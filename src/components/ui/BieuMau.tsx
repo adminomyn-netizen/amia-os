@@ -1,0 +1,130 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { Hop } from "./Hop";
+import { Chon, type LuaChon } from "./Chon";
+import { NgayChon } from "./NgayChon";
+import { OTien } from "./OTien";
+import { Gat } from "./Gat";
+import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_CHU_NGUY, NUT_PHU, O_NHAP, O_NHIEU_DONG } from "./dinh-dang";
+
+export type Truong = {
+  ten: string;
+  nhan: string;
+  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "email";
+  luaChon?: LuaChon[];
+  batBuoc?: boolean;
+  goiY?: string;
+  rong?: boolean;
+  chiKhiTao?: boolean;
+};
+export type GiaTri = Record<string, string | number | boolean | string[] | null | undefined>;
+export type KetQuaHD = { ok?: boolean; loi?: string; [k: string]: unknown };
+
+function ONhieu({ luaChon, giaTri, onDoi }: { luaChon: LuaChon[]; giaTri: string[]; onDoi: (v: string[]) => void }) {
+  const [tim, setTim] = useState("");
+  const ds = luaChon.filter((l) => l.nhan.toLowerCase().includes(tim.toLowerCase()));
+  return (
+    <div className="rounded-nho border border-vien-dam bg-giay-sang">
+      <input value={tim} onChange={(e) => setTim(e.target.value)} placeholder="Tìm nhanh" className="h-10 w-full border-b border-vien bg-transparent px-3 text-[14px] outline-none" />
+      <ul className="max-h-44 overflow-y-auto py-1">
+        {ds.map((l) => {
+          const bat = giaTri.includes(l.gia_tri);
+          return (
+            <li key={l.gia_tri}>
+              <button type="button" role="checkbox" aria-checked={bat} onClick={() => onDoi(bat ? giaTri.filter((x) => x !== l.gia_tri) : [...giaTri, l.gia_tri])}
+                className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[14px] hover:bg-giay-tram">
+                <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border text-[11px] leading-none ${bat ? "border-nhan bg-nhan text-white" : "border-vien-dam"}`}>{bat ? "✓" : ""}</span>
+                <span className="truncate">{l.nhan}</span>
+              </button>
+            </li>
+          );
+        })}
+        {ds.length === 0 && <li className="px-3 py-2 text-[13px] text-muc-3">Không có mục nào.</li>}
+      </ul>
+      <div className="border-t border-vien px-3 py-1.5 text-[12px] text-muc-3">Đã chọn {giaTri.length}</div>
+    </div>
+  );
+}
+
+/** Nút mở hộp thoại biểu mẫu. Không dùng <form> submit (tránh lỗi mất phiên của Server Action trên trang đã đăng nhập): gom giá trị vào FormData rồi gọi action. */
+export function NutHop({
+  nhan, tieuDe, moTa, truong = [], giaTri = {}, an = {}, action, kieu = "chinh", rong, nhanLuu = "Lưu", xacNhan, nguy,
+}: {
+  nhan: string; tieuDe: string; moTa?: string; truong?: Truong[]; giaTri?: GiaTri; an?: Record<string, string>;
+  action: (fd: FormData) => Promise<KetQuaHD | void>; kieu?: "chinh" | "phu" | "chu"; rong?: boolean; nhanLuu?: string; xacNhan?: string; nguy?: boolean;
+}) {
+  const router = useRouter();
+  const [mo, setMo] = useState(false);
+  const [dang, bat] = useTransition();
+  const [loi, setLoi] = useState("");
+  const [v, setV] = useState<GiaTri>(giaTri);
+  const laTao = !giaTri.id;
+  const dat = (ten: string, gt: GiaTri[string]) => setV((x) => ({ ...x, [ten]: gt }));
+
+  const gui = () => {
+    setLoi("");
+    for (const t of truong) {
+      if (t.chiKhiTao && !laTao) continue;
+      const gt = v[t.ten];
+      if (t.batBuoc && (gt === undefined || gt === null || gt === "" || (Array.isArray(gt) && gt.length === 0))) {
+        setLoi(`Chưa nhập: ${t.nhan}.`);
+        return;
+      }
+    }
+    const fd = new FormData();
+    for (const [k, x] of Object.entries(an)) fd.set(k, x);
+    if (giaTri.id) fd.set("id", String(giaTri.id));
+    for (const t of truong) {
+      const gt = v[t.ten];
+      if (Array.isArray(gt)) gt.forEach((x) => fd.append(t.ten, x));
+      else if (typeof gt === "boolean") fd.set(t.ten, gt ? "1" : "0");
+      else fd.set(t.ten, gt == null ? "" : String(gt));
+    }
+    bat(async () => {
+      const kq = await action(fd);
+      if (kq && kq.loi) setLoi(kq.loi);
+      else {
+        setMo(false);
+        router.refresh();
+      }
+    });
+  };
+
+  const lopNut = kieu === "chinh" ? NUT_CHINH : kieu === "phu" ? NUT_PHU : nguy ? NUT_CHU_NGUY : NUT_CHU;
+  return (
+    <>
+      <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setMo(true); }}>{nhan}</button>
+      <Hop mo={mo} dong={() => setMo(false)} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
+        {xacNhan && <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p>}
+        <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
+          {truong.filter((t) => !t.chiKhiTao || laTao).map((t) => {
+            const gt = v[t.ten];
+            const id = `f-${t.ten}`;
+            return (
+              <div key={t.ten} className={t.rong || t.loai === "nhieu_dong" || t.loai === "nhieu" ? "sm:col-span-2" : ""}>
+                {t.loai !== "gat" && <label htmlFor={id} className={NHAN_O}>{t.nhan}{t.batBuoc && <span className="text-loi"> *</span>}</label>}
+                {t.loai === "chu" && <input id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
+                {t.loai === "email" && <input id={id} type="email" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
+                {t.loai === "mat_khau" && <input id={id} type="text" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
+                {t.loai === "so" && <input id={id} inputMode="decimal" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value.replace(/[^\d.,-]/g, ""))} placeholder={t.goiY} className={`${O_NHAP} text-right tabular-nums`} autoComplete="off" />}
+                {t.loai === "tien" && <OTien id={id} giaTriMacDinh={Number(gt) || 0} onDoi={(n) => dat(t.ten, n)} />}
+                {t.loai === "chon" && <Chon id={id} luaChon={t.luaChon ?? []} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn"} />}
+                {t.loai === "ngay" && <NgayChon id={id} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} />}
+                {t.loai === "nhieu_dong" && <textarea id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHIEU_DONG} />}
+                {t.loai === "gat" && <Gat nhan={t.nhan} giaTriMacDinh={!!gt} onDoi={(x) => dat(t.ten, x)} />}
+                {t.loai === "nhieu" && <ONhieu luaChon={t.luaChon ?? []} giaTri={Array.isArray(gt) ? gt : []} onDoi={(x) => dat(t.ten, x)} />}
+              </div>
+            );
+          })}
+        </div>
+        {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
+        <div className="mt-6 flex justify-end gap-2.5">
+          <button type="button" className={NUT_PHU} onClick={() => setMo(false)}>Huỷ</button>
+          <button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : nhanLuu}</button>
+        </div>
+      </Hop>
+    </>
+  );
+}

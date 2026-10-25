@@ -1,0 +1,174 @@
+@import "tailwindcss";
+
+/* Giao diện chỉ có bản sáng. Giữ biến thể .dark (không bao giờ bật) để lớp tối sót lại không bị kích hoạt theo hệ điều hành. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Bộ nhận diện AMIA OS: giấy ngà ấm + mực rêu đậm + MỘT màu chính Mallard Green (#006F62, theo AMIA_LOGO_GUIDELINE) + điểm vàng đồng (#BA9551).
+ * ASSUMPTION: bảng màu phần mềm dựa trên màu logo; chị/anh Gia chốt bảng khác thì chỉ sửa các biến dưới đây. */
+:root {
+  --giay: #faf7f1;
+  --giay-sang: #ffffff;
+  --giay-tram: #f1ece2;
+  --muc: #1b2926;
+  --muc-2: #46544f;
+  --muc-3: #5a6864;
+  --vien: #e6dfd0;
+  --vien-dam: #8c8777;
+  --nhan: #006f62;
+  --nhan-dam: #00564c;
+  --nhan-nhat: #dcefe9;
+  --chu-tren-vang: #ffffff;
+  --vang-sang: #0a8576;
+  --vang: #006f62;
+  --vang-tram: #00564c;
+  --dat: #ba9551;
+  --dat-dam: #7d5f22;
+  --dat-nen: #f6efdf;
+  --espresso: #0a2b26;
+  --espresso-sau: #061a17;
+  --loi: #b42318;
+  --loi-nen: #fdecea;
+  --canh-bao: #8f4a0b;
+  --canh-bao-nen: #fdf0da;
+
+  /* Năm sắc nhấn cho số liệu: chữ (-sac) trên nền (-nen) ≥ 4,5:1; -1/-2 là hai đầu dải (chữ trắng ≥ 4,5:1). */
+  --sac-luc: #00564c; --sac-luc-nen: #dcefe9; --sac-luc-mau: #14a394; --sac-luc-1: #0a8576; --sac-luc-2: #00564c;
+  --sac-xanh: #1b4f72; --sac-xanh-nen: #e0eef7; --sac-xanh-mau: #3b8ec2; --sac-xanh-1: #25648f; --sac-xanh-2: #1b4f72;
+  --sac-tim: #6b2f5e; --sac-tim-nen: #f3e5f0; --sac-tim-mau: #a85c97; --sac-tim-1: #84407a; --sac-tim-2: #6b2f5e;
+  --sac-cam: #7d5f22; --sac-cam-nen: #f6efdf; --sac-cam-mau: #ba9551; --sac-cam-1: #8c6a24; --sac-cam-2: #7d5f22;
+  --sac-hong: #a12a46; --sac-hong-nen: #fde6ec; --sac-hong-mau: #d35a77; --sac-hong-1: #b83a58; --sac-hong-2: #a12a46;
+
+  --menu: #0a2b26;
+  --menu-chu: #cfe0dc;
+  --menu-chu-phu: #93b3ad;
+  --menu-sang: #ffffff;
+  --menu-nhan: #d9b877;
+  --menu-chon: rgba(255, 255, 255, 0.12);
+  --menu-hover: rgba(255, 255, 255, 0.07);
+  --menu-vien: rgba(255, 255, 255, 0.12);
+
+  --gradient-vang: linear-gradient(135deg, #0a8576 0%, #006f62 55%, #00564c 100%);
+  --gradient-vang-hover: linear-gradient(135deg, #0e9484 0%, #00796b 55%, #006256 100%);
+  --gradient-toi: linear-gradient(155deg, #0e3d36 0%, #0a2b26 50%, #061a17 100%);
+  --gradient-nen: linear-gradient(180deg, #ffffff 0%, #faf7f1 55%, #f1ece2 100%);
+
+  --background: var(--giay);
+  --foreground: var(--muc);
+}
+
+.dark {
+  color-scheme: light;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-giay: var(--giay);
+  --color-giay-sang: var(--giay-sang);
+  --color-giay-tram: var(--giay-tram);
+  --color-muc: var(--muc);
+  --color-muc-2: var(--muc-2);
+  --color-muc-3: var(--muc-3);
+  --color-vien: var(--vien);
+  --color-vien-dam: var(--vien-dam);
+  --color-nhan: var(--nhan);
+  --color-nhan-dam: var(--nhan-dam);
+  --color-nhan-nhat: var(--nhan-nhat);
+  --color-vang-sang: var(--vang-sang);
+  --color-vang: var(--vang);
+  --color-vang-tram: var(--vang-tram);
+  --color-dat: var(--dat);
+  --color-dat-dam: var(--dat-dam);
+  --color-dat-nen: var(--dat-nen);
+  --color-espresso: var(--espresso);
+  --color-espresso-sau: var(--espresso-sau);
+  --color-loi: var(--loi);
+  --color-loi-nen: var(--loi-nen);
+  --color-canh-bao: var(--canh-bao);
+  --color-canh-bao-nen: var(--canh-bao-nen);
+  --color-menu: var(--menu);
+  --color-menu-chu: var(--menu-chu);
+  --color-menu-chu-phu: var(--menu-chu-phu);
+  --color-menu-sang: var(--menu-sang);
+  --color-menu-nhan: var(--menu-nhan);
+  --color-menu-chon: var(--menu-chon);
+  --color-menu-hover: var(--menu-hover);
+  --color-menu-vien: var(--menu-vien);
+  --color-sac-luc: var(--sac-luc);
+  --color-sac-luc-nen: var(--sac-luc-nen);
+  --color-sac-xanh: var(--sac-xanh);
+  --color-sac-xanh-nen: var(--sac-xanh-nen);
+  --color-sac-tim: var(--sac-tim);
+  --color-sac-tim-nen: var(--sac-tim-nen);
+  --color-sac-cam: var(--sac-cam);
+  --color-sac-cam-nen: var(--sac-cam-nen);
+  --color-sac-hong: var(--sac-hong);
+  --color-sac-hong-nen: var(--sac-hong-nen);
+  --font-sans: var(--font-roboto), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), Georgia, serif;
+  --radius-tag: 5px;
+  --radius-nho: 8px;
+  --radius-the: 10px;
+  --radius-vua: 12px;
+  --radius-hop: 14px;
+}
+
+html { font-size: 15px; }
+
+body {
+  background: var(--gradient-nen) fixed, var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.55;
+  font-variant-numeric: tabular-nums;
+}
+
+.nut-vang {
+  background: var(--gradient-vang);
+  color: var(--chu-tren-vang);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.35), 0 1px 2px rgb(0 86 76 / 0.3);
+  transition: filter 150ms ease-out, box-shadow 150ms ease-out;
+}
+.nut-vang:hover:not(:disabled) {
+  background: var(--gradient-vang-hover);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.45), 0 2px 8px rgb(0 86 76 / 0.34);
+}
+.nen-toi {
+  background:
+    radial-gradient(120% 80% at 100% 0%, rgb(186 149 81 / 0.2) 0%, transparent 55%),
+    var(--gradient-toi);
+}
+.nen-trang { background: var(--gradient-nen); }
+
+/* Tiêu đề hiển thị dùng Playfair Display (guideline logo AMIA); thân chữ dùng Roboto. */
+.chu-tieu-de {
+  font-family: var(--font-serif);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+.nhan-muc {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muc-3);
+}
+
+@layer base {
+  :focus-visible {
+    outline: 2px solid var(--nhan);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
+}
+
+@media print {
+  .khong-in { display: none !important; }
+  body { background: #fff !important; }
+  @page { size: A4; margin: 14mm; }
+}

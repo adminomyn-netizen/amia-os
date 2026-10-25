@@ -1,5 +1,6 @@
 "use server";
 
+import { luuAnh, xoaAnh } from "@/lib/kho-anh";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
@@ -114,11 +115,10 @@ export async function taiAnh(fd: FormData): Promise<KQ> {
   if (!k) return { loi: "Không tìm thấy khách." };
   const ngay = chuoi(fd, "ngay_chup") || homNayHCM();
   const duong = `${khachId}/${ngay}/${randomUUID()}.${duoi}`;
-  const { error: e1 } = await db.storage.from("khach-anh").upload(duong, Buffer.from(await tep.arrayBuffer()), { contentType: tep.type, upsert: false });
-  if (e1) return { loi: "Không tải được ảnh lên kho riêng. Thử lại." };
+  if (!(await luuAnh(duong, Buffer.from(await tep.arrayBuffer()), tep.type))) return { loi: "Không tải được ảnh lên kho riêng. Thử lại." };
   const loai = ["truoc", "sau", "khac"].includes(chuoi(fd, "loai")) ? chuoi(fd, "loai") : "khac";
   const { error } = await db.from("khach_anh").insert({ khach_id: khachId, duong_dan: duong, loai, ngay_chup: ngay, ghi_chu: chuoiHoacNull(fd, "ghi_chu"), tao_boi: nd.nhanVienId });
-  if (error) { await db.storage.from("khach-anh").remove([duong]); return { loi: thongBaoLoi(error) }; }
+  if (error) { await xoaAnh(duong); return { loi: thongBaoLoi(error) }; }
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "them_anh", doi_tuong: "khach_hang", doi_tuong_id: khachId });
   revalidatePath(`/khach-hang/${khachId}`);
   return { ok: true };

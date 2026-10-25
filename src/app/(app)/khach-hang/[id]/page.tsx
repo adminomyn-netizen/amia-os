@@ -1,3 +1,4 @@
+import { linkAnh } from "@/lib/kho-anh";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
@@ -133,8 +134,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     );
   } else {
     const { data: anh } = await db.from("khach_anh").select("*").eq("khach_id", id).order("ngay_chup", { ascending: false }).order("tao_luc", { ascending: false });
-    const link = anh?.length ? (await db.storage.from("khach-anh").createSignedUrls(anh.map((a) => a.duong_dan), 3600)).data ?? [] : [];
-    const urlTheo = new Map(link.map((l) => [l.path, l.signedUrl]));
+    const urlTheo = anh?.length ? await linkAnh(anh.map((a) => a.duong_dan), 3600) : new Map<string, string>();
     const theoNgay = new Map<string, NonNullable<typeof anh>>();
     for (const a of anh ?? []) theoNgay.set(a.ngay_chup, [...(theoNgay.get(a.ngay_chup) ?? []), a]);
     noiDung = (

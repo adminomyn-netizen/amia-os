@@ -2096,6 +2096,17 @@ export type Database = {
           tru_the_tien: number
         }[]
       }
+      bc_the_con_du: {
+        Args: { p_cn?: string }
+        Returns: {
+          du_tien: number
+          gia_tri_buoi: number
+          so_buoi: number
+          so_the_khong_gioi_han: number
+          so_the_lan: number
+          so_the_tien: number
+        }[]
+      }
       bc_muc_ban: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {

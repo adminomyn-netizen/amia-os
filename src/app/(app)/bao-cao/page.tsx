@@ -93,16 +93,12 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
       </>
     );
   } else {
-    let q = db.from("v_the_khach").select("id, ma, khach_id, loai, so_buoi_con, so_du_tien, gia_tri_buoi, tinh_trang, han_dung").in("tinh_trang", ["hoat_dong", "sap_het"]);
-    if (cn) q = q.eq("chi_nhanh_id", cn);
-    const { data } = await q;
-    const lan = (data ?? []).filter((t) => t.loai === "lan"), tienThe = (data ?? []).filter((t) => t.loai === "tien");
-    const nghiaVu = lan.reduce((s, t) => s + (t.so_buoi_con ?? 0) * Number(t.gia_tri_buoi), 0);
-    const duTien = tienThe.reduce((s, t) => s + Number(t.so_du_tien), 0);
+    const { data: tong } = await db.rpc("bc_the_con_du", { p_cn: (cn ?? undefined) as string });
+    const t = tong?.[0] ?? { so_the_lan: 0, so_buoi: 0, gia_tri_buoi: 0, so_the_khong_gioi_han: 0, so_the_tien: 0, du_tien: 0 };
     noiDung = (
       <>
         {lc}
-        <HangChiSo muc={[{ nhan: "Buổi khách đã trả tiền mà chưa làm", so: soVN(lan.reduce((s, t) => s + (t.so_buoi_con ?? 0), 0)), ghiChu: `${lan.length} thẻ liệu trình` }, { nhan: "Giá trị buổi chưa làm", so: tienVN(nghiaVu), ghiChu: "doanh thu chưa ghi nhận" }, { nhan: "Số dư thẻ tiền", so: tienVN(duTien), ghiChu: `${tienThe.length} thẻ` }]} />
+        <HangChiSo muc={[{ nhan: "Buổi khách đã trả tiền mà chưa làm", so: soVN(Number(t.so_buoi)), ghiChu: `${soVN(t.so_the_lan)} thẻ liệu trình${t.so_the_khong_gioi_han ? ` (chưa kể ${soVN(t.so_the_khong_gioi_han)} thẻ không giới hạn buổi)` : ""}` }, { nhan: "Giá trị buổi chưa làm", so: tienVN(Number(t.gia_tri_buoi)), ghiChu: "doanh thu chưa ghi nhận" }, { nhan: "Số dư thẻ tiền", so: tienVN(Number(t.du_tien)), ghiChu: `${soVN(t.so_the_tien)} thẻ` }]} />
         <p className="mt-4 text-[13px] text-muc-2">Đây là khoản AMIA còn nợ khách (dịch vụ hoặc tiền trong thẻ). Chi tiết từng thẻ ở mục <Link href="/the" className="text-nhan-dam hover:underline">Thẻ liệu trình</Link>.</p>
       </>
     );

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { LogOut } from "lucide-react";
 import { dangXuat } from "@/app/dang-nhap/actions";
 import { NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
@@ -9,10 +10,10 @@ export function DauTrang({ hoTen, vaiTro, chiNhanh, muc }: { hoTen: string; vaiT
       <MobileNav muc={muc} />
       <div className="hidden text-[13px] text-muc-3 lg:block">{chiNhanh ? `Chi nhánh: ${chiNhanh}` : "Mọi chi nhánh"}</div>
       <div className="flex items-center gap-3">
-        <div className="text-right leading-tight">
+        <Link href="/tai-khoan" title="Tài khoản của tôi" className="text-right leading-tight hover:opacity-80">
           <div className="text-[14px] font-medium text-muc">{hoTen}</div>
           <div className="text-[12px] text-muc-3">{NHAN_VAI_TRO[vaiTro]}</div>
-        </div>
+        </Link>
         <form action={dangXuat}>
           <button type="submit" aria-label="Đăng xuất" title="Đăng xuất" className="rounded-nho p-2 text-muc-3 hover:bg-giay-tram hover:text-muc">
             <LogOut strokeWidth={1.6} className="h-[19px] w-[19px]" />

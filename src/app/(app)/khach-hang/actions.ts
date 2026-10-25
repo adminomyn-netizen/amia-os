@@ -6,6 +6,7 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM } from "@/lib/dinh-dang";
+import { docKhachTuExcel } from "@/lib/nhap-khach";
 
 type KQ = { ok?: true; loi?: string; id?: string };
 const NGUON_HOP_LE = ["mkt", "telesale", "tu_van", "khach_cu_gioi_thieu", "khac"];
@@ -121,4 +122,40 @@ export async function taiAnh(fd: FormData): Promise<KQ> {
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "them_anh", doi_tuong: "khach_hang", doi_tuong_id: khachId });
   revalidatePath(`/khach-hang/${khachId}`);
   return { ok: true };
+}
+
+export type KetQuaNhap = { ok?: boolean; loi?: string; hopLe?: number; tongDong?: number; daCo?: number; daNhap?: number; dongLoi?: { dong: number; viec: string }[] };
+
+/** Nhập khách từ Excel. che_do=xem chỉ kiểm tra (không ghi). Khách có SĐT đã tồn tại thì bỏ qua (không ghi đè). Nguồn/người phụ trách/chi nhánh áp chung cho cả file. */
+export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
+  const nd = await kiemQuyen("khach.nhap");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const tep = fd.get("tep");
+  if (!(tep instanceof File) || tep.size === 0) return { loi: "Chưa chọn file Excel (.xlsx)." };
+  if (tep.size > 8 * 1024 * 1024) return { loi: "File quá 8 MB. Tách nhỏ rồi nhập từng phần." };
+  const nguon = chuoi(fd, "nguon"), phuTrach = chuoi(fd, "nguoi_phu_trach_id"), cn = chuoi(fd, "chi_nhanh_id");
+  if (!NGUON_HOP_LE.includes(nguon) || !phuTrach || !cn) return { loi: "Chọn nguồn, người phụ trách và chi nhánh áp cho cả file." };
+  let doc;
+  try { doc = await docKhachTuExcel(await tep.arrayBuffer()); } catch { return { loi: "Không đọc được file. Dùng file .xlsx (không phải .xls hoặc .csv)." }; }
+  if (doc.cotThieu.length) return { loi: `File thiếu cột bắt buộc: ${doc.cotThieu.join(", ")}.` };
+  const db = sb();
+  const sdts = doc.khach.map((k) => k.dien_thoai);
+  const daCo = new Set<string>();
+  for (let i = 0; i < sdts.length; i += 300) { const { data } = await db.from("khach_hang").select("dien_thoai").in("dien_thoai", sdts.slice(i, i + 300)); (data ?? []).forEach((x) => daCo.add(x.dien_thoai)); }
+  const moi = doc.khach.filter((k) => !daCo.has(k.dien_thoai));
+  const kq: KetQuaNhap = { ok: true, tongDong: doc.tongDong, hopLe: doc.khach.length, daCo: daCo.size, dongLoi: doc.loi.slice(0, 30) };
+  if (chuoi(fd, "che_do") !== "nhap") return kq;
+  let nhap = 0;
+  for (let i = 0; i < moi.length; i += 200) {
+    const lo = moi.slice(i, i + 200);
+    const base = Number((await db.rpc("so_tiep_theo", { p_khoa: "khach" })).data ?? 0);
+    // Cấp đủ dải mã cho lô: so_tiep_theo tăng 1/lần gọi nên gọi thêm lo.length-1 lần để giữ mã duy nhất.
+    for (let j = 1; j < lo.length; j++) await db.rpc("so_tiep_theo", { p_khoa: "khach" });
+    const rows = lo.map((k, j) => ({ ma: "KH" + String(base + j).padStart(6, "0"), ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo, email: k.email, ngay_sinh: k.ngay_sinh, gioi_tinh: k.gioi_tinh, dia_chi: k.dia_chi, ghi_chu: k.ghi_chu, chi_nhanh_id: cn, nguon, nguoi_phu_trach_id: phuTrach, tao_boi: nd.nhanVienId }));
+    const { error } = await db.from("khach_hang").insert(rows);
+    if (error) return { ...kq, ok: false, loi: `Dừng ở lô thứ ${i / 200 + 1} (đã nhập ${nhap} khách): ${thongBaoLoi(error)}`, daNhap: nhap };
+    nhap += rows.length;
+  }
+  revalidatePath("/khach-hang");
+  return { ...kq, daNhap: nhap };
 }

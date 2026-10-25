@@ -110,7 +110,9 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <TieuDeTrang tieuDe="Báo cáo" phu={tien ? "Số liệu tính trực tiếp từ sổ hoá đơn, sổ thu tiền, sổ thẻ và sổ kho" : "Báo cáo vận hành"} />
+      <TieuDeTrang tieuDe="Báo cáo" phu={tien ? "Số liệu tính trực tiếp từ sổ hoá đơn, sổ thu tiền, sổ thẻ và sổ kho" : "Báo cáo vận hành"}>
+        {tien && tab === "doanh-thu" && <a href={`/api/xuat/doanh-thu?tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
+      </TieuDeTrang>
       <Tab muc={tabs} dang={tab} goc="/bao-cao" them={them} />
       {noiDung}
     </>

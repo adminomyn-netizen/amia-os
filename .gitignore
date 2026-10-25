@@ -45,3 +45,6 @@ next-env.d.ts
 
 # phông gốc để dựng logo (OFL) — tải lại theo scripts/phong/HUONG-DAN.txt
 scripts/phong/*.ttf
+
+# sao lưu dữ liệu khách (không đưa vào git)
+/sao-luu/

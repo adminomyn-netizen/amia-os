@@ -9,7 +9,8 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { LocKhach } from "@/components/khach/LocKhach";
-import { luuKhach } from "./actions";
+import { NhapExcelKhach } from "@/components/khach/NhapExcelKhach";
+import { luuKhach, nhapKhachExcel } from "./actions";
 
 const MOI_TRANG = 40;
 
@@ -50,6 +51,7 @@ export default async function TrangKhachHang({ searchParams }: { searchParams: P
   return (
     <>
       <TieuDeTrang tieuDe="Khách hàng" phu={`${tong.toLocaleString("vi-VN")} khách khớp bộ lọc`}>
+        {coQuyen(nd.vaiTro, "khach.nhap") && <NhapExcelKhach nguon={NGUON} nhanVien={nvLC} chiNhanh={(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} action={nhapKhachExcel} macDinh={{ nguoi: nd.nhanVienId, cn: nd.chiNhanhId ?? cn?.[0]?.id ?? "" }} />}
         {coQuyen(nd.vaiTro, "khach.sua") && (
           <NutHop nhan="Thêm khách" tieuDe="Thêm khách hàng" moTa="Nguồn khách và người phụ trách là bắt buộc để tính hoa hồng và đánh giá quảng cáo." rong truong={truong}
             giaTri={{ chi_nhanh_id: nd.chiNhanhId ?? (cn?.[0]?.id ?? ""), nguoi_phu_trach_id: nd.nhanVienId, quan_tam: [] }} action={luuKhach} />

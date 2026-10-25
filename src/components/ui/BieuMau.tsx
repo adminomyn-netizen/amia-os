@@ -12,7 +12,7 @@ import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_CHU_NGUY, NUT_PHU, O_NHAP, O_NHIEU_DONG
 export type Truong = {
   ten: string;
   nhan: string;
-  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "email";
+  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "mat_khau_an" | "email";
   luaChon?: LuaChon[];
   batBuoc?: boolean;
   goiY?: string;
@@ -108,6 +108,7 @@ export function NutHop({
                 {t.loai === "chu" && <input id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
                 {t.loai === "email" && <input id={id} type="email" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
                 {t.loai === "mat_khau" && <input id={id} type="text" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
+                {t.loai === "mat_khau_an" && <input id={id} type="password" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} className={O_NHAP} autoComplete="new-password" />}
                 {t.loai === "so" && <input id={id} inputMode="decimal" {...CHON_HET} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value.replace(/[^\d.,-]/g, ""))} placeholder={t.goiY} className={`${O_NHAP} text-right tabular-nums`} autoComplete="off" />}
                 {t.loai === "tien" && <OTien id={id} giaTriMacDinh={Number(gt) || 0} onDoi={(n) => dat(t.ten, n)} />}
                 {t.loai === "chon" && <Chon id={id} luaChon={t.luaChon ?? []} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn"} />}

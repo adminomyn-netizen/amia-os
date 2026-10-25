@@ -1,0 +1,947 @@
+[
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 20,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Thuốc giảm đau efferalgan codeine 500mg",
+"don_vi_b2": "V",
+"dinh_muc": 1,
+"don_vi_dung": "viên",
+"don_gia": 3250,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Đầu MFU N4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 300,
+"don_vi_dung": "shoot",
+"don_gia": 2144,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Đầu MFU S1.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 200,
+"don_vi_dung": "shoot",
+"don_gia": 1965,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Đầu MFU A3",
+"don_vi_b2": "Shot",
+"dinh_muc": 200,
+"don_vi_dung": "shoot",
+"don_gia": 1495,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Đầu Mfu Youth F4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": "",
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "định mức trống; B2 ghi shot, DM1 ghi line; liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Đầu Mfu Youth F3.0",
+"don_vi_b2": "Shot",
+"dinh_muc": "",
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "định mức trống; B2 ghi shot, DM1 ghi line; liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Đầu MFU P4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 500,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Đầu MFU P3",
+"don_vi_b2": "Shot",
+"dinh_muc": 500,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Basic",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Utherapy",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 20,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Utherapy",
+"vat_tu": "Thuốc giảm đau efferalgan codeine 500mg",
+"don_vi_b2": "V",
+"dinh_muc": 1,
+"don_vi_dung": "viên",
+"don_gia": 3250,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Utherapy",
+"vat_tu": "Ultherapy 4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 300,
+"don_vi_dung": "line",
+"don_gia": 10000,
+"flora_ghi": "B2 ghi shot, DM1 ghi line"
+},
+{
+"dich_vu": "Utherapy",
+"vat_tu": "Ultherapy 3.0",
+"don_vi_b2": "Shot",
+"dinh_muc": 300,
+"don_vi_dung": "line",
+"don_gia": 10000,
+"flora_ghi": "B2 ghi shot, DM1 ghi line"
+},
+{
+"dich_vu": "Utherapy",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Exion mặt",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 20,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Linerase Collagen",
+"don_vi_b2": "mg",
+"dinh_muc": 50,
+"don_vi_dung": "mg",
+"don_gia": 45670,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Linerase Hydro",
+"don_vi_b2": "Ml",
+"dinh_muc": 2.5,
+"don_vi_dung": "ml",
+"don_gia": "",
+"flora_ghi": "thiếu giá DM1"
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Natri bicacbinat 8.4%",
+"don_vi_b2": "Ml",
+"dinh_muc": 0.3,
+"don_vi_dung": "",
+"don_gia": "",
+"flora_ghi": "thiếu giá DM1"
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Kim tiêm 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 3,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Kim tiêm 5cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Kim tiêm 34G",
+"don_vi_b2": "C",
+"dinh_muc": 2,
+"don_vi_dung": "cái",
+"don_gia": 2900,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Kim lấy thuốc 18G MPV",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 300,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Bio Collagen (Bio Collagen HA)",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX Pro Plus (mặt + cổ)",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 20,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX Pro Plus (mặt + cổ)",
+"vat_tu": "Thuốc giảm đau efferalgan codeine 500mg",
+"don_vi_b2": "V",
+"dinh_muc": 1,
+"don_vi_dung": "viên",
+"don_gia": 3250,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX Pro Plus (mặt + cổ)",
+"vat_tu": "Miếng dán Thermage",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 300000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX Pro Plus (mặt + cổ)",
+"vat_tu": "Gas Thermage Gryogen Coolant Canisters FLX",
+"don_vi_b2": "g",
+"dinh_muc": 250,
+"don_vi_dung": "g",
+"don_gia": 2400,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX Pro Plus (mặt + cổ)",
+"vat_tu": "Gel Thermage Coupling Fluid 60ML FLX",
+"don_vi_b2": "Ml",
+"dinh_muc": 50,
+"don_vi_dung": "ml",
+"don_gia": 8333,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX Pro Plus (mặt + cổ)",
+"vat_tu": "Đầu típ Thermage FLX EYE TIP 0.25 CM,450 REP",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "đầu",
+"don_gia": 11000000,
+"flora_ghi": "SAI ĐẦU TIP: mặt+cổ phải dùng TOTAL TIP 3.0cm 1200REP (22,27tr), không phải EYE TIP"
+},
+{
+"dich_vu": "Thermage FLX Pro Plus (mặt + cổ)",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Exion Bikini",
+"vat_tu": "Exion bikini ngắn",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "đầu",
+"don_gia": 700000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Exion Bikini",
+"vat_tu": "Exion bikini dài",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "đầu",
+"don_gia": 1800000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Exion mặt từng vùng",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Mắt",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 10,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Mắt",
+"vat_tu": "Thuốc giảm đau efferalgan codeine 500mg",
+"don_vi_b2": "V",
+"dinh_muc": 1,
+"don_vi_dung": "viên",
+"don_gia": 3250,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Mắt",
+"vat_tu": "Đầu MFU P4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 500,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Mắt",
+"vat_tu": "Đầu MFU P3",
+"don_vi_b2": "Shot",
+"dinh_muc": 500,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Mắt",
+"vat_tu": "Đầu Mfu Youth P 1.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 500,
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "B2 ghi shot, DM1 ghi line"
+},
+{
+"dich_vu": "Mfu Mắt",
+"vat_tu": "Đầu Mfu Youth P 1.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 500,
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "B2 ghi shot, DM1 ghi line; TRÙNG DÒNG, tính 2 lần"
+},
+{
+"dich_vu": "Mfu Mắt",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 20,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Thuốc giảm đau efferalgan codeine 500mg",
+"don_vi_b2": "V",
+"dinh_muc": 1,
+"don_vi_dung": "viên",
+"don_gia": 3250,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Đầu MFU N4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 200,
+"don_vi_dung": "shoot",
+"don_gia": 2144,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Đầu MFU S1.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 100,
+"don_vi_dung": "shoot",
+"don_gia": 1965,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Đầu MFU A3",
+"don_vi_b2": "Shot",
+"dinh_muc": 200,
+"don_vi_dung": "shoot",
+"don_gia": 1495,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Đầu Mfu Youth F4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 200,
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "B2 ghi shot, DM1 ghi line; liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Đầu Mfu Youth F3.0",
+"don_vi_b2": "Shot",
+"dinh_muc": 300,
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "B2 ghi shot, DM1 ghi line; liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Đầu MFU P4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 1000,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Đầu MFU P3",
+"don_vi_b2": "Shot",
+"dinh_muc": 1000,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": "liệt kê đủ các đầu: phải lấy theo chỉ định bác sĩ"
+},
+{
+"dich_vu": "Mfu Pro Basic",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX- trẻ hóa vùng mắt",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 10,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX- trẻ hóa vùng mắt",
+"vat_tu": "Thuốc giảm đau efferalgan codeine 500mg",
+"don_vi_b2": "V",
+"dinh_muc": 1,
+"don_vi_dung": "viên",
+"don_gia": 3250,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX- trẻ hóa vùng mắt",
+"vat_tu": "Miếng dán Thermage",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 300000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX- trẻ hóa vùng mắt",
+"vat_tu": "Gas Thermage Gryogen Coolant Canisters FLX",
+"don_vi_b2": "B",
+"dinh_muc": 0.5,
+"don_vi_dung": "g",
+"don_gia": 2400,
+"flora_ghi": "đơn vị B (?) 0,5 trong khi mặt+cổ ghi 250g, cần thống nhất"
+},
+{
+"dich_vu": "Thermage FLX- trẻ hóa vùng mắt",
+"vat_tu": "Gel Thermage Coupling Fluid 60ML FLX",
+"don_vi_b2": "Ml",
+"dinh_muc": 50,
+"don_vi_dung": "ml",
+"don_gia": 8333,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX- trẻ hóa vùng mắt",
+"vat_tu": "Đầu típ Thermage FLX EYE TIP 0.25 CM,450 REP",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "đầu",
+"don_gia": 11000000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Thermage FLX- trẻ hóa vùng mắt",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 20,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Thuốc giảm đau efferalgan codeine 500mg",
+"don_vi_b2": "V",
+"dinh_muc": 1,
+"don_vi_dung": "viên",
+"don_gia": 3250,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Đầu MFU N4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 100,
+"don_vi_dung": "shoot",
+"don_gia": 2144,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Đầu MFU S1.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 100,
+"don_vi_dung": "shoot",
+"don_gia": 1965,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Đầu MFU A3",
+"don_vi_b2": "Shot",
+"dinh_muc": 100,
+"don_vi_dung": "shoot",
+"don_gia": 1495,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Đầu Mfu Youth F4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 100,
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "B2 ghi shot, DM1 ghi line"
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Đầu Mfu Youth F3.0",
+"don_vi_b2": "Shot",
+"dinh_muc": 100,
+"don_vi_dung": "line",
+"don_gia": 2672,
+"flora_ghi": "B2 ghi shot, DM1 ghi line"
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Đầu MFU P4.5",
+"don_vi_b2": "Shot",
+"dinh_muc": 200,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Đầu MFU P3",
+"don_vi_b2": "Shot",
+"dinh_muc": 300,
+"don_vi_dung": "shoot",
+"don_gia": 284,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Mfu Basic ( Lần 2 )",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Pico plus full body",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 20,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 10,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Thuốc tê Pháp Septodont đỏ Lignospan Standard 2%",
+"don_vi_b2": "ống",
+"dinh_muc": 1,
+"don_vi_dung": "ml",
+"don_gia": 11556,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kim tiêm 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Chất làm đầy da Châu Âu - Croma Saypha FILLER Lidocaine 1ml",
+"don_vi_b2": "Ml",
+"dinh_muc": 1,
+"don_vi_dung": "ml",
+"don_gia": 3500000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kim Caluna 23G*20mm",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 3000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kim cannula 25G dùng tiêm Filler",
+"don_vi_b2": "C",
+"dinh_muc": "",
+"don_vi_dung": "cái",
+"don_gia": 3000,
+"flora_ghi": "định mức trống"
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kim Caluna 27G*50mm",
+"don_vi_b2": "C",
+"dinh_muc": "",
+"don_vi_dung": "cái",
+"don_gia": 4400,
+"flora_ghi": "định mức trống"
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kim tiêm 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": "TRÙNG DÒNG, tính 2 lần"
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kim tiêm 34G",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 2900,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Kim tiểu đường 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 3100,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax VIP (châu âu )",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 10,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Thuốc tê Pháp Septodont đỏ Lignospan Standard 2%",
+"don_vi_b2": "ống",
+"dinh_muc": 1,
+"don_vi_dung": "ml",
+"don_gia": 11556,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kim tiêm 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 4,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Filler Hàn AiLEENE Vol 2 tím trung 2ml/hộp",
+"don_vi_b2": "Ml",
+"dinh_muc": 1,
+"don_vi_dung": "ml",
+"don_gia": 690000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kim Caluna 23G*20mm",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 3000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kim cannula 25G dùng tiêm Filler",
+"don_vi_b2": "C",
+"dinh_muc": "",
+"don_vi_dung": "cái",
+"don_gia": 3000,
+"flora_ghi": "định mức trống"
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kim Caluna 27G*50mm",
+"don_vi_b2": "C",
+"dinh_muc": "",
+"don_vi_dung": "cái",
+"don_gia": 4400,
+"flora_ghi": "định mức trống"
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kim tiêm 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": "TRÙNG DÒNG, tính 2 lần"
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kim tiêm 34G",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 2900,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Kim tiểu đường 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 3100,
+"flora_ghi": ""
+},
+{
+"dich_vu": "HA Volumax Korea",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 10,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Thuốc tiêm tan Malinda lọ*2ml",
+"don_vi_b2": "Lọ",
+"dinh_muc": 1,
+"don_vi_dung": "ml",
+"don_gia": 35000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Botox xóa nhăn làm đầy BOTULAX 100ui",
+"don_vi_b2": "Ui",
+"dinh_muc": 40,
+"don_vi_dung": "ui",
+"don_gia": 7200,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Kim tiêm 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 4,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Kim tiêm 5cc",
+"don_vi_b2": "C",
+"dinh_muc": 2,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Kim tiêm 34G",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 2900,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Kim tiểu đường 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 3100,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Xóa nhăn nếp cau mày/trán bằng botox",
+"vat_tu": "Mặt nạ PDRN",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "miếng",
+"don_gia": 10000,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Toxin Body Cấy Botox Bắp cơ: Tay/Vai/Đùi/Bắp tay/Bắp chân",
+"vat_tu": "Kem gây tê Pleincell Cream 450g",
+"don_vi_b2": "Ml",
+"dinh_muc": 50,
+"don_vi_dung": "g",
+"don_gia": 2156,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Toxin Body Cấy Botox Bắp cơ: Tay/Vai/Đùi/Bắp tay/Bắp chân",
+"vat_tu": "Botox xóa nhăn làm đầy BOTULAX 100ui",
+"don_vi_b2": "Ui",
+"dinh_muc": 160,
+"don_vi_dung": "ui",
+"don_gia": 7200,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Toxin Body Cấy Botox Bắp cơ: Tay/Vai/Đùi/Bắp tay/Bắp chân",
+"vat_tu": "Kim tiêm 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 4,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Toxin Body Cấy Botox Bắp cơ: Tay/Vai/Đùi/Bắp tay/Bắp chân",
+"vat_tu": "Kim tiêm 5cc",
+"don_vi_b2": "C",
+"dinh_muc": 2,
+"don_vi_dung": "cái",
+"don_gia": 650,
+"flora_ghi": ""
+},
+{
+"dich_vu": "Toxin Body Cấy Botox Bắp cơ: Tay/Vai/Đùi/Bắp tay/Bắp chân",
+"vat_tu": "Kim tiểu đường 1cc",
+"don_vi_b2": "C",
+"dinh_muc": 1,
+"don_vi_dung": "cái",
+"don_gia": 3100,
+"flora_ghi": ""
+}
+]

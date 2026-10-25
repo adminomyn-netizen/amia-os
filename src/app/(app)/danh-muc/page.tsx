@@ -22,6 +22,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
   const tab = TAB.some((x) => x.ma === t) ? t! : "dich-vu";
   const sua = coQuyen(nd.vaiTro, "danhmuc.sua");
   const quanLy = coQuyen(nd.vaiTro, "nhanvien.quanly");
+  const xemVon = coQuyen(nd.vaiTro, "baocao.tien");
   const db = sb();
   const [nhom, dv] = await Promise.all([db.from("dich_vu_nhom").select("*").order("thu_tu"), tab === "goi-the" || tab === "dich-vu" ? db.from("dich_vu").select("*").order("ma") : Promise.resolve({ data: [] })]);
   const nhomLC = (nhom.data ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }));
@@ -44,7 +45,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Dịch vụ", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm", hienThi: (r) => tenNhom.get(r.nhom_id) ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => r.don_vi_tinh }, { nhan: "Phút", hienThi: (r) => r.thoi_luong_phut, phai: true }, { nhan: "Giá bán", hienThi: (r) => tienVN(r.gia), phai: true },
-          { nhan: "Giá vốn", hienThi: (r) => tienVN(r.gia_von), phai: true }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
+          ...(xemVon ? [{ nhan: "Giá vốn", hienThi: (r: NonNullable<typeof dv.data>[number]) => tienVN(r.gia_von), phai: true }] : []), { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof dv.data>[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuDichVu} /> }] : []),
         ]} />
     );
@@ -86,7 +87,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => (r.don_vi_mua ? `${r.don_vi} (mua: ${r.don_vi_mua} = ${soVN(r.he_so_quy_doi)})` : r.don_vi) },
-          { nhan: "Giá vốn / đv", hienThi: (r) => (r.gia_nhap_don_vi == null ? "chưa có" : tienVN(r.gia_nhap_don_vi)), phai: true }, { nhan: "Giá bán", hienThi: (r) => (r.ban_le ? tienVN(r.gia_ban) : ""), phai: true },
+          ...(xemVon ? [{ nhan: "Giá vốn / đv", hienThi: (r: NonNullable<typeof sp>[number]) => (r.gia_nhap_don_vi == null ? "chưa có" : tienVN(r.gia_nhap_don_vi)), phai: true }] : []), { nhan: "Giá bán", hienThi: (r) => (r.ban_le ? tienVN(r.gia_ban) : ""), phai: true },
           { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={{ ...r, nhom_cap: r.nhom_cap ?? "" }} action={luuSanPham} /> }] : []),
         ]} />

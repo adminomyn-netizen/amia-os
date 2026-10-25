@@ -9,3 +9,9 @@ export const NUT_PHU =
   "h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium text-muc-2 hover:bg-giay-tram disabled:opacity-60";
 export const NUT_CHU = "text-[13px] font-medium text-nhan-dam underline-offset-4 hover:underline disabled:opacity-50";
 export const NUT_CHU_NGUY = "text-[13px] font-medium text-loi underline-offset-4 hover:underline disabled:opacity-50";
+
+/** Ô số: bấm vào là chọn hết nội dung để gõ đè ngay (Chrome sẽ bỏ chọn khi nhả chuột nếu không chặn mouseup). */
+export const CHON_HET = {
+  onFocus: (e: { currentTarget: { select: () => void } }) => e.currentTarget.select(),
+  onMouseUp: (e: { preventDefault: () => void }) => e.preventDefault(),
+};

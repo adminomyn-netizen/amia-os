@@ -15,3 +15,6 @@ export function thongBaoLoi(e: { message?: string; code?: string } | null | unde
   return "Hệ thống gặp lỗi khi lưu. Thử lại, nếu vẫn lỗi báo người phụ trách kỹ thuật.";
 }
 export type KetQua<T = object> = ({ ok: true } & T) | { ok?: false; loi: string };
+
+/** Tham số tuỳ chọn của hàm Postgres: chuỗi rỗng → NULL (kiểu sinh tự động chưa cho phép null cho tham số hàm). */
+export const tuyChon = (v: string | null | undefined) => (v ? v : null) as unknown as string;

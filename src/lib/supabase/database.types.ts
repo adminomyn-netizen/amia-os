@@ -346,6 +346,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "dong_nhan_vien_dong_id_fkey"
+            columns: ["dong_id"]
+            isOneToOne: false
+            referencedRelation: "v_doanh_so_dong"
+            referencedColumns: ["dong_id"]
+          },
+          {
             foreignKeyName: "dong_nhan_vien_nhan_vien_id_fkey"
             columns: ["nhan_vien_id"]
             isOneToOne: false
@@ -638,6 +645,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "hoa_don_dong_hoa_don_id_fkey"
+            columns: ["hoa_don_id"]
+            isOneToOne: false
+            referencedRelation: "v_doanh_so_dong"
+            referencedColumns: ["hoa_don_id"]
+          },
+          {
             foreignKeyName: "hoa_don_dong_san_pham_id_fkey"
             columns: ["san_pham_id"]
             isOneToOne: false
@@ -645,6 +659,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hoa_hong_ti_le: {
+        Row: {
+          id: string
+          loai: string
+          muc_id: string | null
+          ti_le: number
+          vai: string
+        }
+        Insert: {
+          id?: string
+          loai: string
+          muc_id?: string | null
+          ti_le: number
+          vai: string
+        }
+        Update: {
+          id?: string
+          loai?: string
+          muc_id?: string | null
+          ti_le?: number
+          vai?: string
+        }
+        Relationships: []
       }
       khach_anh: {
         Row: {
@@ -1010,6 +1048,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "hoa_don"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kho_so_cai_hoa_don_id_fkey"
+            columns: ["hoa_don_id"]
+            isOneToOne: false
+            referencedRelation: "v_doanh_so_dong"
+            referencedColumns: ["hoa_don_id"]
           },
           {
             foreignKeyName: "kho_so_cai_nguoi_id_fkey"
@@ -1559,6 +1604,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "thanh_toan_hoa_don_id_fkey"
+            columns: ["hoa_don_id"]
+            isOneToOne: false
+            referencedRelation: "v_doanh_so_dong"
+            referencedColumns: ["hoa_don_id"]
+          },
+          {
             foreignKeyName: "thanh_toan_nguoi_id_fkey"
             columns: ["nguoi_id"]
             isOneToOne: false
@@ -1659,6 +1711,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "the_khach_hoa_don_dong_id_fkey"
+            columns: ["hoa_don_dong_id"]
+            isOneToOne: false
+            referencedRelation: "v_doanh_so_dong"
+            referencedColumns: ["dong_id"]
+          },
+          {
             foreignKeyName: "the_khach_khach_id_fkey"
             columns: ["khach_id"]
             isOneToOne: false
@@ -1727,6 +1786,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "the_so_cai_hoa_don_id_fkey"
+            columns: ["hoa_don_id"]
+            isOneToOne: false
+            referencedRelation: "v_doanh_so_dong"
+            referencedColumns: ["hoa_don_id"]
+          },
+          {
             foreignKeyName: "the_so_cai_nguoi_id_fkey"
             columns: ["nguoi_id"]
             isOneToOne: false
@@ -1751,6 +1817,28 @@ export type Database = {
       }
     }
     Views: {
+      v_doanh_so_dong: {
+        Row: {
+          chi_nhanh_id: string | null
+          doanh_so: number | null
+          dong_id: string | null
+          hoa_don_id: string | null
+          loai: string | null
+          muc_id: string | null
+          ngay_hd: string | null
+          so_luong: number | null
+          ten: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hoa_don_chi_nhanh_id_fkey"
+            columns: ["chi_nhanh_id"]
+            isOneToOne: false
+            referencedRelation: "chi_nhanh"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       v_khach_hang: {
         Row: {
           cap_nhat_luc: string | null
@@ -1937,6 +2025,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "the_khach_hoa_don_dong_id_fkey"
+            columns: ["hoa_don_dong_id"]
+            isOneToOne: false
+            referencedRelation: "v_doanh_so_dong"
+            referencedColumns: ["dong_id"]
+          },
+          {
             foreignKeyName: "the_khach_khach_id_fkey"
             columns: ["khach_id"]
             isOneToOne: false
@@ -1983,6 +2078,44 @@ export type Database = {
       }
     }
     Functions: {
+      bc_doanh_thu_ngay: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          chuyen_khoan: number
+          doanh_thu: number
+          doanh_thu_buoi: number
+          ngay: string
+          no_moi: number
+          quet_the: number
+          so_buoi: number
+          so_don: number
+          thu_don_moi: number
+          thu_no_cu: number
+          thuc_thu: number
+          tien_mat: number
+          tru_the_tien: number
+        }[]
+      }
+      bc_muc_ban: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          doanh_so: number
+          loai: string
+          muc_id: string
+          so_luong: number
+          ten: string
+        }[]
+      }
+      bc_nhan_vien: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          doanh_so: number
+          hoa_hong: number
+          nhan_vien_id: string
+          so_dong: number
+          vai: string
+        }[]
+      }
       cap_phieu: { Args: { p_id: string; p_nguoi: string }; Returns: undefined }
       cap_them_phieu: {
         Args: {

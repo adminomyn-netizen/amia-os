@@ -2,10 +2,10 @@ import { LayoutDashboard, CalendarDays, ShoppingBag, Receipt, Users, CreditCard,
 import type { ComponentType } from "react";
 import { coQuyen, type Quyen, type VaiTro } from "@/lib/quyen";
 
-export type MucMenu = { ten: string; duong_dan: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; nhom: string; quyen: Quyen; moTa: string };
+export type MucMenu = { ten: string; duong_dan: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; nhom: string; quyen: Quyen | null; moTa: string };
 
 export const MENU: MucMenu[] = [
-  { ten: "Tổng quan", duong_dan: "/tong-quan", icon: LayoutDashboard, nhom: "Hằng ngày", quyen: "baocao.xem", moTa: "Doanh thu, nợ, buổi đã làm hôm nay" },
+  { ten: "Tổng quan", duong_dan: "/tong-quan", icon: LayoutDashboard, nhom: "Hằng ngày", quyen: null, moTa: "Việc hôm nay, doanh thu, cảnh báo" },
   { ten: "Lịch hẹn", duong_dan: "/lich-hen", icon: CalendarDays, nhom: "Hằng ngày", quyen: "lich.xem", moTa: "Đặt, đổi, huỷ lịch; mở ca" },
   { ten: "Bán hàng", duong_dan: "/ban-hang", icon: ShoppingBag, nhom: "Hằng ngày", quyen: "ban.tao", moTa: "Thu ngân: dịch vụ, thẻ, sản phẩm" },
   { ten: "Hoá đơn", duong_dan: "/hoa-don", icon: Receipt, nhom: "Hằng ngày", quyen: "ban.xem", moTa: "Danh sách hoá đơn, thu nợ, huỷ" },
@@ -20,7 +20,7 @@ export const MENU: MucMenu[] = [
   { ten: "Nhân viên", duong_dan: "/nhan-vien", icon: UserCog, nhom: "Cài đặt", quyen: "nhanvien.quanly", moTa: "Tài khoản, vai trò, chi nhánh" },
 ];
 
-export const locMenu = (vt: VaiTro) => MENU.filter((m) => coQuyen(vt, m.quyen));
+export const locMenu = (vt: VaiTro) => MENU.filter((m) => m.quyen === null || coQuyen(vt, m.quyen));
 export function gomTheoNhom(ds: MucMenu[]) {
   const ra: { nhom: string; muc: MucMenu[] }[] = [];
   for (const m of ds) {

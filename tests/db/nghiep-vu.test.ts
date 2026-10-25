@@ -307,3 +307,31 @@ describe("khách hàng: bắt buộc nguồn + người phụ trách, 1 SĐT = 1
     expect((await one<{ trang_thai: string; hang: string }>(`select trang_thai, hang from v_khach_hang where ma='KH000006'`))).toMatchObject({ trang_thai: "lead", hang: "Thường" });
   });
 });
+
+describe("báo cáo + hoa hồng", () => {
+  it("báo cáo ngày khớp từng đồng: đơn mới, thu đơn mới, thu nợ cũ, thẻ tiền, nợ mới", async () => {
+    // Một ngày riêng: 2030-01-10. Đơn 10.000.000 giảm 1tr → doanh thu 9tr; thu 6tr tiền mặt + 1tr CK ngay trong ngày; nợ 2tr trả ngày 2030-01-12.
+    const kh = (await one<{ id: string }>(`insert into khach_hang (ma, ho_ten, dien_thoai, chi_nhanh_id, nguon, nguoi_phu_trach_id) values ('KH900001','BC','0900000900',$1,'mkt',$2) returning id`, [CN, NV.tuVan])).id;
+    const h = (await one<{ id: string }>(`insert into hoa_don (ma, chi_nhanh_id, khach_id, nguoi_lap_id, giam_gia_don, ngay_hd) values ('HDBC1',$1,$2,$3,1000000,'2030-01-10') returning id`, [CN, kh, NV.thuNgan])).id;
+    const dg = await one<{ id: string }>(`insert into hoa_don_dong (hoa_don_id, loai, dich_vu_id, ten, don_gia) values ($1,'dich_vu',$2,'Peel',10000000) returning id`, [h, DV_PEEL]);
+    await q(`insert into dong_nhan_vien (dong_id, nhan_vien_id, vai, ti_le) values ($1,$2,'ban',60),($1,$3,'ban',40)`, [dg.id, NV.thuNgan, NV.tuVan]);
+    await q(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, nguoi_id, ngay) values ($1,'tien_mat',6000000,$2,'2030-01-10'),($1,'chuyen_khoan',1000000,$2,'2030-01-10')`, [h, NV.thuNgan]);
+    await q(`select chot_hoa_don($1,$2)`, [h, NV.thuNgan]);
+    await q(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, nguoi_id, ngay) values ($1,'quet_the',2000000,$2,'2030-01-12')`, [h, NV.thuNgan]);
+    const r = await q<Record<string, string>>(`select ngay::text, so_don, doanh_thu::text, thu_don_moi::text, thu_no_cu::text, thuc_thu::text, tien_mat::text, chuyen_khoan::text, quet_the::text, no_moi::text from bc_doanh_thu_ngay('2030-01-10','2030-01-12',$1)`, [CN]);
+    expect(r[0]).toMatchObject({ ngay: "2030-01-10", so_don: 1, doanh_thu: "9000000", thu_don_moi: "7000000", thu_no_cu: "0", thuc_thu: "7000000", tien_mat: "6000000", chuyen_khoan: "1000000", no_moi: "2000000" });
+    expect(r[2]).toMatchObject({ ngay: "2030-01-12", so_don: 0, thu_no_cu: "2000000", thuc_thu: "2000000", quet_the: "2000000" });
+  });
+  it("hoa hồng: doanh số chia theo vai, đã chia phần giảm giá cả đơn, nhân tỉ lệ cài đặt (riêng cho mục thắng mặc định)", async () => {
+    await q(`insert into hoa_hong_ti_le (loai, muc_id, vai, ti_le) values ('dich_vu', null, 'ban', 10), ('dich_vu', $1, 'ban', 20)`, [DV_PEEL]);
+    // đơn BC ở trên: doanh thu 9tr, chia ban 60/40 cho thu ngân và tư vấn
+    const r = await q<{ nhan_vien_id: string; doanh_so: string; hoa_hong: string }>(`select nhan_vien_id, doanh_so::text, hoa_hong::text from bc_nhan_vien('2030-01-10','2030-01-10',$1) where vai='ban' order by 2 desc`, [CN]);
+    expect(r).toHaveLength(2);
+    expect(r[0]).toMatchObject({ nhan_vien_id: NV.thuNgan, doanh_so: "5400000", hoa_hong: "1080000" });
+    expect(r[1]).toMatchObject({ nhan_vien_id: NV.tuVan, doanh_so: "3600000", hoa_hong: "720000" });
+  });
+  it("doanh số theo mục bán", async () => {
+    const r = await one<{ ten: string; so_luong: string; doanh_so: string }>(`select ten, so_luong::text, doanh_so::text from bc_muc_ban('2030-01-10','2030-01-10',$1)`, [CN]);
+    expect(r).toMatchObject({ ten: "Peel", so_luong: "1", doanh_so: "9000000" });
+  });
+});

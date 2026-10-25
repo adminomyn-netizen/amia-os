@@ -2,7 +2,7 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { ngayVN, tienVN } from "@/lib/dinh-dang";
+import { ngayVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
@@ -58,7 +58,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
           { nhan: "Mã thẻ", hienThi: (r) => <Link href={`/the/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
           { nhan: "Khách", hienThi: (r) => { const k = tenK.get(r.khach_id ?? ""); return k ? <Link href={`/khach-hang/${k.id}`} className="text-muc hover:underline">{k.ho_ten}</Link> : ""; } },
           { nhan: "Gói", hienThi: (r) => tenGoi.get(r.goi_id ?? "") ?? "" },
-          { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? `${r.so_buoi_con}/${r.so_buoi_tong} buổi` : tienVN(r.so_du_tien)), phai: true },
+          { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
           { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
           { nhan: "Tình trạng", hienThi: (r) => { const t = NHAN_TINH_TRANG[r.tinh_trang ?? "hoat_dong"]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
           ...(tab === "lan" && coQuyen(nd.vaiTro, "the.thuchien") ? [{ nhan: "", hienThi: (r: NonNullable<typeof the>[number]) => (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? (

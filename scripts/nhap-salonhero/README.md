@@ -39,3 +39,10 @@ Chạy lại an toàn (mọi bản ghi có `sh_id` unique, gặp lại thì bỏ
 - Thẻ liệu trình không giới hạn buổi ở SalonHero (use_limit = 999999) giữ nguyên số đó.
 - Thẻ chuyển sang KHÔNG khoá theo dịch vụ (SalonHero gắn thẻ với một "dịch vụ vỏ"); nhân viên chọn đúng dịch vụ khi trừ buổi.
 - Chưa chuyển: lịch sử hoá đơn/đơn hàng, lịch hẹn, ảnh khách, điểm thưởng (chỉ lưu số), định mức vật tư, lương/hoa hồng.
+
+## Chạy song song rồi chuyển lần cuối
+- Bộ nhập chỉ THÊM bản ghi mới (theo `sh_id`); KHÔNG cập nhật số dư thẻ / công nợ của bản ghi đã nhập. Trong lúc chạy song song, SalonHero vẫn thay đổi, nên số dư bên AMIA OS sẽ dần lệch SalonHero.
+- Trước khi tắt SalonHero: dừng nhập liệu bên SalonHero → xuất lại → xoá toàn bộ bản ghi có `sh_id` (và dữ liệu phát sinh trên chúng) hoặc dựng DB mới → chạy lại `chay.mjs --that` → đối chiếu. Đừng làm bước này khi bên AMIA OS đã có giao dịch thật chưa chốt cách xử lý.
+
+## Ảnh khách
+Chưa chuyển. Mẫu 300 khách ngẫu nhiên có 93 khách có ảnh với tổng 5.854 ảnh ⇒ ước toàn hệ thống cỡ 250.000 ảnh (chưa biết dung lượng vì kho ảnh SalonHero trả 403 khi truy cập từ ngoài phiên đăng nhập). Vượt xa 1GB miễn phí của Supabase và 5GB (12 tháng) của AWS S3. Ảnh vẫn xem được ở SalonHero trong thời gian chạy song song; cần chọn kho trả phí rẻ (vd. Cloudflare R2, S3) trước khi chuyển.

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { ngayGioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
 import { NHAN_NGUON, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -62,7 +62,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         <Bang duLieu={the ?? []} khoa={(r) => r.id ?? ""} trong="Khách chưa có thẻ nào."
           cot={[
             { nhan: "Mã thẻ", hienThi: (r) => r.ma }, { nhan: "Loại", hienThi: (r) => (r.loai === "lan" ? "Liệu trình" : "Thẻ tiền") },
-            { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? `${r.so_buoi_con}/${r.so_buoi_tong} buổi` : tienVN(r.so_du_tien)), phai: true },
+            { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
             { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
             { nhan: "Tình trạng", hienThi: (r) => <NhanTrangThai kieu={r.tinh_trang === "hoat_dong" ? "tot" : r.tinh_trang === "sap_het" ? "cho" : "tram"}>{({ hoat_dong: "Đang dùng", sap_het: "Sắp hết", het_han: "Hết hạn", hoan_thanh: "Đã dùng hết", khoa: "Đang khoá", thu_hoi: "Đã thu hồi" } as Record<string, string>)[r.tinh_trang ?? ""]}</NhanTrangThai> },
           ]} />

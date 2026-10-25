@@ -6,7 +6,7 @@ Thứ tự theo chỉ đạo của chị Lâm (25/10): làm đúng việc đang 
 Giai đoạn 1 (khách, danh mục, lịch hẹn, bán hàng, thực hiện buổi, báo cáo ngày), giai đoạn 2 (định mức, phiếu cấp trước ca, kho), hoa hồng, nhập Excel khách, xuất Excel doanh thu, đổi mật khẩu.
 
 ## Chưa làm, theo thứ tự đề xuất
-1. **Chuyển dữ liệu thật từ SalonHero** (13.575 khách, 355 loại thẻ, thẻ còn buổi, thẻ tiền còn dư, công nợ): bộ nhập Excel khách đã có và đã thử bằng dữ liệu giả; còn thiếu nhập thẻ còn buổi/nợ. Chỉ chạy khi chị cho phép; trước đó sao lưu, và đối chiếu từng khách trước khi tắt SalonHero.
+1. **Dữ liệu SalonHero**: ĐÃ chuyển khách, thẻ còn giá trị, công nợ, danh mục, tồn kho (25/10/2026, xem `scripts/nhap-salonhero/README.md`). CHƯA chuyển: ảnh khách (~250.000 ảnh, cần kho trả phí), lịch sử hoá đơn, lịch hẹn, định mức vật tư. Việc còn lại trước khi tắt SalonHero: rà SĐT trùng/trống, chuyển lần cuối khi dừng SalonHero, đối chiếu từng khách mẫu.
 2. Sổ quỹ thu/chi, đối soát chuyển khoản với sao kê ngân hàng.
 3. Phí thực hiện theo buổi cho KTV/bác sĩ, hoa hồng giới thiệu, chấm công và bảng lương.
 4. Hoá đơn điện tử (Viettel/Misa), SMS/Zalo OA nhắc lịch, voucher, điểm thưởng, web đặt lịch.

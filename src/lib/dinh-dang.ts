@@ -20,3 +20,9 @@ export const congNgay = (d: string, n: number) => {
   t.setUTCDate(t.getUTCDate() + n);
   return t.toISOString().slice(0, 10);
 };
+
+/** "còn/tổng buổi"; thẻ chuyển từ SalonHero không giới hạn buổi (tổng 999.999) hiện là "Không giới hạn". */
+export function buoiConLai(con: number | null | undefined, tong: number | null | undefined) {
+  if ((tong ?? 0) >= 999999) return "Không giới hạn";
+  return `${con ?? 0}/${tong ?? 0} buổi`;
+}

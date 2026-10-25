@@ -45,7 +45,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
         {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="phu" nhan={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} tieuDe={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} xacNhan={t.trang_thai === "khoa" ? "Cho phép dùng thẻ trở lại?" : "Khoá thẻ: không dùng được cho tới khi mở lại."} an={{ the_id: id, trang_thai: t.trang_thai === "khoa" ? "hoat_dong" : "khoa" }} nhanLuu="Xác nhận" action={doiTrangThaiThe} />}
       </TieuDeTrang>
       <HangChiSo muc={t.loai === "lan"
-        ? [{ nhan: "Buổi còn lại", so: `${t.so_buoi_con}/${t.so_buoi_tong}` }, { nhan: "Doanh thu mỗi buổi", so: tienVN(t.gia_tri_buoi) }, { nhan: "Ngày cấp", so: ngayVN(t.ngay_cap) }, { nhan: "Hạn dùng", so: ngayVN(t.han_dung) || "Không hạn" }]
+        ? [{ nhan: "Buổi còn lại", so: (t.so_buoi_tong ?? 0) >= 999999 ? "Không giới hạn" : `${t.so_buoi_con}/${t.so_buoi_tong}` }, { nhan: "Doanh thu mỗi buổi", so: tienVN(t.gia_tri_buoi) }, { nhan: "Ngày cấp", so: ngayVN(t.ngay_cap) }, { nhan: "Hạn dùng", so: ngayVN(t.han_dung) || "Không hạn" }]
         : [{ nhan: "Số dư", so: tienVN(t.so_du_tien) }, { nhan: "Đã nạp", so: tienVN(t.tong_tien) }, { nhan: "Ngày cấp", so: ngayVN(t.ngay_cap) }, { nhan: "Hạn dùng", so: ngayVN(t.han_dung) || "Không hạn" }]} />
       <div className="mt-8 space-y-8">
         {t.loai === "lan" && (

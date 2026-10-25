@@ -45,4 +45,5 @@ Chạy lại an toàn (mọi bản ghi có `sh_id` unique, gặp lại thì bỏ
 - Trước khi tắt SalonHero: dừng nhập liệu bên SalonHero → xuất lại → xoá toàn bộ bản ghi có `sh_id` (và dữ liệu phát sinh trên chúng) hoặc dựng DB mới → chạy lại `chay.mjs --that` → đối chiếu. Đừng làm bước này khi bên AMIA OS đã có giao dịch thật chưa chốt cách xử lý.
 
 ## Ảnh khách
-Chưa chuyển. Mẫu 300 khách ngẫu nhiên có 93 khách có ảnh với tổng 5.854 ảnh ⇒ ước toàn hệ thống cỡ 250.000 ảnh (chưa biết dung lượng vì kho ảnh SalonHero trả 403 khi truy cập từ ngoài phiên đăng nhập). Vượt xa 1GB miễn phí của Supabase và 5GB (12 tháng) của AWS S3. Ảnh vẫn xem được ở SalonHero trong thời gian chạy song song; cần chọn kho trả phí rẻ (vd. Cloudflare R2, S3) trước khi chuyển.
+**Quyết định của chị Lâm (25/10/2026): tạm KHÔNG lưu ảnh khách trên AMIA OS.** Ảnh vẫn xem ở SalonHero trong thời gian chạy song song.
+Số liệu để quyết định lại sau: 259.990 ảnh của 5.110 khách, trung bình ~1,6 MB/ảnh ⇒ khoảng 430 GB (danh sách ở `sao-luu/salonhero/anh.json`). Đã chuẩn bị sẵn: `src/lib/kho-anh.ts` (dùng Cloudflare R2 khi có biến `R2_*`, nếu không dùng kho Supabase) và `anh.mjs` (tải từ CDN công khai của SalonHero rồi đẩy lên R2, chạy tiếp được). Phương án rẻ hơn nếu cần: thu nhỏ còn ~300 KB/ảnh (~80 GB).

@@ -20,6 +20,9 @@ Phần mềm vận hành phòng khám AMIA (thay SalonHero). Tiếng Việt, gia
 | Hoa hồng | Doanh số theo vai × tỉ lệ cài đặt (mặc định theo loại, riêng theo mục) |
 | Phân quyền | 11 vai trò, kiểm ở trang và ở từng Server Action (xem `src/lib/quyen.ts`) |
 
+## Dữ liệu đã chuyển từ SalonHero (25/10/2026)
+Xem `scripts/nhap-salonhero/README.md`: 13.633 khách, 12.757 thẻ còn giá trị, 150 đơn công nợ (1.343.642.500đ), 247 dịch vụ, 423 sản phẩm, 25 nhân viên, tồn kho đầu kỳ. Đang chạy song song để trải nghiệm.
+
 ## Chưa có (xem `docs/LO-TRINH.md`)
 Lương và chấm công, sổ quỹ + đối soát ngân hàng, hoá đơn điện tử, SMS/Zalo OA, voucher, điểm thưởng, web đặt lịch, chuyển dữ liệu thật từ SalonHero, phí thực hiện theo buổi cho KTV, hoa hồng giới thiệu.
 

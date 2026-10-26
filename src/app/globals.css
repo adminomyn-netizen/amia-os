@@ -1,6 +1,6 @@
 @import "tailwindcss";
 
-/* Giao diện Sáng / Tối: chọn trong menu tài khoản, lưu ở máy, mặc định theo hệ điều hành. Tối = data-theme="dark" trên <html>; biến thể .dark của Tailwind vẫn không dùng. */
+/* Giao diện Sáng / Tối: mặc định LUÔN sáng; chỉ tối khi người dùng bấm nút Tối trong menu tài khoản (lưu ở máy). Tối = data-theme="dark" trên <html>; biến thể .dark của Tailwind vẫn không dùng. */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* Bộ nhận diện AMIA OS: giấy ngà ấm + mực rêu đậm + MỘT màu chính Mallard Green (#006F62, theo AMIA_LOGO_GUIDELINE) + điểm vàng đồng (#BA9551).
@@ -262,19 +262,21 @@ body {
   main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) { font-size: 16px; } /* iOS không tự phóng to khi chạm ô nhập */
 }
 .thanh-tab {
-  /* Gắn sát đáy, là một phần của khung (không nổi): trên điện thoại chỉ vùng nội dung cuộn nên thanh không dịch chuyển khi thanh địa chỉ trình duyệt co giãn. */
+  /* Gắn sát đáy, là một phần của khung (không nổi): trên điện thoại chỉ vùng nội dung cuộn nên thanh không dịch chuyển khi thanh địa chỉ trình duyệt co giãn.
+   * Tông sáng dịu cùng nền thẻ + viền mảnh; mục đang chọn tô nhạt màu chính. Chế độ tối tự đổi theo biến màu. */
   flex-shrink: 0; position: relative; z-index: 40;
   display: flex; align-items: stretch; gap: 2px; padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
-  background: var(--gradient-toi);
-  box-shadow: inset 0 1px 0 rgb(217 184 119 / 0.32), 0 -10px 24px -14px rgb(6 26 23 / 0.6);
+  background: var(--giay-sang);
+  box-shadow: 0 -1px 0 var(--vien), 0 -8px 20px -14px rgb(10 43 38 / 0.22);
 }
 .thanh-tab a, .thanh-tab button {
   position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-  min-height: 52px; padding: 6px 2px; border-radius: var(--radius-vua); font-size: 11px; line-height: 1.1; color: var(--menu-chu);
+  min-height: 52px; padding: 6px 2px; border-radius: var(--radius-vua); font-size: 11px; line-height: 1.1; color: var(--muc-3);
   transition: background-color 160ms ease-out, color 160ms ease-out;
 }
-.thanh-tab a[aria-current="page"] { color: #fff; background: linear-gradient(180deg, rgb(217 184 119 / 0.28), rgb(255 255 255 / 0.1)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16); }
-.thanh-tab a[aria-current="page"] svg { color: var(--menu-nhan); }
+.thanh-tab a:active, .thanh-tab button:active { background: var(--giay-tram); }
+.thanh-tab a[aria-current="page"] { color: var(--nhan-dam); font-weight: 600; background: var(--nhan-nhat); }
+.thanh-tab a[aria-current="page"] svg { color: var(--nhan); }
 @media (min-width: 1024px) { .thanh-tab { display: none; } }
 /* Khung điện thoại: cao đúng màn hình, tiêu đề + thanh dưới đứng yên, chỉ <main> cuộn. In ấn thì trả về cuộn cả trang. */
 @media (max-width: 1023px) {

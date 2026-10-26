@@ -10,10 +10,10 @@ export const metadata: Metadata = {
   title: "AMIA OS",
   description: "Phần mềm vận hành phòng khám AMIA: khách hàng, lịch hẹn, thu ngân, thẻ liệu trình, cấp vật tư trước ca",
 };
-export const viewport: Viewport = { themeColor: [{ media: "(prefers-color-scheme: dark)", color: "#061a17" }, { media: "(prefers-color-scheme: light)", color: "#0a2b26" }], viewportFit: "cover", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#0a2b26", viewportFit: "cover", width: "device-width", initialScale: 1 };
 
-/** Chạy trước khi vẽ trang để không nháy sáng→tối: lấy lựa chọn đã lưu (sang / toi / may), mặc định theo hệ điều hành. */
-const DAT_GIAO_DIEN = `try{var g=localStorage.getItem("amia_giao_dien")||"may";var t=g==="may"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):g==="toi"?"dark":"light";document.documentElement.dataset.theme=t}catch(e){}`;
+/** Chạy trước khi vẽ trang để không nháy sáng→tối. Mặc định LUÔN sáng ở mọi màn hình; chỉ tối khi người dùng tự bấm nút Tối (lưu ở máy họ). */
+const DAT_GIAO_DIEN = `var t="light";try{if(localStorage.getItem("amia_giao_dien")==="toi")t="dark"}catch(e){}document.documentElement.dataset.theme=t;`;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

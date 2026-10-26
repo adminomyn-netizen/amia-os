@@ -12,13 +12,16 @@ const UU_TIEN = ["/trang-chu", "/lich-hen", "/ban-hang", "/khach-hang", "/the", 
 /** Thanh tab nổi dưới đáy cho điện thoại: 4 mục dùng nhiều nhất người này được phép + "Thêm" mở bảng đầy đủ chức năng. */
 export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
   const pathname = usePathname();
-  const [mo, setMo] = useState(false);
-  useEffect(() => { setMo(false); }, [pathname]);
+  // Mở gắn với trang đang xem: đổi trang là tự đóng, không cần effect.
+  const [moTai, setMoTai] = useState<string | null>(null);
+  const mo = moTai === pathname;
+  const setMo = (b: boolean) => setMoTai(b ? pathname : null);
   useEffect(() => {
     if (!mo) return;
     const phim = (e: KeyboardEvent) => e.key === "Escape" && setMo(false);
     document.addEventListener("keydown", phim);
     return () => document.removeEventListener("keydown", phim);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mo]);
 
   const co = new Set(muc.map((m) => m.duong_dan));

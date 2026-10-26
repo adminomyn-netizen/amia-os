@@ -11,14 +11,14 @@ export function ChuongThongBao() {
   const [ds, setDs] = useState<Muc[] | null>(null);
   const [mo, setMo] = useState(false);
   const goc = useRef<HTMLDivElement>(null);
-  const tai = useCallback(async () => {
-    try { const r = await fetch("/api/canh-bao", { cache: "no-store" }); if (r.ok) setDs((await r.json()).ds as Muc[]); } catch { /* mất mạng: giữ số cũ */ }
+  const lamMoi = useCallback(() => {
+    fetch("/api/canh-bao", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j) setDs(j.ds as Muc[]); }).catch(() => { /* mất mạng: giữ số cũ */ });
   }, []);
   useEffect(() => {
-    void tai();
-    const t = setInterval(() => { if (document.visibilityState === "visible") void tai(); }, 60000);
-    return () => clearInterval(t);
-  }, [tai]);
+    const dau = setTimeout(lamMoi, 0);
+    const t = setInterval(() => { if (document.visibilityState === "visible") lamMoi(); }, 60000);
+    return () => { clearTimeout(dau); clearInterval(t); };
+  }, [lamMoi]);
   useEffect(() => {
     if (!mo) return;
     const ngoai = (e: MouseEvent) => { if (goc.current && !goc.current.contains(e.target as Node)) setMo(false); };
@@ -29,7 +29,7 @@ export function ChuongThongBao() {
   const n = ds?.length ?? 0;
   return (
     <div ref={goc} className="relative">
-      <button type="button" onClick={() => { setMo((x) => !x); void tai(); }} aria-haspopup="menu" aria-expanded={mo} aria-label={n ? `Thông báo, ${n} việc đang chờ` : "Thông báo"} title="Việc đang chờ xử lý"
+      <button type="button" onClick={() => { setMo((x) => !x); lamMoi(); }} aria-haspopup="menu" aria-expanded={mo} aria-label={n ? `Thông báo, ${n} việc đang chờ` : "Thông báo"} title="Việc đang chờ xử lý"
         className="nut-nguoi relative flex h-10 w-10 items-center justify-center rounded-nho text-muc-2">
         <Bell strokeWidth={1.7} className="h-[21px] w-[21px]" />
         {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: "0 0 0 2px #fff" }}>{n}</span>}

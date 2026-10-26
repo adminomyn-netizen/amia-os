@@ -12,13 +12,15 @@ export function CaiUngDung() {
   const [ios, setIos] = useState(false);
   const [daCai, setDaCai] = useState(true);
   useEffect(() => {
-    const standalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true;
-    setDaCai(standalone);
-    setIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
+    // Đọc môi trường trình duyệt sau khi vẽ lần đầu (tránh lệch HTML máy chủ/trình duyệt).
+    const doc = setTimeout(() => {
+      setDaCai(window.matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true);
+      setIos(/iphone|ipad|ipod/i.test(navigator.userAgent));
+    }, 0);
     const bat = (e: Event) => { e.preventDefault(); setSu(e as SuKienCai); };
     window.addEventListener("beforeinstallprompt", bat);
     window.addEventListener("appinstalled", () => setDaCai(true));
-    return () => window.removeEventListener("beforeinstallprompt", bat);
+    return () => { clearTimeout(doc); window.removeEventListener("beforeinstallprompt", bat); };
   }, []);
   if (daCai || (!su && !ios)) return null;
   return (

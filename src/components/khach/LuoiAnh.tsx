@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { linkAnhMoi, trangAnh } from "@/app/(app)/khach-hang/actions";
 import type { AnhKhach } from "@/lib/anh-khach";
 import { ngayVN } from "@/lib/dinh-dang";
+import { XemAnhPhongTo } from "./XemAnhPhongTo";
 
 const LOAI_ANH: Record<string, string> = { truoc: "Trước", sau: "Sau", khac: "Khác" };
 
@@ -22,6 +23,7 @@ export function LuoiAnh({ khachId, banDau, tong }: { khachId: string; banDau: An
   const [tongTruoc, setTongTruoc] = useState(tong);
   const [dangTai, setDangTai] = useState(false);
   const [loiTai, setLoiTai] = useState(false);
+  const [moId, setMoId] = useState<string | null>(null); // ảnh đang xem phóng to
   const day = useRef<HTMLDivElement>(null);
   const daThuLai = useRef(new Set<string>());
   if (banDau !== truoc) { setTruoc(banDau); setDs(gop(ds, banDau)); } // trang được làm mới (ảnh cũ mới về): gộp ảnh mới vào, giữ phần đã cuộn
@@ -59,6 +61,9 @@ export function LuoiAnh({ khachId, banDau, tong }: { khachId: string; banDau: An
     return [...m.entries()];
   }, [ds]);
 
+  const dsPhang = useMemo(() => theoNgay.flatMap(([, a]) => a), [theoNgay]); // đúng thứ tự trên lưới, để chuyển ảnh trước/sau
+  const chiSoMo = moId ? dsPhang.findIndex((a) => a.id === moId) : -1;
+
   return (
     <>
       {theoNgay.map(([ngay, anh]) => (
@@ -67,14 +72,17 @@ export function LuoiAnh({ khachId, banDau, tong }: { khachId: string; banDau: An
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
             {anh.map((a) => (
               <figure key={a.id} className="overflow-hidden rounded-nho border border-vien bg-giay-tram">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.url ?? undefined} alt={`Ảnh ${LOAI_ANH[a.loai] ?? ""} điều trị ngày ${ngayVN(a.ngay)}`} loading="lazy" decoding="async" onError={() => thuLai(a.id)} className="aspect-[3/4] w-full object-cover" />
+                <button type="button" onClick={() => setMoId(a.id)} aria-label={`Phóng to ảnh ${LOAI_ANH[a.loai] ?? ""} ngày ${ngayVN(a.ngay)}`} className="block w-full cursor-zoom-in">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.url ?? undefined} alt={`Ảnh ${LOAI_ANH[a.loai] ?? ""} điều trị ngày ${ngayVN(a.ngay)}`} loading="lazy" decoding="async" onError={() => thuLai(a.id)} className="aspect-[3/4] w-full object-cover" />
+                </button>
                 <figcaption className="px-2 py-1.5 text-[12px] text-muc-2">{LOAI_ANH[a.loai]}{a.ghiChu ? ` · ${a.ghiChu}` : ""}</figcaption>
               </figure>
             ))}
           </div>
         </section>
       ))}
+      {chiSoMo >= 0 && <XemAnhPhongTo ds={dsPhang} chiSo={chiSoMo} dong={() => setMoId(null)} doiToi={(i) => setMoId(dsPhang[i]?.id ?? null)} />}
       {conNua && <div ref={day} className="h-10" aria-hidden />}
       {dangTai && <p role="status" className="py-3 text-center text-[13px] text-muc-3">Đang tải thêm ảnh…</p>}
       {loiTai && <button type="button" onClick={() => setLoiTai(false)} className="mx-auto block rounded-nho border border-vien-dam px-4 py-2 text-[13px] text-muc-2 hover:bg-giay-tram">Chưa tải được thêm ảnh. Bấm để thử lại</button>}

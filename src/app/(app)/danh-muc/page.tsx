@@ -7,7 +7,7 @@ import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
-import { luuChiNhanh, luuDichVu, luuGoiThe, luuNhomDichVu, luuSanPham } from "./actions";
+import { luuChiNhanh, luuDichVu, luuGoiThe, luuNhomDichVu, luuSanPham, xoaChiNhanh, xoaDichVu, xoaGoiThe, xoaNhomDichVu, xoaSanPham } from "./actions";
 
 const TAB = [
   { ma: "dich-vu", ten: "Dịch vụ" }, { ma: "goi-the", ten: "Gói thẻ" }, { ma: "san-pham", ten: "Sản phẩm và vật tư" },
@@ -46,7 +46,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Dịch vụ", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm", hienThi: (r) => tenNhom.get(r.nhom_id) ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => r.don_vi_tinh }, { nhan: "Phút", hienThi: (r) => r.thoi_luong_phut, phai: true }, { nhan: "Giá bán", hienThi: (r) => tienVN(r.gia), phai: true },
           ...(xemVon ? [{ nhan: "Giá vốn", hienThi: (r: NonNullable<typeof dv.data>[number]) => tienVN(r.gia_von), phai: true }] : []), { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
-          ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof dv.data>[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuDichVu} /> }] : []),
+          ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof dv.data>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuDichVu} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaDichVu} /></span> }] : []),
         ]} />
     );
   } else if (tab === "goi-the") {
@@ -67,7 +67,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Loại", hienThi: (r) => (r.loai === "lan" ? `Liệu trình ${r.so_buoi} buổi` : "Thẻ tiền") }, { nhan: "Giá bán", hienThi: (r) => tienVN(r.gia), phai: true },
           { nhan: "Giá trị / buổi", hienThi: (r) => (r.loai === "lan" ? tienVN(Math.round(r.gia / (r.so_buoi || 1))) : `nạp ${tienVN(r.gia_tri_the)}`), phai: true },
           { nhan: "Hạn", hienThi: (r) => (r.han_dung_ngay ? `${r.han_dung_ngay} ngày` : "Không hạn") }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
-          ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof goi.data>[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={{ ...r, dich_vu_ids: (lk.data ?? []).filter((l) => l.goi_id === r.id).map((l) => l.dich_vu_id) }} action={luuGoiThe} /> }] : []),
+          ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof goi.data>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={{ ...r, dich_vu_ids: (lk.data ?? []).filter((l) => l.goi_id === r.id).map((l) => l.dich_vu_id) }} action={luuGoiThe} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaGoiThe} /></span> }] : []),
         ]} />
     );
   } else if (tab === "san-pham") {
@@ -89,7 +89,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Đơn vị", hienThi: (r) => (r.don_vi_mua ? `${r.don_vi} (mua: ${r.don_vi_mua} = ${soVN(r.he_so_quy_doi)})` : r.don_vi) },
           ...(xemVon ? [{ nhan: "Giá vốn / đv", hienThi: (r: NonNullable<typeof sp>[number]) => (r.gia_nhap_don_vi == null ? "chưa có" : tienVN(r.gia_nhap_don_vi)), phai: true }] : []), { nhan: "Giá bán", hienThi: (r) => (r.ban_le ? tienVN(r.gia_ban) : ""), phai: true },
           { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
-          ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={{ ...r, nhom_cap: r.nhom_cap ?? "" }} action={luuSanPham} /> }] : []),
+          ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={{ ...r, nhom_cap: r.nhom_cap ?? "" }} action={luuSanPham} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaSanPham} /></span> }] : []),
         ]} />
     );
   } else if (tab === "nhom") {
@@ -98,7 +98,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     noiDung = (
       <Bang duLieu={nhom.data ?? []} khoa={(r) => r.id} cot={[
         { nhan: "Thứ tự", hienThi: (r) => r.thu_tu }, { nhan: "Nhóm", hienThi: (r) => <span className="text-muc">{r.ten}</span> },
-        ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof nhom.data>[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuNhomDichVu} /> }] : []),
+        ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof nhom.data>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuNhomDichVu} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaNhomDichVu} /></span> }] : []),
       ]} />
     );
   } else {
@@ -112,7 +112,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
       <Bang duLieu={cn ?? []} khoa={(r) => r.id} cot={[
         { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Chi nhánh", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Địa chỉ", hienThi: (r) => r.dia_chi ?? "" },
         { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
-        ...(quanLy ? [{ nhan: "", hienThi: (r: NonNullable<typeof cn>[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r, dia_chi: r.dia_chi ?? "", dien_thoai: r.dien_thoai ?? "" }} action={luuChiNhanh} /> }] : []),
+        ...(quanLy ? [{ nhan: "", hienThi: (r: NonNullable<typeof cn>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r, dia_chi: r.dia_chi ?? "", dien_thoai: r.dien_thoai ?? "" }} action={luuChiNhanh} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaChiNhanh} /></span> }] : []),
       ]} />
     );
   }

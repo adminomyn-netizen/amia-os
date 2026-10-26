@@ -85,3 +85,22 @@ export async function datQuyen(fd: FormData): Promise<KQ> {
   const { error } = await sb().from("nhan_vien").update({ quyen_rieng: chon }).eq("id", id);
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
+
+/** Xoá hồ sơ nhân viên (chỉ Kỹ thuật). Người đã gắn với hoá đơn, lịch, phiếu cấp, hoa hồng... bị DB chặn → hướng dẫn khoá tài khoản thay vì xoá. Không tự xoá mình, không xoá Kỹ thuật. */
+export async function xoaNhanVien(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("hethong.phanquyen");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  if (id === nd.nhanVienId) return { loi: "Không tự xoá chính mình." };
+  const db = sb();
+  const { data: nv } = await db.from("nhan_vien").select("user_id, vai_tro").eq("id", id).maybeSingle();
+  if (!nv) return { loi: "Không tìm thấy nhân viên." };
+  if (nv.vai_tro === "ky_thuat") return { loi: "Không xoá được tài khoản Kỹ thuật." };
+  const { error } = await db.from("nhan_vien").delete().eq("id", id);
+  if (error) {
+    if (error.code === "23503") return { loi: "Nhân viên này đã có dữ liệu liên quan (hoá đơn, lịch hẹn, phiếu cấp, hoa hồng...) nên không xoá được. Hãy bấm Sửa rồi tắt \"Đang làm việc\" để khoá." };
+    return { loi: thongBaoLoi(error) };
+  }
+  if (nv.user_id) await createAdminClient().auth.admin.deleteUser(nv.user_id);
+  return xong();
+}

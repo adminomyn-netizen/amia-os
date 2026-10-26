@@ -55,7 +55,7 @@ const DATA = {
 beforeAll(async () => {
   db = await taoDbVoiMigration();
   await q(`insert into auth.users (id) values ('${u(900)}')`);
-  await q(`insert into nhan_vien (id, user_id, ho_ten, vai_tro) values ('${CHU}', '${u(900)}', 'Chủ', 'chu')`);
+  await q(`insert into nhan_vien (id, user_id, ho_ten, vai_tro) values ('${CHU}', '${u(900)}', 'Quản lý', 'quan_ly')`);
 });
 
 describe("nhập dữ liệu SalonHero", () => {

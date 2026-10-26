@@ -83,3 +83,20 @@ export async function luuChiNhanh(fd: FormData): Promise<KQ> {
   const { error } = id ? await sb().from("chi_nhanh").update(row).eq("id", id) : await sb().from("chi_nhanh").insert(row);
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
+
+/** Xoá một mục danh mục. Mục đã có lịch sử (hoá đơn, thẻ, kho, lịch...) bị khoá ngoại chặn ở DB → hướng người dùng bấm "Ngừng" (tắt Đang bán/Đang dùng) thay vì xoá. */
+const MUC_DA_DUNG = "Mục này đã được dùng ở nơi khác (hoá đơn, thẻ, kho, lịch hẹn...) nên không xoá được. Hãy sửa và tắt \"Đang dùng/Đang bán\" để ngừng dùng.";
+async function xoaMuc(quyen: "danhmuc.sua" | "nhanvien.quanly", bang: "dich_vu" | "goi_the" | "san_pham" | "dich_vu_nhom" | "chi_nhanh", fd: FormData): Promise<KQ> {
+  if (!(await kiemQuyen(quyen))) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  if (!id) return { loi: "Thiếu mục cần xoá." };
+  const { error, count } = await sb().from(bang).delete({ count: "exact" }).eq("id", id);
+  if (error) return { loi: error.code === "23503" ? MUC_DA_DUNG : thongBaoLoi(error) };
+  if (!count) return { loi: "Mục này không còn tồn tại." };
+  return xong();
+}
+export const xoaDichVu = async (fd: FormData) => xoaMuc("danhmuc.sua", "dich_vu", fd);
+export const xoaGoiThe = async (fd: FormData) => xoaMuc("danhmuc.sua", "goi_the", fd);
+export const xoaSanPham = async (fd: FormData) => xoaMuc("danhmuc.sua", "san_pham", fd);
+export const xoaNhomDichVu = async (fd: FormData) => xoaMuc("danhmuc.sua", "dich_vu_nhom", fd);
+export const xoaChiNhanh = async (fd: FormData) => xoaMuc("nhanvien.quanly", "chi_nhanh", fd);

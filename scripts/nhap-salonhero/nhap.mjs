@@ -49,8 +49,8 @@ export function khachDayDu(d) {
 export async function nhap(db, d, { log = () => {} } = {}) {
   const q = async (sql, p) => (await db.query(sql, p)).rows;
   const kq = {};
-  const chu = (await q(`select id from public.nhan_vien where vai_tro = 'chu' and hoat_dong order by tao_luc limit 1`))[0];
-  if (!chu) throw new Error("Chưa có tài khoản Chủ (nhan_vien.vai_tro = 'chu') để làm người phụ trách / người lập mặc định.");
+  const chu = (await q(`select id from public.nhan_vien where vai_tro = 'quan_ly' and hoat_dong order by tao_luc limit 1`))[0];
+  if (!chu) throw new Error("Chưa có tài khoản Quản lý (nhan_vien.vai_tro = 'quan_ly') để làm người phụ trách / người lập mặc định.");
   const cn = Object.fromEntries((await q(`select ma, id from public.chi_nhanh`)).map((r) => [r.ma, r.id]));
   if (!cn.VINH || !cn.DALAT) throw new Error("Thiếu chi nhánh VINH / DALAT.");
 

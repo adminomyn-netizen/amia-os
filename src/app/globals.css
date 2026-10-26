@@ -104,8 +104,8 @@
   --color-sac-cam-nen: var(--sac-cam-nen);
   --color-sac-hong: var(--sac-hong);
   --color-sac-hong-nen: var(--sac-hong-nen);
-  --font-sans: var(--font-roboto), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair), Georgia, serif;
+  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
   --radius-tag: 5px;
   --radius-nho: 8px;
   --radius-the: 10px;
@@ -199,12 +199,12 @@ body {
 }
 .vong-anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
-/* Tiêu đề hiển thị dùng Playfair Display (guideline logo AMIA); thân chữ dùng Roboto. */
+/* Tiêu đề: cùng họ Be Vietnam Pro, đậm vừa, khít chữ. Không dùng chữ có chân. */
 .chu-tieu-de {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-weight: 600;
-  line-height: 1.2;
-  letter-spacing: -0.01em;
+  line-height: 1.18;
+  letter-spacing: -0.028em;
 }
 .nhan-muc {
   font-size: 12px;

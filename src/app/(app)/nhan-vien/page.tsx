@@ -6,7 +6,7 @@ import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
-import { datLaiMatKhau, suaNhanVien, taoNhanVien } from "./actions";
+import { datLaiMatKhau, suaNhanVien, taoNhanVien, xoaNhanVien } from "./actions";
 
 export default async function TrangNhanVien() {
   await yeuCauQuyen("hethong.phanquyen");
@@ -41,6 +41,7 @@ export default async function TrangNhanVien() {
             {laVaiTro(r.vai_tro) && r.vai_tro !== "ky_thuat" && <NutPhanQuyen id={r.id} hoTen={r.ho_ten} vaiTro={NHAN_VAI_TRO[r.vai_tro]} dangDung={quyenHieuLuc(r.vai_tro, r.quyen_rieng)} macDinh={!r.quyen_rieng} coRieng={!!r.quyen_rieng} />}
             <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ho_ten}`} truong={truongSua} giaTri={{ ...r, chuc_danh: r.chuc_danh ?? "", dien_thoai: r.dien_thoai ?? "", chi_nhanh_id: r.chi_nhanh_id ?? "" }} action={suaNhanVien} />
             {r.user_id && <NutHop kieu="chu" nhan="Đặt lại mật khẩu" tieuDe={`Đặt lại mật khẩu: ${r.ho_ten}`} truong={[{ ten: "mat_khau", nhan: "Mật khẩu mới (≥ 8 ký tự)", loai: "mat_khau", batBuoc: true, rong: true }]} giaTri={{ id: r.id }} action={datLaiMatKhau} />}
+            {r.vai_tro !== "ky_thuat" && <NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá nhân viên: ${r.ho_ten}`} xacNhan="Xoá hồ sơ này (kèm tài khoản đăng nhập nếu có)? Không hoàn lại được. Người đã có hoá đơn, lịch hay phiếu liên quan sẽ không xoá được; khi đó hãy khoá tài khoản." an={{ id: r.id }} nhanLuu="Xoá" action={xoaNhanVien} />}
           </span>
         ) },
       ]} />

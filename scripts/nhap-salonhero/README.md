@@ -35,7 +35,7 @@ Chạy lại an toàn (mọi bản ghi có `sh_id` unique, gặp lại thì bỏ
 - **Khách đã bị xoá khỏi danh sách SalonHero nhưng còn thẻ**: dựng lại hồ sơ từ dữ liệu thẻ (có ghi chú cảnh báo) để không mất số dư.
 - **SĐT**: trống ⇒ `KHONG-SDT-<id>`; trùng ⇒ thêm `-TRUNG<id>` + ghi chú; cần người rà. Mã khách trùng thêm `-<id>`.
 - **Chi nhánh khách**: theo cơ sở tạo (`init_location_id`), không rõ ⇒ Vinh.
-- Người phụ trách mặc định = tài khoản Chủ. Nguồn khách suy từ chữ SalonHero ("page/facebook/voucher" ⇒ mkt, "bạn bè giới thiệu" ⇒ khách cũ giới thiệu, còn lại ⇒ khác).
+- Người phụ trách mặc định = tài khoản Quản lý / Leader đầu tiên. Nguồn khách suy từ chữ SalonHero ("page/facebook/voucher" ⇒ mkt, "bạn bè giới thiệu" ⇒ khách cũ giới thiệu, còn lại ⇒ khác).
 - Thẻ liệu trình không giới hạn buổi ở SalonHero (use_limit = 999999) giữ nguyên số đó.
 - Thẻ chuyển sang KHÔNG khoá theo dịch vụ (SalonHero gắn thẻ với một "dịch vụ vỏ"); nhân viên chọn đúng dịch vụ khi trừ buổi.
 - Chưa chuyển: lịch sử hoá đơn/đơn hàng, lịch hẹn, ảnh khách, điểm thưởng (chỉ lưu số), định mức vật tư, lương/hoa hồng.

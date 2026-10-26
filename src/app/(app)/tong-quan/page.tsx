@@ -10,7 +10,7 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { TongQuanKyThuat } from "./KyThuat";
 
-const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { ky_thuat: "Bảng điều khiển kỹ thuật", chu: "Bảng điều hành", giam_doc: "Bảng điều hành", quan_ly: "Bảng điều hành chi nhánh", ke_toan: "Bảng kế toán", thu_kho: "Bảng kho", thu_ngan: "Bảng thu ngân", marketing: "Bảng marketing", nha_dau_tu: "Bảng nhà đầu tư" };
+const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { ky_thuat: "Bảng điều khiển kỹ thuật", quan_ly: "Bảng điều hành", ke_toan: "Bảng kế toán", thu_kho: "Bảng kho", thu_ngan: "Bảng thu ngân", marketing: "Bảng marketing", nha_dau_tu: "Bảng nhà đầu tư" };
 
 export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string }> }) {
   const nd = await yeuCauQuyen("tongquan.xem");

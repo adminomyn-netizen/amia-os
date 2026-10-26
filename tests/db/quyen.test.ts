@@ -7,11 +7,11 @@ describe("ma trận quyền", () => {
   it("chỉ Kỹ thuật nắm phân quyền hệ thống, và có mọi quyền khác", () => {
     const nam = VAI_TRO.filter((v) => coQuyen(nguoi(v), "hethong.phanquyen"));
     expect(nam).toEqual(["ky_thuat"]);
-    for (const q of QUYEN_THEO_VAI_TRO.chu) expect(coQuyen(nguoi("ky_thuat"), q)).toBe(true);
+    for (const q of QUYEN_THEO_VAI_TRO.quan_ly) expect(coQuyen(nguoi("ky_thuat"), q)).toBe(true);
   });
 
-  it("Giám đốc, Chủ, Quản lý có sẵn mọi tính năng nghiệp vụ", () => {
-    for (const v of ["chu", "giam_doc", "quan_ly"] as const) for (const q of QUYEN_THEO_VAI_TRO.ky_thuat.filter((x) => x !== "hethong.phanquyen")) expect(coQuyen(nguoi(v), q)).toBe(true);
+  it("Quản lý / Leader có sẵn mọi tính năng nghiệp vụ, trừ phân quyền hệ thống", () => {
+    for (const v of ["quan_ly"] as const) for (const q of QUYEN_THEO_VAI_TRO.ky_thuat.filter((x) => x !== "hethong.phanquyen")) expect(coQuyen(nguoi(v), q)).toBe(true);
   });
 
   it("danh sách riêng thay hẳn mặc định; không ghi thì theo vai trò", () => {

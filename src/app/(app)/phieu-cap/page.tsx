@@ -51,7 +51,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
           <h2 className="text-[15px] font-semibold text-muc">Lịch của {k?.ho_ten} ({k?.ma})</h2>
           {dichVu.length === 0 ? <p className="mt-1 text-[14px] text-muc-2">Các dịch vụ của lịch này không có vật tư nhóm A cần phiếu cấp, hoặc đã ra phiếu đủ. Mở ca không bị chặn.</p> : (
             <div className="mt-3"><FormPhieu dichVu={dichVu} khachId={l.khach_id} lichId={l.id} chiNhanhId={l.chi_nhanh_id} macDinhBacSi={nd.vaiTro === "bac_si" ? nd.nhanVienId : ""}
-              bacSi={(nv ?? []).filter((n) => ["bac_si", "chu", "giam_doc", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))} ktv={(nv ?? []).filter((n) => n.vai_tro === "ktv" || n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))} action={taoPhieu} /></div>
+              bacSi={(nv ?? []).filter((n) => ["bac_si", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))} ktv={(nv ?? []).filter((n) => n.vai_tro === "ktv" || n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))} action={taoPhieu} /></div>
           )}
         </section>
       );

@@ -32,7 +32,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const ng = Number(nguong?.gia_tri ?? 5);
   const tt = TT_PHIEU[p.trang_thai];
-  const bsLC = (nv ?? []).filter((n) => ["bac_si", "chu", "giam_doc", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const bsLC = (nv ?? []).filter((n) => ["bac_si", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const tongCap = (dong ?? []).reduce((s, d) => s + Number(d.so_cap) * Number(d.don_gia ?? 0), 0);
   const tongDung = (dong ?? []).reduce((s, d) => s + (d.so_tra == null ? 0 : (Number(d.so_cap) - Number(d.so_tra)) * Number(d.don_gia ?? 0)), 0);
   const lamXong = p.trang_thai === "da_lam" || p.trang_thai === "da_doi_chieu";

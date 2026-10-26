@@ -48,3 +48,4 @@ scripts/phong/*.ttf
 
 # sao lưu dữ liệu khách (không đưa vào git)
 /sao-luu/
+dong-bo-anh.log

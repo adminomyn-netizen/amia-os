@@ -727,6 +727,12 @@ export type Database = {
           ngay_chup: string
           tao_boi: string | null
           tao_luc: string
+          lark_file_token: string | null
+          lark_loi: string | null
+          lark_record_id: string | null
+          lark_so_lan: number
+          lark_trang_thai: string
+          lark_xong_luc: string | null
         }
         Insert: {
           duong_dan: string
@@ -737,6 +743,12 @@ export type Database = {
           ngay_chup?: string
           tao_boi?: string | null
           tao_luc?: string
+          lark_file_token?: string | null
+          lark_loi?: string | null
+          lark_record_id?: string | null
+          lark_so_lan?: number
+          lark_trang_thai?: string
+          lark_xong_luc?: string | null
         }
         Update: {
           duong_dan?: string
@@ -747,6 +759,12 @@ export type Database = {
           ngay_chup?: string
           tao_boi?: string | null
           tao_luc?: string
+          lark_file_token?: string | null
+          lark_loi?: string | null
+          lark_record_id?: string | null
+          lark_so_lan?: number
+          lark_trang_thai?: string
+          lark_xong_luc?: string | null
         }
         Relationships: [
           {

@@ -88,7 +88,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         </section>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-2"><BatThongBao /><CaiUngDung /></div>
+      <div className="grid gap-4"><BatThongBao /><CaiUngDung /></div>
 
       <section aria-label="Tất cả chức năng">
         <h2 className="mb-3 text-[15px] font-semibold text-muc">Tất cả chức năng</h2>

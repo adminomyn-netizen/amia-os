@@ -721,6 +721,7 @@ export type Database = {
         Row: {
           duong_dan: string
           ghi_chu: string | null
+          het_han: string | null
           id: string
           khach_id: string
           loai: string
@@ -737,6 +738,7 @@ export type Database = {
         Insert: {
           duong_dan: string
           ghi_chu?: string | null
+          het_han?: string | null
           id?: string
           khach_id: string
           loai?: string
@@ -753,6 +755,7 @@ export type Database = {
         Update: {
           duong_dan?: string
           ghi_chu?: string | null
+          het_han?: string | null
           id?: string
           khach_id?: string
           loai?: string
@@ -783,6 +786,80 @@ export type Database = {
           },
           {
             foreignKeyName: "khach_anh_tao_boi_fkey"
+            columns: ["tao_boi"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      khach_anh_luu_tru: {
+        Row: {
+          cap_nhat_luc: string
+          khach_id: string
+          so_anh: number
+        }
+        Insert: {
+          cap_nhat_luc?: string
+          khach_id: string
+          so_anh: number
+        }
+        Update: {
+          cap_nhat_luc?: string
+          khach_id?: string
+          so_anh?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "khach_anh_luu_tru_khach_id_fkey"
+            columns: ["khach_id"]
+            isOneToOne: true
+            referencedRelation: "khach_hang"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      yeu_cau_lay_anh: {
+        Row: {
+          id: string
+          khach_id: string
+          loi: string | null
+          so_anh_lay: number | null
+          tao_boi: string | null
+          tao_luc: string
+          trang_thai: string
+          xong_luc: string | null
+        }
+        Insert: {
+          id?: string
+          khach_id: string
+          loi?: string | null
+          so_anh_lay?: number | null
+          tao_boi?: string | null
+          tao_luc?: string
+          trang_thai?: string
+          xong_luc?: string | null
+        }
+        Update: {
+          id?: string
+          khach_id?: string
+          loi?: string | null
+          so_anh_lay?: number | null
+          tao_boi?: string | null
+          tao_luc?: string
+          trang_thai?: string
+          xong_luc?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "yeu_cau_lay_anh_khach_id_fkey"
+            columns: ["khach_id"]
+            isOneToOne: false
+            referencedRelation: "khach_hang"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "yeu_cau_lay_anh_tao_boi_fkey"
             columns: ["tao_boi"]
             isOneToOne: false
             referencedRelation: "nhan_vien"

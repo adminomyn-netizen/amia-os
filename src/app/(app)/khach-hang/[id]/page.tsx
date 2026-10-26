@@ -13,6 +13,7 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { TaiAnh } from "@/components/khach/TaiAnh";
+import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../actions";
 
 const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú điều trị" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "anh", ten: "Ảnh khách hàng" }];
@@ -135,11 +136,19 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   } else {
     const { data: anh } = await db.from("khach_anh").select("*").eq("khach_id", id).order("ngay_chup", { ascending: false }).order("tao_luc", { ascending: false });
     const urlTheo = anh?.length ? await linkAnh(anh.map((a) => a.duong_dan), 3600) : new Map<string, string>();
+    // Ảnh cũ ở kho lưu trữ (Lark): số ảnh, ảnh đang mở xem tạm, và yêu cầu lấy ảnh gần nhất.
+    const [{ data: lt }, { data: yc }] = await Promise.all([
+      db.from("khach_anh_luu_tru").select("so_anh").eq("khach_id", id).maybeSingle(),
+      db.from("yeu_cau_lay_anh").select("trang_thai, loi").eq("khach_id", id).order("tao_luc", { ascending: false }).limit(1).maybeSingle(),
+    ]);
+    const tam = (anh ?? []).filter((a) => a.het_han);
+    const hetHanSom = tam.length ? tam.map((a) => a.het_han as string).sort()[0] : null;
     const theoNgay = new Map<string, NonNullable<typeof anh>>();
     for (const a of anh ?? []) theoNgay.set(a.ngay_chup, [...(theoNgay.get(a.ngay_chup) ?? []), a]);
     noiDung = (
       <>
         {coQuyen(nd, "anh.them") && <TaiAnh khachId={id} />}
+        {lt && lt.so_anh > 0 && <AnhCuLuuTru khachId={id} tong={lt.so_anh} conLai={Math.max(0, lt.so_anh - tam.length)} dangLay={yc?.trang_thai === "cho" || yc?.trang_thai === "dang_lay"} loi={yc?.trang_thai === "loi" ? yc.loi : null} hetHan={hetHanSom ? ngayVN(hetHanSom) : null} />}
         {!k.dong_y_dung_hinh && <p className="mb-4 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Khách chưa đồng ý bằng văn bản cho dùng hình ảnh: ảnh chỉ lưu hồ sơ điều trị, không dùng cho quảng cáo.</p>}
         {(anh ?? []).length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ảnh nào.</p>}
         {[...theoNgay.entries()].map(([ngay, ds]) => (

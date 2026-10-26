@@ -101,6 +101,22 @@ export async function xoaNguoiThan(fd: FormData): Promise<KQ> {
 }
 
 const LOAI_ANH: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+/** Nhân viên bấm "Lấy ảnh cũ về xem": xếp yêu cầu vào hàng đợi, tiến trình trên máy chủ nhà chép ảnh từ kho lưu trữ (Lark) về, giữ tạm 3 ngày. */
+export async function layAnhCu(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("anh.xem");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const khachId = chuoi(fd, "khach_id");
+  const db = sb();
+  const { data: lt } = await db.from("khach_anh_luu_tru").select("so_anh").eq("khach_id", khachId).maybeSingle();
+  if (!lt || lt.so_anh === 0) return { loi: "Khách này không có ảnh cũ ở kho lưu trữ." };
+  const { error } = await db.from("yeu_cau_lay_anh").insert({ khach_id: khachId, tao_boi: nd.nhanVienId });
+  // 23505 = đang có yêu cầu chạy cho khách này: coi như đã nhận, không báo lỗi.
+  if (error && error.code !== "23505") return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "lay_anh_cu", doi_tuong: "khach_hang", doi_tuong_id: khachId });
+  revalidatePath(`/khach-hang/${khachId}`);
+  return { ok: true };
+}
+
 export async function taiAnh(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("anh.them");
   if (!nd) return { loi: KHONG_DU_QUYEN };

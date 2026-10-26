@@ -2105,6 +2105,15 @@ export type Database = {
           tru_the_tien: number
         }[]
       }
+      bc_phan_bo: {
+        Args: { p_cn?: string }
+        Returns: {
+          nhan: string
+          nhom: string
+          so: number
+          tien: number
+        }[]
+      }
       bc_the_con_du: {
         Args: { p_cn?: string }
         Returns: {

@@ -191,6 +191,21 @@ body {
 }
 .nut-nguoi { transition: background-color 160ms ease-out, box-shadow 160ms ease-out; }
 .nut-nguoi:hover { background: var(--giay-tram); box-shadow: inset 0 0 0 1px var(--vien); }
+/* Đồng hồ đầu trang: khung tối viền vàng, số lớn, giây màu vàng, dấu hai chấm nhấp nháy. */
+.dong-ho {
+  display: flex; align-items: center; gap: 14px;
+  padding: 7px 16px 7px 14px; border-radius: var(--radius-vua);
+  color: #fff; background: var(--gradient-toi);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), inset 0 0 0 1px rgb(217 184 119 / 0.4), 0 10px 20px -10px rgb(6 26 23 / 0.7);
+}
+.dong-ho-so { font-size: 24px; font-weight: 600; line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.dong-ho-so i { font-style: normal; padding: 0 2px; color: var(--menu-nhan); animation: nhap-nhay 1s steps(1) infinite; }
+.dong-ho-so b { font-weight: 600; color: var(--menu-nhan); }
+.dong-ho-phu { display: flex; flex-direction: column; gap: 3px; padding-left: 14px; border-left: 1px solid rgb(255 255 255 / 0.16); line-height: 1.1; }
+.dong-ho-nhan { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--menu-chu-phu); }
+.dong-ho-ngay { font-size: 13px; color: var(--menu-chu); text-transform: capitalize; }
+@keyframes nhap-nhay { 50% { opacity: 0.25; } }
+
 .vong-anh {
   display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
   border-radius: 50%; overflow: hidden; font-weight: 600; color: var(--chu-tren-vang);

@@ -6,7 +6,7 @@ export function HangChiSo({ muc }: { muc: { nhan: string; so: string; ghiChu?: s
       {muc.map((m, i) => (
         <div key={m.nhan} className="the-noi the-noi-nang vao px-5 pb-5 pt-6" style={{ animationDelay: `${i * 70}ms` }}>
           <dt className="text-[13px] text-muc-3">{m.nhan}</dt>
-          <dd className="mt-2 text-[30px] font-medium leading-none tabular-nums text-muc">{m.so}</dd>
+          <dd className={`mt-2 font-medium leading-none tabular-nums text-muc ${m.so.length > 14 ? "text-[21px]" : m.so.length > 11 ? "text-[25px]" : "text-[30px]"}`}>{m.so}</dd>
           {m.ghiChu && <dd className="mt-2 text-[12px] text-muc-3">{m.ghiChu}</dd>}
         </div>
       ))}

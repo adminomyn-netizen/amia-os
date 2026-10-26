@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 
-const GIO = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
-const NGAY = new Intl.DateTimeFormat("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", weekday: "short", day: "2-digit", month: "2-digit", year: "numeric" });
+const HCM = { timeZone: "Asia/Ho_Chi_Minh" } as const;
+const GIO = new Intl.DateTimeFormat("en-GB", { ...HCM, hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false });
+const NGAY = new Intl.DateTimeFormat("vi-VN", { ...HCM, weekday: "long", day: "2-digit", month: "2-digit", year: "numeric" });
 
-/** Đồng hồ thời gian thực theo giờ Hồ Chí Minh (UTC+7), chạy theo giây. Chỉ vẽ sau khi tải xong để không lệch giữa máy chủ và trình duyệt. */
+/** Đồng hồ thời gian thực giờ Hồ Chí Minh (UTC+7) trong khung tối có viền vàng: số lớn dễ đọc, giây màu vàng, kèm thứ ngày tháng.
+ *  Chỉ vẽ sau khi tải xong để giờ máy chủ và trình duyệt không lệch nhau. */
 export function DongHo() {
   const [bay, setBay] = useState<Date | null>(null);
   useEffect(() => {
@@ -14,10 +16,16 @@ export function DongHo() {
     const t = setInterval(dat, 1000);
     return () => clearInterval(t);
   }, []);
+  const [h, m, s] = (bay ? GIO.format(bay) : "--:--:--").split(":");
   return (
-    <div className="hidden text-right leading-tight sm:block" title="Giờ Hồ Chí Minh (UTC+7)" aria-label="Giờ hiện tại, múi giờ Hồ Chí Minh">
-      <div className="text-[15px] font-medium tabular-nums text-muc" suppressHydrationWarning>{bay ? GIO.format(bay) : "--:--:--"}</div>
-      <div className="text-[11px] uppercase tracking-[0.06em] text-muc-3" suppressHydrationWarning>{bay ? NGAY.format(bay) : "Giờ HCM"}</div>
+    <div className="dong-ho" role="timer" aria-label={bay ? `Bây giờ là ${h} giờ ${m} phút, giờ Hồ Chí Minh` : "Giờ Hồ Chí Minh"} suppressHydrationWarning>
+      <div className="dong-ho-so" aria-hidden suppressHydrationWarning>
+        <span>{h}</span><i>:</i><span>{m}</span><i className="hidden min-[420px]:inline">:</i><b className="hidden min-[420px]:inline">{s}</b>
+      </div>
+      <div className="dong-ho-phu hidden md:block" aria-hidden suppressHydrationWarning>
+        <span className="dong-ho-nhan">Giờ Hồ Chí Minh · UTC+7</span>
+        <span className="dong-ho-ngay">{bay ? NGAY.format(bay) : "—"}</span>
+      </div>
     </div>
   );
 }

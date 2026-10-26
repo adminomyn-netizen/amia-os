@@ -13,7 +13,6 @@ export function DauTrang({ hoTen, vaiTro, chiNhanh, anh, muc }: { hoTen: string;
       <div className="hidden text-[13px] text-muc-3 lg:block">{chiNhanh ? `Chi nhánh: ${chiNhanh}` : "Mọi chi nhánh"}</div>
       <div className="flex items-center gap-4">
         <DongHo />
-        <span className="hidden h-8 w-px bg-vien sm:block" aria-hidden />
         <Link href="/tai-khoan" title="Tài khoản của tôi" className="nut-nguoi flex items-center gap-3 rounded-nho py-1 pl-1 pr-3">
           <AnhDaiDien hoTen={hoTen} anh={anh} kichCo={38} />
           <span className="text-right leading-tight">

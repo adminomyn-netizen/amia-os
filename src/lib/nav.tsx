@@ -17,7 +17,7 @@ export const MENU: MucMenu[] = [
   { ten: "Báo cáo", duong_dan: "/bao-cao", icon: BarChart3, nhom: "Báo cáo", quyen: "baocao.xem", moTa: "Doanh thu, nhân viên, nợ, vật tư" },
   { ten: "Hoa hồng", duong_dan: "/hoa-hong", icon: HandCoins, nhom: "Báo cáo", quyen: "baocao.tien", moTa: "Hoa hồng bán hàng theo nhân viên" },
   { ten: "Danh mục", duong_dan: "/danh-muc", icon: ListTree, nhom: "Cài đặt", quyen: "danhmuc.xem", moTa: "Dịch vụ, gói thẻ, sản phẩm" },
-  { ten: "Nhân viên", duong_dan: "/nhan-vien", icon: UserCog, nhom: "Cài đặt", quyen: "nhanvien.quanly", moTa: "Tài khoản, vai trò, chi nhánh" },
+  { ten: "Nhân viên", duong_dan: "/nhan-vien", icon: UserCog, nhom: "Cài đặt", quyen: "hethong.phanquyen", moTa: "Tài khoản, vai trò, phân quyền" },
 ];
 
 export const locMenu = (vt: VaiTro) => MENU.filter((m) => m.quyen === null || coQuyen(vt, m.quyen));

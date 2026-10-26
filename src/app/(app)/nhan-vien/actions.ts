@@ -12,11 +12,10 @@ const xong = (): KQ => { revalidatePath("/nhan-vien"); return { ok: true }; };
 const MK_TOI_THIEU = 8;
 
 export async function taoNhanVien(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("nhanvien.quanly");
+  const nd = await kiemQuyen("hethong.phanquyen");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const vaiTro = chuoi(fd, "vai_tro");
   if (!laVaiTro(vaiTro)) return { loi: "Chọn vai trò." };
-  if (vaiTro === "chu" && nd.vaiTro !== "chu") return { loi: "Chỉ Chủ mới tạo được tài khoản Chủ." };
   const hoTen = chuoi(fd, "ho_ten");
   const email = chuoi(fd, "email").toLowerCase();
   const matKhau = chuoi(fd, "mat_khau");
@@ -37,7 +36,7 @@ export async function taoNhanVien(fd: FormData): Promise<KQ> {
 }
 
 export async function suaNhanVien(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("nhanvien.quanly");
+  const nd = await kiemQuyen("hethong.phanquyen");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const id = chuoi(fd, "id");
   const vaiTro = chuoi(fd, "vai_tro");
@@ -45,7 +44,6 @@ export async function suaNhanVien(fd: FormData): Promise<KQ> {
   const db = sb();
   const { data: cu } = await db.from("nhan_vien").select("user_id, vai_tro").eq("id", id).maybeSingle();
   if (!cu) return { loi: "Không tìm thấy nhân viên." };
-  if ((vaiTro === "chu" || cu.vai_tro === "chu") && nd.vaiTro !== "chu") return { loi: "Chỉ Chủ mới đổi được tài khoản Chủ." };
   const hoatDong = bat(fd, "hoat_dong");
   if (id === nd.nhanVienId && !hoatDong) return { loi: "Không tự khoá tài khoản của chính mình." };
   const { error } = await db.from("nhan_vien").update({
@@ -61,13 +59,12 @@ export async function suaNhanVien(fd: FormData): Promise<KQ> {
 }
 
 export async function datLaiMatKhau(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("nhanvien.quanly");
+  const nd = await kiemQuyen("hethong.phanquyen");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const matKhau = chuoi(fd, "mat_khau");
   if (matKhau.length < MK_TOI_THIEU) return { loi: `Mật khẩu tối thiểu ${MK_TOI_THIEU} ký tự.` };
   const { data: nv } = await sb().from("nhan_vien").select("user_id, vai_tro").eq("id", chuoi(fd, "id")).maybeSingle();
   if (!nv?.user_id) return { loi: "Nhân viên này chưa có tài khoản đăng nhập." };
-  if (nv.vai_tro === "chu" && nd.vaiTro !== "chu") return { loi: "Chỉ Chủ mới đặt lại mật khẩu của Chủ." };
   const { error } = await createAdminClient().auth.admin.updateUserById(nv.user_id, { password: matKhau });
   return error ? { loi: "Không đặt lại được mật khẩu." } : xong();
 }

@@ -8,11 +8,11 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { datLaiMatKhau, suaNhanVien, taoNhanVien } from "./actions";
 
 export default async function TrangNhanVien() {
-  const nd = await yeuCauQuyen("nhanvien.quanly");
+  await yeuCauQuyen("hethong.phanquyen");
   const db = sb();
   const [{ data: ds }, { data: cn }] = await Promise.all([db.from("nhan_vien").select("*").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
-  const vaiTroLC = VAI_TRO.filter((v) => v !== "chu" || nd.vaiTro === "chu").map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] }));
+  const vaiTroLC = VAI_TRO.map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] }));
   const cnLC = [{ gia_tri: "", nhan: "Mọi chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))];
   const chung: Truong[] = [
     { ten: "ho_ten", nhan: "Họ tên", loai: "chu", batBuoc: true }, { ten: "vai_tro", nhan: "Vai trò", loai: "chon", luaChon: vaiTroLC, batBuoc: true },

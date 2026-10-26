@@ -43,6 +43,6 @@ npm run kiem-tra        # eslint + tsc + 36 bài test nghiệp vụ trên Postgr
 
 ## Vận hành
 - Thêm migration: tạo `supabase/migrations/00NN_ten.sql` → `npm run kiem-tra` → `supabase db push --yes` (mật khẩu DB lấy từ Keychain mục `amia-os-db-password`, truyền qua `SUPABASE_DB_PASSWORD`) → `supabase gen types typescript --linked --schema public > src/lib/supabase/database.types.ts`.
-- Tạo tài khoản: trong app, mục Nhân viên (Chủ/Quản lý). Dòng lệnh: `node scripts/tao-tai-khoan.mjs <email> <mật khẩu> <họ tên> <vai_tro> [VINH|DALAT]`.
+- Tạo tài khoản: trong app, mục Nhân viên (chỉ vai trò Kỹ thuật). Dòng lệnh: `node scripts/tao-tai-khoan.mjs <email> <mật khẩu> <họ tên> <vai_tro> [VINH|DALAT]`.
 - Sao lưu: `node scripts/sao-luu.mjs` (file JSON trong `sao-luu/`, không vào git). Gói Supabase miễn phí KHÔNG có sao lưu tự động theo thời điểm: cần lịch sao lưu riêng hoặc nâng gói trước khi chạy thật.
 - Commit phải dùng email `adminomyn@gmail.com` (Vercel chặn deploy nếu không tìm thấy tài khoản Git của tác giả).

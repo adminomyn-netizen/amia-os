@@ -36,11 +36,8 @@ export async function capNhatPhien(request: NextRequest) {
     url.pathname = "/dang-nhap";
     return NextResponse.redirect(url);
   }
-  if (coPhien && laTrangCongKhai) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/tong-quan";
-    return NextResponse.redirect(url);
-  }
+  // Đã đăng nhập mà vào /dang-nhap: KHÔNG đẩy đi ở đây (JWT còn hạn chưa chắc phiên còn sống → dễ lặp chuyển trang).
+  // dang-nhap/layout.tsx hỏi máy chủ Auth thật rồi mới đẩy.
 
   return supabaseResponse;
 }

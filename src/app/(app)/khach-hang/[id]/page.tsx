@@ -22,8 +22,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const nd = await yeuCauQuyen("khach.xem");
   const { id } = await params;
   const { tab: t } = await searchParams;
-  const xemSucKhoe = coQuyen(nd.vaiTro, "hoso.xem");
-  const tabHopLe = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd.vaiTro, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd.vaiTro, "ban.xem")));
+  const xemSucKhoe = coQuyen(nd, "hoso.xem");
+  const tabHopLe = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd, "ban.xem")));
   const tab = tabHopLe.some((x) => x.ma === t) ? t! : "thong-tin";
   const db = sb();
   const { data: k } = await db.from("v_khach_hang").select("*").eq("id", id).maybeSingle();
@@ -41,7 +41,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) });
   const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
   const tt = TRANG_THAI_KHACH[k.trang_thai ?? "lead"];
-  const sua = coQuyen(nd.vaiTro, "khach.sua");
+  const sua = coQuyen(nd, "khach.sua");
   const giaTriSua = { id: k.id, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo ?? "", email: k.email ?? "", gioi_tinh: k.gioi_tinh ?? "", ngay_sinh: k.ngay_sinh ?? "", dia_chi: k.dia_chi ?? "", chi_nhanh_id: k.chi_nhanh_id, nguon: k.nguon, nguon_chi_tiet: k.nguon_chi_tiet ?? "", nguoi_gioi_thieu: "", nguoi_phu_trach_id: k.nguoi_phu_trach_id, ghi_chu: k.ghi_chu ?? "", dong_y_dung_hinh: k.dong_y_dung_hinh, quan_tam: (qt ?? []).map((x) => x.dich_vu_id) };
 
   // Dữ liệu sức khoẻ: ghi vết mỗi lần mở tab ghi chú hoặc ảnh.
@@ -77,7 +77,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     ];
     noiDung = (
       <>
-        {coQuyen(nd.vaiTro, "hoso.sua") && <div className="mb-5"><NutHop nhan="Thêm ghi chú" tieuDe="Thêm ghi chú điều trị" moTa="Ghi chú chỉ thêm, không sửa hay xoá để giữ lịch sử hồ sơ." rong truong={tr} an={{ khach_id: id }} action={luuGhiChu} /></div>}
+        {coQuyen(nd, "hoso.sua") && <div className="mb-5"><NutHop nhan="Thêm ghi chú" tieuDe="Thêm ghi chú điều trị" moTa="Ghi chú chỉ thêm, không sửa hay xoá để giữ lịch sử hồ sơ." rong truong={tr} an={{ khach_id: id }} action={luuGhiChu} /></div>}
         {(gc ?? []).length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ghi chú điều trị.</p>}
         <ol className="space-y-5">
           {(gc ?? []).map((g) => (
@@ -139,7 +139,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     for (const a of anh ?? []) theoNgay.set(a.ngay_chup, [...(theoNgay.get(a.ngay_chup) ?? []), a]);
     noiDung = (
       <>
-        {coQuyen(nd.vaiTro, "anh.them") && <TaiAnh khachId={id} />}
+        {coQuyen(nd, "anh.them") && <TaiAnh khachId={id} />}
         {!k.dong_y_dung_hinh && <p className="mb-4 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Khách chưa đồng ý bằng văn bản cho dùng hình ảnh: ảnh chỉ lưu hồ sơ điều trị, không dùng cho quảng cáo.</p>}
         {(anh ?? []).length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ảnh nào.</p>}
         {[...theoNgay.entries()].map(([ngay, ds]) => (
@@ -163,8 +163,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   return (
     <>
       <TieuDeTrang tieuDe={k.ho_ten ?? ""} phu={<span className="flex flex-wrap items-center gap-2"><span>{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai></span>}>
-        {coQuyen(nd.vaiTro, "lich.sua") && <Link href={`/lich-hen?khach=${id}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Đặt lịch</Link>}
-        {coQuyen(nd.vaiTro, "ban.tao") && <Link href={`/ban-hang?khach=${id}`} className="nut-vang h-10 rounded-nho px-4 text-[14px] leading-10">Tạo đơn</Link>}
+        {coQuyen(nd, "lich.sua") && <Link href={`/lich-hen?khach=${id}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Đặt lịch</Link>}
+        {coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?khach=${id}`} className="nut-vang h-10 rounded-nho px-4 text-[14px] leading-10">Tạo đơn</Link>}
         {sua && <NutHop kieu="phu" nhan="Sửa hồ sơ" tieuDe="Sửa hồ sơ khách" rong truong={truong} giaTri={giaTriSua} action={luuKhach} />}
         {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
       </TieuDeTrang>

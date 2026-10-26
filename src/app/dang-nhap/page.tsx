@@ -18,10 +18,10 @@ export default function TrangDangNhap() {
         <p className="text-[12px] text-menu-chu-phu">AMIA Beauty Center · Phòng khám da liễu</p>
       </section>
       <section className="flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-[400px]">
+        <div className="the-noi vao w-full max-w-[420px] p-8 pt-9">
           <Image src="/logo-amia.png" alt="AMIA" width={150} height={65} priority className="mb-8 h-auto w-[130px] lg:hidden" />
           <h2 className="chu-tieu-de text-[34px] text-muc">Đăng nhập</h2>
-          <p className="mb-7 mt-1 text-[14px] text-muc-3">Dùng tài khoản do chủ phòng khám cấp.</p>
+          <p className="mb-7 mt-1 text-[14px] text-muc-3">Dùng tài khoản do bộ phận Kỹ thuật cấp.</p>
           <form action={action} className="space-y-5">
             <div>
               <label htmlFor="email" className={NHAN_O}>Email</label>
@@ -33,7 +33,7 @@ export default function TrangDangNhap() {
             </div>
             {state?.loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{state.loi}</div>}
             <button type="submit" disabled={dangXuLy} className="nut-vang h-[50px] w-full rounded-nho text-[15px] disabled:opacity-60">{dangXuLy ? "Đang đăng nhập" : "Đăng nhập"}</button>
-            <p className="text-[13px] text-muc-3">Quên mật khẩu hoặc cần thêm tài khoản: nhờ chủ phòng khám đặt lại trong mục Nhân viên.</p>
+            <p className="text-[13px] text-muc-3">Quên mật khẩu hoặc cần thêm tài khoản: nhờ bộ phận Kỹ thuật đặt lại.</p>
           </form>
         </div>
       </section>

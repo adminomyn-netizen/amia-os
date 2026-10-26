@@ -1,11 +1,11 @@
 import { LayoutDashboard, CalendarDays, ShoppingBag, Receipt, Users, CreditCard, PackageCheck, Warehouse, BarChart3, ListTree, UserCog, FlaskConical, HandCoins } from "lucide-react";
 import type { ComponentType } from "react";
-import { coQuyen, type Quyen, type VaiTro } from "@/lib/quyen";
+import { coQuyen, type CoQuyen, type Quyen } from "@/lib/quyen";
 
 export type MucMenu = { ten: string; duong_dan: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; nhom: string; quyen: Quyen | null; moTa: string };
 
 export const MENU: MucMenu[] = [
-  { ten: "Tổng quan", duong_dan: "/tong-quan", icon: LayoutDashboard, nhom: "Hằng ngày", quyen: null, moTa: "Việc hôm nay, doanh thu, cảnh báo" },
+  { ten: "Tổng quan", duong_dan: "/tong-quan", icon: LayoutDashboard, nhom: "Hằng ngày", quyen: "tongquan.xem", moTa: "Việc hôm nay, doanh thu, cảnh báo" },
   { ten: "Lịch hẹn", duong_dan: "/lich-hen", icon: CalendarDays, nhom: "Hằng ngày", quyen: "lich.xem", moTa: "Đặt, đổi, huỷ lịch; mở ca" },
   { ten: "Bán hàng", duong_dan: "/ban-hang", icon: ShoppingBag, nhom: "Hằng ngày", quyen: "ban.tao", moTa: "Thu ngân: dịch vụ, thẻ, sản phẩm" },
   { ten: "Hoá đơn", duong_dan: "/hoa-don", icon: Receipt, nhom: "Hằng ngày", quyen: "ban.xem", moTa: "Danh sách hoá đơn, thu nợ, huỷ" },
@@ -20,7 +20,12 @@ export const MENU: MucMenu[] = [
   { ten: "Nhân viên", duong_dan: "/nhan-vien", icon: UserCog, nhom: "Cài đặt", quyen: "hethong.phanquyen", moTa: "Tài khoản, vai trò, phân quyền" },
 ];
 
-export const locMenu = (vt: VaiTro) => MENU.filter((m) => m.quyen === null || coQuyen(vt, m.quyen));
+export const locMenu = (nd: CoQuyen) => MENU.filter((m) => m.quyen === null || coQuyen(nd, m.quyen));
+/** Trang đầu tiên người này vào được (không vòng lặp chuyển trang); không có mục nào thì về Tài khoản. */
+export const trangDau = (nd: CoQuyen, khongDuQuyen = false) => {
+  const d = locMenu(nd)[0]?.duong_dan ?? "/tai-khoan";
+  return khongDuQuyen ? `${d}?khong-du-quyen=1` : d;
+};
 export function gomTheoNhom(ds: MucMenu[]) {
   const ra: { nhom: string; muc: MucMenu[] }[] = [];
   for (const m of ds) {

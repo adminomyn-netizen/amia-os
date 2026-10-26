@@ -42,7 +42,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   return (
     <>
       <TieuDeTrang tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Thực hiện buổi để trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
-        {coQuyen(nd.vaiTro, "the.dieuchinh") && (
+        {coQuyen(nd, "the.dieuchinh") && (
           <NutHop kieu="phu" nhan="Cấp thẻ tay" tieuDe="Cấp thẻ tay" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Thẻ cấp tay không tính doanh thu." rong
             truong={[{ ten: "khach", nhan: "Khách (mã hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true }, { ten: "goi_id", nhan: "Gói thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: (goi ?? []).map((g) => ({ gia_tri: g.id, nhan: `${g.ten} (${g.loai === "lan" ? `${g.so_buoi} buổi` : "thẻ tiền"})` })) },
               { ten: "so_buoi", nhan: "Số buổi còn lại (nếu khác gói)", loai: "so" }, { ten: "so_tien", nhan: "Số dư (thẻ tiền, nếu khác gói)", loai: "tien" }, { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ly_do", nhan: "Lý do cấp tay", loai: "chu", rong: true, batBuoc: true }]} action={capTheTay} />
@@ -61,7 +61,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
           { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
           { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
           { nhan: "Tình trạng", hienThi: (r) => { const t = NHAN_TINH_TRANG[r.tinh_trang ?? "hoat_dong"]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
-          ...(tab === "lan" && coQuyen(nd.vaiTro, "the.thuchien") ? [{ nhan: "", hienThi: (r: NonNullable<typeof the>[number]) => (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? (
+          ...(tab === "lan" && coQuyen(nd, "the.thuchien") ? [{ nhan: "", hienThi: (r: NonNullable<typeof the>[number]) => (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? (
             <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={(lk ?? []).some((l) => l.goi_id === r.goi_id) ? (dv ?? []).filter((d) => (lk ?? []).some((l) => l.goi_id === r.goi_id && l.dich_vu_id === d.id)).map((d) => ({ gia_tri: d.id, nhan: d.ten })) : (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten }))} action={thucHienBuoi} />) : null }] : []),
         ]} />
     </>

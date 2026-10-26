@@ -20,9 +20,9 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
   const nd = await yeuCauQuyen("danhmuc.xem");
   const { tab: t } = await searchParams;
   const tab = TAB.some((x) => x.ma === t) ? t! : "dich-vu";
-  const sua = coQuyen(nd.vaiTro, "danhmuc.sua");
-  const quanLy = coQuyen(nd.vaiTro, "nhanvien.quanly");
-  const xemVon = coQuyen(nd.vaiTro, "baocao.tien");
+  const sua = coQuyen(nd, "danhmuc.sua");
+  const quanLy = coQuyen(nd, "nhanvien.quanly");
+  const xemVon = coQuyen(nd, "baocao.tien");
   const db = sb();
   const [nhom, dv] = await Promise.all([db.from("dich_vu_nhom").select("*").order("thu_tu"), tab === "goi-the" || tab === "dich-vu" ? db.from("dich_vu").select("*").order("ma") : Promise.resolve({ data: [] })]);
   const nhomLC = (nhom.data ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }));

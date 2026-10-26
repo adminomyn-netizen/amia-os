@@ -12,8 +12,8 @@ import { luuDinhMuc, nhapDinhMuc, xoaDinhMuc } from "./actions";
 export default async function TrangDinhMuc({ searchParams }: { searchParams: Promise<{ dv?: string }> }) {
   const nd = await yeuCauQuyen("danhmuc.xem");
   const { dv: dvId } = await searchParams;
-  const sua = coQuyen(nd.vaiTro, "danhmuc.sua");
-  const xemVon = coQuyen(nd.vaiTro, "baocao.tien");
+  const sua = coQuyen(nd, "danhmuc.sua");
+  const xemVon = coQuyen(nd, "baocao.tien");
   const db = sb();
   const [{ data: dv }, { data: sp }, { data: dem }] = await Promise.all([
     db.from("dich_vu").select("id, ma, ten, gia, gia_von").eq("hoat_dong", true).order("ma"),

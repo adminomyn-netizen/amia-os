@@ -21,7 +21,7 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
   const tab = sp.tab === "ti-le" ? "ti-le" : "bang";
   const { tu, den } = khoangNgay(sp.tu, sp.den);
   const db = sb();
-  const sua = coQuyen(nd.vaiTro, "danhmuc.sua");
+  const sua = coQuyen(nd, "danhmuc.sua");
   const cn = nd.chiNhanhId ?? (sp.cn || undefined);
   let noiDung: React.ReactNode;
   if (tab === "bang") {

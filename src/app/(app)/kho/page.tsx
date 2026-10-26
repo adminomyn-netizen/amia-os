@@ -21,7 +21,7 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
   const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma");
   const cn = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
   const { data: spAll } = await db.from("san_pham").select("id, ma, ten, don_vi, nhom_cap, ton_toi_thieu, gia_nhap_don_vi, theo_doi_kho").eq("hoat_dong", true).eq("theo_doi_kho", true).order("ten");
-  const sua = coQuyen(nd.vaiTro, "kho.nhap");
+  const sua = coQuyen(nd, "kho.nhap");
   const spLC = (spAll ?? []).map((s) => ({ gia_tri: s.id, nhan: `${s.ten} (${s.don_vi})` }));
   let noiDung: React.ReactNode;
   if (tab === "ton") {

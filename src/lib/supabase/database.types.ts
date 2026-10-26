@@ -1201,6 +1201,9 @@ export type Database = {
       }
       nhan_vien: {
         Row: {
+          anh_dai_dien: string | null
+          phai_doi_mat_khau: boolean
+          quyen_rieng: string[] | null
           chi_nhanh_id: string | null
           chuc_danh: string | null
           dien_thoai: string | null
@@ -1213,6 +1216,9 @@ export type Database = {
           vai_tro: string
         }
         Insert: {
+          anh_dai_dien?: string | null
+          phai_doi_mat_khau?: boolean
+          quyen_rieng?: string[] | null
           chi_nhanh_id?: string | null
           chuc_danh?: string | null
           dien_thoai?: string | null
@@ -1225,6 +1231,9 @@ export type Database = {
           vai_tro: string
         }
         Update: {
+          anh_dai_dien?: string | null
+          phai_doi_mat_khau?: boolean
+          quyen_rieng?: string[] | null
           chi_nhanh_id?: string | null
           chuc_danh?: string | null
           dien_thoai?: string | null

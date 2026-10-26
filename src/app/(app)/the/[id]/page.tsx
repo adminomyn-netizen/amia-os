@@ -35,12 +35,12 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
   const dvLC = (lk?.length ? (dv ?? []).filter((d) => lk.some((l) => l.dich_vu_id === d.id)) : dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten }));
   const nvLC = (nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const bsLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
-  const dieuChinh = coQuyen(nd.vaiTro, "the.dieuchinh");
+  const dieuChinh = coQuyen(nd, "the.dieuchinh");
 
   return (
     <>
       <TieuDeTrang tieuDe={t.ma ?? ""} phu={<span className="flex flex-wrap items-center gap-2"><span>{g?.ten}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{t.cap_tay && <NhanTrangThai kieu="cho">Cấp tay, không tính doanh thu</NhanTrangThai>}</span>}>
-        {t.loai === "lan" && coQuyen(nd.vaiTro, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutBuoi theId={id} nhanVien={nvLC} bacSi={bsLC} dichVu={dvLC} action={thucHienBuoi} nhan="Thực hiện buổi" />}
+        {t.loai === "lan" && coQuyen(nd, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutBuoi theId={id} nhanVien={nvLC} bacSi={bsLC} dichVu={dvLC} action={thucHienBuoi} nhan="Thực hiện buổi" />}
         {dieuChinh && <NutHop kieu="phu" nhan="Điều chỉnh số dư" tieuDe="Điều chỉnh thẻ" moTa="Cộng hoặc trừ (dùng số âm). Mọi điều chỉnh đều ghi lý do vào lịch sử." an={{ the_id: id }} truong={[{ ten: t.loai === "lan" ? "so_buoi" : "so_tien", nhan: t.loai === "lan" ? "Số buổi cộng/trừ (VD 2 hoặc -1)" : "Số tiền cộng/trừ (VD 500000 hoặc -200000)", loai: "chu", batBuoc: true, rong: true }, { ten: "ly_do", nhan: "Lý do", loai: "nhieu_dong", batBuoc: true }]} action={dieuChinhThe} />}
         {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="phu" nhan={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} tieuDe={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} xacNhan={t.trang_thai === "khoa" ? "Cho phép dùng thẻ trở lại?" : "Khoá thẻ: không dùng được cho tới khi mở lại."} an={{ the_id: id, trang_thai: t.trang_thai === "khoa" ? "hoat_dong" : "khoa" }} nhanLuu="Xác nhận" action={doiTrangThaiThe} />}
       </TieuDeTrang>

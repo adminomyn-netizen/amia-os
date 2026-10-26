@@ -37,11 +37,11 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
     <>
       <TieuDeTrang tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)} · lập bởi {tenNv.get(h.nguoi_lap_id)}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
         <Link href={`/in/hoa-don/${id}`} target="_blank" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In hoá đơn</Link>
-        {coNo && coQuyen(nd.vaiTro, "no.thu") && (
+        {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
             truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC.filter((p) => p.gia_tri !== "the_tien"), batBuoc: true }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
         )}
-        {h.trang_thai !== "huy" && coQuyen(nd.vaiTro, "ban.huy") && (
+        {h.trang_thai !== "huy" && coQuyen(nd, "ban.huy") && (
           <NutHop kieu="phu" nhan="Huỷ hoá đơn" tieuDe="Huỷ hoá đơn" moTa="Huỷ sẽ hoàn lại các khoản đã thu (kể cả thẻ tiền), thu hồi thẻ đã bán và trả kho. Không huỷ được nếu thẻ đã được dùng." an={{ hoa_don_id: id }} nhanLuu="Huỷ hoá đơn"
             truong={[{ ten: "ly_do", nhan: "Lý do huỷ", loai: "nhieu_dong", batBuoc: true }]} action={huyHoaDon} />
         )}

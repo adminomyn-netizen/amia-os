@@ -17,7 +17,7 @@ const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn
 export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
   const sp = await searchParams;
-  const tien = coQuyen(nd.vaiTro, "baocao.tien");
+  const tien = coQuyen(nd, "baocao.tien");
   const tabs = TAB.filter((t) => tien || t.ma === "doanh-thu");
   const tab = tabs.some((t) => t.ma === sp.tab) ? sp.tab! : "doanh-thu";
   const { tu, den } = khoangNgay(sp.tu, sp.den);

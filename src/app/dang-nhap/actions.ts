@@ -16,7 +16,7 @@ export async function dangNhap(_: { loi?: string } | undefined, formData: FormDa
     await supabase.auth.signOut();
     return { loi: "Tài khoản này chưa được cấp quyền dùng phần mềm hoặc đã bị khoá. Nhờ chủ phòng khám kiểm tra." };
   }
-  redirect("/tong-quan");
+  redirect("/");
 }
 
 export async function dangXuat() {

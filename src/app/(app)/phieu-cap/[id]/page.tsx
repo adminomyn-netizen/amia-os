@@ -32,7 +32,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const ng = Number(nguong?.gia_tri ?? 5);
   const tt = TT_PHIEU[p.trang_thai];
-  const bsLC = (nv ?? []).filter((n) => ["bac_si", "chu", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const bsLC = (nv ?? []).filter((n) => ["bac_si", "chu", "giam_doc", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const tongCap = (dong ?? []).reduce((s, d) => s + Number(d.so_cap) * Number(d.don_gia ?? 0), 0);
   const tongDung = (dong ?? []).reduce((s, d) => s + (d.so_tra == null ? 0 : (Number(d.so_cap) - Number(d.so_tra)) * Number(d.don_gia ?? 0)), 0);
   const lamXong = p.trang_thai === "da_lam" || p.trang_thai === "da_doi_chieu";
@@ -40,19 +40,19 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
   return (
     <>
       <TieuDeTrang tieuDe={p.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><span>{dv?.ten}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
-        {p.trang_thai === "cho_cap" && coQuyen(nd.vaiTro, "phieu.cap") && <NutNhanh chinh nhan="Kho cấp vật tư" action={capPhieu} du={{ id }} />}
-        {p.trang_thai === "da_cap" && coQuyen(nd.vaiTro, "phieu.nhan") && (
+        {p.trang_thai === "cho_cap" && coQuyen(nd, "phieu.cap") && <NutNhanh chinh nhan="Kho cấp vật tư" action={capPhieu} du={{ id }} />}
+        {p.trang_thai === "da_cap" && coQuyen(nd, "phieu.nhan") && (
           <NutHop nhan="KTV nhận vật tư" tieuDe="Xác nhận đã nhận vật tư" moTa="Kiểm đủ số lượng trên phiếu. Chưa nhận thì không mở ca được." an={{ id }} nhanLuu="Đã nhận đủ" truong={[{ ten: "dem_truoc", nhan: "Số đếm máy TRƯỚC ca (nếu máy có bộ đếm)", loai: "so", rong: true }]} action={nhanPhieu} />
         )}
-        {p.trang_thai === "da_nhan" && coQuyen(nd.vaiTro, "phieu.nhan") && <FormHoanTat id={id} nguongPct={ng} bacSi={bsLC} action={hoanTatPhieu}
+        {p.trang_thai === "da_nhan" && coQuyen(nd, "phieu.nhan") && <FormHoanTat id={id} nguongPct={ng} bacSi={bsLC} action={hoanTatPhieu}
           dong={(dong ?? []).map((d) => ({ id: d.id, ten: sp.get(d.san_pham_id)?.ten ?? "", don_vi: sp.get(d.san_pham_id)?.don_vi ?? "", so_cap: Number(d.so_cap), dinh_muc: Number(d.dinh_muc) }))} />}
-        {["da_cap", "da_nhan"].includes(p.trang_thai) && coQuyen(nd.vaiTro, "phieu.cap") && (
+        {["da_cap", "da_nhan"].includes(p.trang_thai) && coQuyen(nd, "phieu.cap") && (
           <NutHop kieu="phu" nhan="Cấp thêm" tieuDe="Cấp thêm vật tư giữa ca" moTa="Phải có lý do và bác sĩ xác nhận." an={{ id }} nhanLuu="Cấp thêm"
             truong={[{ ten: "san_pham_id", nhan: "Vật tư", loai: "chon", batBuoc: true, rong: true, luaChon: (spAll ?? []).map((s) => ({ gia_tri: s.id, nhan: `${s.ten} (${s.don_vi})` })) }, { ten: "so_luong", nhan: "Số cấp thêm", loai: "so", batBuoc: true },
               { ten: "bac_si_xn", nhan: "Bác sĩ xác nhận", loai: "chon", luaChon: bsLC, batBuoc: true }, { ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={capThemPhieu} />
         )}
-        {p.trang_thai === "da_lam" && coQuyen(nd.vaiTro, "phieu.doichieu") && <NutNhanh chinh nhan="Đã đối chiếu" action={doiChieuPhieu} du={{ id }} />}
-        {["cho_cap", "da_cap", "da_nhan"].includes(p.trang_thai) && coQuyen(nd.vaiTro, "phieu.cap") && <NutHop kieu="phu" nhan="Huỷ phiếu" tieuDe="Huỷ phiếu cấp" moTa="Vật tư đã cấp sẽ được hoàn lại kho." an={{ id }} nhanLuu="Huỷ phiếu" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={huyPhieu} />}
+        {p.trang_thai === "da_lam" && coQuyen(nd, "phieu.doichieu") && <NutNhanh chinh nhan="Đã đối chiếu" action={doiChieuPhieu} du={{ id }} />}
+        {["cho_cap", "da_cap", "da_nhan"].includes(p.trang_thai) && coQuyen(nd, "phieu.cap") && <NutHop kieu="phu" nhan="Huỷ phiếu" tieuDe="Huỷ phiếu cấp" moTa="Vật tư đã cấp sẽ được hoàn lại kho." an={{ id }} nhanLuu="Huỷ phiếu" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={huyPhieu} />}
       </TieuDeTrang>
       <HangChiSo muc={[{ nhan: "Bác sĩ chỉ định", so: tenNv.get(p.bac_si_id) ?? "" }, { nhan: "KTV nhận", so: tenNv.get(p.ktv_id ?? "") ?? "Chưa" }, { nhan: "Giá trị đã cấp", so: tienVN(Math.round(tongCap)) }, { nhan: "Giá trị dùng thật", so: lamXong ? tienVN(Math.round(tongDung)) : "Chưa làm xong" }]} />
       <div className="mt-8 space-y-8">

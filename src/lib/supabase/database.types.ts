@@ -819,6 +819,38 @@ export type Database = {
           },
         ]
       }
+      thong_bao_trang_thai: {
+        Row: {
+          cap_nhat_luc: string
+          dau_van: string
+          ma: string
+          nhan_vien_id: string
+          trang_thai: string
+        }
+        Insert: {
+          cap_nhat_luc?: string
+          dau_van: string
+          ma: string
+          nhan_vien_id: string
+          trang_thai: string
+        }
+        Update: {
+          cap_nhat_luc?: string
+          dau_van?: string
+          ma?: string
+          nhan_vien_id?: string
+          trang_thai?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "thong_bao_trang_thai_nhan_vien_id_fkey"
+            columns: ["nhan_vien_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       yeu_cau_lay_anh: {
         Row: {
           id: string

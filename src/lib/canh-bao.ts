@@ -3,7 +3,8 @@ import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, type CoQuyen } from "@/lib/quyen";
 
-export type CanhBao = { nhan: string; href: string };
+/** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
+export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
 export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null }): Promise<CanhBao[]> {
@@ -18,11 +19,11 @@ export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null }): P
     coQuyen(nd, "baocao.tien") ? loc(db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0)) : null,
     coQuyen(nd, "kho.xem") ? loc(db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true }).eq("duoi_muc_toi_thieu", true)) : null,
   ]);
-  if ((lich?.count ?? 0) > 0) ra.push({ nhan: `${lich!.count} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
-  if ((phieu?.count ?? 0) > 0) ra.push({ nhan: `${phieu!.count} phiếu cấp vật tư đang chờ kho cấp hoặc KTV nhận`, href: "/phieu-cap" });
-  if ((the?.count ?? 0) > 0) ra.push({ nhan: `${the!.count} thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)`, href: "/the" });
+  if ((lich?.count ?? 0) > 0) ra.push({ ma: "lich", nhan: `${lich!.count} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
+  if ((phieu?.count ?? 0) > 0) ra.push({ ma: "phieu", nhan: `${phieu!.count} phiếu cấp vật tư đang chờ kho cấp hoặc KTV nhận`, href: "/phieu-cap" });
+  if ((the?.count ?? 0) > 0) ra.push({ ma: "the", nhan: `${the!.count} thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)`, href: "/the" });
   const dsNo = (no?.data ?? []) as { con_no: number }[];
-  if (dsNo.length > 0) ra.push({ nhan: `${dsNo.length} hoá đơn còn nợ, tổng ${tienVN(dsNo.reduce((s, r) => s + Number(r.con_no), 0))}`, href: "/bao-cao?tab=no" });
-  if ((kho?.count ?? 0) > 0) ra.push({ nhan: `${kho!.count} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
+  if (dsNo.length > 0) ra.push({ ma: "no", nhan: `${dsNo.length} hoá đơn còn nợ, tổng ${tienVN(dsNo.reduce((s, r) => s + Number(r.con_no), 0))}`, href: "/bao-cao?tab=no" });
+  if ((kho?.count ?? 0) > 0) ra.push({ ma: "kho", nhan: `${kho!.count} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
   return ra;
 }

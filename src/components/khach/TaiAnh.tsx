@@ -4,7 +4,8 @@ import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { taiAnh } from "@/app/(app)/khach-hang/actions";
 import { Chon } from "@/components/ui/Chon";
-import { NUT_CHINH } from "@/components/ui/dinh-dang";
+import { NUT_CHINH, NUT_PHU } from "@/components/ui/dinh-dang";
+import { HopCamera } from "./HopCamera";
 
 /** Thu nhỏ ảnh về cạnh dài ≤ 1800 px (JPEG 85%) ngay trên máy trước khi tải lên: nhanh hơn và nhẹ kho. */
 async function thuNho(f: File): Promise<File> {
@@ -25,20 +26,29 @@ export function TaiAnh({ khachId }: { khachId: string }) {
   const [loai, setLoai] = useState("truoc");
   const [loi, setLoi] = useState("");
   const [dang, bat] = useTransition();
+  const mayAnh = useRef<HTMLInputElement>(null);
+  const [camera, setCamera] = useState(false);
+  /** Thu nhỏ rồi lưu một ảnh vào hồ sơ khách; trả về lời báo lỗi (hoặc null nếu lưu được). */
+  const luuMot = async (f: File): Promise<string | null> => {
+    const fd = new FormData();
+    fd.set("khach_id", khachId);
+    fd.set("loai", loai);
+    fd.set("tep", await thuNho(f));
+    const kq = await taiAnh(fd);
+    if (!kq.loi) router.refresh();
+    return kq.loi ?? null;
+  };
   const chon = (e: React.ChangeEvent<HTMLInputElement>) => {
     const ds = Array.from(e.target.files ?? []);
+    const nguon = e.target;
     if (!ds.length) return;
     setLoi("");
     bat(async () => {
       for (const f of ds) {
-        const fd = new FormData();
-        fd.set("khach_id", khachId);
-        fd.set("loai", loai);
-        fd.set("tep", await thuNho(f));
-        const kq = await taiAnh(fd);
-        if (kq.loi) { setLoi(kq.loi); break; }
+        const e1 = await luuMot(f);
+        if (e1) { setLoi(e1); break; }
       }
-      if (ref.current) ref.current.value = "";
+      nguon.value = "";
       router.refresh();
     });
   };
@@ -48,7 +58,10 @@ export function TaiAnh({ khachId }: { khachId: string }) {
         <Chon ariaLabel="Loại ảnh" giaTri={loai} onDoi={setLoai} luaChon={[{ gia_tri: "truoc", nhan: "Trước điều trị" }, { gia_tri: "sau", nhan: "Sau điều trị" }, { gia_tri: "khac", nhan: "Khác" }]} />
       </div>
       <input ref={ref} type="file" accept="image/jpeg,image/png,image/webp" multiple className="sr-only" id="chon-anh" onChange={chon} />
+      <input ref={mayAnh} type="file" accept="image/*" capture="environment" className="sr-only" aria-hidden tabIndex={-1} onChange={chon} />
       <button type="button" className={NUT_CHINH} disabled={dang} onClick={() => ref.current?.click()}>{dang ? "Đang tải ảnh" : "Tải ảnh lên"}</button>
+      <button type="button" className={NUT_PHU} disabled={dang} onClick={() => setCamera(true)}>Chụp bằng camera</button>
+      <HopCamera mo={camera} dong={() => setCamera(false)} luu={luuMot} dungCameraMay={() => setTimeout(() => mayAnh.current?.click(), 0)} />
       {loi && <span role="alert" className="text-[13px] text-loi">{loi}</span>}
     </div>
   );

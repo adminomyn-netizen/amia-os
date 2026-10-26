@@ -83,12 +83,9 @@ export function Pos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNha
   return (
     <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
       <section className="min-w-0">
-        <label className="mb-4 block text-[13px] text-muc-2">Chi nhánh bán
-          <select value={cnId} disabled={khoaChiNhanh} onChange={(e) => setCnId(e.target.value)} className={`${O_NHAP} mt-1`}>
-            {!cnId && <option value="">Chọn chi nhánh</option>}
-            {chiNhanh.map((c) => <option key={c.id} value={c.id}>{c.ten}</option>)}
-          </select>
-        </label>
+        <div className="mb-4 text-[13px] text-muc-2"><span className="mb-1 block">Chi nhánh bán</span>
+          <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={setCnId} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
+        </div>
         <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
         <div className="mt-5 flex gap-1 border-b border-vien" role="tablist">
           {LOAI_TAB.map((t) => (

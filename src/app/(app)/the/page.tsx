@@ -41,7 +41,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const { data: ks } = idsK.length ? await db.from("khach_hang").select("id, ho_ten, ma, dien_thoai").in("id", idsK) : { data: [] };
   const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
   const tenGoi = new Map((goi ?? []).map((g) => [g.id, g.ten]));
-  let ds = the ?? [];
+  const ds = the ?? [];
   const nvLC = (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
 

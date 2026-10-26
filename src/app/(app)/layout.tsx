@@ -16,7 +16,7 @@ export default async function KhungUngDung({ children }: { children: React.React
     <div className="flex min-h-screen w-full">
       <Sidebar muc={muc} thuGonBanDau={thuGon} />
       <div className="flex min-h-screen min-w-0 flex-1 flex-col">
-        <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chiNhanh={chiNhanh} anh={nd.anhDaiDien} muc={muc} />
+        <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} muc={muc} />
         <main className="flex-1 px-4 pb-16 pt-6 lg:px-12 lg:py-8">{children}</main>
       </div>
     </div>

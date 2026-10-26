@@ -9,6 +9,7 @@ import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { CaiUngDung } from "@/components/trang-chu/CaiUngDung";
+import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 
 const LOI_TAT = [
   { href: "/lich-hen", nhan: "Đặt lịch hẹn", q: "lich.sua" as const }, { href: "/ban-hang", nhan: "Bán hàng", q: "ban.tao" as const },
@@ -87,7 +88,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         </section>
       )}
 
-      <CaiUngDung />
+      <div className="grid gap-4 lg:grid-cols-2"><BatThongBao /><CaiUngDung /></div>
 
       <section aria-label="Tất cả chức năng">
         <h2 className="mb-3 text-[15px] font-semibold text-muc">Tất cả chức năng</h2>

@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { guiChoNhanVien, nguoiCoQuyen } from "@/lib/push";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
@@ -27,7 +29,14 @@ export async function taoPhieu(fd: FormData): Promise<KQ> {
   try { chiDinh = JSON.parse(chuoi(fd, "chi_dinh") || "[]"); } catch { return { loi: "Chỉ định vật tư không đọc được." }; }
   const { data, error } = await db.rpc("tao_phieu_cap", { p_chi_nhanh: chiNhanh, p_lich: tuyChon(lich), p_khach: khach, p_dich_vu: dv, p_bac_si: chuoi(fd, "bac_si_id"), p_ktv: tuyChon(chuoi(fd, "ktv_id")), p_chi_dinh: chiDinh as never, p_nguoi: nd.nhanVienId });
   lamMoi();
-  return error ? { loi: thongBaoLoi(error) } : { ok: true, id: String(data) };
+  if (error) return { loi: thongBaoLoi(error) };
+  const phieuId = String(data);
+  // Báo cho kho (người có quyền cấp vật tư của chi nhánh này) để cấp trước ca.
+  after(async () => {
+    const [nguoi, { data: k }, { data: d }] = await Promise.all([nguoiCoQuyen("phieu.cap", chiNhanh), db.from("khach_hang").select("ho_ten").eq("id", khach).maybeSingle(), db.from("dich_vu").select("ten").eq("id", dv).maybeSingle()]);
+    await guiChoNhanVien(nguoi.filter((x) => x !== nd.nhanVienId), { tieuDe: "Phiếu cấp vật tư mới", noiDung: `${d?.ten ?? "Dịch vụ"} · ${k?.ho_ten ?? "khách"}. Cần cấp trước ca.`, url: `/phieu-cap/${phieuId}`, tag: `phieu-${phieuId}` });
+  });
+  return { ok: true, id: phieuId };
 }
 
 export async function capPhieu(fd: FormData): Promise<KQ> {
@@ -35,7 +44,14 @@ export async function capPhieu(fd: FormData): Promise<KQ> {
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const { error } = await sb().rpc("cap_phieu", { p_id: chuoi(fd, "id"), p_nguoi: nd.nhanVienId });
   lamMoi(chuoi(fd, "id"));
-  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+  if (error) return { loi: thongBaoLoi(error) };
+  // Báo cho bác sĩ chỉ định và KTV thực hiện: vật tư đã sẵn sàng để nhận.
+  const id = chuoi(fd, "id");
+  after(async () => {
+    const { data: p } = await sb().from("phieu_cap").select("ma, ktv_id, bac_si_id").eq("id", id).maybeSingle();
+    if (p) await guiChoNhanVien([p.ktv_id, p.bac_si_id].filter((x): x is string => !!x && x !== nd.nhanVienId), { tieuDe: "Vật tư đã được cấp", noiDung: `Phiếu ${p.ma} đã cấp xong, nhận tại kho để vào ca.`, url: `/phieu-cap/${id}`, tag: `phieu-${id}` });
+  });
+  return { ok: true };
 }
 
 export async function nhanPhieu(fd: FormData): Promise<KQ> {

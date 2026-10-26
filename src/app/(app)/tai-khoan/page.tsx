@@ -4,6 +4,7 @@ import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { NutHop } from "@/components/ui/BieuMau";
 import { AnhDaiDien } from "@/components/layout/AnhDaiDien";
 import { DoiAnhDaiDien } from "@/components/tai-khoan/DoiAnhDaiDien";
+import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 import { doiMatKhau } from "./actions";
 
 export default async function TrangTaiKhoan({ searchParams }: { searchParams: Promise<{ "doi-mat-khau"?: string }> }) {
@@ -33,6 +34,7 @@ export default async function TrangTaiKhoan({ searchParams }: { searchParams: Pr
           </div>
         </section>
       </div>
+      {!nd.phaiDoiMatKhau && <div className="mt-6 max-w-3xl"><BatThongBao /></div>}
     </>
   );
 }

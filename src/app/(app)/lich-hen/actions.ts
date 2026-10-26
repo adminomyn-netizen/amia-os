@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { guiChoNhanVien } from "@/lib/push";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
@@ -45,6 +47,13 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   }
   await db.from("lich_hen_dich_vu").delete().eq("lich_id", lichId);
   await db.from("lich_hen_dich_vu").insert(dv.map((d) => ({ lich_id: lichId, dich_vu_id: d })));
+  // Báo cho người được giao lịch (trừ khi chính họ vừa tạo). Gửi sau khi trả lời để không làm chậm màn hình.
+  if (nv && nv !== nd.nhanVienId) {
+    after(async () => {
+      const { data: k } = await db.from("khach_hang").select("ho_ten").eq("id", khachId).maybeSingle();
+      await guiChoNhanVien([nv], { tieuDe: id ? "Lịch hẹn của bạn thay đổi" : "Bạn có lịch hẹn mới", noiDung: `${gio} ngày ${ngay.split("-").reverse().join("/")} · ${k?.ho_ten ?? "khách"}`, url: "/lich-hen", tag: `lich-${lichId}` });
+    });
+  }
   lamMoi();
   return { ok: true };
 }

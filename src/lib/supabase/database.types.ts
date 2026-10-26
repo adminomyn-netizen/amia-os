@@ -208,6 +208,39 @@ export type Database = {
         }
         Relationships: []
       }
+      dang_ky_thong_bao: {
+        Row: {
+          auth: string
+          endpoint: string
+          gui_cuoi_luc: string | null
+          id: string
+          nhan_vien_id: string
+          p256dh: string
+          tao_luc: string
+          thiet_bi: string | null
+        }
+        Insert: {
+          auth: string
+          endpoint: string
+          gui_cuoi_luc?: string | null
+          id?: string
+          nhan_vien_id: string
+          p256dh: string
+          tao_luc?: string
+          thiet_bi?: string | null
+        }
+        Update: {
+          auth?: string
+          endpoint?: string
+          gui_cuoi_luc?: string | null
+          id?: string
+          nhan_vien_id?: string
+          p256dh?: string
+          tao_luc?: string
+          thiet_bi?: string | null
+        }
+        Relationships: []
+      }
       dich_vu: {
         Row: {
           don_vi_tinh: string

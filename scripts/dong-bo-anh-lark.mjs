@@ -87,9 +87,16 @@ for (const a of ds) {
     xong++;
     console.log(`xong ${a.id} ${((Date.now() - t0) / 1000).toFixed(1)}s`);
   } catch (e) {
+    const m = String(e.stderr || e.message || e);
+    // Lark giới hạn tốc độ: không phải lỗi của ảnh → không tính lần thử, trả về hàng đợi và nghỉ hết đợt này (30 giây sau chạy lại).
+    if (/429|frequen|rate|too many|limit/i.test(m)) {
+      await sb.from("khach_anh").update({ lark_trang_thai: "cho", lark_so_lan: a.lark_so_lan }).eq("id", a.id);
+      console.error(`Lark giới hạn tốc độ, nghỉ đợt này (${a.id})`);
+      break;
+    }
     hong++;
-    await sb.from("khach_anh").update({ lark_trang_thai: "loi", lark_loi: String(e.message ?? e).slice(0, 500) }).eq("id", a.id);
-    console.error(`lỗi ${a.id}:`, String(e.message ?? e).slice(0, 200));
+    await sb.from("khach_anh").update({ lark_trang_thai: "loi", lark_loi: m.slice(0, 500) }).eq("id", a.id);
+    console.error(`lỗi ${a.id}:`, m.slice(0, 200));
   }
 }
 rmSync(tam, { recursive: true, force: true });

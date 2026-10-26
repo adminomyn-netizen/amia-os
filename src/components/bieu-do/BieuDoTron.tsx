@@ -14,10 +14,9 @@ export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: numb
   const ds = duLieu.filter((d) => d.gia_tri > 0);
   const tong = ds.reduce((s, d) => s + d.gia_tri, 0);
   if (tong <= 0) return <p className="py-8 text-center text-[14px] text-muc-3">Chưa có dữ liệu để vẽ.</p>;
-  let goc = 0;
   const lat = ds.map((d, i) => {
-    const a0 = goc, a1 = goc + (d.gia_tri / tong) * 2 * Math.PI;
-    goc = a1;
+    const truoc = ds.slice(0, i).reduce((t, x) => t + x.gia_tri, 0);
+    const a0 = (truoc / tong) * 2 * Math.PI, a1 = ((truoc + d.gia_tri) / tong) * 2 * Math.PI;
     return { ...d, mau: MAU_BIEU_DO[i % MAU_BIEU_DO.length], a0, a1, pt: (d.gia_tri / tong) * 100 };
   });
   const rTrong = kieu === "vong" ? 50 : 0;

@@ -45,7 +45,7 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Không có hoá đơn trong khoảng này."
         cot={[
           { nhan: "Mã", hienThi: (r) => <Link href={`/hoa-don/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
-          { nhan: "Khách hàng", hienThi: (r) => (r.khach_id ? tenK.get(r.khach_id)?.ho_ten ?? "" : "Khách lẻ") }, { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_hd) },
+          { chinh: true, nhan: "Khách hàng", hienThi: (r) => (r.khach_id ? tenK.get(r.khach_id)?.ho_ten ?? "" : "Khách lẻ") }, { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_hd) },
           { nhan: "Người lập", hienThi: (r) => tenNv.get(r.nguoi_lap_id) ?? "" },
           { nhan: "Phải thu", hienThi: (r) => tienVN(r.tong_phai_thu), phai: true }, { nhan: "Đã thu", hienThi: (r) => tienVN(r.da_thu), phai: true },
           { nhan: "Còn nợ", hienThi: (r) => (r.trang_thai === "hoan_thanh" && Number(r.con_no) > 0 ? <span className="font-medium text-canh-bao">{tienVN(r.con_no)}</span> : ""), phai: true },

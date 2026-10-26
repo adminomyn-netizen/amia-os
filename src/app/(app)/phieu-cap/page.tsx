@@ -80,7 +80,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
         <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu cấp nào trong ngày."
           cot={[
             { nhan: "Mã phiếu", hienThi: (r) => <Link href={`/phieu-cap/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> }, { nhan: "Giờ", hienThi: (r) => gioVN(r.tao_luc) },
-            { nhan: "Khách", hienThi: (r) => tenK.get(r.khach_id) ?? "" }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
+            { chinh: true, nhan: "Khách", hienThi: (r) => tenK.get(r.khach_id) ?? "" }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
             { nhan: "Bác sĩ", hienThi: (r) => tenNv.get(r.bac_si_id) ?? "" }, { nhan: "KTV", hienThi: (r) => tenNv.get(r.ktv_id ?? "") ?? "" },
             { nhan: "Giá trị cấp", hienThi: (r) => tienVN((dong ?? []).filter((d) => d.phieu_id === r.id).reduce((s, d) => s + Number(d.so_cap) * Number(d.don_gia ?? 0), 0)), phai: true },
             { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_PHIEU[r.trang_thai].kieu}>{TT_PHIEU[r.trang_thai].nhan}</NhanTrangThai> },

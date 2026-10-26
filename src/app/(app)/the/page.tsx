@@ -56,7 +56,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
       <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có thẻ nào."
         cot={[
           { nhan: "Mã thẻ", hienThi: (r) => <Link href={`/the/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
-          { nhan: "Khách", hienThi: (r) => { const k = tenK.get(r.khach_id ?? ""); return k ? <Link href={`/khach-hang/${k.id}`} className="text-muc hover:underline">{k.ho_ten}</Link> : ""; } },
+          { chinh: true, nhan: "Khách", hienThi: (r) => { const k = tenK.get(r.khach_id ?? ""); return k ? <Link href={`/khach-hang/${k.id}`} className="text-muc hover:underline">{k.ho_ten}</Link> : ""; } },
           { nhan: "Gói", hienThi: (r) => tenGoi.get(r.goi_id ?? "") ?? "" },
           { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
           { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },

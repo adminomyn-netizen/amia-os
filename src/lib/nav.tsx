@@ -1,11 +1,12 @@
-import { LayoutDashboard, CalendarDays, ShoppingBag, Receipt, Users, CreditCard, PackageCheck, Warehouse, BarChart3, ListTree, UserCog, FlaskConical, HandCoins } from "lucide-react";
+import { Home, LayoutDashboard, CalendarDays, ShoppingBag, Receipt, Users, CreditCard, PackageCheck, Warehouse, BarChart3, ListTree, UserCog, FlaskConical, HandCoins } from "lucide-react";
 import type { ComponentType } from "react";
 import { coQuyen, type CoQuyen, type Quyen } from "@/lib/quyen";
 
 export type MucMenu = { ten: string; duong_dan: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; nhom: string; quyen: Quyen | null; moTa: string };
 
 export const MENU: MucMenu[] = [
-  { ten: "Tổng quan", duong_dan: "/tong-quan", icon: LayoutDashboard, nhom: "Hằng ngày", quyen: "tongquan.xem", moTa: "Việc hôm nay, doanh thu, cảnh báo" },
+  { ten: "Trang chủ", duong_dan: "/trang-chu", icon: Home, nhom: "Hằng ngày", quyen: null, moTa: "Việc của tôi hôm nay, hiệu suất, lối tắt" },
+  { ten: "Tổng quan", duong_dan: "/tong-quan", icon: LayoutDashboard, nhom: "Hằng ngày", quyen: "tongquan.xem", moTa: "Bảng điều hành: doanh thu, khách, thẻ, kho" },
   { ten: "Lịch hẹn", duong_dan: "/lich-hen", icon: CalendarDays, nhom: "Hằng ngày", quyen: "lich.xem", moTa: "Đặt, đổi, huỷ lịch; mở ca" },
   { ten: "Bán hàng", duong_dan: "/ban-hang", icon: ShoppingBag, nhom: "Hằng ngày", quyen: "ban.tao", moTa: "Thu ngân: dịch vụ, thẻ, sản phẩm" },
   { ten: "Hoá đơn", duong_dan: "/hoa-don", icon: Receipt, nhom: "Hằng ngày", quyen: "ban.xem", moTa: "Danh sách hoá đơn, thu nợ, huỷ" },

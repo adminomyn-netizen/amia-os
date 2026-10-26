@@ -85,7 +85,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     noiDung = (
       <Bang duLieu={sp ?? []} khoa={(r) => r.id} trong="Chưa có sản phẩm hoặc vật tư."
         cot={[
-          { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
+          { nhan: "Mã", hienThi: (r) => r.ma }, { chinh: true, nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => (r.don_vi_mua ? `${r.don_vi} (mua: ${r.don_vi_mua} = ${soVN(r.he_so_quy_doi)})` : r.don_vi) },
           ...(xemVon ? [{ nhan: "Giá vốn / đv", hienThi: (r: NonNullable<typeof sp>[number]) => (r.gia_nhap_don_vi == null ? "chưa có" : tienVN(r.gia_nhap_don_vi)), phai: true }] : []), { nhan: "Giá bán", hienThi: (r) => (r.ban_le ? tienVN(r.gia_ban) : ""), phai: true },
           { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },

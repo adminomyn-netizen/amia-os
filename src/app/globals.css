@@ -201,9 +201,11 @@ body {
 .dong-ho-so { font-size: 24px; font-weight: 600; line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .dong-ho-so i { font-style: normal; padding: 0 2px; color: var(--menu-nhan); animation: nhap-nhay 1s steps(1) infinite; }
 .dong-ho-so b { font-weight: 600; color: var(--menu-nhan); }
-.dong-ho-phu { display: flex; flex-direction: column; gap: 3px; padding-left: 14px; border-left: 1px solid rgb(255 255 255 / 0.16); line-height: 1.1; }
+.dong-ho-phu { display: none; flex-direction: column; gap: 3px; padding-left: 14px; border-left: 1px solid rgb(255 255 255 / 0.16); line-height: 1.1; }
 .dong-ho-nhan { font-size: 10px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--menu-chu-phu); }
 .dong-ho-ngay { font-size: 13px; color: var(--menu-chu); text-transform: capitalize; }
+@media (min-width: 768px) { .dong-ho-phu { display: flex; } }
+@media (max-width: 767px) { .dong-ho { padding: 6px 11px; } .dong-ho-so { font-size: 19px; } }
 @keyframes nhap-nhay { 50% { opacity: 0.25; } }
 
 .vong-anh {
@@ -213,6 +215,42 @@ body {
   box-shadow: 0 0 0 2px #fff, 0 0 0 3.5px var(--dat), 0 6px 12px -3px rgb(0 86 76 / 0.45);
 }
 .vong-anh img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+
+/* ===== Điện thoại: bảng thành thẻ, ô chạm lớn, thanh tab dưới đáy, vùng an toàn của tai thỏ/thanh Home ===== */
+@media (max-width: 767px) {
+  .bang-the { min-width: 0 !important; }
+  .bang-the thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .bang-the, .bang-the tbody, .bang-the tr, .bang-the td { display: block; width: 100%; }
+  .bang-the tr { display: flex; flex-direction: column; height: auto !important; margin-bottom: 12px; padding: 6px 16px; background: linear-gradient(180deg, #fff, #fdfbf7); border: 1px solid var(--vien); border-radius: var(--radius-the); box-shadow: var(--sang-vien), var(--bong-1); }
+  .bang-the td { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 8px 0 !important; text-align: right; border: 0; }
+  .bang-the td::before { content: attr(data-label); flex-shrink: 0; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muc-3); text-align: left; }
+  .bang-the td:first-child { font-size: 15px; font-weight: 500; color: var(--muc); }
+  .bang-the td[data-chinh] { order: -1; justify-content: flex-start; padding: 10px 0 12px !important; margin-bottom: 4px; font-size: 17px; font-weight: 600; color: var(--muc); border-bottom: 1px solid var(--vien); }
+  .bang-the td[data-chinh]::before { display: none; }
+  .bang-the td a { display: inline-block; padding-block: 8px; }
+  .bang-the td[data-label=""] { justify-content: flex-start; flex-wrap: wrap; gap: 6px 18px; margin-top: 4px; padding-top: 12px !important; border-top: 1px solid var(--vien); }
+  .bang-the td[data-label=""]::before { display: none; }
+}
+@media (pointer: coarse) {
+  main button:not([role="switch"]):not([role="checkbox"]):not([role="option"]) { min-height: 40px; }
+  main input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) { font-size: 16px; } /* iOS không tự phóng to khi chạm ô nhập */
+}
+.thanh-tab {
+  position: fixed; z-index: 40; left: 12px; right: 12px; bottom: calc(10px + env(safe-area-inset-bottom));
+  display: flex; align-items: stretch; gap: 2px; padding: 6px; border-radius: var(--radius-hop);
+  background: var(--gradient-toi);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), inset 0 0 0 1px rgb(217 184 119 / 0.28), 0 16px 30px -10px rgb(6 26 23 / 0.7);
+}
+.thanh-tab a, .thanh-tab button {
+  position: relative; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+  min-height: 52px; padding: 6px 2px; border-radius: var(--radius-vua); font-size: 11px; line-height: 1.1; color: var(--menu-chu);
+  transition: background-color 160ms ease-out, color 160ms ease-out;
+}
+.thanh-tab a[aria-current="page"] { color: #fff; background: linear-gradient(180deg, rgb(217 184 119 / 0.28), rgb(255 255 255 / 0.1)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.16); }
+.thanh-tab a[aria-current="page"] svg { color: var(--menu-nhan); }
+@media (min-width: 1024px) { .thanh-tab { display: none; } }
+.bang-duoi { padding-bottom: env(safe-area-inset-bottom); }
 
 /* Tiêu đề: cùng họ Be Vietnam Pro, đậm vừa, khít chữ. Không dùng chữ có chân. */
 .chu-tieu-de {

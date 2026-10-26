@@ -3,9 +3,12 @@ export type Cot<T> = {
   hienThi: (dong: T) => React.ReactNode;
   /** căn phải cho cột số */
   phai?: boolean;
+  /** cột tên/tiêu đề: trên điện thoại hiện to ở đầu thẻ (mặc định cột đầu tiên) */
+  chinh?: boolean;
 };
 
-/** Bảng dữ liệu kiểu biên tập: tiêu đề chữ hoa nhỏ, kẻ ngang mảnh, hàng 52 px, rê chuột nền be. */
+/** Bảng dữ liệu kiểu biên tập: tiêu đề chữ hoa nhỏ, kẻ ngang mảnh, hàng 52 px, rê chuột nền be.
+ *  Trên điện thoại (<768px) mỗi hàng tự thành một thẻ "nhãn: giá trị" (CSS .bang-the dùng data-label) — một bản DOM duy nhất nên các nút/hộp thoại bên trong không bị nhân đôi. */
 export function Bang<T>({
   cot,
   duLieu,
@@ -19,7 +22,7 @@ export function Bang<T>({
 }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[560px] text-left text-[14px]">
+      <table className="bang-the w-full min-w-[560px] text-left text-[14px]">
         <thead>
           <tr className="nhan-muc border-b border-vien">
             {cot.map((c, i) => (
@@ -33,7 +36,7 @@ export function Bang<T>({
           {duLieu.map((dong) => (
             <tr key={khoa(dong)} className="h-[52px] border-b border-vien transition-colors hover:bg-giay-tram/60">
               {cot.map((c, i) => (
-                <td key={`${c.nhan}-${i}`} className={`py-2 pr-4 text-muc-2 ${c.phai ? "text-right tabular-nums" : ""}`}>
+                <td key={`${c.nhan}-${i}`} data-label={c.nhan} data-chinh={c.chinh ? "" : undefined} className={`py-2 pr-4 text-muc-2 ${c.phai ? "text-right tabular-nums" : ""}`}>
                   {c.hienThi(dong)}
                 </td>
               ))}

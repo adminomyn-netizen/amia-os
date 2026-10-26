@@ -60,7 +60,7 @@ export default async function TrangKhachHang({ searchParams }: { searchParams: P
       <LocKhach nhanVien={nvLC} nguon={NGUON} trangThai={TRANG_THAI_KHACH_LC} hang={(hang ?? []).map((h) => ({ gia_tri: h.ten, nhan: h.ten }))} />
       <Bang duLieu={ds ?? []} khoa={(r) => r.id ?? ""} trong="Không có khách nào khớp. Thử bỏ bớt bộ lọc."
         cot={[
-          { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Khách hàng", hienThi: (r) => <Link href={`/khach-hang/${r.id}`} className="font-medium text-nhan-dam underline-offset-4 hover:underline">{r.ho_ten}</Link> },
+          { nhan: "Mã", hienThi: (r) => r.ma }, { chinh: true, nhan: "Khách hàng", hienThi: (r) => <Link href={`/khach-hang/${r.id}`} className="font-medium text-nhan-dam underline-offset-4 hover:underline">{r.ho_ten}</Link> },
           { nhan: "Điện thoại", hienThi: (r) => r.dien_thoai }, { nhan: "Nguồn", hienThi: (r) => NHAN_NGUON[r.nguon ?? ""] ?? r.nguon },
           { nhan: "Trạng thái", hienThi: (r) => { const t = TRANG_THAI_KHACH[r.trang_thai ?? "lead"]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
           { nhan: "Hạng", hienThi: (r) => r.hang ?? "" }, { nhan: "Phụ trách", hienThi: (r) => tenNv.get(r.nguoi_phu_trach_id ?? "") ?? "" },

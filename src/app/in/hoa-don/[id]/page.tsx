@@ -20,7 +20,7 @@ export default async function InHoaDon({ params }: { params: Promise<{ id: strin
     db.from("nhan_vien").select("ho_ten").eq("id", h.nguoi_lap_id).maybeSingle(),
   ]);
   return (
-    <main className="mx-auto max-w-[560px] bg-white px-6 py-8 text-[13px] text-muc">
+    <main data-theme="light" className="mx-auto max-w-[560px] bg-white px-6 py-8 text-[13px] text-muc">
       <div className="khong-in mb-4 flex justify-end"><NutIn /></div>
       <header className="text-center">
         <h1 className="chu-tieu-de text-[22px]">{cn?.ten ?? "AMIA"}</h1>

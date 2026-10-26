@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronsLeft, ChevronsRight, Menu, X } from "lucide-react";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useState } from "react";
 import { gomTheoNhom, MENU } from "@/lib/nav";
 
@@ -66,26 +66,5 @@ export function Sidebar({ muc, thuGonBanDau }: { muc: MucDto[]; thuGonBanDau: bo
         <span className={gon ? "sr-only" : ""}>Thu gọn menu</span>
       </button>
     </aside>
-  );
-}
-
-export function MobileNav({ muc }: { muc: MucDto[] }) {
-  const [mo, setMo] = useState(false);
-  return (
-    <>
-      <button type="button" onClick={() => setMo(true)} aria-label="Mở menu" className="p-2 text-muc lg:hidden"><Menu strokeWidth={1.6} className="h-6 w-6" /></button>
-      {mo && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <button type="button" aria-label="Đóng menu" className="absolute inset-0 bg-muc/40" onClick={() => setMo(false)} />
-          <aside className="thanh-ben relative flex h-full w-[280px] max-w-[85vw] flex-col text-menu-chu">
-            <div className="flex h-[76px] items-center justify-between px-6">
-              <Logo />
-              <button type="button" onClick={() => setMo(false)} aria-label="Đóng" className="p-2 text-menu-chu-phu"><X strokeWidth={1.6} className="h-5 w-5" /></button>
-            </div>
-            <DanhSach muc={muc} dong={() => setMo(false)} />
-          </aside>
-        </div>
-      )}
-    </>
   );
 }

@@ -22,7 +22,7 @@ export function DuongMien({ nhan, chuoi, dinhDang = (n: number) => n.toLocaleStr
             <g key={c.ten}>
               <path d={`${d} L${x(c.gia_tri.length - 1).toFixed(1)} ${T + cao} L${x(0).toFixed(1)} ${T + cao} Z`} fill={`url(#gd-mien-${k})`} />
               <path d={d} fill="none" stroke={m} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" />
-              {c.gia_tri.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r="3" fill="#fff" stroke={m} strokeWidth="1.8"><title>{`${nhan[i]} · ${c.ten}: ${dinhDang(v)}`}</title></circle>)}
+              {c.gia_tri.map((v, i) => <circle key={i} cx={x(i)} cy={y(v)} r="3" fill="var(--giay-sang)" stroke={m} strokeWidth="1.8"><title>{`${nhan[i]} · ${c.ten}: ${dinhDang(v)}`}</title></circle>)}
             </g>
           );
         })}

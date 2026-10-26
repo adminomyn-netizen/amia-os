@@ -26,7 +26,7 @@ export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: numb
         {lat.length === 1 ? (
           <circle cx={C} cy={C} r={rTrong ? (R + rTrong) / 2 : R / 2} fill="none" stroke={lat[0].mau} strokeWidth={rTrong ? R - rTrong : R} />
         ) : (
-          lat.map((l) => <path key={l.nhan} d={cung(l.a0, l.a1, R, rTrong)} fill={l.mau} stroke="#fff" strokeWidth="2" strokeLinejoin="round"><title>{`${l.nhan}: ${dinhDang(l.gia_tri)} (${l.pt.toFixed(1)}%)`}</title></path>)
+          lat.map((l) => <path key={l.nhan} d={cung(l.a0, l.a1, R, rTrong)} fill={l.mau} stroke="var(--giay-sang)" strokeWidth="2" strokeLinejoin="round"><title>{`${l.nhan}: ${dinhDang(l.gia_tri)} (${l.pt.toFixed(1)}%)`}</title></path>)
         )}
         {kieu === "vong" && (
           <g textAnchor="middle">

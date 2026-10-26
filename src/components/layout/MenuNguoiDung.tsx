@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, UserCog } from "lucide-react";
 import { dangXuat } from "@/app/dang-nhap/actions";
 import { AnhDaiDien } from "./AnhDaiDien";
+import { ChonGiaoDien } from "./ChonGiaoDien";
 
 type Props = { hoTen: string; vaiTro: string; chucDanh: string | null; email: string; chiNhanh: string | null; anh: string | null };
 
@@ -48,6 +49,7 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh }:
             <div><dt className="nhan-muc">Email đăng nhập</dt><dd className="mt-0.5 break-all text-muc-2">{email}</dd></div>
             <div><dt className="nhan-muc">Chi nhánh</dt><dd className="mt-0.5 text-muc-2">{chiNhanh ?? "Mọi chi nhánh"}</dd></div>
           </dl>
+          <ChonGiaoDien />
           <div className="border-t border-vien p-2">
             <Link href="/tai-khoan" role="menuitem" onClick={() => setMo(false)} className="flex items-center gap-3 rounded-nho px-3 py-2.5 text-[14px] text-muc hover:bg-giay-tram">
               <UserCog strokeWidth={1.6} className="h-[18px] w-[18px] text-muc-3" aria-hidden />Thông tin cá nhân & đổi mật khẩu

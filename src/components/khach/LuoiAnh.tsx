@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { linkAnhMoi, trangAnh } from "@/app/(app)/khach-hang/actions";
-import { SO_ANH_TRANG, type AnhKhach } from "@/lib/anh-khach";
+import type { AnhKhach } from "@/lib/anh-khach";
 import { ngayVN } from "@/lib/dinh-dang";
 
 const LOAI_ANH: Record<string, string> = { truoc: "Trước", sau: "Sau", khac: "Khác" };
@@ -18,12 +18,15 @@ export function LuoiAnh({ khachId, banDau, tong }: { khachId: string; banDau: An
   const [ds, setDs] = useState(() => gop(new Map(), banDau));
   const [truoc, setTruoc] = useState(banDau);
   const [viTri, setViTri] = useState(banDau.length); // số ảnh đã xin từ server (không phụ thuộc trùng lặp)
-  const [het, setHet] = useState(false);
+  const [het, setHet] = useState(false); // server trả trang rỗng: tạm hết ảnh; mở lại khi tổng số ảnh đổi (ảnh cũ đang về dần)
+  const [tongTruoc, setTongTruoc] = useState(tong);
   const [dangTai, setDangTai] = useState(false);
   const [loiTai, setLoiTai] = useState(false);
   const day = useRef<HTMLDivElement>(null);
   const daThuLai = useRef(new Set<string>());
   if (banDau !== truoc) { setTruoc(banDau); setDs(gop(ds, banDau)); } // trang được làm mới (ảnh cũ mới về): gộp ảnh mới vào, giữ phần đã cuộn
+
+  if (tong !== tongTruoc) { setTongTruoc(tong); setHet(false); }
 
   const conNua = !het && !loiTai && viTri < tong;
   useEffect(() => {
@@ -35,7 +38,7 @@ export function LuoiAnh({ khachId, banDau, tong }: { khachId: string; banDau: An
       setDangTai(true);
       void trangAnh(khachId, viTri).then((r) => {
         if (r.loi) setLoiTai(true);
-        else { setDs((c) => gop(c, r.ds)); setViTri((v) => v + r.ds.length); if (r.ds.length < SO_ANH_TRANG) setHet(true); }
+        else { setDs((c) => gop(c, r.ds)); setViTri((v) => v + r.ds.length); if (r.ds.length === 0) setHet(true); }
       }).catch(() => setLoiTai(true)).finally(() => setDangTai(false));
     }, { rootMargin: "900px 0px" });
     quanSat.observe(el);

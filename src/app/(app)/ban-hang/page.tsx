@@ -15,7 +15,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     db.from("goi_the").select("id, ten, gia, loai, so_buoi").eq("hoat_dong", true).order("ten"),
     db.from("san_pham").select("id, ten, gia_ban, nhom").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id").eq("hoat_dong", true).order("ho_ten"),
-    db.from("chi_nhanh").select("id").eq("hoat_dong", true).order("ma"),
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
   ]);
   const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
   const muc: MucBan[] = [
@@ -23,16 +23,17 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền" })),
     ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm" })),
   ];
-  type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string };
+  type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string };
   let khach: K | null = null;
-  if (khachId) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id").eq("id", khachId).maybeSingle()).data;
+  if (khachId) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", khachId).maybeSingle()).data;
   let dongBanDau: DongDon[] = [];
   let lichDung: string | null = null;
+  let cnLich: string | null = null;
   if (lichId) {
-    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id").eq("id", lichId).maybeSingle();
+    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id").eq("id", lichId).maybeSingle();
     if (l) {
-      lichDung = l.id;
-      if (!khach) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id").eq("id", l.khach_id).maybeSingle()).data;
+      lichDung = l.id; cnLich = l.chi_nhanh_id;
+      if (!khach) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", l.khach_id).maybeSingle()).data;
       const { data: ld } = await db.from("lich_hen_dich_vu").select("dich_vu_id, so_luong").eq("lich_id", l.id);
       dongBanDau = (ld ?? []).filter((x) => muc.some((m) => m.loai === "dich_vu" && m.id === x.dich_vu_id)).map((x) => ({
         loai: "dich_vu", ref: x.dich_vu_id, sl: x.so_luong, giam: 0,
@@ -40,11 +41,12 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
       }));
     }
   }
-  const chiNhanhId = nd.chiNhanhId ?? cn?.[0]?.id ?? "";
+  // Chi nhánh của đơn: người có chi nhánh cố định thì khoá theo đó; người xem mọi chi nhánh thì lấy theo lịch hẹn, rồi theo khách; không đoán, để trống bắt chọn.
+  const chiNhanhId = nd.chiNhanhId ?? cnLich ?? khach?.chi_nhanh_id ?? "";
   return (
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, ghi người hưởng, thu tiền nhiều lần rồi chốt đơn." />
-      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} lichId={lichDung}
+      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} lichId={lichDung}
         tim={timKhach} layThe={layTheTien} chot={chotDonBanHang} />
     </>
   );

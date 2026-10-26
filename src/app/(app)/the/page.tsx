@@ -24,6 +24,13 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const db = sb();
   let q = db.from("v_the_khach").select("*").eq("loai", tab).order("ngay_cap", { ascending: false }).limit(200);
   if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  // Tìm ở máy chủ trên TOÀN BỘ thẻ (mã thẻ, mã/tên/SĐT khách), không lọc trên 200 thẻ mới nhất.
+  const tuKhoa = (sp.q ?? "").trim().replace(/[%,()*\\]/g, " ").trim();
+  if (tuKhoa) {
+    const { data: kt } = await db.from("khach_hang").select("id").or(`ho_ten.ilike.%${tuKhoa}%,dien_thoai.ilike.%${tuKhoa.replace(/^0/, "")}%,ma.ilike.%${tuKhoa}%`).limit(300);
+    const ids = (kt ?? []).map((k) => k.id);
+    q = q.or(ids.length ? `ma.ilike.%${tuKhoa}%,khach_id.in.(${ids.join(",")})` : `ma.ilike.%${tuKhoa}%`);
+  }
   if (sp.het !== "1") q = q.in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]);
   const [{ data: the }, { data: goi }, { data: nv }, { data: dv }, { data: lk }] = await Promise.all([
     q, db.from("goi_the").select("id, ten, loai, so_buoi, gia_tri_the").eq("hoat_dong", true).order("ten"),
@@ -35,7 +42,6 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
   const tenGoi = new Map((goi ?? []).map((g) => [g.id, g.ten]));
   let ds = the ?? [];
-  if (sp.q) { const t = sp.q.toLowerCase(); ds = ds.filter((x) => { const k = tenK.get(x.khach_id ?? ""); return (x.ma ?? "").toLowerCase().includes(t) || k?.ho_ten.toLowerCase().includes(t) || k?.dien_thoai.includes(t) || k?.ma.toLowerCase().includes(t); }); }
   const nvLC = (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
 

@@ -32,6 +32,9 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   try { don = JSON.parse(json) as DonBan; } catch { return { loi: "Dữ liệu đơn không đọc được." }; }
   if (!don.dong?.length) return { loi: "Đơn chưa có dòng hàng nào." };
   const db = sb();
+  // Người có chi nhánh cố định chỉ bán ở chi nhánh của mình; người xem mọi chi nhánh phải chọn rõ, không tự rơi về chi nhánh đầu.
+  if (nd.chiNhanhId) don.chiNhanhId = nd.chiNhanhId;
+  else if (!don.chiNhanhId || !(await db.from("chi_nhanh").select("id").eq("id", don.chiNhanhId).eq("hoat_dong", true).maybeSingle()).data) return { loi: "Chọn chi nhánh bán trước khi chốt đơn." };
 
   const idsDv = don.dong.filter((d) => d.loai === "dich_vu").map((d) => d.ref);
   const idsGoi = don.dong.filter((d) => d.loai === "goi_the").map((d) => d.ref);

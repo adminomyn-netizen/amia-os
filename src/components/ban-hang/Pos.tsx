@@ -18,13 +18,14 @@ const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ" }, { ma: "goi_the", ten: "
 const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 /** Màn Thu ngân. Dựng đơn trong trình duyệt, gửi MỘT lần lên máy chủ; máy chủ tự đọc lại giá từ danh mục và chốt trong một giao dịch. */
-export function Pos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, lichId, tim, layThe, chot }: {
-  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; lichId: string | null;
+export function Pos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId, tim, layThe, chot }: {
+  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null;
   tim: typeof timKhach; layThe: typeof layTheTien; chot: typeof chotDonBanHang;
 }) {
   const router = useRouter();
   const [dang, bat] = useTransition();
   const [khach, setKhach] = useState<KhachChon | null>(khachBanDau);
+  const [cnId, setCnId] = useState(chiNhanhId);
   const [tab, setTab] = useState<MucBan["loai"]>("dich_vu");
   const [tu, setTu] = useState("");
   const [dong, setDong] = useState<DongDon[]>(dongBanDau);
@@ -73,7 +74,7 @@ export function Pos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, lichId
     if (conNo > 0 && !khach) return setLoi("Còn nợ thì phải chọn khách hàng.");
     for (const t of thu) if (t.phuong_thuc === "the_tien" && !t.the_id) return setLoi("Chọn thẻ tiền cho khoản trừ thẻ.");
     bat(async () => {
-      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu }));
+      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu }));
       if ("loi" in kq && kq.loi) setLoi(kq.loi);
       else if ("id" in kq) router.push(`/hoa-don/${kq.id}?moi=1`);
     });
@@ -82,6 +83,12 @@ export function Pos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, lichId
   return (
     <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
       <section className="min-w-0">
+        <label className="mb-4 block text-[13px] text-muc-2">Chi nhánh bán
+          <select value={cnId} disabled={khoaChiNhanh} onChange={(e) => setCnId(e.target.value)} className={`${O_NHAP} mt-1`}>
+            {!cnId && <option value="">Chọn chi nhánh</option>}
+            {chiNhanh.map((c) => <option key={c.id} value={c.id}>{c.ten}</option>)}
+          </select>
+        </label>
         <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
         <div className="mt-5 flex gap-1 border-b border-vien" role="tablist">
           {LOAI_TAB.map((t) => (

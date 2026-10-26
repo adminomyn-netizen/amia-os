@@ -16,6 +16,8 @@ import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../actions";
 
+/** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
+const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
 const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú điều trị" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "anh", ten: "Ảnh khách hàng" }];
 const LOAI_ANH: Record<string, string> = { truoc: "Trước", sau: "Sau", khac: "Khác" };
 
@@ -139,18 +141,21 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     // Ảnh cũ ở kho lưu trữ (Lark): số ảnh, ảnh đang mở xem tạm, và yêu cầu lấy ảnh gần nhất.
     const [{ data: lt }, { data: yc }] = await Promise.all([
       db.from("khach_anh_luu_tru").select("so_anh").eq("khach_id", id).maybeSingle(),
-      db.from("yeu_cau_lay_anh").select("trang_thai, loi").eq("khach_id", id).order("tao_luc", { ascending: false }).limit(1).maybeSingle(),
+      db.from("yeu_cau_lay_anh").select("trang_thai, tao_luc, so_anh_lay").eq("khach_id", id).order("tao_luc", { ascending: false }).limit(1).maybeSingle(),
     ]);
     const tam = (anh ?? []).filter((a) => a.het_han);
-    const hetHanSom = tam.length ? tam.map((a) => a.het_han as string).sort()[0] : null;
+    // Còn ảnh cũ chưa về → tự xếp yêu cầu lấy (mỗi lần tối đa 300 ảnh, xong lượt này tới lượt sau). Lần trước lỗi trong 10 phút qua thì chưa thử lại.
+    const conLaiCu = Math.max(0, (lt?.so_anh ?? 0) - tam.length);
+    const dangLayCu = yc?.trang_thai === "cho" || yc?.trang_thai === "dang_lay";
+    const loiGanDay = (yc?.trang_thai === "loi" && moiXayRa(yc.tao_luc, 10 * 60_000)) || (yc?.trang_thai === "xong" && yc.so_anh_lay === 0); // lượt trước không lấy thêm được ảnh nào: không lặp mãi
     const theoNgay = new Map<string, NonNullable<typeof anh>>();
     for (const a of anh ?? []) theoNgay.set(a.ngay_chup, [...(theoNgay.get(a.ngay_chup) ?? []), a]);
     noiDung = (
       <>
         {coQuyen(nd, "anh.them") && <TaiAnh khachId={id} />}
-        {lt && lt.so_anh > 0 && <AnhCuLuuTru khachId={id} tong={lt.so_anh} conLai={Math.max(0, lt.so_anh - tam.length)} dangLay={yc?.trang_thai === "cho" || yc?.trang_thai === "dang_lay"} loi={yc?.trang_thai === "loi" ? yc.loi : null} hetHan={hetHanSom ? ngayVN(hetHanSom) : null} />}
+        {lt && lt.so_anh > 0 && coQuyen(nd, "anh.xem") && <AnhCuLuuTru khachId={id} canLay={conLaiCu > 0 && !dangLayCu && !loiGanDay} dangLay={dangLayCu} />}
         {!k.dong_y_dung_hinh && <p className="mb-4 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Khách chưa đồng ý bằng văn bản cho dùng hình ảnh: ảnh chỉ lưu hồ sơ điều trị, không dùng cho quảng cáo.</p>}
-        {(anh ?? []).length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ảnh nào.</p>}
+        {(anh ?? []).length === 0 && !dangLayCu && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ảnh nào.</p>}
         {[...theoNgay.entries()].map(([ngay, ds]) => (
           <section key={ngay} className="mb-6">
             <h3 className="mb-2 text-[14px] font-semibold text-muc">{ngayVN(ngay)}</h3>

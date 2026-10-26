@@ -1,7 +1,9 @@
 // Lấy ảnh cũ SalonHero của MỘT khách từ kho lưu trữ về kho ảnh AMIA OS để nhân viên xem (giữ tạm 3 ngày rồi tự dọn; bản gốc vẫn ở Lark).
 // Chạy: node scripts/lay-anh-cu.mjs  (launchd gọi mỗi 15 giây). Yêu cầu nằm ở bảng yeu_cau_lay_anh nên máy tắt không mất việc.
-// Nguồn ảnh: ổ đĩa ~/amia-anh-tam (bản chép khi chuyển từ SalonHero); không có thì tải tệp nén .zip chứa ảnh đó từ Base Lark (sổ lark-so.jsonl).
+// Nguồn ảnh theo thứ tự: ổ đĩa ~/amia-anh-tam (bản chép khi chuyển từ SalonHero) → tệp nén .zip chứa ảnh đó ở Base Lark (sổ lark-so.jsonl)
+// → còn chưa chuyển tới khách này thì tải thẳng từ SalonHero rồi thu nhỏ y như khi chuyển (nên bấm lúc nào cũng có ảnh).
 import { createClient } from "@supabase/supabase-js";
+import sharp from "sharp";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
@@ -17,6 +19,7 @@ const sb = createClient(env.NEXT_PUBLIC_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_
 const LARK = process.env.LARK_CLI ?? "/Users/phamtunglam/.local/bin/lark-cli2";
 const BASE = "HqZobkuRNa0giLsmaxwj64lFpCc";
 const GIU_NGAY = 3, TOI_DA_MOT_LAN = 300, TRAN_MB = 900, SONG_SONG = 6;
+const cdn = (u) => "https://salonhero-wasabi.becdn.net/" + u.split("/PROD/")[1];
 const vnNgay = (iso) => new Date(new Date(iso).getTime() + 7 * 3600e3).toISOString().slice(0, 10);
 
 // Khoá chống chạy chồng: 1 tiến trình một lúc; khoá cũ hơn 10 phút coi là treo.
@@ -81,6 +84,17 @@ async function tuLark(a, ngay, tam) {
   return existsSync(tep) ? readFileSync(tep) : null;
 }
 
+/** Chưa chuyển tới khách này: tải thẳng từ SalonHero, xoay đúng chiều, thu nhỏ cạnh dài 1200 px (giống bước 1). */
+async function tuSalonHero(a) {
+  for (let lan = 0; lan < 3; lan++) {
+    const r = await fetch(cdn(a[2]), { signal: AbortSignal.timeout(60_000) }).catch(() => null);
+    if (r?.ok) return sharp(Buffer.from(await r.arrayBuffer())).rotate().resize({ width: 1200, height: 1200, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 78, mozjpeg: true }).toBuffer();
+    if (r && (r.status === 403 || r.status === 404)) return null;
+    await new Promise((x) => setTimeout(x, 1500 * (lan + 1)));
+  }
+  return null;
+}
+
 async function layChoKhach(yc) {
   const { data: k } = await sb.from("khach_hang").select("sh_id").eq("id", yc.khach_id).single();
   if (!k?.sh_id) throw new Error("Khách không có mã SalonHero");
@@ -105,7 +119,7 @@ async function layChoKhach(yc) {
       const a = can[i++], ngay = vnNgay(a[3]);
       try {
         const local = join(THU_MUC, String(sh), ngay, `sh-${a[1]}.jpg`);
-        const buf = existsSync(local) ? readFileSync(local) : await tuLark(a, ngay, tam);
+        const buf = existsSync(local) ? readFileSync(local) : (await tuLark(a, ngay, tam)) ?? (await tuSalonHero(a));
         if (!buf) { thieu++; continue; }
         const duong = `${yc.khach_id}/${ngay}/sh-${a[1]}.jpg`;
         const { error: e1 } = await sb.storage.from("khach-anh").upload(duong, buf, { contentType: "image/jpeg", upsert: true });

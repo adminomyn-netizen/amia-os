@@ -1,4 +1,4 @@
-import { linkAnh } from "@/lib/kho-anh";
+import { docTrangAnh } from "@/lib/anh-khach-doc";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
@@ -14,12 +14,12 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
+import { LuoiAnh } from "@/components/khach/LuoiAnh";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
 const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú điều trị" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "anh", ten: "Ảnh khách hàng" }];
-const LOAI_ANH: Record<string, string> = { truoc: "Trước", sau: "Sau", khac: "Khác" };
 
 export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauQuyen("khach.xem");
@@ -136,40 +136,28 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
       </div>
     );
   } else {
-    const { data: anh } = await db.from("khach_anh").select("*").eq("khach_id", id).order("ngay_chup", { ascending: false }).order("tao_luc", { ascending: false });
-    const urlTheo = anh?.length ? await linkAnh(anh.map((a) => a.duong_dan), 3600) : new Map<string, string>();
+    // Chỉ lấy + ký link cho trang đầu; phần còn lại LuoiAnh xin thêm khi cuộn tới (khách có thể có hàng nghìn ảnh).
+    const [trangDau, { count: tongAnh }, { count: soTam }] = await Promise.all([
+      docTrangAnh(id, 0),
+      db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id),
+      db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id).not("het_han", "is", null),
+    ]);
     // Ảnh cũ ở kho lưu trữ (Lark): số ảnh, ảnh đang mở xem tạm, và yêu cầu lấy ảnh gần nhất.
     const [{ data: lt }, { data: yc }] = await Promise.all([
       db.from("khach_anh_luu_tru").select("so_anh").eq("khach_id", id).maybeSingle(),
       db.from("yeu_cau_lay_anh").select("trang_thai, tao_luc, so_anh_lay").eq("khach_id", id).order("tao_luc", { ascending: false }).limit(1).maybeSingle(),
     ]);
-    const tam = (anh ?? []).filter((a) => a.het_han);
     // Còn ảnh cũ chưa về → tự xếp yêu cầu lấy (mỗi lần tối đa 300 ảnh, xong lượt này tới lượt sau). Lần trước lỗi trong 10 phút qua thì chưa thử lại.
-    const conLaiCu = Math.max(0, (lt?.so_anh ?? 0) - tam.length);
+    const conLaiCu = Math.max(0, (lt?.so_anh ?? 0) - (soTam ?? 0));
     const dangLayCu = yc?.trang_thai === "cho" || yc?.trang_thai === "dang_lay";
     const loiGanDay = (yc?.trang_thai === "loi" && moiXayRa(yc.tao_luc, 10 * 60_000)) || (yc?.trang_thai === "xong" && yc.so_anh_lay === 0); // lượt trước không lấy thêm được ảnh nào: không lặp mãi
-    const theoNgay = new Map<string, NonNullable<typeof anh>>();
-    for (const a of anh ?? []) theoNgay.set(a.ngay_chup, [...(theoNgay.get(a.ngay_chup) ?? []), a]);
     noiDung = (
       <>
         {coQuyen(nd, "anh.them") && <TaiAnh khachId={id} />}
         {lt && lt.so_anh > 0 && coQuyen(nd, "anh.xem") && <AnhCuLuuTru khachId={id} canLay={conLaiCu > 0 && !dangLayCu && !loiGanDay} dangLay={dangLayCu} />}
         {!k.dong_y_dung_hinh && <p className="mb-4 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Khách chưa đồng ý bằng văn bản cho dùng hình ảnh: ảnh chỉ lưu hồ sơ điều trị, không dùng cho quảng cáo.</p>}
-        {(anh ?? []).length === 0 && !dangLayCu && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ảnh nào.</p>}
-        {[...theoNgay.entries()].map(([ngay, ds]) => (
-          <section key={ngay} className="mb-6">
-            <h3 className="mb-2 text-[14px] font-semibold text-muc">{ngayVN(ngay)}</h3>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {ds.map((a) => (
-                <figure key={a.id} className="overflow-hidden rounded-nho border border-vien bg-giay-tram">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={urlTheo.get(a.duong_dan) ?? undefined} alt={`Ảnh ${LOAI_ANH[a.loai]} điều trị ngày ${ngayVN(a.ngay_chup)}`} loading="lazy" className="aspect-[3/4] w-full object-cover" />
-                  <figcaption className="px-2 py-1.5 text-[12px] text-muc-2">{LOAI_ANH[a.loai]}{a.ghi_chu ? ` · ${a.ghi_chu}` : ""}</figcaption>
-                </figure>
-              ))}
-            </div>
-          </section>
-        ))}
+        {(tongAnh ?? 0) === 0 && !dangLayCu && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ảnh nào.</p>}
+        <LuoiAnh khachId={id} banDau={trangDau} tong={tongAnh ?? 0} />
       </>
     );
   }

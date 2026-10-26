@@ -1,6 +1,8 @@
 "use server";
 
 import { luuAnh, xoaAnh } from "@/lib/kho-anh";
+import { docAnhTheoMa, docTrangAnh } from "@/lib/anh-khach-doc";
+import type { AnhKhach } from "@/lib/anh-khach";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "node:crypto";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
@@ -115,6 +117,20 @@ export async function layAnhCu(fd: FormData): Promise<KQ> {
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "lay_anh_cu", doi_tuong: "khach_hang", doi_tuong_id: khachId });
   revalidatePath(`/khach-hang/${khachId}`);
   return { ok: true };
+}
+
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Trang ảnh kế tiếp của khách (cuộn xuống thì lấy thêm). `tu` = số ảnh đã có. */
+export async function trangAnh(khachId: string, tu: number): Promise<{ ds: AnhKhach[]; loi?: string }> {
+  if (!(await kiemQuyen("anh.xem"))) return { ds: [], loi: KHONG_DU_QUYEN };
+  if (!UUID.test(khachId) || !Number.isInteger(tu) || tu < 0 || tu > 100_000) return { ds: [], loi: "Yêu cầu không hợp lệ." };
+  return { ds: await docTrangAnh(khachId, tu) };
+}
+/** Cấp lại link xem cho vài ảnh khi link cũ đã hết hạn. */
+export async function linkAnhMoi(khachId: string, ids: string[]): Promise<{ ds: AnhKhach[]; loi?: string }> {
+  if (!(await kiemQuyen("anh.xem"))) return { ds: [], loi: KHONG_DU_QUYEN };
+  if (!UUID.test(khachId) || ids.length === 0 || ids.length > 30 || !ids.every((x) => UUID.test(x))) return { ds: [], loi: "Yêu cầu không hợp lệ." };
+  return { ds: await docAnhTheoMa(khachId, ids) };
 }
 
 export async function taiAnh(fd: FormData): Promise<KQ> {

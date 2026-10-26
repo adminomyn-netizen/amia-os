@@ -68,7 +68,7 @@ export function ChuongThongBao() {
       <button type="button" onClick={() => { setMo((x) => !x); lamMoi(); }} aria-haspopup="menu" aria-expanded={mo} aria-label={n ? `Thông báo, ${n} việc đang chờ` : "Thông báo"} title="Việc đang chờ xử lý"
         className="nut-nguoi relative flex h-10 w-10 items-center justify-center rounded-nho text-muc-2">
         <Bell strokeWidth={1.7} className="h-[21px] w-[21px]" />
-        {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: "0 0 0 2px #fff" }}>{n}</span>}
+        {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: "0 0 0 2px var(--giay-sang)" }}>{n}</span>}
       </button>
       {mo && (
         <div role="menu" aria-label="Thông báo" style={{ position: "absolute" }} className="the-noi the-noi-thap vao right-0 top-full z-50 mt-2.5 w-[340px] max-w-[calc(100vw-24px)] overflow-hidden">

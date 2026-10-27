@@ -35,7 +35,8 @@ export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh 
   const moBang = (ma: string, li: HTMLElement | null, rong: number) => {
     clearTimeout(hen.current);
     const r = li?.getBoundingClientRect();
-    const trai = Math.max(16, Math.min(r?.left ?? 16, window.innerWidth - rong - 16));
+    const giua = r ? r.left + r.width / 2 : window.innerWidth / 2;
+    const trai = Math.max(16, Math.min(giua - rong / 2, window.innerWidth - rong - 16));
     setMoTai({ ma, trang: pathname, trai });
   };
   const dong = (tre = 140) => { clearTimeout(hen.current); hen.current = setTimeout(() => setMoTai(null), tre); };
@@ -50,11 +51,11 @@ export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh 
   const nhom = THU_TU_NHOM.map((ten) => ({ ten, muc: muc.filter((m) => m.nhom === ten) })).filter((g) => g.muc.length > 0);
 
   return (
-    <header ref={thanh} className="thanh-ngang khong-in sticky top-0 z-40 hidden h-[66px] items-center gap-4 px-6 lg:flex xl:px-8" onMouseLeave={() => dong()}>
-      <Link href="/trang-chu" className="mr-2 shrink-0" aria-label="AMIA OS, về trang chủ">
+    <header ref={thanh} className="thanh-ngang khong-in sticky top-0 z-40 hidden h-[66px] grid-cols-[1fr_auto_1fr] items-center gap-4 px-6 lg:grid xl:px-8" onMouseLeave={() => dong()}>
+      <Link href="/trang-chu" className="shrink-0 justify-self-start" aria-label="AMIA OS, về trang chủ">
         <Image src="/logo-amia-trang.png" alt="AMIA Beauty Center" width={120} height={52} priority className="h-auto w-[84px]" />
       </Link>
-      <nav className="flex min-w-0 flex-1 items-center gap-1" aria-label="Menu chính">
+      <nav className="flex items-center justify-center gap-1" aria-label="Menu chính">
         {nhom.map((g) => {
           const dang = g.muc.some((m) => mucDangChon(pathname, m.duong_dan));
           const bangMo = mo?.ma === g.ten;
@@ -106,7 +107,7 @@ export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh 
           );
         })}
       </nav>
-      <div className="flex shrink-0 items-center gap-2 xl:gap-3">
+      <div className="flex shrink-0 items-center justify-self-end gap-2 xl:gap-3">
         <DongHo />
         <ChuongThongBao toi />
         <MenuNguoiDung hoTen={hoTen} vaiTro={vaiTro} chucDanh={chucDanh} email={email} chiNhanh={chiNhanh} anh={anh} toi />

@@ -221,7 +221,8 @@ body {
 @media (min-width: 1536px) { .thanh-ngang .dong-ho-phu { display: flex; } }
 .muc-con { transition: background-color 140ms ease-out, color 140ms ease-out; }
 .muc-con:hover { background: var(--nhan-nhat); color: var(--nhan-dam); }
-.bang-ngang { box-shadow: var(--sang-vien), var(--bong-3); }
+.bang-ngang { box-shadow: var(--sang-vien), var(--bong-3); border-color: var(--the-vien-nang); animation: hien-nhanh 140ms ease-out both; }
+@keyframes hien-nhanh { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 
 /* Thẻ chức năng ở trang tổng quan: ô biểu tượng màu chính, mũi tên nhích khi rê chuột. */
 .o-bieu-tuong {

@@ -6,6 +6,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang, so, soHoacNull } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
+import { caCuaNgay, type Ca } from "@/lib/ca-lam";
 import { isoVN, ngayCongThem, phutTrongNgayVN, phutTuGio, soNgayGiua, thuCuaNgay } from "@/lib/nhan-su";
 
 type KQ = { ok?: true; loi?: string };
@@ -14,18 +15,6 @@ const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 const GIO = /^([01]\d|2[0-3]):[0-5]\d$/;
 const dem = async (k: string, tien: string) => `${tien}${String(Number((await sb().rpc("so_tiep_theo", { p_khoa: k })).data ?? 0)).padStart(6, "0")}`;
 
-type Ca = { id: string; gio_vao: string; gio_ra: string; dung_sai_phut: number };
-/** Ca của một người trong một ngày: theo lịch phân ca; không có thì ca mặc định theo khung làm việc. */
-async function caCuaNgay(nv: string, ngay: string): Promise<Ca | null> {
-  const db = sb();
-  const { data: pc } = await db.from("phan_ca").select("nghi, ca_id").eq("nhan_vien_id", nv).eq("ngay", ngay).maybeSingle();
-  if (pc?.nghi) return null;
-  if (pc?.ca_id) { const { data } = await db.from("ca_lam").select("id, gio_vao, gio_ra, dung_sai_phut").eq("id", pc.ca_id).maybeSingle(); return data; }
-  const { data: n } = await db.from("nhan_vien").select("khung_lam_viec").eq("id", nv).maybeSingle();
-  if (!n || n.khung_lam_viec === "khong_cham_cong") return null;
-  const { data } = await db.from("ca_lam").select("id, gio_vao, gio_ra, dung_sai_phut").eq("ma", n.khung_lam_viec === "van_phong" ? "VP_HC" : "CN_DAI").maybeSingle();
-  return data;
-}
 /** Công theo quy chế MSC: đủ hai lượt = 1, thiếu một lượt = 0,5. Trễ tính từ phút đầu sau giờ vào (trừ dung sai), về sớm so với giờ ra của ca. */
 function tinhChamCong(vao: string | null, ra: string | null, ca: Ca | null) {
   const tre = vao && ca ? Math.max(0, phutTrongNgayVN(vao) - phutTuGio(ca.gio_vao) - ca.dung_sai_phut) : 0;

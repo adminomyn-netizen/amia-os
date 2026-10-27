@@ -10,6 +10,8 @@ import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
+import { caCuaNgay } from "@/lib/ca-lam";
+import { KhungChamCong } from "@/components/nhan-su/KhungChamCong";
 import { chamCongVao, chamCongRa, nhapCongThuCong, khoaThangCong } from "../actions";
 
 const thangKe = (t: string, n: number) => { const [y, m] = t.split("-").map(Number); const d = new Date(Date.UTC(y, m - 1 + n, 1)); return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`; };
@@ -45,16 +47,16 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
       db.rpc("so_du_phep", { p_nv: nd.nhanVienId, p_nam: nam }),
     ]);
     const homNay = (cc ?? []).find((c) => c.ngay === hom);
+    const ca = await caCuaNgay(nd.nhanVienId, hom);
     const tongCong = (cc ?? []).reduce((a, c) => a + Number(c.cong), 0);
     noiDung = (
       <>
-        <div className="mb-6 flex flex-wrap items-center gap-3 rounded-nho border border-vien bg-giay-sang p-4">
-          <div className="mr-auto text-[14px] text-muc-2">
-            Hôm nay {ngayVN(hom)}: {homNay ? <>vào <b>{gioVN(homNay.vao) || "chưa"}</b> · ra <b>{gioVN(homNay.ra) || "chưa"}</b>{homNay.tre_phut > 0 && <span className="text-canh-bao"> · trễ {homNay.tre_phut} phút</span>}</> : "chưa chấm công"}
-          </div>
-          <NutHop nhan="Chấm công vào" tieuDe="Chấm công vào" xacNhan="Ghi giờ vào làm bằng giờ hiện tại?" action={chamCongVao} nhanLuu="Chấm công vào" />
-          <NutHop kieu="phu" nhan="Chấm công ra" tieuDe="Chấm công ra" xacNhan="Ghi giờ tan ca bằng giờ hiện tại?" action={chamCongRa} nhanLuu="Chấm công ra" />
-        </div>
+        <KhungChamCong ngay={ngayVN(hom)}
+          ca={ca ? { ten: ca.ten, vao: ca.gio_vao, ra: ca.gio_ra, dungSai: ca.dung_sai_phut } : null}
+          vao={homNay?.vao ? { gio: gioVN(homNay.vao), trePhut: homNay.tre_phut } : null}
+          ra={homNay?.ra ? { gio: gioVN(homNay.ra), veSomPhut: homNay.ve_som_phut } : null}
+          nutVao={<NutHop nhan="Chấm công vào" tieuDe="Chấm công vào" xacNhan="Ghi giờ vào làm bằng giờ hiện tại?" action={chamCongVao} nhanLuu="Chấm công vào" />}
+          nutRa={<NutHop kieu="phu" nhan="Chấm công ra" tieuDe="Chấm công ra" xacNhan="Ghi giờ tan ca bằng giờ hiện tại?" action={chamCongRa} nhanLuu="Chấm công ra" />} />
         <HangChiSo muc={[{ nhan: "Công tháng này", so: soVN(tongCong) }, { nhan: "Ngày đi trễ", so: String((cc ?? []).filter((c) => c.tre_phut > 0).length) }, { nhan: "Phép năm còn lại", so: soVN(du), ghiChu: "ngày" }]} />
         <div className="mt-6" />
         {dieuHuong}

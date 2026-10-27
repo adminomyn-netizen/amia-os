@@ -27,7 +27,7 @@ export type Quyen =
   | "ban.xem" | "ban.tao" | "ban.huy" | "no.thu"
   | "the.xem" | "the.thuchien" | "the.dieuchinh"
   | "danhmuc.xem" | "danhmuc.sua"
-  | "kho.xem" | "kho.nhap"
+  | "kho.xem" | "kho.nhap" | "kho.duyet" | "ky.khoa" | "ky.mo_lai"
   | "phieu.xem" | "phieu.chidinh" | "phieu.cap" | "phieu.nhan" | "phieu.doichieu"
   | "baocao.xem" | "baocao.tien"
   | "quy.xem" | "quy.ghi"
@@ -44,7 +44,7 @@ export type Quyen =
 const TAT_CA: Quyen[] = [
   "khach.xem", "khach.sua", "khach.nhap", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
   "ban.xem", "ban.tao", "ban.huy", "no.thu", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
-  "kho.xem", "kho.nhap", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "tongquan.xem", "quy.xem", "quy.ghi", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
+  "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "tongquan.xem", "quy.xem", "quy.ghi", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
   "cong.xem", "cong.sua", "nghi.duyet", "nghi.duyet_bgd", "luong.xem", "luong.sua", "luong.duyet", "noibo.dung",
   "mkt.xem", "mkt.sua", "mkt.duyet", "lead.xu_ly",
 ];
@@ -58,7 +58,7 @@ export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
   bac_si: ["khach.xem", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.chidinh", "noibo.dung"],
   ktv: ["khach.xem", "hoso.xem", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.nhan", "noibo.dung"],
   thu_kho: ["tongquan.xem", "danhmuc.xem", "kho.xem", "kho.nhap", "phieu.xem", "phieu.cap", "phieu.doichieu", "mua.xem", "mua.tao", "noibo.dung"],
-  ke_toan: ["tongquan.xem", "khach.xem", "ban.xem", "no.thu", "danhmuc.xem", "kho.xem", "baocao.xem", "baocao.tien", "phieu.xem", "quy.xem", "quy.ghi", "mua.xem", "cong.xem", "luong.xem", "luong.sua", "noibo.dung"],
+  ke_toan: ["tongquan.xem", "khach.xem", "ban.xem", "no.thu", "danhmuc.xem", "kho.xem", "kho.duyet", "ky.khoa", "baocao.xem", "baocao.tien", "phieu.xem", "quy.xem", "quy.ghi", "mua.xem", "cong.xem", "luong.xem", "luong.sua", "noibo.dung"],
   marketing: ["tongquan.xem", "khach.xem", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "mkt.xem", "mkt.sua", "lead.xu_ly"],
   nha_dau_tu: ["tongquan.xem", "baocao.xem", "baocao.tien"],
   nhan_vien: ["noibo.dung"],
@@ -85,11 +85,11 @@ export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] 
   { nhom: "Lịch hẹn", muc: [{ ma: "lich.xem", nhan: "Xem lịch" }, { ma: "lich.sua", nhan: "Đặt / đổi / huỷ lịch" }] },
   { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "no.thu", nhan: "Thu nợ" }] },
   { nhom: "Thẻ liệu trình", muc: [{ ma: "the.xem", nhan: "Xem thẻ" }, { ma: "the.thuchien", nhan: "Thực hiện buổi" }, { ma: "the.dieuchinh", nhan: "Điều chỉnh / cấp thẻ tay" }] },
-  { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "KTV nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }] },
+  { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "KTV nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }, { ma: "kho.duyet", nhan: "Duyệt kiểm kê, xử lý vật tư, hậu kiểm xuất khẩn cấp" }] },
   { nhom: "Mua hàng", muc: [{ ma: "mua.xem", nhan: "Xem đơn mua, nhà cung cấp, công nợ" }, { ma: "mua.tao", nhan: "Lập đơn mua, nhà cung cấp" }, { ma: "mua.duyet", nhan: "Duyệt / từ chối đơn mua" }] },
   { nhom: "Nơi làm việc", muc: [{ ma: "noibo.dung", nhan: "Dùng Nơi làm việc (việc, chấm công, đề xuất, phiếu của tôi)" }, { ma: "viec.tatca", nhan: "Xem việc và báo cáo ngày của mọi người" }, { ma: "dexuat.duyet", nhan: "Duyệt / từ chối đề xuất" }, { ma: "wiki.sua", nhan: "Viết, sửa Wiki công ty" }] },
   { nhom: "Nhân sự", muc: [{ ma: "cong.xem", nhan: "Xem chấm công, lịch ca, phiếu của mọi người" }, { ma: "cong.sua", nhan: "Phân ca, nhập công tay, khoá tháng, chỉnh phép" }, { ma: "nghi.duyet", nhan: "Duyệt phiếu nghỉ, tăng ca, điều chỉnh công" }, { ma: "nghi.duyet_bgd", nhan: "Duyệt nghỉ từ 4 ngày (Ban Giám đốc)" }, { ma: "luong.xem", nhan: "Xem bảng lương và điều kiện lương" }, { ma: "luong.sua", nhan: "Lập kỳ lương, sửa điều kiện lương, cộng/trừ" }, { ma: "luong.duyet", nhan: "Duyệt kỳ lương" }] },
   { nhom: "Marketing", muc: [{ ma: "mkt.xem", nhan: "Xem chiến dịch, quảng cáo, nội dung, báo cáo marketing" }, { ma: "mkt.sua", nhan: "Tạo/sửa chiến dịch, quảng cáo, nội dung, link, đối tác" }, { ma: "mkt.duyet", nhan: "Duyệt chiến dịch và nội dung" }, { ma: "lead.xu_ly", nhan: "Nhận và xử lý lead (liên hệ, chuyển thành khách)" }] },
-  { nhom: "Sổ quỹ", muc: [{ ma: "quy.xem", nhan: "Xem sổ quỹ thu/chi" }, { ma: "quy.ghi", nhan: "Ghi thu/chi, chuyển quỹ, đảo phiếu" }] },
+  { nhom: "Sổ quỹ", muc: [{ ma: "quy.xem", nhan: "Xem sổ quỹ thu/chi" }, { ma: "quy.ghi", nhan: "Ghi thu/chi, chuyển quỹ, đảo phiếu" }, { ma: "ky.khoa", nhan: "Khoá kỳ kế toán theo tháng" }, { ma: "ky.mo_lai", nhan: "Mở lại kỳ đã khoá (phải ghi lý do)" }] },
   { nhom: "Danh mục & báo cáo", muc: [{ ma: "danhmuc.xem", nhan: "Xem danh mục" }, { ma: "danhmuc.sua", nhan: "Sửa danh mục" }, { ma: "baocao.xem", nhan: "Xem báo cáo" }, { ma: "baocao.tien", nhan: "Xem số tiền (doanh thu, hoa hồng)" }, { ma: "nhanvien.quanly", nhan: "Sửa chi nhánh" }] },
 ];

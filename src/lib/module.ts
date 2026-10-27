@@ -35,7 +35,7 @@ export const MODULE: Module[] = [
     ],
   },
   {
-    ma: "tai-chinh", ten: "Tài chính - Kế toán", duongDan: "/tai-chinh", quyen: ["quy.xem", "baocao.tien", "no.thu"],
+    ma: "tai-chinh", ten: "Tài chính - Kế toán", duongDan: "/tai-chinh", quyen: ["quy.xem", "baocao.tien", "no.thu", "ky.khoa"],
     moTa: "Sổ quỹ thu/chi, công nợ, hoá đơn và quyết toán.",
     nhom: [
       { nhan: "Thu / chi", the: [
@@ -55,7 +55,7 @@ export const MODULE: Module[] = [
       { nhan: "Quyết toán & kế toán", the: [
         { ten: "Quyết toán hoa hồng", moTa: "Chốt đợt hoa hồng cho nhân viên và cộng tác viên.", trangThai: "sap_co" },
         { ten: "Đối soát bán hàng", moTa: "Số lượng, giá vốn, doanh thu sau hoàn/trả theo sản phẩm.", trangThai: "sap_co" },
-        { ten: "Khoá kỳ kế toán", moTa: "Khoá/mở kỳ theo tháng và chi nhánh, chặn sửa số đã chốt.", trangThai: "sap_co" },
+        { ten: "Khoá kỳ kế toán", moTa: "Khoá/mở kỳ theo tháng, chặn ghi thêm sổ quỹ và công nợ của tháng đã chốt.", duongDan: "/tai-chinh/khoa-ky", trangThai: "san_sang", quyen: ["ky.khoa", "ky.mo_lai"] },
       ] },
     ],
   },
@@ -75,9 +75,10 @@ export const MODULE: Module[] = [
         { ten: "Công nợ nhà cung cấp", moTa: "Công nợ phải trả và thanh toán.", duongDan: "/kho-mua-sam/cong-no", trangThai: "san_sang", quyen: ["mua.xem"] },
       ] },
       { nhan: "Điều chỉnh & kiểm soát", the: [
-        { ten: "Điều chuyển kho", moTa: "Chuyển hàng giữa các kho / chi nhánh.", trangThai: "sap_co" },
-        { ten: "Điều chỉnh tồn", moTa: "Tăng, giảm hoặc đặt lại số tồn, có lý do.", trangThai: "sap_co" },
-        { ten: "Kiểm kê kho", moTa: "Kiểm kê và soát lệch tồn.", trangThai: "sap_co" },
+        { ten: "Chuyển kho", moTa: "Chuyển hàng giữa các chi nhánh; kho nhận xác nhận trong 24 giờ.", duongDan: "/kho/chuyen-kho", trangThai: "san_sang", quyen: ["kho.xem"] },
+        { ten: "Kiểm kê kho", moTa: "Chụp tồn, hai người đếm, duyệt rồi mới ghi chênh lệch.", duongDan: "/kho/kiem-ke", trangThai: "san_sang", quyen: ["kho.xem"] },
+        { ten: "Xử lý vật tư & xuất khẩn cấp", moTa: "Huỷ, hao hụt, trả nhà cung cấp, điều chỉnh tồn có duyệt; xuất cấp cứu hậu kiểm 24 giờ.", duongDan: "/kho/xu-ly", trangThai: "san_sang", quyen: ["kho.xem"] },
+        { ten: "Lô & hạn dùng", moTa: "Lô sắp hết hạn trong 30, 60, 90 ngày và hàng quá hạn.", duongDan: "/kho?tab=han", trangThai: "san_sang", quyen: ["kho.xem"] },
       ] },
     ],
   },

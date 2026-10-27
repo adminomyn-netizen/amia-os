@@ -8,15 +8,16 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import Link from "next/link";
-import { kiemKe, nhapKho } from "./actions";
+import { NHAN_LOAI_KHO, MOC_HAN } from "@/lib/kho";
+import { homNayHCM, congNgay } from "@/lib/dinh-dang";
+import { nhapKho } from "./actions";
 
-const TAB = [{ ma: "ton", ten: "Tồn kho" }, { ma: "so", ten: "Sổ kho" }];
-const NHAN_LOAI: Record<string, string> = { nhap: "Nhập kho", xuat_ban: "Bán lẻ", cap_ca: "Cấp theo phiếu", tra_ca: "Trả lại kho", kiem_ke: "Kiểm kê", dieu_chinh: "Điều chỉnh", chuyen_di: "Chuyển đi", chuyen_den: "Chuyển đến", hao_hut: "Hao hụt" };
+const TAB = [{ ma: "ton", ten: "Tồn kho" }, { ma: "han", ten: "Lô & hạn dùng" }, { ma: "so", ten: "Sổ kho" }];
 
 export default async function TrangKho({ searchParams }: { searchParams: Promise<{ tab?: string; cn?: string; thieu?: string }> }) {
   const nd = await yeuCauQuyen("kho.xem");
   const sp = await searchParams;
-  const tab = sp.tab === "so" ? "so" : "ton";
+  const tab = sp.tab === "so" ? "so" : sp.tab === "han" ? "han" : "ton";
   const db = sb();
   const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma");
   const cn = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
@@ -39,7 +40,22 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
             { nhan: "Tối thiểu", hienThi: (r) => (Number(r.ton_toi_thieu) > 0 ? soVN(r.ton_toi_thieu) : ""), phai: true },
             { nhan: "Giá trị tồn", hienThi: (r) => (r.gia_nhap_don_vi == null ? "chưa có giá" : tienVN(Math.round(r.ton * Number(r.gia_nhap_don_vi)))), phai: true },
             { nhan: "", hienThi: (r) => (r.ton < Number(r.ton_toi_thieu) ? <NhanTrangThai kieu="cho">Sắp hết</NhanTrangThai> : null) },
-            ...(sua ? [{ nhan: "", hienThi: (r: (typeof ds)[number]) => <NutHop kieu="chu" nhan="Kiểm kê" tieuDe={`Kiểm kê: ${r.ten}`} moTa={`Sổ đang ghi ${soVN(r.ton)} ${r.don_vi}. Nhập số đếm thực tế, hệ thống ghi phần chênh lệch.`} an={{ chi_nhanh_id: cn, san_pham_id: r.id }} truong={[{ ten: "so_thuc_te", nhan: `Số thực tế (${r.don_vi})`, loai: "so", batBuoc: true }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={kiemKe} /> }] : []),
+          ]} />
+      </>
+    );
+  } else if (tab === "han") {
+    const { data: lo } = await db.from("v_ton_lo").select("*").eq("chi_nhanh_id", cn).gt("con_lai", 0).not("han_dung", "is", null).order("han_dung");
+    const hom = homNayHCM(), tenSp = new Map((spAll ?? []).map((s) => [s.id, s]));
+    const nhom = (han: string) => { if (han < hom) return 0; for (const m of MOC_HAN) if (han <= congNgay(hom, m)) return m; return 999; };
+    const ds = (lo ?? []).map((l) => ({ ...l, nhom: nhom(l.han_dung!) })).filter((l) => l.nhom !== 999 || sp.thieu === "1");
+    noiDung = (
+      <>
+        <p className="mb-3 text-[13px] text-muc-3">Tồn theo lô tính theo FEFO: hàng hết hạn sớm coi như xuất trước. Chỉ hiện lô còn hàng và hết hạn trong {MOC_HAN[MOC_HAN.length - 1]} ngày tới (hoặc đã quá hạn). Hàng đã quá hạn không được bán hay dùng, cần lập phiếu <Link href="/kho/xu-ly" className="text-nhan-dam hover:underline">xử lý vật tư</Link>.</p>
+        <Bang duLieu={ds} khoa={(r) => `${r.san_pham_id}${r.so_lo}${r.han_dung}`} trong="Không có lô nào sắp hết hạn."
+          cot={[
+            { nhan: "Vật tư", chinh: true, hienThi: (r) => tenSp.get(r.san_pham_id!)?.ten ?? "" }, { nhan: "Lô", hienThi: (r) => r.so_lo }, { nhan: "Hạn dùng", hienThi: (r) => ngayVN(r.han_dung) },
+            { nhan: "Còn lại", phai: true, hienThi: (r) => `${soVN(r.con_lai)} ${tenSp.get(r.san_pham_id!)?.don_vi ?? ""}` },
+            { nhan: "Mức", hienThi: (r) => <NhanTrangThai kieu={r.nhom === 0 ? "loi" : r.nhom <= 30 ? "loi" : "cho"}>{r.nhom === 0 ? "Đã quá hạn" : `Dưới ${r.nhom} ngày`}</NhanTrangThai> },
           ]} />
       </>
     );
@@ -50,7 +66,7 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
     const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
     noiDung = (
       <Bang duLieu={so ?? []} khoa={(r) => String(r.id)} trong="Sổ kho còn trống." cot={[
-        { nhan: "Lúc", hienThi: (r) => ngayGioVN(r.tao_luc) }, { nhan: "Việc", hienThi: (r) => NHAN_LOAI[r.loai] ?? r.loai }, { nhan: "Vật tư", hienThi: (r) => tenSp.get(r.san_pham_id)?.ten ?? "" },
+        { nhan: "Lúc", hienThi: (r) => ngayGioVN(r.tao_luc) }, { nhan: "Việc", hienThi: (r) => NHAN_LOAI_KHO[r.loai] ?? r.loai }, { nhan: "Vật tư", hienThi: (r) => tenSp.get(r.san_pham_id)?.ten ?? "" },
         { nhan: "Lô / hạn", hienThi: (r) => [r.so_lo, r.han_dung ? ngayVN(r.han_dung) : ""].filter(Boolean).join(" · ") }, { nhan: "Người ghi", hienThi: (r) => tenNv.get(r.nguoi_id ?? "") ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
         { nhan: "Số lượng", hienThi: (r) => <span className={Number(r.so_luong) < 0 ? "text-loi" : "text-nhan-dam"}>{Number(r.so_luong) > 0 ? "+" : ""}{soVN(r.so_luong)}</span>, phai: true },
       ]} />
@@ -61,9 +77,10 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
       <TieuDeTrang tieuDe="Kho" phu="Tồn kho là tổng sổ kho (nhập, cấp theo phiếu, trả, bán lẻ, kiểm kê). Không sửa số trực tiếp.">
         {sua && <NutHop nhan="Nhập kho" tieuDe="Nhập kho" rong an={{ chi_nhanh_id: cn }} truong={[
           { ten: "san_pham_id", nhan: "Vật tư / sản phẩm", loai: "chon", batBuoc: true, rong: true, luaChon: spLC }, { ten: "so_luong", nhan: "Số lượng (theo đơn vị DÙNG)", loai: "so", batBuoc: true },
-          { ten: "tong_tien", nhan: "Tổng tiền nhập (để tính giá vốn, không bắt buộc)", loai: "tien" }, { ten: "so_lo", nhan: "Số lô", loai: "chu" }, { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú (nhà cung cấp, số phiếu...)", loai: "chu", rong: true }]} action={nhapKho} />}
+          { ten: "tong_tien", nhan: "Tổng tiền nhập (để tính giá vốn, không bắt buộc)", loai: "tien" }, { ten: "so_lo", nhan: "Số lô", loai: "chu" }, { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ngoai_le", nhan: "Ngoại lệ hạn dùng (hàng còn dưới 90 ngày, đã được đồng ý; ghi lý do vào ghi chú)", loai: "gat", rong: true }, { ten: "ghi_chu", nhan: "Ghi chú (nhà cung cấp, số phiếu...)", loai: "chu", rong: true }]} action={nhapKho} />}
       </TieuDeTrang>
       {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && <div className="mb-4 flex gap-2 text-[14px]">{(dsCn ?? []).map((c) => <Link key={c.id} href={`/kho?tab=${tab}&cn=${c.id}`} className={`rounded-nho px-3 py-2 ${c.id === cn ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}</div>}
+      <div className="mb-3 flex flex-wrap gap-4 text-[14px]"><Link href="/kho/chuyen-kho" className="font-medium text-nhan-dam hover:underline">Chuyển kho</Link><Link href="/kho/kiem-ke" className="font-medium text-nhan-dam hover:underline">Kiểm kê</Link><Link href="/kho/xu-ly" className="font-medium text-nhan-dam hover:underline">Xử lý vật tư &amp; xuất khẩn cấp</Link></div>
       <Tab muc={TAB} dang={tab} goc="/kho" them={`&cn=${cn}`} />
       {noiDung}
     </>

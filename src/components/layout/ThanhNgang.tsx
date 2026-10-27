@@ -6,7 +6,6 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { MENU, mucDangChon } from "@/lib/nav";
-import { DongHo } from "./DongHo";
 import { ChuongThongBao } from "./ChuongThongBao";
 import { MenuNguoiDung } from "./MenuNguoiDung";
 
@@ -22,7 +21,7 @@ const THU_TU_NHOM = ["Hằng ngày", "Vận hành", "Phát triển", "Hệ thố
 const cotCua = (n: number) => (n <= 4 ? n : n <= 6 ? 3 : 4);
 const rongBang = (n: number) => cotCua(n) * 236 + 32;
 
-/** Thanh menu ngang cho máy tính (≥1024px): logo, 4 nút nhóm (Hằng ngày, Vận hành, Phát triển, Hệ thống), rồi đồng hồ, chuông, tài khoản.
+/** Thanh menu ngang cho máy tính (≥1024px): logo, 4 nút nhóm (Hằng ngày, Vận hành, Phát triển, Hệ thống), rồi chuông, tài khoản.
  *  Rê chuột (hoặc Tab/Enter) vào một nhóm thì thả xuống các mục lớn của nhóm kèm chức năng con. Điện thoại/máy tính bảng dọc giữ thanh trên + thanh tab dưới. */
 export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh }: Props) {
   const pathname = usePathname();
@@ -108,7 +107,6 @@ export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh 
         })}
       </nav>
       <div className="flex shrink-0 items-center justify-self-end gap-2 xl:gap-3">
-        <DongHo />
         <ChuongThongBao toi />
         <MenuNguoiDung hoTen={hoTen} vaiTro={vaiTro} chucDanh={chucDanh} email={email} chiNhanh={chiNhanh} anh={anh} toi />
       </div>

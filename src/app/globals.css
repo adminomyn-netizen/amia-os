@@ -215,10 +215,6 @@ body {
 .muc-ngang svg { color: var(--menu-chu-phu); }
 .muc-ngang:hover svg, .muc-ngang[aria-current="page"] svg, .muc-ngang[data-mo="true"] svg { color: var(--menu-nhan); }
 .thanh-ngang .nut-nguoi:hover { background: var(--menu-hover); box-shadow: none; }
-.thanh-ngang .dong-ho { padding: 6px 12px; gap: 10px; box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), inset 0 0 0 1px rgb(217 184 119 / 0.35); }
-.thanh-ngang .dong-ho-so { font-size: 20px; }
-.thanh-ngang .dong-ho-phu { display: none; }
-@media (min-width: 1536px) { .thanh-ngang .dong-ho-phu { display: flex; } }
 .muc-con { transition: background-color 140ms ease-out, color 140ms ease-out; }
 .muc-con:hover { background: var(--nhan-nhat); color: var(--nhan-dam); }
 .bang-ngang { box-shadow: var(--sang-vien), var(--bong-3); border-color: var(--the-vien-nang); animation: hien-nhanh 140ms ease-out both; }

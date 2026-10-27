@@ -5,6 +5,7 @@ import { layCanhBao } from "@/lib/canh-bao";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { locMenu } from "@/lib/nav";
 import { coQuyen, NHAN_VAI_TRO } from "@/lib/quyen";
+import { DongHo } from "@/components/layout/DongHo";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -51,10 +52,13 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
 
   return (
     <div className="space-y-8">
-      <div>
-        <p className="nhan-muc">{NHAN_VAI_TRO[nd.vaiTro]}{nd.chucDanh ? ` · ${nd.chucDanh}` : ""}</p>
-        <h1 className="chu-tieu-de mt-1 text-[28px] leading-[1.15] text-muc lg:text-[34px]">Xin chào, {nd.hoTen}</h1>
-        <p className="mt-1.5 text-[14px] text-muc-3">Hôm nay {ngayVN(homNay)}</p>
+      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+        <div className="min-w-0">
+          <p className="nhan-muc">{NHAN_VAI_TRO[nd.vaiTro]}{nd.chucDanh ? ` · ${nd.chucDanh}` : ""}</p>
+          <h1 className="chu-tieu-de mt-1 text-[28px] leading-[1.15] text-muc lg:text-[34px]">Xin chào, {nd.hoTen}</h1>
+          <p className="mt-1.5 text-[14px] text-muc-3">Hôm nay {ngayVN(homNay)}</p>
+        </div>
+        <DongHo />
       </div>
       {tin.length > 0 && (
         <section aria-label="Bảng tin công ty" className="space-y-2.5">

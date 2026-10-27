@@ -42,7 +42,7 @@ export default function TrangDangNhap() {
             {state?.loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{state.loi}</div>}
             <button type="submit" disabled={dangXuLy} className="nut-vang h-[50px] w-full rounded-nho text-[15px] disabled:opacity-60">{dangXuLy ? "Đang đăng nhập" : "Đăng nhập"}</button>
             <Link href="/dang-ky" className="flex h-[50px] w-full items-center justify-center rounded-nho border border-vien-dam text-[15px] text-muc-2 hover:bg-giay-tram">Chưa có tài khoản? Đăng ký</Link>
-            <p className="text-[13px] text-muc-3">Quên mật khẩu: nhờ bộ phận Kỹ thuật đặt lại.</p>
+            <Link href="/quen-mat-khau" className="block text-center text-[14px] text-nhan-dam underline underline-offset-4">Quên mật khẩu?</Link>
           </form>
         </div>
       </section>

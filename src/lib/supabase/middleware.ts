@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // /api/cron/* tự kiểm CRON_SECRET trong từng route (Vercel Cron không có phiên đăng nhập).
-const DUONG_DAN_CONG_KHAI = ["/dang-nhap", "/dang-ky", "/api/cron", "/l/"];
+const DUONG_DAN_CONG_KHAI = ["/dang-nhap", "/dang-ky", "/quen-mat-khau", "/dat-lai-mat-khau", "/api/cron", "/l/"];
 
 export async function capNhatPhien(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

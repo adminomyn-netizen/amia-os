@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useState } from "react";
-import { gomTheoNhom, MENU } from "@/lib/nav";
+import { gomTheoNhom, MENU, mucDangChon } from "@/lib/nav";
 
 type MucDto = { ten: string; duong_dan: string; nhom: string; moTa: string };
 
@@ -19,7 +19,7 @@ function DanhSach({ muc, dong, gon = false }: { muc: MucDto[]; dong?: () => void
           {gon ? <div className="mx-3 mb-2 border-t border-menu-vien" aria-hidden /> : <div className="px-2.5 pb-2 text-[11px] font-medium uppercase tracking-[0.12em] text-menu-chu-phu">{g.nhom}</div>}
           <ul className="space-y-0.5">
             {g.muc.map((m) => {
-              const dangChon = pathname === m.duong_dan || pathname.startsWith(m.duong_dan + "/");
+              const dangChon = mucDangChon(pathname, m.duong_dan);
               const Icon = m.icon;
               return (
                 <li key={m.duong_dan}>

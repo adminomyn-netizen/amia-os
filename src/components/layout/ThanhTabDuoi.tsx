@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Grid2x2, X } from "lucide-react";
-import { gomTheoNhom, MENU } from "@/lib/nav";
+import { gomTheoNhom, MENU, mucDangChon } from "@/lib/nav";
 
 type MucDto = { ten: string; duong_dan: string; nhom: string; moTa: string };
-const UU_TIEN = ["/trang-chu", "/lich-hen", "/ban-hang", "/khach-hang", "/the", "/phieu-cap", "/kho", "/bao-cao"];
+const UU_TIEN = ["/trang-chu", "/lich-hen", "/ban-hang", "/khach-hang", "/the", "/kho-mua-sam", "/noi-lam-viec", "/bao-cao"];
 
 /** Thanh tab nổi dưới đáy cho điện thoại: 4 mục dùng nhiều nhất người này được phép + "Thêm" mở bảng đầy đủ chức năng. */
 export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
@@ -27,7 +27,7 @@ export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
   const co = new Set(muc.map((m) => m.duong_dan));
   const chinh = UU_TIEN.filter((d) => co.has(d)).slice(0, 4).map((d) => MENU.find((m) => m.duong_dan === d)!).filter(Boolean);
   const nhom = gomTheoNhom(muc.map((m) => MENU.find((x) => x.duong_dan === m.duong_dan)!).filter(Boolean));
-  const dang = (d: string) => pathname === d || pathname.startsWith(d + "/");
+  const dang = (d: string) => mucDangChon(pathname, d);
 
   return (
     <>

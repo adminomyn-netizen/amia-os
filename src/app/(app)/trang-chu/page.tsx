@@ -52,7 +52,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-x-6 gap-y-4">
+      <div className="flex flex-wrap items-stretch justify-between gap-x-6 gap-y-4">
         <div className="min-w-0">
           <p className="nhan-muc">{NHAN_VAI_TRO[nd.vaiTro]}{nd.chucDanh ? ` · ${nd.chucDanh}` : ""}</p>
           <h1 className="chu-tieu-de mt-1 text-[28px] leading-[1.15] text-muc lg:text-[34px]">Xin chào, {nd.hoTen}</h1>

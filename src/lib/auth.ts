@@ -41,3 +41,16 @@ export async function kiemQuyen(q: Quyen) {
   return nd && coQuyen(nd, q) ? nd : null;
 }
 export const KHONG_DU_QUYEN = "Bạn không có quyền thực hiện thao tác này.";
+
+/** Trang dành cho mọi nhân viên nội bộ (việc, báo cáo ngày, wiki, đề xuất) — chỉ loại Nhà đầu tư. */
+export async function yeuCauNoiBo() {
+  const nd = await layNguoiDungDangNhap();
+  if (nd.vaiTro === "nha_dau_tu") redirect(trangDau(nd, true));
+  return nd;
+}
+
+/** Server Action cho mọi nhân viên nội bộ. */
+export async function kiemNoiBo() {
+  const nd = await layNguoiDungHienTai();
+  return nd && nd.vaiTro !== "nha_dau_tu" ? nd : null;
+}

@@ -17,18 +17,18 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Công việc & chấm công", the: [
         { ten: "Việc của tôi hôm nay", moTa: "Lịch, thẻ, phiếu vật tư và việc được giao cho tôi.", duongDan: "/trang-chu", trangThai: "san_sang" },
-        { ten: "Việc cần hoàn thành", moTa: "Việc được giao cho tôi, việc tôi giao và việc quá hạn.", trangThai: "sap_co" },
+        { ten: "Việc cần hoàn thành", moTa: "Việc được giao cho tôi, việc tôi giao và việc quá hạn.", duongDan: "/noi-lam-viec/viec", trangThai: "san_sang" },
         { ten: "Bảng chấm công", moTa: "Chấm công và giờ làm thực tế.", trangThai: "sap_co" },
-        { ten: "Báo cáo ngày", moTa: "Nhân viên nộp báo cáo công việc cuối ngày.", trangThai: "sap_co" },
+        { ten: "Báo cáo ngày", moTa: "Nhân viên nộp báo cáo công việc cuối ngày.", duongDan: "/noi-lam-viec/bao-cao-ngay", trangThai: "san_sang" },
       ] },
       { nhan: "Kiến thức nội bộ", the: [
-        { ten: "Wiki công ty", moTa: "Quy định, quy trình và tài liệu đã ban hành.", trangThai: "sap_co" },
+        { ten: "Wiki công ty", moTa: "Quy định, quy trình và tài liệu đã ban hành.", duongDan: "/noi-lam-viec/wiki", trangThai: "san_sang" },
       ] },
       { nhan: "Đề xuất & phê duyệt", the: [
-        { ten: "Trung tâm phê duyệt", moTa: "Một nơi duyệt nghỉ phép, đề xuất nội bộ và thao tác nhạy cảm.", trangThai: "sap_co" },
-        { ten: "Đề xuất mua sắm", moTa: "Phiếu đề nghị mua hàng gửi quản lý duyệt.", trangThai: "sap_co" },
-        { ten: "Đề xuất thanh toán", moTa: "Đề xuất chi một khoản, gửi quản lý duyệt.", trangThai: "sap_co" },
-        { ten: "Đề xuất tạm ứng lương", moTa: "Nhân viên xin tạm ứng lương.", trangThai: "sap_co" },
+        { ten: "Trung tâm phê duyệt", moTa: "Một nơi duyệt đề xuất nội bộ và đơn mua hàng, rồi thực hiện ngay.", duongDan: "/noi-lam-viec/phe-duyet", trangThai: "san_sang" },
+        { ten: "Đề xuất mua sắm", moTa: "Phiếu đề nghị mua hàng gửi quản lý duyệt.", duongDan: "/noi-lam-viec/de-xuat?tab=mua-sam", trangThai: "san_sang" },
+        { ten: "Đề xuất thanh toán", moTa: "Đề xuất chi một khoản, gửi quản lý duyệt.", duongDan: "/noi-lam-viec/de-xuat?tab=thanh-toan", trangThai: "san_sang" },
+        { ten: "Đề xuất tạm ứng lương", moTa: "Nhân viên xin tạm ứng lương.", duongDan: "/noi-lam-viec/de-xuat?tab=tam-ung", trangThai: "san_sang" },
       ] },
     ],
   },

@@ -44,8 +44,9 @@ export const MODULE: Module[] = [
         { ten: "Khoản chi", moTa: "Ghi nhận khoản chi, chi phí.", duongDan: "/tai-chinh/so-quy?moi=chi", trangThai: "san_sang", quyen: ["quy.ghi"] },
       ] },
       { nhan: "Công nợ", the: [
-        { ten: "Công nợ khách hàng", moTa: "Khách còn nợ và thu nợ.", duongDan: "/bao-cao?tab=no", trangThai: "san_sang", quyen: ["baocao.tien"] },
+        { ten: "Công nợ khách hàng", moTa: "Khách còn nợ theo 6 nhóm tuổi nợ, trạng thái nhắc và tranh chấp.", duongDan: "/tai-chinh/cong-no-khach", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "Công nợ phải trả nhà cung cấp", moTa: "Công nợ và thanh toán nhà cung cấp.", duongDan: "/kho-mua-sam/cong-no", trangThai: "san_sang", quyen: ["mua.xem"] },
+        { ten: "Ngân sách", moTa: "Ngân sách tháng theo phân loại chi, so với đã chi từ sổ quỹ.", duongDan: "/tai-chinh/ngan-sach", trangThai: "san_sang", quyen: ["quy.xem"] },
       ] },
       { nhan: "Hoá đơn", the: [
         { ten: "Danh sách hoá đơn", moTa: "Hoá đơn bán hàng, thu nợ, huỷ.", duongDan: "/hoa-don", trangThai: "san_sang", quyen: ["ban.xem"] },
@@ -88,6 +89,7 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Hồ sơ", the: [
         { ten: "Hồ sơ nhân viên", moTa: "Thông tin, vai trò, chi nhánh, trạng thái.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
+        { ten: "Onboarding thử việc", moTa: "Các mốc 0, 3, 7, 30, 60 ngày cho nhân viên mới.", duongDan: "/nhan-su/onboarding", trangThai: "san_sang", quyen: ["cong.xem"] },
         { ten: "Hợp đồng lao động", moTa: "Thử việc → HĐLĐ lần 1 → lần 2 → không xác định thời hạn; nhắc trước 45 ngày.", duongDan: "/nhan-su/hop-dong", trangThai: "san_sang", quyen: ["cong.xem"] },
       ] },
       { nhan: "Chấm công", the: [

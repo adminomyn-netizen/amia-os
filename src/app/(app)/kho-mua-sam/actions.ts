@@ -39,6 +39,20 @@ export async function taoDonMua(fd: FormData): Promise<KQ> {
 }
 
 /** Đọc đơn và chặn theo chi nhánh của người thao tác. */
+/** Số báo giá tối thiểu theo giá trị đơn (ngưỡng ở quy_tac_duyet). Thiếu thì cần lý do ngoại lệ do người duyệt đơn ghi. */
+async function kiemBaoGia(donId: string): Promise<string | null> {
+  const db = sb();
+  const [{ data: dong }, { data: qt }, { count }, { data: don }] = await Promise.all([
+    db.from("don_mua_dong").select("so_luong, don_gia").eq("don_mua_id", donId), db.from("quy_tac_duyet").select("ma, nguong_tien, trang_thai").in("ma", ["bao_gia_2", "bao_gia_3"]),
+    db.from("bao_gia_don_mua").select("id", { count: "exact", head: true }).eq("don_mua_id", donId), db.from("don_mua").select("ly_do_ngoai_le_bao_gia").eq("id", donId).maybeSingle(),
+  ]);
+  const tong = (dong ?? []).reduce((a, d) => a + Math.round(Number(d.so_luong) * Number(d.don_gia)), 0);
+  const nguong = (ma: string) => Number((qt ?? []).find((q) => q.ma === ma && q.trang_thai === "hieu_luc")?.nguong_tien ?? 0);
+  const can = nguong("bao_gia_3") > 0 && tong >= nguong("bao_gia_3") ? 3 : nguong("bao_gia_2") > 0 && tong >= nguong("bao_gia_2") ? 2 : 0;
+  if (can > 0 && (count ?? 0) < can && !don?.ly_do_ngoai_le_bao_gia) return `Đơn từ ${can === 3 ? nguong("bao_gia_3").toLocaleString("vi-VN") : nguong("bao_gia_2").toLocaleString("vi-VN")} đ cần ít nhất ${can} báo giá (đang có ${count ?? 0}). Thêm báo giá hoặc để người duyệt ghi lý do ngoại lệ.`;
+  return null;
+}
+
 async function layDon(id: string, chiNhanhId: string | null) {
   const { data } = await sb().from("don_mua").select("*").eq("id", id).maybeSingle();
   return data && (!chiNhanhId || data.chi_nhanh_id === chiNhanhId) ? data : null;
@@ -77,6 +91,8 @@ export async function guiDuyetDonMua(fd: FormData): Promise<KQ> {
   if (!don || don.trang_thai !== "nhap") return { loi: "Đơn không ở trạng thái nháp." };
   const { count } = await sb().from("don_mua_dong").select("id", { count: "exact", head: true }).eq("don_mua_id", don.id);
   if (!count) return { loi: "Thêm ít nhất một dòng hàng trước khi gửi duyệt." };
+  const thieuBg = await kiemBaoGia(don.id);
+  if (thieuBg) return { loi: thieuBg };
   const { error } = await sb().from("don_mua").update({ trang_thai: "cho_duyet", ly_do: null }).eq("id", don.id).eq("trang_thai", "nhap");
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();
@@ -90,6 +106,8 @@ export async function duyetDonMua(fd: FormData): Promise<KQ> {
   const don = await layDon(chuoi(fd, "don_id"), nd.chiNhanhId);
   if (!don || don.trang_thai !== "cho_duyet") return { loi: "Đơn không ở trạng thái chờ duyệt." };
   if (don.nguoi_tao_id === nd.nhanVienId && nd.vaiTro !== "ky_thuat") return { loi: "Người lập đơn không tự duyệt đơn của mình." };
+  const thieuBg = await kiemBaoGia(don.id);
+  if (thieuBg) return { loi: thieuBg };
   const { data, error } = await sb().from("don_mua").update({ trang_thai: "da_duyet", nguoi_duyet_id: nd.nhanVienId, duyet_luc: new Date().toISOString() }).eq("id", don.id).eq("trang_thai", "cho_duyet").select("id");
   if (error) return { loi: thongBaoLoi(error) };
   if (!data?.length) return { loi: "Đơn vừa được xử lý bởi người khác." };
@@ -150,5 +168,60 @@ export async function thanhToanNcc(fd: FormData): Promise<KQ> {
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();
   revalidatePath("/tai-chinh/so-quy");
+  return { ok: true };
+}
+
+// ─── Báo giá ────────────────────────────────────────────────────────────────
+export async function themBaoGia(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("mua.tao");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const don = await layDon(chuoi(fd, "don_id"), nd.chiNhanhId);
+  if (!don || !["nhap", "cho_duyet"].includes(don.trang_thai)) return { loi: "Chỉ thêm báo giá cho đơn nháp hoặc đang chờ duyệt." };
+  const tien = Math.round(so(fd, "tong_tien")), link = chuoiHoacNull(fd, "link_file");
+  if (!chuoi(fd, "ncc_id") || !(tien > 0)) return { loi: "Chọn nhà cung cấp và nhập tổng tiền báo giá." };
+  if (link && !/^https?:\/\//.test(link)) return { loi: "Link file phải bắt đầu bằng https://" };
+  const { error } = await sb().from("bao_gia_don_mua").upsert({ don_mua_id: don.id, ncc_id: chuoi(fd, "ncc_id"), tong_tien: tien, ghi_chu: chuoiHoacNull(fd, "ghi_chu"), link_file: link, nguoi_id: nd.nhanVienId }, { onConflict: "don_mua_id,ncc_id" });
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+export async function chonBaoGia(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("mua.tao");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const db = sb();
+  const { data: bg } = await db.from("bao_gia_don_mua").select("id, don_mua_id").eq("id", chuoi(fd, "bao_gia_id")).maybeSingle();
+  const don = bg ? await layDon(bg.don_mua_id, nd.chiNhanhId) : null;
+  if (!bg || !don || !["nhap", "cho_duyet"].includes(don.trang_thai)) return { loi: "Không chọn được báo giá này." };
+  await db.from("bao_gia_don_mua").update({ duoc_chon: false }).eq("don_mua_id", bg.don_mua_id);
+  const { error } = await db.from("bao_gia_don_mua").update({ duoc_chon: true }).eq("id", bg.id);
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+export async function xoaBaoGia(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("mua.tao");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const db = sb();
+  const { data: bg } = await db.from("bao_gia_don_mua").select("id, don_mua_id").eq("id", chuoi(fd, "bao_gia_id")).maybeSingle();
+  const don = bg ? await layDon(bg.don_mua_id, nd.chiNhanhId) : null;
+  if (!bg || !don || don.trang_thai !== "nhap") return { loi: "Chỉ xoá báo giá của đơn nháp." };
+  const { error } = await db.from("bao_gia_don_mua").delete().eq("id", bg.id);
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+/** Thiếu báo giá thì người có quyền duyệt đơn ghi lý do ngoại lệ (ví dụ nhà cung cấp độc quyền, mua gấp). */
+export async function ngoaiLeBaoGia(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("mua.duyet");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const don = await layDon(chuoi(fd, "don_id"), nd.chiNhanhId);
+  if (!don || !["nhap", "cho_duyet"].includes(don.trang_thai)) return { loi: "Đơn không còn ở bước này." };
+  if (!chuoi(fd, "ly_do")) return { loi: "Ghi lý do ngoại lệ." };
+  const { error } = await sb().from("don_mua").update({ ly_do_ngoai_le_bao_gia: chuoi(fd, "ly_do") }).eq("id", don.id);
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
   return { ok: true };
 }

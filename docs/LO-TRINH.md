@@ -24,4 +24,5 @@ Tài liệu nghiệp vụ đọc từ bản demo BeDental nằm ở `docs/bedent
 ## Còn lại sau 27/10/2026
 - **Chờ chị Lâm xác nhận** (đang để thành tham số, không cứng): ngưỡng ký 100 triệu của Giám đốc chi nhánh; ngưỡng 10 triệu "chờ xác nhận"; biểu thuế TNCN và giảm trừ; lương thử việc 85%; ăn ca 35.000; bảng phạt trễ; công chuẩn 26 ngày; nhắc hợp đồng lao động trước 45 ngày. Chính sách hoa hồng giới thiệu/CTV chưa có văn bản nên chưa tính tự động.
 - **Chưa làm vì cần tài khoản bên thứ ba**: hoá đơn điện tử, Zalo OA/SMS, hộp thư đa kênh, web đặt lịch.
-- **Chưa làm, có thể làm tiếp**: báo giá nhiều nhà cung cấp và ngân sách kỳ (kiểm tra khi gửi đề xuất), công nợ khách theo 6 nhóm tuổi nợ, sổ quỹ hai tầng, kế hoạch vật tư theo tháng, onboarding nhân sự thử việc, cảnh báo lô sắp hết hạn trên chuông thông báo.
+- **Đã làm thêm (27/10 tối):** báo giá nhiều nhà cung cấp trên đơn mua (từ 20 triệu cần 2, từ 30 triệu cần 3, thiếu thì ghi ngoại lệ), ngân sách tháng, công nợ khách 6 nhóm tuổi nợ, onboarding thử việc, cảnh báo trên chuông (lô hết hạn, chuyển kho quá 24 giờ, xuất khẩn chờ hậu kiểm, hoá đơn chưa về, văn bản, hợp đồng lao động).
+- **Chưa làm, có thể làm tiếp**: sổ quỹ hai tầng, kế hoạch vật tư theo tháng, chặn đề xuất vượt ngân sách (hiện chỉ hiển thị), chỉnh danh sách mốc onboarding trên giao diện.

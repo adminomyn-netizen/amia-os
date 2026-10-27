@@ -6,12 +6,13 @@ import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
-import { datLaiMatKhau, suaNhanVien, taoNhanVien, xoaNhanVien } from "./actions";
+import { datLaiMatKhau, duyetYeuCauTaiKhoan, suaNhanVien, taoNhanVien, tuChoiYeuCauTaiKhoan, xoaNhanVien } from "./actions";
+import { ngayVN, ngayCuaIso } from "@/lib/dinh-dang";
 
 export default async function TrangNhanVien() {
   await yeuCauQuyen("hethong.phanquyen");
   const db = sb();
-  const [{ data: ds }, { data: cn }] = await Promise.all([db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
+  const [{ data: yeuCau }, { data: ds }, { data: cn }] = await Promise.all([db.from("yeu_cau_tai_khoan").select("*").eq("trang_thai", "cho_duyet").order("tao_luc"), db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const vaiTroLC = VAI_TRO.map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] }));
   const cnLC = [{ gia_tri: "", nhan: "Mọi chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))];
@@ -32,6 +33,24 @@ export default async function TrangNhanVien() {
       <TieuDeTrang tieuDe="Nhân viên" phu="Tài khoản, vai trò, phân quyền từng người và chi nhánh. Chỉ Kỹ thuật thấy mục này. Người không cần đăng nhập (VD kỹ thuật viên) vẫn tạo hồ sơ để gán vào hoá đơn và hoa hồng.">
         <NutHop nhan="Thêm nhân viên" tieuDe="Thêm nhân viên" truong={truongTao} giaTri={{ vai_tro: "le_tan", chi_nhanh_id: "" }} action={taoNhanVien} />
       </TieuDeTrang>
+      {(yeuCau ?? []).length > 0 && (
+        <section className="mb-8">
+          <h2 className="nhan-muc mb-2">Yêu cầu đăng ký đang chờ ({yeuCau!.length})</h2>
+          <Bang duLieu={yeuCau ?? []} khoa={(r) => r.id}
+            cot={[
+              { nhan: "Họ tên", chinh: true, hienThi: (r) => <span className="text-muc">{r.ho_ten}</span> },
+              { nhan: "Liên hệ", hienThi: (r) => <div>{r.email}<div className="text-[12.5px] text-muc-3">{r.dien_thoai}</div></div> },
+              { nhan: "Chi nhánh · vị trí", hienThi: (r) => [tenCn.get(r.chi_nhanh_id ?? ""), r.vi_tri].filter(Boolean).join(" · ") },
+              { nhan: "Gửi lúc", hienThi: (r) => ngayVN(ngayCuaIso(r.tao_luc)) },
+              { nhan: "", hienThi: (r) => (
+                <div className="flex flex-wrap justify-end gap-1.5">
+                  <NutHop kieu="chu" nhan="Duyệt" tieuDe={`Duyệt: ${r.ho_ten}`} moTa="Tạo tài khoản với mật khẩu ban đầu 12345678; người dùng buộc đổi khi vào lần đầu. Nhớ báo mật khẩu cho họ." truong={[{ ten: "vai_tro", nhan: "Vai trò", loai: "chon", luaChon: vaiTroLC, batBuoc: true }]} giaTri={{ vai_tro: "le_tan" }} an={{ id: r.id }} action={duyetYeuCauTaiKhoan} nhanLuu="Tạo tài khoản" />
+                  <NutHop kieu="chu" nguy nhan="Từ chối" tieuDe={`Từ chối: ${r.ho_ten}`} truong={[{ ten: "ly_do", nhan: "Lý do (không bắt buộc)", loai: "chu", rong: true }]} an={{ id: r.id }} action={tuChoiYeuCauTaiKhoan} nhanLuu="Từ chối" />
+                </div>
+              ) },
+            ]} />
+        </section>
+      )}
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} cot={[
         { nhan: "Họ tên", hienThi: (r) => <span className="text-muc">{r.ho_ten}</span> }, { nhan: "Vai trò", hienThi: (r) => NHAN_VAI_TRO[r.vai_tro as keyof typeof NHAN_VAI_TRO] ?? r.vai_tro },
         { nhan: "Chi nhánh", hienThi: (r) => (r.chi_nhanh_id ? tenCn.get(r.chi_nhanh_id) ?? "" : "Mọi chi nhánh") }, { nhan: "Email", hienThi: (r) => r.email ?? "Không có tài khoản" },

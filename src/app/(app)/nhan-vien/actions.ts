@@ -104,3 +104,31 @@ export async function xoaNhanVien(fd: FormData): Promise<KQ> {
   if (nv.user_id) await createAdminClient().auth.admin.deleteUser(nv.user_id);
   return xong();
 }
+
+/** Duyệt yêu cầu đăng ký (trang /dang-ky): tạo tài khoản với mật khẩu mặc định (buộc đổi ở lần đầu) rồi đánh dấu đã duyệt. Giành quyền xử lý trước để hai người bấm cùng lúc không tạo hai lần. */
+export async function duyetYeuCauTaiKhoan(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("hethong.phanquyen");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const vaiTro = chuoi(fd, "vai_tro");
+  if (!laVaiTro(vaiTro)) return { loi: "Chọn vai trò cho tài khoản." };
+  const id = chuoi(fd, "id");
+  const { data: yc } = await sb().from("yeu_cau_tai_khoan").update({ trang_thai: "da_duyet", nguoi_xu_ly_id: nd.nhanVienId, xu_ly_luc: new Date().toISOString() }).eq("id", id).eq("trang_thai", "cho_duyet").select("*").maybeSingle();
+  if (!yc) return { loi: "Yêu cầu đã được xử lý hoặc không còn." };
+  const tao = new FormData();
+  tao.set("ho_ten", yc.ho_ten); tao.set("email", yc.email); tao.set("dien_thoai", yc.dien_thoai ?? ""); tao.set("vai_tro", vaiTro);
+  tao.set("chuc_danh", yc.vi_tri ?? ""); tao.set("chi_nhanh_id", yc.chi_nhanh_id ?? "");
+  const kq = await taoNhanVien(tao);
+  if (kq.loi) {
+    await sb().from("yeu_cau_tai_khoan").update({ trang_thai: "cho_duyet", nguoi_xu_ly_id: null, xu_ly_luc: null }).eq("id", id);
+    return kq;
+  }
+  return xong();
+}
+
+export async function tuChoiYeuCauTaiKhoan(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("hethong.phanquyen");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const { data } = await sb().from("yeu_cau_tai_khoan").update({ trang_thai: "tu_choi", nguoi_xu_ly_id: nd.nhanVienId, xu_ly_luc: new Date().toISOString(), ly_do: chuoiHoacNull(fd, "ly_do") }).eq("id", chuoi(fd, "id")).eq("trang_thai", "cho_duyet").select("id");
+  if (!data?.length) return { loi: "Yêu cầu đã được xử lý hoặc không còn." };
+  return xong();
+}

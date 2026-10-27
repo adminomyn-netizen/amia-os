@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Ellipsis } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { MENU, mucDangChon } from "@/lib/nav";
 import { DongHo } from "./DongHo";
 import { ChuongThongBao } from "./ChuongThongBao";
@@ -16,14 +16,14 @@ export type MucNgang = {
 };
 type Props = { muc: MucNgang[]; hoTen: string; vaiTro: string; chucDanh: string | null; email: string; chiNhanh: string | null; anh: string | null };
 
-/** Số mục hiện trên thanh theo bề rộng màn hình (lg / xl / 2xl / ≥1800px); mục còn lại gom vào nút "Thêm". */
-const HIEN = [4, 6, 9, 13];
-const LOP_HIEN = ["flex", "hidden xl:flex", "hidden 2xl:flex", "hidden min-[1800px]:flex"];
-const LOP_AN_TRONG_THEM = ["hidden", "xl:hidden", "2xl:hidden", "min-[1800px]:hidden"];
-const tang = (i: number) => HIEN.findIndex((k) => i < k);
+/** Mỗi mục lớn chỉ liệt kê tối đa từng này chức năng con trong bảng thả xuống; còn lại bấm "Xem tất cả". */
+const TOI_DA_CON = 6;
+const THU_TU_NHOM = ["Hằng ngày", "Vận hành", "Phát triển", "Hệ thống"];
+const cotCua = (n: number) => (n <= 4 ? n : n <= 6 ? 3 : 4);
+const rongBang = (n: number) => cotCua(n) * 236 + 32;
 
-/** Thanh menu ngang cho máy tính (≥1024px): logo, các mục lớn có menu thả xuống (rê chuột hoặc phím), nút "Thêm", rồi chi nhánh, giờ, chuông, tài khoản.
- *  Điện thoại/máy tính bảng dọc giữ thanh trên + thanh tab dưới như cũ. */
+/** Thanh menu ngang cho máy tính (≥1024px): logo, 4 nút nhóm (Hằng ngày, Vận hành, Phát triển, Hệ thống), rồi đồng hồ, chuông, tài khoản.
+ *  Rê chuột (hoặc Tab/Enter) vào một nhóm thì thả xuống các mục lớn của nhóm kèm chức năng con. Điện thoại/máy tính bảng dọc giữ thanh trên + thanh tab dưới. */
 export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh }: Props) {
   const pathname = usePathname();
   // Mở gắn với trang đang xem: đổi trang là tự đóng.
@@ -32,10 +32,10 @@ export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh 
   const hen = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const thanh = useRef<HTMLElement>(null);
 
-  const moBang = (ma: string, li: HTMLElement | null, rongBang: number) => {
+  const moBang = (ma: string, li: HTMLElement | null, rong: number) => {
     clearTimeout(hen.current);
     const r = li?.getBoundingClientRect();
-    const trai = Math.max(16, Math.min(r?.left ?? 16, window.innerWidth - rongBang - 16));
+    const trai = Math.max(16, Math.min(r?.left ?? 16, window.innerWidth - rong - 16));
     setMoTai({ ma, trang: pathname, trai });
   };
   const dong = (tre = 140) => { clearTimeout(hen.current); hen.current = setTimeout(() => setMoTai(null), tre); };
@@ -47,94 +47,66 @@ export function ThanhNgang({ muc, hoTen, vaiTro, chucDanh, email, chiNhanh, anh 
     return () => { document.removeEventListener("keydown", phim); document.removeEventListener("mousedown", ngoai); };
   }, [mo]);
 
-  const ngang = muc;
-  const nhieu = ngang.length > HIEN[0];
-  const lopNutThem = ngang.length <= HIEN[1] ? "xl:hidden" : ngang.length <= HIEN[2] ? "2xl:hidden" : ngang.length <= HIEN[3] ? "min-[1800px]:hidden" : "";
-  const rongBang = (soNhom: number) => Math.min(Math.max(soNhom, 1), 3) * 252 + 32;
+  const nhom = THU_TU_NHOM.map((ten) => ({ ten, muc: muc.filter((m) => m.nhom === ten) })).filter((g) => g.muc.length > 0);
 
   return (
-    <header ref={thanh} className="thanh-ngang khong-in sticky top-0 z-40 hidden h-[66px] items-center gap-3 px-6 xl:gap-5 xl:px-8 lg:flex" onMouseLeave={() => dong()}>
-      <Link href="/trang-chu" className="mr-1 shrink-0" aria-label="AMIA OS, về trang chủ">
+    <header ref={thanh} className="thanh-ngang khong-in sticky top-0 z-40 hidden h-[66px] items-center gap-4 px-6 lg:flex xl:px-8" onMouseLeave={() => dong()}>
+      <Link href="/trang-chu" className="mr-2 shrink-0" aria-label="AMIA OS, về trang chủ">
         <Image src="/logo-amia-trang.png" alt="AMIA Beauty Center" width={120} height={52} priority className="h-auto w-[84px]" />
       </Link>
-      <nav className="flex min-w-0 flex-1 items-center gap-0.5" aria-label="Menu chính">
-        {ngang.map((m, i) => {
-          const dang = mucDangChon(pathname, m.duong_dan);
-          const Icon = MENU.find((x) => x.duong_dan === m.duong_dan)!.icon;
-          const coCon = m.con.length > 0;
-          const bangMo = mo?.ma === m.duong_dan;
+      <nav className="flex min-w-0 flex-1 items-center gap-1" aria-label="Menu chính">
+        {nhom.map((g) => {
+          const dang = g.muc.some((m) => mucDangChon(pathname, m.duong_dan));
+          const bangMo = mo?.ma === g.ten;
+          const rong = rongBang(g.muc.length);
           return (
-            <div key={m.duong_dan} className={`${LOP_HIEN[tang(i)] ?? LOP_HIEN[3]} items-center`}
-              onMouseEnter={(e) => (coCon ? moBang(m.duong_dan, e.currentTarget, rongBang(m.con.length)) : dong(0))}
-              onFocus={(e) => (coCon ? moBang(m.duong_dan, e.currentTarget, rongBang(m.con.length)) : undefined)}
+            <div key={g.ten} className="flex items-center"
+              onMouseEnter={(e) => moBang(g.ten, e.currentTarget, rong)}
               onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) dong(0); }}>
-              <Link href={m.duong_dan} aria-current={dang ? "page" : undefined} aria-haspopup={coCon ? "true" : undefined} aria-expanded={coCon ? bangMo : undefined}
-                className="muc-ngang flex h-10 items-center gap-2 whitespace-nowrap rounded-nho px-3 text-[14px]" data-mo={bangMo}>
-                <Icon strokeWidth={1.7} className="h-[17px] w-[17px] shrink-0" aria-hidden />
-                {m.ngan}
-                {coCon && <ChevronDown strokeWidth={1.8} className={`h-3.5 w-3.5 shrink-0 opacity-70 transition-transform ${bangMo ? "rotate-180" : ""}`} aria-hidden />}
-              </Link>
-              {bangMo && coCon && (
-                <div role="menu" aria-label={m.ten} style={{ position: "fixed", left: mo.trai, width: rongBang(m.con.length) }}
-                  className="the-noi the-noi-thap vao bang-ngang top-[66px] z-50 max-w-[calc(100vw-32px)] overflow-hidden p-0">
-                  <div className="flex items-start justify-between gap-4 border-b border-vien bg-giay-tram/60 px-5 py-3.5">
-                    <div className="min-w-0">
-                      <div className="text-[15px] font-semibold text-muc">{m.ten}</div>
-                      <div className="mt-0.5 line-clamp-1 text-[12.5px] text-muc-3">{m.moTa}</div>
-                    </div>
-                    <Link href={m.duong_dan} role="menuitem" className="shrink-0 pt-0.5 text-[13px] font-medium text-nhan-dam hover:underline">Xem tất cả →</Link>
-                  </div>
-                  <div className="grid gap-x-1 gap-y-4 p-4" style={{ gridTemplateColumns: `repeat(${Math.min(m.con.length, 3)}, minmax(0, 1fr))` }}>
-                    {m.con.map((g) => (
-                      <div key={g.nhan} className="min-w-0">
-                        <div className="nhan-muc px-2.5 pb-1.5">{g.nhan}</div>
-                        <ul>
-                          {g.the.map((t) => (
-                            <li key={t.ten}>
-                              <Link href={t.duongDan} role="menuitem" title={t.moTa} className="muc-con block rounded-nho px-2.5 py-1.5 text-[13.5px] leading-snug text-muc-2">{t.ten}</Link>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
+              <button type="button" aria-haspopup="true" aria-expanded={bangMo} data-mo={bangMo}
+                aria-current={dang ? "page" : undefined}
+                onClick={(e) => (bangMo ? setMoTai(null) : moBang(g.ten, e.currentTarget.parentElement, rong))}
+                className="muc-ngang flex h-10 items-center gap-2 whitespace-nowrap rounded-nho px-4 text-[14.5px]">
+                {g.ten}
+                <ChevronDown strokeWidth={1.8} className={`h-3.5 w-3.5 shrink-0 opacity-70 transition-transform ${bangMo ? "rotate-180" : ""}`} aria-hidden />
+              </button>
+              {bangMo && (
+                <div role="menu" aria-label={g.ten} style={{ position: "fixed", left: mo.trai, width: rong }}
+                  className="the-noi the-noi-thap vao bang-ngang top-[66px] z-50 max-w-[calc(100vw-32px)] overflow-y-auto overflow-x-hidden p-4">
+                  <div className="grid gap-x-2 gap-y-5" style={{ gridTemplateColumns: `repeat(${cotCua(g.muc.length)}, minmax(0, 1fr))` }}>
+                    {g.muc.map((m) => {
+                      const Icon = MENU.find((x) => x.duong_dan === m.duong_dan)!.icon;
+                      const cacCon = m.con.flatMap((c) => c.the);
+                      const dangMuc = mucDangChon(pathname, m.duong_dan);
+                      return (
+                        <div key={m.duong_dan} className="min-w-0">
+                          <Link href={m.duong_dan} role="menuitem" aria-current={dangMuc ? "page" : undefined} className="muc-con flex items-center gap-2.5 rounded-nho px-2.5 py-2 font-semibold text-muc">
+                            <Icon strokeWidth={1.7} className="h-[18px] w-[18px] shrink-0 text-nhan" aria-hidden />
+                            <span className="min-w-0 truncate text-[14.5px]">{m.ten}</span>
+                          </Link>
+                          {cacCon.length > 0 && (
+                            <ul className="mt-0.5 border-l border-vien ml-[19px]">
+                              {cacCon.slice(0, TOI_DA_CON).map((t) => (
+                                <li key={t.ten}>
+                                  <Link href={t.duongDan} role="menuitem" title={t.moTa} className="muc-con block rounded-nho px-3 py-1.5 text-[13.5px] leading-snug text-muc-2">{t.ten}</Link>
+                                </li>
+                              ))}
+                              {cacCon.length > TOI_DA_CON && (
+                                <li><Link href={m.duong_dan} role="menuitem" className="block px-3 py-1.5 text-[13px] font-medium text-nhan-dam hover:underline">Xem tất cả {cacCon.length} →</Link></li>
+                              )}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
             </div>
           );
         })}
-        {nhieu && (
-          <div className={`${lopNutThem} items-center flex`}
-            onMouseEnter={(e) => moBang("them", e.currentTarget, rongBang(2))}
-            onFocus={(e) => moBang("them", e.currentTarget, rongBang(2))}
-            onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) dong(0); }}>
-            <button type="button" aria-haspopup="true" aria-expanded={mo?.ma === "them"} data-mo={mo?.ma === "them"}
-              onClick={(e) => (mo?.ma === "them" ? setMoTai(null) : moBang("them", e.currentTarget.parentElement, rongBang(2)))}
-              className="muc-ngang flex h-10 items-center gap-2 whitespace-nowrap rounded-nho px-3 text-[14px]">
-              <Ellipsis strokeWidth={1.7} className="h-[17px] w-[17px]" aria-hidden />Thêm
-            </button>
-            {mo?.ma === "them" && (
-              <div role="menu" aria-label="Thêm chức năng" style={{ position: "fixed", left: mo.trai, width: rongBang(2) }} className="the-noi the-noi-thap vao bang-ngang top-[66px] z-50 max-w-[calc(100vw-32px)] overflow-hidden p-3">
-                <ul className="grid grid-cols-2 gap-1">
-                  {ngang.map((m, i) => {
-                    const Icon = MENU.find((x) => x.duong_dan === m.duong_dan)!.icon;
-                    return (
-                      <li key={m.duong_dan} className={LOP_AN_TRONG_THEM[tang(i)] ?? LOP_AN_TRONG_THEM[3]}>
-                        <Link href={m.duong_dan} role="menuitem" className="muc-con flex items-start gap-3 rounded-nho px-3 py-2.5">
-                          <Icon strokeWidth={1.6} className="mt-0.5 h-[18px] w-[18px] shrink-0 text-nhan" aria-hidden />
-                          <span className="min-w-0"><span className="block text-[14px] font-medium text-muc">{m.ten}</span><span className="line-clamp-1 text-[12px] text-muc-3">{m.moTa}</span></span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
       </nav>
-      <div className="flex shrink-0 items-center gap-1.5 xl:gap-3">
-        <span className="hidden max-w-[170px] truncate text-[12.5px] text-menu-chu-phu 2xl:block" title={chiNhanh ?? "Mọi chi nhánh"}>{chiNhanh ?? "Mọi chi nhánh"}</span>
+      <div className="flex shrink-0 items-center gap-2 xl:gap-3">
         <DongHo />
         <ChuongThongBao toi />
         <MenuNguoiDung hoTen={hoTen} vaiTro={vaiTro} chucDanh={chucDanh} email={email} chiNhanh={chiNhanh} anh={anh} toi />

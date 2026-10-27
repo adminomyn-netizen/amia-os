@@ -33,13 +33,13 @@ export const MODULE: Module[] = [
     ],
   },
   {
-    ma: "tai-chinh", ten: "Tài chính - Kế toán", duongDan: "/tai-chinh", quyen: ["baocao.tien", "no.thu"],
+    ma: "tai-chinh", ten: "Tài chính - Kế toán", duongDan: "/tai-chinh", quyen: ["quy.xem", "baocao.tien", "no.thu"],
     moTa: "Sổ quỹ thu/chi, công nợ, hoá đơn và quyết toán.",
     nhom: [
       { nhan: "Thu / chi", the: [
-        { ten: "Sổ quỹ", moTa: "Sổ quỹ thu/chi từ các lần thanh toán: lọc, tổng, số dư chạy, xuất Excel.", trangThai: "sap_co" },
-        { ten: "Khoản thu", moTa: "Ghi nhận khoản thu ngoài hoá đơn.", trangThai: "sap_co" },
-        { ten: "Khoản chi", moTa: "Ghi nhận khoản chi, chi phí.", trangThai: "sap_co" },
+        { ten: "Sổ quỹ", moTa: "Tiền mặt và ngân hàng: thu/chi, chuyển quỹ, số dư, xuất Excel.", duongDan: "/tai-chinh/so-quy", trangThai: "san_sang", quyen: ["quy.xem"] },
+        { ten: "Khoản thu", moTa: "Ghi nhận khoản thu ngoài hoá đơn.", duongDan: "/tai-chinh/so-quy?moi=thu", trangThai: "san_sang", quyen: ["quy.ghi"] },
+        { ten: "Khoản chi", moTa: "Ghi nhận khoản chi, chi phí.", duongDan: "/tai-chinh/so-quy?moi=chi", trangThai: "san_sang", quyen: ["quy.ghi"] },
       ] },
       { nhan: "Công nợ", the: [
         { ten: "Công nợ khách hàng", moTa: "Khách còn nợ và thu nợ.", duongDan: "/bao-cao?tab=no", trangThai: "san_sang", quyen: ["baocao.tien"] },

@@ -1,0 +1,130 @@
+import Link from "next/link";
+import { yeuCauQuyen } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
+import { sb } from "@/lib/db";
+import { khoangNgay } from "@/lib/bao-cao";
+import { ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { Tab } from "@/components/ui/Tab";
+import { Bang } from "@/components/ui/Table";
+import { HangChiSo } from "@/components/ui/HangChiSo";
+import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { NutHop, type Truong } from "@/components/ui/BieuMau";
+import { LocSoQuy } from "@/components/tai-chinh/LocSoQuy";
+import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
+import { chuyenQuy, daoPhieu, ghiThuChi, luuLoaiThuChi, nhapSoDuDau } from "./actions";
+
+const TAB = [{ ma: "tien-mat", ten: "Sổ quỹ tiền mặt" }, { ma: "ngan-hang", ten: "Sổ quỹ ngân hàng" }, { ma: "loai", ten: "Phân loại thu/chi" }];
+const NHAN_LOAI: Record<string, { ten: string; kieu: "tot" | "loi" | "cho" | "tram" }> = { thu: { ten: "Thu vào", kieu: "tot" }, chi: { ten: "Chi ra", kieu: "loi" }, nap: { ten: "Nạp quỹ", kieu: "cho" }, rut: { ten: "Rút quỹ", kieu: "cho" } };
+
+type SP = { tab?: string; tu?: string; den?: string; cn?: string; loai?: string; pl?: string; da?: string };
+
+export default async function TrangSoQuy({ searchParams }: { searchParams: Promise<SP> }) {
+  const nd = await yeuCauQuyen("quy.xem");
+  const sp = await searchParams;
+  const tab = TAB.some((t) => t.ma === sp.tab) ? sp.tab! : "tien-mat";
+  const ghi = coQuyen(nd, "quy.ghi");
+  const db = sb();
+  const { tu, den, homNay } = khoangNgay(sp.tu, sp.den);
+  const [{ data: dsCn }, { data: loaiTC }] = await Promise.all([db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"), db.from("loai_thu_chi").select("*").order("huong", { ascending: false }).order("thu_tu")]);
+  const cn = nd.chiNhanhId ?? (sp.cn || undefined);
+  let qq = db.from("quy").select("*").eq("hoat_dong", true).order("loai").order("ten");
+  if (cn) qq = qq.eq("chi_nhanh_id", cn);
+  const { data: dsQuy } = await qq;
+  const quyHienTai = (dsQuy ?? []).filter((q) => q.loai === (tab === "ngan-hang" ? "ngan_hang" : "tien_mat"));
+  const luaQuy = (dsQuy ?? []).map((q) => ({ gia_tri: q.id, nhan: q.ten }));
+  const goc = "/tai-chinh/so-quy";
+  const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
+  const quyMacDinh = quyHienTai[0]?.id ?? luaQuy[0]?.gia_tri ?? "";
+  const luaLoai = (h: "thu" | "chi") => (loaiTC ?? []).filter((l) => l.huong === h && l.hoat_dong && !l.he_thong).map((l) => ({ gia_tri: l.id, nhan: l.ten }));
+  const chung: Truong[] = [
+    { ten: "quy_id", nhan: "Quỹ", loai: "chon", luaChon: luaQuy, batBuoc: true }, { ten: "so_tien", nhan: "Số tiền", loai: "tien", batBuoc: true },
+    { ten: "ngay", nhan: "Ngày", loai: "ngay", batBuoc: true }, { ten: "doi_tuong", nhan: "Người nộp / người nhận", loai: "chu" }, { ten: "noi_dung", nhan: "Nội dung", loai: "chu", batBuoc: true, rong: true },
+  ];
+  const truongThu: Truong[] = [{ ten: "loai_thu_chi_id", nhan: "Phân loại", loai: "chon", luaChon: luaLoai("thu"), batBuoc: true }, ...chung];
+  const truongChi: Truong[] = [{ ten: "loai_thu_chi_id", nhan: "Phân loại", loai: "chon", luaChon: luaLoai("chi"), batBuoc: true }, ...chung];
+  const nutGhi = ghi && (
+    <>
+      <NutHop nhan="Thêm khoản thu" tieuDe="Thêm khoản thu" truong={truongThu} action={ghiThuChi} an={{ huong: "thu" }} giaTri={{ quy_id: quyMacDinh, ngay: homNay }} />
+      <NutHop kieu="phu" nhan="Thêm khoản chi" tieuDe="Thêm khoản chi" truong={truongChi} action={ghiThuChi} an={{ huong: "chi" }} giaTri={{ quy_id: quyMacDinh, ngay: homNay }} />
+      <NutHop kieu="phu" nhan="Chuyển quỹ" tieuDe="Chuyển tiền giữa hai quỹ" moTa="Rút từ quỹ này, nạp vào quỹ kia (vd nộp tiền mặt vào ngân hàng)." action={chuyenQuy}
+        truong={[{ ten: "quy_tu", nhan: "Từ quỹ", loai: "chon", luaChon: luaQuy, batBuoc: true }, { ten: "quy_den", nhan: "Sang quỹ", loai: "chon", luaChon: luaQuy, batBuoc: true }, { ten: "so_tien", nhan: "Số tiền", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày", loai: "ngay", batBuoc: true }, { ten: "noi_dung", nhan: "Nội dung", loai: "chu", rong: true }]}
+        giaTri={{ ngay: homNay }} />
+    </>
+  );
+
+  let noiDung: React.ReactNode;
+  if (tab === "loai") {
+    const truong: Truong[] = [{ ten: "huong", nhan: "Loại", loai: "chon", luaChon: [{ gia_tri: "thu", nhan: "Thu vào" }, { gia_tri: "chi", nhan: "Chi ra" }], chiKhiTao: true, batBuoc: true }, { ten: "ten", nhan: "Tên phân loại", loai: "chu", batBuoc: true, rong: true }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" }];
+    noiDung = (
+      <>
+        {ghi && <div className="mb-4"><NutHop nhan="Thêm phân loại" tieuDe="Thêm phân loại thu/chi" truong={truong} action={luuLoaiThuChi} giaTri={{ huong: "chi", hoat_dong: true }} /></div>}
+        <Bang duLieu={loaiTC ?? []} khoa={(r) => r.id} trong="Chưa có phân loại."
+          cot={[
+            { nhan: "Phân loại", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
+            { nhan: "Loại", hienThi: (r) => <NhanTrangThai kieu={r.huong === "thu" ? "tot" : "loi"}>{r.huong === "thu" ? "Thu vào" : "Chi ra"}</NhanTrangThai> },
+            { nhan: "Ghi chú", hienThi: (r) => (r.he_thong ? "Hệ thống tự ghi, không sửa" : r.hoat_dong ? "" : "Ngừng dùng") },
+            { nhan: "", hienThi: (r) => (ghi && !r.he_thong ? <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa phân loại" truong={truong.filter((t) => t.ten !== "huong")} action={luuLoaiThuChi} giaTri={{ id: r.id, ten: r.ten, hoat_dong: r.hoat_dong }} /> : null) },
+          ]} />
+      </>
+    );
+  } else {
+    const ids = quyHienTai.map((q) => q.id);
+    const [{ data: tong }, { data: dong }] = await Promise.all([
+      db.rpc("so_quy_tong", { p_quy: ids, p_tu: tu, p_den: den }),
+      db.from("v_so_quy").select("*").in("quy_id", ids).gte("ngay", tu).lte("ngay", den).order("ngay").order("tao_luc").limit(5000),
+    ]);
+    const t = tong?.[0];
+    const dau = Number(t?.dau ?? 0);
+    let du = dau;
+    const tatCa = (dong ?? []).map((r) => { du += Number(r.bien_dong); return { ...r, du }; });
+    let ds = tatCa;
+    if (sp.da !== "1") ds = ds.filter((r) => !r.da_dao && r.nguon !== "dao_phieu");
+    if (sp.loai) ds = ds.filter((r) => r.loai === sp.loai);
+    if (sp.pl) ds = ds.filter((r) => r.loai_thu_chi === sp.pl);
+    ds = ds.reverse();
+    const chuaNhap = quyHienTai.filter((q) => !q.da_nhap_so_du);
+    noiDung = (
+      <>
+        <LocBaoCao goc={goc} tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />
+        <ChiSoQuy dau={dau} thu={Number(t?.thu ?? 0)} chi={Number(t?.chi ?? 0)} nap={Number(t?.nap ?? 0)} rut={Number(t?.rut ?? 0)} hienTai={Number(t?.hien_tai ?? 0)} />
+        {chuaNhap.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-nho bg-canh-bao-nen px-3.5 py-2.5 text-[13.5px] text-canh-bao" role="status">
+            <span>Tồn quỹ đang tính từ 0 vì {chuaNhap.length}/{quyHienTai.length} quỹ chưa nhập số dư ban đầu — có thể lệch với tiền thực tế.</span>
+            {ghi && chuaNhap.map((q) => <NutHop key={q.id} kieu="chu" nhan={`Nhập số dư: ${q.ten}`} tieuDe="Nhập số dư ban đầu" moTa={q.ten} truong={[{ ten: "so_du_dau", nhan: "Số dư ban đầu", loai: "tien", batBuoc: true }]} action={nhapSoDuDau} an={{ quy_id: q.id }} giaTri={{ so_du_dau: Number(q.so_du_dau) }} />)}
+          </div>
+        )}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <LocSoQuy goc={goc} loai={sp.loai ?? ""} pl={sp.pl ?? ""} da={sp.da === "1"} phanLoai={(loaiTC ?? []).map((l) => l.ten)} />
+          <a href={`/api/xuat/so-quy?quy=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>
+        </div>
+        <div className="mt-3">
+          <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có giao dịch nào trong bộ lọc này."
+            cot={[
+              { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Mã", hienThi: (r) => <span className="tabular-nums">{r.ma}</span> },
+              { nhan: "Loại", hienThi: (r) => { const n = NHAN_LOAI[r.loai ?? ""]; return n ? <NhanTrangThai kieu={n.kieu}>{n.ten}</NhanTrangThai> : null; } },
+              { nhan: "Phân loại", hienThi: (r) => r.loai_thu_chi ?? "" },
+              { nhan: "Nội dung", chinh: true, hienThi: (r) => <span className="text-muc">{r.noi_dung}{r.doi_tuong ? <span className="text-muc-3"> · {r.doi_tuong}</span> : null}{r.da_dao ? <span className="text-muc-3"> · đã đảo</span> : null}</span> },
+              { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={Number(r.bien_dong) < 0 ? "text-loi" : "text-nhan-dam"}>{Number(r.bien_dong) < 0 ? "−" : "+"}{soVN(r.so_tien)}</span> },
+              { nhan: "Số dư", phai: true, hienThi: (r) => soVN(r.du) },
+              { nhan: "", hienThi: (r) => (ghi && r.sua_duoc && !r.da_dao && r.nguon !== "dao_phieu" ? <NutHop kieu="chu" nguy nhan="Đảo phiếu" tieuDe="Đảo phiếu" xacNhan={`Ghi dòng ngược chiều để huỷ ${r.ma}. Phiếu gốc vẫn còn trong sổ.`} truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={daoPhieu} an={{ id: r.id ?? "" }} nhanLuu="Đảo phiếu" /> : null) },
+            ]} />
+        </div>
+        {ds.length === 0 ? null : <p className="mt-3 text-[12px] text-muc-3">Số dư chạy tính từ tồn đầu kỳ {tienVN(dau)}. Tiền khách trả (tiền mặt vào quỹ tiền mặt; chuyển khoản và quẹt thẻ vào quỹ ngân hàng; trừ thẻ tiền không tính) tự vào sổ quỹ.</p>}
+      </>
+    );
+  }
+  return (
+    <div>
+      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính - Kế toán</Link>
+      <TieuDeTrang tieuDe="Sổ quỹ thu/chi" phu="Tiền mặt và ngân hàng: thu, chi, chuyển quỹ, số dư chạy. Dòng đã ghi chỉ đảo được, không sửa hay xoá.">{nutGhi}</TieuDeTrang>
+      <Tab muc={TAB} dang={tab} goc={goc} them={them} />
+      {noiDung}
+    </div>
+  );
+}
+
+function ChiSoQuy({ dau, thu, chi, nap, rut, hienTai }: { dau: number; thu: number; chi: number; nap: number; rut: number; hienTai: number }) {
+  const cuoi = dau + thu - chi + nap - rut;
+  return <HangChiSo muc={[{ nhan: "Tồn quỹ đầu kỳ", so: tienVN(dau) }, { nhan: "Thu − chi trong kỳ", so: tienVN(thu - chi), ghiChu: `Thu ${soVN(thu)} · Chi ${soVN(chi)}` }, { nhan: "Tồn quỹ cuối kỳ", so: tienVN(cuoi), ghiChu: nap || rut ? `Nạp ${soVN(nap)} · Rút ${soVN(rut)}` : undefined }, { nhan: "Tồn quỹ hiện tại", so: tienVN(hienTai) }]} />;
+}

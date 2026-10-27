@@ -127,10 +127,10 @@ export const MODULE: Module[] = [
     moTa: "Thiết lập cửa hàng, danh mục, hoa hồng, phân quyền.",
     nhom: [
       { nhan: "Cửa hàng", the: [
-        { ten: "Thông tin chung", moTa: "Tên, địa chỉ, pháp nhân, giờ làm việc.", trangThai: "sap_co" },
+        { ten: "Thông tin chung", moTa: "Tên, địa chỉ, pháp nhân, giờ làm việc.", duongDan: "/cai-dat/thong-tin-chung", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Chi nhánh", moTa: "Chi nhánh và phân quyền vận hành.", duongDan: "/danh-muc?tab=chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
-        { ten: "Tài khoản ngân hàng", moTa: "Tài khoản dùng khi thu tiền chuyển khoản và sổ quỹ.", trangThai: "sap_co" },
-        { ten: "Bảng tin công ty", moTa: "Thông báo hiển thị cho toàn công ty.", trangThai: "sap_co" },
+        { ten: "Tài khoản ngân hàng", moTa: "Tài khoản dùng khi thu tiền chuyển khoản và sổ quỹ.", duongDan: "/cai-dat/ngan-hang", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Bảng tin công ty", moTa: "Thông báo hiển thị cho toàn công ty.", duongDan: "/cai-dat/bang-tin", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
       { nhan: "Sản phẩm / dịch vụ", the: [
         { ten: "Danh mục dịch vụ", moTa: "Dịch vụ, giá và nhóm dịch vụ.", duongDan: "/danh-muc?tab=dich-vu", trangThai: "san_sang", quyen: ["danhmuc.xem"] },

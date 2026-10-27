@@ -23,6 +23,8 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   const nd = await layNguoiDungDangNhap();
   const sp = await searchParams;
   const db = sb(), homNay = homNayHCM(), dauThang = `${homNay.slice(0, 8)}01`, cn = nd.chiNhanhId;
+  const { data: dsTin } = await db.from("bang_tin").select("id, tieu_de, noi_dung, hien_den").eq("hoat_dong", true).lte("hien_tu", homNay).order("ghim", { ascending: false }).order("hien_tu", { ascending: false }).limit(10);
+  const tin = (dsTin ?? []).filter((t) => !t.hien_den || t.hien_den >= homNay).slice(0, 3);
   const tu = new Date(`${homNay}T00:00:00+07:00`).toISOString(), den = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
 
   const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }] = await Promise.all([
@@ -54,6 +56,16 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         <h1 className="chu-tieu-de mt-1 text-[28px] leading-[1.15] text-muc lg:text-[34px]">Xin chào, {nd.hoTen}</h1>
         <p className="mt-1.5 text-[14px] text-muc-3">Hôm nay {ngayVN(homNay)}</p>
       </div>
+      {tin.length > 0 && (
+        <section aria-label="Bảng tin công ty" className="space-y-2.5">
+          {tin.map((t) => (
+            <article key={t.id} className="the-noi the-noi-thap px-4 py-3.5">
+              <h2 className="text-[15px] font-semibold text-muc">{t.tieu_de}</h2>
+              <p className="mt-1 whitespace-pre-line text-[14px] text-muc-2">{t.noi_dung}</p>
+            </article>
+          ))}
+        </section>
+      )}
       {sp["khong-du-quyen"] && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p>}
 
       <section aria-label="Hiệu suất của tôi">

@@ -445,6 +445,132 @@ export type Database = {
           },
         ]
       }
+      don_mua: {
+        Row: {
+          chi_nhanh_id: string
+          duyet_luc: string | null
+          ghi_chu: string | null
+          id: string
+          ly_do: string | null
+          ma: string
+          ncc_id: string
+          ngay_dat: string
+          ngay_du_kien: string | null
+          nguoi_duyet_id: string | null
+          nguoi_tao_id: string
+          tao_luc: string
+          trang_thai: string
+        }
+        Insert: {
+          chi_nhanh_id: string
+          duyet_luc?: string | null
+          ghi_chu?: string | null
+          id?: string
+          ly_do?: string | null
+          ma: string
+          ncc_id: string
+          ngay_dat?: string
+          ngay_du_kien?: string | null
+          nguoi_duyet_id?: string | null
+          nguoi_tao_id: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Update: {
+          chi_nhanh_id?: string
+          duyet_luc?: string | null
+          ghi_chu?: string | null
+          id?: string
+          ly_do?: string | null
+          ma?: string
+          ncc_id?: string
+          ngay_dat?: string
+          ngay_du_kien?: string | null
+          nguoi_duyet_id?: string | null
+          nguoi_tao_id?: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "don_mua_chi_nhanh_id_fkey"
+            columns: ["chi_nhanh_id"]
+            isOneToOne: false
+            referencedRelation: "chi_nhanh"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "don_mua_ncc_id_fkey"
+            columns: ["ncc_id"]
+            isOneToOne: false
+            referencedRelation: "nha_cung_cap"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "don_mua_ncc_id_fkey"
+            columns: ["ncc_id"]
+            isOneToOne: false
+            referencedRelation: "v_cong_no_ncc"
+            referencedColumns: ["ncc_id"]
+          },
+          {
+            foreignKeyName: "don_mua_nguoi_duyet_id_fkey"
+            columns: ["nguoi_duyet_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "don_mua_nguoi_tao_id_fkey"
+            columns: ["nguoi_tao_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      don_mua_dong: {
+        Row: {
+          da_nhan: number
+          don_gia: number
+          don_mua_id: string
+          id: string
+          san_pham_id: string
+          so_luong: number
+        }
+        Insert: {
+          da_nhan?: number
+          don_gia?: number
+          don_mua_id: string
+          id?: string
+          san_pham_id: string
+          so_luong: number
+        }
+        Update: {
+          da_nhan?: number
+          don_gia?: number
+          don_mua_id?: string
+          id?: string
+          san_pham_id?: string
+          so_luong?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "don_mua_dong_don_mua_id_fkey"
+            columns: ["don_mua_id"]
+            isOneToOne: false
+            referencedRelation: "don_mua"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "don_mua_dong_san_pham_id_fkey"
+            columns: ["san_pham_id"]
+            isOneToOne: false
+            referencedRelation: "san_pham"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dong_nhan_vien: {
         Row: {
           dong_id: string
@@ -1441,6 +1567,126 @@ export type Database = {
         }
         Relationships: []
       }
+      ncc_so_cai: {
+        Row: {
+          don_mua_id: string | null
+          ghi_chu: string | null
+          id: number
+          loai: string
+          ncc_id: string
+          ngay: string
+          nguoi_id: string | null
+          so_quy_id: string | null
+          so_tien: number
+          tao_luc: string
+        }
+        Insert: {
+          don_mua_id?: string | null
+          ghi_chu?: string | null
+          id?: never
+          loai: string
+          ncc_id: string
+          ngay?: string
+          nguoi_id?: string | null
+          so_quy_id?: string | null
+          so_tien: number
+          tao_luc?: string
+        }
+        Update: {
+          don_mua_id?: string | null
+          ghi_chu?: string | null
+          id?: never
+          loai?: string
+          ncc_id?: string
+          ngay?: string
+          nguoi_id?: string | null
+          so_quy_id?: string | null
+          so_tien?: number
+          tao_luc?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ncc_so_cai_don_mua_id_fkey"
+            columns: ["don_mua_id"]
+            isOneToOne: false
+            referencedRelation: "don_mua"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ncc_so_cai_ncc_id_fkey"
+            columns: ["ncc_id"]
+            isOneToOne: false
+            referencedRelation: "nha_cung_cap"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ncc_so_cai_ncc_id_fkey"
+            columns: ["ncc_id"]
+            isOneToOne: false
+            referencedRelation: "v_cong_no_ncc"
+            referencedColumns: ["ncc_id"]
+          },
+          {
+            foreignKeyName: "ncc_so_cai_nguoi_id_fkey"
+            columns: ["nguoi_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ncc_so_cai_so_quy_id_fkey"
+            columns: ["so_quy_id"]
+            isOneToOne: false
+            referencedRelation: "so_quy"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nha_cung_cap: {
+        Row: {
+          dia_chi: string | null
+          dien_thoai: string | null
+          email: string | null
+          ghi_chu: string | null
+          hoat_dong: boolean
+          id: string
+          ma: string
+          ma_so_thue: string | null
+          nguoi_lien_he: string | null
+          so_ngay_no: number
+          tao_luc: string
+          ten: string
+        }
+        Insert: {
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          ghi_chu?: string | null
+          hoat_dong?: boolean
+          id?: string
+          ma: string
+          ma_so_thue?: string | null
+          nguoi_lien_he?: string | null
+          so_ngay_no?: number
+          tao_luc?: string
+          ten: string
+        }
+        Update: {
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          ghi_chu?: string | null
+          hoat_dong?: boolean
+          id?: string
+          ma?: string
+          ma_so_thue?: string | null
+          nguoi_lien_he?: string | null
+          so_ngay_no?: number
+          tao_luc?: string
+          ten?: string
+        }
+        Relationships: []
+      }
       nhan_vien: {
         Row: {
           anh_dai_dien: string | null
@@ -2326,6 +2572,19 @@ export type Database = {
       }
     }
     Views: {
+      v_cong_no_ncc: {
+        Row: {
+          con_no: number | null
+          hoat_dong: boolean | null
+          ma: string | null
+          ncc_id: string | null
+          so_ngay_no: number | null
+          ten: string | null
+          thanh_toan_cuoi: string | null
+          tong_hoa_don: number | null
+        }
+        Relationships: []
+      }
       v_doanh_so_dong: {
         Row: {
           chi_nhanh_id: string | null
@@ -2721,6 +2980,10 @@ export type Database = {
         Returns: undefined
       }
       khoa_tat_ca_bang: { Args: never; Returns: undefined }
+      nhan_hang_don_mua: {
+        Args: { p_don: string; p_dong: Json; p_nguoi: string }
+        Returns: undefined
+      }
       nhan_phieu: {
         Args: { p_dem_truoc: number; p_id: string; p_nguoi: string }
         Returns: undefined
@@ -2749,6 +3012,17 @@ export type Database = {
           p_nguoi: string
         }
         Returns: string
+      }
+      thanh_toan_ncc: {
+        Args: {
+          p_ghi_chu: string
+          p_ncc: string
+          p_ngay: string
+          p_nguoi: string
+          p_quy: string
+          p_so_tien: number
+        }
+        Returns: undefined
       }
       thuc_hien_buoi: {
         Args: {

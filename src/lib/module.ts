@@ -43,7 +43,7 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "Công nợ", the: [
         { ten: "Công nợ khách hàng", moTa: "Khách còn nợ và thu nợ.", duongDan: "/bao-cao?tab=no", trangThai: "san_sang", quyen: ["baocao.tien"] },
-        { ten: "Công nợ phải trả nhà cung cấp", moTa: "Công nợ và thanh toán nhà cung cấp.", trangThai: "sap_co" },
+        { ten: "Công nợ phải trả nhà cung cấp", moTa: "Công nợ và thanh toán nhà cung cấp.", duongDan: "/kho-mua-sam/cong-no", trangThai: "san_sang", quyen: ["mua.xem"] },
       ] },
       { nhan: "Hoá đơn", the: [
         { ten: "Danh sách hoá đơn", moTa: "Hoá đơn bán hàng, thu nợ, huỷ.", duongDan: "/hoa-don", trangThai: "san_sang", quyen: ["ban.xem"] },
@@ -68,9 +68,9 @@ export const MODULE: Module[] = [
         { ten: "Phiếu cấp vật tư", moTa: "Cấp vật tư trước ca, trả, đối chiếu.", duongDan: "/phieu-cap", trangThai: "san_sang", quyen: ["phieu.xem"] },
       ] },
       { nhan: "Nhập & mua hàng", the: [
-        { ten: "Nhà cung cấp", moTa: "Danh mục nhà cung cấp.", trangThai: "sap_co" },
-        { ten: "Mua hàng (đề nghị / đơn mua)", moTa: "Đề nghị mua, duyệt, đơn mua, nhận hàng.", trangThai: "sap_co" },
-        { ten: "Công nợ nhà cung cấp", moTa: "Công nợ phải trả và thanh toán.", trangThai: "sap_co" },
+        { ten: "Nhà cung cấp", moTa: "Danh mục nhà cung cấp, hạn thanh toán, công nợ.", duongDan: "/kho-mua-sam/nha-cung-cap", trangThai: "san_sang", quyen: ["mua.xem"] },
+        { ten: "Mua hàng (đề nghị / đơn mua)", moTa: "Lập đơn, gửi duyệt, nhận hàng vào kho.", duongDan: "/kho-mua-sam/mua-hang", trangThai: "san_sang", quyen: ["mua.xem"] },
+        { ten: "Công nợ nhà cung cấp", moTa: "Công nợ phải trả và thanh toán.", duongDan: "/kho-mua-sam/cong-no", trangThai: "san_sang", quyen: ["mua.xem"] },
       ] },
       { nhan: "Điều chỉnh & kiểm soát", the: [
         { ten: "Điều chuyển kho", moTa: "Chuyển hàng giữa các kho / chi nhánh.", trangThai: "sap_co" },

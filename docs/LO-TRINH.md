@@ -13,3 +13,10 @@ Giai đoạn 1 (khách, danh mục, lịch hẹn, bán hàng, thực hiện bu�
 5. Kho nâng cao: trừ theo lô/hạn dùng (FEFO), chuyển kho giữa 2 chi nhánh, cảnh báo cận hạn.
 6. Báo cáo: giá vốn/buổi và lãi gộp từng dịch vụ từ dữ liệu phiếu cấp thật, khách rời bỏ, nguồn quảng cáo ra doanh thu.
 7. Nối Pancake/quảng cáo (nguồn khách → doanh thu), bot cảnh báo.
+
+## Làm theo BeDental (chị Lâm 27/10/2026: "làm hết tất cả app Amia theo bên BeDental")
+Tài liệu nghiệp vụ đọc từ bản demo BeDental nằm ở `docs/bedental/` (mỗi mục lớn một tệp, có mục "Đề xuất cho AMIA"). Khung menu và trang thẻ chức năng: `src/lib/module.ts` (thẻ có `duongDan` là đã dùng được).
+- Đã xong: khung 12 mục lớn; Cài đặt (thông tin chung, tài khoản ngân hàng, bảng tin ở Trang chủ); Sổ quỹ thu/chi (tiền mặt, ngân hàng, chuyển quỹ, đảo phiếu, xuất Excel); Mua hàng (đơn mua có duyệt, nhận hàng vào kho), Nhà cung cấp, Công nợ nhà cung cấp.
+- Còn lại theo thứ tự: Nơi làm việc (việc cần làm, báo cáo ngày, đề xuất mua/chi/tạm ứng, wiki), Nhân sự (chấm công, ca, nghỉ phép, lương; lấy từ `hrm-omyn`), Điều chuyển kho / lô-hạn dùng, Marketing (lead, nguồn giới thiệu/CTV, link/QR), Văn bản & Hợp đồng, Khoá kỳ kế toán, chính sách phê duyệt, báo cáo bổ sung.
+- Không làm (BeDental cũng ghi "Sắp có" hoặc cần tài khoản bên thứ ba): hoá đơn điện tử, Zalo OA/SMS, Web đặt lịch, Zalo Mini App, API keys, Facebook, landing page, automation.
+- Dữ liệu thử khi kiểm: bảng sổ cái chỉ thêm dòng (sổ quỹ, kho, công nợ NCC) nên dọn bằng `supabase db query --linked` trong MỘT giao dịch (tắt trigger, xoá đúng dòng của mình, bật lại, kiểm trigger đã bật).

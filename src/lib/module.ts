@@ -88,7 +88,7 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Hồ sơ", the: [
         { ten: "Hồ sơ nhân viên", moTa: "Thông tin, vai trò, chi nhánh, trạng thái.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
-        { ten: "Hợp đồng & pháp lý", moTa: "Hợp đồng lao động và hồ sơ pháp lý.", trangThai: "sap_co" },
+        { ten: "Hợp đồng lao động", moTa: "Thử việc → HĐLĐ lần 1 → lần 2 → không xác định thời hạn; nhắc trước 45 ngày.", duongDan: "/nhan-su/hop-dong", trangThai: "san_sang", quyen: ["cong.xem"] },
       ] },
       { nhan: "Chấm công", the: [
         { ten: "Chấm công / giờ làm", moTa: "Chấm công vào/ra, bảng công và tổng hợp tháng.", duongDan: "/nhan-su/cham-cong", trangThai: "san_sang" },
@@ -102,12 +102,14 @@ export const MODULE: Module[] = [
     ],
   },
   {
-    ma: "van-ban", ten: "Văn bản & Hợp đồng", duongDan: "/van-ban", quyen: ["nhanvien.quanly"],
+    ma: "van-ban", ten: "Văn bản & Hợp đồng", duongDan: "/van-ban", quyen: ["vb.xem"],
     moTa: "Quản lý văn bản từ dự thảo, ký, hiệu lực đến hết hạn.",
     nhom: [
       { nhan: "Hồ sơ", the: [
-        { ten: "Tất cả văn bản", moTa: "Hợp đồng, quyết định, quy định, biên bản… kèm hiệu lực.", trangThai: "sap_co" },
-        { ten: "Đối tác", moTa: "Danh sách đối tác ký hợp đồng.", trangThai: "sap_co" },
+        { ten: "Tất cả văn bản", moTa: "Hợp đồng, quyết định, quy định, biên bản… kèm hiệu lực và bản điện tử.", duongDan: "/van-ban/danh-sach", trangThai: "san_sang", quyen: ["vb.xem"] },
+        { ten: "Cần xử lý", moTa: "Sắp hết hạn, thiếu bản điện tử, phụ lục dùng tạm đã hết hạn, chờ duyệt.", duongDan: "/van-ban/danh-sach?tab=can-xu-ly", trangThai: "san_sang", quyen: ["vb.xem"] },
+        { ten: "Đồng ý dùng ảnh", moTa: "Đồng ý chụp để theo dõi điều trị và đồng ý dùng ảnh cho truyền thông (có hạn, rút lại được).", duongDan: "/van-ban/dong-y-anh", trangThai: "san_sang", quyen: ["vb.xem"] },
+        { ten: "Đối tác", moTa: "Danh sách đối tác ký hợp đồng (nhà cung cấp).", duongDan: "/kho-mua-sam/nha-cung-cap", trangThai: "san_sang", quyen: ["mua.xem"] },
       ] },
     ],
   },

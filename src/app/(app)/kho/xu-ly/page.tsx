@@ -49,8 +49,8 @@ export default async function TrangXuLy({ searchParams }: { searchParams: Promis
           { nhan: "Trạng thái", hienThi: (r) => <div><NhanTrangThai kieu={TT_XU_LY[r.trang_thai].kieu}>{TT_XU_LY[r.trang_thai].ten}</NhanTrangThai>{r.nguoi_duyet_id && <div className="mt-1 text-[12.5px] text-muc-3">{tenNv.get(r.nguoi_duyet_id)}</div>}</div> },
           { nhan: "", hienThi: (r) => r.trang_thai !== "cho_duyet" ? null : (
             <div className="flex flex-wrap justify-end gap-2">
-              {duyet && r.nguoi_lap_id !== nd.nhanVienId && <NutHop kieu="chu" nhan="Duyệt" tieuDe="Duyệt xử lý" xacNhan={`Duyệt ${r.ma}? ${LOAI_XU_LY[r.loai]} ${soVN(r.so_luong)} sẽ ghi vào sổ kho.`} action={duyetXuLyVatTu} an={{ id: r.id }} nhanLuu="Duyệt" />}
-              {duyet && r.nguoi_lap_id !== nd.nhanVienId && <NutHop kieu="chu" nguy nhan="Từ chối" tieuDe="Từ chối" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={tuChoiXuLyVatTu} an={{ id: r.id }} />}
+              {duyet && (r.nguoi_lap_id !== nd.nhanVienId || nd.vaiTro === "ky_thuat") && <NutHop kieu="chu" nhan="Duyệt" tieuDe="Duyệt xử lý" xacNhan={`Duyệt ${r.ma}? ${LOAI_XU_LY[r.loai]} ${soVN(r.so_luong)} sẽ ghi vào sổ kho.`} action={duyetXuLyVatTu} an={{ id: r.id }} nhanLuu="Duyệt" />}
+              {duyet && (r.nguoi_lap_id !== nd.nhanVienId || nd.vaiTro === "ky_thuat") && <NutHop kieu="chu" nguy nhan="Từ chối" tieuDe="Từ chối" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={tuChoiXuLyVatTu} an={{ id: r.id }} />}
               {r.nguoi_lap_id === nd.nhanVienId && <NutHop kieu="chu" nhan="Huỷ phiếu" tieuDe="Huỷ phiếu" xacNhan={`Huỷ ${r.ma}?`} action={huyXuLyVatTu} an={{ id: r.id }} nhanLuu="Huỷ phiếu" />}
             </div>
           ) },

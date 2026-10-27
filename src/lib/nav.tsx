@@ -17,7 +17,7 @@ export const MENU: MucMenu[] = [
   { ten: "Kho & Mua sắm", duong_dan: "/kho-mua-sam", icon: Warehouse, nhom: "Vận hành", quyen: ["kho.xem", "phieu.xem"], moTa: "Tồn kho, vật tư cấp theo ca, mua hàng, kiểm kê" },
   { ten: "Tài chính - Kế toán", duong_dan: "/tai-chinh", icon: Landmark, nhom: "Vận hành", quyen: ["quy.xem", "baocao.tien", "no.thu"], moTa: "Sổ quỹ, công nợ, hoá đơn, quyết toán" },
   { ten: "Nhân sự", duong_dan: "/nhan-su", icon: UsersRound, nhom: "Vận hành", quyen: ["nhanvien.quanly", "baocao.tien"], moTa: "Hồ sơ, chấm công, ca, nghỉ phép, lương" },
-  { ten: "Văn bản & Hợp đồng", duong_dan: "/van-ban", icon: FileText, nhom: "Vận hành", quyen: ["nhanvien.quanly"], moTa: "Hợp đồng, quyết định, quy định" },
+  { ten: "Văn bản & Hợp đồng", duong_dan: "/van-ban", icon: FileText, nhom: "Vận hành", quyen: ["vb.xem"], moTa: "Hợp đồng, quyết định, quy định" },
   { ten: "Marketing", duong_dan: "/marketing", icon: Megaphone, nhom: "Phát triển", quyen: ["mkt.xem", "lead.xu_ly"], moTa: "Khách tiềm năng, nguồn giới thiệu, chiến dịch" },
   { ten: "Báo cáo", duong_dan: "/bao-cao", icon: BarChart3, nhom: "Phát triển", quyen: "baocao.xem", moTa: "Doanh thu, nhân viên, nợ, vật tư" },
   { ten: "Cài đặt", duong_dan: "/cai-dat", icon: Settings, nhom: "Hệ thống", quyen: ["danhmuc.xem", "nhanvien.quanly", "hethong.phanquyen", "baocao.tien"], moTa: "Danh mục, hoa hồng, phân quyền, chi nhánh" },

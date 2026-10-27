@@ -238,18 +238,32 @@ body {
 .nut-nguoi { transition: background-color 160ms ease-out, box-shadow 160ms ease-out; }
 .nut-nguoi:hover { background: var(--giay-tram); box-shadow: inset 0 0 0 1px var(--vien); }
 /* Đồng hồ đầu trang: khung tối viền vàng, số lớn, giây màu vàng, dấu hai chấm nhấp nháy. */
+/* Giao diện sáng: khung đồng hồ là thẻ sáng cùng họ với các thẻ khác (vệt teal mảnh trên cùng, số mực lục, giây màu teal). Giao diện tối: khung lục đậm viền vàng đồng. */
 .dong-ho {
+  position: relative; overflow: hidden;
   display: flex; align-items: center; gap: 20px;
   padding: 14px 26px 14px 24px; border-radius: var(--radius-vua);
-  color: #fff; background: var(--gradient-toi);
+  color: var(--muc);
+  background:
+    linear-gradient(90deg, var(--vang-sang) 0%, var(--vang) 60%, var(--dat) 100%) top / 100% 3px no-repeat,
+    linear-gradient(145deg, var(--the-1) 0%, var(--nhan-nhat) 130%);
+  border: 1px solid var(--vien);
+  box-shadow: var(--sang-vien), var(--bong-2);
+}
+:root[data-theme="dark"] .dong-ho {
+  color: #fff; background: var(--gradient-toi); border-color: transparent;
   box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), inset 0 0 0 1px rgb(217 184 119 / 0.4), 0 10px 20px -10px rgb(6 26 23 / 0.7);
 }
 .dong-ho-so { font-size: 40px; font-weight: 600; line-height: 1; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.dong-ho-so i { font-style: normal; padding: 0 2px; color: var(--menu-nhan); animation: nhap-nhay 1s steps(1) infinite; }
-.dong-ho-so b { font-weight: 600; color: var(--menu-nhan); }
-.dong-ho-phu { display: none; flex-direction: column; gap: 5px; padding-left: 20px; border-left: 1px solid rgb(255 255 255 / 0.16); line-height: 1.1; }
-.dong-ho-nhan { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--menu-chu-phu); }
-.dong-ho-ngay { font-size: 16px; color: var(--menu-chu); text-transform: capitalize; }
+.dong-ho-so i { font-style: normal; padding: 0 2px; color: var(--vang); animation: nhap-nhay 1s steps(1) infinite; }
+.dong-ho-so b { font-weight: 600; color: var(--vang); }
+.dong-ho-phu { display: none; flex-direction: column; gap: 5px; padding-left: 20px; border-left: 1px solid var(--vien); line-height: 1.1; }
+.dong-ho-nhan { font-size: 11px; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muc-3); }
+.dong-ho-ngay { font-size: 16px; color: var(--muc-2); text-transform: capitalize; }
+:root[data-theme="dark"] .dong-ho-so i, :root[data-theme="dark"] .dong-ho-so b { color: var(--menu-nhan); }
+:root[data-theme="dark"] .dong-ho-phu { border-left-color: rgb(255 255 255 / 0.16); }
+:root[data-theme="dark"] .dong-ho-nhan { color: var(--menu-chu-phu); }
+:root[data-theme="dark"] .dong-ho-ngay { color: var(--menu-chu); }
 @media (min-width: 768px) { .dong-ho-phu { display: flex; } }
 @media (max-width: 767px) { .dong-ho { padding: 10px 16px; } .dong-ho-so { font-size: 30px; } }
 @keyframes nhap-nhay { 50% { opacity: 0.25; } }

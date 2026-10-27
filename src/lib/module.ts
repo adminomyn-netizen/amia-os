@@ -49,12 +49,12 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "Hoá đơn", the: [
         { ten: "Danh sách hoá đơn", moTa: "Hoá đơn bán hàng, thu nợ, huỷ.", duongDan: "/hoa-don", trangThai: "san_sang", quyen: ["ban.xem"] },
-        { ten: "Hoá đơn đầu vào", moTa: "Hoá đơn mua vào từ nhà cung cấp.", trangThai: "sap_co" },
+        { ten: "Hoá đơn đầu vào", moTa: "Hoá đơn mua vào: theo dõi hoá đơn chưa về, đối chiếu với đơn mua.", duongDan: "/tai-chinh/hoa-don-dau-vao", trangThai: "san_sang", quyen: ["mua.xem"] },
         { ten: "Hoá đơn điện tử", moTa: "Kết nối hoá đơn điện tử (cần tài khoản nhà cung cấp).", trangThai: "sap_co" },
       ] },
       { nhan: "Quyết toán & kế toán", the: [
-        { ten: "Quyết toán hoa hồng", moTa: "Chốt đợt hoa hồng cho nhân viên và cộng tác viên.", trangThai: "sap_co" },
-        { ten: "Đối soát bán hàng", moTa: "Số lượng, giá vốn, doanh thu sau hoàn/trả theo sản phẩm.", trangThai: "sap_co" },
+        { ten: "Quyết toán hoa hồng", moTa: "Hoa hồng theo tháng, so số hiện tại với số đã chốt trong bảng lương.", duongDan: "/tai-chinh/quyet-toan-hoa-hong", trangThai: "san_sang", quyen: ["luong.xem"] },
+        { ten: "Đối soát bán hàng", moTa: "Sản phẩm bán so với xuất kho, giá vốn và doanh thu sau huỷ.", duongDan: "/tai-chinh/doi-soat", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "Khoá kỳ kế toán", moTa: "Khoá/mở kỳ theo tháng, chặn ghi thêm sổ quỹ và công nợ của tháng đã chốt.", duongDan: "/tai-chinh/khoa-ky", trangThai: "san_sang", quyen: ["ky.khoa", "ky.mo_lai"] },
       ] },
     ],

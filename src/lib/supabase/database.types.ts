@@ -1732,6 +1732,108 @@ export type Database = {
           },
         ]
       }
+      hoa_don_dau_vao: {
+        Row: {
+          doi_chieu_boi: string | null
+          doi_chieu_luc: string | null
+          don_mua_id: string | null
+          ghi_chu: string | null
+          han_nhan: string | null
+          id: string
+          ky_hieu: string | null
+          link_file: string | null
+          ma: string
+          muc_dich: string | null
+          ncc_id: string
+          ngay_hd: string | null
+          nguoi_id: string
+          so_hd: string | null
+          tao_luc: string
+          thue_gtgt: number
+          tien_hang: number
+          tong_tien: number | null
+          trang_thai: string
+        }
+        Insert: {
+          doi_chieu_boi?: string | null
+          doi_chieu_luc?: string | null
+          don_mua_id?: string | null
+          ghi_chu?: string | null
+          han_nhan?: string | null
+          id?: string
+          ky_hieu?: string | null
+          link_file?: string | null
+          ma: string
+          muc_dich?: string | null
+          ncc_id: string
+          ngay_hd?: string | null
+          nguoi_id: string
+          so_hd?: string | null
+          tao_luc?: string
+          thue_gtgt?: number
+          tien_hang: number
+          tong_tien?: number | null
+          trang_thai?: string
+        }
+        Update: {
+          doi_chieu_boi?: string | null
+          doi_chieu_luc?: string | null
+          don_mua_id?: string | null
+          ghi_chu?: string | null
+          han_nhan?: string | null
+          id?: string
+          ky_hieu?: string | null
+          link_file?: string | null
+          ma?: string
+          muc_dich?: string | null
+          ncc_id?: string
+          ngay_hd?: string | null
+          nguoi_id?: string
+          so_hd?: string | null
+          tao_luc?: string
+          thue_gtgt?: number
+          tien_hang?: number
+          tong_tien?: number | null
+          trang_thai?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hoa_don_dau_vao_doi_chieu_boi_fkey"
+            columns: ["doi_chieu_boi"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hoa_don_dau_vao_don_mua_id_fkey"
+            columns: ["don_mua_id"]
+            isOneToOne: false
+            referencedRelation: "don_mua"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hoa_don_dau_vao_ncc_id_fkey"
+            columns: ["ncc_id"]
+            isOneToOne: false
+            referencedRelation: "nha_cung_cap"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hoa_don_dau_vao_ncc_id_fkey"
+            columns: ["ncc_id"]
+            isOneToOne: false
+            referencedRelation: "v_cong_no_ncc"
+            referencedColumns: ["ncc_id"]
+          },
+          {
+            foreignKeyName: "hoa_don_dau_vao_nguoi_id_fkey"
+            columns: ["nguoi_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hoa_don_dong: {
         Row: {
           dich_vu_id: string | null
@@ -5360,6 +5462,21 @@ export type Database = {
           thuc_thu: number
           tien_mat: number
           tru_the_tien: number
+        }[]
+      }
+      bc_doi_soat_san_pham: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          chenh_lech: number
+          doanh_thu: number
+          don_vi: string
+          gia_von: number
+          ma: string
+          san_pham_id: string
+          sl_ban: number
+          sl_huy: number
+          sl_xuat_kho: number
+          ten: string
         }[]
       }
       bc_muc_ban: {

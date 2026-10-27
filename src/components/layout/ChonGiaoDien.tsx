@@ -17,18 +17,6 @@ function dat(che: Che) {
   window.dispatchEvent(new Event(SU_KIEN));
 }
 
-/** Nút tròn trên thanh đầu trang: một chạm đổi qua lại giữa Sáng và Tối (hiện cả trên điện thoại). */
-export function NutGiaoDien() {
-  const che = useSyncExternalStore(theoDoi, doc, () => "sang" as Che);
-  const toi = che === "toi";
-  return (
-    <button type="button" onClick={() => dat(toi ? "sang" : "toi")} aria-pressed={toi} aria-label="Chế độ tối" title={toi ? "Đang tối. Bấm để chuyển sang sáng" : "Đang sáng. Bấm để chuyển sang tối"}
-      className="nut-nguoi flex h-10 w-10 shrink-0 items-center justify-center rounded-nho text-muc-2">
-      {toi ? <Sun strokeWidth={1.7} className="h-[21px] w-[21px]" aria-hidden /> : <Moon strokeWidth={1.7} className="h-[21px] w-[21px]" aria-hidden />}
-    </button>
-  );
-}
-
 /** Nút chọn giao diện Sáng / Tối trong menu tài khoản (dùng được cả trên điện thoại); lưu ở trình duyệt của người dùng. */
 export function ChonGiaoDien() {
   const che = useSyncExternalStore(theoDoi, doc, () => "sang" as Che);

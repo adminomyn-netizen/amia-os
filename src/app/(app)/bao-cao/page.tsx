@@ -22,7 +22,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const tab = tabs.some((t) => t.ma === sp.tab) ? sp.tab! : "doanh-thu";
   const { tu, den } = khoangNgay(sp.tu, sp.den);
   const db = sb();
-  const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma");
+  const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
   const cn = nd.chiNhanhId ?? (sp.cn || undefined);
   const lc = <LocBaoCao goc="/bao-cao" tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />;
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;

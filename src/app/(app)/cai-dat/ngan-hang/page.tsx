@@ -15,7 +15,7 @@ export default async function TrangNganHang() {
   const nd = await yeuCauQuyen("danhmuc.xem");
   const sua = coQuyen(nd, "danhmuc.sua");
   const db = sb();
-  const [{ data: tk }, { data: cn }] = await Promise.all([db.from("tai_khoan_ngan_hang").select("*").order("tao_luc"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
+  const [{ data: tk }, { data: cn }] = await Promise.all([db.from("tai_khoan_ngan_hang").select("*").order("tao_luc"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const truong: Truong[] = [
     { ten: "ngan_hang", nhan: "Ngân hàng", loai: "chu", batBuoc: true, goiY: "VD: Vietcombank" }, { ten: "so_tai_khoan", nhan: "Số tài khoản", loai: "chu", batBuoc: true },

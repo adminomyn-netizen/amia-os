@@ -33,7 +33,7 @@ export default async function TrangKhachHang({ searchParams }: { searchParams: P
   const [{ data: ds, count }, { data: nv }, { data: cn }, { data: dv }, { data: hang }] = await Promise.all([
     q,
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
-    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("hang_khach").select("ten").order("thu_tu"),
   ]);

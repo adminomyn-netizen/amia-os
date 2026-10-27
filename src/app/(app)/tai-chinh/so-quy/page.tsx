@@ -26,7 +26,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
   const ghi = coQuyen(nd, "quy.ghi");
   const db = sb();
   const { tu, den, homNay } = khoangNgay(sp.tu, sp.den);
-  const [{ data: dsCn }, { data: loaiTC }] = await Promise.all([db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"), db.from("loai_thu_chi").select("*").order("huong", { ascending: false }).order("thu_tu")]);
+  const [{ data: dsCn }, { data: loaiTC }] = await Promise.all([db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("loai_thu_chi").select("*").order("huong", { ascending: false }).order("thu_tu")]);
   const cn = nd.chiNhanhId ?? (sp.cn || undefined);
   let qq = db.from("quy").select("*").eq("hoat_dong", true).order("loai").order("ten");
   if (cn) qq = qq.eq("chi_nhanh_id", cn);

@@ -24,7 +24,7 @@ export default async function TrangChienDich() {
   const db = sb();
   const [{ data: ds }, { data: nguon }, { data: nv }, { data: cn }, { data: cp }] = await Promise.all([
     db.from("chien_dich").select("*").order("tao_luc", { ascending: false }).limit(200), db.from("nguon_lead").select("id, ten").eq("hoat_dong", true).order("thu_tu"),
-    db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true), db.from("chi_phi_qc_ngay").select("chien_dich_id, chi_phi"),
+    db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu"), db.from("chi_phi_qc_ngay").select("chien_dich_id, chi_phi"),
   ]);
   const daChi = new Map<string, number>();
   for (const c of cp ?? []) daChi.set(c.chien_dich_id, (daChi.get(c.chien_dich_id) ?? 0) + Number(c.chi_phi));

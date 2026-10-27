@@ -22,7 +22,7 @@ export default async function TrangDanhSachVb({ searchParams }: { searchParams: 
   let q = db.from("van_ban").select("*").order("tao_luc", { ascending: false }).limit(500);
   if (nd.chiNhanhId) q = q.or(`chi_nhanh_id.eq.${nd.chiNhanhId},chi_nhanh_id.is.null`);
   const [{ data: all }, { data: loai }, { data: cn }, { data: ncc }, { data: ch }] = await Promise.all([
-    q, db.from("vb_loai").select("*").eq("hoat_dong", true).order("nhom").order("thu_tu"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
+    q, db.from("vb_loai").select("*").eq("hoat_dong", true).order("nhom").order("thu_tu"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("nha_cung_cap").select("id, ten").order("ten"), db.from("cau_hinh").select("khoa, gia_tri").in("khoa", ["van_ban.nhac_truoc_ngay", "van_ban.nguong_gd_chi_nhanh"]),
   ]);
   const cauHinh = new Map((ch ?? []).map((c) => [c.khoa, Number(c.gia_tri)]));

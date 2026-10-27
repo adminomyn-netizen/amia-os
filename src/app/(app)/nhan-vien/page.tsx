@@ -14,7 +14,7 @@ import { KHUNG_LAM, TT_LAM } from "@/lib/nhan-su";
 export default async function TrangNhanVien() {
   await yeuCauQuyen("hethong.phanquyen");
   const db = sb();
-  const [{ data: moDk }, { data: ds }, { data: cn }] = await Promise.all([db.from("cau_hinh").select("gia_tri").eq("khoa", "dang_ky.mo").maybeSingle(), db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng, han_muc_duyet, chuc_danh_tai_chinh, ma_nv, ngay_vao_lam, ngay_vao_chinh_thuc, trang_thai_lam, khung_lam_viec, vai_tro_chuyen_mon").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
+  const [{ data: moDk }, { data: ds }, { data: cn }] = await Promise.all([db.from("cau_hinh").select("gia_tri").eq("khoa", "dang_ky.mo").maybeSingle(), db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng, han_muc_duyet, chuc_danh_tai_chinh, ma_nv, ngay_vao_lam, ngay_vao_chinh_thuc, trang_thai_lam, khung_lam_viec, vai_tro_chuyen_mon").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
   const dangKyMo = (moDk?.gia_tri ?? "1") !== "0";
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const vaiTroLC = VAI_TRO.map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] }));

@@ -569,6 +569,7 @@ export type Database = {
           ma: string
           tao_luc: string
           ten: string
+          thu_tu: number
         }
         Insert: {
           dia_chi?: string | null
@@ -578,6 +579,7 @@ export type Database = {
           ma: string
           tao_luc?: string
           ten: string
+          thu_tu?: number
         }
         Update: {
           dia_chi?: string | null
@@ -587,6 +589,7 @@ export type Database = {
           ma?: string
           tao_luc?: string
           ten?: string
+          thu_tu?: number
         }
         Relationships: []
       }

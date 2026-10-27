@@ -16,7 +16,7 @@ export default async function TrangKiemKe() {
   const db = sb();
   let q = db.from("phieu_kiem_ke").select("*").order("tao_luc", { ascending: false }).limit(100);
   if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
-  const [{ data: ds }, { data: cn }, { data: nv }] = await Promise.all([q, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"), db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten")]);
+  const [{ data: ds }, { data: cn }, { data: nv }] = await Promise.all([q, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten")]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const truong: Truong[] = [
     ...(nd.chiNhanhId ? [] : [{ ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon" as const, batBuoc: true, luaChon: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) }]),

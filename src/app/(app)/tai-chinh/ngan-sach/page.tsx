@@ -23,7 +23,7 @@ export default async function TrangNganSach({ searchParams }: { searchParams: Pr
   const db = sb();
   const [{ data: ns }, { data: chi }, { data: quy }, { data: loai }, { data: cn }] = await Promise.all([
     db.from("ngan_sach_ky").select("*").eq("thang", thang), db.from("so_quy").select("loai_thu_chi_id, so_tien, quy_id").eq("loai", "chi").gte("ngay", dau).lte("ngay", cuoi).not("loai_thu_chi_id", "is", null).limit(5000),
-    db.from("quy").select("id, chi_nhanh_id"), db.from("loai_thu_chi").select("id, ten").eq("huong", "chi").eq("hoat_dong", true).eq("he_thong", false).order("ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
+    db.from("quy").select("id, chi_nhanh_id"), db.from("loai_thu_chi").select("id, ten").eq("huong", "chi").eq("hoat_dong", true).eq("he_thong", false).order("ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
   ]);
   const cnCuaQuy = new Map((quy ?? []).map((q) => [q.id, q.chi_nhanh_id])), tenLoai = new Map((loai ?? []).map((l) => [l.id, l.ten])), tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const daChi = (loaiId: string, chiNhanh: string | null) => (chi ?? []).filter((c) => c.loai_thu_chi_id === loaiId && (!chiNhanh || cnCuaQuy.get(c.quy_id) === chiNhanh)).reduce((s, c) => s + Number(c.so_tien), 0);

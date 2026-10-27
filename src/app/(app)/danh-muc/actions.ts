@@ -78,7 +78,7 @@ export async function luuSanPham(fd: FormData): Promise<KQ> {
 export async function luuChiNhanh(fd: FormData): Promise<KQ> {
   if (!(await kiemQuyen("nhanvien.quanly"))) return { loi: KHONG_DU_QUYEN };
   const id = chuoi(fd, "id");
-  const row = { ma: chuoi(fd, "ma").toUpperCase(), ten: chuoi(fd, "ten"), dia_chi: chuoiHoacNull(fd, "dia_chi"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"), hoat_dong: bat(fd, "hoat_dong") };
+  const row = { ma: chuoi(fd, "ma").toUpperCase(), ten: chuoi(fd, "ten"), dia_chi: chuoiHoacNull(fd, "dia_chi"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"), thu_tu: so(fd, "thu_tu") || 100, hoat_dong: bat(fd, "hoat_dong") };
   if (!row.ma || !row.ten) return { loi: "Nhập mã và tên chi nhánh." };
   const { error } = id ? await sb().from("chi_nhanh").update(row).eq("id", id) : await sb().from("chi_nhanh").insert(row);
   return error ? { loi: thongBaoLoi(error) } : xong();

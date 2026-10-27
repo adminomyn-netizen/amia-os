@@ -5,7 +5,7 @@ import { FormDangKy } from "./FormDangKy";
 export const dynamic = "force-dynamic";
 
 export default async function TrangDangKy() {
-  const { data: cn } = await sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma");
+  const { data: cn } = await sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       <section className="nen-toi hidden flex-col justify-between p-14 text-menu-chu lg:flex">

@@ -24,7 +24,7 @@ export default async function TrangMuaHang({ searchParams }: { searchParams: Pro
   let q = db.from("don_mua").select("*").order("tao_luc", { ascending: false }).limit(300);
   if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
   if (tab !== "tat-ca") q = q.eq("trang_thai", tab);
-  const [{ data: don }, { data: ncc }, { data: cn }] = await Promise.all([q, db.from("nha_cung_cap").select("id, ten, hoat_dong").order("ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
+  const [{ data: don }, { data: ncc }, { data: cn }] = await Promise.all([q, db.from("nha_cung_cap").select("id, ten, hoat_dong").order("ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
   const ids = (don ?? []).map((d) => d.id);
   const { data: dong } = ids.length ? await db.from("don_mua_dong").select("don_mua_id, so_luong, don_gia").in("don_mua_id", ids) : { data: [] };
   const tong = new Map<string, number>();

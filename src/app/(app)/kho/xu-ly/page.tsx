@@ -20,7 +20,7 @@ export default async function TrangXuLy({ searchParams }: { searchParams: Promis
   const tab = t === "xuat-khan" ? "xuat-khan" : "xu-ly";
   const db = sb();
   const [{ data: cn }, { data: sp }, { data: nv }, { data: ncc }] = await Promise.all([
-    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"), db.from("san_pham").select("id, ten, don_vi").eq("hoat_dong", true).eq("theo_doi_kho", true).order("ten"),
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("san_pham").select("id, ten, don_vi").eq("hoat_dong", true).eq("theo_doi_kho", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, chi_nhanh_id").eq("hoat_dong", true).order("ho_ten"), db.from("nha_cung_cap").select("id, ten").order("ten"),
   ]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten])), tenSp = new Map((sp ?? []).map((s) => [s.id, s])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));

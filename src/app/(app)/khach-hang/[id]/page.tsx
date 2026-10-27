@@ -33,7 +33,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   if (!k) notFound();
   const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }] = await Promise.all([
     db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"),
-    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("khach_quan_tam").select("dich_vu_id").eq("khach_id", id),
     db.from("hoa_don").select("con_no").eq("khach_id", id).eq("trang_thai", "hoan_thanh").gt("con_no", 0),

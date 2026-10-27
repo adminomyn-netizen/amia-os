@@ -15,7 +15,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     db.from("goi_the").select("id, ten, gia, loai, so_buoi").eq("hoat_dong", true).order("ten"),
     db.from("san_pham").select("id, ten, gia_ban, nhom").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id").eq("hoat_dong", true).order("ho_ten"),
-    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
   ]);
   const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
   const muc: MucBan[] = [

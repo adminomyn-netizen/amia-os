@@ -102,12 +102,12 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
       ]} />
     );
   } else {
-    const { data: cn } = await db.from("chi_nhanh").select("*").order("ma");
+    const { data: cn } = await db.from("chi_nhanh").select("*").order("thu_tu").order("ma");
     const truong: Truong[] = [
       { ten: "ma", nhan: "Mã", loai: "chu", batBuoc: true }, { ten: "ten", nhan: "Tên chi nhánh", loai: "chu", batBuoc: true },
-      { ten: "dia_chi", nhan: "Địa chỉ", loai: "chu", rong: true }, { ten: "dien_thoai", nhan: "Điện thoại", loai: "chu" }, { ten: "hoat_dong", nhan: "Đang hoạt động", loai: "gat" },
+      { ten: "dia_chi", nhan: "Địa chỉ", loai: "chu", rong: true }, { ten: "dien_thoai", nhan: "Điện thoại", loai: "chu" }, { ten: "thu_tu", nhan: "Thứ tự hiện (nhỏ đứng trước)", loai: "so" }, { ten: "hoat_dong", nhan: "Đang hoạt động", loai: "gat" },
     ];
-    nutThem = quanLy && <NutHop nhan="Thêm chi nhánh" tieuDe="Thêm chi nhánh" truong={truong} giaTri={{ hoat_dong: true }} action={luuChiNhanh} />;
+    nutThem = quanLy && <NutHop nhan="Thêm chi nhánh" tieuDe="Thêm chi nhánh" truong={truong} giaTri={{ hoat_dong: true, thu_tu: 100 }} action={luuChiNhanh} />;
     noiDung = (
       <Bang duLieu={cn ?? []} khoa={(r) => r.id} cot={[
         { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Chi nhánh", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Địa chỉ", hienThi: (r) => r.dia_chi ?? "" },

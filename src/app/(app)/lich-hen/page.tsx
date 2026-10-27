@@ -30,7 +30,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const homNay = homNayHCM();
   const ngay = /^\d{4}-\d{2}-\d{2}$/.test(sp.ngay ?? "") ? sp.ngay! : homNay;
   const db = sb();
-  const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma");
+  const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
   const cnId = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
   const tu = new Date(`${ngay}T00:00:00+07:00`).toISOString();
   const den = new Date(`${congNgay(ngay, 1)}T00:00:00+07:00`).toISOString();

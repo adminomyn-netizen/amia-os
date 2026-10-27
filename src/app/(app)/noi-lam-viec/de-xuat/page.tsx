@@ -33,7 +33,7 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
   if (!tatCa) q = q.eq("nguoi_gui_id", nd.nhanVienId);
   else if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
   const [{ data: dx }, { data: nv }, { data: cn }, { data: tuCu }, { data: hoanDa }] = await Promise.all([
-    q, db.from("nhan_vien").select("id, ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
+    q, db.from("nhan_vien").select("id, ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     loai === "hoan_ung" ? db.from("de_xuat").select("id, ma, tieu_de, so_tien").eq("loai", "tam_ung").eq("loai_tam_ung", "chi_phi").eq("trang_thai", "da_thuc_hien").eq("nguoi_gui_id", nd.nhanVienId) : Promise.resolve({ data: [] }),
     loai === "hoan_ung" ? db.from("de_xuat").select("de_xuat_goc_id").eq("loai", "hoan_ung").not("trang_thai", "in", "(tu_choi,huy)") : Promise.resolve({ data: [] }),
   ]);

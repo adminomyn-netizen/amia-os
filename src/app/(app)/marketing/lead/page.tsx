@@ -28,7 +28,7 @@ export default async function TrangLead({ searchParams }: { searchParams: Promis
   if (tab === "dong") q = q.or(`trang_thai_lien_he.in.(${DONG.join(",")}),trang_thai_phan_bo.in.(lead_trung,khong_hop_le)`);
   const [{ data: ds }, { data: nguon }, { data: cd }, { data: dt }, { data: nv }, { data: cn }] = await Promise.all([
     q, db.from("nguon_lead").select("id, ten, hoat_dong").order("thu_tu"), db.from("chien_dich").select("id, ten, ma").in("trang_thai", ["da_duyet", "dang_chay", "tam_dung"]).order("tao_luc", { ascending: false }),
-    db.from("doi_tac_gt").select("id, ten").eq("hoat_dong", true).order("ten"), db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true),
+    db.from("doi_tac_gt").select("id, ten").eq("hoat_dong", true).order("ten"), db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu"),
   ]);
   const tenNguon = new Map((nguon ?? []).map((n) => [n.id, n.ten])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten])), tenCn = new Map((cn ?? []).map((n) => [n.id, n.ten]));
   const truongTao: Truong[] = [

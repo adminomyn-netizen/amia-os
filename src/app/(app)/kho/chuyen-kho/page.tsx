@@ -19,7 +19,7 @@ export default async function TrangChuyenKho() {
   let q = db.from("phieu_chuyen_kho").select("*").order("gui_luc", { ascending: false }).limit(200);
   if (nd.chiNhanhId) q = q.or(`tu_chi_nhanh_id.eq.${nd.chiNhanhId},den_chi_nhanh_id.eq.${nd.chiNhanhId}`);
   const [{ data: ds }, { data: cn }, { data: sp }, { data: nv }] = await Promise.all([
-    q, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"), db.from("san_pham").select("id, ten, don_vi").eq("hoat_dong", true).eq("theo_doi_kho", true).order("ten"),
+    q, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("san_pham").select("id, ten, don_vi").eq("hoat_dong", true).eq("theo_doi_kho", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten"),
   ]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten])), tenSp = new Map((sp ?? []).map((s) => [s.id, s])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));

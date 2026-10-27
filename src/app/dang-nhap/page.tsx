@@ -2,9 +2,15 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState } from "react";
+import { Suspense, useActionState } from "react";
+import { useSearchParams } from "next/navigation";
 import { dangNhap } from "./actions";
 import { NHAN_O, O_NHAP } from "@/components/ui/dinh-dang";
+
+function ThongBaoDangKy() {
+  const sp = useSearchParams();
+  return sp.get("dk") === "1" ? <div role="status" className="mb-5 rounded-nho bg-nhan-nhat px-3 py-2.5 text-[14px] text-nhan-dam">Đăng ký thành công. Đăng nhập bằng email và mật khẩu vừa tạo.</div> : null;
+}
 
 export default function TrangDangNhap() {
   const [state, action, dangXuLy] = useActionState(dangNhap, undefined);
@@ -22,7 +28,8 @@ export default function TrangDangNhap() {
         <div className="the-noi vao w-full max-w-[420px] p-8 pt-9">
           <Image src="/logo-amia.png" alt="AMIA" width={150} height={65} priority className="mb-8 h-auto w-[130px] lg:hidden" />
           <h2 className="chu-tieu-de text-[30px] text-muc">Đăng nhập</h2>
-          <p className="mb-7 mt-1 text-[14px] text-muc-3">Dùng tài khoản do bộ phận Kỹ thuật cấp. Chưa có tài khoản thì gửi yêu cầu đăng ký.</p>
+          <p className="mb-7 mt-1 text-[14px] text-muc-3">Đăng nhập bằng email và mật khẩu của bạn. Chưa có tài khoản thì đăng ký ngay bên dưới.</p>
+          <Suspense fallback={null}><ThongBaoDangKy /></Suspense>
           <form action={action} className="space-y-5">
             <div>
               <label htmlFor="email" className={NHAN_O}>Email</label>

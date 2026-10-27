@@ -109,9 +109,14 @@ export async function guiDeXuat(fd: FormData): Promise<KQ> {
   if (!cn) return { loi: "Chọn chi nhánh." };
   const db = sb();
   let goc: string | null = null;
-  if (loai === "tam_ung") {
-    // Còn khoản tạm ứng cũ chưa hoàn ứng thì chưa xin khoản mới.
-    const { data: cu } = await db.from("de_xuat").select("id, trang_thai").eq("loai", "tam_ung").eq("nguoi_gui_id", nd.nhanVienId).in("trang_thai", ["cho_duyet", "da_duyet", "da_thuc_hien"]);
+  const loaiTamUng = loai === "tam_ung" ? (chuoi(fd, "loai_tam_ung") === "chi_phi" ? "chi_phi" : "luong") : null;
+  if (loaiTamUng === "luong") {
+    const { count } = await db.from("de_xuat").select("id", { count: "exact", head: true }).eq("loai", "tam_ung").eq("loai_tam_ung", "luong").eq("nguoi_gui_id", nd.nhanVienId).in("trang_thai", ["cho_duyet", "da_duyet"]);
+    if (count) return { loi: "Bạn đang có đề xuất tạm ứng lương chưa xử lý xong." };
+  }
+  if (loaiTamUng === "chi_phi") {
+    // Còn khoản tạm ứng chi phí cũ chưa hoàn ứng thì chưa xin khoản mới.
+    const { data: cu } = await db.from("de_xuat").select("id, trang_thai").eq("loai", "tam_ung").eq("loai_tam_ung", "chi_phi").eq("nguoi_gui_id", nd.nhanVienId).in("trang_thai", ["cho_duyet", "da_duyet", "da_thuc_hien"]);
     const mo = (cu ?? []).filter((x) => x.trang_thai !== "da_thuc_hien");
     if (mo.length) return { loi: "Bạn đang có đề xuất tạm ứng chưa xử lý xong." };
     const ids = (cu ?? []).map((x) => x.id);
@@ -123,13 +128,14 @@ export async function guiDeXuat(fd: FormData): Promise<KQ> {
   }
   if (loai === "hoan_ung") {
     goc = chuoi(fd, "de_xuat_goc_id");
-    const { data: g } = await db.from("de_xuat").select("id, nguoi_gui_id, loai, trang_thai, chi_nhanh_id").eq("id", goc).maybeSingle();
-    if (!g || g.loai !== "tam_ung" || g.trang_thai !== "da_thuc_hien" || g.nguoi_gui_id !== nd.nhanVienId) return { loi: "Chọn khoản tạm ứng đã chi của chính bạn." };
+    const { data: g } = await db.from("de_xuat").select("id, nguoi_gui_id, loai, trang_thai, chi_nhanh_id, loai_tam_ung").eq("id", goc).maybeSingle();
+    if (g && g.loai_tam_ung !== "chi_phi") return { loi: "Tạm ứng lương được trừ vào kỳ lương, không cần hoàn ứng." };
+    if (!g || g.loai !== "tam_ung" || g.trang_thai !== "da_thuc_hien" || g.nguoi_gui_id !== nd.nhanVienId) return { loi: "Chọn khoản tạm ứng chi phí đã chi của chính bạn." };
   }
   const { error } = await db.from("de_xuat").insert({
     ma: await dem("de_xuat", "DX"), loai, tieu_de: tieuDe, noi_dung: chuoiHoacNull(fd, "noi_dung"), so_tien: tien,
     doi_tuong: loai === "tam_ung" || loai === "hoan_ung" ? null : chuoiHoacNull(fd, "doi_tuong"), chi_nhanh_id: cn, nguoi_gui_id: nd.nhanVienId, han_duyet: chuoiHoacNull(fd, "han_duyet"),
-    ngay_can_chi: chuoiHoacNull(fd, "ngay_can_chi"), de_xuat_goc_id: goc,
+    ngay_can_chi: chuoiHoacNull(fd, "ngay_can_chi"), de_xuat_goc_id: goc, loai_tam_ung: loaiTamUng,
   });
   if (error) return { loi: error.code === "23505" ? "Khoản tạm ứng này đã có hoàn ứng." : thongBaoLoi(error) };
   lamMoi();

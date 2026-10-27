@@ -16,7 +16,7 @@ const LOAI = { "mua-sam": "mua_sam", "thanh-toan": "thanh_toan", "tam-ung": "tam
 const MO_TA = {
   mua_sam: "Đề nghị mua hàng hoá, vật tư gửi quản lý duyệt. Duyệt xong, bộ phận mua lập đơn mua từ đề xuất.",
   thanh_toan: "Đề xuất chi một khoản (nhà cung cấp, chi phí…). Duyệt xong, kế toán chi từ sổ quỹ.",
-  tam_ung: "Nhân viên xin tạm ứng lương. Duyệt xong, kế toán chi từ sổ quỹ. Còn khoản tạm ứng chưa hoàn ứng thì chưa xin được khoản mới.",
+  tam_ung: "Tạm ứng lương: duyệt xong kế toán chi từ sổ quỹ và hệ thống tự trừ vào kỳ lương gần nhất. Tạm ứng chi phí công việc: phải hoàn ứng; còn khoản chưa hoàn ứng thì chưa xin được khoản mới.",
   hoan_ung: "Quyết toán một khoản tạm ứng đã chi: nhập tổng chi thực tế. Thừa thì nhân viên hoàn lại quỹ, thiếu thì công ty chi thêm; mỗi tạm ứng chỉ hoàn ứng một lần.",
   hoan_khach: "Hoàn tiền cho khách. Mọi giá trị đều cần Giám đốc (hạn mức không giới hạn) duyệt.",
 } as const;
@@ -34,7 +34,7 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
   else if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
   const [{ data: dx }, { data: nv }, { data: cn }, { data: tuCu }, { data: hoanDa }] = await Promise.all([
     q, db.from("nhan_vien").select("id, ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma"),
-    loai === "hoan_ung" ? db.from("de_xuat").select("id, ma, tieu_de, so_tien").eq("loai", "tam_ung").eq("trang_thai", "da_thuc_hien").eq("nguoi_gui_id", nd.nhanVienId) : Promise.resolve({ data: [] }),
+    loai === "hoan_ung" ? db.from("de_xuat").select("id, ma, tieu_de, so_tien").eq("loai", "tam_ung").eq("loai_tam_ung", "chi_phi").eq("trang_thai", "da_thuc_hien").eq("nguoi_gui_id", nd.nhanVienId) : Promise.resolve({ data: [] }),
     loai === "hoan_ung" ? db.from("de_xuat").select("de_xuat_goc_id").eq("loai", "hoan_ung").not("trang_thai", "in", "(tu_choi,huy)") : Promise.resolve({ data: [] }),
   ]);
   const daHoan = new Set((hoanDa ?? []).map((x) => x.de_xuat_goc_id));
@@ -42,6 +42,7 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
   const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const truong: Truong[] = [
     { ten: "tieu_de", nhan: "Nội dung đề xuất", loai: "chu", batBuoc: true, rong: true },
+    ...(loai === "tam_ung" ? [{ ten: "loai_tam_ung", nhan: "Loại tạm ứng", loai: "chon" as const, luaChon: [{ gia_tri: "luong", nhan: "Tạm ứng lương (trừ vào lương)" }, { gia_tri: "chi_phi", nhan: "Tạm ứng chi phí công việc (phải hoàn ứng)" }], batBuoc: true, rong: true }] : []),
     ...(loai === "hoan_ung" ? [{ ten: "de_xuat_goc_id", nhan: "Khoản tạm ứng cần hoàn ứng", loai: "chon" as const, luaChon: gocLC, batBuoc: true, rong: true, goiY: gocLC.length ? "Chọn khoản tạm ứng" : "Chưa có khoản tạm ứng nào cần hoàn" }] : []),
     { ten: "so_tien", nhan: loai === "mua_sam" ? "Dự toán (không bắt buộc)" : loai === "hoan_ung" ? "Tổng chi thực tế" : "Số tiền", loai: "tien", batBuoc: loai !== "mua_sam" },
     ...(loai === "tam_ung" || loai === "hoan_ung" ? [] : [{ ten: "doi_tuong", nhan: loai === "mua_sam" ? "Nhà cung cấp dự kiến" : "Trả cho", loai: "chu" as const }]),
@@ -54,7 +55,7 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
     <div>
       <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
       <TieuDeTrang tieuDe="Đề xuất" phu={<>{MO_TA[loai]} Duyệt và xử lý ở <Link href="/noi-lam-viec/phe-duyet" className="text-nhan-dam hover:underline">Trung tâm phê duyệt</Link>.</>}>
-        <NutHop nhan="Tạo đề xuất" tieuDe={`Đề xuất ${LOAI_DX[loai].toLowerCase()}`} truong={truong} action={guiDeXuat} an={{ loai }} giaTri={{}} />
+        <NutHop nhan="Tạo đề xuất" tieuDe={`Đề xuất ${LOAI_DX[loai].toLowerCase()}`} truong={truong} action={guiDeXuat} an={{ loai }} giaTri={{ loai_tam_ung: "luong" }} />
       </TieuDeTrang>
       <Tab muc={TAB} dang={tab} goc="/noi-lam-viec/de-xuat" them={tatCa ? "&pham=tat-ca" : ""} />
       {xemHet && (

@@ -4,6 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayCuaIso, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { LOAI_DX, TT_DX } from "@/lib/de-xuat";
+import { LOAI_PHIEU, LOAI_NGHI, TT_PHIEU } from "@/lib/nhan-su";
 import { TT_DON } from "@/app/(app)/kho-mua-sam/mua-hang/page";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
@@ -13,20 +14,22 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { duyetDeXuat, tuChoiDeXuat, chiTheoDeXuat, lapDonMuaTuDeXuat } from "../actions";
 import { duyetDonMua, tuChoiDonMua } from "@/app/(app)/kho-mua-sam/actions";
+import { duyetPhieuHr, tuChoiPhieuHr } from "@/app/(app)/nhan-su/actions";
 
 type Dong = {
-  khoa: string; nguon: "dx" | "dm"; id: string; ma: string; loai: string; tieuDe: string; nguoiGui: string | null; chiNhanh: string; tien: number | null;
+  khoa: string; nguon: "dx" | "dm" | "hr"; soNgay?: number; id: string; ma: string; loai: string; tieuDe: string; nguoiGui: string | null; chiNhanh: string; tien: number | null;
   tt: string; ttTen: string; kieu: "tot" | "cho" | "loi" | "tram"; luc: string; han: string | null; ly: string | null; loaiDx?: string; quy?: string | null;
 };
 
 const TAB = [
-  { ma: "tat-ca", ten: "Tất cả" }, { ma: "cho-duyet", ten: "Chờ tôi duyệt" }, { ma: "cho-thuc-hien", ten: "Chờ thực hiện" },
+  { ma: "tat-ca", ten: "Tất cả" }, { ma: "hr", ten: "Nghỉ phép · OT · HR" }, { ma: "cho-duyet", ten: "Chờ tôi duyệt" }, { ma: "cho-thuc-hien", ten: "Chờ thực hiện" },
   { ma: "toi-gui", ten: "Tôi đã gửi" }, { ma: "da-xu-ly", ten: "Đã xử lý" }, { ma: "tu-choi", ten: "Bị từ chối" },
 ];
 
 export default async function TrangPheDuyet({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauNoiBo();
   const duyetDx = coQuyen(nd, "dexuat.duyet"), duyetDm = coQuyen(nd, "mua.duyet"), chi = coQuyen(nd, "quy.ghi"), lapDon = coQuyen(nd, "mua.tao");
+  const duyetHr = coQuyen(nd, "nghi.duyet"), xemHr = duyetHr || coQuyen(nd, "cong.xem");
   const xemHet = duyetDx || chi || lapDon || duyetDm;
   const { tab: t } = await searchParams;
   const tab = TAB.some((x) => x.ma === t) ? t! : "tat-ca";
@@ -37,8 +40,10 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
   let qm = db.from("don_mua").select("*").in("trang_thai", ["cho_duyet", "da_duyet", "dang_nhan", "da_nhan"]).order("tao_luc", { ascending: false }).limit(200);
   if (nd.chiNhanhId) qm = qm.eq("chi_nhanh_id", nd.chiNhanhId);
   const coDm = coQuyen(nd, "mua.xem");
-  const [{ data: dx }, { data: dm }, { data: nv }, { data: cn }, { data: quy }, { data: ncc }, { data: ltc }] = await Promise.all([
-    qx, coDm ? qm : Promise.resolve({ data: [] as never[] }), db.from("nhan_vien").select("id, ho_ten"), db.from("chi_nhanh").select("id, ten"),
+  const [{ data: dx }, { data: dm }, { data: hr }, { data: nv }, { data: cn }, { data: quy }, { data: ncc }, { data: ltc }] = await Promise.all([
+    qx, coDm ? qm : Promise.resolve({ data: [] as never[] }),
+    (xemHr ? db.from("phieu_hr").select("*").order("tao_luc", { ascending: false }).limit(300) : db.from("phieu_hr").select("*").or(`nhan_vien_id.eq.${nd.nhanVienId},nguoi_gui_id.eq.${nd.nhanVienId}`).order("tao_luc", { ascending: false }).limit(100)),
+    db.from("nhan_vien").select("id, ho_ten, chi_nhanh_id"), db.from("chi_nhanh").select("id, ten"),
     chi ? db.from("quy").select("id, ten, chi_nhanh_id").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
     lapDon ? db.from("nha_cung_cap").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
     chi ? db.from("loai_thu_chi").select("id, ten").eq("huong", "chi").eq("he_thong", false).eq("hoat_dong", true).order("thu_tu") : Promise.resolve({ data: [] }),
@@ -49,16 +54,23 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
   for (const d of dong ?? []) tongDm.set(d.don_mua_id, (tongDm.get(d.don_mua_id) ?? 0) + Math.round(Number(d.so_luong) * Number(d.don_gia)));
   const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten])), tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
 
+  const cnCua = new Map((nv ?? []).map((n) => [n.id, n.chi_nhanh_id]));
+  const hrDong: Dong[] = (hr ?? []).filter((r) => !nd.chiNhanhId || !xemHr || cnCua.get(r.nhan_vien_id) === nd.chiNhanhId).map((r): Dong => ({
+    khoa: `hr${r.id}`, nguon: "hr", id: r.id, ma: r.ma, loai: `Phiếu ${LOAI_PHIEU[r.loai].toLowerCase()}`, soNgay: Number(r.so_ngay),
+    tieuDe: `${r.loai_nghi ? `${LOAI_NGHI[r.loai_nghi]} · ` : ""}${ngayVN(r.tu_ngay)}${r.den_ngay !== r.tu_ngay ? ` – ${ngayVN(r.den_ngay)}` : ""} · ${r.so_gio ? `${r.so_gio} giờ` : `${r.so_ngay} ngày`} — ${r.ly_do}${r.qua_han_bao_truoc ? " (báo trễ)" : ""}${r.vuot_han_muc ? " (quên chấm công quá 3 lần/tháng)" : ""}`,
+    nguoiGui: r.nhan_vien_id, chiNhanh: tenCn.get(cnCua.get(r.nhan_vien_id) ?? "") ?? "", tien: null, tt: r.trang_thai, ttTen: TT_PHIEU[r.trang_thai].ten, kieu: TT_PHIEU[r.trang_thai].kieu, luc: r.tao_luc, han: null, ly: r.ly_do_duyet && r.trang_thai === "tu_choi" ? r.ly_do_duyet : null,
+  }));
   const tatCa: Dong[] = [
     ...(dx ?? []).map((r): Dong => ({ khoa: `dx${r.id}`, nguon: "dx", id: r.id, ma: r.ma, loai: `Đề xuất ${LOAI_DX[r.loai as keyof typeof LOAI_DX].toLowerCase()}`, tieuDe: r.tieu_de, nguoiGui: r.nguoi_gui_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: r.so_tien, tt: r.trang_thai, ttTen: TT_DX[r.trang_thai].ten, kieu: TT_DX[r.trang_thai].kieu, luc: r.tao_luc, han: r.han_duyet, ly: r.ly_do, loaiDx: r.loai })),
     ...(dm ?? []).map((r): Dong => ({ khoa: `dm${r.id}`, nguon: "dm", id: r.id, ma: r.ma, loai: "Đơn mua hàng", tieuDe: r.ghi_chu || "Đơn mua hàng", nguoiGui: r.nguoi_tao_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: tongDm.get(r.id) ?? 0, tt: r.trang_thai, ttTen: TT_DON[r.trang_thai].ten, kieu: TT_DON[r.trang_thai].kieu, luc: r.tao_luc, han: null, ly: r.ly_do })),
+    ...hrDong,
   ].sort((a, b) => b.luc.localeCompare(a.luc));
 
-  const choToiDuyet = (r: Dong) => r.tt === "cho_duyet" && (r.nguon === "dx" ? duyetDx : duyetDm) && (r.nguoiGui !== nd.nhanVienId || nd.vaiTro === "ky_thuat");
+  const choToiDuyet = (r: Dong) => r.tt === "cho_duyet" && (r.nguon === "dx" ? duyetDx : r.nguon === "hr" ? duyetHr : duyetDm) && (r.nguoiGui !== nd.nhanVienId || nd.vaiTro === "ky_thuat") && (r.nguon !== "hr" || (r.soNgay ?? 0) < 4 || r.loai !== "Phiếu nghỉ" || coQuyen(nd, "nghi.duyet_bgd"));
   const choThucHien = (r: Dong) => r.nguon === "dx" && r.tt === "da_duyet" && (r.loaiDx === "mua_sam" ? lapDon : chi);
   const daXuLy = (r: Dong) => ["da_duyet", "da_thuc_hien", "tu_choi", "huy", "dang_nhan", "da_nhan"].includes(r.tt) && !choThucHien(r);
   const loc: Record<string, (r: Dong) => boolean> = {
-    "tat-ca": () => true, "cho-duyet": choToiDuyet, "cho-thuc-hien": choThucHien, "toi-gui": (r) => r.nguoiGui === nd.nhanVienId, "da-xu-ly": daXuLy, "tu-choi": (r) => r.tt === "tu_choi",
+    "tat-ca": () => true, hr: (r) => r.nguon === "hr", "cho-duyet": choToiDuyet, "cho-thuc-hien": choThucHien, "toi-gui": (r) => r.nguoiGui === nd.nhanVienId, "da-xu-ly": daXuLy, "tu-choi": (r) => r.tt === "tu_choi",
   };
   const dem = (ma: string) => tatCa.filter(loc[ma]).length;
   const hienThi = tatCa.filter(loc[tab]);
@@ -83,8 +95,8 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
           { nhan: "", hienThi: (r) => {
             const nut = [];
             if (choToiDuyet(r)) {
-              nut.push(<NutHop key="d" kieu="chu" nhan="Duyệt" tieuDe="Duyệt" xacNhan={`Duyệt ${r.ma}${r.tien ? ` · ${tienVN(r.tien)}` : ""}?`} action={r.nguon === "dx" ? duyetDeXuat : duyetDonMua} an={r.nguon === "dx" ? { id: r.id } : { don_id: r.id }} nhanLuu="Duyệt" />);
-              nut.push(<NutHop key="t" kieu="chu" nguy nhan="Từ chối" tieuDe="Từ chối" truong={lyDo("Lý do từ chối")} action={r.nguon === "dx" ? tuChoiDeXuat : tuChoiDonMua} an={r.nguon === "dx" ? { id: r.id } : { don_id: r.id }} nhanLuu="Từ chối" />);
+              nut.push(<NutHop key="d" kieu="chu" nhan="Duyệt" tieuDe="Duyệt" xacNhan={`Duyệt ${r.ma}${r.tien ? ` · ${tienVN(r.tien)}` : ""}?`} action={r.nguon === "dx" ? duyetDeXuat : r.nguon === "hr" ? duyetPhieuHr : duyetDonMua} an={r.nguon === "dm" ? { don_id: r.id } : { id: r.id }} nhanLuu="Duyệt" />);
+              nut.push(<NutHop key="t" kieu="chu" nguy nhan="Từ chối" tieuDe="Từ chối" truong={lyDo("Lý do từ chối")} action={r.nguon === "dx" ? tuChoiDeXuat : r.nguon === "hr" ? tuChoiPhieuHr : tuChoiDonMua} an={r.nguon === "dm" ? { don_id: r.id } : { id: r.id }} nhanLuu="Từ chối" />);
             }
             if (choThucHien(r) && r.loaiDx !== "mua_sam") {
               const cnId = (dx ?? []).find((x) => x.id === r.id)?.chi_nhanh_id;

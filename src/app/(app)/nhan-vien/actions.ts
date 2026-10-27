@@ -45,11 +45,16 @@ export async function suaNhanVien(fd: FormData): Promise<KQ> {
   const db = sb();
   const { data: cu } = await db.from("nhan_vien").select("user_id, vai_tro").eq("id", id).maybeSingle();
   if (!cu) return { loi: "Không tìm thấy nhân viên." };
-  const hoatDong = bat(fd, "hoat_dong");
+  const ttLam = ["dang_lam", "tam_nghi", "nghi_viec", "khoa"].includes(chuoi(fd, "trang_thai_lam")) ? chuoi(fd, "trang_thai_lam") : "dang_lam";
+  const khung = ["van_phong", "chi_nhanh", "khong_cham_cong"].includes(chuoi(fd, "khung_lam_viec")) ? chuoi(fd, "khung_lam_viec") : "chi_nhanh";
+  // Nghỉ việc / khoá = không đăng nhập được (khoá thay cho xoá).
+  const hoatDong = bat(fd, "hoat_dong") && ttLam !== "nghi_viec" && ttLam !== "khoa";
+  const ttLuu = !bat(fd, "hoat_dong") && ttLam === "dang_lam" ? "khoa" : ttLam;
   if (id === nd.nhanVienId && !hoatDong) return { loi: "Không tự khoá tài khoản của chính mình." };
   const { error } = await db.from("nhan_vien").update({
     ho_ten: chuoi(fd, "ho_ten"), vai_tro: vaiTro, chuc_danh: chuoiHoacNull(fd, "chuc_danh"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"),
     chi_nhanh_id: chuoiHoacNull(fd, "chi_nhanh_id"), hoat_dong: hoatDong,
+    trang_thai_lam: ttLuu, khung_lam_viec: khung, ngay_vao_lam: chuoiHoacNull(fd, "ngay_vao_lam"), ngay_vao_chinh_thuc: chuoiHoacNull(fd, "ngay_vao_chinh_thuc"), vai_tro_chuyen_mon: mang(fd, "vai_tro_chuyen_mon"),
     chuc_danh_tai_chinh: chuoiHoacNull(fd, "chuc_danh_tai_chinh"), han_muc_duyet: chuoiHoacNull(fd, "han_muc_duyet") === null ? null : Math.max(0, Math.round(so(fd, "han_muc_duyet"))),
   }).eq("id", id);
   if (error) return { loi: thongBaoLoi(error) };
@@ -106,30 +111,11 @@ export async function xoaNhanVien(fd: FormData): Promise<KQ> {
   return xong();
 }
 
-/** Duyệt yêu cầu đăng ký (trang /dang-ky): tạo tài khoản với mật khẩu mặc định (buộc đổi ở lần đầu) rồi đánh dấu đã duyệt. Giành quyền xử lý trước để hai người bấm cùng lúc không tạo hai lần. */
-export async function duyetYeuCauTaiKhoan(fd: FormData): Promise<KQ> {
+/** Công tắc đăng ký tự do ở /dang-ky (cau_hinh dang_ky.mo). Chỉ Kỹ thuật. */
+export async function datDangKyTuDo(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("hethong.phanquyen");
   if (!nd) return { loi: KHONG_DU_QUYEN };
-  const vaiTro = chuoi(fd, "vai_tro");
-  if (!laVaiTro(vaiTro)) return { loi: "Chọn vai trò cho tài khoản." };
-  const id = chuoi(fd, "id");
-  const { data: yc } = await sb().from("yeu_cau_tai_khoan").update({ trang_thai: "da_duyet", nguoi_xu_ly_id: nd.nhanVienId, xu_ly_luc: new Date().toISOString() }).eq("id", id).eq("trang_thai", "cho_duyet").select("*").maybeSingle();
-  if (!yc) return { loi: "Yêu cầu đã được xử lý hoặc không còn." };
-  const tao = new FormData();
-  tao.set("ho_ten", yc.ho_ten); tao.set("email", yc.email); tao.set("dien_thoai", yc.dien_thoai ?? ""); tao.set("vai_tro", vaiTro);
-  tao.set("chuc_danh", yc.vi_tri ?? ""); tao.set("chi_nhanh_id", yc.chi_nhanh_id ?? "");
-  const kq = await taoNhanVien(tao);
-  if (kq.loi) {
-    await sb().from("yeu_cau_tai_khoan").update({ trang_thai: "cho_duyet", nguoi_xu_ly_id: null, xu_ly_luc: null }).eq("id", id);
-    return kq;
-  }
-  return xong();
-}
-
-export async function tuChoiYeuCauTaiKhoan(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("hethong.phanquyen");
-  if (!nd) return { loi: KHONG_DU_QUYEN };
-  const { data } = await sb().from("yeu_cau_tai_khoan").update({ trang_thai: "tu_choi", nguoi_xu_ly_id: nd.nhanVienId, xu_ly_luc: new Date().toISOString(), ly_do: chuoiHoacNull(fd, "ly_do") }).eq("id", chuoi(fd, "id")).eq("trang_thai", "cho_duyet").select("id");
-  if (!data?.length) return { loi: "Yêu cầu đã được xử lý hoặc không còn." };
+  const { error } = await sb().from("cau_hinh").upsert({ khoa: "dang_ky.mo", gia_tri: chuoi(fd, "mo") === "1" ? "1" : "0", ghi_chu: "Cho phép người mới tự đăng ký tại /dang-ky (vai trò Nhân viên, dùng được ngay). 0 = tắt." }, { onConflict: "khoa" });
+  if (error) return { loi: thongBaoLoi(error) };
   return xong();
 }

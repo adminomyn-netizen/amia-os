@@ -12,13 +12,15 @@ export const NHAN_TRANG_THAI: Record<TrangThaiThe, string> = { san_sang: "Sẵn 
 
 export const MODULE: Module[] = [
   {
-    ma: "noi-lam-viec", ten: "Nơi làm việc", duongDan: "/noi-lam-viec", quyen: ["lich.xem", "khach.xem", "the.xem", "phieu.xem", "ban.xem"],
+    ma: "noi-lam-viec", ten: "Nơi làm việc", duongDan: "/noi-lam-viec", quyen: ["noibo.dung", "lich.xem", "khach.xem", "the.xem", "phieu.xem", "ban.xem"],
     moTa: "Cổng làm việc hằng ngày: việc cần làm, chấm công, đề xuất và kiến thức nội bộ.",
     nhom: [
       { nhan: "Công việc & chấm công", the: [
         { ten: "Việc của tôi hôm nay", moTa: "Lịch, thẻ, phiếu vật tư và việc được giao cho tôi.", duongDan: "/trang-chu", trangThai: "san_sang" },
         { ten: "Việc cần hoàn thành", moTa: "Việc được giao cho tôi, việc tôi giao và việc quá hạn.", duongDan: "/noi-lam-viec/viec", trangThai: "san_sang" },
-        { ten: "Bảng chấm công", moTa: "Chấm công và giờ làm thực tế.", trangThai: "sap_co" },
+        { ten: "Bảng chấm công", moTa: "Chấm công và giờ làm thực tế.", duongDan: "/nhan-su/cham-cong", trangThai: "san_sang" },
+        { ten: "Đơn nghỉ & phiếu nhân sự", moTa: "Xin nghỉ, tăng ca, đi trễ, điều chỉnh công; xem phép năm.", duongDan: "/nhan-su/ngay-nghi", trangThai: "san_sang" },
+        { ten: "Phiếu lương của tôi", moTa: "Lương các kỳ đã được duyệt.", duongDan: "/nhan-su/luong/phieu", trangThai: "san_sang" },
         { ten: "Báo cáo ngày", moTa: "Nhân viên nộp báo cáo công việc cuối ngày.", duongDan: "/noi-lam-viec/bao-cao-ngay", trangThai: "san_sang" },
       ] },
       { nhan: "Kiến thức nội bộ", the: [
@@ -80,7 +82,7 @@ export const MODULE: Module[] = [
     ],
   },
   {
-    ma: "nhan-su", ten: "Nhân sự", duongDan: "/nhan-su", quyen: ["nhanvien.quanly", "baocao.tien"],
+    ma: "nhan-su", ten: "Nhân sự", duongDan: "/nhan-su", quyen: ["nhanvien.quanly", "baocao.tien", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem"],
     moTa: "Hồ sơ, chấm công, ca, nghỉ phép, hoa hồng và lương.",
     nhom: [
       { nhan: "Hồ sơ", the: [
@@ -88,13 +90,13 @@ export const MODULE: Module[] = [
         { ten: "Hợp đồng & pháp lý", moTa: "Hợp đồng lao động và hồ sơ pháp lý.", trangThai: "sap_co" },
       ] },
       { nhan: "Chấm công", the: [
-        { ten: "Chấm công / giờ làm", moTa: "Chấm công và giờ làm thực tế.", trangThai: "sap_co" },
-        { ten: "Quản lý ca kíp", moTa: "Ca làm, lịch trực, phân ca.", trangThai: "sap_co" },
-        { ten: "Quản lý ngày nghỉ", moTa: "Phép, nghỉ và duyệt vắng mặt.", trangThai: "sap_co" },
+        { ten: "Chấm công / giờ làm", moTa: "Chấm công vào/ra, bảng công và tổng hợp tháng.", duongDan: "/nhan-su/cham-cong", trangThai: "san_sang" },
+        { ten: "Quản lý ca kíp", moTa: "Ca làm, lịch tuần, phân ca, ngày lễ.", duongDan: "/nhan-su/ca-kip", trangThai: "san_sang" },
+        { ten: "Quản lý ngày nghỉ", moTa: "Phiếu nghỉ, tăng ca, điều chỉnh công và phép năm.", duongDan: "/nhan-su/ngay-nghi", trangThai: "san_sang" },
       ] },
       { nhan: "Lương & hoa hồng", the: [
         { ten: "Hoa hồng nhân viên", moTa: "Hoa hồng bán hàng theo kỳ.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },
-        { ten: "Bảng lương tổng hợp", moTa: "Lương, phụ cấp và khoản khấu trừ.", trangThai: "sap_co" },
+        { ten: "Bảng lương tổng hợp", moTa: "Lương, phụ cấp và khoản khấu trừ.", duongDan: "/nhan-su/luong", trangThai: "san_sang", quyen: ["luong.xem"] },
       ] },
     ],
   },

@@ -13,7 +13,7 @@ export const MENU: MucMenu[] = [
   { ten: "Hoá đơn", duong_dan: "/hoa-don", icon: Receipt, nhom: "Hằng ngày", quyen: "ban.xem", moTa: "Danh sách hoá đơn, thu nợ, huỷ" },
   { ten: "Khách hàng", duong_dan: "/khach-hang", icon: Users, nhom: "Hằng ngày", quyen: "khach.xem", moTa: "Hồ sơ, ghi chú điều trị, ảnh" },
   { ten: "Thẻ liệu trình", duong_dan: "/the", icon: CreditCard, nhom: "Hằng ngày", quyen: "the.xem", moTa: "Thẻ lần, thẻ tiền, thực hiện buổi" },
-  { ten: "Nơi làm việc", duong_dan: "/noi-lam-viec", icon: Briefcase, nhom: "Vận hành", quyen: ["lich.xem", "khach.xem", "the.xem", "phieu.xem", "ban.xem"], moTa: "Việc cần làm, chấm công, đề xuất, wiki" },
+  { ten: "Nơi làm việc", duong_dan: "/noi-lam-viec", icon: Briefcase, nhom: "Vận hành", quyen: ["noibo.dung", "lich.xem", "khach.xem", "the.xem", "phieu.xem", "ban.xem"], moTa: "Việc cần làm, chấm công, đề xuất, wiki" },
   { ten: "Kho & Mua sắm", duong_dan: "/kho-mua-sam", icon: Warehouse, nhom: "Vận hành", quyen: ["kho.xem", "phieu.xem"], moTa: "Tồn kho, vật tư cấp theo ca, mua hàng, kiểm kê" },
   { ten: "Tài chính - Kế toán", duong_dan: "/tai-chinh", icon: Landmark, nhom: "Vận hành", quyen: ["quy.xem", "baocao.tien", "no.thu"], moTa: "Sổ quỹ, công nợ, hoá đơn, quyết toán" },
   { ten: "Nhân sự", duong_dan: "/nhan-su", icon: UsersRound, nhom: "Vận hành", quyen: ["nhanvien.quanly", "baocao.tien"], moTa: "Hồ sơ, chấm công, ca, nghỉ phép, lương" },

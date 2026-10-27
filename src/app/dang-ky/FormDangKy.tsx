@@ -2,25 +2,16 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
-import { guiYeuCauTaiKhoan } from "./actions";
+import { dangKyTaiKhoan } from "./actions";
 import { Chon } from "@/components/ui/Chon";
 import { NHAN_O, O_NHAP } from "@/components/ui/dinh-dang";
 
 export function FormDangKy({ chiNhanh }: { chiNhanh: { id: string; ten: string }[] }) {
-  const [kq, action, dang] = useActionState(guiYeuCauTaiKhoan, undefined);
-  if (kq?.ok) {
-    return (
-      <div>
-        <h2 className="chu-tieu-de text-[26px] text-muc">Đã gửi yêu cầu</h2>
-        <p className="mt-3 text-[14.5px] leading-relaxed text-muc-2">Bộ phận Kỹ thuật sẽ kiểm tra và cấp tài khoản. Khi có tài khoản, bạn đăng nhập bằng email vừa khai và mật khẩu do Kỹ thuật báo; lần đầu hệ thống sẽ yêu cầu đổi mật khẩu.</p>
-        <Link href="/dang-nhap" className="nut-vang mt-7 flex h-[50px] w-full items-center justify-center rounded-nho text-[15px]">Về trang đăng nhập</Link>
-      </div>
-    );
-  }
+  const [kq, action, dang] = useActionState(dangKyTaiKhoan, undefined);
   return (
     <>
       <h2 className="chu-tieu-de text-[30px] text-muc">Đăng ký tài khoản</h2>
-      <p className="mb-7 mt-1 text-[14px] text-muc-3">Gửi thông tin để bộ phận Kỹ thuật cấp tài khoản. Tài khoản chỉ dùng được sau khi được duyệt.</p>
+      <p className="mb-7 mt-1 text-[14px] text-muc-3">Tạo tài khoản và dùng được ngay. Bộ phận Kỹ thuật sẽ chỉnh vị trí và quyền cho bạn sau.</p>
       <form action={action} className="space-y-5">
         <div>
           <label htmlFor="ho_ten" className={NHAN_O}>Họ và tên</label>
@@ -39,12 +30,16 @@ export function FormDangKy({ chiNhanh }: { chiNhanh: { id: string; ten: string }
           <Chon id="chi_nhanh_id" ten="chi_nhanh_id" batBuoc luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} trong="Chọn chi nhánh" />
         </div>
         <div>
-          <label htmlFor="vi_tri" className={NHAN_O}>Vị trí công việc (không bắt buộc)</label>
-          <input id="vi_tri" name="vi_tri" maxLength={100} placeholder="Lễ tân, kỹ thuật viên, kế toán…" className={O_NHAP} />
+          <label htmlFor="mat_khau" className={NHAN_O}>Mật khẩu (tối thiểu 8 ký tự)</label>
+          <input id="mat_khau" name="mat_khau" type="password" required minLength={8} maxLength={72} autoComplete="new-password" className={O_NHAP} />
+        </div>
+        <div>
+          <label htmlFor="mat_khau2" className={NHAN_O}>Nhập lại mật khẩu</label>
+          <input id="mat_khau2" name="mat_khau2" type="password" required minLength={8} maxLength={72} autoComplete="new-password" className={O_NHAP} />
         </div>
         <input name="website" tabIndex={-1} autoComplete="off" aria-hidden className="hidden" />
         {kq?.loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{kq.loi}</div>}
-        <button type="submit" disabled={dang} className="nut-vang h-[50px] w-full rounded-nho text-[15px] disabled:opacity-60">{dang ? "Đang gửi" : "Gửi yêu cầu đăng ký"}</button>
+        <button type="submit" disabled={dang} className="nut-vang h-[50px] w-full rounded-nho text-[15px] disabled:opacity-60">{dang ? "Đang tạo tài khoản" : "Đăng ký"}</button>
         <p className="text-center text-[13.5px] text-muc-3">Đã có tài khoản? <Link href="/dang-nhap" className="text-nhan-dam hover:underline">Đăng nhập</Link></p>
       </form>
     </>

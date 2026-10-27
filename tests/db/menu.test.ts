@@ -21,6 +21,13 @@ describe("menu theo vai trò", () => {
   });
 });
 
+describe("vai trò Nhân viên (đăng ký tự do)", () => {
+  it("chỉ có quyền dùng Nơi làm việc: thấy Trang chủ và Nơi làm việc, không thấy mục lớn nào khác", () => {
+    expect(nguoi("nhan_vien").quyen).toEqual(["noibo.dung"]);
+    expect(ten("nhan_vien")).toEqual(["Trang chủ", "Nơi làm việc"]);
+  });
+});
+
 describe("các mục lớn và thẻ chức năng", () => {
   it("Tài khoản & phân quyền chỉ hiện cho vai trò có quyền hệ thống (Kỹ thuật), Quản lý không thấy thẻ này", () => {
     const the = MODULE.flatMap((m) => m.nhom.flatMap((g) => g.the)).filter((t) => t.duongDan === "/nhan-vien");

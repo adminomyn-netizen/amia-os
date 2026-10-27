@@ -111,16 +111,24 @@ export const MODULE: Module[] = [
     ],
   },
   {
-    ma: "marketing", ten: "Marketing", duongDan: "/marketing", quyen: ["khach.sua"],
-    moTa: "Khách tiềm năng, nguồn giới thiệu và theo dõi chiến dịch.",
+    ma: "marketing", ten: "Marketing", duongDan: "/marketing", quyen: ["mkt.xem", "lead.xu_ly"],
+    moTa: "Khách tiềm năng, chiến dịch, nội dung, nguồn giới thiệu và báo cáo phễu.",
     nhom: [
       { nhan: "Khách tiềm năng", the: [
-        { ten: "Hộp khách tiềm năng", moTa: "Khách tiềm năng theo các bước chăm sóc.", trangThai: "sap_co" },
+        { ten: "Lead & phễu khách", moTa: "Nhận lead, ghi liên hệ, chuyển thành khách; không xoá lead.", duongDan: "/marketing/lead", trangThai: "san_sang", quyen: ["lead.xu_ly"] },
         { ten: "Hộp thư đa kênh", moTa: "Trả lời khách qua Zalo OA, Messenger (cần kết nối kênh).", trangThai: "sap_co" },
       ] },
-      { nhan: "Giới thiệu & cộng tác viên", the: [
-        { ten: "Nguồn giới thiệu / cộng tác viên", moTa: "Nguồn khách, cộng tác viên và hoa hồng giới thiệu.", trangThai: "sap_co" },
-        { ten: "Link / mã QR theo dõi", moTa: "Link theo dõi nguồn khách cho từng chiến dịch.", trangThai: "sap_co" },
+      { nhan: "Chiến dịch & nội dung", the: [
+        { ten: "Chiến dịch", moTa: "Một mục tiêu cho mỗi chiến dịch, có duyệt trước khi chạy.", duongDan: "/marketing/chien-dich", trangThai: "san_sang", quyen: ["mkt.xem"] },
+        { ten: "Quảng cáo theo ngày", moTa: "Chi phí và số liệu quảng cáo từng ngày theo chiến dịch.", duongDan: "/marketing/quang-cao", trangThai: "san_sang", quyen: ["mkt.xem"] },
+        { ten: "Nội dung", moTa: "Việc làm nội dung: người làm, hạn, duyệt, link bài đăng.", duongDan: "/marketing/noi-dung", trangThai: "san_sang", quyen: ["mkt.xem"] },
+      ] },
+      { nhan: "Giới thiệu & theo dõi", the: [
+        { ten: "Nguồn giới thiệu / cộng tác viên", moTa: "Đối tác giới thiệu, mã giới thiệu và danh sách nguồn lead.", duongDan: "/marketing/doi-tac", trangThai: "san_sang", quyen: ["mkt.xem"] },
+        { ten: "Link / mã QR theo dõi", moTa: "Link đếm lượt bấm và mã QR cho từng chiến dịch.", duongDan: "/marketing/link", trangThai: "san_sang", quyen: ["mkt.xem"] },
+      ] },
+      { nhan: "Báo cáo", the: [
+        { ten: "Báo cáo marketing", moTa: "Phễu lead → khách đến → thực thu và giá mỗi lead theo nguồn.", duongDan: "/marketing/bao-cao", trangThai: "san_sang", quyen: ["mkt.xem"] },
       ] },
     ],
   },

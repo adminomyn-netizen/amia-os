@@ -3,7 +3,7 @@ import type { ComponentType } from "react";
 import { coQuyen, type CoQuyen, type Quyen } from "@/lib/quyen";
 import { MODULE } from "@/lib/module";
 
-export type MucMenu = { ten: string; duong_dan: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; nhom: string; quyen: Quyen | Quyen[] | null; moTa: string };
+export type MucMenu = { ten: string; duong_dan: string; icon: ComponentType<{ className?: string; strokeWidth?: number }>; nhom: string; quyen: Quyen | Quyen[] | null; moTa: string; ngan?: string };
 
 export const MENU: MucMenu[] = [
   { ten: "Trang chủ", duong_dan: "/trang-chu", icon: Home, nhom: "Hằng ngày", quyen: null, moTa: "Việc của tôi hôm nay, hiệu suất, lối tắt" },
@@ -15,9 +15,9 @@ export const MENU: MucMenu[] = [
   { ten: "Thẻ liệu trình", duong_dan: "/the", icon: CreditCard, nhom: "Hằng ngày", quyen: "the.xem", moTa: "Thẻ lần, thẻ tiền, thực hiện buổi" },
   { ten: "Nơi làm việc", duong_dan: "/noi-lam-viec", icon: Briefcase, nhom: "Vận hành", quyen: ["noibo.dung", "lich.xem", "khach.xem", "the.xem", "phieu.xem", "ban.xem"], moTa: "Việc cần làm, chấm công, đề xuất, wiki" },
   { ten: "Kho & Mua sắm", duong_dan: "/kho-mua-sam", icon: Warehouse, nhom: "Vận hành", quyen: ["kho.xem", "phieu.xem"], moTa: "Tồn kho, vật tư cấp theo ca, mua hàng, kiểm kê" },
-  { ten: "Tài chính - Kế toán", duong_dan: "/tai-chinh", icon: Landmark, nhom: "Vận hành", quyen: ["quy.xem", "baocao.tien", "no.thu"], moTa: "Sổ quỹ, công nợ, hoá đơn, quyết toán" },
+  { ten: "Tài chính - Kế toán", ngan: "Tài chính", duong_dan: "/tai-chinh", icon: Landmark, nhom: "Vận hành", quyen: ["quy.xem", "baocao.tien", "no.thu"], moTa: "Sổ quỹ, công nợ, hoá đơn, quyết toán" },
   { ten: "Nhân sự", duong_dan: "/nhan-su", icon: UsersRound, nhom: "Vận hành", quyen: ["nhanvien.quanly", "baocao.tien"], moTa: "Hồ sơ, chấm công, ca, nghỉ phép, lương" },
-  { ten: "Văn bản & Hợp đồng", duong_dan: "/van-ban", icon: FileText, nhom: "Vận hành", quyen: ["vb.xem"], moTa: "Hợp đồng, quyết định, quy định" },
+  { ten: "Văn bản & Hợp đồng", ngan: "Văn bản", duong_dan: "/van-ban", icon: FileText, nhom: "Vận hành", quyen: ["vb.xem"], moTa: "Hợp đồng, quyết định, quy định" },
   { ten: "Marketing", duong_dan: "/marketing", icon: Megaphone, nhom: "Phát triển", quyen: ["mkt.xem", "lead.xu_ly"], moTa: "Khách tiềm năng, nguồn giới thiệu, chiến dịch" },
   { ten: "Báo cáo", duong_dan: "/bao-cao", icon: BarChart3, nhom: "Phát triển", quyen: "baocao.xem", moTa: "Doanh thu, nhân viên, nợ, vật tư" },
   { ten: "Cài đặt", duong_dan: "/cai-dat", icon: Settings, nhom: "Hệ thống", quyen: ["danhmuc.xem", "nhanvien.quanly", "hethong.phanquyen", "baocao.tien"], moTa: "Danh mục, hoa hồng, phân quyền, chi nhánh" },
@@ -51,4 +51,19 @@ export function mucDangChon(pathname: string, duongDan: string) {
     if (!p || !khop(p) || MENU.some((x) => x.duong_dan === p)) return false;
     return MODULE.find((m) => m.nhom.some((h) => h.the.some((u) => u.duongDan?.split("?")[0] === p)))?.duongDan === duongDan;
   }));
+}
+
+/** Thứ tự các mục lớn trên thanh menu ngang (máy tính): mục dùng nhiều nhất đứng trước, màn hình hẹp thì mục cuối gom vào nút "Thêm". */
+const THU_TU_NGANG = ["/trang-chu", "/lich-hen", "/ban-hang", "/khach-hang", "/the", "/noi-lam-viec", "/kho-mua-sam", "/tai-chinh", "/nhan-su", "/marketing", "/bao-cao", "/tong-quan", "/hoa-don", "/van-ban", "/cai-dat"];
+export const sapXepNgang = <T extends { duong_dan: string }>(ds: T[]) => [...ds].sort((a, b) => THU_TU_NGANG.indexOf(a.duong_dan) - THU_TU_NGANG.indexOf(b.duong_dan));
+
+export const coMotQuyen = (nd: CoQuyen, qs?: Quyen[] | null) => !qs || qs.length === 0 || qs.some((q) => coQuyen(nd, q));
+
+/** Chức năng con của một mục lớn (thả xuống từ thanh menu): chỉ thẻ đã dùng được và người này có quyền, gom theo nhóm của trang tổng quan. */
+export function chucNangCon(nd: CoQuyen, duongDan: string) {
+  const m = MODULE.find((x) => x.duongDan === duongDan);
+  if (!m) return [];
+  return m.nhom
+    .map((g) => ({ nhan: g.nhan, the: g.the.filter((t) => t.duongDan && coMotQuyen(nd, t.quyen)).map((t) => ({ ten: t.ten, duongDan: t.duongDan!, moTa: t.moTa })) }))
+    .filter((g) => g.the.length > 0);
 }

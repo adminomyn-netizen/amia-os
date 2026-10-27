@@ -7,11 +7,11 @@ import { dangXuat } from "@/app/dang-nhap/actions";
 import { AnhDaiDien } from "./AnhDaiDien";
 import { ChonGiaoDien } from "./ChonGiaoDien";
 
-type Props = { hoTen: string; vaiTro: string; chucDanh: string | null; email: string; chiNhanh: string | null; anh: string | null };
+type Props = { hoTen: string; vaiTro: string; chucDanh: string | null; email: string; chiNhanh: string | null; anh: string | null; toi?: boolean };
 
 /** Nút "avatar + tên" mở bảng nhỏ: ảnh lớn, họ tên, vị trí đầy đủ (vai trò, chức danh, chi nhánh), email;
  *  rồi lối vào chỉnh thông tin cá nhân / đổi mật khẩu; đăng xuất nằm dưới cùng. Đóng bằng Esc, bấm ra ngoài hoặc chọn một mục. */
-export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh }: Props) {
+export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, toi = false }: Props) {
   const [mo, setMo] = useState(false);
   const goc = useRef<HTMLDivElement>(null);
   const nut = useRef<HTMLButtonElement>(null);
@@ -28,13 +28,13 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh }:
   return (
     <div ref={goc} className="relative">
       <button ref={nut} type="button" onClick={() => setMo((x) => !x)} aria-haspopup="menu" aria-expanded={mo} title="Tài khoản của tôi"
-        className="nut-nguoi flex items-center gap-3 rounded-nho py-1 pl-1 pr-2.5">
+        className={`nut-nguoi flex items-center gap-3 rounded-nho py-1 pl-1 ${toi ? "pr-1.5 2xl:pr-2.5" : "pr-2.5"}`}>
         <AnhDaiDien hoTen={hoTen} anh={anh} kichCo={38} />
-        <span className="hidden text-left leading-tight sm:block">
-          <span className="block max-w-[170px] truncate text-[14px] font-medium text-muc">{hoTen}</span>
-          <span className="block text-[12px] text-muc-3">{vaiTro}</span>
+        <span className={`hidden text-left leading-tight ${toi ? "2xl:block" : "sm:block"}`}>
+          <span className={`block max-w-[170px] truncate text-[14px] font-medium ${toi ? "text-menu-sang" : "text-muc"}`}>{hoTen}</span>
+          <span className={`block text-[12px] ${toi ? "text-menu-chu-phu" : "text-muc-3"}`}>{vaiTro}</span>
         </span>
-        <ChevronDown strokeWidth={1.8} className={`h-4 w-4 text-muc-3 transition-transform ${mo ? "rotate-180" : ""}`} aria-hidden />
+        <ChevronDown strokeWidth={1.8} className={`h-4 w-4 ${toi ? "text-menu-chu-phu" : "text-muc-3"} transition-transform ${mo ? "rotate-180" : ""}`} aria-hidden />
       </button>
       {mo && (
         <div role="menu" aria-label="Tài khoản" style={{ position: "absolute" }} className="the-noi the-noi-thap vao right-0 top-full z-50 mt-2.5 w-[312px] max-w-[calc(100vw-24px)] overflow-hidden">

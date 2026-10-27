@@ -1,23 +1,24 @@
-import { cookies } from "next/headers";
 import { layNguoiDungDangNhap } from "@/lib/auth";
 import { sb } from "@/lib/db";
-import { locMenu } from "@/lib/nav";
-import { Sidebar } from "@/components/layout/Sidebar";
+import { chucNangCon, locMenu, sapXepNgang } from "@/lib/nav";
+import { NHAN_VAI_TRO } from "@/lib/quyen";
+import { ThanhNgang } from "@/components/layout/ThanhNgang";
 import { DauTrang } from "@/components/layout/DauTrang";
 import { ThanhTabDuoi } from "@/components/layout/ThanhTabDuoi";
 import { CuonVeDau } from "@/components/layout/CuonVeDau";
 
-/** Khung dùng chung: menu + đầu trang đứng yên khi đổi trang, chỉ phần nội dung bên dưới đổi (kèm loading.tsx). */
+/** Khung dùng chung: thanh menu ngang (máy tính) / đầu trang + thanh tab dưới (điện thoại) đứng yên khi đổi trang, chỉ phần nội dung bên dưới đổi (kèm loading.tsx). */
 export default async function KhungUngDung({ children }: { children: React.ReactNode }) {
   const nd = await layNguoiDungDangNhap(true);
-  const thuGon = (await cookies()).get("amia_thu_gon")?.value === "1";
-  const muc = (nd.phaiDoiMatKhau ? [] : locMenu(nd)).map((m) => ({ ten: m.ten, duong_dan: m.duong_dan, nhom: m.nhom, moTa: m.moTa }));
+  const dsMuc = nd.phaiDoiMatKhau ? [] : locMenu(nd);
+  const muc = dsMuc.map((m) => ({ ten: m.ten, duong_dan: m.duong_dan, nhom: m.nhom, moTa: m.moTa }));
+  const mucNgang = sapXepNgang(dsMuc.map((m) => ({ ten: m.ten, ngan: m.ngan ?? m.ten, duong_dan: m.duong_dan, nhom: m.nhom, moTa: m.moTa, con: chucNangCon(nd, m.duong_dan) })));
   let chiNhanh: string | null = null;
   if (nd.chiNhanhId) chiNhanh = (await sb().from("chi_nhanh").select("ten").eq("id", nd.chiNhanhId).maybeSingle()).data?.ten ?? null;
   return (
-    <div className="khung-di-dong flex min-h-screen w-full">
-      <Sidebar muc={muc} thuGonBanDau={thuGon} />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col lg:min-h-screen">
+    <div className="khung-di-dong flex min-h-screen w-full flex-col">
+      <ThanhNgang muc={mucNgang} hoTen={nd.hoTen} vaiTro={NHAN_VAI_TRO[nd.vaiTro]} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} />
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} />
         <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-12 lg:pb-16 lg:pt-8">{children}</main>
         <CuonVeDau />

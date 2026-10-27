@@ -11,7 +11,7 @@ type Muc = { ma: string; nhan: string; href: string; trang: "chua_doc" | "da_doc
  * bấm vào một việc = đã đọc, có nút "Đọc hết" và nút xoá từng việc (việc hiện lại nếu nội dung/số lượng đổi).
  * Cập nhật TỨC THỜI: DB bắn tín hiệu rỗng vào kênh Realtime 'canh-bao' khi dữ liệu liên quan đổi → chuông gọi lại /api/canh-bao (có kiểm quyền).
  * Phòng hờ mất kết nối: tự hỏi lại 30 giây/lần khi chưa nối được Realtime (5 phút/lần khi đã nối), khi quay lại tab, khi có mạng lại và khi mở chuông. */
-export function ChuongThongBao() {
+export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
   const [ds, setDs] = useState<Muc[] | null>(null);
   const [mo, setMo] = useState(false);
   const [truc, setTruc] = useState(false);
@@ -66,9 +66,9 @@ export function ChuongThongBao() {
     <div ref={goc} className="relative">
       <span role="status" aria-live="polite" className="sr-only">{thongBaoMoi}</span>
       <button type="button" onClick={() => { setMo((x) => !x); lamMoi(); }} aria-haspopup="menu" aria-expanded={mo} aria-label={n ? `Thông báo, ${n} việc đang chờ` : "Thông báo"} title="Việc đang chờ xử lý"
-        className="nut-nguoi relative flex h-10 w-10 items-center justify-center rounded-nho text-muc-2">
+        className={`nut-nguoi relative flex h-10 w-10 items-center justify-center rounded-nho ${toi ? "text-menu-chu" : "text-muc-2"}`}>
         <Bell strokeWidth={1.7} className="h-[21px] w-[21px]" />
-        {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: "0 0 0 2px var(--giay-sang)" }}>{n}</span>}
+        {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: `0 0 0 2px var(${toi ? "--menu" : "--giay-sang"})` }}>{n}</span>}
       </button>
       {mo && (
         <div role="menu" aria-label="Thông báo" style={{ position: "absolute" }} className="the-noi the-noi-thap vao right-0 top-full z-50 mt-2.5 w-[340px] max-w-[calc(100vw-24px)] overflow-hidden">

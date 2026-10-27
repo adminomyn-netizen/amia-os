@@ -7,6 +7,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, bat, so } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { hanMucHieuLuc } from "@/lib/de-xuat";
+import { vuotNganSach } from "@/lib/ngan-sach";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => { revalidatePath("/noi-lam-viec", "layout"); };
@@ -201,6 +202,13 @@ export async function chiTheoDeXuat(fd: FormData): Promise<KQ> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || ngay > homNayHCM()) return { loi: "Ngày chi không được ở tương lai." };
   const canLoai = d.loai !== "hoan_khach" && d.loai !== "hoan_ung";
   if (!chuoi(fd, "quy_id") || (canLoai && !chuoi(fd, "loai_thu_chi_id"))) return { loi: "Chọn quỹ và phân loại chi." };
+  // Khoản chi vượt ngân sách tháng: chỉ người có quyền Khoá kỳ (hoặc Kỹ thuật) được tick "chấp nhận vượt" để chi tiếp.
+  const loaiChi = chuoi(fd, "loai_thu_chi_id");
+  if (loaiChi && d.so_tien && d.loai !== "hoan_khach" && d.loai !== "hoan_ung") {
+    const vuot = await vuotNganSach({ ngay, loaiThuChiId: loaiChi, chiNhanhId: d.chi_nhanh_id, soTien: Number(d.so_tien) });
+    const choQua = (nd.vaiTro === "ky_thuat" || coQuyen(nd, "ky.khoa")) && bat(fd, "chap_nhan_vuot");
+    if (vuot && !choQua) return { loi: `${vuot} ${nd.vaiTro === "ky_thuat" || coQuyen(nd, "ky.khoa") ? "Tick \"Chấp nhận vượt ngân sách\" nếu vẫn chi." : "Nhờ kế toán trưởng nâng ngân sách hoặc cho phép chi."}` };
+  }
   const { error } = await sb().rpc("chi_theo_de_xuat", { p_de_xuat: d.id, p_quy: chuoi(fd, "quy_id"), p_loai_thu_chi: chuoi(fd, "loai_thu_chi_id") || (null as unknown as string), p_ngay: ngay, p_nguoi: nd.nhanVienId, p_bo_qua_kiem: nd.vaiTro === "ky_thuat" });
   if (error) return { loi: thongBaoLoi(error) };
   revalidatePath("/tai-chinh", "layout");

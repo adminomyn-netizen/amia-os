@@ -88,9 +88,9 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
             }
             if (choThucHien(r) && r.loaiDx !== "mua_sam") {
               const cnId = (dx ?? []).find((x) => x.id === r.id)?.chi_nhanh_id;
-              nut.push(<NutHop key="c" kieu="chu" nhan="Chi tiền" tieuDe={`Chi tiền · ${r.ma}`} moTa={`${r.tieuDe} — ${tienVN(r.tien)}. Ghi một dòng chi vào sổ quỹ.`} action={chiTheoDeXuat} an={{ id: r.id }} giaTri={{ ngay: hom }} nhanLuu="Chi tiền"
+              nut.push(<NutHop key="c" kieu="chu" nhan={r.loaiDx === "hoan_ung" ? "Thực hiện" : "Chi tiền"} tieuDe={`${r.loaiDx === "hoan_ung" ? "Thực hiện hoàn ứng" : "Chi tiền"} · ${r.ma}`} moTa={r.loaiDx === "hoan_ung" ? `${r.tieuDe} — chi thực tế ${tienVN(r.tien)}. Hệ thống so với khoản tạm ứng gốc: thiếu thì chi thêm, thừa thì thu lại vào quỹ, bằng nhau thì chỉ đóng.` : `${r.tieuDe} — ${tienVN(r.tien)}. Ghi một dòng chi vào sổ quỹ. Người duyệt không tự chi cùng đề xuất (trừ Kỹ thuật).`} action={chiTheoDeXuat} an={{ id: r.id }} giaTri={{ ngay: hom }} nhanLuu={r.loaiDx === "hoan_ung" ? "Thực hiện" : "Chi tiền"}
                 truong={[{ ten: "quy_id", nhan: "Chi từ quỹ", loai: "chon", batBuoc: true, luaChon: (quy ?? []).filter((q) => q.chi_nhanh_id === cnId).map((q) => ({ gia_tri: q.id, nhan: q.ten })) },
-                  { ten: "loai_thu_chi_id", nhan: "Phân loại chi", loai: "chon", batBuoc: true, luaChon: (ltc ?? []).map((l) => ({ gia_tri: l.id, nhan: l.ten })) }, { ten: "ngay", nhan: "Ngày chi", loai: "ngay" }]} />);
+                  ...(r.loaiDx === "hoan_ung" || r.loaiDx === "hoan_khach" ? [] : [{ ten: "loai_thu_chi_id", nhan: "Phân loại chi", loai: "chon" as const, batBuoc: true, luaChon: (ltc ?? []).map((l) => ({ gia_tri: l.id, nhan: l.ten })) }]), { ten: "ngay", nhan: "Ngày chi", loai: "ngay" }]} />);
             }
             if (choThucHien(r) && r.loaiDx === "mua_sam") {
               nut.push(<NutHop key="l" kieu="chu" nhan="Lập đơn mua" tieuDe={`Lập đơn mua · ${r.ma}`} moTa="Tạo đơn mua nháp từ đề xuất này; thêm hàng và gửi duyệt ở màn Mua hàng." action={lapDonMuaTuDeXuat} an={{ id: r.id }} nhanLuu="Lập đơn"

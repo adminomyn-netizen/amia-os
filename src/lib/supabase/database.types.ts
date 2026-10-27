@@ -425,6 +425,7 @@ export type Database = {
       de_xuat: {
         Row: {
           chi_nhanh_id: string
+          de_xuat_goc_id: string | null
           doi_tuong: string | null
           don_mua_id: string | null
           duyet_luc: string | null
@@ -432,7 +433,9 @@ export type Database = {
           id: string
           loai: string
           ly_do: string | null
+          ly_do_hoan: string | null
           ma: string
+          ngay_can_chi: string | null
           nguoi_duyet_id: string | null
           nguoi_gui_id: string
           noi_dung: string | null
@@ -444,6 +447,7 @@ export type Database = {
         }
         Insert: {
           chi_nhanh_id: string
+          de_xuat_goc_id?: string | null
           doi_tuong?: string | null
           don_mua_id?: string | null
           duyet_luc?: string | null
@@ -451,7 +455,9 @@ export type Database = {
           id?: string
           loai: string
           ly_do?: string | null
+          ly_do_hoan?: string | null
           ma: string
+          ngay_can_chi?: string | null
           nguoi_duyet_id?: string | null
           nguoi_gui_id: string
           noi_dung?: string | null
@@ -463,6 +469,7 @@ export type Database = {
         }
         Update: {
           chi_nhanh_id?: string
+          de_xuat_goc_id?: string | null
           doi_tuong?: string | null
           don_mua_id?: string | null
           duyet_luc?: string | null
@@ -470,7 +477,9 @@ export type Database = {
           id?: string
           loai?: string
           ly_do?: string | null
+          ly_do_hoan?: string | null
           ma?: string
+          ngay_can_chi?: string | null
           nguoi_duyet_id?: string | null
           nguoi_gui_id?: string
           noi_dung?: string | null
@@ -486,6 +495,13 @@ export type Database = {
             columns: ["chi_nhanh_id"]
             isOneToOne: false
             referencedRelation: "chi_nhanh"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "de_xuat_de_xuat_goc_id_fkey"
+            columns: ["de_xuat_goc_id"]
+            isOneToOne: false
+            referencedRelation: "de_xuat"
             referencedColumns: ["id"]
           },
           {
@@ -1893,8 +1909,10 @@ export type Database = {
           anh_dai_dien: string | null
           chi_nhanh_id: string | null
           chuc_danh: string | null
+          chuc_danh_tai_chinh: string | null
           dien_thoai: string | null
           email: string | null
+          han_muc_duyet: number | null
           ho_ten: string
           hoat_dong: boolean
           id: string
@@ -1909,8 +1927,10 @@ export type Database = {
           anh_dai_dien?: string | null
           chi_nhanh_id?: string | null
           chuc_danh?: string | null
+          chuc_danh_tai_chinh?: string | null
           dien_thoai?: string | null
           email?: string | null
+          han_muc_duyet?: number | null
           ho_ten: string
           hoat_dong?: boolean
           id?: string
@@ -1925,8 +1945,10 @@ export type Database = {
           anh_dai_dien?: string | null
           chi_nhanh_id?: string | null
           chuc_danh?: string | null
+          chuc_danh_tai_chinh?: string | null
           dien_thoai?: string | null
           email?: string | null
+          han_muc_duyet?: number | null
           ho_ten?: string
           hoat_dong?: boolean
           id?: string
@@ -2242,6 +2264,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      quy_tac_duyet: {
+        Row: {
+          cap_nhat_luc: string
+          id: string
+          ma: string
+          mo_ta: string | null
+          nguong_tien: number
+          ten: string
+          trang_thai: string
+        }
+        Insert: {
+          cap_nhat_luc?: string
+          id?: string
+          ma: string
+          mo_ta?: string | null
+          nguong_tien: number
+          ten: string
+          trang_thai?: string
+        }
+        Update: {
+          cap_nhat_luc?: string
+          id?: string
+          ma?: string
+          mo_ta?: string | null
+          nguong_tien?: number
+          ten?: string
+          trang_thai?: string
+        }
+        Relationships: []
       }
       san_pham: {
         Row: {
@@ -3257,6 +3309,7 @@ export type Database = {
       }
       chi_theo_de_xuat: {
         Args: {
+          p_bo_qua_kiem?: boolean
           p_de_xuat: string
           p_loai_thu_chi: string
           p_ngay: string

@@ -6,6 +6,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, bat, so } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
+import { hanMucHieuLuc } from "@/lib/de-xuat";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => { revalidatePath("/noi-lam-viec", "layout"); };
@@ -98,7 +99,7 @@ export async function guiDeXuat(fd: FormData): Promise<KQ> {
   const nd = await kiemNoiBo();
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const loai = chuoi(fd, "loai");
-  if (!["mua_sam", "thanh_toan", "tam_ung"].includes(loai)) return { loi: "Loại đề xuất không hợp lệ." };
+  if (!["mua_sam", "thanh_toan", "tam_ung", "hoan_ung", "hoan_khach"].includes(loai)) return { loi: "Loại đề xuất không hợp lệ." };
   const tieuDe = chuoi(fd, "tieu_de");
   if (!tieuDe) return { loi: "Nhập nội dung đề xuất." };
   const tien = chuoi(fd, "so_tien") === "" ? null : so(fd, "so_tien");
@@ -106,11 +107,31 @@ export async function guiDeXuat(fd: FormData): Promise<KQ> {
   if (loai !== "mua_sam" && tien === null) return { loi: "Nhập số tiền." };
   const cn = nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id");
   if (!cn) return { loi: "Chọn chi nhánh." };
-  const { error } = await sb().from("de_xuat").insert({
+  const db = sb();
+  let goc: string | null = null;
+  if (loai === "tam_ung") {
+    // Còn khoản tạm ứng cũ chưa hoàn ứng thì chưa xin khoản mới.
+    const { data: cu } = await db.from("de_xuat").select("id, trang_thai").eq("loai", "tam_ung").eq("nguoi_gui_id", nd.nhanVienId).in("trang_thai", ["cho_duyet", "da_duyet", "da_thuc_hien"]);
+    const mo = (cu ?? []).filter((x) => x.trang_thai !== "da_thuc_hien");
+    if (mo.length) return { loi: "Bạn đang có đề xuất tạm ứng chưa xử lý xong." };
+    const ids = (cu ?? []).map((x) => x.id);
+    if (ids.length) {
+      const { data: hu } = await db.from("de_xuat").select("de_xuat_goc_id").eq("loai", "hoan_ung").in("de_xuat_goc_id", ids).not("trang_thai", "in", "(tu_choi,huy)");
+      const daHoan = new Set((hu ?? []).map((x) => x.de_xuat_goc_id));
+      if (ids.some((i) => !daHoan.has(i))) return { loi: "Bạn còn khoản tạm ứng chưa hoàn ứng. Hoàn ứng khoản cũ trước khi xin khoản mới." };
+    }
+  }
+  if (loai === "hoan_ung") {
+    goc = chuoi(fd, "de_xuat_goc_id");
+    const { data: g } = await db.from("de_xuat").select("id, nguoi_gui_id, loai, trang_thai, chi_nhanh_id").eq("id", goc).maybeSingle();
+    if (!g || g.loai !== "tam_ung" || g.trang_thai !== "da_thuc_hien" || g.nguoi_gui_id !== nd.nhanVienId) return { loi: "Chọn khoản tạm ứng đã chi của chính bạn." };
+  }
+  const { error } = await db.from("de_xuat").insert({
     ma: await dem("de_xuat", "DX"), loai, tieu_de: tieuDe, noi_dung: chuoiHoacNull(fd, "noi_dung"), so_tien: tien,
-    doi_tuong: loai === "tam_ung" ? null : chuoiHoacNull(fd, "doi_tuong"), chi_nhanh_id: cn, nguoi_gui_id: nd.nhanVienId, han_duyet: chuoiHoacNull(fd, "han_duyet"),
+    doi_tuong: loai === "tam_ung" || loai === "hoan_ung" ? null : chuoiHoacNull(fd, "doi_tuong"), chi_nhanh_id: cn, nguoi_gui_id: nd.nhanVienId, han_duyet: chuoiHoacNull(fd, "han_duyet"),
+    ngay_can_chi: chuoiHoacNull(fd, "ngay_can_chi"), de_xuat_goc_id: goc,
   });
-  if (error) return { loi: thongBaoLoi(error) };
+  if (error) return { loi: error.code === "23505" ? "Khoản tạm ứng này đã có hoàn ứng." : thongBaoLoi(error) };
   lamMoi();
   return { ok: true };
 }
@@ -127,6 +148,10 @@ export async function duyetDeXuat(fd: FormData): Promise<KQ> {
   const d = await layDeXuat(chuoi(fd, "id"), nd.chiNhanhId);
   if (!d || d.trang_thai !== "cho_duyet") return { loi: "Đề xuất không ở trạng thái chờ duyệt." };
   if (d.nguoi_gui_id === nd.nhanVienId && nd.vaiTro !== "ky_thuat") return { loi: "Người gửi không tự duyệt đề xuất của mình." };
+  const { data: nv } = await sb().from("nhan_vien").select("han_muc_duyet").eq("id", nd.nhanVienId).maybeSingle();
+  const han = hanMucHieuLuc(nd.vaiTro, nv?.han_muc_duyet);
+  if (d.loai === "hoan_khach" && han !== Infinity) return { loi: "Hoàn trả khách chỉ Giám đốc (không giới hạn hạn mức) được duyệt." };
+  if ((d.so_tien ?? 0) > han) return { loi: `Số tiền vượt hạn mức duyệt của bạn (${han.toLocaleString("vi-VN")} đ). Chuyển cho người có hạn mức cao hơn.` };
   const { data, error } = await sb().from("de_xuat").update({ trang_thai: "da_duyet", nguoi_duyet_id: nd.nhanVienId, duyet_luc: new Date().toISOString(), ly_do: null }).eq("id", d.id).eq("trang_thai", "cho_duyet").select("id");
   if (error) return { loi: thongBaoLoi(error) };
   if (!data?.length) return { loi: "Đề xuất vừa được xử lý bởi người khác." };
@@ -168,8 +193,9 @@ export async function chiTheoDeXuat(fd: FormData): Promise<KQ> {
   if (!d) return { loi: "Không tìm thấy đề xuất." };
   const ngay = chuoi(fd, "ngay") || homNayHCM();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || ngay > homNayHCM()) return { loi: "Ngày chi không được ở tương lai." };
-  if (!chuoi(fd, "quy_id") || !chuoi(fd, "loai_thu_chi_id")) return { loi: "Chọn quỹ và phân loại chi." };
-  const { error } = await sb().rpc("chi_theo_de_xuat", { p_de_xuat: d.id, p_quy: chuoi(fd, "quy_id"), p_loai_thu_chi: chuoi(fd, "loai_thu_chi_id"), p_ngay: ngay, p_nguoi: nd.nhanVienId });
+  const canLoai = d.loai !== "hoan_khach" && d.loai !== "hoan_ung";
+  if (!chuoi(fd, "quy_id") || (canLoai && !chuoi(fd, "loai_thu_chi_id"))) return { loi: "Chọn quỹ và phân loại chi." };
+  const { error } = await sb().rpc("chi_theo_de_xuat", { p_de_xuat: d.id, p_quy: chuoi(fd, "quy_id"), p_loai_thu_chi: chuoi(fd, "loai_thu_chi_id") || (null as unknown as string), p_ngay: ngay, p_nguoi: nd.nhanVienId, p_bo_qua_kiem: nd.vaiTro === "ky_thuat" });
   if (error) return { loi: thongBaoLoi(error) };
   revalidatePath("/tai-chinh", "layout");
   lamMoi();

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sb, thongBaoLoi } from "@/lib/db";
-import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
+import { bat, chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
 import { laVaiTro, NHOM_QUYEN } from "@/lib/quyen";
 import { MK_MAC_DINH } from "@/lib/mat-khau";
 
@@ -50,6 +50,7 @@ export async function suaNhanVien(fd: FormData): Promise<KQ> {
   const { error } = await db.from("nhan_vien").update({
     ho_ten: chuoi(fd, "ho_ten"), vai_tro: vaiTro, chuc_danh: chuoiHoacNull(fd, "chuc_danh"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"),
     chi_nhanh_id: chuoiHoacNull(fd, "chi_nhanh_id"), hoat_dong: hoatDong,
+    chuc_danh_tai_chinh: chuoiHoacNull(fd, "chuc_danh_tai_chinh"), han_muc_duyet: chuoiHoacNull(fd, "han_muc_duyet") === null ? null : Math.max(0, Math.round(so(fd, "han_muc_duyet"))),
   }).eq("id", id);
   if (error) return { loi: thongBaoLoi(error) };
   if (cu.user_id) {

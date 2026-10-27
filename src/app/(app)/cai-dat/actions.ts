@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
-import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
+import { bat, chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
 
 type KQ = { ok?: true; loi?: string };
 const NGAY_TRONG_TUAN = ["t2", "t3", "t4", "t5", "t6", "t7", "cn"];
@@ -55,5 +55,16 @@ export async function luuBangTin(fd: FormData): Promise<KQ> {
   if (error) return { loi: thongBaoLoi(error) };
   revalidatePath("/cai-dat/bang-tin");
   revalidatePath("/trang-chu");
+  return { ok: true };
+}
+
+/** Chính sách phê duyệt: chỉnh ngưỡng tiền và đánh dấu đã được chủ phòng khám xác nhận. Chỉ Kỹ thuật (hethong.phanquyen). */
+export async function luuQuyTacDuyet(fd: FormData): Promise<KQ> {
+  if (!(await kiemQuyen("hethong.phanquyen"))) return { loi: KHONG_DU_QUYEN };
+  const nguong = Math.round(so(fd, "nguong_tien"));
+  if (!Number.isInteger(nguong) || nguong < 0 || nguong > 100_000_000_000) return { loi: "Ngưỡng là số đồng từ 0 đến 100 tỷ." };
+  const { error } = await sb().from("quy_tac_duyet").update({ nguong_tien: nguong, trang_thai: bat(fd, "hieu_luc") ? "hieu_luc" : "cho_xac_nhan", cap_nhat_luc: new Date().toISOString() }).eq("id", chuoi(fd, "id"));
+  if (error) return { loi: thongBaoLoi(error) };
+  revalidatePath("/cai-dat", "layout");
   return { ok: true };
 }

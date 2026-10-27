@@ -8,11 +8,12 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { datLaiMatKhau, duyetYeuCauTaiKhoan, suaNhanVien, taoNhanVien, tuChoiYeuCauTaiKhoan, xoaNhanVien } from "./actions";
 import { ngayVN, ngayCuaIso } from "@/lib/dinh-dang";
+import { CHUC_DANH_TC } from "@/lib/de-xuat";
 
 export default async function TrangNhanVien() {
   await yeuCauQuyen("hethong.phanquyen");
   const db = sb();
-  const [{ data: yeuCau }, { data: ds }, { data: cn }] = await Promise.all([db.from("yeu_cau_tai_khoan").select("*").eq("trang_thai", "cho_duyet").order("tao_luc"), db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
+  const [{ data: yeuCau }, { data: ds }, { data: cn }] = await Promise.all([db.from("yeu_cau_tai_khoan").select("*").eq("trang_thai", "cho_duyet").order("tao_luc"), db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng, han_muc_duyet, chuc_danh_tai_chinh").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ma")]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const vaiTroLC = VAI_TRO.map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] }));
   const cnLC = [{ gia_tri: "", nhan: "Mọi chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))];
@@ -26,7 +27,10 @@ export default async function TrangNhanVien() {
     { ten: "email", nhan: "Email đăng nhập (bỏ trống nếu không cần tài khoản)", loai: "email", rong: true },
     { ten: "mat_khau", nhan: "Mật khẩu ban đầu (bỏ trống = 12345678; người dùng buộc đổi khi vào lần đầu)", loai: "mat_khau", rong: true },
   ];
-  const truongSua: Truong[] = [...chung, { ten: "hoat_dong", nhan: "Đang làm việc / được đăng nhập", loai: "gat" }];
+  const truongSua: Truong[] = [...chung,
+    { ten: "chuc_danh_tai_chinh", nhan: "Chức danh tài chính (nếu có)", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Không có" }, ...Object.entries(CHUC_DANH_TC).map(([gia_tri, nhan]) => ({ gia_tri, nhan }))] },
+    { ten: "han_muc_duyet", nhan: "Hạn mức duyệt chi (đ). Bỏ trống = theo vai trò (Kỹ thuật, Quản lý không giới hạn; vai trò khác không duyệt tiền)", loai: "so", rong: true },
+    { ten: "hoat_dong", nhan: "Đang làm việc / được đăng nhập", loai: "gat" }];
 
   return (
     <>
@@ -58,7 +62,7 @@ export default async function TrangNhanVien() {
         { nhan: "", hienThi: (r) => (
           <span className="flex gap-4">
             {laVaiTro(r.vai_tro) && r.vai_tro !== "ky_thuat" && <NutPhanQuyen id={r.id} hoTen={r.ho_ten} vaiTro={NHAN_VAI_TRO[r.vai_tro]} dangDung={quyenHieuLuc(r.vai_tro, r.quyen_rieng)} macDinh={!r.quyen_rieng} coRieng={!!r.quyen_rieng} />}
-            <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ho_ten}`} truong={truongSua} giaTri={{ ...r, chuc_danh: r.chuc_danh ?? "", dien_thoai: r.dien_thoai ?? "", chi_nhanh_id: r.chi_nhanh_id ?? "" }} action={suaNhanVien} />
+            <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ho_ten}`} truong={truongSua} giaTri={{ ...r, chuc_danh: r.chuc_danh ?? "", dien_thoai: r.dien_thoai ?? "", chi_nhanh_id: r.chi_nhanh_id ?? "", chuc_danh_tai_chinh: r.chuc_danh_tai_chinh ?? "", han_muc_duyet: r.han_muc_duyet ?? "" }} action={suaNhanVien} />
             {r.user_id && <NutHop kieu="chu" nhan="Đặt lại mật khẩu" tieuDe={`Đặt lại mật khẩu: ${r.ho_ten}`} truong={[{ ten: "mat_khau", nhan: "Mật khẩu mới (≥ 8 ký tự)", loai: "mat_khau", batBuoc: true, rong: true }]} giaTri={{ id: r.id }} action={datLaiMatKhau} />}
             {r.vai_tro !== "ky_thuat" && <NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá nhân viên: ${r.ho_ten}`} xacNhan="Xoá hồ sơ này (kèm tài khoản đăng nhập nếu có)? Không hoàn lại được. Người đã có hoá đơn, lịch hay phiếu liên quan sẽ không xoá được; khi đó hãy khoá tài khoản." an={{ id: r.id }} nhanLuu="Xoá" action={xoaNhanVien} />}
           </span>

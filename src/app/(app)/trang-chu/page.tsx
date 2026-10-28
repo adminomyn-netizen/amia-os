@@ -11,7 +11,6 @@ import { BangHieuSuatApp } from "@/components/trang-chu/BangHieuSuatApp";
 import { doHieuSuatApp, mocDo } from "@/lib/do-hieu-suat";
 import { BangDieuHanh } from "@/components/trang-chu/BangDieuHanh";
 import type { SoLieu } from "@/components/trang-chu/BangSoLieu";
-import { CaiUngDung } from "@/components/trang-chu/CaiUngDung";
 
 const LOI_TAT = [
   { href: "/nhan-su/cham-cong", nhan: "Chấm công", q: "noibo.dung" as const },
@@ -223,8 +222,6 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
 
         </>
       )}
-
-      <CaiUngDung />
 
     </div>
   );

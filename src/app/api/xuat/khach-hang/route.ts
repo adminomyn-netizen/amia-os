@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { kiemQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
-import { apLocKhach, COT_KHACH } from "@/lib/khach-danh-sach";
+import { docThamSo, locKhach } from "@/lib/khach-danh-sach";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 
 /** Xuất cả vài chục nghìn khách cần nhiều lượt đọc: cho phép chạy tới 60 giây. */
@@ -15,7 +15,7 @@ export async function GET(req: Request) {
   const nd = await kiemQuyen("khach.xem");
   if (!nd) return new Response("Không đủ quyền", { status: 403 });
   const u = new URL(req.url).searchParams;
-  const tham = { q: u.get("q") ?? "", trang_thai: u.get("trang_thai") ?? "", nguon: u.get("nguon") ?? "", hang: u.get("hang") ?? "", phu_trach: u.get("phu_trach") ?? "", sx: u.get("sx") ?? "ten" };
+  const tham = docThamSo(u);
   const db = sb();
   const [{ data: nv }, { data: cn }] = await Promise.all([db.from("nhan_vien").select("id, ho_ten"), db.from("chi_nhanh").select("id, ten")]);
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten])), tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
@@ -27,23 +27,26 @@ export async function GET(req: Request) {
     { header: "Giới tính", key: "gt", width: 10 }, { header: "Ngày sinh", key: "ns", width: 12 }, { header: "Địa chỉ", key: "dc", width: 34 }, { header: "Chi nhánh", key: "cn", width: 20 },
     { header: "Nguồn", key: "nguon", width: 18 }, { header: "Chi tiết nguồn", key: "ct", width: 24 }, { header: "Trạng thái", key: "tt", width: 16 }, { header: "Hạng", key: "hang", width: 12 },
     { header: "Người phụ trách", key: "pt", width: 20 }, { header: "Thẻ đang dùng", key: "the", width: 12 }, { header: "Chi 12 tháng", key: "chi", width: 16 }, { header: "Ngày tạo", key: "tao", width: 12 },
+    { header: "Tỉnh/thành", key: "tinh", width: 18 }, { header: "Quận/huyện", key: "quan", width: 18 }, { header: "Điểm thưởng", key: "diem", width: 12 }, { header: "Nhóm khách", key: "nhom", width: 24 }, { header: "Facebook", key: "fb", width: 26 },
   ];
   let tong = 0;
   // Đọc 4 lượt 1000 dòng song song (mỗi lượt ~1-2 giây trên bộ dữ liệu thật) rồi ghi theo đúng thứ tự; lượt nào ít hơn 1000 dòng là hết.
   let het = false;
   for (let dau = 0; dau < TOI_DA && !het; dau += MOI_LAN * 4) {
-    const cacLuot = await Promise.all([0, 1, 2, 3].map((i) => apLocKhach(db.from("v_khach_hang").select(COT_KHACH), tham).range(dau + i * MOI_LAN, dau + (i + 1) * MOI_LAN - 1)));
-    for (const { data, error } of cacLuot) {
-      if (error) return new Response("Không xuất được, thử lại.", { status: 500 });
-      for (const r of data ?? []) {
+    const cacLuot = await Promise.all([0, 1, 2, 3].map((i) => locKhach(tham, dau + i * MOI_LAN, MOI_LAN)));
+    for (const kq of cacLuot) {
+      if (!kq) return new Response("Không xuất được, thử lại.", { status: 500 });
+      const data = kq.ds;
+      for (const r of data) {
         ws.addRow({
           ma: r.ma, ten: r.ho_ten, sdt: r.dien_thoai, zalo: r.zalo ?? "", email: r.email ?? "", gt: r.gioi_tinh ?? "", ns: ngayVN(r.ngay_sinh), dc: r.dia_chi ?? "", cn: tenCn.get(r.chi_nhanh_id ?? "") ?? "",
           nguon: NHAN_NGUON[r.nguon ?? ""] ?? r.nguon, ct: r.nguon_chi_tiet ?? "", tt: TRANG_THAI_KHACH[r.trang_thai ?? "lead"]?.nhan ?? "", hang: r.hang ?? "", pt: tenNv.get(r.nguoi_phu_trach_id ?? "") ?? "",
           the: r.so_the_dang_dung ?? 0, chi: Number(r.chi_12_thang ?? 0), tao: ngayVN(r.tao_luc),
+          tinh: r.tinh_thanh ?? "", quan: r.quan_huyen ?? "", diem: r.diem_so_du ?? 0, nhom: r.nhom.map((n) => n.ten).join(", "), fb: r.facebook ?? "",
         });
       }
-      tong += data?.length ?? 0;
-      if ((data?.length ?? 0) < MOI_LAN) { het = true; break; }
+      tong += data.length;
+      if (data.length < MOI_LAN) { het = true; break; }
     }
   }
   // Điện thoại/Zalo để dạng chữ, Excel không cắt số 0 đầu.

@@ -5,10 +5,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
-import { NHAN_NGUON, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
-import { HangChiSo } from "@/components/ui/HangChiSo";
-import { Tab } from "@/components/ui/Tab";
+import { NHAN_NGUON, NHAN_TRANG_THAI_LICH, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -22,7 +19,7 @@ import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú điều trị" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauQuyen("khach.xem");
@@ -30,26 +27,31 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const { tab: t } = await searchParams;
   const xemSucKhoe = coQuyen(nd, "hoso.xem");
   const kn4 = (["kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly"] as const).some((q) => coQuyen(nd, q));
-  const tabHopLe = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd, "ban.xem")) && (x.ma !== "khieu-nai" || kn4));
-  const tab = tabHopLe.some((x) => x.ma === t) ? t! : "thong-tin";
+  const tabHopLe0 = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd, "ban.xem")) && (x.ma !== "khieu-nai" || kn4));
+  const tab = tabHopLe0.some((x) => x.ma === t) ? t! : "thong-tin";
   const db = sb();
   const { data: k } = await db.from("v_khach_hang").select("*").eq("id", id).maybeSingle();
   if (!k) notFound();
-  const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }] = await Promise.all([
+  const xemAnh = coQuyen(nd, "anh.xem");
+  const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab] = await Promise.all([
     db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"),
     db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("khach_quan_tam").select("dich_vu_id").eq("khach_id", id),
     db.from("hoa_don").select("con_no").eq("khach_id", id).eq("trang_thai", "hoan_thanh").gt("con_no", 0),
     db.from("v_the_khach").select("*").eq("khach_id", id).order("ngay_cap", { ascending: false }),
+    k.nguoi_gioi_thieu_id ? db.from("khach_hang").select("ma, ho_ten").eq("id", k.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
+    xemAnh ? demAnhKhach(id) : Promise.resolve(0),
   ]);
+  // Số ảnh trên nhãn tab: ảnh đã có trong kho + ảnh cũ còn ở kho lưu trữ (con số không đổi khi nhân viên bấm lấy ảnh cũ về xem).
+  const tabHopLe = tabHopLe0.map((x) => (x.ma === "anh" ? { ...x, ten: `Ảnh khách hàng (${soAnhTab.toLocaleString("vi-VN")})` } : x));
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const nvLC = (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) });
   const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
   const tt = TRANG_THAI_KHACH[k.trang_thai ?? "lead"];
   const sua = coQuyen(nd, "khach.sua");
-  const giaTriSua = { id: k.id, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo ?? "", email: k.email ?? "", gioi_tinh: k.gioi_tinh ?? "", ngay_sinh: k.ngay_sinh ?? "", dia_chi: k.dia_chi ?? "", chi_nhanh_id: k.chi_nhanh_id, nguon: k.nguon, nguon_chi_tiet: k.nguon_chi_tiet ?? "", nguoi_gioi_thieu: "", nguoi_phu_trach_id: k.nguoi_phu_trach_id, ghi_chu: k.ghi_chu ?? "", dong_y_dung_hinh: k.dong_y_dung_hinh, quan_tam: (qt ?? []).map((x) => x.dich_vu_id) };
+  const giaTriSua = { id: k.id, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo ?? "", email: k.email ?? "", gioi_tinh: k.gioi_tinh ?? "", ngay_sinh: k.ngay_sinh ?? "", dia_chi: k.dia_chi ?? "", chi_nhanh_id: k.chi_nhanh_id, nguon: k.nguon, nguon_chi_tiet: k.nguon_chi_tiet ?? "", nguoi_gioi_thieu: nguoiGt?.ma ?? "", nguoi_phu_trach_id: k.nguoi_phu_trach_id, ghi_chu: k.ghi_chu ?? "", dong_y_dung_hinh: k.dong_y_dung_hinh, quan_tam: (qt ?? []).map((x) => x.dich_vu_id) };
 
   // Dữ liệu sức khoẻ: ghi vết mỗi lần mở tab ghi chú hoặc ảnh.
   if (tab === "ghi-chu" || tab === "anh") await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: `xem_${tab}`, doi_tuong: "khach_hang", doi_tuong_id: id });
@@ -58,15 +60,15 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   if (tab === "thong-tin") {
     const hang: [string, React.ReactNode][] = [
       ["Điện thoại", k.dien_thoai], ["Zalo", k.zalo ?? ""], ["Email", k.email ?? ""], ["Giới tính", k.gioi_tinh ?? ""], ["Ngày sinh", ngayVN(k.ngay_sinh) || "Chưa có"], ["Địa chỉ", k.dia_chi ?? ""],
-      ["Nguồn khách", NHAN_NGUON[k.nguon ?? ""] ?? k.nguon], ["Chi tiết nguồn", k.nguon_chi_tiet ?? ""], ["Người phụ trách", tenNv.get(k.nguoi_phu_trach_id ?? "") ?? ""],
-      ["Đồng ý dùng hình ảnh", k.dong_y_dung_hinh ? `Có (${ngayVN(k.dong_y_dung_hinh_luc)})` : "Chưa"], ["Ghi chú chung", k.ghi_chu ?? ""],
+      ["Nguồn khách", NHAN_NGUON[k.nguon ?? ""] ?? k.nguon], ["Chi tiết nguồn", k.nguon_chi_tiet ?? ""], ["Người giới thiệu", nguoiGt ? `${nguoiGt.ho_ten} (${nguoiGt.ma})` : ""], ["Người phụ trách", tenNv.get(k.nguoi_phu_trach_id ?? "") ?? ""],
+      ["Đồng ý dùng hình ảnh", k.dong_y_dung_hinh ? `Có (${ngayVN(k.dong_y_dung_hinh_luc)})` : k.dong_y_dung_hinh_luc ? `Đã rút ngày ${ngayVN(k.dong_y_dung_hinh_luc)}` : "Chưa"], ["Ghi chú chung", k.ghi_chu ?? ""],
     ];
     noiDung = (
       <>
-        <dl className="grid gap-x-8 gap-y-4 sm:grid-cols-2">
-          {hang.map(([a, b]) => (<div key={a} className="border-b border-vien pb-3"><dt className="nhan-muc">{a}</dt><dd className="mt-1 text-[15px] text-muc">{b || "—"}</dd></div>))}
+        <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+          {hang.map(([a, b]) => (<div key={a} className="border-b border-vien pb-3"><dt className="nhan-muc">{a}</dt><dd className="mt-1 text-[13px] text-muc">{b || "—"}</dd></div>))}
         </dl>
-        <h3 className="mb-3 mt-8 text-[15px] font-semibold text-muc">Thẻ của khách</h3>
+        <h3 className="mb-3 mt-8 text-[14px] font-medium text-muc">Thẻ của khách</h3>
         <Bang duLieu={the ?? []} khoa={(r) => r.id ?? ""} trong="Khách chưa có thẻ nào."
           cot={[
             { nhan: "Mã thẻ", chinh: true, hienThi: (r) => <Link className="font-medium text-nhan-dam underline underline-offset-2" href={`/the/${r.id}`}>{r.ma}</Link> }, { nhan: "Loại", hienThi: (r) => (r.loai === "lan" ? "Liệu trình" : "Thẻ tiền") },
@@ -84,6 +86,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     ];
     noiDung = (
       <>
+        <h3 className="mb-3 text-[14px] font-medium text-muc">Ghi chú điều trị</h3>
         {coQuyen(nd, "hoso.sua") && <div className="mb-5"><NutHop nhan="Thêm ghi chú" tieuDe="Thêm ghi chú điều trị" moTa="Ghi chú chỉ thêm, không sửa hay xoá để giữ lịch sử hồ sơ." rong truong={tr} an={{ khach_id: id }} action={luuGhiChu} /></div>}
         {(gc ?? []).length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ghi chú điều trị.</p>}
         <ol className="space-y-5">
@@ -118,7 +121,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     const [{ data: hd }, { data: buoi }, { data: lich }] = await Promise.all([
       db.from("hoa_don").select("id, ma, ngay_hd, trang_thai, tong_phai_thu, da_thu, con_no").eq("khach_id", id).order("ngay_hd", { ascending: false }).limit(50),
       db.from("buoi_thuc_hien").select("id, ngay_lam, dich_vu_id, nv_thuc_hien_id, trang_thai, doanh_thu_buoi").eq("khach_id", id).order("ngay_lam", { ascending: false }).limit(50),
-      db.from("lich_hen").select("id, bat_dau, trang_thai").eq("khach_id", id).order("bat_dau", { ascending: false }).limit(20),
+      db.from("lich_hen").select("id, bat_dau, trang_thai, lich_hen_dich_vu(dich_vu_id)").eq("khach_id", id).order("bat_dau", { ascending: false }).limit(20),
     ]);
     const { data: dvAll } = await db.from("dich_vu").select("id, ten");
     const tenDv = new Map((dvAll ?? []).map((d) => [d.id, d.ten]));
@@ -136,7 +139,11 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             { nhan: "Trạng thái", hienThi: (r) => (r.trang_thai === "da_lam" ? "Đã làm" : "Đã huỷ") }, { nhan: "Doanh thu buổi", hienThi: (r) => tienVN(r.doanh_thu_buoi), phai: true },
           ]} /></section>
         <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Lịch hẹn gần đây</h3>
-          <Bang duLieu={lich ?? []} khoa={(r) => r.id} trong="Chưa có lịch hẹn." cot={[{ nhan: "Giờ hẹn", hienThi: (r) => ngayGioVN(r.bat_dau) }, { nhan: "Trạng thái", hienThi: (r) => r.trang_thai }]} /></section>
+          <Bang duLieu={lich ?? []} khoa={(r) => r.id} trong="Chưa có lịch hẹn." cot={[
+            { nhan: "Giờ hẹn", hienThi: (r) => ngayGioVN(r.bat_dau) },
+            { nhan: "Dịch vụ", hienThi: (r) => (r.lich_hen_dich_vu ?? []).map((x) => tenDv.get(x.dich_vu_id) ?? "").filter(Boolean).join(", ") },
+            { nhan: "Trạng thái", hienThi: (r) => NHAN_TRANG_THAI_LICH[r.trang_thai] ?? r.trang_thai },
+          ]} /></section>
       </div>
     );
   } else if (tab === "khieu-nai") {
@@ -216,20 +223,48 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     );
   }
 
+  const NUT_LIEN_KET = "flex h-9 items-center rounded-nho border border-vien-dam px-3.5 text-[13px] font-medium text-muc-2 hover:bg-giay-tram";
+  const chiSo: [string, string][] = [
+    ["Chi 12 tháng gần nhất", tienVN(k.chi_12_thang)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
+  ];
   return (
     <>
-      <TieuDeTrang tieuDe={k.ho_ten ?? ""} phu={<span className="flex flex-wrap items-center gap-2"><span>{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai></span>}>
-        {coQuyen(nd, "lich.sua") && <Link href={`/lich-hen?khach=${id}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Đặt lịch</Link>}
-        {coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?khach=${id}`} className="nut-vang h-10 rounded-nho px-4 text-[14px] leading-10">Tạo đơn</Link>}
-        {sua && <NutHop kieu="phu" nhan="Sửa hồ sơ" tieuDe="Sửa hồ sơ khách" rong truong={truong} giaTri={giaTriSua} action={luuKhach} />}
-        {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
-      </TieuDeTrang>
-      <HangChiSo muc={[
-        { nhan: "Chi 12 tháng gần nhất", so: tienVN(k.chi_12_thang) }, { nhan: "Thẻ đang dùng", so: soVN(k.so_the_dang_dung) },
-        { nhan: "Còn nợ", so: tienVN(tongNo) }, { nhan: "Tạo hồ sơ", so: ngayVN(k.tao_luc) },
-      ]} />
-      <div className="mt-6"><Tab muc={tabHopLe} dang={tab} goc={`/khach-hang/${id}`} /></div>
+      <Link href="/khach-hang" className="mb-3 inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
+      <div className="rounded-the border border-vien bg-giay-sang p-4">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="min-w-0">
+            <h1 className="chu-tieu-de text-[20px] font-bold uppercase leading-tight text-muc [overflow-wrap:anywhere]">{k.ho_ten}</h1>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-muc-3"><span className="tabular-nums">{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai></div>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            {sua && <NutHop kieu="phu" nhan="Sửa" tieuDe="Sửa hồ sơ khách" rong truong={truong} giaTri={giaTriSua} action={luuKhach} />}
+            {coQuyen(nd, "lich.sua") && <Link href={`/lich-hen?khach=${id}`} className={NUT_LIEN_KET}>Đặt lịch</Link>}
+            {coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?khach=${id}`} className="nut-vang flex h-9 items-center rounded-nho px-3.5 text-[13px]">Tạo đơn</Link>}
+            <Link href={`/in-ma-khach/${id}`} target="_blank" className={NUT_LIEN_KET}>In mã</Link>
+            {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
+          </div>
+        </div>
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-4">
+          {chiSo.map(([a, b]) => (<div key={a}><dt className="text-[12px] text-muc-3">{a}</dt><dd className="mt-0.5 text-[16px] font-medium tabular-nums text-muc">{b}</dd></div>))}
+        </dl>
+      </div>
+      <div role="tablist" className="tab-khach mt-4 mb-4">
+        {tabHopLe.map((m) => (
+          <Link key={m.ma} href={`/khach-hang/${id}?tab=${m.ma}`} role="tab" aria-selected={tab === m.ma} scroll={false}>{m.ten}</Link>
+        ))}
+      </div>
       {noiDung}
     </>
   );
+}
+
+/** Số ảnh của khách cho nhãn tab: ảnh đã có trong kho riêng + ảnh cũ còn ở kho lưu trữ chưa lấy về. */
+async function demAnhKhach(id: string) {
+  const db = sb();
+  const [{ count: coSan }, { count: tam }, { data: luuTru }] = await Promise.all([
+    db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id),
+    db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id).not("het_han", "is", null),
+    db.from("khach_anh_luu_tru").select("so_anh").eq("khach_id", id).maybeSingle(),
+  ]);
+  return (coSan ?? 0) + Math.max(0, (luuTru?.so_anh ?? 0) - (tam ?? 0));
 }

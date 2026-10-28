@@ -14,6 +14,17 @@ export const TRANG_THAI_KHACH: Record<string, { nhan: string; kieu: "tot" | "cho
   mat: { nhan: "Đã mất", kieu: "loi" },
 };
 export const TRANG_THAI_KHACH_LC = Object.entries(TRANG_THAI_KHACH).map(([gia_tri, v]) => ({ gia_tri, nhan: v.nhan }));
+/** Nhãn tiếng Việt của trạng thái lịch hẹn (tab Lịch sử giao dịch; bảng lịch hẹn riêng có bản màu sắc ở trang Lịch hẹn). */
+export const NHAN_TRANG_THAI_LICH: Record<string, string> = {
+  chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành", huy: "Đã huỷ", khong_den: "Không đến",
+};
+/** Thứ tự danh sách khách (mặc định tên A → Z như SalonHero). */
+export const SAP_XEP_KHACH = [
+  { gia_tri: "ten", nhan: "Tên A → Z" },
+  { gia_tri: "ten_giam", nhan: "Tên Z → A" },
+  { gia_tri: "moi", nhan: "Mới tạo trước" },
+  { gia_tri: "chi", nhan: "Chi 12 tháng cao trước" },
+];
 
 import type { Truong } from "@/components/ui/BieuMau";
 import type { LuaChon } from "@/components/ui/Chon";

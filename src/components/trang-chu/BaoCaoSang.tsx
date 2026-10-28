@@ -29,7 +29,7 @@ function Muc({ nhan, so, phu, bt: Bt, mau, lk, canh }: { nhan: string; so: numbe
 function Nhom({ tieuDe, phu, children }: { tieuDe: string; phu: string; children: React.ReactNode }) {
   return (
     <div>
-      <div className="mb-2.5 flex items-baseline gap-2"><h3 className="text-[13px] font-semibold uppercase tracking-wide text-muc-2">{tieuDe}</h3><span className="text-[12px] text-muc-3">{phu}</span></div>
+      <div className="mb-2.5 flex items-baseline gap-2"><h3 className="shrink-0 whitespace-nowrap text-[13px] font-semibold uppercase tracking-wide text-muc-2">{tieuDe}</h3><span className="text-[12px] text-muc-3">{phu}</span></div>
       {children}
     </div>
   );
@@ -108,7 +108,7 @@ export async function BaoCaoSang({ cn, tenCn }: { cn: string | null; tenCn: stri
         <h2 className="text-[15px] font-semibold text-muc">{tieuDe}{tenCn ? ` · ${tenCn}` : ""} <span className="ml-1 text-[12.5px] font-normal text-muc-3">{phu}</span></h2>
         <NutSaoChep van={vietBaoCaoSang(b, tenCn, tieuDe)} />
       </div>
-      <Nhom tieuDe="Hôm nay" phu="việc chăm sóc cần làm (lịch hẹn, thẻ, thu chi đã có ở các ô phía trên)">
+      <Nhom tieuDe="Hôm nay" phu="việc chăm sóc cần làm">
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
           <Muc nhan="Nhắc đến hạn" so={n.nhac_den_han} phu={n.nhac_qua_han > 0 ? `+${soVN(n.nhac_qua_han)} quá hạn chưa xử lý` : "nhắc chăm sóc hôm nay"} bt={Bell} mau="tim" />
           <Muc nhan="Đến hẹn tái khám" so={n.tai_kham} phu="khách đến kỳ làm lại" bt={Repeat} mau="luc" lk="/khach-hang/tai-kham" canh />

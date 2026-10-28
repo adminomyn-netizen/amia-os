@@ -4,10 +4,41 @@ import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
 import { chuoi, chuoiHoacNull, so } from "@/lib/form";
-import { chuanSdt, homNayHCM } from "@/lib/dinh-dang";
+import { chuanSdt, homNayHCM, ngayVN } from "@/lib/dinh-dang";
+import type { NguoiDung } from "@/lib/auth";
 
-type KQ = { ok?: true; loi?: string };
+type KQ = { ok?: true; loi?: string; canhBao?: string };
 const lamMoi = (id?: string) => { revalidatePath("/the"); if (id) revalidatePath(`/the/${id}`); };
+const NGAY = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Kiểm "hẹn buổi kế tiếp" (ngày + nội dung, không bắt buộc) TRƯỚC khi trừ buổi, để lỗi nhập không xảy ra sau khi buổi đã trừ. */
+function docHenKeTiep(fd: FormData, ngayLam: string): { co: false } | { co: true; ngay: string; noiDung: string | null } | { loi: string } {
+  const ngay = chuoi(fd, "ke_tiep_ngay"), noiDung = chuoiHoacNull(fd, "ke_tiep_noi_dung")?.slice(0, 300) ?? null;
+  if (!ngay && !noiDung) return { co: false };
+  if (!ngay) return { loi: "Hẹn buổi kế tiếp: chọn ngày hẹn (hoặc xoá nội dung nếu không hẹn)." };
+  if (!NGAY.test(ngay)) return { loi: "Ngày hẹn buổi kế tiếp không hợp lệ." };
+  if (ngay <= ngayLam) return { loi: "Ngày hẹn buổi kế tiếp phải sau ngày làm buổi này." };
+  return { co: true, ngay, noiDung };
+}
+
+/** Ghi hẹn buổi kế tiếp của một thẻ + tạo nhắc ở khach_nhac (nhắc đúng ngày hẹn). KHÔNG đụng tới số buổi/tiền. Không tạo lich_hen (chưa có giờ/nhân viên). */
+async function ghiHenKeTiep(nd: NguoiDung, theId: string, buoiId: string | null, ngay: string, noiDung: string | null): Promise<{ loi?: string }> {
+  const db = sb();
+  const { data: t } = await db.from("the_khach").select("id, ma, khach_id, chi_nhanh_id, goi_id").eq("id", theId).maybeSingle();
+  if (!t) return { loi: "Không tìm thấy thẻ." };
+  const { data: g } = await db.from("goi_the").select("ten").eq("id", t.goi_id).maybeSingle();
+  const ten = g?.ten ?? t.ma;
+  const { data: nhac, error: e1 } = await db.from("khach_nhac").insert({
+    khach_id: t.khach_id, noi_dung: `Hẹn buổi kế tiếp thẻ ${ten} (${t.ma}) ngày ${ngayVN(ngay)}${noiDung ? `: ${noiDung}` : "."}`.slice(0, 400), trang_thai: "dang_nhac",
+    ngay_nhac: `${ngay}T08:00:00+07:00`, nguoi_tao_ten: nd.hoTen, chi_nhanh_id: t.chi_nhanh_id, dich_vu_ten: ten, la_lich_su: false,
+  }).select("id").single();
+  if (e1 || !nhac) return { loi: thongBaoLoi(e1) };
+  const { error } = await db.from("the_buoi_ke_tiep").insert({ the_id: t.id, khach_id: t.khach_id, buoi_id: buoiId, ngay_hen: ngay, noi_dung: noiDung, chi_nhanh_id: t.chi_nhanh_id, nhac_id: nhac.id, nguoi_id: nd.nhanVienId });
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "hen_buoi_ke_tiep", doi_tuong: "khach_hang", doi_tuong_id: t.khach_id, chi_tiet: { the_id: t.id, ngay_hen: ngay, nhac_id: nhac.id } });
+  revalidatePath("/khach-hang/tai-kham");
+  return {};
+}
 
 export async function thucHienBuoi(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("the.thuchien");
@@ -16,12 +47,34 @@ export async function thucHienBuoi(fd: FormData): Promise<KQ> {
   const thamSo: Record<string, number | string> = {};
   for (const k of ["shot", "line"]) if (chuoi(fd, k)) thamSo[k] = so(fd, k);
   if (chuoi(fd, "vung")) thamSo.vung = chuoi(fd, "vung");
-  const { error } = await sb().rpc("thuc_hien_buoi", {
+  const ngayLam = chuoi(fd, "ngay") || homNayHCM();
+  const hen = docHenKeTiep(fd, ngayLam);
+  if ("loi" in hen) return { loi: hen.loi };
+  const { data: buoiId, error } = await sb().rpc("thuc_hien_buoi", {
     p_the: theId, p_dich_vu: chuoi(fd, "dich_vu_id"), p_nv: chuoi(fd, "nv_id"), p_bac_si: tuyChon(chuoi(fd, "bac_si_id")), p_lich: tuyChon(chuoi(fd, "lich_id")),
-    p_ngay: chuoi(fd, "ngay") || homNayHCM(), p_tham_so: thamSo, p_ghi_chu: tuyChon(chuoi(fd, "ghi_chu")), p_nguoi: nd.nhanVienId,
+    p_ngay: ngayLam, p_tham_so: thamSo, p_ghi_chu: tuyChon(chuoi(fd, "ghi_chu")), p_nguoi: nd.nhanVienId,
   });
   lamMoi(theId); revalidatePath("/lich-hen");
-  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+  if (error) return { loi: thongBaoLoi(error) };
+  // Buổi đã trừ xong. Hẹn kế tiếp lỗi thì CHỈ cảnh báo (đừng báo lỗi: người dùng bấm lại sẽ trừ buổi lần nữa).
+  if (hen.co) {
+    const r = await ghiHenKeTiep(nd, theId, typeof buoiId === "string" ? buoiId : null, hen.ngay, hen.noiDung);
+    if (r.loi) return { ok: true, canhBao: `Đã trừ buổi, nhưng CHƯA lưu được hẹn buổi kế tiếp (${r.loi}). Đừng làm lại buổi; vào hồ sơ thẻ bấm "Hẹn buổi kế tiếp" để ghi.` } as KQ;
+  }
+  return { ok: true };
+}
+
+/** Hẹn buổi kế tiếp ở hồ sơ thẻ (không trừ buổi). Dùng khi quên ghi lúc trừ buổi. */
+export async function henBuoiKeTiep(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("the.thuchien");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const theId = chuoi(fd, "the_id");
+  const hen = docHenKeTiep(fd, homNayHCM());
+  if ("loi" in hen) return { loi: hen.loi };
+  if (!hen.co) return { loi: "Chọn ngày hẹn buổi kế tiếp." };
+  const r = await ghiHenKeTiep(nd, theId, null, hen.ngay, hen.noiDung);
+  lamMoi(theId);
+  return r.loi ? { loi: r.loi } : { ok: true };
 }
 
 export async function huyBuoi(fd: FormData): Promise<KQ> {

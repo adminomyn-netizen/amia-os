@@ -18,6 +18,7 @@ import { thamSoBaoHanh, thangTron, tinhBaoHanh, LOAI_KN, TT_BC, TT_KN } from "@/
 import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
 import { ganNhomChoKhach } from "../nhom/actions";
+import { docTaiKham, docTheSapHet } from "@/lib/cham-soc-khach";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
@@ -44,7 +45,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   if (!k) notFound();
   const xemAnh = coQuyen(nd, "anh.xem");
   const sua0 = coQuyen(nd, "khach.sua");
-  const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab, { data: kx }, { data: nhomKh }, { data: moiNhom }] = await Promise.all([
+  const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab, { data: kx }, { data: nhomKh }, taiKham, theSapHet, { data: moiNhom }] = await Promise.all([
     db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"),
     db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
@@ -56,6 +57,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     // Trường chuyển từ SalonHero (0055/0065) chưa có trong v_khach_hang: đọc thẳng bảng khách.
     db.from("khach_hang").select("nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc").eq("id", id).maybeSingle(),
     db.from("khach_nhom").select("nhom_khach!inner(id, ten, mau)").eq("khach_id", id).eq("nhom_khach.hoat_dong", true),
+    coQuyen(nd, "the.xem") ? docTaiKham(null, undefined, undefined, id, 1).catch(() => []) : Promise.resolve([]),
+    coQuyen(nd, "the.xem") ? docTheSapHet(null, undefined, undefined, id, 5).catch(() => []) : Promise.resolve([]),
     sua0 ? db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
   ]);
   const nhom = (nhomKh ?? []).map((x) => x.nhom_khach as unknown as { id: string; ten: string; mau: string | null } | null).filter((x): x is { id: string; ten: string; mau: string | null } => !!x).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
@@ -266,7 +269,9 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0">
             <h1 className="chu-tieu-de text-[20px] font-bold uppercase leading-tight text-muc [overflow-wrap:anywhere]">{k.ho_ten}</h1>
-            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-muc-3"><span className="tabular-nums">{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai></div>
+            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-muc-3"><span className="tabular-nums">{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai>
+              {theSapHet.length > 0 && <Link href="/khach-hang/the-sap-het" title={theSapHet.map((t) => t.ten_goi).join(", ")}><NhanTrangThai kieu="cho">Thẻ sắp hết{theSapHet.length > 1 ? ` (${theSapHet.length})` : ""}</NhanTrangThai></Link>}
+              {taiKham.length > 0 && <Link href="/khach-hang/tai-kham" title={`Hẹn tái khám ${ngayVN(taiKham[0].den_han)}`}><NhanTrangThai kieu="cho">{taiKham[0].so_ngay_tre > 0 ? `Quá hẹn tái khám ${taiKham[0].so_ngay_tre} ngày` : "Đến hẹn tái khám"}</NhanTrangThai></Link>}</div>
             {(nhom.length > 0 || sua) && (
               <div className="mt-1.5 flex flex-wrap items-center gap-1" aria-label="Nhóm khách">
                 {nhom.map((n) => <NhanNhom key={n.id} ten={n.ten} mau={n.mau} />)}

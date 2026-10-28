@@ -47,3 +47,35 @@ export function ngayLap(ngay: string, kieu: KieuLap, khoang: number, tong: numbe
   }
   return ra;
 }
+
+// ───────── Lưới lịch hẹn kiểu SalonHero (nhân viên / chỗ / thời gian × ngày) ─────────
+const THU_DAI = ["C.Nhật", "Thứ 2", "Thứ 3", "Thứ 4", "Thứ 5", "Thứ 6", "Thứ 7"];
+/** Thứ của ngày YYYY-MM-DD: 0 = Chủ nhật … 6 = Thứ 7 (không phụ thuộc múi giờ máy). */
+export const thuCuaNgay = (ngay: string) => new Date(`${ngay}T00:00:00Z`).getUTCDay();
+const ddmm = (ngay: string) => `${ngay.slice(8, 10)}/${ngay.slice(5, 7)}`;
+/** Nhãn cột ngày: "Hôm nay (28/10)", "Thứ 5 (29/10)", "C.Nhật (01/11)". */
+export const nhanCotNgay = (ngay: string, homNay: string) => (ngay === homNay ? `Hôm nay (${ddmm(ngay)})` : `${THU_DAI[thuCuaNgay(ngay)]} (${ddmm(ngay)})`);
+/** Thanh ngày bên phải: "Thứ 4, 28/10/2026 (Hôm nay)". */
+export const nhanNgayDai = (ngay: string, homNay: string) => `${THU_DAI[thuCuaNgay(ngay)]}, ${ddmm(ngay)}/${ngay.slice(0, 4)}${ngay === homNay ? " (Hôm nay)" : ""}`;
+/** "2026-10-28" → "28-10-2026" (ô chọn khoảng ngày). */
+export const ngayGach = (ngay: string) => ngay.split("-").reverse().join("-");
+
+/** Tên nhân viên hiển thị IN HOA: "MSC.TV-25.0115.Nguyễn Thị Thư" → "MSC.TV-25.0115.NGUYỄN THỊ THƯ". */
+export const tenNvHoa = (ten: string) => ten.trim().toLocaleUpperCase("vi-VN");
+/** Chữ tắt trong vòng tròn: bỏ phần mã "MSC.…." ở đầu, lấy chữ cái đầu của từ CUỐI rồi từ ĐẦU ("Đinh Thị Hôngg Mây" → "MĐ"); một từ thì lấy hai chữ đầu. */
+export function chuTatTen(ten: string) {
+  const t = ten.trim();
+  const sach = /^MSC\./i.test(t) ? t.slice(t.lastIndexOf(".") + 1).trim() || t : t;
+  const tu = sach.split(/\s+/).filter(Boolean);
+  if (tu.length === 0) return "?";
+  if (tu.length === 1) return tu[0].slice(0, 2).toLocaleUpperCase("vi-VN");
+  return (tu[tu.length - 1][0] + tu[0][0]).toLocaleUpperCase("vi-VN");
+}
+/** Mọi ngày từ `tu` đến `den` (gồm cả hai đầu), tối đa `toiDa` ngày. */
+export function cacNgayTrong(tu: string, den: string, toiDa = 31): string[] {
+  const ra: string[] = [];
+  for (let t = new Date(`${tu}T00:00:00Z`), d = new Date(`${den}T00:00:00Z`); t <= d && ra.length < toiDa; t.setUTCDate(t.getUTCDate() + 1)) ra.push(t.toISOString().slice(0, 10));
+  return ra;
+}
+/** Số ô hạng khách: Vàng → cúp, Bạch kim/Kim cương → kim cương, Bạc → huy chương, Thường → không biểu tượng. */
+export const BIEU_TUONG_HANG: Record<string, "cup" | "kim_cuong" | "huy_chuong" | ""> = { "Vàng": "cup", "Bạch kim": "kim_cuong", "Kim cương": "kim_cuong", "Bạc": "huy_chuong", "Thường": "" };

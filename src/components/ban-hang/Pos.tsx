@@ -32,6 +32,8 @@ export function Pos(props: PropsPos) {
   const dem = useRef(1);
   const [xong, setXong] = useState<{ id: string; ma: string } | null>(null);
   const nutTab = useRef(new Map<number, HTMLButtonElement | null>());
+  // Màn hẹp: dải tab cuộn ngang, luôn kéo tab đang xem vào tầm nhìn (vd vừa bấm Thêm đơn).
+  useEffect(() => { nutTab.current.get(dangXem)?.scrollIntoView({ block: "nearest", inline: "nearest" }); }, [dangXem]);
   const them = () => {
     if (ds.length >= TOI_DA_DON) return;
     dem.current += 1;
@@ -95,7 +97,11 @@ export function Pos(props: PropsPos) {
       {ds.map((t, i) => (
         <div key={t.k} role="tabpanel" id={`don-${t.k}`} aria-labelledby={`don-tab-${t.k}`} hidden={t.k !== dangXem}>
           <DonPos {...props} k={t.k} dauTien={i === 0 && t.k === 1} onDoi={capNhat}
-            onXong={(kq) => { setXong(kq); bo(t.k); }} />
+            onXong={(kq) => {
+              setXong(kq); bo(t.k);
+              // Bỏ ?lich=&khach= khỏi địa chỉ: tải lại trang không dựng lại đơn vừa chốt (không dùng router.push để giữ các đơn khác).
+              if (window.location.search) window.history.replaceState(null, "", "/ban-hang");
+            }} />
         </div>
       ))}
     </div>

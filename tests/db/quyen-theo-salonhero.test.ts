@@ -43,3 +43,12 @@ describe("Bác sĩ (SalonHero: Bác sỹ)", () => {
     expect(ten("bac_si")).not.toContain("Báo cáo");
   });
 });
+
+describe("Kỹ thuật viên (SalonHero: Nhân viên, Tư vấn bán hàng)", () => {
+  it("được đặt lịch và thêm/sửa khách như SalonHero; chưa cho bán hàng (thu tiền), vẫn giữ thẻ để thực hiện buổi", () => {
+    expect(co("ktv", "lich.sua")).toBe(true);
+    expect(co("ktv", "khach.sua")).toBe(true);
+    for (const q of ["ban.tao", "ban.xem", "baocao.tien", "quy.xem"] as const) expect(co("ktv", q)).toBe(false);
+    expect(co("ktv", "the.xem") && co("ktv", "the.thuchien")).toBe(true);
+  });
+});

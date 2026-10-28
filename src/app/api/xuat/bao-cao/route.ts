@@ -6,7 +6,7 @@ import { khoangNgay } from "@/lib/bao-cao";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
-import { gomTheoKy, kieuGom, layLichSuDungThe, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, kieuGom, layLichSuDungThe, layCacLanTraNo, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
@@ -103,6 +103,12 @@ export async function GET(req: Request) {
     bangs.push({ ten: "Theo dịch vụ, sản phẩm", dong: ds, cot: [
       { nhan: "Tên", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 16 }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Trước giảm giá", khoa: "truoc", tien: true },
       { nhan: "Sau giảm giá", khoa: "sau", tien: true }, { nhan: "Trừ thẻ tiền", khoa: "truThe", tien: true }, { nhan: "Thực nhận", khoa: "thucNhan", tien: true }] });
+  } else if (tab === "no" && u.searchParams.get("nt") === "tra") {
+    const xemSdt = coQuyen(nd, "khach.xem");
+    const { rows } = await layCacLanTraNo(db, { tu, den, cn, q: u.searchParams.get("q") || undefined }, true);
+    bangs.push({ ten: "Các lần trả nợ", dong: rows.map((r) => ({ ...r, ngay: ngay(r.ngay), dienThoai: xemSdt ? r.dienThoai : "" })), cot: [
+      { nhan: "Ngày trả nợ", khoa: "ngay", rong: 14 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Mã đơn hàng", khoa: "maHd", rong: 14 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 },
+      { nhan: "Tổng số tiền hóa đơn", khoa: "tongHd", tien: true }, { nhan: "Số tiền trả", khoa: "soTien", tien: true }, { nhan: "Loại thanh toán", khoa: "phuongThuc", rong: 16 }, { nhan: "Người thu", khoa: "nguoiThu", rong: 24 }] });
   } else if (tab === "no") {
     const ds = await docHet((a, b) => {
       let q = db.from("hoa_don").select("id, ma, ngay_hd, tong_phai_thu, da_thu, con_no, khach_id").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd").order("id");

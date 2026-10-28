@@ -6,6 +6,7 @@ import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
 import { ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { Tab } from "@/components/ui/Tab";
 import { CotNgang } from "@/components/bieu-do/CotNgang";
 import { Bang } from "@/components/ui/Table";
@@ -19,8 +20,9 @@ import { BaoCaoDanhGia } from "@/components/bao-cao/BaoCaoDanhGia";
 import { BaoCaoTiLeChot } from "@/components/bao-cao/BaoCaoTiLeChot";
 import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 import { BaoCaoLichSuDungThe, BaoCaoTheoChiNhanh, BaoCaoTheoKhachHang } from "@/components/bao-cao/BaoCaoGap";
+import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
-import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
 const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
@@ -28,9 +30,14 @@ const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "danh-gia", "ti-le-chot
 /** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
 const TAB_NHOM: Record<string, "tong" | "thang"> = { "thu-ngan": "tong", "dat-lich": "thang", "dung-dich-vu": "thang" };
 const Chip = ({ href, dang, ten }: { href: string; dang: boolean; ten: string }) => <Link href={href} scroll={false} aria-current={dang ? "page" : undefined} className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${dang ? "bg-nhan text-white" : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{ten}</Link>;
+const ChipNo = ({ nt, them }: { nt: "ds" | "tra"; them: string }) => (
+  <nav aria-label="Khách hàng nợ" className="mb-4 flex gap-2 overflow-x-auto pb-1">
+    {([["ds", "Danh sách khách hàng còn nợ"], ["tra", "Các lần trả nợ"]] as const).map(([k, t]) => <Link key={k} href={`/bao-cao?tab=no${k === "tra" ? "&nt=tra" : ""}${them}`} scroll={false} aria-current={nt === k ? "page" : undefined} className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${nt === k ? "bg-nhan text-white" : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{t}</Link>)}
+  </nav>
+);
 const TieuDeMuc = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-6 text-[15px] font-medium text-muc">{children}</h2>;
 
-export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; loai?: string; lm?: string; hang?: string; tt?: string; lt?: string; so?: string }> }) {
+export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; loai?: string; lm?: string; nt?: string; hang?: string; tt?: string; lt?: string; so?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
   const sp = await searchParams;
   const tien = coQuyen(nd, "baocao.tien");
@@ -47,7 +54,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
   const loc = { tu, den, cn, nhom, doiTuNgay };
   const coChiNhanh = !cn && (dsCn ?? []).length > 1;
-  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "dich-vu" ? `${sp.loai ? `&loai=${sp.loai}` : ""}${sp.lm ? `&lm=${sp.lm}` : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
+  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "no" && sp.nt === "tra" ? `&nt=tra${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "dich-vu" ? `${sp.loai ? `&loai=${sp.loai}` : ""}${sp.lm ? `&lm=${sp.lm}` : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
   let noiDung: React.ReactNode;
 
   const dsChiNhanh = nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
@@ -169,6 +176,34 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
         <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Một dòng = một mặt hàng theo loại. Trước giảm giá = đơn giá × số lượng; Sau giảm giá = thành tiền đã chia giảm giá cả đơn; Trừ thẻ tiền = phần đơn thanh toán bằng thẻ tiền, chia theo doanh số từng dòng; Thực nhận = Sau giảm giá − Trừ thẻ tiền. Dùng thẻ là dịch vụ làm bằng thẻ liệu trình (không thu tiền lúc làm). Nút “Xem” danh sách khách của SalonHero chưa có.</p>
       </>
     );
+  } else if (tab === "no" && sp.nt === "tra") {
+    const so = 20, trang = soTrang(sp.trang);
+    const { rows, tong } = await layCacLanTraNo(db, { tu, den, cn, q: sp.q || undefined, trang, so });
+    const xemSdt = coQuyen(nd, "khach.xem");
+    const goc = { tab: "no", nt: "tra", tu, den, cn: sp.cn, q: sp.q };
+    noiDung = (
+      <>
+        <ChipNo nt="tra" them={them} />
+        {lc}
+        <form method="get" action="/bao-cao" className="mb-5 flex gap-2">
+          <input type="hidden" name="tab" value="no" /><input type="hidden" name="nt" value="tra" /><input type="hidden" name="tu" value={tu} /><input type="hidden" name="den" value={den} />
+          {sp.cn && <input type="hidden" name="cn" value={sp.cn} />}
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm theo mã đơn hàng, tên khách hàng, SĐT" aria-label="Tìm theo mã đơn hàng, tên khách hàng, SĐT" className={O_NHAP} />
+          <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
+        </form>
+        <HangChiSo muc={[{ nhan: "Tổng tiền đã trả nợ", so: tienVN(tong.tien), ghiChu: `${soVN(tong.dong)} lần trả` }]} />
+        <div className="mt-6"><Bang duLieu={rows} khoa={(r) => r.id} trong="Không tìm thấy kết quả nào"
+          cot={[
+            { nhan: "Ngày trả nợ", hienThi: (r) => ngayVN(r.ngay) },
+            { nhan: "Khách hàng", chinh: true, hienThi: (r) => <span className="block">{r.khachId ? <Link href={`/khach-hang/${r.khachId}`} className="text-muc hover:underline">{r.khach}</Link> : <span className="text-muc">{r.khach}</span>}<span className="block text-[12px] text-muc-3">{xemSdt ? r.dienThoai : r.dienThoai ? "•••" : ""}</span></span> },
+            { nhan: "Mã đơn hàng", hienThi: (r) => <Link href={`/hoa-don/${r.hoaDonId}`} className="font-medium text-nhan-dam hover:underline">{r.maHd}</Link> },
+            { nhan: "Chi nhánh", hienThi: (r) => r.chiNhanh }, { nhan: "Tổng số tiền hóa đơn", hienThi: (r) => tienVN(r.tongHd), phai: true },
+            { nhan: "Số tiền trả", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.soTien)}</span>, phai: true }, { nhan: "Loại thanh toán", hienThi: (r) => r.phuongThuc }, { nhan: "Người thu", hienThi: (r) => r.nguoiThu },
+          ]} /></div>
+        <ThanhTrang trang={trang} tong={tong.dong} moi={so} gan={(t) => `/bao-cao?${new URLSearchParams(Object.entries({ ...goc, trang: t ? String(t) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`} />
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Một dòng = một lần khách trả nợ (tiền mặt, chuyển khoản, quẹt thẻ thu sau ngày lập đơn) trong khoảng ngày đã chọn. Giờ thu và mã phiếu thu của SalonHero chưa được chuyển sang; nút Trả nợ để thu nợ ở trang chi tiết hoá đơn.</p>
+      </>
+    );
   } else if (tab === "no") {
     let q = db.from("hoa_don").select("id, ma, ngay_hd, tong_phai_thu, da_thu, con_no, khach_id").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd");
     if (cn) q = q.eq("chi_nhanh_id", cn);
@@ -178,6 +213,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
     const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
     noiDung = (
       <>
+        <ChipNo nt="ds" them={them} />
         {lc}
         <HangChiSo muc={[{ nhan: "Tổng nợ", so: tienVN((data ?? []).reduce((s, r) => s + Number(r.con_no), 0)) }, { nhan: "Số hoá đơn nợ", so: String((data ?? []).length) }]} />
         <div className="mt-6"><Bang duLieu={data ?? []} khoa={(r) => r.id} trong="Không có khách nào còn nợ."

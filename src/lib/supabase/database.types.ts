@@ -10133,6 +10133,32 @@ export type Database = {
         Args: { p_cn?: string; p_ngay?: string }
         Returns: Json
       }
+      bc_cac_lan_tra_no: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_so?: number
+          p_tim?: string
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          chi_nhanh: string
+          dien_thoai: string
+          hoa_don_id: string
+          khach: string
+          khach_id: string
+          ma_hd: string
+          ngay: string
+          nguoi_thu: string
+          phuong_thuc: string
+          so_tien: number
+          thanh_toan_id: string
+          tong_dong: number
+          tong_hd: number
+          tong_tien: number
+        }[]
+      }
       bc_dat_lich: {
         Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
         Returns: {

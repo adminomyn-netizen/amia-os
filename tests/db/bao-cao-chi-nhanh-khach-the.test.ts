@@ -133,3 +133,12 @@ describe("bc_san_pham_dich_vu", () => {
     expect(dung).toMatchObject({ ten: "Chăm sóc da", so_luong: 2, truoc: 0, sau: 0 });
   });
 });
+
+describe("bc_cac_lan_tra_no", () => {
+  it("chỉ các khoản thu sau ngày lập đơn, tổng, tìm theo khách / mã đơn", async () => {
+    const r = await q<Record<string, string | number>>(`select ma_hd, khach, so_tien::int, phuong_thuc, tong_dong::int, tong_tien::int from bc_cac_lan_tra_no('2026-10-01','2026-10-31')`);
+    expect(r).toEqual([{ ma_hd: "26100011", khach: "Nguyễn Thị Thuỳ Nga", so_tien: 200000, phuong_thuc: "tien_mat", tong_dong: 1, tong_tien: 200000 }]);
+    expect((await q(`select 1 from bc_cac_lan_tra_no('2026-10-01','2026-10-31',null,'26100011')`)).length).toBe(1);
+    expect((await q(`select 1 from bc_cac_lan_tra_no('2026-10-01','2026-10-31',null,'binh')`)).length).toBe(0);
+  });
+});

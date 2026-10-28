@@ -120,3 +120,11 @@ export async function laySanPhamDichVu(db: Db, tu: string, den: string, cn?: str
   if (error) throw new Error(error.message);
   return (data ?? []).map((r) => ({ loai: r.loai as LoaiMuc, ma: r.ma, ten: r.loai === "ban_the" ? `Bán ${r.ten}` : r.loai === "dung_the" ? `Sử dụng ${r.ten}` : r.ten, soLuong: Number(r.so_luong), truoc: Number(r.truoc), sau: Number(r.sau), truThe: Number(r.tru_the), thucNhan: Number(r.thuc_nhan) }));
 }
+
+export const PHUONG_THUC_VN: Record<string, string> = { tien_mat: "Tiền mặt", chuyen_khoan: "Chuyển khoản", quet_the: "Quẹt thẻ", the_tien: "Thẻ tiền" };
+export async function layCacLanTraNo(db: Db, l: { tu: string; den: string; cn?: string; q?: string; trang?: number; so?: number }, tatCa = false) {
+  const { data, error } = await db.rpc("bc_cac_lan_tra_no", { p_tu: l.tu, p_den: l.den, p_cn: tuyChon(l.cn), p_tim: tuyChon(l.q?.trim().slice(0, 80)), p_so: tatCa ? 20000 : (l.so ?? 20), p_tu_dong: tatCa ? 0 : ((l.trang ?? 1) - 1) * (l.so ?? 20) });
+  if (error) throw new Error(error.message);
+  const rows = (data ?? []).map((r) => ({ id: r.thanh_toan_id, ngay: r.ngay, hoaDonId: r.hoa_don_id, maHd: r.ma_hd, khachId: r.khach_id, khach: r.khach, dienThoai: r.dien_thoai, chiNhanh: r.chi_nhanh, tongHd: Number(r.tong_hd), soTien: Number(r.so_tien), phuongThuc: PHUONG_THUC_VN[r.phuong_thuc] ?? r.phuong_thuc, nguoiThu: r.nguoi_thu }));
+  return { rows, tong: { dong: Number(data?.[0]?.tong_dong ?? 0), tien: Number(data?.[0]?.tong_tien ?? 0) } };
+}

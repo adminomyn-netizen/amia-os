@@ -20,7 +20,6 @@ export async function luuTiLe(fd: FormData): Promise<KQ> {
   if (!dt) return { loi: "Đối tượng áp dụng không hợp lệ." };
   if (!(ti >= 0 && ti <= 100)) return { loi: "Tỉ lệ phải từ 0 đến 100%." };
   if (!(tien >= 0 && tien <= 1_000_000_000)) return { loi: "Số tiền cố định không hợp lệ." };
-  if (ti === 0 && tien === 0) return { loi: "Nhập tỉ lệ hoặc số tiền cố định (không cùng bằng 0). Muốn bỏ cài đặt thì bấm Xoá." };
   const db = sb();
   let q = db.from("hoa_hong_ti_le").select("id, ti_le, so_tien").eq("loai", loai).eq("vai", vai);
   q = muc ? q.eq("muc_id", muc) : q.is("muc_id", null);

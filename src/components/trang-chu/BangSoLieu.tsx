@@ -2,6 +2,7 @@ import Link from "next/link";
 import { tienGon, tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
 import { Package, Sparkles, Users } from "lucide-react";
+import { BieuDoTron } from "@/components/bieu-do/BieuDoTron";
 import { BieuDoNhanh, type DiemNgay } from "./BieuDoNhanh";
 import { BangXepHangDep } from "./BangXepHangDep";
 
@@ -33,28 +34,10 @@ function Khung({ tieuDe, phai, children, cls = "" }: { tieuDe: string; phai?: Re
   );
 }
 
-/** Vòng tròn tỉ lệ: mỗi phần một màu, ở giữa là số tổng. */
-function Vong({ phan, giua, nhanGiua }: { phan: { gt: number; mau: string }[]; giua: string; nhanGiua: string }) {
-  const tong = phan.reduce((s, p) => s + p.gt, 0), R = 46, C = 2 * Math.PI * R;
-  let dau = 0;
-  return (
-    <svg viewBox="0 0 120 120" className="h-36 w-36 shrink-0" role="img" aria-label={`${nhanGiua}: ${giua}`}>
-      <circle cx="60" cy="60" r={R} fill="none" stroke="var(--giay-tram)" strokeWidth="16" />
-      {tong > 0 && phan.map((p, i) => {
-        const d = (p.gt / tong) * C, el = <circle key={i} cx="60" cy="60" r={R} fill="none" stroke={p.mau} strokeWidth="16" strokeDasharray={`${d} ${C - d}`} strokeDashoffset={-dau} transform="rotate(-90 60 60)" />;
-        dau += d; return el;
-      })}
-      <text x="60" y="58" textAnchor="middle" className="fill-[var(--muc)] text-[15px] font-semibold">{giua}</text>
-      <text x="60" y="74" textAnchor="middle" className="fill-[var(--muc-3)] text-[8.5px]">{nhanGiua}</text>
-    </svg>
-  );
-}
-
 /** Các biểu đồ và số liệu cho lãnh đạo: nhiều màu, nhìn là thấy tình hình kinh doanh, khách, thẻ, công nợ, lịch, chấm công. */
 export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
   const { thang: t } = d;
   const doi = t.thangTruoc > 0 ? Math.round(((t.doanhThu - t.thangTruoc) / t.thangTruoc) * 100) : null;
-  const tongThu = d.coCauThu.tienMat + d.coCauThu.chuyenKhoan + d.coCauThu.quetThe;
   const cc = [
     { nhan: "Tiền mặt", gt: d.coCauThu.tienMat, mau: "var(--sac-luc-mau)" },
     { nhan: "Chuyển khoản", gt: d.coCauThu.chuyenKhoan, mau: "var(--sac-xanh-mau)" },
@@ -96,10 +79,7 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
         )}
         {xemTien && (
           <Khung tieuDe="Cơ cấu thu tháng này">
-            <div className="flex flex-wrap items-center justify-center gap-4">
-              <Vong phan={cc} giua={tienGon(tongThu)} nhanGiua="tổng thu" />
-              <ul className="min-w-0 space-y-2 text-[13px]">{cc.map((c) => <li key={c.nhan}><NoiChiTiet tieuDe={c.nhan} dong={[{ nhan: "Số tiền", gt: tienVN(c.gt) }, { nhan: "Tỉ trọng", gt: `${phanTram(c.gt, tongThu)}%` }]}><div className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 shrink-0 rounded-sm" style={{ background: c.mau }} /><span className="text-muc-2">{c.nhan}</span><span className="ml-auto pl-3 tabular-nums text-muc">{phanTram(c.gt, tongThu)}%</span></div></NoiChiTiet></li>)}</ul>
-            </div>
+            <BieuDoTron kieu="mong" ten="Cơ cấu thu tháng này" nhanTam="tổng thu" duLieu={cc.map((c) => ({ nhan: c.nhan, gia_tri: c.gt, mau: c.mau }))} dinhDang={tienVN} dinhDangGon={tienGon} dinhDangTam={tienGon} trong="Tháng này chưa có khoản thu nào." />
           </Khung>
         )}
         <Khung tieuDe="Nguồn khách mới tháng này" phai={<Link href="/khach-hang" className="font-medium text-nhan-dam hover:underline">Khách hàng</Link>}>
@@ -120,10 +100,8 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
           )}
         </Khung>
         <Khung tieuDe="Chấm công hôm nay" phai={<Link href="/nhan-su/cham-cong" className="font-medium text-nhan-dam hover:underline">Bảng công</Link>}>
-          <div className="flex items-center gap-5">
-            <Vong phan={[{ gt: d.chamCong.da, mau: "var(--sac-luc-mau)" }, { gt: Math.max(0, d.chamCong.tong - d.chamCong.da), mau: "var(--sac-hong-mau)" }]} giua={`${phanTram(d.chamCong.da, d.chamCong.tong)}%`} nhanGiua="đã chấm công" />
-            <ul className="space-y-2 text-[13px]"><li className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 rounded-sm" style={{ background: "var(--sac-luc-mau)" }} />Đã chấm {d.chamCong.da}</li><li className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 rounded-sm" style={{ background: "var(--sac-hong-mau)" }} />Chưa chấm {Math.max(0, d.chamCong.tong - d.chamCong.da)}</li><li className="text-muc-3">Tổng {d.chamCong.tong} người đang làm</li></ul>
-          </div>
+          <BieuDoTron kieu="mong" ten="Chấm công hôm nay" nhanTam="đã chấm công" tamChinh={`${phanTram(d.chamCong.da, d.chamCong.tong)}%`} duLieu={[{ nhan: "Đã chấm", gia_tri: d.chamCong.da, mau: "var(--sac-luc-mau)" }, { nhan: "Chưa chấm", gia_tri: Math.max(0, d.chamCong.tong - d.chamCong.da), mau: "var(--sac-hong-mau)" }]} dinhDang={(n) => `${n} người`} trong="Chưa có nhân viên nào cần chấm công." />
+          <p className="mt-3 text-[13px] text-muc-3">Tổng {d.chamCong.tong} người đang làm</p>
         </Khung>
       </div>
       <BangXepHang d={d} xemTien={xemTien} />

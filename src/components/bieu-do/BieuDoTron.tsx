@@ -1,50 +1,44 @@
 import { MAU_BIEU_DO, type Diem } from "./mau";
+import { HINH_CHUAN, HINH_MONG, phanTramChu, type KhucTron } from "./hinh-cung";
+import { TronTuongTac } from "./TronTuongTac";
 
-const R = 80, C = 100;
-const toaDo = (goc: number, r: number) => [C + r * Math.sin(goc), C - r * Math.cos(goc)] as const;
-function cung(a0: number, a1: number, rNgoai: number, rTrong: number) {
-  const [x0, y0] = toaDo(a0, rNgoai), [x1, y1] = toaDo(a1, rNgoai), lon = a1 - a0 > Math.PI ? 1 : 0;
-  if (rTrong <= 0) return `M${C} ${C} L${x0} ${y0} A${rNgoai} ${rNgoai} 0 ${lon} 1 ${x1} ${y1} Z`;
-  const [x2, y2] = toaDo(a1, rTrong), [x3, y3] = toaDo(a0, rTrong);
-  return `M${x0} ${y0} A${rNgoai} ${rNgoai} 0 ${lon} 1 ${x1} ${y1} L${x2} ${y2} A${rTrong} ${rTrong} 0 ${lon} 0 ${x3} ${y3} Z`;
-}
-
-/** Biểu đồ tròn (banh = đặc, vong = rỗng có số tổng ở giữa) kèm chú thích có số và phần trăm — không chỉ dựa vào màu. */
-export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: number) => n.toLocaleString("vi-VN"), dinhDangTam, ten }: { duLieu: Diem[]; kieu?: "banh" | "vong"; nhanTam?: string; dinhDang?: (n: number) => string; /** Số ở tâm vòng (nên gọn để nằm trọn trong vòng); mặc định dùng dinhDang. */ dinhDangTam?: (n: number) => string; ten: string }) {
+/**
+ * Biểu đồ tròn (banh = đặc, vong = rỗng có số tổng ở giữa, mong = vòng dày của trang chủ). Chạy ở máy chủ: tính sẵn chữ
+ * (số tiền, phần trăm, câu cho trình đọc) rồi đưa cho phần tương tác ở trình duyệt, nên hàm định dạng truyền vào không bị lọt sang đó.
+ * Rê chuột / chạm vào khúc hoặc dòng chú giải để xem số tiền và phần trăm của khúc đó.
+ */
+export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: number) => n.toLocaleString("vi-VN"), dinhDangTam, dinhDangGon, tamChinh, ten, trong = "Chưa có dữ liệu để vẽ." }: {
+  duLieu: Diem[];
+  kieu?: "banh" | "vong" | "mong";
+  nhanTam?: string;
+  /** Định dạng số trong khung chi tiết và câu đọc màn hình (số đầy đủ). */
+  dinhDang?: (n: number) => string;
+  /** Số ở tâm vòng (nên gọn để nằm trọn trong vòng); mặc định dùng dinhDang. */
+  dinhDangTam?: (n: number) => string;
+  /** Số ở chú giải bên cạnh (nên gọn cho vừa màn hẹp); mặc định dùng dinhDang. */
+  dinhDangGon?: (n: number) => string;
+  /** Chữ ở tâm vòng thay cho tổng (vd phần trăm đã chấm công); khi tổng bằng 0 vẫn vẽ vòng rỗng kèm chữ này. */
+  tamChinh?: string;
+  ten: string;
+  /** Câu hiện khi không có số liệu nào để vẽ. */
+  trong?: string;
+}) {
   const ds = duLieu.filter((d) => d.gia_tri > 0);
   const tong = ds.reduce((s, d) => s + d.gia_tri, 0);
-  if (tong <= 0) return <p className="py-8 text-center text-[14px] text-muc-3">Chưa có dữ liệu để vẽ.</p>;
-  const lat = ds.map((d, i) => {
+  const hinh = kieu === "mong" ? HINH_MONG : HINH_CHUAN(kieu === "vong");
+  const coTam = kieu !== "banh";
+  const bocCuc = kieu === "mong" ? "mong" : "chuan";
+  if (tong <= 0) {
+    // Tâm vòng có chữ riêng (vd 0% đã chấm công) thì vẫn vẽ vòng rỗng để khung không nhảy; còn lại chỉ báo chưa có dữ liệu.
+    if (tamChinh == null || !coTam) return <p className="py-8 text-center text-[14px] text-muc-3">{trong}</p>;
+    return <TronTuongTac khuc={[]} hinh={hinh} ten={ten} tamChinh={tamChinh} tamPhu={nhanTam} bocCuc={bocCuc} bong={kieu !== "mong"} trong={trong} />;
+  }
+  const gon = dinhDangGon ?? dinhDang;
+  const khuc: KhucTron[] = ds.map((d, i) => {
     const truoc = ds.slice(0, i).reduce((t, x) => t + x.gia_tri, 0);
-    const a0 = (truoc / tong) * 2 * Math.PI, a1 = ((truoc + d.gia_tri) / tong) * 2 * Math.PI;
-    return { ...d, mau: MAU_BIEU_DO[i % MAU_BIEU_DO.length], a0, a1, pt: (d.gia_tri / tong) * 100 };
+    const a0 = (truoc / tong) * 2 * Math.PI, a1 = ((truoc + d.gia_tri) / tong) * 2 * Math.PI, pt = phanTramChu((d.gia_tri / tong) * 100), tien = dinhDang(d.gia_tri);
+    return { nhan: d.nhan, mau: d.mau ?? MAU_BIEU_DO[i % MAU_BIEU_DO.length], a0, a1, tien, gon: gon(d.gia_tri), pt, doc: `${d.nhan}: ${tien}, ${pt}` };
   });
-  const rTrong = kieu === "vong" ? 50 : 0;
-  return (
-    <div className="flex flex-wrap items-center gap-x-8 gap-y-4">
-      <svg viewBox="0 0 200 200" role="img" aria-label={`${ten}: ${lat.map((l) => `${l.nhan} ${l.pt.toFixed(0)}%`).join(", ")}`} className="h-[190px] w-[190px] shrink-0 drop-shadow-[0_8px_10px_rgba(10,43,38,0.18)]">
-        {lat.length === 1 ? (
-          <circle cx={C} cy={C} r={rTrong ? (R + rTrong) / 2 : R / 2} fill="none" stroke={lat[0].mau} strokeWidth={rTrong ? R - rTrong : R} />
-        ) : (
-          lat.map((l) => <path key={l.nhan} d={cung(l.a0, l.a1, R, rTrong)} fill={l.mau} stroke="var(--giay-sang)" strokeWidth="2" strokeLinejoin="round"><title>{`${l.nhan}: ${dinhDang(l.gia_tri)} (${l.pt.toFixed(1)}%)`}</title></path>)
-        )}
-        {kieu === "vong" && (
-          <g textAnchor="middle">
-            <text x={C} y={C + 2} fontSize="22" fontWeight="600" fill="var(--muc)">{(dinhDangTam ?? dinhDang)(tong)}</text>
-            {nhanTam && <text x={C} y={C + 20} fontSize="10" fill="var(--muc-3)">{nhanTam}</text>}
-          </g>
-        )}
-      </svg>
-      <ul className="min-w-[180px] flex-1 space-y-1.5 text-[13px]">
-        {lat.map((l) => (
-          <li key={l.nhan} className="flex items-center gap-2.5">
-            <span aria-hidden className="h-3 w-3 shrink-0" style={{ background: l.mau, borderRadius: 3 }} />
-            <span className="min-w-0 flex-1 truncate text-muc-2">{l.nhan}</span>
-            <span className="tabular-nums text-muc">{dinhDang(l.gia_tri)}</span>
-            <span className="w-11 text-right tabular-nums text-muc-3">{l.pt.toFixed(l.pt < 10 ? 1 : 0)}%</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
+  const giua = tamChinh ?? (dinhDangTam ?? dinhDang)(tong);
+  return <TronTuongTac khuc={khuc} hinh={hinh} ten={ten} tamChinh={coTam ? giua : undefined} tamPhu={coTam ? nhanTam : undefined} bocCuc={bocCuc} bong={kieu !== "mong"} />;
 }

@@ -5,7 +5,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
-import { NHAN_NGUON, NHAN_TRANG_THAI_LICH, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
+import { NHAN_NGUON, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -13,6 +13,7 @@ import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
 import { LuoiAnh } from "@/components/khach/LuoiAnh";
 import { NhanNhom } from "@/components/khach/DanhSachKhach";
+import { LichSuGiaoDich, type ThamSoLichSu } from "@/components/khach/LichSuGiaoDich";
 import { thamSoBaoHanh, thangTron, tinhBaoHanh, LOAI_KN, TT_BC, TT_KN } from "@/lib/khieu-nai";
 import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
@@ -26,16 +27,19 @@ const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi 
 const DIEM_MOI_TRANG = 50;
 const LOAI_DIEM: Record<string, string> = { cong_hoa_don: "Cộng theo hoá đơn", hoan_hoa_don: "Trừ do huỷ/hoàn hoá đơn", sua_tay: "Sửa tay", dieu_chinh_dau: "Điều chỉnh đầu kỳ", dieu_chinh: "Điều chỉnh", doi_diem: "Đổi điểm" };
 
-export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; trang?: string }> }) {
+export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; trang?: string } & ThamSoLichSu> }) {
   const nd = await yeuCauQuyen("khach.xem");
   const { id } = await params;
-  const { tab: t, trang: trangDiem } = await searchParams;
+  const sp = await searchParams;
+  const { tab: t, trang: trangDiem } = sp;
   const xemSucKhoe = coQuyen(nd, "hoso.xem");
   const kn4 = (["kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly"] as const).some((q) => coQuyen(nd, q));
   const tabHopLe0 = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd, "ban.xem")) && (x.ma !== "khieu-nai" || kn4));
   const tab = tabHopLe0.some((x) => x.ma === t) ? t! : "thong-tin";
   const db = sb();
-  const { data: k } = await db.from("v_khach_hang").select("*").eq("id", id).maybeSingle();
+  const { data: k, error: loiDoc } = await db.from("v_khach_hang").select("*").eq("id", id).maybeSingle();
+  // Lỗi đọc (mạng, CSDL quá tải) ≠ không có khách: báo lỗi để thử lại, không hiện "không tìm thấy".
+  if (loiDoc) { console.error("[ho-so-khach]", loiDoc.code, loiDoc.message); throw new Error("Không đọc được hồ sơ khách, thử lại."); }
   if (!k) notFound();
   const xemAnh = coQuyen(nd, "anh.xem");
   const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab, { data: kx }, { data: nhomKh }] = await Promise.all([
@@ -77,8 +81,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
       ["Chi nhánh khách đã đến", coSo.length > 1 ? <span>{coSo.join(", ")} <span className="nhan-nho ml-1">Nhiều chi nhánh</span></span> : coSo.join("")],
       ["Mã thẻ giấy", kx?.ma_the_giay ?? ""],
       ["Lịch hẹn ở SalonHero", kx?.tong_dat_lich_goc != null ? `${soVN(kx.tong_dat_lich_goc)} lần đặt · ${soVN(kx.tong_checkin_goc ?? 0)} lần đến · ${soVN(kx.tong_huy_lich_goc ?? 0)} lần huỷ` : ""],
-      ["Nguồn khách", NHAN_NGUON[k.nguon ?? ""] ?? k.nguon], ["Chi tiết nguồn", k.nguon_chi_tiet ?? ""], ["Người giới thiệu", nguoiGt ? `${nguoiGt.ho_ten} (${nguoiGt.ma})` : ""], ["Người phụ trách", tenNv.get(k.nguoi_phu_trach_id ?? "") ?? ""],
-      ["Đồng ý dùng hình ảnh", k.dong_y_dung_hinh ? `Có (${ngayVN(k.dong_y_dung_hinh_luc)})` : k.dong_y_dung_hinh_luc ? `Đã rút ngày ${ngayVN(k.dong_y_dung_hinh_luc)}` : "Chưa"], ["Ghi chú chung", k.ghi_chu ?? ""],
+      ["Nguồn khách", NHAN_NGUON[k.nguon ?? ""] ?? k.nguon], ["Chi tiết nguồn", k.nguon_chi_tiet ?? ""], ["Người giới thiệu", nguoiGt ? `${nguoiGt.ho_ten} (${nguoiGt.ma})` : k.nguon === "khach_cu_gioi_thieu" ? "Chưa nối người giới thiệu (dữ liệu SalonHero)" : ""], ["Người phụ trách", tenNv.get(k.nguoi_phu_trach_id ?? "") ?? ""],
+      ["Đồng ý dùng hình ảnh", k.dong_y_dung_hinh ? `Có${k.dong_y_dung_hinh_luc ? ` (${ngayVN(k.dong_y_dung_hinh_luc)})` : ""}` : "Chưa"], ["Ghi chú chung", k.ghi_chu ?? ""],
     ];
     noiDung = (
       <>
@@ -135,34 +139,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
       </>
     );
   } else if (tab === "lich-su") {
-    const [{ data: hd }, { data: buoi }, { data: lich }] = await Promise.all([
-      db.from("hoa_don").select("id, ma, ngay_hd, trang_thai, tong_phai_thu, da_thu, con_no").eq("khach_id", id).order("ngay_hd", { ascending: false }).limit(50),
-      db.from("buoi_thuc_hien").select("id, ngay_lam, dich_vu_id, nv_thuc_hien_id, trang_thai, doanh_thu_buoi").eq("khach_id", id).order("ngay_lam", { ascending: false }).limit(50),
-      db.from("lich_hen").select("id, bat_dau, trang_thai, lich_hen_dich_vu(dich_vu_id)").eq("khach_id", id).order("bat_dau", { ascending: false }).limit(20),
-    ]);
-    const { data: dvAll } = await db.from("dich_vu").select("id, ten");
-    const tenDv = new Map((dvAll ?? []).map((d) => [d.id, d.ten]));
-    noiDung = (
-      <div className="space-y-8">
-        <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Hoá đơn</h3>
-          <Bang duLieu={hd ?? []} khoa={(r) => r.id} trong="Chưa có hoá đơn." cot={[
-            { nhan: "Mã", hienThi: (r) => <Link className="font-medium text-nhan-dam hover:underline" href={`/hoa-don/${r.id}`}>{r.ma}</Link> }, { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_hd) },
-            { nhan: "Trạng thái", hienThi: (r) => ({ nhap: "Nháp", hoan_thanh: "Hoàn thành", huy: "Đã huỷ" } as Record<string, string>)[r.trang_thai] },
-            { nhan: "Phải thu", hienThi: (r) => tienVN(r.tong_phai_thu), phai: true }, { nhan: "Đã thu", hienThi: (r) => tienVN(r.da_thu), phai: true }, { nhan: "Còn nợ", hienThi: (r) => (r.trang_thai === "hoan_thanh" ? tienVN(r.con_no) : ""), phai: true },
-          ]} /></section>
-        <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Buổi đã thực hiện</h3>
-          <Bang duLieu={buoi ?? []} khoa={(r) => r.id} trong="Chưa có buổi nào." cot={[
-            { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_lam) }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" }, { nhan: "Người làm", hienThi: (r) => tenNv.get(r.nv_thuc_hien_id) ?? "" },
-            { nhan: "Trạng thái", hienThi: (r) => (r.trang_thai === "da_lam" ? "Đã làm" : "Đã huỷ") }, { nhan: "Doanh thu buổi", hienThi: (r) => tienVN(r.doanh_thu_buoi), phai: true },
-          ]} /></section>
-        <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Lịch hẹn gần đây</h3>
-          <Bang duLieu={lich ?? []} khoa={(r) => r.id} trong="Chưa có lịch hẹn." cot={[
-            { nhan: "Giờ hẹn", hienThi: (r) => ngayGioVN(r.bat_dau) },
-            { nhan: "Dịch vụ", hienThi: (r) => (r.lich_hen_dich_vu ?? []).map((x) => tenDv.get(x.dich_vu_id) ?? "").filter(Boolean).join(", ") },
-            { nhan: "Trạng thái", hienThi: (r) => NHAN_TRANG_THAI_LICH[r.trang_thai] ?? r.trang_thai },
-          ]} /></section>
-      </div>
-    );
+    noiDung = <LichSuGiaoDich khachId={id} t={sp} />;
   } else if (tab === "khieu-nai") {
     const xemKn = coQuyen(nd, "kn.ghi") || coQuyen(nd, "kn.duyet");
     const [{ data: kns }, { data: bcs }, { data: bhs }, { data: buoiDa }, { data: dvAll }, { data: chBh }] = await Promise.all([
@@ -294,6 +271,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             {coQuyen(nd, "lich.sua") && <Link href={`/lich-hen?khach=${id}`} className={NUT_LIEN_KET}>Đặt lịch</Link>}
             {coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?khach=${id}`} className="nut-vang flex h-9 items-center rounded-nho px-3.5 text-[13px]">Tạo đơn</Link>}
             <Link href={`/in-ma-khach/${id}`} target="_blank" className={NUT_LIEN_KET}>In mã</Link>
+            <Link href={`/in-ma-khach/${id}?kieu=phieu`} target="_blank" className={NUT_LIEN_KET}>In phiếu</Link>
             {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
           </div>
         </div>

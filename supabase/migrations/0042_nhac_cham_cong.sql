@@ -18,25 +18,35 @@ create table public.nhac_da_gui (
   primary key (nhan_vien_id, ngay, loai)
 );
 
-create extension if not exists supabase_vault;
-create extension if not exists pg_net;
-create extension if not exists pg_cron;
+-- Phần lịch và mã bí mật chỉ chạy trên Supabase thật (có Vault, pg_cron, pg_net); cơ sở dữ liệu thử cục bộ không có thì bỏ qua.
+do $mig$
+begin
+  if not exists (select 1 from pg_available_extensions where name in ('supabase_vault', 'pg_cron', 'pg_net') having count(*) = 3) then
+    raise notice 'Bỏ qua lịch nhắc: máy này không có supabase_vault, pg_cron, pg_net.';
+    return;
+  end if;
+  create extension if not exists supabase_vault;
+  create extension if not exists pg_net;
+  create extension if not exists pg_cron;
 
-select vault.create_secret(replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''), 'cron_nhac_token', 'Mã bí mật để lịch Supabase gọi /api/cron/nhac-cham-cong');
+  perform vault.create_secret(replace(gen_random_uuid()::text || gen_random_uuid()::text, '-', ''), 'cron_nhac_token', 'Mã bí mật để lịch Supabase gọi /api/cron/nhac-cham-cong');
 
-create function public.kiem_token_cron(p text) returns boolean language sql security definer set search_path = '' as $$
-  select exists (select 1 from vault.decrypted_secrets where name = 'cron_nhac_token' and decrypted_secret = p)
-$$;
-revoke all on function public.kiem_token_cron(text) from public, anon, authenticated;
-grant execute on function public.kiem_token_cron(text) to service_role;
+  execute $f$
+    create or replace function public.kiem_token_cron(p text) returns boolean language sql security definer set search_path = '' as $b$
+      select exists (select 1 from vault.decrypted_secrets where name = 'cron_nhac_token' and decrypted_secret = p)
+    $b$ $f$;
+  revoke all on function public.kiem_token_cron(text) from public, anon, authenticated;
+  grant execute on function public.kiem_token_cron(text) to service_role;
 
--- 00:00–16:55 UTC = 07:00–23:55 giờ Việt Nam, mỗi 5 phút.
-select cron.schedule('nhac-cham-cong', '*/5 0-16 * * *', $cron$
-  select net.http_get(
-    url := 'https://amia-os-neon.vercel.app/api/cron/nhac-cham-cong',
-    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'cron_nhac_token')),
-    timeout_milliseconds := 25000
-  )
-$cron$);
+  -- 00:00–16:55 UTC = 07:00–23:55 giờ Việt Nam, mỗi 5 phút.
+  perform cron.schedule('nhac-cham-cong', '*/5 0-16 * * *', $cron$
+    select net.http_get(
+      url := 'https://amia-os-neon.vercel.app/api/cron/nhac-cham-cong',
+      headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'cron_nhac_token')),
+      timeout_milliseconds := 25000
+    )
+  $cron$);
+end
+$mig$;
 
 select public.khoa_tat_ca_bang();

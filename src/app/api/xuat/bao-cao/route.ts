@@ -6,13 +6,12 @@ import { khoangNgay } from "@/lib/bao-cao";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
-import { gomTheoKy, kieuGom, layLichSuDungThe, layNhanVienSh, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, kieuGom, layLichSuDungThe, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
  *  Quyền chặn ở máy chủ: cần `baocao.xem`; tab có số tiền cần thêm `baocao.tien` (giống trang). Người gắn chi nhánh chỉ xuất được chi nhánh của mình. */
 const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia", "ti-le-chot"]);
-const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 export async function GET(req: Request) {
   const nd = await kiemQuyen("baocao.xem");
   if (!nd) return new Response("Không đủ quyền xem báo cáo", { status: 403 });
@@ -98,9 +97,12 @@ export async function GET(req: Request) {
       { nhan: "Doanh số sản phẩm", khoa: "dsSanPham", tien: true }, { nhan: "Tổng số thẻ đã bán", khoa: "soThe", so: true }, { nhan: "Doanh số bán thẻ", khoa: "dsThe", tien: true },
       { nhan: "Số lần tư vấn", khoa: "soTuVan", so: true }, { nhan: "Doanh số tư vấn", khoa: "dsTuVan", tien: true }, { nhan: "Tổng doanh số", khoa: "tong", tien: true }] });
   } else if (tab === "dich-vu") {
-    const { data } = await db.rpc("bc_muc_ban", { p_tu: tu, p_den: den, p_cn: cn as string });
-    bangs.push({ ten: "Theo dịch vụ, sản phẩm", dong: (data ?? []).map((r) => ({ ...r, loai: LOAI[r.loai] ?? r.loai })), cot: [
-      { nhan: "Loại", khoa: "loai", rong: 12 }, { nhan: "Tên", khoa: "ten", rong: 44 }, { nhan: "Số lượng", khoa: "so_luong", so: true }, { nhan: "Doanh số", khoa: "doanh_so", tien: true }] });
+    const loc1 = LOC_LOAI.find((l) => l.ma === (u.searchParams.get("loai") ?? "")) ?? LOC_LOAI[0];
+    const lm = u.searchParams.get("lm");
+    const ds = (await laySanPhamDichVu(db, tu, den, cn)).filter((r) => loc1.gom.includes(r.loai) && (!lm || r.loai === lm));
+    bangs.push({ ten: "Theo dịch vụ, sản phẩm", dong: ds, cot: [
+      { nhan: "Tên", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 16 }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Trước giảm giá", khoa: "truoc", tien: true },
+      { nhan: "Sau giảm giá", khoa: "sau", tien: true }, { nhan: "Trừ thẻ tiền", khoa: "truThe", tien: true }, { nhan: "Thực nhận", khoa: "thucNhan", tien: true }] });
   } else if (tab === "no") {
     const ds = await docHet((a, b) => {
       let q = db.from("hoa_don").select("id, ma, ngay_hd, tong_phai_thu, da_thu, con_no, khach_id").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd").order("id");

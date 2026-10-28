@@ -105,3 +105,18 @@ export async function layNhanVienSh(db: Db, tu: string, den: string, cn?: string
     return { ...x, tong: x.dsDichVu + x.dsSanPham + x.dsThe + x.dsTuVan };
   }).sort((a, b) => b.tong - a.tong);
 }
+
+export const LOAI_MUC = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", ban_the: "Bán thẻ", dung_the: "Dùng thẻ" } as const;
+export type LoaiMuc = keyof typeof LOAI_MUC;
+/** Bộ lọc loại ở đầu trang (như SalonHero): Dịch vụ & sản phẩm / Dịch vụ / Sản phẩm / Thẻ. */
+export const LOC_LOAI: { ma: string; ten: string; gom: LoaiMuc[] }[] = [
+  { ma: "", ten: "Dịch vụ & sản phẩm", gom: ["dich_vu", "san_pham", "ban_the", "dung_the"] },
+  { ma: "dv", ten: "Dịch vụ", gom: ["dich_vu", "ban_the", "dung_the"] },
+  { ma: "sp", ten: "Sản phẩm", gom: ["san_pham"] },
+  { ma: "the", ten: "Thẻ", gom: ["ban_the", "dung_the"] },
+];
+export async function laySanPhamDichVu(db: Db, tu: string, den: string, cn?: string) {
+  const { data, error } = await db.rpc("bc_san_pham_dich_vu", { p_tu: tu, p_den: den, p_cn: tuyChon(cn) });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({ loai: r.loai as LoaiMuc, ma: r.ma, ten: r.loai === "ban_the" ? `Bán ${r.ten}` : r.loai === "dung_the" ? `Sử dụng ${r.ten}` : r.ten, soLuong: Number(r.so_luong), truoc: Number(r.truoc), sau: Number(r.sau), truThe: Number(r.tru_the), thucNhan: Number(r.thuc_nhan) }));
+}

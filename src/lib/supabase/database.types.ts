@@ -10338,6 +10338,19 @@ export type Database = {
           thuc_thu: number
         }[]
       }
+      bc_san_pham_dich_vu: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          loai: string
+          ma: string
+          sau: number
+          so_luong: number
+          ten: string
+          thuc_nhan: number
+          tru_the: number
+          truoc: number
+        }[]
+      }
       bc_the_con_du: {
         Args: { p_cn?: string }
         Returns: {

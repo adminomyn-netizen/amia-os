@@ -124,3 +124,12 @@ describe("bc_nhan_vien_sh", () => {
     expect(r.find((x) => x.ho_ten === "KTV nghỉ")).toMatchObject({ so_tu_van: 1, ds_tu_van: 319600 });
   });
 });
+
+describe("bc_san_pham_dich_vu", () => {
+  it("tách dùng thẻ / bán thẻ / dịch vụ trả tiền; trước giảm giá, sau giảm giá, trừ thẻ tiền, thực nhận", async () => {
+    const r = await q<Record<string, string | number>>(`select loai, ten, so_luong::int, truoc::int, sau::int, tru_the::int, thuc_nhan::int from bc_san_pham_dich_vu('2026-10-01','2026-10-31',$1)`, [VINH]);
+    // SH-12: một dòng dịch vụ làm bằng thẻ (0 đồng), đơn 1M trừ thẻ 0,4M nhưng không có dòng nào có doanh số để chia → trừ thẻ ở dòng 0
+    const dung = r.find((x) => x.loai === "dung_the");
+    expect(dung).toMatchObject({ ten: "Chăm sóc da", so_luong: 2, truoc: 0, sau: 0 });
+  });
+});

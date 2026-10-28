@@ -20,17 +20,17 @@ import { BaoCaoTiLeChot } from "@/components/bao-cao/BaoCaoTiLeChot";
 import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 import { BaoCaoLichSuDungThe, BaoCaoTheoChiNhanh, BaoCaoTheoKhachHang } from "@/components/bao-cao/BaoCaoGap";
 import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
-import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layNhanVienSh, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
 const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
 const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "danh-gia", "ti-le-chot"]);
 /** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
 const TAB_NHOM: Record<string, "tong" | "thang"> = { "thu-ngan": "tong", "dat-lich": "thang", "dung-dich-vu": "thang" };
+const Chip = ({ href, dang, ten }: { href: string; dang: boolean; ten: string }) => <Link href={href} scroll={false} aria-current={dang ? "page" : undefined} className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${dang ? "bg-nhan text-white" : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{ten}</Link>;
 const TieuDeMuc = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-6 text-[15px] font-medium text-muc">{children}</h2>;
-const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 
-export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; hang?: string; tt?: string; lt?: string; so?: string }> }) {
+export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; loai?: string; lm?: string; hang?: string; tt?: string; lt?: string; so?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
   const sp = await searchParams;
   const tien = coQuyen(nd, "baocao.tien");
@@ -47,7 +47,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
   const loc = { tu, den, cn, nhom, doiTuNgay };
   const coChiNhanh = !cn && (dsCn ?? []).length > 1;
-  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
+  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "dich-vu" ? `${sp.loai ? `&loai=${sp.loai}` : ""}${sp.lm ? `&lm=${sp.lm}` : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
   let noiDung: React.ReactNode;
 
   const dsChiNhanh = nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
@@ -140,12 +140,33 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
       </>
     );
   } else if (tab === "dich-vu") {
-    const { data } = await db.rpc("bc_muc_ban", { p_tu: tu, p_den: den, p_cn: cn as string });
+    const tatCa = await laySanPhamDichVu(db, tu, den, cn);
+    const loc1 = LOC_LOAI.find((l) => l.ma === (sp.loai ?? "")) ?? LOC_LOAI[0];
+    const ds1 = tatCa.filter((r) => loc1.gom.includes(r.loai));
+    const lm = (Object.keys(LOAI_MUC) as LoaiMuc[]).find((k) => k === sp.lm);
+    const ds = lm ? ds1.filter((r) => r.loai === lm) : ds1;
+    const tong = (k: "sau" | "truThe" | "thucNhan", loai?: LoaiMuc) => ds1.filter((r) => !loai || r.loai === loai).reduce((t, r) => t + r[k], 0);
+    const goc = `/bao-cao?tab=dich-vu${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
     noiDung = (
       <>
         {lc}
-        <Bang duLieu={data ?? []} khoa={(r) => `${r.loai}-${r.muc_id}`} trong="Chưa bán gì trong khoảng này."
-          cot={[{ nhan: "Loại", hienThi: (r) => LOAI[r.loai] }, { nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Số lượng", hienThi: (r) => soVN(r.so_luong), phai: true }, { nhan: "Doanh số", hienThi: (r) => tienVN(r.doanh_so), phai: true }]} />
+        <nav aria-label="Loại" className="mb-4 flex gap-2 overflow-x-auto pb-1">{LOC_LOAI.map((l) => <Chip key={l.ma} href={`${goc}${l.ma ? `&loai=${l.ma}` : ""}`} dang={loc1.ma === l.ma} ten={l.ten} />)}</nav>
+        <HangChiSo muc={[
+          { nhan: "Tổng doanh thu", so: tienVN(tong("sau")) }, { nhan: "Trừ thẻ tiền", so: tienVN(tong("truThe")) }, { nhan: "Tổng thực nhận", so: tienVN(tong("thucNhan")) },
+          { nhan: "Doanh thu dịch vụ", so: tienVN(tong("sau", "dich_vu")) }, { nhan: "Doanh thu sản phẩm", so: tienVN(tong("sau", "san_pham")) }, { nhan: "Doanh thu bán thẻ", so: tienVN(tong("sau", "ban_the")) },
+        ]} />
+        <TieuDeMuc>Bảng số liệu các dịch vụ (không tính giảm giá hóa đơn và thuế)</TieuDeMuc>
+        <nav aria-label="Lọc bảng" className="mb-3 flex gap-2 overflow-x-auto pb-1">
+          <Chip href={`${goc}${sp.loai ? `&loai=${sp.loai}` : ""}`} dang={!lm} ten="Tất cả" />
+          {(Object.keys(LOAI_MUC) as LoaiMuc[]).map((k) => <Chip key={k} href={`${goc}${sp.loai ? `&loai=${sp.loai}` : ""}&lm=${k}`} dang={lm === k} ten={LOAI_MUC[k]} />)}
+        </nav>
+        <Bang duLieu={ds} khoa={(r) => `${r.loai}-${r.ten}`} trong="Chưa bán gì trong khoảng này."
+          cot={[
+            { nhan: "Tên dịch vụ", chinh: true, hienThi: (r) => <span className="block"><span className="text-muc">{r.ten}</span><span className="block text-[12px] text-muc-3">{r.ma}</span></span> },
+            { nhan: "Số lượng", hienThi: (r) => soVN(r.soLuong), phai: true }, { nhan: "Trước giảm giá", hienThi: (r) => tienVN(r.truoc), phai: true }, { nhan: "Sau giảm giá", hienThi: (r) => tienVN(r.sau), phai: true },
+            { nhan: "Trừ thẻ tiền", hienThi: (r) => tienVN(r.truThe), phai: true }, { nhan: "Thực nhận", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.thucNhan)}</span>, phai: true },
+          ]} />
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Một dòng = một mặt hàng theo loại. Trước giảm giá = đơn giá × số lượng; Sau giảm giá = thành tiền đã chia giảm giá cả đơn; Trừ thẻ tiền = phần đơn thanh toán bằng thẻ tiền, chia theo doanh số từng dòng; Thực nhận = Sau giảm giá − Trừ thẻ tiền. Dùng thẻ là dịch vụ làm bằng thẻ liệu trình (không thu tiền lúc làm). Nút “Xem” danh sách khách của SalonHero chưa có.</p>
       </>
     );
   } else if (tab === "no") {

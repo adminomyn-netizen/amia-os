@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -28,7 +29,9 @@ export default async function TrangCongNo({ searchParams }: { searchParams: Prom
   return (
     <div>
       <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho &amp; Mua sắm</Link>
-      <TieuDeTrang tieuDe="Công nợ nhà cung cấp" phu="Công nợ phải trả: tăng khi nhận hàng, giảm khi thanh toán. Thanh toán tự ghi một dòng chi vào Sổ quỹ." />
+      <TieuDeTrang tieuDe="Công nợ nhà cung cấp" phu="Công nợ phải trả: tăng khi nhận hàng, giảm khi thanh toán. Thanh toán tự ghi một dòng chi vào Sổ quỹ.">
+        <NutXuatExcel loai="cong-no-ncc" ten="công nợ nhà cung cấp" />
+      </TieuDeTrang>
       <HangChiSo muc={[{ nhan: "Tổng phải trả", so: tienVN(tong) }, { nhan: "Nhà cung cấp còn nợ", so: String(co.length) }]} />
       <div className="mt-5">
         <Bang duLieu={co} khoa={(r) => r.ncc_id ?? ""} trong="Hiện không còn khoản nợ nhà cung cấp nào."

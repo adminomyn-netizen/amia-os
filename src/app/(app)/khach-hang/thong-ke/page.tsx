@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { unstable_cache } from "next/cache";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
@@ -48,6 +49,7 @@ export default async function ThongKeKhach() {
       <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="chu-tieu-de text-[22px] text-muc">Thống kê khách</h1>
+        <NutXuatExcel loai="thong-ke-khach" ten="thống kê khách" />
         <p className="text-[13px] text-muc-3">{so(t.tong)} khách · tổng {so(t.tong_diem)} điểm thưởng · số liệu làm mới mỗi 5 phút</p>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">

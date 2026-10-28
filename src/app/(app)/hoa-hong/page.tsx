@@ -1,4 +1,5 @@
 import { yeuCauQuyen } from "@/lib/auth";
+import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
@@ -55,7 +56,9 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
   }
   return (
     <>
-      <TieuDeTrang tieuDe="Hoa hồng" phu="Tính từ hoá đơn đã chốt: doanh số chia theo vai Phục vụ, Tư vấn, Bán hàng, nhân tỉ lệ hoa hồng." />
+      <TieuDeTrang tieuDe="Hoa hồng" phu="Tính từ hoá đơn đã chốt: doanh số chia theo vai Phục vụ, Tư vấn, Bán hàng, nhân tỉ lệ hoa hồng.">
+        {tab === "bang" ? <NutXuatExcel loai="hoa-hong" ten="bảng hoa hồng theo bộ lọc đang chọn" tham={{ tu, den, cn: sp.cn }} /> : <NutXuatExcel loai="ti-le-hoa-hong" ten="tỉ lệ hoa hồng" />}
+      </TieuDeTrang>
       <Tab muc={TAB} dang={tab} goc="/hoa-hong" them={`${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}`} />
       {noiDung}
     </>

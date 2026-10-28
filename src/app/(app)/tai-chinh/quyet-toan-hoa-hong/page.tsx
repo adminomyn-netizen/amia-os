@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -38,7 +39,7 @@ export default async function TrangQuyetToanHoaHong({ searchParams }: { searchPa
     <div>
       <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
       <TieuDeTrang tieuDe={`Quyết toán hoa hồng ${String(m).padStart(2, "0")}/${y}`} phu="Hoa hồng tính từ doanh số hoá đơn hoàn thành theo tỉ lệ chia và bảng tỉ lệ hoa hồng. Khi tính kỳ lương, số này được chốt vào bảng lương; trang này cho thấy số hiện tại và số đã chốt để phát hiện lệch.">
-        <div className="flex gap-3 text-[14px]"><Link href={`/tai-chinh/quyet-toan-hoa-hong?thang=${thangTruoc}`} className="text-nhan-dam hover:underline">← Tháng trước</Link>{thangSau <= `${ny}-${String(nt).padStart(2, "0")}` && <Link href={`/tai-chinh/quyet-toan-hoa-hong?thang=${thangSau}`} className="text-nhan-dam hover:underline">Tháng sau →</Link>}</div>
+        <div className="flex items-center gap-3 text-[14px]"><NutXuatExcel loai="quyet-toan-hoa-hong" ten={`quyết toán hoa hồng tháng ${thang}`} tham={{ thang }} /><Link href={`/tai-chinh/quyet-toan-hoa-hong?thang=${thangTruoc}`} className="text-nhan-dam hover:underline">← Tháng trước</Link>{thangSau <= `${ny}-${String(nt).padStart(2, "0")}` && <Link href={`/tai-chinh/quyet-toan-hoa-hong?thang=${thangSau}`} className="text-nhan-dam hover:underline">Tháng sau →</Link>}</div>
       </TieuDeTrang>
       <HangChiSo muc={[
         { nhan: "Hoa hồng hiện tại", so: tienVN(tongHh), ghiChu: `${dong.length} người` },

@@ -1,32 +1,16 @@
-import ExcelJS from "exceljs";
 import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
+import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat as Bang, type Cot } from "@/lib/xuat-excel";
 import { khoangNgay } from "@/lib/bao-cao";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
  *  Quyền chặn ở máy chủ: cần `baocao.xem`; tab có số tiền cần thêm `baocao.tien` (giống trang). Người gắn chi nhánh chỉ xuất được chi nhánh của mình. */
-type Cot = { nhan: string; khoa: string; rong?: number; tien?: boolean; so?: boolean };
-type Bang = { ten: string; cot: Cot[]; dong: Record<string, unknown>[] };
-
 const TAB_KHONG_TIEN = new Set(["dat-lich"]);
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
-const ngay = (s: string | null | undefined) => (s ? s.slice(0, 10).split("-").reverse().join("/") : "");
-
-/** Đọc hết dữ liệu qua API (mỗi lần tối đa 1.000 dòng). */
-async function docHet<T>(lay: (tu: number, den: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) {
-  const ra: T[] = [];
-  for (let i = 0; ; i += 1000) {
-    const { data, error } = await lay(i, i + 999);
-    if (error) throw new Error(error.message);
-    ra.push(...(data ?? []));
-    if (!data || data.length < 1000) return ra;
-  }
-}
-
 export async function GET(req: Request) {
   const nd = await kiemQuyen("baocao.xem");
   if (!nd) return new Response("Không đủ quyền xem báo cáo", { status: 403 });
@@ -119,16 +103,5 @@ export async function GET(req: Request) {
     return new Response("Không có báo cáo này", { status: 404 });
   }
 
-  const wb = new ExcelJS.Workbook();
-  for (const b of bangs) {
-    const ws = wb.addWorksheet(b.ten.slice(0, 31));
-    ws.columns = b.cot.map((c) => ({ header: c.nhan, key: c.khoa, width: c.rong ?? (c.tien ? 18 : 12) }));
-    for (const r of b.dong) ws.addRow(Object.fromEntries(b.cot.map((c) => [c.khoa, c.tien || c.so ? Number(r[c.khoa] ?? 0) : (r[c.khoa] ?? "")])));
-    ws.getRow(1).font = { bold: true };
-    ws.views = [{ state: "frozen", ySplit: 1 }];
-    b.cot.forEach((c, i) => { if (c.tien || c.so) ws.getColumn(i + 1).numFmt = "#,##0"; });
-  }
-  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xuat_excel", doi_tuong: "bao_cao", chi_tiet: { tab, tu, den, chi_nhanh_id: cn ?? null, so_dong: bangs.reduce((s, b) => s + b.dong.length, 0) } });
-  const buf = await wb.xlsx.writeBuffer();
-  return new Response(buf as ArrayBuffer, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="bao-cao-${tab}-${tu}-${den}.xlsx"`, "Cache-Control": "no-store" } });
+  return phanHoiExcel(db, nd, bangs, { tenTep: `bao-cao-${tab}-${tu}-${den}`, doiTuong: "bao_cao", chiTiet: { tab, tu, den, chi_nhanh_id: cn ?? null } });
 }

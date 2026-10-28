@@ -68,6 +68,18 @@ async function nhacQuanLy(nd: Nd, hom: string, phutNay: number): Promise<CanhBao
       ra.push({ ma: `tomtat_${loai}`, href: "/bao-cao", nhan: `${t.tieu_de}. ${t.noi_dung}` });
     }
   }
+  // Tuyển dụng cho người quản lý nhân sự: yêu cầu chờ tiếp nhận, ứng viên mới nộp chưa xử lý, tin sắp/đã quá hạn nộp mà chưa đóng.
+  if (suaCong) {
+    const ba = congNgay(hom, 3);
+    const [{ count: yc }, { count: uvMoi }, { data: tins }] = await Promise.all([
+      db.from("yeu_cau_tuyen_dung").select("id", { count: "exact", head: true }).eq("trang_thai", "Chờ tiếp nhận"),
+      db.from("ung_vien").select("id", { count: "exact", head: true }).eq("trang_thai", "Mới nộp"),
+      db.from("tin_tuyen_dung").select("han_nop").neq("trang_thai", "Đã đóng").not("han_nop", "is", null).lte("han_nop", ba),
+    ]);
+    if ((yc ?? 0) > 0) ra.push({ ma: "tdyc", href: "/nhan-su/tuyen-dung?tab=yeu-cau", nhan: `${yc} yêu cầu tuyển dụng đang chờ tiếp nhận.` });
+    if ((uvMoi ?? 0) > 0) ra.push({ ma: "tduv", href: "/nhan-su/tuyen-dung", nhan: `${uvMoi} ứng viên mới nộp chưa được xử lý.` });
+    if ((tins?.length ?? 0) > 0) ra.push({ ma: "tdtin", href: "/nhan-su/tuyen-dung?tab=tin", nhan: `${tins!.length} tin tuyển dụng sắp hoặc đã quá hạn nộp mà chưa đóng.` });
+  }
   if (!xemCong && !suaCong && !xemLuong) return ra;
   const [caMap, { data: ccHom }, { data: khoa }, { count: ccThangTruoc }, { count: lichThangSau }, { data: ky }] = await Promise.all([
     xemCong && phutNay >= 9 * 60 - 60 ? caCuaNhieuNguoi(hom) : null,

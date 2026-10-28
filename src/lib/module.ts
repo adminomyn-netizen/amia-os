@@ -90,6 +90,7 @@ export const MODULE: Module[] = [
       { nhan: "Hồ sơ", the: [
         { ten: "Hồ sơ nhân viên", moTa: "Thông tin, vai trò, chi nhánh, trạng thái.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Onboarding thử việc", moTa: "Các mốc 0, 3, 7, 30, 60 ngày cho nhân viên mới.", duongDan: "/nhan-su/onboarding", trangThai: "san_sang", quyen: ["cong.xem"] },
+        { ten: "Tuyển dụng", moTa: "Yêu cầu tuyển, tin tuyển dụng, ứng viên theo bước, kênh đăng và chi phí.", duongDan: "/nhan-su/tuyen-dung", trangThai: "san_sang", quyen: ["cong.xem"] },
         { ten: "Hợp đồng lao động", moTa: "Thử việc → HĐLĐ lần 1 → lần 2 → không xác định thời hạn; nhắc trước 45 ngày.", duongDan: "/nhan-su/hop-dong", trangThai: "san_sang", quyen: ["cong.xem"] },
       ] },
       { nhan: "Chấm công", the: [

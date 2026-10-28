@@ -7,13 +7,21 @@ export type BaoCaoSang = {
   hom_nay: { ngay: string; so_lich: number; sinh_nhat: number; sinh_nhat_ten: string[]; nhac_den_han: number; nhac_qua_han: number; the_sap_het: number; tai_kham: number };
 };
 
-/** Văn bản báo cáo sáng sẵn để dán vào Zalo/Lark cho quản lý. */
-export function vietBaoCaoSang(b: BaoCaoSang, tenChiNhanh: string | null): string {
+/** Tên khối theo giờ Việt Nam: sáng là báo cáo sáng, trong ngày là cập nhật, tối là tổng kết (tránh gọi 'báo cáo sáng' vào buổi tối). */
+export const gioVNHienTai = () => new Date(Date.now() + 7 * 3600e3).getUTCHours();
+export function tieuDeTheoGio(gio: number): { tieuDe: string; phu: string } {
+  if (gio < 11) return { tieuDe: "Báo cáo sáng", phu: "hôm qua và việc cần làm hôm nay" };
+  if (gio < 18) return { tieuDe: "Cập nhật trong ngày", phu: "tình hình hôm nay đến lúc này" };
+  return { tieuDe: "Tổng kết ngày", phu: "hôm nay đã diễn ra thế nào" };
+}
+
+/** Văn bản báo cáo sẵn để dán vào Zalo/Lark cho quản lý. */
+export function vietBaoCaoSang(b: BaoCaoSang, tenChiNhanh: string | null, tieuDe = "Báo cáo sáng"): string {
   const q = b.hom_qua, n = b.hom_nay;
   const ten = n.sinh_nhat_ten ?? [];
   const sn = n.sinh_nhat > 0 ? `${n.sinh_nhat} khách sinh nhật (${ten.join(", ")}${n.sinh_nhat > ten.length ? ", …" : ""})` : "không có khách sinh nhật";
   return [
-    `BÁO CÁO SÁNG ${ngayVN(b.ngay)} · ${tenChiNhanh ?? "Tất cả chi nhánh"}`,
+    `${tieuDe.toUpperCase()} ${ngayVN(b.ngay)} · ${tenChiNhanh ?? "Tất cả chi nhánh"}`,
     `Hôm qua (${ngayVN(q.ngay)}): ${q.so_hoa_don} hoá đơn · ${q.lich_hoan_thanh} lịch hoàn thành · ${q.lich_huy} lịch huỷ · ${q.lich_khong_den} khách không đến · ${q.khach_moi} khách mới.`,
     `Hôm nay: ${n.so_lich} lịch hẹn · ${sn} · ${n.nhac_den_han} nhắc đến hạn hôm nay${n.nhac_qua_han > 0 ? ` (còn ${n.nhac_qua_han} nhắc quá hạn chưa xử lý)` : ""} · ${n.the_sap_het} thẻ sắp hết · ${n.tai_kham} khách đến hẹn tái khám.`,
   ].join("\n");

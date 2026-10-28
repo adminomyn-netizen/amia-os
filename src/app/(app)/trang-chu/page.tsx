@@ -175,8 +175,6 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
       )}
       {sp["khong-du-quyen"] && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p>}
 
-      {dieuHanh && coQuyen(nd, "baocao.xem") && <BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} />}
-
       {dieuHanh ? (
         <BangDieuHanh canhBao={canhBao} tin={tin.map((t) => ({ id: t.id, tieu_de: t.tieu_de, noi_dung: t.noi_dung }))} top={top}
           so={{ lich: soLich, dangCho, khongDen, hoanThanh: Math.max(0, soLich - dangCho), choXacNhan: soLieu?.lich.find((x) => x.nhan === "Chưa xác nhận")?.so ?? 0, dangPhucVu: soLieu?.lich.find((x) => x.nhan === "Đang phục vụ")?.so ?? 0, thuChiTiet: hn ? `doanh thu ${tienVN(Number(hn.doanh_thu))}` : "", tongNo: soLieu?.thang.congNo ?? 0, khoThap: canhBao.filter((c) => c.ma === "kho").length, leadChua: 0, nhanCn: dsCn, cnDangChon: cn, thuHomNay: coQuyen(nd, "baocao.tien") ? Number(hn?.thuc_thu ?? 0) : null, noMoi: coQuyen(nd, "baocao.tien") ? Number(hn?.no_moi ?? 0) : null }} soLieu={soLieu} xemTien={coQuyen(nd, "baocao.tien")} />
@@ -194,6 +192,8 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
           </dl>
         </>
       )}
+
+      {dieuHanh && coQuyen(nd, "baocao.xem") && <BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} />}
 
       {nd.vaiTro === "ky_thuat" && <BangHieuSuatApp d={await doHieuSuatApp(batDau)} />}
 

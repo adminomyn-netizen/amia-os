@@ -52,3 +52,12 @@ describe("Kỹ thuật viên (SalonHero: Nhân viên, Tư vấn bán hàng)", ()
     expect(co("ktv", "the.xem") && co("ktv", "the.thuchien")).toBe(true);
   });
 });
+
+describe("Kế toán (SalonHero: Kế toán)", () => {
+  it("xem lịch và thêm/sửa khách như SalonHero; chưa nới: bán hàng, huỷ hoá đơn, sửa danh mục, nhập kho, phân quyền", () => {
+    expect(co("ke_toan", "lich.xem")).toBe(true);
+    expect(co("ke_toan", "khach.sua")).toBe(true);
+    for (const q of ["ban.tao", "ban.huy", "danhmuc.sua", "kho.nhap", "mua.tao", "nhanvien.quanly", "hethong.phanquyen", "lich.sua"] as const) expect(co("ke_toan", q)).toBe(false);
+    expect(co("ke_toan", "quy.ghi") && co("ke_toan", "ky.khoa") && co("ke_toan", "luong.sua")).toBe(true);
+  });
+});

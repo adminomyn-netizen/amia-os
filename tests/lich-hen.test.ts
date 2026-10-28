@@ -19,3 +19,24 @@ describe("lịch lặp", () => {
     expect(moTaLap({ kieu_lap: null })).toBe("");
   });
 });
+
+import { cacNgayTrong, chuTatTen, nhanCotNgay, nhanNgayDai, thuCuaNgay } from "@/lib/lich-hen";
+describe("lưới lịch hẹn kiểu SalonHero", () => {
+  it("nhãn cột ngày", () => {
+    expect(nhanCotNgay("2026-10-28", "2026-10-28")).toBe("Hôm nay (28/10)");
+    expect(nhanCotNgay("2026-10-29", "2026-10-28")).toBe("Thứ 5 (29/10)");
+    expect(nhanCotNgay("2026-11-01", "2026-10-28")).toBe("C.Nhật (01/11)");
+    expect(thuCuaNgay("2026-10-31")).toBe(6);
+    expect(nhanNgayDai("2026-10-28", "2026-10-28")).toBe("Thứ 4, 28/10/2026 (Hôm nay)");
+  });
+  it("khoảng ngày 8 ngày, qua tháng", () => {
+    expect(cacNgayTrong("2026-10-28", "2026-11-04")).toHaveLength(8);
+    expect(cacNgayTrong("2026-10-30", "2026-11-02")).toEqual(["2026-10-30", "2026-10-31", "2026-11-01", "2026-11-02"]);
+    expect(cacNgayTrong("2026-01-01", "2026-12-31", 31)).toHaveLength(31);
+  });
+  it("chữ tắt tên nhân viên", () => {
+    expect(chuTatTen("MSC.0134. Đinh Thị Hôngg Mây")).toBe("MĐ");
+    expect(chuTatTen("MSC.TV-25.0115.Nguyễn Thị Thư")).toBe("TN");
+    expect(chuTatTen("Tuyết Nhung KTV")).toBe("KT");
+  });
+});

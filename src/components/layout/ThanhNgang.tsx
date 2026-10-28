@@ -9,6 +9,8 @@ import { MENU, mucDangChon } from "@/lib/nav";
 export type MucNgang = {
   ten: string; ngan: string; duong_dan: string; nhom: string; moTa: string;
   con: { nhan: string; the: { ten: string; duongDan: string; moTa: string }[] }[];
+  /** Số đỏ cạnh tên mục (vd số lịch hẹn hôm nay); 0/không có = không hiện. */
+  dem?: number;
 };
 
 const KHOA = "amia-thanh-ben-thu-nho", SU_KIEN = "amia-thanh-ben-doi";
@@ -37,8 +39,8 @@ export function ThanhBen({ muc }: { muc: MucNgang[] }) {
             return (
               <li key={m.duong_dan}>
                 <Link href={m.duong_dan} title={nho ? m.ten : m.moTa} aria-label={nho ? m.ten : undefined} aria-current={dang ? "page" : undefined}
-                  className={`muc-menu flex h-11 items-center gap-3 rounded-nho text-[14.5px] ${nho ? "justify-center px-0" : "px-3.5"}`}>
-                  <Icon strokeWidth={1.7} className="h-[19px] w-[19px] shrink-0" aria-hidden />{!nho && <span className="min-w-0 truncate">{m.ten}</span>}
+                  className={`muc-menu relative flex h-11 items-center gap-3 rounded-nho text-[14.5px] ${nho ? "justify-center px-0" : "px-3.5"}`}>
+                  <Icon strokeWidth={1.7} className="h-[19px] w-[19px] shrink-0" aria-hidden />{!nho && <span className="min-w-0 truncate">{m.ten}</span>}{!!m.dem && <span className={`${nho ? "absolute right-1.5 top-1.5" : "ml-auto"} flex h-[18px] min-w-[18px] items-center justify-center rounded-[50%] bg-loi px-1 text-[11px] font-semibold leading-none text-white`} aria-label={`${m.dem} lịch hôm nay`}>{m.dem}</span>}
                 </Link>
               </li>
             );

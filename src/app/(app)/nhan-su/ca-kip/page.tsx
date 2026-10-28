@@ -28,7 +28,7 @@ export default async function TrangCaKip({ searchParams }: { searchParams: Promi
   const lich = new Map((pc ?? []).map((p) => [`${p.nhan_vien_id}|${p.ngay}`, p.nghi ? "Nghỉ" : tenCa.get(p.ca_id ?? "") ?? ""]));
   const ds = (nv ?? []).filter((n) => !nd.chiNhanhId || n.chi_nhanh_id === nd.chiNhanhId);
   const truongCa: Truong[] = [
-    { ten: "ten", nhan: "Tên ca", loai: "chu", batBuoc: true, rong: true }, { ten: "ma", nhan: "Mã ca (chữ hoa, không dấu)", loai: "chu", chiKhiTao: true }, { ten: "gio_vao", nhan: "Giờ vào (08:00)", loai: "chu", batBuoc: true }, { ten: "gio_ra", nhan: "Giờ ra (17:00)", loai: "chu", batBuoc: true },
+    { ten: "ten", nhan: "Tên ca", loai: "chu", batBuoc: true, rong: true }, { ten: "ma", nhan: "Mã ca", loai: "chu", chiKhiTao: true, goiY: "VP, CN…", ghiChu: "Chữ hoa, không dấu." }, { ten: "gio_vao", nhan: "Giờ vào", loai: "gio", batBuoc: true }, { ten: "gio_ra", nhan: "Giờ ra", loai: "gio", batBuoc: true, ghiChu: "Phải sau giờ vào." },
     { ten: "nghi_phut", nhan: "Nghỉ giữa ca (phút)", loai: "so" }, { ten: "dung_sai_phut", nhan: "Dung sai đi trễ (phút)", loai: "so" }, { ten: "gio_chuan", nhan: "Số giờ chuẩn", loai: "so" }, { ten: "hoat_dong", nhan: "Đang sử dụng", loai: "gat" },
   ];
   const truongPhan: Truong[] = [

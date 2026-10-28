@@ -18,7 +18,7 @@ export default async function TrangThongTinChung() {
     { ten: "ten_thuong_hieu", nhan: "Tên thương hiệu", loai: "chu", batBuoc: true }, { ten: "ten_phap_nhan", nhan: "Tên pháp nhân", loai: "chu", goiY: "Tên công ty trên giấy phép" },
     { ten: "ma_so_thue", nhan: "Mã số thuế", loai: "chu" }, { ten: "dien_thoai", nhan: "Điện thoại", loai: "chu" },
     { ten: "dia_chi", nhan: "Địa chỉ", loai: "chu", rong: true }, { ten: "email", nhan: "Email", loai: "email" }, { ten: "website", nhan: "Website", loai: "chu" },
-    { ten: "gio_mo", nhan: "Giờ mở cửa", loai: "chu", batBuoc: true, goiY: "08:00" }, { ten: "gio_dong", nhan: "Giờ đóng cửa", loai: "chu", batBuoc: true, goiY: "20:00" },
+    { ten: "gio_mo", nhan: "Giờ mở cửa", loai: "gio", batBuoc: true, denGio: "23:30" }, { ten: "gio_dong", nhan: "Giờ đóng cửa", loai: "gio", batBuoc: true, denGio: "23:30" },
     { ten: "nghi", nhan: "Ngày nghỉ cố định trong tuần", loai: "nhieu", luaChon: NGAY },
   ];
   const dong: [string, string | null | undefined][] = [

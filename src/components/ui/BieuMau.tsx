@@ -12,13 +12,30 @@ import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_CHU_NGUY, NUT_PHU, O_NHAP, O_NHIEU_DONG
 export type Truong = {
   ten: string;
   nhan: string;
-  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "mat_khau_an" | "email";
+  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "gio" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "mat_khau_an" | "email";
   luaChon?: LuaChon[];
   batBuoc?: boolean;
   goiY?: string;
   rong?: boolean;
   chiKhiTao?: boolean;
+  /** Dòng chú thích nhỏ dưới ô nhập (thay cho việc nhét hướng dẫn vào nhãn làm nhãn dài, lệch hàng). */
+  ghiChu?: string;
+  /** Chỉ hiện (và chỉ gửi) khi ô `ten` đang có một trong các giá trị `la`. */
+  hienKhi?: { ten: string; la: string[] };
+  /** Ô giờ (loai "gio"): chọn trong danh sách khung giờ cố định, mặc định 05:00–22:00 cách nhau 15 phút. */
+  tuGio?: string; denGio?: string; buocPhut?: number;
 };
+const gioSlot = (tu = "05:00", den = "22:00", buoc = 15): LuaChon[] => {
+  const ra: LuaChon[] = [], phut = (g: string) => Number(g.slice(0, 2)) * 60 + Number(g.slice(3, 5));
+  for (let m = phut(tu); m <= phut(den); m += buoc) { const g = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; ra.push({ gia_tri: g, nhan: g }); }
+  return ra;
+};
+/** Nhãn dài có phần trong ngoặc ("Số ngày (nghỉ nửa ngày: 0,5…)") được tách: nhãn gọn một dòng + chú thích nhỏ bên dưới, để các ô cùng hàng luôn thẳng nhau. */
+const tachNhan = (t: Truong): { nhan: string; ghiChu?: string } => {
+  const m = !t.ghiChu && t.nhan.length > 26 ? /^(.{3,}?)\s*\((.{6,})\)\s*$/.exec(t.nhan) : null;
+  return m ? { nhan: m[1], ghiChu: m[2].charAt(0).toUpperCase() + m[2].slice(1) } : { nhan: t.nhan, ghiChu: t.ghiChu };
+};
+const hien = (t: Truong, v: Record<string, unknown>) => !t.hienKhi || t.hienKhi.la.includes(String(v[t.hienKhi.ten] ?? ""));
 export type GiaTri = Record<string, string | number | boolean | string[] | null | undefined>;
 export type KetQuaHD = { ok?: boolean; loi?: string; [k: string]: unknown };
 
@@ -66,7 +83,7 @@ export function NutHop({
   const gui = () => {
     setLoi("");
     for (const t of truong) {
-      if (t.chiKhiTao && !laTao) continue;
+      if ((t.chiKhiTao && !laTao) || !hien(t, v)) continue;
       const gt = v[t.ten];
       if (t.batBuoc && (gt === undefined || gt === null || gt === "" || (Array.isArray(gt) && gt.length === 0))) {
         setLoi(`Chưa nhập: ${t.nhan}.`);
@@ -77,10 +94,11 @@ export function NutHop({
     for (const [k, x] of Object.entries(an)) fd.set(k, x);
     if (giaTri.id) fd.set("id", String(giaTri.id));
     for (const t of truong) {
+      if (!hien(t, v)) continue;
       const gt = v[t.ten];
       if (Array.isArray(gt)) gt.forEach((x) => fd.append(t.ten, x));
       else if (typeof gt === "boolean") fd.set(t.ten, gt ? "1" : "0");
-      else fd.set(t.ten, gt == null ? "" : String(gt));
+      else fd.set(t.ten, gt == null ? "" : t.loai === "gio" ? String(gt).slice(0, 5) : String(gt));
     }
     bat(async () => {
       const kq = await action(fd);
@@ -99,12 +117,13 @@ export function NutHop({
       <Hop mo={mo} dong={() => setMo(false)} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
         {xacNhan && <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p>}
         <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
-          {truong.filter((t) => !t.chiKhiTao || laTao).map((t) => {
+          {truong.filter((t) => (!t.chiKhiTao || laTao) && hien(t, v)).map((t) => {
             const gt = v[t.ten];
             const id = `f-${t.ten}`;
+            const { nhan: nhanO, ghiChu: ghiChuO } = tachNhan(t);
             return (
               <div key={t.ten} className={t.rong || t.loai === "nhieu_dong" || t.loai === "nhieu" ? "sm:col-span-2" : ""}>
-                {t.loai !== "gat" && <label htmlFor={id} className={NHAN_O}>{t.nhan}{t.batBuoc && <span className="text-loi"> *</span>}</label>}
+                {t.loai !== "gat" && <label htmlFor={id} className={NHAN_O}>{nhanO}{t.batBuoc && <span className="text-loi"> *</span>}</label>}
                 {t.loai === "chu" && <input id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
                 {t.loai === "email" && <input id={id} type="email" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
                 {t.loai === "mat_khau" && <input id={id} type="text" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
@@ -113,9 +132,11 @@ export function NutHop({
                 {t.loai === "tien" && <OTien id={id} giaTriMacDinh={Number(gt) || 0} onDoi={(n) => dat(t.ten, n)} />}
                 {t.loai === "chon" && <Chon id={id} luaChon={t.luaChon ?? []} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn"} />}
                 {t.loai === "ngay" && <NgayChon id={id} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} />}
+                {t.loai === "gio" && <Chon id={id} luaChon={[{ gia_tri: "", nhan: "Chưa chọn" }, ...gioSlot(t.tuGio, t.denGio, t.buocPhut)]} giaTri={String(gt ?? "").slice(0, 5)} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn giờ"} />}
                 {t.loai === "nhieu_dong" && <textarea id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHIEU_DONG} />}
                 {t.loai === "gat" && <Gat nhan={t.nhan} giaTriMacDinh={!!gt} onDoi={(x) => dat(t.ten, x)} />}
                 {t.loai === "nhieu" && <ONhieu luaChon={t.luaChon ?? []} giaTri={Array.isArray(gt) ? gt : []} onDoi={(x) => dat(t.ten, x)} />}
+                {ghiChuO && <p className="mt-1.5 text-[12px] leading-snug text-muc-3">{ghiChuO}</p>}
               </div>
             );
           })}

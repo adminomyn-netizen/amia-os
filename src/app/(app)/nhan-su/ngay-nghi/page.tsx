@@ -27,17 +27,22 @@ export default async function TrangNgayNghi({ searchParams }: { searchParams: Pr
   const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const ngoai = (ds ?? []).filter((p) => !nd.chiNhanhId || tab === "cua-toi" || (nv ?? []).find((n) => n.id === p.nhan_vien_id)?.chi_nhanh_id === nd.chiNhanhId);
   const nhanLoai = Object.entries(LOAI_PHIEU).map(([gia_tri, nhan]) => ({ gia_tri, nhan }));
+  const NHIEU_NGAY = ["nghi", "cong_tac", "lam_online"], THEO_GIO = ["lam_them", "di_tre_ve_som", "ra_ngoai"], CO_BAN_GIAO = ["nghi", "cong_tac"];
   const truong: Truong[] = [
     { ten: "loai", nhan: "Loại phiếu", loai: "chon", batBuoc: true, luaChon: nhanLoai },
-    { ten: "loai_nghi", nhan: "Loại nghỉ (khi chọn Nghỉ)", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...Object.entries(LOAI_NGHI).map(([gia_tri, nhan]) => ({ gia_tri, nhan }))] },
-    ...(sua ? [{ ten: "nhan_vien_id", nhan: "Tạo thay cho nhân viên (bỏ trống = chính tôi)", loai: "chon" as const, rong: true, luaChon: [{ gia_tri: "", nhan: "Chính tôi" }, ...(nv ?? []).filter((n) => n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: `${n.ho_ten} (${n.ma_nv})` }))] }] : []),
-    { ten: "tu_ngay", nhan: "Từ ngày", loai: "ngay", batBuoc: true }, { ten: "den_ngay", nhan: "Đến ngày (bỏ trống = một ngày)", loai: "ngay" },
-    { ten: "so_ngay", nhan: "Số ngày (nghỉ nửa ngày: 0,5; bỏ trống = đủ khoảng ngày)", loai: "so" }, { ten: "so_gio", nhan: "Số giờ (tăng ca, đi trễ, ra ngoài)", loai: "so" },
-    { ten: "vao_dieu_chinh", nhan: "Giờ vào đúng (điều chỉnh công, 08:00)", loai: "chu" }, { ten: "ra_dieu_chinh", nhan: "Giờ ra đúng (điều chỉnh công, 17:30)", loai: "chu" },
-    { ten: "loi_cham_cong", nhan: "Loại lỗi (điều chỉnh công)", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...Object.entries(LOI_CC).map(([gia_tri, nhan]) => ({ gia_tri, nhan }))] },
-    { ten: "nguoi_nhan_ban_giao_id", nhan: "Người nhận bàn giao", loai: "chon", rong: true, luaChon: [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))] },
+    { ten: "loai_nghi", nhan: "Loại nghỉ", loai: "chon", batBuoc: true, hienKhi: { ten: "loai", la: ["nghi"] }, luaChon: Object.entries(LOAI_NGHI).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
+    ...(sua ? [{ ten: "nhan_vien_id", nhan: "Tạo thay cho", loai: "chon" as const, rong: true, luaChon: [{ gia_tri: "", nhan: "Chính tôi" }, ...(nv ?? []).filter((n) => n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: `${n.ho_ten} (${n.ma_nv})` }))] }] : []),
+    { ten: "tu_ngay", nhan: "Từ ngày", loai: "ngay", batBuoc: true },
+    { ten: "den_ngay", nhan: "Đến ngày", loai: "ngay", hienKhi: { ten: "loai", la: NHIEU_NGAY }, ghiChu: "Bỏ trống = nghỉ một ngày." },
+    { ten: "so_ngay", nhan: "Số ngày", loai: "so", hienKhi: { ten: "loai", la: NHIEU_NGAY }, ghiChu: "Nghỉ nửa ngày: 0,5. Bỏ trống = đủ khoảng ngày." },
+    { ten: "so_gio", nhan: "Số giờ", loai: "so", batBuoc: true, hienKhi: { ten: "loai", la: THEO_GIO }, ghiChu: "Lớn hơn 0, tối đa 12 giờ." },
+    { ten: "vao_dieu_chinh", nhan: "Giờ vào đúng", loai: "gio", hienKhi: { ten: "loai", la: ["dieu_chinh_cc"] }, ghiChu: "Chọn ít nhất giờ vào hoặc giờ ra." },
+    { ten: "ra_dieu_chinh", nhan: "Giờ ra đúng", loai: "gio", hienKhi: { ten: "loai", la: ["dieu_chinh_cc"] } },
+    { ten: "loi_cham_cong", nhan: "Lý do điều chỉnh", loai: "chon", batBuoc: true, rong: true, hienKhi: { ten: "loai", la: ["dieu_chinh_cc"] }, luaChon: Object.entries(LOI_CC).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
+    { ten: "nguoi_nhan_ban_giao_id", nhan: "Người nhận bàn giao", loai: "chon", rong: true, hienKhi: { ten: "loai", la: CO_BAN_GIAO }, luaChon: [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))] },
     { ten: "ly_do", nhan: "Lý do", loai: "nhieu_dong", batBuoc: true, rong: true },
   ];
+
   const truongPhep: Truong[] = [
     { ten: "nhan_vien_id", nhan: "Nhân viên", loai: "chon", batBuoc: true, luaChon: (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: `${n.ho_ten} (${n.ma_nv})` })) }, { ten: "nam", nhan: "Năm", loai: "so", batBuoc: true },
     { ten: "so_ngay", nhan: "Số ngày cộng (âm để trừ)", loai: "so", batBuoc: true }, { ten: "ly_do", nhan: "Lý do (phép tồn năm trước, thưởng phép…)", loai: "chu", batBuoc: true, rong: true },

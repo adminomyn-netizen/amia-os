@@ -74,7 +74,7 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
     const ds = (cc ?? []).filter((c) => trongPhamVi(c.nhan_vien_id));
     const truong: Truong[] = [
       { ten: "nhan_vien_id", nhan: "Nhân viên", loai: "chon", batBuoc: true, luaChon: (nv ?? []).filter((n) => trongPhamVi(n.id) && n.khung_lam_viec !== "khong_cham_cong").map((n) => ({ gia_tri: n.id, nhan: `${n.ho_ten} (${n.ma_nv})` })) },
-      { ten: "ngay", nhan: "Ngày", loai: "ngay", batBuoc: true }, { ten: "gio_vao", nhan: "Giờ vào (08:00)", loai: "chu" }, { ten: "gio_ra", nhan: "Giờ ra (17:30)", loai: "chu" },
+      { ten: "ngay", nhan: "Ngày", loai: "ngay", batBuoc: true }, { ten: "gio_vao", nhan: "Giờ vào", loai: "gio", ghiChu: "Chọn ít nhất giờ vào hoặc giờ ra." }, { ten: "gio_ra", nhan: "Giờ ra", loai: "gio" },
       { ten: "ghi_chu", nhan: "Lý do nhập tay", loai: "chu", rong: true },
     ];
     noiDung = (

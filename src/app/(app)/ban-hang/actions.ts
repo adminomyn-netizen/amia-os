@@ -3,7 +3,7 @@
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuanSdt } from "@/lib/dinh-dang";
-import { tinhDon, type DonBan } from "@/lib/ban-hang";
+import { tinhDon, TOI_DA_NGUOI_HUONG, type DonBan } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
@@ -80,6 +80,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     if (!Number.isInteger(d.giam) || d.giam < 0 || d.giam > m.gia * d.sl) return { loi: `Giảm giá của "${m.ten}" chưa hợp lệ.` };
     for (const vai of ["phuc_vu", "tu_van", "ban"] as const) {
       const ds = d.nv?.[vai] ?? [];
+      if (ds.length > TOI_DA_NGUOI_HUONG) return { loi: `"${m.ten}": mỗi vai chỉ có tối đa ${TOI_DA_NGUOI_HUONG} người hưởng.` };
       if (ds.length && Math.abs(ds.reduce((s, x) => s + Number(x.ti), 0) - 100) > 0.01) return { loi: `"${m.ten}": phần chia cho vai ${vai === "phuc_vu" ? "Phục vụ" : vai === "tu_van" ? "Tư vấn" : "Bán hàng"} phải cộng đủ 100%.` };
       if (new Set(ds.map((x) => x.id)).size !== ds.length) return { loi: `"${m.ten}": một người không được xuất hiện hai lần trong cùng một vai.` };
     }

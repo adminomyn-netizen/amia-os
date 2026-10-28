@@ -8,7 +8,7 @@ import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
-import { GIOI_HAN_VOUCHER, PHUONG_THUC, tinhDon, tinhGiamVoucher, VAI, type DongDon, type KhoanThu, type MucBan, type Vai } from "@/lib/ban-hang";
+import { chiaDeuTi, GIOI_HAN_VOUCHER, lamTron, PHUONG_THUC, tinhDon, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DongDon, type KhoanThu, type MucBan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -236,7 +236,6 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
             {dong.map((d, i) => {
               const m = tuMuc.get(khoaDong(d));
               if (!m) return null;
-              const nguoi = VAI.flatMap((v) => d.nv[v.ma].map((x) => nhanVien.find((n) => n.id === x.id)?.ten)).filter(Boolean);
               return (
                 <li key={khoaDong(d)} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
@@ -252,7 +251,12 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                     <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Giảm <OTien className="w-[120px]" giaTri={d.giam} onDoi={(n) => capNhat(i, { giam: Math.min(n, m.gia * d.sl) })} ariaLabel="Giảm giá dòng" /></span>
                     <span className="ml-auto text-[15px] font-medium tabular-nums text-muc">{tienVN(m.gia * d.sl - d.giam)}</span>
                   </div>
-                  <button type="button" onClick={() => setSuaNv(i)} className={`mt-2 flex items-center gap-1.5 text-[13px] ${NUT_CHU}`}><UserRound strokeWidth={1.6} className="h-3.5 w-3.5" />{nguoi.length ? nguoi.join(", ") : "Chọn người phục vụ, tư vấn, bán"}</button>
+                  <button type="button" onClick={() => setSuaNv(i)} className={`mt-2 flex items-center gap-1.5 text-[13px] ${NUT_CHU}`}><UserRound strokeWidth={1.6} className="h-3.5 w-3.5" />{VAI.some((v) => d.nv[v.ma].length) ? "Sửa nhân viên" : "Chọn người phục vụ, tư vấn, bán"}</button>
+                  <ul className="mt-1 space-y-0.5 text-[12px] text-muc-3">
+                    {VAI.filter((v) => d.nv[v.ma].length).map((v) => (
+                      <li key={v.ma}><span className="text-muc-2">{v.ten}:</span> {d.nv[v.ma].map((x) => `${nhanVien.find((n) => n.id === x.id)?.ten ?? ""}${d.nv[v.ma].length > 1 ? ` ${x.ti}%` : ""}`).join(", ")}</li>
+                    ))}
+                  </ul>
                 </li>
               );
             })}
@@ -339,7 +343,15 @@ function NguoiHuong({ d, ten, nhanVien, dong, luu }: { d: DongDon; ten: string; 
   const lc = [{ gia_tri: "", nhan: "Không có" }, ...nhanVien.map((n) => ({ gia_tri: n.id, nhan: n.ten }))];
   const doiNguoi = (v: Vai, i: number, id: string) => setNv((x) => ({ ...x, [v]: id ? x[v].map((y, j) => (j === i ? { ...y, id } : y)) : x[v].filter((_, j) => j !== i) }));
   const doiTi = (v: Vai, i: number, ti: number) => setNv((x) => ({ ...x, [v]: x[v].map((y, j) => (j === i ? { ...y, ti } : y)) }));
-  const themNguoi = (v: Vai) => setNv((x) => ({ ...x, [v]: x[v].length === 0 ? [{ id: nhanVien[0]?.id ?? "", ti: 100 }] : [...x[v], { id: "", ti: 0 }] }));
+  const chiaDeu = (v: Vai) => setNv((x) => { const t = chiaDeuTi(x[v].length); return { ...x, [v]: x[v].map((y, j) => ({ ...y, ti: t[j] })) }; });
+  // Thêm người thứ 2 trở đi: chia đều lại cho cả nhóm (sửa tay sau nếu cần). Tối đa 5 người mỗi vai.
+  const themNguoi = (v: Vai) => setNv((x) => {
+    if (x[v].length >= TOI_DA_NGUOI_HUONG) return x;
+    if (x[v].length === 0) return { ...x, [v]: [{ id: nhanVien[0]?.id ?? "", ti: 100 }] };
+    const t = chiaDeuTi(x[v].length + 1);
+    return { ...x, [v]: [...x[v], { id: "", ti: 0 }].map((y, j) => ({ ...y, ti: t[j] })) };
+  });
+  const tongTi = (v: Vai) => lamTron(nv[v].reduce((s, x) => s + x.ti, 0));
   const xong = () => {
     for (const v of VAI) {
       const ds = nv[v.ma].filter((x) => x.id);
@@ -349,20 +361,24 @@ function NguoiHuong({ d, ten, nhanVien, dong, luu }: { d: DongDon; ten: string; 
     luu({ phuc_vu: nv.phuc_vu.filter((x) => x.id), tu_van: nv.tu_van.filter((x) => x.id), ban: nv.ban.filter((x) => x.id) });
   };
   return (
-    <Hop mo dong={dong} tieuDe="Người hưởng" moTa={`${ten}. Mỗi vai chia tối đa 100%; bỏ trống vai nào thì vai đó không tính hoa hồng.`} rong="rong">
+    <Hop mo dong={dong} tieuDe="Người hưởng" moTa={`${ten}. Mỗi vai chọn tối đa ${TOI_DA_NGUOI_HUONG} người, phần chia cộng đủ 100%; bỏ trống vai nào thì vai đó không tính hoa hồng.`} rong="rong">
       <div className="space-y-5">
         {VAI.map((v) => (
           <div key={v.ma}>
-            <div className="mb-2 flex items-center justify-between"><span className="text-[14px] font-semibold text-muc">{v.ten}</span>
-              <button type="button" className={NUT_CHU} onClick={() => themNguoi(v.ma)}>{nv[v.ma].length ? "Thêm người chia" : "Chọn người"}</button></div>
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1"><span className="text-[14px] font-semibold text-muc">{v.ten} <span className="text-[12px] font-normal text-muc-3">({nv[v.ma].length}/{TOI_DA_NGUOI_HUONG})</span></span>
+              <span className="flex items-center gap-4">
+                {nv[v.ma].length >= 2 && <button type="button" className={NUT_CHU} onClick={() => chiaDeu(v.ma)}>Chia đều</button>}
+                {nv[v.ma].length < TOI_DA_NGUOI_HUONG ? <button type="button" className={NUT_CHU} onClick={() => themNguoi(v.ma)}>{nv[v.ma].length ? "Thêm người chia" : "Chọn người"}</button> : <span className="text-[12px] text-muc-3">Đã đủ {TOI_DA_NGUOI_HUONG} người</span>}
+              </span></div>
             <ul className="space-y-2">
               {nv[v.ma].map((x, i) => (
                 <li key={`${v.ma}-${i}`} className="grid grid-cols-[1fr_96px] gap-2">
                   <Chon nho trong="Chọn nhân viên" ariaLabel={`${v.ten} ${i + 1}`} giaTri={x.id} luaChon={lc} onDoi={(id) => doiNguoi(v.ma, i, id)} />
-                  <div className="relative"><input inputMode="decimal" {...CHON_HET} aria-label="Phần trăm" value={String(x.ti)} onChange={(e) => doiTi(v.ma, i, Number(e.target.value.replace(/[^\d.]/g, "")) || 0)} className={`${O_NHAP} h-9 pr-7 text-right`} /><span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px] text-muc-3">%</span></div>
+                  <div className="relative"><input inputMode="decimal" {...CHON_HET} aria-label={`Phần trăm ${v.ten} ${i + 1}`} value={String(x.ti)} onChange={(e) => doiTi(v.ma, i, Number(e.target.value.replace(/[^\d.]/g, "")) || 0)} className={`${O_NHAP} h-9 pr-7 text-right`} /><span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px] text-muc-3">%</span></div>
                 </li>
               ))}
             </ul>
+            {nv[v.ma].length > 1 && <p className={`mt-1.5 text-[12px] ${tongTi(v.ma) === 100 ? "text-nhan-dam" : "text-canh-bao"}`}>{tongTi(v.ma) === 100 ? "Đã chia đủ 100%" : tongTi(v.ma) < 100 ? `Còn thiếu ${lamTron(100 - tongTi(v.ma))}%` : `Đang dư ${lamTron(tongTi(v.ma) - 100)}%`}</p>}
           </div>
         ))}
       </div>

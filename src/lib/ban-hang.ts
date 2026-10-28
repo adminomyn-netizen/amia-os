@@ -1,5 +1,7 @@
 export type Vai = "phuc_vu" | "tu_van" | "ban";
 export const VAI: { ma: Vai; ten: string }[] = [{ ma: "phuc_vu", ten: "Phục vụ" }, { ma: "tu_van", ten: "Tư vấn" }, { ma: "ban", ten: "Bán hàng" }];
+/** SalonHero: mỗi dòng hàng có tối đa 5 người hưởng cho mỗi vai. DB cũng chặn (migration 0081). */
+export const TOI_DA_NGUOI_HUONG = 5;
 export const PHUONG_THUC = [
   { gia_tri: "tien_mat", nhan: "Tiền mặt" }, { gia_tri: "chuyen_khoan", nhan: "Chuyển khoản" }, { gia_tri: "quet_the", nhan: "Quẹt thẻ" }, { gia_tri: "the_tien", nhan: "Trừ thẻ tiền" },
 ];
@@ -43,3 +45,7 @@ export const tinhGiamVoucher = (v: VoucherDon, dong: { loai: string; thanh: numb
   if (v.loai_giam === "phan_tram" && v.giam_toi_da != null) giam = Math.min(giam, v.giam_toi_da);
   return Math.max(Math.min(giam, coSo), 0);
 };
+
+export const lamTron = (n: number) => Math.round(n * 100) / 100;
+/** Chia đều 100% cho n người (hai chữ số lẻ): phần dư dồn vào người cuối để cộng đủ đúng 100. */
+export const chiaDeuTi = (n: number) => Array.from({ length: n }, (_, i) => (i < n - 1 ? lamTron(100 / n) : lamTron(100 - lamTron(100 / n) * (n - 1))));

@@ -10,7 +10,7 @@ function cung(a0: number, a1: number, rNgoai: number, rTrong: number) {
 }
 
 /** Biểu đồ tròn (banh = đặc, vong = rỗng có số tổng ở giữa) kèm chú thích có số và phần trăm — không chỉ dựa vào màu. */
-export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: number) => n.toLocaleString("vi-VN"), ten }: { duLieu: Diem[]; kieu?: "banh" | "vong"; nhanTam?: string; dinhDang?: (n: number) => string; ten: string }) {
+export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: number) => n.toLocaleString("vi-VN"), dinhDangTam, ten }: { duLieu: Diem[]; kieu?: "banh" | "vong"; nhanTam?: string; dinhDang?: (n: number) => string; /** Số ở tâm vòng (nên gọn để nằm trọn trong vòng); mặc định dùng dinhDang. */ dinhDangTam?: (n: number) => string; ten: string }) {
   const ds = duLieu.filter((d) => d.gia_tri > 0);
   const tong = ds.reduce((s, d) => s + d.gia_tri, 0);
   if (tong <= 0) return <p className="py-8 text-center text-[14px] text-muc-3">Chưa có dữ liệu để vẽ.</p>;
@@ -30,7 +30,7 @@ export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: numb
         )}
         {kieu === "vong" && (
           <g textAnchor="middle">
-            <text x={C} y={C + 2} fontSize="22" fontWeight="600" fill="var(--muc)">{dinhDang(tong)}</text>
+            <text x={C} y={C + 2} fontSize="22" fontWeight="600" fill="var(--muc)">{(dinhDangTam ?? dinhDang)(tong)}</text>
             {nhanTam && <text x={C} y={C + 20} fontSize="10" fill="var(--muc-3)">{nhanTam}</text>}
           </g>
         )}

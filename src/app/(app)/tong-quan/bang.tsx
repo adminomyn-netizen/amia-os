@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { sb } from "@/lib/db";
-import { congNgay, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { congNgay, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { BieuDoTron } from "@/components/bieu-do/BieuDoTron";
@@ -59,11 +59,11 @@ export async function BangDoanhThu({ cn }: { cn: string | null }) {
         { nhan: "Buổi đã làm", so: soVN(t("so_buoi")) },
       ]} />
       <MucTrang noi tieuDe="Doanh thu 30 ngày gần nhất" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Báo cáo chi tiết</Link>}>
-        <DuongMien ten="Doanh thu và thực thu 30 ngày" nhan={(ngay30 ?? []).map((r) => ngayNganVN(r.ngay))} dinhDang={tienVN}
+        <DuongMien ten="Doanh thu và thực thu 30 ngày" nhan={(ngay30 ?? []).map((r) => ngayNganVN(r.ngay))} dinhDang={tienVN} dinhDangTruc={tienGon}
           chuoi={[{ ten: "Doanh thu", gia_tri: (ngay30 ?? []).map((r) => Number(r.doanh_thu)), mau: "var(--sac-luc-mau)" }, { ten: "Thực thu", gia_tri: (ngay30 ?? []).map((r) => Number(r.thuc_thu)), mau: "var(--dat)" }]} />
       </MucTrang>
       <div className={luoi}>
-        <MucTrang noi tieuDe="Thực thu theo hình thức (tháng này)"><BieuDoTron ten="Thực thu theo hình thức" kieu="vong" nhanTam="đồng" dinhDang={tr} duLieu={[{ nhan: "Tiền mặt", gia_tri: t("tien_mat") }, { nhan: "Chuyển khoản", gia_tri: t("chuyen_khoan") }, { nhan: "Quẹt thẻ", gia_tri: t("quet_the") }, { nhan: "Trừ thẻ tiền", gia_tri: t("tru_the_tien") }]} /></MucTrang>
+        <MucTrang noi tieuDe="Thực thu theo hình thức (tháng này)"><BieuDoTron ten="Thực thu theo hình thức" kieu="vong" nhanTam="đồng" dinhDang={tr} dinhDangTam={tienGon} duLieu={[{ nhan: "Tiền mặt", gia_tri: t("tien_mat") }, { nhan: "Chuyển khoản", gia_tri: t("chuyen_khoan") }, { nhan: "Quẹt thẻ", gia_tri: t("quet_the") }, { nhan: "Trừ thẻ tiền", gia_tri: t("tru_the_tien") }]} /></MucTrang>
         <MucTrang noi tieuDe="Cơ cấu doanh số (tháng này)"><BieuDoTron ten="Cơ cấu doanh số" kieu="banh" dinhDang={tr} duLieu={[...theoLoai].map(([k, v]) => ({ nhan: NHAN_LOAI_BAN[k as keyof typeof NHAN_LOAI_BAN] ?? k, gia_tri: v }))} /></MucTrang>
         <MucTrang noi tieuDe="Top dịch vụ / sản phẩm bán chạy (tháng này)"><CotNgang dinhDang={tr} duLieu={(mucBan ?? []).slice(0, 8).map((r) => ({ nhan: r.ten, gia_tri: Number(r.doanh_so) }))} trong="Tháng này chưa có đơn nào." /></MucTrang>
         <MucTrang noi tieuDe="Doanh số theo nhân viên (tháng này)"><CotNgang mau="var(--sac-xanh-mau)" dinhDang={tr} duLieu={DAY([...theoNv].map(([id, v]) => ({ nhan: tenNv.get(id) ?? "Không rõ", gia_tri: v }))).slice(0, 8)} trong="Tháng này chưa có doanh số theo nhân viên." /></MucTrang>

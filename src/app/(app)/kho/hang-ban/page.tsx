@@ -2,6 +2,7 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
+import { docSanPhamKhoHangBan } from "@/lib/kho-hang-ban-doc";
 import { soVN, tienVN } from "@/lib/dinh-dang";
 import { demTinhTrang, khopTinhTrang, laTinhTrang, tongGiaTriKho, TINH_TRANG_KHO } from "@/lib/kho-hang-ban";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
@@ -23,16 +24,11 @@ export default async function TrangKhoHangBan({ searchParams }: { searchParams: 
   const { data: dsCn } = await dsChiNhanhRutGon();
   const cn = nd.chiNhanhId ?? (dsCn?.some((c) => c.id === sp.cn) ? sp.cn! : "");
   const tt = laTinhTrang(sp.tt) ? sp.tt : "tat_ca";
-  const [{ data: spAll }, { data: ton }] = await Promise.all([
-    db.from("san_pham").select("id, ma, ten, nhom, don_vi, ton_toi_thieu, gia_nhap_don_vi").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
-    cn ? db.from("v_ton_kho").select("san_pham_id, ton").eq("chi_nhanh_id", cn) : db.from("v_ton_kho").select("san_pham_id, ton"),
-  ]);
-  const tonMap = new Map<string, number>();
-  for (const t of ton ?? []) tonMap.set(t.san_pham_id!, (tonMap.get(t.san_pham_id!) ?? 0) + Number(t.ton));
+  const spAll = await docSanPhamKhoHangBan(db, cn);
   const nhomDem = new Map<string, number>();
-  for (const s of spAll ?? []) nhomDem.set(s.nhom ?? "", (nhomDem.get(s.nhom ?? "") ?? 0) + 1);
+  for (const s of spAll) nhomDem.set(s.nhom ?? "", (nhomDem.get(s.nhom ?? "") ?? 0) + 1);
   const nhom = sp.nhom && nhomDem.has(sp.nhom) ? sp.nhom : "";
-  const theoNhom = (spAll ?? []).filter((s) => !nhom || s.nhom === nhom).map((s) => ({ ...s, ton: tonMap.get(s.id) ?? 0, toiThieu: Number(s.ton_toi_thieu ?? 0), gia: s.gia_nhap_don_vi == null ? null : Number(s.gia_nhap_don_vi) }));
+  const theoNhom = spAll.filter((s) => !nhom || s.nhom === nhom).map((s) => ({ ...s, toiThieu: s.ton_toi_thieu, gia: s.gia_nhap_don_vi }));
   const dem = demTinhTrang(theoNhom), tong = tongGiaTriKho(theoNhom);
   const loc = theoNhom.filter((s) => khopTinhTrang(s.ton, s.toiThieu, tt));
   const cuoi = Math.max(1, Math.ceil(loc.length / MOI_TRANG));
@@ -44,6 +40,7 @@ export default async function TrangKhoHangBan({ searchParams }: { searchParams: 
     <div>
       <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho & Mua sắm</Link>
       <TieuDeTrang tieuDe="Quản lý kho hàng bán" phu="Sản phẩm bán lẻ. Số tồn là tổng sổ kho; nhập, xuất, chuyển kho làm ở các mục bên dưới.">
+        <a href={`/api/xuat/kho-hang-ban?${new URLSearchParams(Object.entries({ cn: cn || undefined, nhom: nhom || undefined, tt: tt === "tat_ca" ? undefined : tt }).filter((e): e is [string, string] => !!e[1])).toString()}`} download aria-label="Xuất Excel số lượng sản phẩm trong kho theo bộ lọc đang chọn" className={`${NUT_PHU} inline-flex items-center`}>Xuất Excel</a>
         <Link href="/bao-cao" className={`${NUT_PHU} inline-flex items-center`}>Báo Cáo Kho</Link>
       </TieuDeTrang>
       <nav aria-label="Kho hàng bán" className="mb-5 flex gap-1 overflow-x-auto border-b border-vien">
@@ -53,7 +50,7 @@ export default async function TrangKhoHangBan({ searchParams }: { searchParams: 
         <aside aria-label="Phân nhóm sản phẩm" className="text-[14px]">
           <h2 className="mb-2 flex items-center justify-between text-[13px] font-medium text-muc-2">Phân nhóm sản phẩm <Link href="/danh-muc?tab=san-pham" className="font-normal text-nhan-dam hover:underline">Cài đặt</Link></h2>
           <ul className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
-            {[{ ten: "", nhan: "Tất cả sản phẩm", n: (spAll ?? []).length }, ...[...nhomDem].sort((a, b) => a[0].localeCompare(b[0], "vi")).map(([ten, n]) => ({ ten, nhan: ten || "Chưa phân nhóm", n }))].map((g) => (
+            {[{ ten: "", nhan: "Tất cả sản phẩm", n: spAll.length }, ...[...nhomDem].sort((a, b) => a[0].localeCompare(b[0], "vi")).map(([ten, n]) => ({ ten, nhan: ten || "Chưa phân nhóm", n }))].map((g) => (
               <li key={g.ten || "tat-ca"} className="shrink-0"><Link href={url({ nhom: g.ten || undefined, trang: undefined })} className={`flex items-center justify-between gap-3 rounded-nho px-3 py-2 ${g.ten === nhom ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-2 hover:bg-giay-tram"}`}><span className="whitespace-nowrap">{g.nhan}</span><span className="text-[12px] tabular-nums text-muc-3">{g.n}</span></Link></li>
             ))}
           </ul>

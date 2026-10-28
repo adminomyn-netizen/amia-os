@@ -30,13 +30,23 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   const { data: trung } = await db.from("khach_hang").select("id, ma, ho_ten").eq("dien_thoai", sdt).maybeSingle();
   if (trung && trung.id !== id) return { loi: `Số này đã có khách: ${trung.ho_ten} (${trung.ma}).` };
 
-  let nguoiGt: string | null = null;
+  // Khi sửa: đọc bản ghi hiện tại để giữ người giới thiệu nếu người dùng không đổi (form hiện sẵn mã người giới thiệu cũ).
+  const { data: cu } = id ? await db.from("khach_hang").select("dong_y_dung_hinh, nguon, nguoi_gioi_thieu_id").eq("id", id).maybeSingle() : { data: null };
+  let nguoiGt: string | null = cu?.nguoi_gioi_thieu_id ?? null;
   const gt = chuoi(fd, "nguoi_gioi_thieu");
   if (nguon === "khach_cu_gioi_thieu") {
-    if (!gt) return { loi: "Khách cũ giới thiệu: nhập mã hoặc số điện thoại của người giới thiệu." };
-    const { data } = await db.from("khach_hang").select("id").or(`ma.eq.${gt.toUpperCase()},dien_thoai.eq.${chuanSdt(gt)}`).maybeSingle();
-    if (!data) return { loi: "Không tìm thấy người giới thiệu theo mã/số điện thoại đó." };
-    nguoiGt = data.id;
+    const maCu = nguoiGt ? ((await db.from("khach_hang").select("ma").eq("id", nguoiGt).maybeSingle()).data?.ma ?? "") : "";
+    if (!gt && !nguoiGt) return { loi: "Khách cũ giới thiệu: nhập mã hoặc số điện thoại của người giới thiệu." };
+    if (gt && gt.toLowerCase() !== maCu.toLowerCase()) {
+      // Khớp mã khách trước (không phân biệt hoa thường), không có mới tra theo số điện thoại hợp lệ.
+      let { data } = await db.from("khach_hang").select("id").ilike("ma", gt.replace(/[%_\\]/g, "")).maybeSingle();
+      if (!data && coSdtHopLe(gt)) data = (await db.from("khach_hang").select("id").eq("dien_thoai", chuanSdt(gt)).maybeSingle()).data;
+      if (!data) return { loi: "Không tìm thấy người giới thiệu theo mã/số điện thoại đó." };
+      if (data.id === id) return { loi: "Khách không thể tự giới thiệu chính mình." };
+      nguoiGt = data.id;
+    }
+  } else if (cu?.nguon === "khach_cu_gioi_thieu") {
+    nguoiGt = null; // đổi nguồn từ "khách cũ giới thiệu" sang nguồn khác thì bỏ người giới thiệu; nguồn khác từ trước (vd dữ liệu chuyển từ SalonHero) thì giữ nguyên.
   }
   const dongY = bat(fd, "dong_y_dung_hinh");
   const row = {
@@ -48,8 +58,9 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   };
   let khachId = id;
   if (id) {
-    const { data: cu } = await db.from("khach_hang").select("dong_y_dung_hinh").eq("id", id).maybeSingle();
-    const { error } = await db.from("khach_hang").update({ ...row, ...(dongY && !cu?.dong_y_dung_hinh ? { dong_y_dung_hinh_luc: new Date().toISOString() } : {}) }).eq("id", id);
+    // `dong_y_dung_hinh_luc` là mốc đổi trạng thái đồng ý gần nhất: bật (đồng ý) hoặc tắt (rút đồng ý) đều ghi giờ hiện tại; không đổi thì giữ.
+    const doiDongY = dongY !== !!cu?.dong_y_dung_hinh;
+    const { error } = await db.from("khach_hang").update({ ...row, ...(doiDongY ? { dong_y_dung_hinh_luc: new Date().toISOString() } : {}) }).eq("id", id);
     if (error) return { loi: thongBaoLoi(error) };
   } else {
     const ma = "KH" + String(await soTiep("khach")).padStart(6, "0");

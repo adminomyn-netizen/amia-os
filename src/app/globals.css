@@ -424,6 +424,29 @@ body {
 @keyframes xh-hien { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
 @keyframes xh-chay { from { transform: scaleX(0); } to { transform: none; } }
 @keyframes xh-lap-lanh { 0%, 82%, 100% { transform: translateY(0) rotate(0); filter: none; } 88% { transform: translateY(-1.5px) rotate(-4deg); filter: brightness(1.15); } 94% { transform: translateY(0) rotate(2deg); } }
+/* ===== Màn Khách hàng: bố cục và kiểu chữ theo SalonHero (chị Lâm yêu cầu 28/10/2026) =====
+ * Chữ gọn 13px/18px CHỈ trong .man-khach (các màn khác giữ cỡ cũ). Màu theo SalonHero: chữ #5E6D8C trên nền #EAF2F7, hàng đang chọn #5C6BC0 chữ trắng,
+ * nhãn tab xám. Muốn đổi màu cả màn chỉ sửa bốn biến dưới đây. Chế độ tối dùng màu theo bảng AMIA. */
+.man-khach {
+  --khach-nen: #eaf2f7; --khach-chu: #5e6d8c; --khach-chon: #5c6bc0; --khach-nhan-tab: #767676; --khach-vien: #cfdbe6;
+  font-size: 13px; line-height: 18px;
+}
+:root[data-theme="dark"] .man-khach { --khach-nen: var(--giay-sang); --khach-chu: var(--muc-2); --khach-chon: #4553a6; --khach-nhan-tab: var(--muc-3); --khach-vien: var(--vien); }
+.man-khach .bang-the, .man-khach .bang-the th, .man-khach .bang-the td { font-size: 13px; line-height: 18px; }
+.man-khach .bang-the tr { height: 44px; }
+.ds-khach { background: var(--khach-nen); color: var(--khach-chu); border: 1px solid var(--khach-vien); border-radius: var(--radius-the); }
+.ds-khach-dong { display: block; width: 100%; padding: 8px 12px; border-bottom: 1px solid var(--khach-vien); text-align: left; color: var(--khach-chu); }
+.ds-khach-dong:hover { background: rgb(92 107 192 / 0.1); }
+.ds-khach-dong[aria-current="true"] { background: var(--khach-chon); color: #fff; }
+.ds-khach-dong[aria-current="true"] .ds-khach-ten { color: #fff; }
+.ds-khach-ten { font-weight: 700; text-transform: uppercase; color: var(--muc); overflow-wrap: anywhere; }
+.ds-khach-dong[aria-current="true"] .nhan-nho { background: rgb(255 255 255 / 0.2); color: #fff; }
+.nhan-nho { display: inline-block; padding: 0 6px; border-radius: var(--radius-tag); background: rgb(92 107 192 / 0.14); color: var(--khach-chu); font-size: 11px; line-height: 18px; font-weight: 500; white-space: nowrap; }
+.tab-khach { display: flex; gap: 2px; overflow-x: auto; border-bottom: 1px solid var(--vien); }
+.tab-khach a { margin-bottom: -1px; padding: 8px 12px; white-space: nowrap; border-bottom: 2px solid transparent; font-size: 13px; color: var(--khach-nhan-tab); }
+.tab-khach a:hover { color: var(--muc); }
+.tab-khach a[aria-selected="true"] { border-bottom-color: var(--khach-chon); color: var(--khach-chon); font-weight: 500; }
+:root[data-theme="dark"] .tab-khach a[aria-selected="true"] { color: var(--muc); }
 
 @media (prefers-reduced-motion: reduce) {
   .xh-vuong-mien { animation: none; }

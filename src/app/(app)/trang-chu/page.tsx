@@ -10,7 +10,8 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { BangHieuSuatApp } from "@/components/trang-chu/BangHieuSuatApp";
 import { doHieuSuatApp, mocDo } from "@/lib/do-hieu-suat";
 import { BangDieuHanh } from "@/components/trang-chu/BangDieuHanh";
-import { BaoCaoSang } from "@/components/trang-chu/BaoCaoSang";
+import { Suspense } from "react";
+import { BaoCaoNgayDangTai, BaoCaoSang } from "@/components/trang-chu/BaoCaoSang";
 import type { SoLieu } from "@/components/trang-chu/BangSoLieu";
 
 const LOI_TAT = [
@@ -193,7 +194,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         </>
       )}
 
-      {dieuHanh && coQuyen(nd, "baocao.xem") && <BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} />}
+      {dieuHanh && coQuyen(nd, "baocao.xem") && <Suspense fallback={<BaoCaoNgayDangTai />}><BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} /></Suspense>}
 
       {nd.vaiTro === "ky_thuat" && <BangHieuSuatApp d={await doHieuSuatApp(batDau)} />}
 

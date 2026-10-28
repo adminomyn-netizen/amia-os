@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { Bell, Cake, CalendarCheck, CalendarX, Receipt, Repeat, UserPlus, UserX, type LucideIcon } from "lucide-react";
 import { sb } from "@/lib/db";
 import { soVN } from "@/lib/dinh-dang";
@@ -68,16 +69,39 @@ function KhungSinhNhat({ tong, ds, tenDuPhong }: { tong: number; ds: KhachSn[]; 
 
 /** Báo cáo sáng trên trang chủ của quản lý: hôm qua + hôm nay, TÍNH MỖI LẦN MỞ (không cần cron). Không có tiền, không có số điện thoại.
  *  Bản lưu lúc 07:00 hằng ngày (bảng bao_cao_sang, pg_cron) dùng để xem lại lịch sử; trang này luôn là số mới nhất. */
-export async function BaoCaoSang({ cn, tenCn }: { cn: string | null; tenCn: string | null }) {
+type DuLieuNgay = { b: KqBaoCao; sn: { id: string; ten: string; hang: string | null; ngay_sinh: string | null }[] };
+
+/** Tính hàm báo cáo + danh sách sinh nhật MỘT lần rồi giữ 5 phút (hàm tính trên DB nhỏ có thể mất vài giây lúc nguội). Lỗi thì ném ra để KHÔNG bị lưu đệm. */
+const docDuLieuNgay = unstable_cache(async (cn: string | null): Promise<DuLieuNgay> => {
   const { data, error } = await sb().rpc("bao_cao_sang_tinh", cn ? { p_cn: cn } : {});
-  if (error || !data) { console.error("[bao-cao-sang]", error?.message); return null; }
+  if (error || !data) throw new Error(error?.message ?? "không có dữ liệu");
   const b = data as unknown as KqBaoCao;
+  const ds = b.hom_nay.sinh_nhat > 0 ? await locKhach({ sinh_nhat: "hom_nay", sx: "ten", ...(cn ? { chi_nhanh: cn } : {}) }, 0, 200) : null;
+  return { b, sn: (ds?.ds ?? []).map((k) => ({ id: k.id, ten: k.ho_ten, hang: k.hang, ngay_sinh: k.ngay_sinh })) };
+}, ["bao-cao-ngay-du-lieu-v2"], { revalidate: 300 });
+
+/** Khung xương hiện ngay trong lúc khối đang tính (trang chủ không phải đợi khối này). */
+export function BaoCaoNgayDangTai() {
+  return (
+    <section aria-label="Đang tải báo cáo ngày" aria-busy="true" className="the-noi min-w-0 space-y-4 p-5 pt-6">
+      <div className="h-5 w-48 animate-pulse rounded-nho bg-giay-tram" />
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-[104px] animate-pulse rounded-nho bg-giay-tram" />)}</div>
+      <div className="h-24 animate-pulse rounded-nho bg-giay-tram" />
+    </section>
+  );
+}
+
+export async function BaoCaoSang({ cn, tenCn }: { cn: string | null; tenCn: string | null }) {
+  let d: DuLieuNgay;
+  try { d = await docDuLieuNgay(cn); } catch (e) {
+    console.error("[bao-cao-ngay]", e instanceof Error ? e.message : e);
+    return <section aria-label="Báo cáo ngày" className="the-noi min-w-0 p-5 text-[13px] text-muc-3">Chưa tải được báo cáo ngày (máy chủ đang bận). Tải lại trang sau ít phút.</section>;
+  }
+  const b = d.b;
   const q = b.hom_qua, n = b.hom_nay;
   const { tieuDe, phu } = tieuDeTheoGio(gioVNHienTai());
-  // Danh sách khách sinh nhật hôm nay (chỉ id + tên) để bấm vào mở hồ sơ; cùng bộ lọc với liên kết 'Khách sinh nhật'.
-  const sn = n.sinh_nhat > 0 ? await locKhach({ sinh_nhat: "hom_nay", sx: "ten", ...(cn ? { chi_nhanh: cn } : {}) }, 0, 200) : null;
   const namNay = namVNHienTai();
-  const dsSn: KhachSn[] = (sn?.ds ?? []).map((k) => ({ id: k.id, ten: k.ho_ten, hang: k.hang, tuoi: k.ngay_sinh && Number(k.ngay_sinh.slice(0, 4)) > 1900 ? namNay - Number(k.ngay_sinh.slice(0, 4)) : null }));
+  const dsSn: KhachSn[] = d.sn.map((k) => ({ id: k.id, ten: k.ten, hang: k.hang, tuoi: k.ngay_sinh && Number(k.ngay_sinh.slice(0, 4)) > 1900 ? namNay - Number(k.ngay_sinh.slice(0, 4)) : null }));
   return (
     <section aria-label={tieuDe} className="the-noi vao min-w-0 space-y-5 p-5 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-vien pb-2.5">

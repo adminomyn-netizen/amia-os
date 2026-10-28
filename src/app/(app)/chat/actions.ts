@@ -51,7 +51,7 @@ export async function layChat(): Promise<TrangChat | { loi: string }> {
   const online = !!nhip && Date.now() - new Date(nhip.luc).getTime() < NHIP_SONG_GIAY * 1000;
   if (!cuoc) return { tin: [], online, dangCho: false };
   const { data } = await db.from("chat_tin").select("id, vai, loai, noi_dung, trang_thai, tep_duong_dan, tep_ten, tao_luc, nhanh_sua, da_duyet_luc").eq("cuoc_id", cuoc.id).order("tao_luc", { ascending: false }).limit(40);
-  const tin = (data ?? []).reverse().map((t) => ({ id: t.id, vai: t.vai as "nguoi" | "agent", loai: t.loai as "hoi" | "sua" | "duyet", noiDung: t.noi_dung, trangThai: t.trang_thai, coTep: !!t.tep_duong_dan, choDuyet: !!t.nhanh_sua && !t.da_duyet_luc, tenTep: t.tep_ten, luc: t.tao_luc }));
+  const tin = (data ?? []).reverse().map((t) => ({ id: t.id, vai: t.vai as "nguoi" | "agent", loai: t.loai as "hoi" | "sua" | "duyet", noiDung: t.noi_dung, trangThai: t.trang_thai, coTep: !!t.tep_duong_dan, choDuyet: t.vai === "agent" && !!t.nhanh_sua && !t.da_duyet_luc, tenTep: t.tep_ten, luc: t.tao_luc }));
   return { tin, online, dangCho: tin.some((t) => t.vai === "nguoi" && ["cho", "dang_xu_ly"].includes(t.trangThai)) };
 }
 

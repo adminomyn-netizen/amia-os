@@ -73,7 +73,7 @@ export function ChatNoi({ choPhepSua, hoTen }: { choPhepSua: boolean; hoTen: str
         </button>
       )}
       {mo && (
-        <section role="dialog" aria-label="Chat với Tula" className="the-noi the-noi-thap vao fixed bottom-[84px] right-3 z-40 flex h-[min(560px,calc(100dvh-170px))] w-[380px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden p-0 lg:bottom-6 lg:right-6 lg:h-[min(600px,calc(100dvh-110px))]">
+        <section role="dialog" aria-label="Chat với Tula" style={{ position: "fixed" }} className="the-noi the-noi-thap vao fixed bottom-[84px] right-3 z-40 flex h-[min(560px,calc(100dvh-170px))] w-[380px] max-w-[calc(100vw-1.5rem)] flex-col overflow-hidden p-0 lg:bottom-6 lg:right-6 lg:h-[min(600px,calc(100dvh-110px))]">
           <header className="flex items-center gap-3 border-b border-vien px-4 py-3">
             <span className="nut-vang flex h-9 w-9 shrink-0 items-center justify-center text-[14px] font-semibold" style={{ borderRadius: 9999 }}>T</span>
             <div className="min-w-0 flex-1">

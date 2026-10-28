@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, Star } from "lucide-react";
+import { AlertTriangle, CalendarDays, CircleDollarSign, ClipboardCheck, Clock, Package, Plus, Star, TrendingUp, Users, ShoppingBag, BarChart3, Warehouse, UsersRound, type LucideIcon } from "lucide-react";
 import type { CanhBao } from "@/lib/canh-bao";
 import { tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
@@ -7,7 +7,17 @@ import { BangSoLieu, type SoLieu } from "./BangSoLieu";
 
 type Tin = { id: string; tieu_de: string; noi_dung: string };
 type NguoiTop = { ten: string; doanhSo: number; hoaHong?: number; soDong?: number };
-type So = { lich: number; dangCho: number; thuHomNay: number | null; noMoi: number | null };
+type So = {
+  lich: number; dangCho: number; khongDen: number; hoanThanh: number; choXacNhan: number; dangPhucVu: number;
+  thuHomNay: number | null; noMoi: number | null; thuChiTiet: string; tongNo: number; khoThap: number; leadChua: number;
+  nhanCn: { id: string; ten: string }[]; cnDangChon: string | null;
+};
+type Tile = { nhan: string; so: string; phu: string; mau: string; Icon: LucideIcon; href: string };
+const TRUY_CAP = [
+  { href: "/khach-hang", nhan: "Khách hàng", Icon: Users, mau: "tim" }, { href: "/lich-hen", nhan: "Lịch hẹn", Icon: CalendarDays, mau: "tim" },
+  { href: "/ban-hang", nhan: "Bán hàng", Icon: ShoppingBag, mau: "tim" }, { href: "/bao-cao", nhan: "Báo cáo", Icon: BarChart3, mau: "tim" },
+  { href: "/nhan-su", nhan: "Nhân sự", Icon: UsersRound, mau: "luc" }, { href: "/kho-mua-sam", nhan: "Kho & Mua sắm", Icon: Warehouse, mau: "luc" },
+];
 
 /** Nhóm cảnh báo để gom thành các nhãn nhỏ trên dải "việc cần xử lý gấp". */
 const NHOM: { nhan: string; ma: CanhBao["ma"][] }[] = [
@@ -29,16 +39,32 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
   const tren3 = top.slice(0, 3), con = top.slice(3, 6);
   const doiCho = [tren3[1], tren3[0], tren3[2]].map((x, i) => x && { ...x, hang: [2, 1, 3][i] });
   const cao: Record<number, string> = { 1: "h-24", 2: "h-16", 3: "h-12" };
-  const tile = [
-    { nhan: "Lịch hẹn hôm nay", so: String(so.lich), mau: "xanh" },
-    { nhan: "Đang chờ / phục vụ", so: String(so.dangCho), mau: "luc" },
-    ...(so.thuHomNay != null ? [{ nhan: "Đã thu hôm nay", so: tienVN(so.thuHomNay), mau: "tim" }] : []),
-    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienVN(so.noMoi), mau: "cam" }] : []),
-    { nhan: "Cần phê duyệt", so: String(choDuyet), mau: "hong" },
+  const tile: Tile[] = [
+    { nhan: "Lịch hẹn hôm nay", so: String(so.lich), phu: `${so.hoanThanh} hoàn thành · ${so.khongDen} không đến`, mau: "xanh", Icon: CalendarDays, href: "/lich-hen" },
+    { nhan: "Đang chờ / phục vụ", so: String(so.dangCho), phu: `${so.choXacNhan + Math.max(0, so.dangCho - so.choXacNhan - so.dangPhucVu)} chờ · ${so.dangPhucVu} đang phục vụ`, mau: "luc", Icon: Clock, href: "/lich-hen" },
+    ...(so.thuHomNay != null ? [{ nhan: "Đã thu hôm nay", so: tienVN(so.thuHomNay), phu: so.thuChiTiet || "chưa có doanh thu", mau: "tim", Icon: CircleDollarSign, href: "/bao-cao" }] : []),
+    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienVN(so.noMoi), phu: `tổng nợ treo ${tienVN(so.tongNo)}`, mau: "cam", Icon: TrendingUp, href: "/bao-cao?tab=no" }] : []),
+    { nhan: "Cần phê duyệt", so: String(choDuyet), phu: choDuyet ? "bấm để xem danh sách" : "đã duyệt hết", mau: "hong", Icon: ClipboardCheck, href: "#viec-cua-toi" },
+    { nhan: "Kho thấp", so: String(so.khoThap), phu: "mặt hàng dưới mức tối thiểu", mau: "cam", Icon: Package, href: "/kho?thieu=1" },
+  ];
+  const canhVanHanh = [
+    { nhan: "Việc cần duyệt", so: String(choDuyet), khan: choDuyet > 0 },
+    { nhan: "Kho sắp hết", so: String(so.khoThap), khan: false },
+    { nhan: "Lịch chưa xác nhận", so: String(so.choXacNhan), khan: false },
+    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienVN(so.noMoi), khan: false }] : []),
   ];
 
   return (
     <div className="space-y-6">
+      {so.nhanCn.length > 0 && (
+        <nav aria-label="Chọn chi nhánh" className="flex flex-wrap items-center justify-end gap-2">
+          <span className="text-[13px] text-muc-3">Xem theo:</span>
+          {[{ id: "", ten: "Tất cả chi nhánh" }, ...so.nhanCn].map((c) => (
+            <Link key={c.id} href={c.id ? `/trang-chu?cn=${c.id}` : "/trang-chu"} aria-current={(so.cnDangChon ?? "") === c.id ? "true" : undefined}
+              className={`rounded-nho px-3 py-1.5 text-[13px] ${(so.cnDangChon ?? "") === c.id ? "bg-nhan font-medium text-white" : "border border-vien bg-giay text-muc-2 hover:bg-giay-tram"}`}>{c.ten}</Link>
+          ))}
+        </nav>
+      )}
       <div role="status" className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-nho border px-4 py-3 text-[14px] ${gap.length ? "border-loi/30 bg-loi-nen text-loi" : "border-vien bg-sac-luc-nen text-sac-luc"}`}>
         <span className="flex items-center gap-2 font-semibold"><AlertTriangle strokeWidth={1.8} className="h-[18px] w-[18px]" aria-hidden />{gap.length ? `${gap.length} việc cần xử lý gấp hôm nay` : "Hôm nay không có việc gấp"}</span>
         <ul className="flex flex-wrap gap-2">{nhan.map((g) => <li key={g.nhan}><NoiChiTiet vi="duoi" tieuDe={`${g.n} ${g.nhan}`} dong={g.ds.slice(0, 4).map((c) => ({ nhan: "•", gt: c.nhan.length > 60 ? `${c.nhan.slice(0, 58)}…` : c.nhan }))}><span className="block rounded-nho border border-vien bg-giay px-3 py-0.5 text-[12.5px] text-muc-2">{g.n} {g.nhan}</span></NoiChiTiet></li>)}</ul>
@@ -83,17 +109,42 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
         </section>
       </div>
 
-      <dl className={`grid grid-cols-2 gap-3 sm:gap-4 ${tile.length >= 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
+      <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {tile.map((t) => (
-          <NoiChiTiet key={t.nhan} cls="min-w-0" vi="duoi" tieuDe={t.nhan} dong={[{ nhan: "Hiện tại", gt: t.so }, ...(t.nhan === "Lịch hẹn hôm nay" && soLieu ? soLieu.lich.filter((x) => x.so > 0).map((x) => ({ nhan: x.nhan, gt: String(x.so) })) : []), ...(t.nhan === "Cần phê duyệt" ? gap.filter((c) => MA_CHO_DUYET.includes(c.ma)).slice(0, 3).map((c) => ({ nhan: "•", gt: c.nhan.slice(0, 50) })) : [])]}>
-          <div className="h-full min-w-0 rounded-nho px-4 pb-4 pt-4 text-white shadow-sm" style={{ background: `linear-gradient(135deg, var(--sac-${t.mau}-1), var(--sac-${t.mau}-2))` }}>
-            <dt className="text-[13px] opacity-90">{t.nhan}</dt>
-            <dd className={`mt-2 font-semibold leading-none tabular-nums ${t.so.length > 11 ? "text-[19px]" : "text-[26px]"}`}>{t.so}</dd>
-          </div>
+          <NoiChiTiet key={t.nhan} cls="min-w-0" vi="duoi" tieuDe={t.nhan} dong={[{ nhan: "Hiện tại", gt: t.so }, { nhan: "Chi tiết", gt: t.phu }]}>
+            <Link href={t.href} className="relative block h-full min-w-0 overflow-hidden rounded-nho px-4 pb-4 pt-4 text-white shadow-sm transition-transform hover:-translate-y-0.5" style={{ background: `linear-gradient(135deg, var(--sac-${t.mau}-1), var(--sac-${t.mau}-2))` }}>
+              <t.Icon aria-hidden strokeWidth={1.5} className="absolute -bottom-2 -right-1 h-16 w-16 opacity-20" />
+              <span className="block text-[13px] opacity-90">{t.nhan}</span>
+              <span className={`mt-2 block font-semibold leading-none tabular-nums ${t.so.length > 11 ? "text-[19px]" : "text-[26px]"}`}>{t.so}</span>
+              <span className="mt-2 block text-[11.5px] leading-snug opacity-85">{t.phu}</span>
+            </Link>
           </NoiChiTiet>
         ))}
       </dl>
+
+      <section aria-label="Truy cập nhanh">
+        <h2 className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-muc"><TrendingUp strokeWidth={1.7} className="h-4 w-4 text-nhan" aria-hidden />Truy cập nhanh <span className="text-[12px] font-normal text-muc-3">theo quyền tài khoản</span></h2>
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
+          {TRUY_CAP.map((q) => (
+            <li key={q.href}><Link href={q.href} className="flex h-full flex-col items-center gap-2 rounded-nho px-3 py-4 text-center text-[13.5px] font-medium text-white transition-transform hover:-translate-y-0.5" style={{ background: `linear-gradient(135deg, var(--sac-${q.mau}-1), var(--sac-${q.mau}-2))` }}><q.Icon strokeWidth={1.6} className="h-6 w-6" aria-hidden />{q.nhan}</Link></li>
+          ))}
+          <li><Link href="/cai-dat" className="flex h-full flex-col items-center gap-2 rounded-nho border border-dashed border-vien-dam px-3 py-4 text-center text-[13.5px] font-medium text-muc-2 hover:bg-giay-tram"><Plus strokeWidth={1.6} className="h-6 w-6" aria-hidden />Tuỳ biến</Link></li>
+        </ul>
+      </section>
+
       {soLieu && <BangSoLieu d={soLieu} xemTien={xemTien} />}
+
+      <section aria-label="Cảnh báo vận hành" className="the-noi vao p-5 pt-6">
+        <h2 className="flex items-center gap-2 border-b border-vien pb-2.5 text-[15px] font-semibold text-muc"><AlertTriangle strokeWidth={1.7} className="h-4 w-4 text-nhan" aria-hidden />Cảnh báo vận hành</h2>
+        <ul className="grid gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-4">
+          {canhVanHanh.map((c) => (
+            <li key={c.nhan} className="flex items-center justify-between gap-3 rounded-nho border border-vien px-4 py-3">
+              <div className="min-w-0"><p className="text-[13px] text-muc-2">{c.nhan}</p><p className="mt-1 text-[22px] font-semibold leading-none tabular-nums text-muc">{c.so}</p></div>
+              <span className={`shrink-0 rounded-nho px-2 py-0.5 text-[11px] font-semibold ${c.khan ? "bg-loi-nen text-loi" : "bg-sac-xanh-nen text-sac-xanh"}`}>{c.khan ? "KHẨN" : "THÔNG TIN"}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
     </div>
   );
 }

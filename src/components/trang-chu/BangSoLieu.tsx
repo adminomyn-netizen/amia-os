@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
+import { BieuDoNhanh, type DiemNgay } from "./BieuDoNhanh";
 
 export type SoLieu = {
   ngay: { ngay: string; doanhThu: number; soDon: number; thucThu: number }[];            // 14 ngày gần nhất, cũ → mới
   homNay: string;
+  ngay30: DiemNgay[];                                     // 30 ngày gần nhất, cũ → mới
+  lichDs: { gio: string; ten: string; tt: string }[];
   thang: { doanhThu: number; thangTruoc: number; donHang: number; buoi: number; khachMoi: number; tongKhach: number; congNo: number; theSapHet: number };
   coCauThu: { tienMat: number; chuyenKhoan: number; quetThe: number };
   nguon: { ten: string; so: number }[];
@@ -48,7 +51,6 @@ function Vong({ phan, giua, nhanGiua }: { phan: { gt: number; mau: string }[]; g
 /** Các biểu đồ và số liệu cho lãnh đạo: nhiều màu, nhìn là thấy tình hình kinh doanh, khách, thẻ, công nợ, lịch, chấm công. */
 export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
   const { thang: t } = d;
-  const max = Math.max(1, ...d.ngay.map((n) => n.doanhThu));
   const doi = t.thangTruoc > 0 ? Math.round(((t.doanhThu - t.thangTruoc) / t.thangTruoc) * 100) : null;
   const tongThu = d.coCauThu.tienMat + d.coCauThu.chuyenKhoan + d.coCauThu.quetThe;
   const cc = [
@@ -86,17 +88,8 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
 
       <div className="grid gap-5 lg:grid-cols-3">
         {xemTien && (
-          <Khung cls="lg:col-span-2" tieuDe="Doanh thu 14 ngày gần nhất" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Xem báo cáo</Link>}>
-            <div className="flex h-48 items-end gap-1.5" role="img" aria-label="Biểu đồ cột doanh thu 14 ngày">
-              {d.ngay.map((n, i) => (
-                <NoiChiTiet key={n.ngay} cls="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" tieuDe={`Ngày ${n.ngay.slice(8)}/${n.ngay.slice(5, 7)}`} dong={[{ nhan: "Doanh thu", gt: tienVN(n.doanhThu) }, { nhan: "Thực thu", gt: tienVN(n.thucThu) }, { nhan: "Số đơn", gt: String(n.soDon) }]}>
-                  {n.doanhThu > 0 && <span className="hidden text-[10px] tabular-nums text-muc-3 xl:block">{n.doanhThu >= 1e6 ? `${(n.doanhThu / 1e6).toFixed(1)}tr` : `${Math.round(n.doanhThu / 1e3)}k`}</span>}
-                  <div className="w-full rounded-t-[4px]" style={{ height: `${Math.max(3, (n.doanhThu / max) * 150)}px`, background: n.ngay === d.homNay ? "var(--sac-cam-mau)" : `linear-gradient(180deg, ${mau(i % 2 ? 0 : 1)}, var(--sac-luc-2))` }} />
-                  <span className="text-[10.5px] text-muc-3">{n.ngay.slice(8)}</span>
-                </NoiChiTiet>
-              ))}
-            </div>
-            <p className="mt-2 text-[12px] text-muc-3">Cột vàng là hôm nay. Rê chuột vào cột để xem chi tiết từng ngày.</p>
+          <Khung cls="lg:col-span-2" tieuDe="Doanh thu nhanh" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Xem báo cáo</Link>}>
+            <BieuDoNhanh du={d.ngay30} />
           </Khung>
         )}
         {xemTien && (
@@ -119,6 +112,7 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
           {tongLich === 0 ? <p className="text-[14px] text-muc-3">Hôm nay chưa có lịch hẹn.</p> : (
             <>
               <div className="flex h-5 overflow-hidden rounded-sm bg-giay-tram" role="img" aria-label="Lịch hẹn hôm nay theo trạng thái">{d.lich.filter((x) => x.so > 0).map((x, i) => <div key={x.nhan} style={{ width: `${(x.so / tongLich) * 100}%`, background: mau(i) }} title={`${x.nhan}: ${x.so}`} />)}</div>
+              <ul className="mt-3 divide-y divide-vien border-y border-vien">{d.lichDs.map((l, i) => <li key={i} className="flex items-center justify-between gap-3 py-2 text-[13.5px]"><span className="min-w-0 truncate"><span className="mr-2 tabular-nums text-muc-3">{l.gio}</span>{l.ten}</span><span className="shrink-0 rounded-nho bg-giay-tram px-2 py-0.5 text-[11.5px] text-muc-2">{l.tt}</span></li>)}</ul>
               <ul className="mt-3 space-y-1.5 text-[13px]">{d.lich.filter((x) => x.so > 0).map((x, i) => <li key={x.nhan} className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 rounded-sm" style={{ background: mau(i) }} /><span className="text-muc-2">{x.nhan}</span><span className="ml-auto tabular-nums text-muc">{x.so}</span></li>)}</ul>
             </>
           )}

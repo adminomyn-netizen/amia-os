@@ -40,17 +40,20 @@ const VIEC_CHINH: Partial<Record<VaiTro, string>> = {
 
 /** Trang chủ cá nhân của MỌI nhân viên (kể cả người không có dashboard): việc đang chờ, hiệu suất của tôi tháng này,
  *  lịch hôm nay, lối tắt theo quyền và toàn bộ chức năng. Dashboard điều hành nằm ở mục Tổng quan. */
-export default async function TrangChu({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string }> }) {
+export default async function TrangChu({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; cn?: string }> }) {
   const batDau = mocDo();
   const nd = await layNguoiDungDangNhap();
   const sp = await searchParams;
-  const db = sb(), homNay = homNayHCM(), dauThang = `${homNay.slice(0, 8)}01`, cn = nd.chiNhanhId;
+  const db = sb(), homNay = homNayHCM(), dauThang = `${homNay.slice(0, 8)}01`;
+  const dieuHanh = nd.vaiTro === "chu" || nd.vaiTro === "ky_thuat" || nd.vaiTro === "quan_ly";
+  // Lãnh đạo không gắn chi nhánh được chọn xem từng chi nhánh (?cn=…) hoặc tất cả.
+  const dsCn = dieuHanh && !nd.chiNhanhId ? ((await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu")).data ?? []) : [];
+  const cn = nd.chiNhanhId ?? (dsCn.some((c) => c.id === sp.cn) ? sp.cn! : null);
   const { data: dsTin } = await db.from("bang_tin").select("id, tieu_de, noi_dung, hien_den").eq("hoat_dong", true).lte("hien_tu", homNay).order("ghim", { ascending: false }).order("hien_tu", { ascending: false }).limit(10);
   const tin = (dsTin ?? []).filter((t) => !t.hien_den || t.hien_den >= homNay).slice(0, 3);
   const tu = new Date(`${homNay}T00:00:00+07:00`).toISOString(), den = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
 
   const congThang = (ngay: string, n: number) => { const d = new Date(`${ngay}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
-  const dieuHanh = nd.vaiTro === "chu" || nd.vaiTro === "ky_thuat" || nd.vaiTro === "quan_ly";
   const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: dtNgay }] = await Promise.all([
     layCanhBao(nd),
     db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: (cn ?? undefined) as string }),
@@ -59,15 +62,22 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
     dieuHanh && coQuyen(nd, "baocao.xem") ? db.rpc("bc_doanh_thu_ngay", { p_tu: `${congThang(dauThang, -1)}`, p_den: homNay, p_cn: (cn ?? undefined) as string }) : Promise.resolve({ data: null }),
   ]);
   const hn = (dtNgay ?? []).find((n) => n.ngay === homNay);
-  let soLich = 0, dangCho = 0;
+  let soLich = 0, dangCho = 0, khongDen = 0;
+  let lichDs: { gio: string; ten: string; tt: string }[] = [];
   let top: { ten: string; doanhSo: number; hoaHong?: number; soDong?: number }[] = [];
   let soLieu: SoLieu | null = null;
   const NHAN_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành" };
   if (dieuHanh) {
-    let lq = db.from("lich_hen").select("trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").limit(500);
+    let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).order("bat_dau").limit(500);
     if (cn) lq = lq.eq("chi_nhanh_id", cn);
-    const ds = (await lq).data ?? [];
+    const tatCaLich = (await lq).data ?? [];
+    const ds = tatCaLich.filter((l) => l.trang_thai !== "huy" && l.trang_thai !== "khong_den");
+    khongDen = tatCaLich.filter((l) => l.trang_thai === "khong_den").length;
     soLich = ds.length; dangCho = ds.filter((l) => l.trang_thai !== "hoan_thanh").length;
+    const idsK = [...new Set(ds.slice(0, 6).map((l) => l.khach_id))];
+    const { data: ksL } = idsK.length ? await db.from("khach_hang").select("id, ho_ten").in("id", idsK) : { data: [] };
+    const tenKL = new Map((ksL ?? []).map((k) => [k.id, k.ho_ten]));
+    lichDs = ds.slice(0, 6).map((l) => ({ gio: gioVN(l.bat_dau), ten: tenKL.get(l.khach_id) ?? "Khách", tt: NHAN_LICH[l.trang_thai] ?? l.trang_thai }));
     const dauTruoc = congThang(dauThang, -1), rows = dtNgay ?? [];
     const thangNay = rows.filter((r) => r.ngay >= dauThang), thangTruoc = rows.filter((r) => r.ngay >= dauTruoc && r.ngay < dauThang);
     const tong = (a: typeof rows, k: "doanh_thu" | "so_don" | "so_buoi" | "tien_mat" | "chuyen_khoan" | "quet_the") => a.reduce((x, r) => x + Number(r[k] ?? 0), 0);
@@ -89,7 +99,8 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
     const dem = new Map<string, number>();
     for (const k of khMoi ?? []) dem.set(k.nguon || "Khác", (dem.get(k.nguon || "Khác") ?? 0) + 1);
     soLieu = {
-      homNay,
+      homNay, lichDs,
+      ngay30: rows.filter((r) => r.ngay > congNgay(homNay, -30)).map((r) => ({ ngay: r.ngay, doanhThu: Number(r.doanh_thu), thucThu: Number(r.thuc_thu), noMoi: Number(r.no_moi) })).sort((a, b) => a.ngay.localeCompare(b.ngay)),
       ngay: rows.filter((r) => r.ngay > congNgay(homNay, -14)).map((r) => ({ ngay: r.ngay, doanhThu: Number(r.doanh_thu), soDon: Number(r.so_don), thucThu: Number(r.thuc_thu) })).sort((a, b) => a.ngay.localeCompare(b.ngay)),
       thang: { doanhThu: tong(thangNay, "doanh_thu"), thangTruoc: tong(thangTruoc, "doanh_thu"), donHang: tong(thangNay, "so_don"), buoi: tong(thangNay, "so_buoi"), khachMoi: nKhMoi ?? (khMoi ?? []).length, tongKhach: nKh ?? 0, congNo: (dsNo ?? []).reduce((x, r) => x + Number(r.con_no), 0), theSapHet: canhBao.filter((c) => c.ma === "the").reduce((x, c) => x + (Number(c.nhan.match(/^\d+/)?.[0]) || 0), 0) },
       coCauThu: { tienMat: tong(thangNay, "tien_mat"), chuyenKhoan: tong(thangNay, "chuyen_khoan"), quetThe: tong(thangNay, "quet_the") },
@@ -165,7 +176,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
 
       {dieuHanh ? (
         <BangDieuHanh canhBao={canhBao} tin={tin.map((t) => ({ id: t.id, tieu_de: t.tieu_de, noi_dung: t.noi_dung }))} top={top}
-          so={{ lich: soLich, dangCho, thuHomNay: coQuyen(nd, "baocao.tien") ? Number(hn?.thuc_thu ?? 0) : null, noMoi: coQuyen(nd, "baocao.tien") ? Number(hn?.no_moi ?? 0) : null }} soLieu={soLieu} xemTien={coQuyen(nd, "baocao.tien")} />
+          so={{ lich: soLich, dangCho, khongDen, hoanThanh: Math.max(0, soLich - dangCho), choXacNhan: soLieu?.lich.find((x) => x.nhan === "Chưa xác nhận")?.so ?? 0, dangPhucVu: soLieu?.lich.find((x) => x.nhan === "Đang phục vụ")?.so ?? 0, thuChiTiet: hn ? `doanh thu ${tienVN(Number(hn.doanh_thu))}` : "", tongNo: soLieu?.thang.congNo ?? 0, khoThap: canhBao.filter((c) => c.ma === "kho").length, leadChua: 0, nhanCn: dsCn, cnDangChon: cn, thuHomNay: coQuyen(nd, "baocao.tien") ? Number(hn?.thuc_thu ?? 0) : null, noMoi: coQuyen(nd, "baocao.tien") ? Number(hn?.no_moi ?? 0) : null }} soLieu={soLieu} xemTien={coQuyen(nd, "baocao.tien")} />
       ) : (
         <>
           {canhBao.length > 0 && <p role="status" className="rounded-nho border border-loi/30 bg-loi-nen px-4 py-3 text-[14px] font-semibold text-loi">{canhBao.length} việc cần xử lý hôm nay</p>}

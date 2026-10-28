@@ -24,7 +24,7 @@ export async function luuDichVu(fd: FormData): Promise<KQ> {
   const id = chuoi(fd, "id");
   const row: TablesInsert<"dich_vu"> = {
     ma: chuoi(fd, "ma").toUpperCase(), nhom_id: chuoi(fd, "nhom_id"), ten: chuoi(fd, "ten"), don_vi_tinh: chuoi(fd, "don_vi_tinh") || "buổi",
-    thoi_luong_phut: so(fd, "thoi_luong_phut") || 60, gia: so(fd, "gia"), gia_von: so(fd, "gia_von"), vat_pct: so(fd, "vat_pct"), hoat_dong: bat(fd, "hoat_dong"),
+    thoi_luong_phut: so(fd, "thoi_luong_phut") || 60, gia: so(fd, "gia"), gia_von: so(fd, "gia_von"), vat_pct: so(fd, "vat_pct"), hoat_dong: bat(fd, "hoat_dong"), dat_online: bat(fd, "dat_online"),
   };
   if (!row.ma || !row.ten || !row.nhom_id) return { loi: "Nhập mã, tên và chọn nhóm dịch vụ." };
   const { error } = id ? await sb().from("dich_vu").update(row).eq("id", id) : await sb().from("dich_vu").insert(row);
@@ -114,3 +114,44 @@ export const xoaGoiThe = async (fd: FormData) => xoaMuc("danhmuc.sua", "goi_the"
 export const xoaSanPham = async (fd: FormData) => xoaMuc("danhmuc.sua", "san_pham", fd);
 export const xoaNhomDichVu = async (fd: FormData) => xoaMuc("danhmuc.sua", "dich_vu_nhom", fd);
 export const xoaChiNhanh = async (fd: FormData) => xoaMuc("nhanvien.quanly", "chi_nhanh", fd);
+
+/** Chỗ làm (giường/phòng) theo chi nhánh: tên chỗ được ghi vào lich_hen.phong khi đặt lịch; số chỗ đang hoạt động là sức chứa để tính giờ trống cho khách đặt online. */
+export async function luuChoLam(fd: FormData): Promise<KQ> {
+  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  const row = { chi_nhanh_id: chuoi(fd, "chi_nhanh_id"), ten: chuoi(fd, "ten").replace(/\s+/g, " "), thu_tu: so(fd, "thu_tu") || 100, hoat_dong: bat(fd, "hoat_dong") };
+  if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
+  if (row.ten.length < 1 || row.ten.length > 40) return { loi: "Tên chỗ từ 1 đến 40 ký tự." };
+  const db = sb();
+  const { error } = id ? await db.from("cho_lam").update(row).eq("id", id) : await db.from("cho_lam").insert(row);
+  if (error?.code === "23505") return { loi: "Chi nhánh này đã có chỗ trùng tên." };
+  if (error) return { loi: thongBaoLoi(error) };
+  // Đổi tên chỗ: các lịch chưa diễn ra dùng tên cũ được đổi theo để lưới không tách thành hai hàng.
+  const cu = chuoi(fd, "ten_cu");
+  if (id && cu && cu !== row.ten) await db.from("lich_hen").update({ phong: row.ten }).eq("chi_nhanh_id", row.chi_nhanh_id).eq("phong", cu).gte("bat_dau", new Date().toISOString());
+  return xong();
+}
+export async function xoaChoLam(fd: FormData): Promise<KQ> {
+  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  if (!id) return { loi: "Thiếu mục cần xoá." };
+  const { error } = await sb().from("cho_lam").delete().eq("id", id);
+  return error ? { loi: thongBaoLoi(error) } : xong();
+}
+
+/** Công tắc + thông số của trang đặt lịch online (/dat-lich). Mở trang ra Internet nên chỉ người quản lý, và ghi nhật ký. */
+export async function luuDatLichOnline(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("nhanvien.quanly");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const truoc = Math.round(so(fd, "bao_truoc_phut")), ngay = Math.round(so(fd, "toi_da_ngay"));
+  if (truoc < 0 || truoc > 10080) return { loi: "Đặt trước tối thiểu từ 0 đến 10.080 phút." };
+  if (ngay < 1 || ngay > 60) return { loi: "Chỉ nhận đặt trong 1 đến 60 ngày tới." };
+  const mo = bat(fd, "mo");
+  const db = sb();
+  const { error } = await db.from("cau_hinh").upsert([
+    { khoa: "dat_online.mo", gia_tri: mo ? "1" : "0" }, { khoa: "dat_online.bao_truoc_phut", gia_tri: String(truoc) }, { khoa: "dat_online.toi_da_ngay", gia_tri: String(ngay) },
+  ]);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_cau_hinh", doi_tuong: "cau_hinh", chi_tiet: { khoa: "dat_online", mo, bao_truoc_phut: truoc, toi_da_ngay: ngay } });
+  return xong();
+}

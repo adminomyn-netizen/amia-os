@@ -35,6 +35,11 @@ export function LocNhanVien({ giaTri, luaChon }: { giaTri: string; luaChon: LuaC
   return <Chon ariaLabel="Lọc theo nhân viên" giaTri={giaTri} luaChon={[{ gia_tri: "", nhan: "Tất cả" }, ...luaChon]} onDoi={(v) => doi({ nv: v })} nho />;
 }
 
+export function LocCho({ giaTri, luaChon }: { giaTri: string; luaChon: LuaChon[] }) {
+  const doi = useDoiUrl();
+  return <Chon ariaLabel="Lọc theo chỗ" giaTri={giaTri} luaChon={[{ gia_tri: "", nhan: "Tất cả" }, ...luaChon]} onDoi={(v) => doi({ cho: v })} nho />;
+}
+
 /** Ô "Tìm khách hàng hoặc mã đặt lịch" + lọc trạng thái. Tìm khi bấm Enter hoặc rời ô (không tải lại mỗi phím). */
 export function TimVaLoc({ q, tt, luaChonTt }: { q: string; tt: string; luaChonTt: LuaChon[] }) {
   const doi = useDoiUrl();

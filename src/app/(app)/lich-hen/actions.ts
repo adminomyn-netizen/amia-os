@@ -93,3 +93,35 @@ export async function doiTrangThaiLich(fd: FormData): Promise<KQ> {
   lamMoi();
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }
+
+/** Lễ tân duyệt một yêu cầu đặt lịch online: hàm Postgres tạo khách (nếu số điện thoại chưa có) + lịch "chưa xác nhận" trong một giao dịch, từ chối nếu hết chỗ/đã qua giờ. */
+export async function duyetYeuCauOnline(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("lich.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  if (!id) return { loi: "Thiếu yêu cầu." };
+  const db = sb();
+  const { data: y } = await db.from("yeu_cau_dat_lich").select("chi_nhanh_id").eq("id", id).maybeSingle();
+  if (!y) return { loi: "Không tìm thấy yêu cầu." };
+  if (nd.chiNhanhId && nd.chiNhanhId !== y.chi_nhanh_id) return { loi: KHONG_DU_QUYEN };
+  const { error } = await db.rpc("duyet_yeu_cau_dat_lich", { p_id: id, p_nguoi: nd.nhanVienId });
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "duyet_yeu_cau_dat_lich", doi_tuong: "yeu_cau_dat_lich", doi_tuong_id: id });
+  lamMoi();
+  return { ok: true };
+}
+export async function tuChoiYeuCauOnline(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("lich.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), lyDo = chuoi(fd, "ly_do").slice(0, 200);
+  if (!id || !lyDo) return { loi: "Ghi lý do từ chối." };
+  const db = sb();
+  const { data: y } = await db.from("yeu_cau_dat_lich").select("chi_nhanh_id, trang_thai").eq("id", id).maybeSingle();
+  if (!y || y.trang_thai !== "cho") return { loi: "Yêu cầu này đã được xử lý." };
+  if (nd.chiNhanhId && nd.chiNhanhId !== y.chi_nhanh_id) return { loi: KHONG_DU_QUYEN };
+  const { error } = await db.from("yeu_cau_dat_lich").update({ trang_thai: "tu_choi", ly_do: lyDo, xu_ly_boi: nd.nhanVienId, xu_ly_luc: new Date().toISOString() }).eq("id", id).eq("trang_thai", "cho");
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "tu_choi_yeu_cau_dat_lich", doi_tuong: "yeu_cau_dat_lich", doi_tuong_id: id, chi_tiet: { ly_do: lyDo } });
+  lamMoi();
+  return { ok: true };
+}

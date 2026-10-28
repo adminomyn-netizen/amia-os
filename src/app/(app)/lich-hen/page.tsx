@@ -12,9 +12,9 @@ import { FormLichHen } from "@/components/lich-hen/FormLichHen";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
 import { thucHienBuoi } from "../the/actions";
-import { doiTrangThaiLich, luuLichHen } from "./actions";
+import { doiTrangThaiLich, duyetYeuCauOnline, luuLichHen, tuChoiYeuCauOnline } from "./actions";
 import { LocNguon } from "@/components/lich-hen/LocNguon";
-import { ChonKhoang, KhungNgay, LocNhanVien, TimVaLoc } from "@/components/lich-hen/DieuKhienLich";
+import { ChonKhoang, KhungNgay, LocCho, LocNhanVien, TimVaLoc } from "@/components/lich-hen/DieuKhienLich";
 import { BIEU_TUONG_HANG, cacNgayTrong, chuTatTen, moTaLap, NGUON_DAT, nhanCotNgay, nhanNgayDai, nhanNguon, tenNvHoa, thuCuaNgay } from "@/lib/lich-hen";
 
 const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
@@ -28,7 +28,7 @@ const DAT = /^\d{4}-\d{2}-\d{2}$/;
 const TOI_DA_THEO_O = 3;
 const MAU_VONG = ["bg-sac-xanh-nen text-sac-xanh", "bg-sac-luc-nen text-sac-luc", "bg-sac-cam-nen text-sac-cam", "bg-sac-tim-nen text-sac-tim", "bg-sac-hong-nen text-sac-hong"];
 
-type Sp = { ngay?: string; tu?: string; den?: string; cn?: string; khach?: string; nguon?: string; nv?: string; kieu?: string; q?: string; tt?: string };
+type Sp = { ngay?: string; tu?: string; den?: string; cn?: string; khach?: string; nguon?: string; nv?: string; cho?: string; kieu?: string; q?: string; tt?: string };
 
 /** Truy vấn `.in()` theo lô 100 mã để địa chỉ yêu cầu không quá dài khi lưới có hàng trăm lịch. */
 async function theoLo<T>(ids: string[], f: (lo: string[]) => PromiseLike<{ data: T[] | null }>): Promise<T[]> {
@@ -63,7 +63,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const cnId = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
   // Đường dẫn giữ mọi bộ lọc hiện có, chỉ đổi phần được nêu (chuỗi rỗng = bỏ tham số).
   const url = (doi: Record<string, string> = {}) => {
-    const m: Record<string, string> = { tu, den, ngay, cn: cnId, kieu, q, tt, nguon, nv: sp.nv ?? "", ...doi };
+    const m: Record<string, string> = { tu, den, ngay, cn: cnId, kieu, q, tt, nguon, nv: sp.nv ?? "", cho: sp.cho ?? "", ...doi };
     const u = new URLSearchParams(Object.entries(m).filter(([, v]) => v));
     return `/lich-hen?${u}`;
   };
@@ -73,11 +73,13 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const homNayDau = new Date(`${homNay}T00:00:00+07:00`).toISOString(), homNayCuoi = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
   let qLich = db.from("lich_hen").select("*").eq("chi_nhanh_id", cnId).gte("bat_dau", tuIso).lt("bat_dau", denIso).order("bat_dau").limit(3000);
   if (nguon) qLich = qLich.eq("nguon", nguon);
-  const [{ data: lichTho }, { data: nv }, { data: dv }, { count: demHomNay }] = await Promise.all([
+  const [{ data: lichTho }, { data: nv }, { data: dv }, { count: demHomNay }, { data: choLam }, { data: yeuCau }] = await Promise.all([
     qLich,
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chuc_danh, ma_nv, chi_nhanh_id").eq("hoat_dong", true).order("ma_nv"),
     db.from("dich_vu").select("id, ma, ten, thoi_luong_phut").eq("hoat_dong", true).order("ma"),
     db.from("lich_hen").select("id", { count: "exact", head: true }).eq("chi_nhanh_id", cnId).gte("bat_dau", homNayDau).lt("bat_dau", homNayCuoi).not("trang_thai", "in", "(huy,khong_den)"),
+    db.from("cho_lam").select("chi_nhanh_id, ten, thu_tu, hoat_dong").order("thu_tu").order("ten"),
+    db.from("yeu_cau_dat_lich").select("id, dich_vu_ids, bat_dau, thoi_luong_phut, ho_ten, dien_thoai, ghi_chu, tao_luc").eq("chi_nhanh_id", cnId).eq("trang_thai", "cho").gte("bat_dau", new Date().toISOString()).order("bat_dau").limit(100),
   ]);
   const idsK = [...new Set((lichTho ?? []).map((l) => l.khach_id))];
   const ks = await theoLo(idsK, (lo) => db.from("v_khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, hang").in("id", lo));
@@ -86,6 +88,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const lich = (lichTho ?? []).filter((l) => {
     if (tt && l.trang_thai !== tt) return false;
     if (sp.nv && (l.nhan_vien_id ?? "") !== sp.nv) return false;
+    if (sp.cho && (l.phong ?? "").trim().toLowerCase() !== sp.cho.toLowerCase()) return false;
     if (!qThuong) return true;
     const k = tenK.get(l.khach_id);
     return [k?.ho_ten, k?.dien_thoai, k?.ma, l.ma_dat_lich].some((x) => (x ?? "").toLowerCase().includes(qThuong));
@@ -112,6 +115,8 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const bsLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
   const dichVu = (dv ?? []).map((d) => ({ id: d.id, ma: d.ma, ten: d.ten, thoiLuong: d.thoi_luong_phut }));
   const cnLC = (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
+  const choDm = (choLam ?? []).filter((c) => c.hoat_dong).map((c) => ({ chiNhanhId: c.chi_nhanh_id, ten: c.ten }));
+  const choCn = choDm.filter((c) => c.chiNhanhId === cnId);
   const sua = coQuyen(nd, "lich.sua");
   const moFormMoi = !!sp.khach;
   let khachMoi = null;
@@ -130,9 +135,12 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     if (sp.nv) hang = hang.filter((h) => h.khoa);
     khoaHang = (l) => l.nhan_vien_id ?? "";
   } else if (kieu === "cho") {
-    const cho = [...new Set(lich.map((l) => (l.phong ?? "").trim()).filter(Boolean))].sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
-    hang = [{ khoa: "", ten: "CHƯA XẾP CHỖ" }, ...cho.map((c, i) => ({ khoa: c, ten: c.toLocaleUpperCase("vi-VN"), vong: c.slice(0, 2).toLocaleUpperCase("vi-VN"), mau: i % MAU_VONG.length }))];
-    khoaHang = (l) => (l.phong ?? "").trim();
+    // Chỗ trong danh mục (đang dùng) của chi nhánh + chỗ chỉ có trong chữ ghi ở lịch (lịch cũ/nhập tay); đang lọc một chỗ thì chỉ hiện chỗ đó.
+    const trongDm = choCn.map((c) => c.ten);
+    const ngoaiDm = [...new Set(lich.map((l) => (l.phong ?? "").trim()).filter((t) => t && !trongDm.some((x) => x.toLowerCase() === t.toLowerCase())))].sort((a, b) => a.localeCompare(b, "vi", { numeric: true }));
+    const cho = [...trongDm, ...ngoaiDm].filter((t) => !sp.cho || t.toLowerCase() === sp.cho.toLowerCase());
+    hang = [...(sp.cho ? [] : [{ khoa: "", ten: "CHƯA XẾP CHỖ" }]), ...cho.map((c, i) => ({ khoa: c, ten: c.toLocaleUpperCase("vi-VN"), vong: c.slice(0, 2).toLocaleUpperCase("vi-VN"), mau: i % MAU_VONG.length }))];
+    khoaHang = (l) => { const t = (l.phong ?? "").trim(); return cho.find((x) => x.toLowerCase() === t.toLowerCase()) ?? t; };
   } else {
     const gios = [...new Set([...Array.from({ length: 14 }, (_, i) => String(i + 7)), ...lich.map((l) => gioCua(l.bat_dau))])].sort((a, b) => Number(a) - Number(b));
     hang = gios.map((g) => ({ khoa: g, ten: `${g.padStart(2, "0")}:00` }));
@@ -152,6 +160,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const lichNgayHieuLuc = lichNgay.filter(homLich).length;
   const soHuy = lichNgay.length - lichNgayHieuLuc;
 
+  const tenYeuCau = (ids: string[]) => ids.map((d) => tenDv.get(d)).filter(Boolean).join(", ");
   const hanhDong = (l: Tables<"lich_hen">, k: { ma?: string | null; ho_ten?: string | null; dien_thoai?: string | null; nguoi_phu_trach_id?: string | null } | undefined, dvIds: string[]) => {
     const theKhach = the.filter((x) => x.khach_id === l.khach_id);
     const nvDefault = l.nhan_vien_id ?? "";
@@ -199,11 +208,14 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
           <Link href={url({ kieu: "cho" })} className={nutPhu}>Sơ đồ chỗ</Link>
           <Link href={url({ tu: congNgay(homNay, -30), den: congNgay(homNay, -1), ngay: congNgay(homNay, -1) })} className={nutPhu}>Lịch sử</Link>
           <ChonKhoang tu={tu} den={den} />
-          {sua && <FormLichHen nhan="Đặt lịch" dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
+          {sua && <FormLichHen nhan="Đặt lịch" cho={choDm} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-muc-3">
         {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && (dsCn ?? []).map((c) => <Link key={c.id} href={url({ cn: c.id })} className={`rounded-nho px-3 py-1.5 ${c.id === cnId ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}
+        <span className="flex items-center gap-2"><span>Nhân viên</span><span className="w-[170px]"><LocNhanVien giaTri={sp.nv ?? ""} luaChon={(nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }))} /></span></span>
+        <span className="flex items-center gap-2"><span>Chỗ</span><span className="w-[140px]"><LocCho giaTri={sp.cho ?? ""} luaChon={[...new Set([...choCn.map((c) => c.ten), ...lich.map((l) => (l.phong ?? "").trim()).filter(Boolean)])].map((t) => ({ gia_tri: t, nhan: t }))} /></span></span>
+        <span className="tabular-nums" aria-live="polite">{lich.filter(homLich).length} lịch đang hiệu lực{sp.nv || sp.cho || q || tt || nguon ? " theo bộ lọc" : ""} trong khoảng ngày</span>
         <span className="flex flex-wrap items-center gap-3 sm:ml-auto">
           <div className="w-[190px]"><LocNguon giaTri={nguon} /></div>
           <a href={xuat(ngay, ngay)} download className="text-nhan-dam hover:underline" aria-label={`Xuất Excel lịch hẹn ngày ${ngayVN(ngay)}`}>Xuất Excel ngày</a>
@@ -211,13 +223,30 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         </span>
       </div>
 
+      {(sua || coQuyen(nd, "lich.xem")) && (yeuCau ?? []).length > 0 && (
+        <section aria-label="Yêu cầu đặt lịch online chờ duyệt" className="mb-4 rounded-the border border-canh-bao bg-canh-bao-nen p-3">
+          <h2 className="mb-2 text-[14px] font-semibold text-canh-bao">Yêu cầu đặt lịch online chờ duyệt ({(yeuCau ?? []).length})</h2>
+          <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {(yeuCau ?? []).map((y) => (
+              <li key={y.id} className="rounded-nho border border-vien bg-giay-sang p-2.5 text-[13px]">
+                <div className="font-semibold text-muc">{ngayVN(ngayCuaIso(y.bat_dau))} {gioVN(y.bat_dau)} · {y.thoi_luong_phut} phút</div>
+                <div className="text-muc-2">{y.ho_ten} · <a href={`tel:${y.dien_thoai}`} className="text-nhan-dam hover:underline">{y.dien_thoai}</a></div>
+                <div className="text-muc-3">{tenYeuCau(y.dich_vu_ids)}</div>
+                {y.ghi_chu && <div className="text-muc-3">{y.ghi_chu}</div>}
+                {sua && <div className="mt-1.5 flex items-center gap-3"><NutNhanh chinh nhan="Duyệt" action={duyetYeuCauOnline} du={{ id: y.id }} /><NutHop kieu="chu" nguy nhan="Từ chối" tieuDe="Từ chối yêu cầu đặt lịch" an={{ id: y.id }} nhanLuu="Từ chối" truong={[{ ten: "ly_do", nhan: "Lý do (ví dụ: đã gọi, khách đổi giờ)", loai: "chu", batBuoc: true, rong: true }]} action={tuChoiYeuCauOnline} /></div>}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
         {/* ───────── Lưới bên trái ───────── */}
         <div className="min-w-0 overflow-x-auto rounded-the border border-vien bg-giay-sang" tabIndex={0} aria-label="Lưới lịch hẹn, cuộn ngang để xem các ngày">
           <div className="grid min-w-max" style={{ gridTemplateColumns: cotLuoi }}>
             <div className="sticky left-0 z-10 flex items-center border-b border-r border-vien bg-giay-sang px-3 py-2">
               {kieu === "nv" ? <div className="w-full"><LocNhanVien giaTri={sp.nv ?? ""} luaChon={(nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }))} /></div>
-                : <span className="text-[13px] font-medium text-muc-2">{kieu === "cho" ? "Chỗ / giường" : "Giờ"}</span>}
+                : kieu === "cho" ? <div className="w-full"><LocCho giaTri={sp.cho ?? ""} luaChon={[...new Set([...choCn.map((c) => c.ten), ...lich.map((l) => (l.phong ?? "").trim()).filter(Boolean)])].map((t) => ({ gia_tri: t, nhan: t.toLocaleUpperCase("vi-VN") }))} /></div>
+                : <span className="text-[13px] font-medium text-muc-2">Giờ</span>}
             </div>
             {cacNgay.map((d) => {
               const thu = thuCuaNgay(d);

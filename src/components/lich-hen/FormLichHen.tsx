@@ -17,9 +17,11 @@ export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string;
 const LUA_CHON_LAP = [{ gia_tri: "", nhan: "Không lặp" }, ...Object.entries(KIEU_LAP).map(([gia_tri, k]) => ({ gia_tri, nhan: k.nhan }))];
 
 /** Đặt lịch / đổi lịch. Thời lượng tự cộng theo dịch vụ chọn nhưng sửa tay được. */
-export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, tim, action, ban, sua, mo: moSan, homNay }: {
+export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, tim, action, ban, sua, mo: moSan, homNay, cho = [] }: {
   nhan: string; kieu?: "chinh" | "chu"; dichVu: DV[]; nhanVien: LuaChon[]; chiNhanh: LuaChon[]; tim: typeof timKhach; action: (fd: FormData) => Promise<{ ok?: boolean; loi?: string }>;
   ban?: { khach?: KhachChon | null; chiNhanhId: string }; sua?: LichSua; mo?: boolean; homNay: string;
+  /** Danh mục chỗ (giường/phòng) của các chi nhánh; chi nhánh nào có chỗ thì ô "Phòng / giường" thành danh sách chọn. */
+  cho?: { chiNhanhId: string; ten: string }[];
 }) {
   const router = useRouter();
   const [mo, setMo] = useState(!!moSan);
@@ -41,6 +43,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   // Nguồn cũ không thuộc danh sách (chữ nhập tay trước đây) vẫn hiện để không mất khi đổi lịch.
   const dsNguon = nguon && !LUA_CHON_NGUON.some((x) => x.gia_tri === nguon) ? [...LUA_CHON_NGUON, { gia_tri: nguon, nhan: nhanNguon(nguon) }] : LUA_CHON_NGUON;
   const xemLap = laKieuLap(kieuLap) && Number(tongBuoi) >= 2 ? ngayLap(ngay, kieuLap, Math.max(1, Number(khoang) || 1), Math.min(Number(tongBuoi), TOI_DA_BUOI_LAP)) : [];
+  const choCuaCn = cho.filter((c) => c.chiNhanhId === cn).map((c) => c.ten);
   const [tim_, setTim] = useState("");
   const doiDv = (id: string) => {
     const moi = dvs.includes(id) ? dvs.filter((x) => x !== id) : [...dvs, id];
@@ -84,7 +87,9 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
           <div className="grid gap-4 sm:grid-cols-2">
             <div><label className={NHAN_O}>Người thực hiện</label><Chon trong="Chưa phân" ariaLabel="Người thực hiện" giaTri={nv} onDoi={setNv} luaChon={[{ gia_tri: "", nhan: "Chưa phân" }, ...nhanVien]} /></div>
             <div><label className={NHAN_O}>Chi nhánh</label><Chon ariaLabel="Chi nhánh" giaTri={cn} onDoi={setCn} luaChon={chiNhanh} /></div>
-            <div><label htmlFor="lh-phong" className={NHAN_O}>Phòng / giường</label><input id="lh-phong" value={phong} onChange={(e) => setPhong(e.target.value)} className={O_NHAP} /></div>
+            {choCuaCn.length > 0
+              ? <div><label className={NHAN_O}>Phòng / giường</label><Chon trong="Chưa xếp chỗ" ariaLabel="Phòng / giường" giaTri={phong} onDoi={setPhong} luaChon={[{ gia_tri: "", nhan: "Chưa xếp chỗ" }, ...(phong && !choCuaCn.includes(phong) ? [phong] : []).concat(choCuaCn).map((t) => ({ gia_tri: t, nhan: t }))]} /></div>
+              : <div><label htmlFor="lh-phong" className={NHAN_O}>Phòng / giường</label><input id="lh-phong" value={phong} onChange={(e) => setPhong(e.target.value)} className={O_NHAP} /></div>}
             <div><label className={NHAN_O}>Nguồn đặt lịch</label><Chon trong="Chọn nguồn" ariaLabel="Nguồn đặt lịch" giaTri={nguon} onDoi={setNguon} luaChon={[{ gia_tri: "", nhan: "Không ghi" }, ...dsNguon]} /></div>
           </div>
           {!sua && (

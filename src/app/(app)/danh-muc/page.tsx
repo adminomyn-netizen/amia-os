@@ -9,11 +9,11 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NHAN_VAN_DE, khoaTen, vanDeSanPham } from "@/lib/san-pham";
-import { luuChiNhanh, luuDichVu, luuGoiThe, luuNhomDichVu, luuSanPham, xoaChiNhanh, xoaDichVu, xoaGoiThe, xoaNhomDichVu, xoaSanPham } from "./actions";
+import { luuChiNhanh, luuChoLam, luuDatLichOnline, luuDichVu, luuGoiThe, luuNhomDichVu, luuSanPham, xoaChiNhanh, xoaChoLam, xoaDichVu, xoaGoiThe, xoaNhomDichVu, xoaSanPham } from "./actions";
 
 const TAB = [
   { ma: "dich-vu", ten: "Dịch vụ" }, { ma: "goi-the", ten: "Gói thẻ" }, { ma: "san-pham", ten: "Sản phẩm và vật tư" },
-  { ma: "ra-soat", ten: "Rà soát sản phẩm" }, { ma: "nhom", ten: "Nhóm dịch vụ" }, { ma: "chi-nhanh", ten: "Chi nhánh" },
+  { ma: "ra-soat", ten: "Rà soát sản phẩm" }, { ma: "nhom", ten: "Nhóm dịch vụ" }, { ma: "cho-lam", ten: "Chỗ / giường" }, { ma: "chi-nhanh", ten: "Chi nhánh" },
 ];
 const DON_VI = ["buổi", "vùng", "shot", "line", "lần", "liệu trình"].map((x) => ({ gia_tri: x, nhan: x }));
 const NHOM_CAP = [{ gia_tri: "", nhan: "Không phải vật tư cấp theo ca" }, { gia_tri: "A", nhan: "A · đắt, đếm được (cấp từng ca)" }, { gia_tri: "B", nhan: "B · chai dùng chung (cấp theo ngày)" }, { gia_tri: "C", nhan: "C · rẻ, khó đếm (cấp theo tuần)" }];
@@ -54,6 +54,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
       { ten: "ten", nhan: "Tên dịch vụ", loai: "chu", batBuoc: true, rong: true }, { ten: "don_vi_tinh", nhan: "Đơn vị tính", loai: "chon", luaChon: DON_VI },
       { ten: "thoi_luong_phut", nhan: "Thời lượng (phút)", loai: "so" }, { ten: "gia", nhan: "Giá bán", loai: "tien" }, { ten: "gia_von", nhan: "Giá vốn", loai: "tien" },
       { ten: "vat_pct", nhan: "VAT (%)", loai: "so" }, { ten: "hoat_dong", nhan: "Đang bán", loai: "gat" },
+      { ten: "dat_online", nhan: "Cho khách tự đặt lịch online (trang /dat-lich)", loai: "gat" },
     ];
     nutThem = sua && <NutHop nhan="Thêm dịch vụ" tieuDe="Thêm dịch vụ" truong={truong} giaTri={{ don_vi_tinh: "buổi", thoi_luong_phut: 60, hoat_dong: true }} action={luuDichVu} />;
     noiDung = (
@@ -61,7 +62,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Dịch vụ", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm", hienThi: (r) => tenNhom.get(r.nhom_id) ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => r.don_vi_tinh }, { nhan: "Phút", hienThi: (r) => r.thoi_luong_phut, phai: true }, { nhan: "Giá bán", hienThi: (r) => tienVN(r.gia), phai: true },
-          ...(xemVon ? [{ nhan: "Giá vốn", hienThi: (r: NonNullable<typeof dv.data>[number]) => tienVN(r.gia_von), phai: true }] : []), { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
+          ...(xemVon ? [{ nhan: "Giá vốn", hienThi: (r: NonNullable<typeof dv.data>[number]) => tienVN(r.gia_von), phai: true }] : []), { nhan: "Đặt online", hienThi: (r) => <NhanTrangThai kieu={r.dat_online ? "tot" : "tram"}>{r.dat_online ? "Bật" : "Tắt"}</NhanTrangThai> }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof dv.data>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuDichVu} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaDichVu} /></span> }] : []),
         ]} />
     );
@@ -147,6 +148,37 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
         { nhan: "Thứ tự", hienThi: (r) => r.thu_tu }, { nhan: "Nhóm", hienThi: (r) => <span className="text-muc">{r.ten}</span> },
         ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof nhom.data>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuNhomDichVu} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaNhomDichVu} /></span> }] : []),
       ]} />
+    );
+  } else if (tab === "cho-lam") {
+    const [{ data: cn }, { data: cho }, { data: cfg }, { count: nDv }] = await Promise.all([
+      db.from("chi_nhanh").select("id, ten").order("thu_tu").order("ma"),
+      db.from("cho_lam").select("*").order("chi_nhanh_id").order("thu_tu").order("ten"),
+      db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "dat_online.%"),
+      db.from("dich_vu").select("id", { count: "exact", head: true }).eq("dat_online", true).eq("hoat_dong", true),
+    ]);
+    const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
+    const c = Object.fromEntries((cfg ?? []).map((x) => [x.khoa, x.gia_tri]));
+    const truong: Truong[] = [
+      { ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon", luaChon: (cn ?? []).map((x) => ({ gia_tri: x.id, nhan: x.ten })), batBuoc: true }, { ten: "ten", nhan: "Tên chỗ (giường / phòng)", loai: "chu", batBuoc: true, goiY: "Giường 1, Phòng VIP..." },
+      { ten: "thu_tu", nhan: "Thứ tự hiện (nhỏ đứng trước)", loai: "so" }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" },
+    ];
+    const truongOnline: Truong[] = [
+      { ten: "mo", nhan: "Mở trang đặt lịch online cho khách (/dat-lich)", loai: "gat", rong: true }, { ten: "bao_truoc_phut", nhan: "Khách phải đặt trước giờ hẹn ít nhất (phút)", loai: "so" }, { ten: "toi_da_ngay", nhan: "Chỉ nhận đặt trong (ngày tới, tối đa 60)", loai: "so" },
+    ];
+    const dangMo = c["dat_online.mo"] === "1";
+    nutThem = <span className="flex flex-wrap gap-2.5">
+      {quanLy && <NutHop kieu="phu" nhan="Đặt lịch online" tieuDe="Đặt lịch online cho khách" moTa="Khách vào trang /dat-lich, chọn dịch vụ và giờ còn trống rồi gửi YÊU CẦU; lễ tân duyệt trong màn Lịch hẹn. Cần có chỗ đang dùng ở chi nhánh và ít nhất một dịch vụ được bật đặt online." truong={truongOnline} giaTri={{ mo: dangMo, bao_truoc_phut: Number(c["dat_online.bao_truoc_phut"] ?? 120), toi_da_ngay: Number(c["dat_online.toi_da_ngay"] ?? 60) }} action={luuDatLichOnline} />}
+      {sua && <NutHop nhan="Thêm chỗ" tieuDe="Thêm chỗ làm" truong={truong} giaTri={{ hoat_dong: true, thu_tu: 100, chi_nhanh_id: cn?.[0]?.id ?? "" }} action={luuChoLam} />}
+    </span>;
+    noiDung = (
+      <>
+        <p className="mb-4 text-[14px] text-muc-2">Chỗ làm (giường, phòng) dùng cho Sơ đồ chỗ ở Lịch hẹn. Trang đặt lịch online cho khách: <b className={dangMo ? "text-nhan-dam" : "text-muc-3"}>{dangMo ? "đang mở" : "đang tắt"}</b> · {nDv ?? 0} dịch vụ được bật đặt online (bật ở tab Dịch vụ) · số chỗ đang dùng của chi nhánh là số lịch tối đa chạy cùng lúc.</p>
+        <Bang duLieu={cho ?? []} khoa={(r) => r.id} trong="Chưa có chỗ nào. Bấm Thêm chỗ để tạo giường/phòng của từng chi nhánh."
+          cot={[
+            { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id) ?? "" }, { nhan: "Chỗ", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Thứ tự", hienThi: (r) => r.thu_tu, phai: true }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
+            ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof cho>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} an={{ ten_cu: r.ten }} action={luuChoLam} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn chỗ này? Lịch hẹn đã ghi tên chỗ vẫn giữ nguyên chữ. Muốn tạm ngừng thì Sửa và tắt Đang dùng." an={{ id: r.id }} nhanLuu="Xoá" action={xoaChoLam} /></span> }] : []),
+          ]} />
+      </>
     );
   } else {
     const { data: cn } = await db.from("chi_nhanh").select("*").order("thu_tu").order("ma");

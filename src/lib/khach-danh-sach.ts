@@ -1,58 +1,72 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { sb } from "@/lib/db";
-import { chuanSdt, homNayHCM } from "@/lib/dinh-dang";
+import { chuanSdt } from "@/lib/dinh-dang";
 
-/** Tham số lọc/sắp xếp danh sách khách: dùng chung cho danh sách bên trái và nút Xuất Excel để hai nơi luôn khớp nhau. */
-export type ThamSoKhach = { q?: string; trang_thai?: string; nguon?: string; hang?: string; phu_trach?: string; sx?: string };
+import { KHOA_LOC, type KhoaLoc } from "@/lib/khach";
 
-/** Cột lấy cho tệp Excel. CỐ Ý không có `ghi_chu` (ghi chú chung từ SalonHero có thể chứa nội dung điều trị). */
-export const COT_KHACH = "id, ma, ho_ten, dien_thoai, zalo, email, gioi_tinh, ngay_sinh, dia_chi, nguon, nguon_chi_tiet, trang_thai, hang, nguoi_phu_trach_id, chi_nhanh_id, so_the_dang_dung, chi_12_thang, tao_luc" as const;
+export type ThamSoKhach = Partial<Record<KhoaLoc | "q" | "sx", string>>;
 
-type Loc = { or: (f: string) => unknown; eq: (c: string, v: string) => unknown; order: (c: string, o?: { ascending: boolean }) => unknown };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const NGAY = /^\d{4}-\d{2}-\d{2}$/;
+const SO = /^\d{1,12}$/;
+/** Kiểu của từng ô: giá trị sai kiểu bị bỏ (không gửi xuống CSDL) thay vì làm lỗi cả danh sách. */
+const KIEU: Partial<Record<KhoaLoc, RegExp>> = {
+  phu_trach: UUID, chi_nhanh: UUID, nhan_vien: UUID, nhom: /^([0-9a-f-]{36}|khong)$/i,
+  diem_tu: SO, diem_den: SO, tuoi_tu: /^\d{1,3}$/, tuoi_den: /^\d{1,3}$/, ds_tu: SO, ds_den: SO,
+  den_tu: NGAY, den_den: NGAY, tao_tu: NGAY, tao_den: NGAY,
+  the: /^(co|khong)$/, no: /^(co|khong)$/, nhieu_cn: /^1$/, sinh_nhat: /^(hom_nay|thang|[1-9]|1[0-2])$/,
+};
 
-/** Áp bộ lọc + thứ tự lên một truy vấn v_khach_hang. Tìm kiếm: tên, mã, email, số điện thoại. */
-export function apLocKhach<T>(truyVan: T, t: ThamSoKhach): T {
-  let q = truyVan as unknown as Loc;
-  const tuKhoa = (t.q ?? "").trim().slice(0, 80);
-  if (tuKhoa) {
-    const so = chuanSdt(tuKhoa);
-    const an = tuKhoa.replace(/[%,()*\\]/g, " ").trim();
-    const dk = [`ho_ten.ilike.%${an}%`, `ma.ilike.%${an}%`, /[a-z@]/i.test(an) ? `email.ilike.%${an}%` : "", so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean);
-    if (an) q = q.or(dk.join(",")) as Loc;
+/** Đọc tham số lọc từ địa chỉ (API/xuất Excel), bỏ giá trị rỗng hoặc sai kiểu. */
+export function docThamSo(u: URLSearchParams): ThamSoKhach {
+  const t: ThamSoKhach = { q: (u.get("q") ?? "").trim().slice(0, 80), sx: u.get("sx") ?? "ten" };
+  for (const k of KHOA_LOC) {
+    const v = (u.get(k) ?? "").trim().slice(0, 120);
+    if (v && (!KIEU[k] || KIEU[k]!.test(v))) t[k] = v;
   }
-  if (t.trang_thai) q = q.eq("trang_thai", t.trang_thai) as Loc;
-  if (t.nguon) q = q.eq("nguon", t.nguon) as Loc;
-  if (t.phu_trach) q = q.eq("nguoi_phu_trach_id", t.phu_trach) as Loc;
-  if (t.hang) q = q.eq("hang", t.hang) as Loc;
-  const sx = t.sx ?? "ten";
-  if (sx === "moi") q = q.order("tao_luc", { ascending: false }) as Loc;
-  else if (sx === "chi") q = q.order("chi_12_thang", { ascending: false }) as Loc;
-  else q = q.order("ho_ten", { ascending: sx !== "ten_giam" }) as Loc;
-  q = q.order("id") as Loc;
-  return q as unknown as T;
+  return t;
+}
+
+export type DongKhach = {
+  id: string; ma: string; ho_ten: string; dien_thoai: string; zalo: string | null; email: string | null; gioi_tinh: string | null; ngay_sinh: string | null;
+  dia_chi: string | null; nguon: string | null; nguon_chi_tiet: string | null; trang_thai: string | null; hang: string | null; nguoi_phu_trach_id: string | null;
+  chi_nhanh_id: string | null; so_the_dang_dung: number | null; chi_12_thang: number | null; tao_luc: string; tinh_thanh: string | null; quan_huyen: string | null;
+  diem_so_du: number; facebook: string | null; co_so_goc: string | null; nhom: { ten: string; mau: string | null }[];
+};
+
+/** Lọc + sắp xếp + phân trang ở CSDL (hàm loc_khach, migration 0066). Trả `tong` = số khách khớp toàn bộ bộ lọc. */
+export async function locKhach(t: ThamSoKhach, tu: number, so: number): Promise<{ ds: DongKhach[]; tong: number } | null> {
+  const p: Record<string, string> = { ...t } as Record<string, string>;
+  if (t.q) p.q_sdt = chuanSdt(t.q);
+  const { data, error } = await sb().rpc("loc_khach", { p, p_tu: tu, p_so: so });
+  if (error) { console.error("[loc_khach]", error.message); return null; }
+  const rows = (data ?? []) as { tong: number; dong: DongKhach }[];
+  // Trang vượt quá cuối: không có dòng nên không biết tổng; trả `tu` để nút "Tải thêm" tự ẩn.
+  return { ds: rows.map((r) => r.dong), tong: rows.length ? Number(rows[0].tong) : tu };
 }
 
 export type SoLieuKhach = { tong: number; moiHomNay: number; sinhNhatHomNay: number; sinhNhatThang: number };
 
-async function tinhSoLieu(homNay: string): Promise<SoLieuKhach> {
-  const db = sb();
-  const [{ count: tong }, { count: moi }, { count: coNgaySinh }] = await Promise.all([
-    db.from("khach_hang").select("id", { count: "exact", head: true }),
-    db.from("khach_hang").select("id", { count: "exact", head: true }).gte("tao_luc", `${homNay}T00:00:00+07:00`),
-    db.from("khach_hang").select("id", { count: "exact", head: true }).not("ngay_sinh", "is", null),
-  ]);
-  // PostgREST không lọc theo tháng/ngày của một cột ngày và đợt này không được thêm hàm SQL, nên đọc cột ngày sinh theo từng trang 1000 dòng rồi đếm.
-  const thang = homNay.slice(5, 7), ngay = homNay.slice(5);
-  const soTrang = Math.min(30, Math.ceil((coNgaySinh ?? 0) / 1000));
-  const cacTrang = await Promise.all(Array.from({ length: soTrang }, (_, i) => db.from("khach_hang").select("ngay_sinh").not("ngay_sinh", "is", null).order("id").range(i * 1000, i * 1000 + 999)));
-  let sinhThang = 0, sinhNgay = 0;
-  for (const tr of cacTrang) for (const r of tr.data ?? []) {
-    const nm = (r.ngay_sinh ?? "").slice(5);
-    if (nm.slice(0, 2) === thang) { sinhThang++; if (nm === ngay) sinhNgay++; }
-  }
-  return { tong: tong ?? 0, moiHomNay: moi ?? 0, sinhNhatHomNay: sinhNgay, sinhNhatThang: sinhThang };
+async function tinhSoLieu(): Promise<SoLieuKhach> {
+  const { data } = await sb().rpc("so_lieu_khach");
+  const s = (data ?? {}) as Record<string, number>;
+  return { tong: s.tong ?? 0, moiHomNay: s.moi_hom_nay ?? 0, sinhNhatHomNay: s.sinh_nhat_hom_nay ?? 0, sinhNhatThang: s.sinh_nhat_thang ?? 0 };
 }
-const soLieuCoDem = unstable_cache(tinhSoLieu, ["khach-so-lieu-dau-trang"], { revalidate: 120 });
-/** 4 số đầu trang danh sách khách (giờ Việt Nam). Nhớ 2 phút để mở trang không phải đọc lại cả cột ngày sinh. */
-export const soLieuKhach = () => soLieuCoDem(homNayHCM());
+/** 4 số đầu trang danh sách khách (giờ Việt Nam), đếm bằng một lượt ở CSDL. Nhớ 1 phút. */
+export const soLieuKhach = unstable_cache(tinhSoLieu, ["khach-so-lieu-dau-trang-2"], { revalidate: 60 });
+
+export type NhomKhach = { id: string; ten: string; mau: string | null; so: number };
+export type TuyChonLoc = { tinh: { tinh: string; so: number; quan: string[] | null }[]; dich_vu: string[] };
+
+async function docTuyChon(): Promise<{ nhom: NhomKhach[]; tuyChon: TuyChonLoc }> {
+  const db = sb();
+  const [{ data: nh }, { data: tc }] = await Promise.all([
+    db.from("nhom_khach").select("id, ten, mau, khach_nhom(count)").eq("hoat_dong", true).order("ten"),
+    db.rpc("tuy_chon_loc_khach"),
+  ]);
+  const nhom = (nh ?? []).map((n) => ({ id: n.id, ten: n.ten, mau: n.mau, so: (n.khach_nhom as unknown as { count: number }[])?.[0]?.count ?? 0 })).sort((a, b) => b.so - a.so || a.ten.localeCompare(b.ten, "vi"));
+  return { nhom, tuyChon: (tc ?? { tinh: [], dich_vu: [] }) as TuyChonLoc };
+}
+/** Danh mục cho ô lọc: nhóm khách (kèm số khách), tỉnh → quận, tên dịch vụ đã bán. Nhớ 5 phút. */
+export const tuyChonLocKhach = unstable_cache(docTuyChon, ["khach-tuy-chon-loc"], { revalidate: 300 });

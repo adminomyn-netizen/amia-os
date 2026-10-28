@@ -2,7 +2,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { NGUON, truongKhach } from "@/lib/khach";
-import { soLieuKhach } from "@/lib/khach-danh-sach";
+import { soLieuKhach, tuyChonLocKhach } from "@/lib/khach-danh-sach";
 import { NutHop } from "@/components/ui/BieuMau";
 import { DanhSachKhach } from "@/components/khach/DanhSachKhach";
 import { KhungHaiCot } from "@/components/khach/KhungHaiCot";
@@ -16,12 +16,13 @@ const bayGio = () => Date.now();
 export default async function KhungKhachHang({ children }: { children: React.ReactNode }) {
   const nd = await yeuCauQuyen("khach.xem");
   const db = sb();
-  const [{ data: nv }, { data: cn }, { data: dv }, { data: hang }, so] = await Promise.all([
+  const [{ data: nv }, { data: cn }, { data: dv }, { data: hang }, so, tc] = await Promise.all([
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
     db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("hang_khach").select("ten").order("thu_tu"),
     soLieuKhach(),
+    tuyChonLocKhach(),
   ]);
   const nvLC = (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const cnLC = (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
@@ -56,7 +57,8 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
 
   return (
     <div className="man-khach">
-      <KhungHaiCot dau={dau} danhSach={<DanhSachKhach nhanVien={nvLC} nguon={NGUON} hang={(hang ?? []).map((h) => ({ gia_tri: h.ten, nhan: h.ten }))} moc={bayGio()} choXuat={coQuyen(nd, "khach.xem")} />}>
+      <KhungHaiCot dau={dau} danhSach={<DanhSachKhach nhanVien={nvLC} nguon={NGUON} hang={(hang ?? []).map((h) => ({ gia_tri: h.ten, nhan: h.ten }))} moc={bayGio()} choXuat={coQuyen(nd, "khach.xem")}
+        danhMuc={{ nhom: tc.nhom, chiNhanh: cnLC, tinh: tc.tuyChon.tinh, dichVu: tc.tuyChon.dich_vu }} />}>
         {children}
       </KhungHaiCot>
     </div>

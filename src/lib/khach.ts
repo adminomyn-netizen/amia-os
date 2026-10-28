@@ -19,11 +19,19 @@ export const NHAN_TRANG_THAI_LICH: Record<string, string> = {
   chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành", huy: "Đã huỷ", khong_den: "Không đến",
 };
 /** Thứ tự danh sách khách (mặc định tên A → Z như SalonHero). */
+/** Các ô lọc danh sách khách (giống SalonHero). Dùng chung cho danh sách bên trái, API và nút Xuất Excel để mọi nơi luôn khớp nhau. */
+export const KHOA_LOC = [
+  "trang_thai", "nguon", "hang", "phu_trach", "nhom", "gioi_tinh", "diem_tu", "diem_den", "tuoi_tu", "tuoi_den", "the", "no", "sinh_nhat",
+  "chi_nhanh", "nhieu_cn", "tinh", "quan", "den_tu", "den_den", "tao_tu", "tao_den", "dich_vu", "nhan_vien", "ds_tu", "ds_den",
+] as const;
+export type KhoaLoc = (typeof KHOA_LOC)[number];
+
 export const SAP_XEP_KHACH = [
   { gia_tri: "ten", nhan: "Tên A → Z" },
   { gia_tri: "ten_giam", nhan: "Tên Z → A" },
   { gia_tri: "moi", nhan: "Mới tạo trước" },
   { gia_tri: "chi", nhan: "Chi 12 tháng cao trước" },
+  { gia_tri: "diem", nhan: "Điểm thưởng cao trước" },
 ];
 
 import type { Truong } from "@/components/ui/BieuMau";

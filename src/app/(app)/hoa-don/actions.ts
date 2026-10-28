@@ -54,3 +54,33 @@ export async function ghiNhanVat(fd: FormData): Promise<KQ> {
   revalidatePath("/hoa-don");
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }
+
+/** Ghi / sửa đánh giá 1–5 sao cho từng nhân viên PHỤC VỤ của hoá đơn đã hoàn thành (thu ngân, lễ tân: người có quyền bán hàng hoặc đặt lịch). Mỗi cặp đơn–nhân viên một đánh giá; DB kiểm lại và ghi nhật ký cũ → mới. */
+export async function luuDanhGia(json: string): Promise<KQ> {
+  const nd = (await kiemQuyen("ban.tao")) ?? (await kiemQuyen("lich.sua"));
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  let d: { hoaDonId: string; dg: { nhanVienId: string; diem: number; yKien: string }[] };
+  try { d = JSON.parse(json); } catch { return { loi: "Dữ liệu không đọc được." }; }
+  if (!Array.isArray(d.dg) || d.dg.length === 0 || d.dg.length > 50) return { loi: "Chưa có đánh giá nào để lưu." };
+  const db = sb();
+  const { data: h } = await db.from("hoa_don").select("id, trang_thai, chi_nhanh_id").eq("id", d.hoaDonId).maybeSingle();
+  if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy hoá đơn." };
+  if (h.trang_thai !== "hoan_thanh") return { loi: "Chỉ đánh giá nhân viên trên hoá đơn đã hoàn thành." };
+  const { data: cu } = await db.from("danh_gia_nhan_vien").select("nhan_vien_id, diem, y_kien").eq("hoa_don_id", h.id);
+  const truoc = new Map((cu ?? []).map((x) => [x.nhan_vien_id, x]));
+  let luu = 0;
+  for (const x of d.dg) {
+    const diem = Number(x.diem), yKien = String(x.yKien ?? "").trim().slice(0, 1000) || null;
+    if (!Number.isInteger(diem) || diem < 1 || diem > 5) return { loi: "Số sao phải từ 1 đến 5." };
+    const c = truoc.get(x.nhanVienId);
+    if (c && c.diem === diem && (c.y_kien ?? null) === yKien) continue;   // không đổi thì không ghi, nhật ký không thừa dòng
+    const { error } = c
+      ? await db.from("danh_gia_nhan_vien").update({ diem, y_kien: yKien, nguoi_ghi_id: nd.nhanVienId }).eq("hoa_don_id", h.id).eq("nhan_vien_id", x.nhanVienId)
+      : await db.from("danh_gia_nhan_vien").insert({ hoa_don_id: h.id, nhan_vien_id: x.nhanVienId, diem, y_kien: yKien, nguoi_ghi_id: nd.nhanVienId });
+    if (error) return { loi: thongBaoLoi(error) };
+    luu++;
+  }
+  revalidatePath(`/hoa-don/${h.id}`);
+  revalidatePath("/bao-cao");
+  return luu ? { ok: true } : { loi: "Chưa có thay đổi nào để lưu." };
+}

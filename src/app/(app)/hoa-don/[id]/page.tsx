@@ -11,7 +11,8 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
-import { ghiNhanVat, huyHoaDon, thuNo } from "../actions";
+import { ghiNhanVat, huyHoaDon, luuDanhGia, thuNo } from "../actions";
+import { DanhGiaNhanVien } from "@/components/hoa-don/DanhGiaNhanVien";
 import { TRANG_THAI_HD } from "@/lib/loc-hoa-don";
 
 export default async function ChiTietHoaDon({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ moi?: string }> }) {
@@ -30,6 +31,11 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   const idsDong = (dong ?? []).map((d) => d.id);
   const { data: chia } = idsDong.length ? await db.from("dong_nhan_vien").select("*").in("dong_id", idsDong) : { data: [] };
   const tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
+  // Đánh giá nhân viên: người đứng vai Phục vụ ở bất kỳ dòng nào của hoá đơn đã hoàn thành.
+  const idPhucVu = [...new Set((chia ?? []).filter((c) => c.vai === "phuc_vu").map((c) => c.nhan_vien_id))];
+  const { data: dgia } = h.trang_thai === "hoan_thanh" && idPhucVu.length ? await db.from("danh_gia_nhan_vien").select("nhan_vien_id, diem, y_kien").eq("hoa_don_id", id) : { data: [] };
+  const dongDg = idPhucVu.map((nvId) => { const d = (dgia ?? []).find((x) => x.nhan_vien_id === nvId); return { nhanVienId: nvId, ten: tenNv.get(nvId) ?? "", diem: d?.diem ?? 0, yKien: d?.y_kien ?? "" }; }).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
+  const duocGhiDg = coQuyen(nd, "ban.tao") || coQuyen(nd, "lich.sua");
   const t = TRANG_THAI_HD[h.trang_thai as keyof typeof TRANG_THAI_HD];
   const coNo = h.trang_thai === "hoan_thanh" && Number(h.con_no) > 0;
 
@@ -70,6 +76,11 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
             { nhan: "Số tiền", hienThi: (r) => <span className={r.loai === "hoan" ? "text-loi" : ""}>{r.loai === "hoan" ? "− " : ""}{tienVN(r.so_tien)}</span>, phai: true },
           ]} />
         </MucTrang>
+        {h.trang_thai === "hoan_thanh" && dongDg.length > 0 && (
+          <MucTrang tieuDe="Đánh giá nhân viên">
+            <DanhGiaNhanVien key={dongDg.map((x) => `${x.nhanVienId}${x.diem}${x.yKien}`).join("|")} hoaDonId={id} dong={dongDg} duocGhi={duocGhiDg} luu={luuDanhGia} />
+          </MucTrang>
+        )}
         {h.trang_thai === "hoan_thanh" && (
           <MucTrang tieuDe="Hoá đơn VAT">
             <div className="flex flex-wrap items-center justify-between gap-3 text-[14px]">

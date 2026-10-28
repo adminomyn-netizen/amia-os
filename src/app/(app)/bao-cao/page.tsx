@@ -10,17 +10,18 @@ import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
 import { BaoCaoDatLich, BaoCaoDungDichVu, BaoCaoThuNgan } from "@/components/bao-cao/BaoCaoMoi";
+import { BaoCaoDanhGia } from "@/components/bao-cao/BaoCaoDanhGia";
 import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 
-const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }];
+const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
-const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich"]);
+const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "danh-gia"]);
 /** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
 const TAB_NHOM: Record<string, "tong" | "thang"> = { "thu-ngan": "tong", "dat-lich": "thang", "dung-dich-vu": "thang" };
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
 
-export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string }> }) {
+export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
   const sp = await searchParams;
   const tien = coQuyen(nd, "baocao.tien");
@@ -40,7 +41,9 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}`;
   let noiDung: React.ReactNode;
 
-  if (tab === "thu-ngan") {
+  if (tab === "danh-gia") {
+    noiDung = <>{lc}<BaoCaoDanhGia loc={{ tu, den, cn }} sao={sp.sao} q={sp.q} trang={sp.trang} /></>;
+  } else if (tab === "thu-ngan") {
     noiDung = <>{lc}<BaoCaoThuNgan loc={loc} /></>;
   } else if (tab === "dat-lich") {
     noiDung = <>{lc}<BaoCaoDatLich loc={loc} coChiNhanh={coChiNhanh} /></>;
@@ -125,7 +128,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   return (
     <>
       <TieuDeTrang tieuDe="Báo cáo" phu={tien ? "Số liệu tính trực tiếp từ sổ hoá đơn, sổ thu tiền, sổ thẻ và sổ kho" : "Báo cáo vận hành"}>
-        {(tien || tab === "dat-lich") && <a href={xuat} download aria-label={`Xuất Excel báo cáo ${tabs.find((t) => t.ma === tab)?.ten ?? ""} theo bộ lọc đang chọn`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
+        {(tien || tab === "dat-lich" || tab === "danh-gia") && <a href={xuat} download aria-label={`Xuất Excel báo cáo ${tabs.find((t) => t.ma === tab)?.ten ?? ""} theo bộ lọc đang chọn`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
       </TieuDeTrang>
       <Tab muc={tabs} dang={tab} goc="/bao-cao" them={them} />
       {noiDung}

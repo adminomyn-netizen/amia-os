@@ -19,7 +19,7 @@ import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
 import { ganNhomChoKhach } from "../nhom/actions";
 import { docTaiKham, docTheSapHet } from "@/lib/cham-soc-khach";
-import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../actions";
+import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaKhach, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
@@ -291,6 +291,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             <Link href={`/in-ma-khach/${id}`} target="_blank" className={NUT_LIEN_KET}>In mã</Link>
             <Link href={`/in-ma-khach/${id}?kieu=phieu`} target="_blank" className={NUT_LIEN_KET}>In phiếu</Link>
             {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
+            {coQuyen(nd, "khach.nhap") && <NutHop kieu="phu" nguy nhan="Xoá" tieuDe={`Xoá khách ${k.ho_ten}`} xacNhan="Chỉ xoá được khách nhập nhầm (chưa có hoá đơn, lịch, thẻ, ảnh, ghi chú điều trị). Xoá rồi không khôi phục được. Tiếp tục?" an={{ id }} nhanLuu="Xoá khách" action={xoaKhach} />}
           </div>
         </div>
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-5 lg:grid-cols-3 xl:grid-cols-5">

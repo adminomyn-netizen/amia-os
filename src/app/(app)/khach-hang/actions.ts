@@ -4,6 +4,7 @@ import { luuAnh, xoaAnh } from "@/lib/kho-anh";
 import { docAnhTheoMa, docTrangAnh } from "@/lib/anh-khach-doc";
 import type { AnhKhach } from "@/lib/anh-khach";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
@@ -92,6 +93,27 @@ export async function danhDauMat(fd: FormData): Promise<KQ> {
   const { error } = await sb().from("khach_hang").update({ danh_dau_mat: bat(fd, "mat") }).eq("id", chuoi(fd, "id"));
   revalidatePath("/khach-hang", "layout");
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** Nút "Xoá" như SalonHero, nhưng chỉ xoá được KHÁCH NHẬP NHẦM: chưa có hoá đơn, lịch, thẻ, buổi, khiếu nại... (CSDL chặn bằng khoá ngoại), chưa có ảnh/ghi chú điều trị. Khách đã có lịch sử thì dùng "Đánh dấu đã mất". Cần quyền nhập khách (quản lý). */
+export async function xoaKhach(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("khach.nhap");
+  if (!nd) return { loi: "Chỉ quản lý (quyền nhập khách) mới xoá được hồ sơ khách." };
+  const id = chuoi(fd, "id");
+  const db = sb();
+  const { data: k } = await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai").eq("id", id).maybeSingle();
+  if (!k) return { loi: "Không tìm thấy khách." };
+  const [{ count: anh }, { count: gc }, { count: anhCu }] = await Promise.all([
+    db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id),
+    db.from("khach_ghi_chu").select("id", { count: "exact", head: true }).eq("khach_id", id),
+    db.from("khach_anh_luu_tru").select("khach_id", { count: "exact", head: true }).eq("khach_id", id),
+  ]);
+  if ((anh ?? 0) + (gc ?? 0) + (anhCu ?? 0) > 0) return { loi: "Khách đã có ảnh hoặc ghi chú điều trị nên không xoá được (hồ sơ điều trị phải giữ). Dùng “Đánh dấu đã mất”." };
+  const { error } = await db.from("khach_hang").delete().eq("id", id);
+  if (error) return { loi: error.code === "23503" ? "Khách đã có hoá đơn, lịch hẹn, thẻ, khiếu nại hoặc dữ liệu khác nên không xoá được. Dùng “Đánh dấu đã mất”." : thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_khach", doi_tuong: "khach_hang", doi_tuong_id: id, chi_tiet: { ma: k.ma, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai } });
+  revalidatePath("/khach-hang", "layout");
+  redirect("/khach-hang");
 }
 
 export async function luuGhiChu(fd: FormData): Promise<KQ> {

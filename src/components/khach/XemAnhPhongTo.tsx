@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight, Minus, Plus, RotateCcw, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, Minus, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import type { AnhKhach } from "@/lib/anh-khach";
-import { ngayVN } from "@/lib/dinh-dang";
+import { ngayGioVN, ngayVN } from "@/lib/dinh-dang";
 
 const LOAI_ANH: Record<string, string> = { truoc: "Trước", sau: "Sau", khac: "Khác" };
 const TOI_DA = 6, NAC_BAM_DUP = 300;
@@ -122,17 +122,28 @@ function KhungAnh({ anh, truoc, sau }: { anh: AnhKhach; truoc?: () => void; sau?
 }
 
 /** Lớp phủ xem ảnh khách toàn màn hình: chọn ảnh bằng bấm vào lưới, đổi ảnh bằng mũi tên / phím ← → / vuốt, đóng bằng Esc, nút X hoặc bấm nền. */
-export function XemAnhPhongTo({ ds, chiSo, dong, doiToi }: { ds: AnhKhach[]; chiSo: number; dong: () => void; doiToi: (i: number) => void }) {
+export function XemAnhPhongTo({ ds, chiSo, dong, doiToi, xoaDuoc, xoa }: {
+  ds: AnhKhach[]; chiSo: number; dong: () => void; doiToi: (i: number) => void;
+  /** Ảnh này người đang xem có được xoá không (người tải lên, hoặc người ghi hồ sơ điều trị). */
+  xoaDuoc?: (a: AnhKhach) => boolean;
+  /** Xoá ảnh; trả câu lỗi nếu không xoá được. */
+  xoa?: (a: AnhKhach) => Promise<string | undefined>;
+}) {
   const nutDong = useRef<HTMLButtonElement>(null);
+  // Hộp hỏi xoá gắn với đúng một ảnh: đổi sang ảnh khác thì tự đóng, không cần đặt lại trạng thái.
+  const [hoiXoaId, setHoiXoaId] = useState<string | null>(null);
+  const [dangXoa, setDangXoa] = useState(false);
+  const [loiXoa, setLoiXoa] = useState<{ id: string; loi: string } | null>(null);
   const chiSoRef = useRef(chiSo);
   const anh = ds[chiSo];
+  const hoiXoaRef = useRef(false);
   useEffect(() => { chiSoRef.current = chiSo; }, [chiSo]);
 
   useEffect(() => {
     const truocDo = document.activeElement;
     nutDong.current?.focus();
     const phim = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dong();
+      if (e.key === "Escape") { if (hoiXoaRef.current) setHoiXoaId(null); else dong(); }
       else if (e.key === "ArrowLeft") doiToi(kep(chiSoRef.current - 1, 0, ds.length - 1));
       else if (e.key === "ArrowRight") doiToi(kep(chiSoRef.current + 1, 0, ds.length - 1));
     };
@@ -142,6 +153,8 @@ export function XemAnhPhongTo({ ds, chiSo, dong, doiToi }: { ds: AnhKhach[]; chi
   }, []);
 
   if (!anh) return null;
+  const hoiXoa = hoiXoaId === anh.id;
+  const loiAnh = loiXoa?.id === anh.id ? loiXoa.loi : "";
   const truoc = chiSo > 0 ? () => doiToi(chiSo - 1) : undefined, sau = chiSo < ds.length - 1 ? () => doiToi(chiSo + 1) : undefined;
   return (
     <div className="fixed inset-0 z-[60] bg-black/92 text-white" role="dialog" aria-modal="true" aria-label={`Xem ảnh ${chiSo + 1} trên ${ds.length}`}>
@@ -150,9 +163,26 @@ export function XemAnhPhongTo({ ds, chiSo, dong, doiToi }: { ds: AnhKhach[]; chi
         <div className="min-w-0 text-[13px] leading-tight">
           <div className="font-medium">{LOAI_ANH[anh.loai] ?? ""} · {ngayVN(anh.ngay)}</div>
           <div className="mt-0.5 truncate text-white/70">{anh.ghiChu ? `${anh.ghiChu} · ` : ""}{chiSo + 1} / {ds.length}</div>
+          <div className="mt-0.5 truncate text-white/70">{anh.taoBoi ? `Tạo bởi ${anh.taoBoi}` : "Chuyển từ hệ thống cũ"} · {ngayGioVN(anh.taoLuc)}</div>
+        </div>
+        <div className="pointer-events-auto flex shrink-0 items-center gap-2">
+          <a href={`/api/khach/anh/${anh.id}`} download aria-label="Tải ảnh về" title="Tải về" className="flex h-11 w-11 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20"><Download strokeWidth={1.8} className="h-5 w-5" aria-hidden /></a>
+          {xoa && xoaDuoc?.(anh) && <button type="button" onClick={() => { hoiXoaRef.current = true; setHoiXoaId(anh.id); }} aria-label="Xoá ảnh" title="Xoá ảnh" className="flex h-11 w-11 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20"><Trash2 strokeWidth={1.8} className="h-5 w-5" aria-hidden /></button>}
         </div>
         <button ref={nutDong} type="button" onClick={dong} aria-label="Đóng" className="pointer-events-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20"><X strokeWidth={1.8} className="h-5 w-5" aria-hidden /></button>
       </div>
+      {hoiXoa && xoa && (
+        <div role="alertdialog" aria-modal="true" aria-labelledby="hoi-xoa-anh" className="absolute inset-x-4 top-1/2 z-20 mx-auto max-w-sm -translate-y-1/2 rounded-the bg-giay-sang p-4 text-muc">
+          <p id="hoi-xoa-anh" className="text-[15px] font-medium">Xoá vĩnh viễn ảnh này?</p>
+          <p className="mt-1 text-[13px] text-muc-3">Ảnh {LOAI_ANH[anh.loai]?.toLowerCase() ?? ""} ngày {ngayVN(anh.ngay)} sẽ bị xoá khỏi kho, không lấy lại được. Việc xoá được ghi nhật ký.</p>
+          {loiAnh && <p role="alert" className="mt-2 text-[13px] text-loi">{loiAnh}</p>}
+          <div className="mt-4 flex justify-end gap-2">
+            <button type="button" autoFocus onClick={() => { hoiXoaRef.current = false; setHoiXoaId(null); }} className="h-10 rounded-nho border border-vien-dam px-4 text-[13px] text-muc-2 hover:bg-giay-tram">Huỷ</button>
+            <button type="button" disabled={dangXoa} onClick={async () => { setDangXoa(true); setLoiXoa(null); const l = await xoa(anh); setDangXoa(false); if (l) setLoiXoa({ id: anh.id, loi: l }); else { hoiXoaRef.current = false; setHoiXoaId(null); } }}
+              className="h-10 rounded-nho bg-loi px-4 text-[13px] font-medium text-white disabled:opacity-60">{dangXoa ? "Đang xoá…" : "Xoá ảnh"}</button>
+          </div>
+        </div>
+      )}
       {truoc && <button type="button" onClick={truoc} aria-label="Ảnh trước" className="absolute left-2 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20 sm:flex"><ChevronLeft strokeWidth={1.8} className="h-6 w-6" aria-hidden /></button>}
       {sau && <button type="button" onClick={sau} aria-label="Ảnh sau" className="absolute right-2 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20 sm:flex"><ChevronRight strokeWidth={1.8} className="h-6 w-6" aria-hidden /></button>}
     </div>

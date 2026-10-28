@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { linkAnhMoi, trangAnh } from "@/app/(app)/khach-hang/actions";
+import { linkAnhMoi, trangAnh, xoaAnhKhach } from "@/app/(app)/khach-hang/actions";
 import type { AnhKhach } from "@/lib/anh-khach";
 import { ngayVN } from "@/lib/dinh-dang";
 import { XemAnhPhongTo } from "./XemAnhPhongTo";
@@ -15,7 +15,7 @@ const gop = (cu: Map<string, AnhKhach>, moi: AnhKhach[]) => {
 };
 
 /** Lưới ảnh khách: server chỉ gửi trang đầu; cuộn gần tới cuối mới lấy tiếp. Ảnh nạp lười, ô giữ chỗ đúng tỉ lệ nên không giật bố cục. */
-export function LuoiAnh({ khachId, banDau, tong }: { khachId: string; banDau: AnhKhach[]; tong: number }) {
+export function LuoiAnh({ khachId, banDau, tong, quyenXoa }: { khachId: string; banDau: AnhKhach[]; tong: number; quyenXoa?: { tatCa: boolean; nhanVienId: string } | null }) {
   const [ds, setDs] = useState(() => gop(new Map(), banDau));
   const [truoc, setTruoc] = useState(banDau);
   const [viTri, setViTri] = useState(banDau.length); // số ảnh đã xin từ server (không phụ thuộc trùng lặp)
@@ -76,13 +76,24 @@ export function LuoiAnh({ khachId, banDau, tong }: { khachId: string; banDau: An
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.url ?? undefined} alt={`Ảnh ${LOAI_ANH[a.loai] ?? ""} điều trị ngày ${ngayVN(a.ngay)}`} loading="lazy" decoding="async" onError={() => thuLai(a.id)} className="aspect-[3/4] w-full object-cover" />
                 </button>
-                <figcaption className="px-2 py-1.5 text-[12px] text-muc-2">{LOAI_ANH[a.loai]}{a.ghiChu ? ` · ${a.ghiChu}` : ""}</figcaption>
+                <figcaption className="px-2 py-1.5 text-[12px] text-muc-2">{LOAI_ANH[a.loai]}{a.ghiChu ? ` · ${a.ghiChu}` : ""}{a.taoBoi && <span className="block truncate text-muc-3">Tạo bởi {a.taoBoi}</span>}</figcaption>
               </figure>
             ))}
           </div>
         </section>
       ))}
-      {chiSoMo >= 0 && <XemAnhPhongTo ds={dsPhang} chiSo={chiSoMo} dong={() => setMoId(null)} doiToi={(i) => setMoId(dsPhang[i]?.id ?? null)} />}
+      {chiSoMo >= 0 && <XemAnhPhongTo ds={dsPhang} chiSo={chiSoMo} dong={() => setMoId(null)} doiToi={(i) => setMoId(dsPhang[i]?.id ?? null)}
+        xoaDuoc={(a) => !!quyenXoa && (quyenXoa.tatCa || a.taoBoiId === quyenXoa.nhanVienId)}
+        xoa={quyenXoa ? async (a) => {
+          const r = await xoaAnhKhach(khachId, a.id);
+          if (r.loi) return r.loi;
+          // Bỏ ảnh khỏi lưới, mở ảnh kế tiếp (hoặc đóng nếu hết).
+          const ke = dsPhang[chiSoMo + 1] ?? dsPhang[chiSoMo - 1];
+          setDs((c) => { const m = new Map(c); m.delete(a.id); return m; });
+          setViTri((v) => Math.max(0, v - 1));
+          setMoId(ke && ke.id !== a.id ? ke.id : null);
+          return undefined;
+        } : undefined} />}
       {conNua && <div ref={day} className="h-10" aria-hidden />}
       {dangTai && <p role="status" className="py-3 text-center text-[13px] text-muc-3">Đang tải thêm ảnh…</p>}
       {loiTai && <button type="button" onClick={() => setLoiTai(false)} className="mx-auto block rounded-nho border border-vien-dam px-4 py-2 text-[13px] text-muc-2 hover:bg-giay-tram">Chưa tải được thêm ảnh. Bấm để thử lại</button>}

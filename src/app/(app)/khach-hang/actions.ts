@@ -148,6 +148,24 @@ export async function linkAnhMoi(khachId: string, ids: string[]): Promise<{ ds: 
   return { ds: await docAnhTheoMa(khachId, ids) };
 }
 
+/** Xoá một ảnh khách: người tải ảnh lên tự xoá được ảnh của mình; người có quyền ghi hồ sơ điều trị xoá được mọi ảnh.
+ *  Xoá dòng trước rồi mới xoá tệp trong kho; ghi nhật ký (đường dẫn, ngày chụp, loại, người tạo) để truy lại. */
+export async function xoaAnhKhach(khachId: string, anhId: string): Promise<KQ> {
+  const nd = await kiemQuyen("anh.them");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  if (!UUID.test(khachId) || !UUID.test(anhId)) return { loi: "Yêu cầu không hợp lệ." };
+  const db = sb();
+  const { data: a } = await db.from("khach_anh").select("id, duong_dan, loai, ngay_chup, tao_boi, tao_luc").eq("id", anhId).eq("khach_id", khachId).maybeSingle();
+  if (!a) return { loi: "Ảnh không còn (có thể đã bị xoá)." };
+  if (a.tao_boi !== nd.nhanVienId && !(await kiemQuyen("hoso.sua"))) return { loi: "Chỉ người tải ảnh lên hoặc người ghi hồ sơ điều trị mới xoá được ảnh này." };
+  const { error } = await db.from("khach_anh").delete().eq("id", anhId);
+  if (error) return { loi: thongBaoLoi(error) };
+  await xoaAnh(a.duong_dan);
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_anh", doi_tuong: "khach_hang", doi_tuong_id: khachId, chi_tiet: { duong_dan: a.duong_dan, loai: a.loai, ngay_chup: a.ngay_chup, tao_boi: a.tao_boi, tao_luc: a.tao_luc } });
+  revalidatePath(`/khach-hang/${khachId}`);
+  return { ok: true };
+}
+
 export async function taiAnh(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("anh.them");
   if (!nd) return { loi: KHONG_DU_QUYEN };

@@ -247,7 +247,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         {lt && lt.so_anh > 0 && coQuyen(nd, "anh.xem") && <AnhCuLuuTru khachId={id} canLay={conLaiCu > 0 && !dangLayCu && !loiGanDay} dangLay={dangLayCu} />}
         {!k.dong_y_dung_hinh && <p className="mb-4 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Khách chưa đồng ý bằng văn bản cho dùng hình ảnh: ảnh chỉ lưu hồ sơ điều trị, không dùng cho quảng cáo.</p>}
         {(tongAnh ?? 0) === 0 && !dangLayCu && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ảnh nào.</p>}
-        <LuoiAnh khachId={id} banDau={trangDau} tong={tongAnh ?? 0} />
+        <LuoiAnh khachId={id} banDau={trangDau} tong={tongAnh ?? 0} quyenXoa={coQuyen(nd, "anh.them") ? { tatCa: coQuyen(nd, "hoso.sua"), nhanVienId: nd.nhanVienId } : null} />
       </>
     );
   }

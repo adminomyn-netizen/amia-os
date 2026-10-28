@@ -17,6 +17,7 @@ import { LichSuGiaoDich, type ThamSoLichSu } from "@/components/khach/LichSuGiao
 import { thamSoBaoHanh, thangTron, tinhBaoHanh, LOAI_KN, TT_BC, TT_KN } from "@/lib/khieu-nai";
 import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
+import { ganNhomChoKhach } from "../nhom/actions";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
@@ -42,7 +43,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   if (loiDoc) { console.error("[ho-so-khach]", loiDoc.code, loiDoc.message); throw new Error("Không đọc được hồ sơ khách, thử lại."); }
   if (!k) notFound();
   const xemAnh = coQuyen(nd, "anh.xem");
-  const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab, { data: kx }, { data: nhomKh }] = await Promise.all([
+  const sua0 = coQuyen(nd, "khach.sua");
+  const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab, { data: kx }, { data: nhomKh }, { data: moiNhom }] = await Promise.all([
     db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"),
     db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
@@ -53,9 +55,10 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     xemAnh ? demAnhKhach(id) : Promise.resolve(0),
     // Trường chuyển từ SalonHero (0055/0065) chưa có trong v_khach_hang: đọc thẳng bảng khách.
     db.from("khach_hang").select("nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc").eq("id", id).maybeSingle(),
-    db.from("khach_nhom").select("nhom_khach(ten, mau)").eq("khach_id", id),
+    db.from("khach_nhom").select("nhom_khach!inner(id, ten, mau)").eq("khach_id", id).eq("nhom_khach.hoat_dong", true),
+    sua0 ? db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
   ]);
-  const nhom = (nhomKh ?? []).map((x) => x.nhom_khach as unknown as { ten: string; mau: string | null } | null).filter((x): x is { ten: string; mau: string | null } => !!x).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
+  const nhom = (nhomKh ?? []).map((x) => x.nhom_khach as unknown as { id: string; ten: string; mau: string | null } | null).filter((x): x is { id: string; ten: string; mau: string | null } => !!x).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
   const coSo = (kx?.co_so_goc ?? "").split(",").map((x) => x.trim()).filter(Boolean);
   // Số ảnh trên nhãn tab: ảnh đã có trong kho + ảnh cũ còn ở kho lưu trữ (con số không đổi khi nhân viên bấm lấy ảnh cũ về xem).
   const tabHopLe = tabHopLe0.map((x) => (x.ma === "anh" ? { ...x, ten: `Ảnh khách hàng (${soAnhTab.toLocaleString("vi-VN")})` } : x));
@@ -264,7 +267,12 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
           <div className="min-w-0">
             <h1 className="chu-tieu-de text-[20px] font-bold uppercase leading-tight text-muc [overflow-wrap:anywhere]">{k.ho_ten}</h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-muc-3"><span className="tabular-nums">{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai></div>
-            {nhom.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1" aria-label="Nhóm khách">{nhom.map((n) => <NhanNhom key={n.ten} ten={n.ten} mau={n.mau} />)}</div>}
+            {(nhom.length > 0 || sua) && (
+              <div className="mt-1.5 flex flex-wrap items-center gap-1" aria-label="Nhóm khách">
+                {nhom.map((n) => <NhanNhom key={n.id} ten={n.ten} mau={n.mau} />)}
+                {sua && <NutHop kieu="chu" nhan={nhom.length ? "Đổi nhóm" : "Gán nhóm"} tieuDe={`Nhóm của ${k.ho_ten}`} moTa="Một khách có thể thuộc nhiều nhóm." truong={[{ ten: "nhom", nhan: "Nhóm khách", loai: "nhieu", luaChon: (moiNhom ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten })) }]} an={{ khach_id: id }} giaTri={{ nhom: nhom.map((n) => n.id) }} action={ganNhomChoKhach} />}
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {sua && <NutHop kieu="phu" nhan="Sửa" tieuDe="Sửa hồ sơ khách" rong truong={truong} giaTri={giaTriSua} action={luuKhach} />}

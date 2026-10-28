@@ -9257,6 +9257,16 @@ export type Database = {
         Args: { p_bo_qua_kiem?: boolean; p_id: string; p_nguoi: string }
         Returns: undefined
       }
+      gan_nhom_theo_loc: {
+        Args: {
+          p: Json
+          p_ap_dung?: boolean
+          p_che_do: string
+          p_du_kien?: number
+          p_nhom: string
+        }
+        Returns: Json
+      }
       ghi_click_link: { Args: { p_ma: string }; Returns: string }
       go_dot_hr: { Args: { p_dot: string }; Returns: Json }
       go_dot_nhap: { Args: { p_dot: string }; Returns: Json }

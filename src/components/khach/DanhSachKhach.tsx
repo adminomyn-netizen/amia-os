@@ -36,7 +36,7 @@ const theoManHinhRong = (bao: () => void) => {
 
 /** Cột trái màn Khách hàng. Lọc/tìm/sắp xếp giữ trong bộ nhớ của khung (không nằm trên địa chỉ) nên bấm đổi khách hay đổi tab bên phải không làm mất.
  *  Lấy dữ liệu qua /api/khach/tim (kiểm quyền ở máy chủ); `moc` đổi (sau khi Thêm/Sửa khách làm mới trang) thì tải lại đúng số dòng đang hiện. */
-export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, danhMuc }: { nhanVien: LuaChon[]; nguon: LuaChon[]; hang: LuaChon[]; moc: number; choXuat: boolean; danhMuc: DanhMucLoc }) {
+export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, choGanNhom, danhMuc }: { nhanVien: LuaChon[]; nguon: LuaChon[]; hang: LuaChon[]; moc: number; choXuat: boolean; choGanNhom?: boolean; danhMuc: DanhMucLoc }) {
   const sp = useSearchParams();
   const dangChon = useSelectedLayoutSegment();
   const manRong = useSyncExternalStore(theoManHinhRong, () => window.matchMedia("(min-width: 1024px)").matches, () => true);
@@ -197,6 +197,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, danhMuc }: 
 
       <div className="flex items-center justify-between gap-2 border-t border-[color:var(--khach-vien)] px-3 py-2 text-[12px]">
         <span>{tong.toLocaleString("vi-VN")} khách{soLoc > 0 || q ? " khớp" : ""}</span>
+        {choGanNhom && <Link href={`/khach-hang/nhom?${thamSo()}`} className="font-medium text-nhan-dam hover:underline">Gán nhóm</Link>}
         {choXuat && <a href={lienKetXuat} download className="flex items-center gap-1 font-medium text-nhan-dam hover:underline"><Download aria-hidden strokeWidth={1.7} className="h-3.5 w-3.5" />Xuất Excel</a>}
       </div>
     </div>

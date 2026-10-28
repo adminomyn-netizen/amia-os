@@ -68,5 +68,18 @@ async function docTuyChon(): Promise<{ nhom: NhomKhach[]; tuyChon: TuyChonLoc }>
   const nhom = (nh ?? []).map((n) => ({ id: n.id, ten: n.ten, mau: n.mau, so: (n.khach_nhom as unknown as { count: number }[])?.[0]?.count ?? 0 })).sort((a, b) => b.so - a.so || a.ten.localeCompare(b.ten, "vi"));
   return { nhom, tuyChon: (tc ?? { tinh: [], dich_vu: [] }) as TuyChonLoc };
 }
+/** Nhóm (kể cả đã ẩn) cho màn quản lý nhóm, kèm số khách. Không nhớ đệm: màn này cần số mới nhất. */
+export async function docNhomQuanLy(): Promise<(NhomKhach & { hoat_dong: boolean; mo_ta: string | null })[]> {
+  const { data } = await sb().from("nhom_khach").select("id, ten, mau, mo_ta, hoat_dong, khach_nhom(count)").order("ten");
+  return (data ?? []).map((n) => ({ id: n.id, ten: n.ten, mau: n.mau, mo_ta: n.mo_ta, hoat_dong: n.hoat_dong, so: (n.khach_nhom as unknown as { count: number }[])?.[0]?.count ?? 0 }));
+}
+
+/** Nhóm trùng tên chỉ khác hoa/thường hoặc dấu cách thừa (vd LUXURY / Luxury): chỉ để CẢNH BÁO gợi ý gộp, không tự gộp. */
+export function nhomTrungTen<T extends { id: string; ten: string; hoat_dong: boolean }>(ds: T[]): T[][] {
+  const m = new Map<string, T[]>();
+  for (const n of ds) { if (!n.hoat_dong) continue; const k = n.ten.normalize("NFC").trim().replace(/\s+/g, " ").toLocaleLowerCase("vi"); m.set(k, [...(m.get(k) ?? []), n]); }
+  return [...m.values()].filter((g) => g.length > 1);
+}
+
 /** Danh mục cho ô lọc: nhóm khách (kèm số khách), tỉnh → quận, tên dịch vụ đã bán. Nhớ 5 phút. */
-export const tuyChonLocKhach = unstable_cache(docTuyChon, ["khach-tuy-chon-loc"], { revalidate: 300 });
+export const tuyChonLocKhach = unstable_cache(docTuyChon, ["khach-tuy-chon-loc"], { revalidate: 300, tags: ["khach-tuy-chon-loc"] });

@@ -74,7 +74,7 @@ async function nhacQuanLy(nd: Nd, hom: string, phutNay: number): Promise<CanhBao
     if (chua > 0) ra.push({ ma: "ccnguoi", href: "/nhan-su/cham-cong?tab=bang-cong", nhan: `${chua} người có ca hôm nay mà chưa chấm công vào.` });
   }
   if (suaCong && !khoa?.khoa && (ccThangTruoc ?? 0) > 0) ra.push({ ma: "cckhoa", href: `/nhan-su/cham-cong?tab=tong-hop&thang=${tt.nam}-${String(tt.thang).padStart(2, "0")}`, nhan: `Công tháng ${String(tt.thang).padStart(2, "0")}/${tt.nam} chưa khoá. Chốt công trước khi tính lương (lương trả muộn nhất ngày 10).` });
-  if (suaCong && ngayTrongThang >= 25 && (lichThangSau ?? 0) === 0) ra.push({ ma: "ccnghi", href: "/nhan-su/ca-kip", nhan: "Nhắc đăng ký lịch nghỉ hằng tuần cho tháng sau (chưa xếp ca ngày nào)." });
+  if (suaCong && ngayTrongThang >= 25 && (lichThangSau ?? 0) === 0) ra.push({ ma: "ccnghi", href: "/nhan-su/ca-kip", nhan: `Đã đến ngày 25: xếp lịch làm và ngày nghỉ hằng tuần của nhân viên cho tháng ${String(ts.thang).padStart(2, "0")}/${ts.nam} (bảng Ca kíp đang chưa có ngày nào).` });
   if (xemLuong && ky) {
     const cho = ky.filter((k) => k.trang_thai === "cho_duyet").length;
     if (cho > 0 && coQuyen(nd, "luong.duyet")) ra.push({ ma: "klduyet", href: "/nhan-su/luong", nhan: `${cho} kỳ lương đang chờ duyệt.` });

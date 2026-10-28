@@ -16,3 +16,6 @@ export const tatCaChiNhanh = unstable_cache(docTatCa, ["chi-nhanh-tat-ca"], { re
 
 /** Chi nhánh đang hoạt động, xếp theo thứ tự hiển thị (giống `.eq("hoat_dong", true).order("thu_tu").order("ma")`). */
 export const chiNhanhHoatDong = async () => (await tatCaChiNhanh()).filter((c) => c.hoat_dong);
+
+/** Dạng trả về giống `db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")` ({ data }), nhưng lấy từ bộ nhớ đệm — thay thẳng vào các trang đang hỏi danh sách này mỗi lượt. */
+export const dsChiNhanhRutGon = async () => ({ data: (await chiNhanhHoatDong().catch(() => [])).map((c) => ({ id: c.id, ten: c.ten })) });

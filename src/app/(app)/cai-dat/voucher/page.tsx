@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -26,7 +27,7 @@ export default async function TrangVoucher({ searchParams }: { searchParams: Pro
   const db = sb();
   const [{ data: tatCa }, { data: cn }, { data: maDs }, { data: luot }] = await Promise.all([
     db.from("voucher").select("*").order("tao_luc", { ascending: false }),
-    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
+    dsChiNhanhRutGon(),
     db.from("voucher_ma").select("voucher_id, ma").order("ma").limit(5000),
     db.from("voucher_luot_dung").select("voucher_id, loai").limit(20000),
   ]);

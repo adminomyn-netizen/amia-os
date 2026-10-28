@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -32,7 +33,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const tab = tabs.some((t) => t.ma === sp.tab) ? sp.tab! : "doanh-thu";
   const { tu, den } = khoangNgay(sp.tu, sp.den);
   const db = sb();
-  const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
+  const { data: dsCn } = await dsChiNhanhRutGon();
   const cn = nd.chiNhanhId ?? (sp.cn || undefined);
   const coNhom = tab in TAB_NHOM;
   const { nhom, doiTuNgay } = chonNhom(sp.nhom, tu, den, TAB_NHOM[tab] ?? "tong");

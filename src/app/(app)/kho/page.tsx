@@ -1,10 +1,12 @@
 import { yeuCauQuyen } from "@/lib/auth";
+import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
+import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import Link from "next/link";
@@ -14,12 +16,12 @@ import { nhapKho } from "./actions";
 
 const TAB = [{ ma: "ton", ten: "Tồn kho" }, { ma: "han", ten: "Lô & hạn dùng" }, { ma: "so", ten: "Sổ kho" }];
 
-export default async function TrangKho({ searchParams }: { searchParams: Promise<{ tab?: string; cn?: string; thieu?: string }> }) {
+export default async function TrangKho({ searchParams }: { searchParams: Promise<{ tab?: string; cn?: string; thieu?: string; trang?: string }> }) {
   const nd = await yeuCauQuyen("kho.xem");
   const sp = await searchParams;
   const tab = sp.tab === "so" ? "so" : sp.tab === "han" ? "han" : "ton";
   const db = sb();
-  const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
+  const { data: dsCn } = await dsChiNhanhRutGon();
   const cn = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
   const { data: spAll } = await db.from("san_pham").select("id, ma, ten, don_vi, nhom_cap, ton_toi_thieu, gia_nhap_don_vi, theo_doi_kho").eq("hoat_dong", true).eq("theo_doi_kho", true).order("ten");
   const sua = coQuyen(nd, "kho.nhap");
@@ -30,6 +32,11 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
     const tonMap = new Map((ton ?? []).map((t) => [t.san_pham_id, Number(t.ton)]));
     let ds = (spAll ?? []).map((s) => ({ ...s, ton: tonMap.get(s.id) ?? 0 }));
     if (sp.thieu === "1") ds = ds.filter((s) => s.ton < Number(s.ton_toi_thieu));
+    // Gần 500 mặt hàng: mỗi trang 100 để trang nhẹ, hiện nhanh.
+    const trang = Math.max(1, Math.min(Number(sp.trang) || 1, Math.max(1, Math.ceil(ds.length / 100))));
+    const tongMatHang = ds.length;
+    ds = ds.slice((trang - 1) * 100, trang * 100);
+    const gan = (t: number | undefined) => `/kho?${new URLSearchParams(Object.entries({ tab: "ton", cn, thieu: sp.thieu === "1" ? "1" : undefined, trang: t && t > 1 ? String(t) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`;
     noiDung = (
       <>
         <div className="mb-4"><Link href={`/kho?cn=${cn}${sp.thieu === "1" ? "" : "&thieu=1"}`} className="text-[14px] font-medium text-nhan-dam hover:underline">{sp.thieu === "1" ? "Hiện tất cả" : "Chỉ hiện hàng dưới mức tối thiểu"}</Link></div>
@@ -41,6 +48,7 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
             { nhan: "Giá trị tồn", hienThi: (r) => (r.gia_nhap_don_vi == null ? "chưa có giá" : tienVN(Math.round(r.ton * Number(r.gia_nhap_don_vi)))), phai: true },
             { nhan: "", hienThi: (r) => (r.ton < Number(r.ton_toi_thieu) ? <NhanTrangThai kieu="cho">Sắp hết</NhanTrangThai> : null) },
           ]} />
+        <ThanhTrang trang={trang} tong={tongMatHang} moi={100} gan={gan} don="mặt hàng" />
       </>
     );
   } else if (tab === "han") {

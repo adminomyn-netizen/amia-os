@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { BarChart3, CalendarClock, History, Tags, TicketX } from "lucide-react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
@@ -20,7 +21,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
   const db = sb();
   const [{ data: nv }, { data: cn }, { data: dv }, { data: hang }, so, tc] = await Promise.all([
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
-    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
+    dsChiNhanhRutGon(),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("hang_khach").select("ten").order("thu_tu"),
     soLieuKhach(),

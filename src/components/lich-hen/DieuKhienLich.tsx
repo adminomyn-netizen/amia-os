@@ -73,3 +73,14 @@ export function KhungNgay({ tieuDe, tong, children }: { tieuDe: string; tong: st
     </section>
   );
 }
+
+/** "Xem thêm (n)" trong ô lưới: bấm để mở các lịch còn lại ngay trong ô, bấm lại để thu gọn. */
+export function XemThemO({ so, children }: { so: number; children: React.ReactNode }) {
+  const [mo, setMo] = useState(false);
+  return (
+    <>
+      {mo && children}
+      <button type="button" onClick={() => setMo(!mo)} aria-expanded={mo} className="block w-full text-center text-[12px] font-medium text-nhan-dam hover:underline">{mo ? "Thu gọn" : `Xem thêm (${so})`}</button>
+    </>
+  );
+}

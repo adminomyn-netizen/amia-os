@@ -14,7 +14,7 @@ import { timKhach } from "../ban-hang/actions";
 import { thucHienBuoi } from "../the/actions";
 import { doiTrangThaiLich, duyetYeuCauOnline, luuLichHen, tuChoiYeuCauOnline } from "./actions";
 import { LocNguon } from "@/components/lich-hen/LocNguon";
-import { ChonKhoang, KhungNgay, LocCho, LocNhanVien, TimVaLoc } from "@/components/lich-hen/DieuKhienLich";
+import { ChonKhoang, KhungNgay, LocCho, LocNhanVien, TimVaLoc, XemThemO } from "@/components/lich-hen/DieuKhienLich";
 import { BIEU_TUONG_HANG, cacNgayTrong, chuTatTen, moTaLap, NGUON_DAT, nhanCotNgay, nhanNgayDai, nhanNguon, tenNvHoa, thuCuaNgay } from "@/lib/lich-hen";
 
 const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
@@ -274,7 +274,16 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
                           </Link>
                         );
                       })}
-                      {ds.length > TOI_DA_THEO_O && <Link href={url({ ngay: d })} className="block text-center text-[12px] font-medium text-nhan-dam hover:underline">Xem thêm ({ds.length - TOI_DA_THEO_O})</Link>}
+                      {ds.length > TOI_DA_THEO_O && <XemThemO so={ds.length - TOI_DA_THEO_O}>{ds.slice(TOI_DA_THEO_O).map((l) => {
+                        const k = tenK.get(l.khach_id);
+                        return (
+                          <Link key={l.id} href={url({ ngay: d })} title={`${k?.ho_ten ?? ""} · ${TT[l.trang_thai].nhan}`} className={`block rounded-nho border border-vien border-l-[3px] border-l-nhan bg-giay-sang px-2 py-1 hover:bg-giay-tram ${l.trang_thai === "hoan_thanh" ? "opacity-60" : ""}`}>
+                            <div className="truncate text-[12px] font-semibold uppercase text-muc">{k?.ho_ten}</div>
+                            <div className="truncate text-[11px] text-muc-3">Hạng {k?.hang ?? "Thường"}</div>
+                            <div className="text-[11px] font-medium tabular-nums text-loi">{gioVN(l.bat_dau)} ~ {gioVN(l.ket_thuc)}</div>
+                          </Link>
+                        );
+                      })}</XemThemO>}
                     </div>
                   );
                 })}

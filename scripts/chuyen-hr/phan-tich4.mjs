@@ -1,0 +1,11 @@
+import { docBang, chu, ngay, thoiDiem } from "./lib-hr.mjs";
+const C=(rows,k)=>{const c={};for(const r of rows){const v=JSON.stringify(r[k]);c[v]=(c[v]||0)+1}return c};
+const a=docBang("2.3"), b=docBang("10.3");
+console.log("2.3 dòng",a.length,"10.3",b.length);
+for (const k of ["Check in result","Check out result","Check in result supplement","Check out result supplement","Shift name","Group name","Check in type","Check in - Is offsite","Ghi nhận đi trễ về sớm"]) console.log(k, JSON.stringify(C(a,k)).slice(0,420));
+const r=a[3]; console.log(Object.fromEntries(Object.entries(r).filter(([k])=>/time|Date|shift/i.test(k)).map(([k,v])=>[k,String(v).slice(0,40)])));
+const ids=new Set(a.map(x=>chu(x["Result id"]))); console.log("Result id duy nhất",ids.size,"trong 2.3",a.length);
+const key=new Set(a.map(x=>(x.Employee?.[0]?.id)+"|"+ngay(x.Date))); console.log("cặp (người,ngày) duy nhất 2.3",key.size);
+const ex=b.filter(x=>!ids.has(chu(x["Result id"]))); const ks=ex.map(x=>(x.Employee?.[0]?.id)+"|"+ngay(x.Date)); console.log("10.3 chỉ-BOD",ex.length,"trùng cặp (người,ngày) với 2.3:",ks.filter(k=>key.has(k)).length, "ngày min/max",ex.map(x=>ngay(x.Date)).sort()[0],ex.map(x=>ngay(x.Date)).sort().at(-1));
+const rr=docBang("2.4"); console.log("2.4",rr.length, JSON.stringify(C(rr,"Is offsite")), Object.fromEntries(Object.entries(rr[5]).filter(([k])=>/time|Date/i.test(k)).map(([k,v])=>[k,String(v).slice(0,40)])));
+console.log("10.4 keys",Object.keys(docBang("10.4")[0]).join("|"));

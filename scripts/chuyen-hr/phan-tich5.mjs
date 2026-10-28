@@ -1,0 +1,12 @@
+import { docBang, chu, ngay } from "./lib-hr.mjs";
+const C=(rows,k)=>{const c={};for(const r of rows){const v=JSON.stringify(r[k]);c[v]=(c[v]||0)+1}return c};
+const a=docBang("2.6"); for (const k of ["Loại chấm công","Loại lỗi","Original record","Status"]) console.log("2.6",k,JSON.stringify(C(a,k)).slice(0,500));
+console.log("2.6 mẫu giờ", ["Date of error","Replenishment time","Submitted at"].map(k=>String(a[0][k]).slice(0,40)));
+const o=docBang("3.2"); console.log("3.2 mẫu", ["Start time","End time","Duration","Submitted at","Completed at"].map(k=>String(o[0][k]).slice(0,40)));
+const t=docBang("3.5"); console.log("3.5 mẫu",["Start time","End time","Khoảng thời gian"].map(k=>String(t[0][k]).slice(0,40)), JSON.stringify(C(t,"Nhân viên")).slice(0,300));
+const n=docBang("3.6"); console.log("3.6", Object.keys(n[0]).join("|"), JSON.stringify(C(n,"Duyệt")), JSON.stringify(C(n,"Không duyệt")));
+const q=docBang("3.3"); console.log("3.3", Object.keys(q[0]).join("|"));
+const th=docBang("5.4"); console.log("5.4", Object.keys(th[0]).join("|"), JSON.stringify(C(th,"Trạng thái")).slice(0,200));
+const k53=docBang("5.3"); console.log("5.3", Object.keys(k53[0]).join("|"));
+const t41=docBang("4.1"); console.log("4.1", Object.keys(t41[0]).join("|").slice(0,1500));
+const b=docBang("3.8"); console.log("3.8", Object.keys(b[0]).join("|"));

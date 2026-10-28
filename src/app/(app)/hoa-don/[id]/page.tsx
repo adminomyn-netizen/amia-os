@@ -12,6 +12,8 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { ghiNhanVat, huyHoaDon, luuDanhGia, thuNo } from "../actions";
+import { luuDanhGiaSauDieuTri } from "../sau-dieu-tri-actions";
+import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
 import { DanhGiaNhanVien } from "@/components/hoa-don/DanhGiaNhanVien";
 import { TRANG_THAI_HD } from "@/lib/loc-hoa-don";
 
@@ -36,6 +38,11 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   const { data: dgia } = h.trang_thai === "hoan_thanh" && idPhucVu.length ? await db.from("danh_gia_nhan_vien").select("nhan_vien_id, diem, y_kien").eq("hoa_don_id", id) : { data: [] };
   const dongDg = idPhucVu.map((nvId) => { const d = (dgia ?? []).find((x) => x.nhan_vien_id === nvId); return { nhanVienId: nvId, ten: tenNv.get(nvId) ?? "", diem: d?.diem ?? 0, yKien: d?.y_kien ?? "" }; }).sort((a, b) => a.ten.localeCompare(b.ten, "vi"));
   const duocGhiDg = coQuyen(nd, "ban.tao") || coQuyen(nd, "lich.sua");
+  // Khách hài lòng sau điều trị (khác đánh giá sao từng nhân viên): chỉ cho đơn hoàn thành của một khách, có ít nhất một dịch vụ.
+  const coDichVu = (dong ?? []).some((d) => d.loai === "dich_vu");
+  const { data: dgSdt } = h.trang_thai === "hoan_thanh" && h.khach_id && coDichVu && !h.la_so_du_dau ? await db.from("danh_gia_sau_dieu_tri").select("*").eq("hoa_don_id", id).maybeSingle() : { data: null };
+  const hienSdt = h.trang_thai === "hoan_thanh" && !!h.khach_id && coDichVu && !h.la_so_du_dau;
+  const { data: lichDg } = hienSdt && !dgSdt && h.lich_hen_id ? await db.from("danh_gia_sau_dieu_tri").select("id").eq("lich_hen_id", h.lich_hen_id).maybeSingle() : { data: null };
   const t = TRANG_THAI_HD[h.trang_thai as keyof typeof TRANG_THAI_HD];
   const coNo = h.trang_thai === "hoan_thanh" && Number(h.con_no) > 0;
 
@@ -79,6 +86,26 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         {h.trang_thai === "hoan_thanh" && dongDg.length > 0 && (
           <MucTrang tieuDe="Đánh giá nhân viên">
             <DanhGiaNhanVien key={dongDg.map((x) => `${x.nhanVienId}${x.diem}${x.yKien}`).join("|")} hoaDonId={id} dong={dongDg} duocGhi={duocGhiDg} luu={luuDanhGia} />
+          </MucTrang>
+        )}
+        {hienSdt && (
+          <MucTrang tieuDe="Khách hài lòng sau điều trị">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-[14px]">
+              <div className="min-w-0">
+                {dgSdt ? (
+                  <>
+                    <NhanTrangThai kieu={KET_QUA_DG[dgSdt.ket_qua].kieu}>{KET_QUA_DG[dgSdt.ket_qua].ten}</NhanTrangThai>
+                    {dgSdt.ly_do && <span className="ml-2 text-muc-2">{LY_DO_KHONG_HAI_LONG[dgSdt.ly_do]}</span>}
+                    {dgSdt.ghi_chu && <p className="mt-1 text-[13px] text-muc-2">{dgSdt.ghi_chu}</p>}
+                    <p className="mt-1 text-[12px] text-muc-3">{ngayGioVN(dgSdt.sua_luc ?? dgSdt.tao_luc)} · {tenNv.get(dgSdt.nguoi_ghi_id ?? "") ?? "—"}{dgSdt.khieu_nai_id && <> · <Link href={`/khieu-nai/${dgSdt.khieu_nai_id}`} className="font-medium text-nhan-dam hover:underline">Xem khiếu nại đã tạo</Link></>}</p>
+                  </>
+                ) : lichDg ? <p className="text-muc-3">Lần điều trị này đã được đánh giá ở lịch hẹn.</p> : <p className="text-muc-3">Chưa ghi khách hài lòng hay không.</p>}
+              </div>
+              {duocGhiDg && !lichDg && (
+                <NutHop kieu="chu" nhan={dgSdt ? "Sửa đánh giá" : "Ghi đánh giá"} tieuDe="Khách hài lòng sau điều trị" moTa="Mỗi lần điều trị một đánh giá, sửa được (có nhật ký). Không hài lòng sẽ tự tạo khiếu nại." an={{ hoa_don_id: id }}
+                  giaTri={{ ket_qua: dgSdt?.ket_qua ?? "hai_long", ly_do: dgSdt?.ly_do ?? "", ghi_chu: dgSdt?.ghi_chu ?? "" }} truong={truongSauDieuTri()} action={luuDanhGiaSauDieuTri} />
+              )}
+            </div>
           </MucTrang>
         )}
         {h.trang_thai === "hoan_thanh" && (

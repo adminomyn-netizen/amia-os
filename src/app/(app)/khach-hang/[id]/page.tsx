@@ -22,11 +22,13 @@ import { docTaiKham, docTheSapHet } from "@/lib/cham-soc-khach";
 import { DanhSachPhieuTuVan, gomNhuCau } from "@/components/khach/PhieuTuVan";
 import { truongPhieuTuVan } from "@/lib/tu-van";
 import { luuPhieuTuVan } from "../tu-van/actions";
+import { luuDanhGiaSauDieuTri } from "../../hoa-don/sau-dieu-tri-actions";
+import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 /** Mỗi trang lịch sử điểm thưởng. */
 const DIEM_MOI_TRANG = 50;
@@ -164,6 +166,42 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         {sua0 && <div className="mb-5"><NutHop nhan="Ghi phiếu tư vấn" tieuDe={`Phiếu tư vấn: ${k.ho_ten}`} moTa="Đặt vấn đề → phân tích → chứng minh → kết quả. Phiếu sửa được (có nhật ký), không xoá." rong truong={trTv} an={{ khach_id: id }}
           giaTri={{ tu_van_vien_id: nd.nhanVienId, ngay_tu_van: homNayHCM(), ket_qua: "cho_chot" }} action={luuPhieuTuVan} /></div>}
         <DanhSachPhieuTuVan phieu={pv ?? []} nhuCau={gomNhuCau(ncTv ?? [])} tenNv={tenNv} tenDv={new Map((dvTv ?? []).map((d) => [d.id, d.ten]))} truong={trTv} duocSua={sua0} luu={luuPhieuTuVan} />
+      </>
+    );
+  } else if (tab === "sau-dieu-tri") {
+    // Mỗi lần điều trị = một hoá đơn hoàn thành có dịch vụ; lịch hoàn thành chưa có hoá đơn hoàn thành thì đánh giá theo lịch.
+    const [{ data: hds }, { data: lichs }, { data: hdLich }] = await Promise.all([
+      db.from("hoa_don").select("id, ma, ngay_hd").eq("khach_id", id).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).order("ngay_hd", { ascending: false }).limit(30),
+      db.from("lich_hen").select("id, bat_dau").eq("khach_id", id).eq("trang_thai", "hoan_thanh").order("bat_dau", { ascending: false }).limit(30),
+      db.from("hoa_don").select("lich_hen_id").eq("khach_id", id).eq("trang_thai", "hoan_thanh").not("lich_hen_id", "is", null),
+    ]);
+    const idHd = (hds ?? []).map((h) => h.id);
+    const coHd = new Set((hdLich ?? []).map((x) => x.lich_hen_id));
+    const lichRieng = (lichs ?? []).filter((l) => !coHd.has(l.id));
+    const idLich = lichRieng.map((l) => l.id);
+    const [{ data: dongDv }, { data: dvLich }, { data: dgH }, { data: dgL }] = await Promise.all([
+      idHd.length ? db.from("hoa_don_dong").select("hoa_don_id, ten").eq("loai", "dich_vu").in("hoa_don_id", idHd) : Promise.resolve({ data: [] as { hoa_don_id: string; ten: string }[] }),
+      idLich.length ? db.from("lich_hen_dich_vu").select("lich_id, dich_vu(ten)").in("lich_id", idLich) : Promise.resolve({ data: [] as { lich_id: string; dich_vu: { ten: string } | null }[] }),
+      idHd.length ? db.from("danh_gia_sau_dieu_tri").select("*").in("hoa_don_id", idHd) : Promise.resolve({ data: [] }),
+      idLich.length ? db.from("danh_gia_sau_dieu_tri").select("*").in("lich_hen_id", idLich) : Promise.resolve({ data: [] }),
+    ]);
+    const dvCua = (ma: string) => (dongDv ?? []).filter((d) => d.hoa_don_id === ma).map((d) => d.ten).join(", ");
+    const dgCua = new Map([...(dgH ?? []).map((d) => [d.hoa_don_id!, d] as const), ...(dgL ?? []).map((d) => [d.lich_hen_id!, d] as const)]);
+    type DongSdt = { khoa: string; ngay: string; nhan: React.ReactNode; dv: string; an: Record<string, string> };
+    const dong: DongSdt[] = [
+      ...(hds ?? []).filter((h) => dvCua(h.id)).map((h) => ({ khoa: h.id, ngay: h.ngay_hd, nhan: <Link href={`/hoa-don/${h.id}`} className="font-medium text-nhan-dam hover:underline">{h.ma}</Link>, dv: dvCua(h.id), an: { hoa_don_id: h.id } })),
+      ...lichRieng.map((l) => ({ khoa: l.id, ngay: l.bat_dau.slice(0, 10), nhan: <span className="text-muc-2">Lịch hẹn (chưa có hoá đơn)</span>, dv: (dvLich ?? []).map((d) => (d.dich_vu as unknown as { ten: string } | null)?.ten).filter(Boolean).join(", "), an: { lich_hen_id: l.id } })),
+    ].sort((a, b) => (a.ngay < b.ngay ? 1 : -1)).slice(0, 30);
+    const duocGhi = coQuyen(nd, "ban.tao") || coQuyen(nd, "lich.sua");
+    noiDung = (
+      <>
+        <h3 className="mb-1 text-[14px] font-medium text-muc">Khách hài lòng sau điều trị</h3>
+        <p className="mb-4 text-[13px] text-muc-3">Cảm nhận của khách về cả lần điều trị (khác với đánh giá sao từng nhân viên ở hoá đơn). Không hài lòng sẽ tự tạo khiếu nại. Mỗi lần điều trị một đánh giá.</p>
+        <Bang duLieu={dong} khoa={(r) => r.khoa} trong="Khách chưa có lần điều trị nào hoàn thành." cot={[
+          { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Hoá đơn / lịch", chinh: true, hienThi: (r) => r.nhan }, { nhan: "Dịch vụ", hienThi: (r) => <span className="text-[13px]">{r.dv}</span> },
+          { nhan: "Khách cảm thấy", hienThi: (r) => { const d = dgCua.get(r.khoa); return d ? <div><NhanTrangThai kieu={KET_QUA_DG[d.ket_qua].kieu}>{KET_QUA_DG[d.ket_qua].ten}</NhanTrangThai>{d.ly_do && <div className="mt-0.5 text-[12px] text-muc-3">{LY_DO_KHONG_HAI_LONG[d.ly_do]}</div>}{d.khieu_nai_id && <Link href={`/khieu-nai/${d.khieu_nai_id}`} className="text-[12px] font-medium text-nhan-dam hover:underline">Xem khiếu nại</Link>}</div> : <span className="text-muc-3">Chưa ghi</span>; } },
+          ...(duocGhi ? [{ nhan: "", hienThi: (r: DongSdt) => { const d = dgCua.get(r.khoa); return <NutHop kieu="chu" nhan={d ? "Sửa" : "Ghi đánh giá"} tieuDe="Khách hài lòng sau điều trị" moTa="Sửa được (có nhật ký). Không hài lòng sẽ tự tạo khiếu nại." an={r.an} giaTri={{ ket_qua: d?.ket_qua ?? "hai_long", ly_do: d?.ly_do ?? "", ghi_chu: d?.ghi_chu ?? "" }} truong={truongSauDieuTri()} action={luuDanhGiaSauDieuTri} />; } }] : []),
+        ]} />
       </>
     );
   } else if (tab === "khieu-nai") {

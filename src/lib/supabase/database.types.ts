@@ -2185,6 +2185,8 @@ export type Database = {
           nguoi_lap_id: string
           phu_phi: number
           sh_id: number | null
+          thu_ngan_sh_id: number | null
+          thu_ngan_ten: string | null
           tao_luc: string
           tip: number
           tong_hang: number
@@ -2212,6 +2214,8 @@ export type Database = {
           nguoi_lap_id: string
           phu_phi?: number
           sh_id?: number | null
+          thu_ngan_sh_id?: number | null
+          thu_ngan_ten?: string | null
           tao_luc?: string
           tip?: number
           tong_hang?: number
@@ -2239,6 +2243,8 @@ export type Database = {
           nguoi_lap_id?: string
           phu_phi?: number
           sh_id?: number | null
+          thu_ngan_sh_id?: number | null
+          thu_ngan_ten?: string | null
           tao_luc?: string
           tip?: number
           tong_hang?: number
@@ -7389,6 +7395,10 @@ export type Database = {
       }
     }
     Functions: {
+      bc_dat_lich: {
+        Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
+        Returns: { chieu: string; chua_den: number; hoan_thanh: number; huy: number; khoa: string; khong_den: number; nhan: string; so_lich: number }[]
+      }
       bc_doanh_thu_ngay: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {
@@ -7422,6 +7432,10 @@ export type Database = {
           ten: string
         }[]
       }
+      bc_dung_dich_vu: {
+        Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
+        Returns: { chieu: string; doanh_so: number; gia_tri_the: number; khoa: string; luot_the: number; luot_tien: number; nhan: string }[]
+      }
       bc_muc_ban: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {
@@ -7441,6 +7455,10 @@ export type Database = {
           so_dong: number
           vai: string
         }[]
+      }
+      bc_thu_ngan: {
+        Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
+        Returns: { cac_ten: string; con_no: number; da_thu: number; doanh_so: number; doanh_thu: number; khoa: string; ky: string; so_don: number; thu_ngan: string; tru_the_tien: number }[]
       }
       bc_phan_bo: {
         Args: { p_cn?: string }

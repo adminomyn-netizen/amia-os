@@ -65,6 +65,8 @@ try {
     hd.push({ sh_id: shId, ma, chi_nhanh: cnTheoLoc(d.location_id), khach_id: khId, trang_thai: huy ? "huy" : "hoan_thanh", ngay, giam_gia_don: so(d.discount), vat_pct: Number(d.tax_percent) || 0,
       phu_phi: phuPhi, tip: so(d.total_tip), tong_hang: tongHang, vat_tien: so(d.tax_amount), tong_phai_thu: huy ? 0 : phai, da_thu: daThuNguon, con_no: huy ? 0 : so(d.debt),
       sh_ma: sach(d.order_id), sh_trang_thai: d.status, tien_tru_the: so(d.total_amount_card), giam_voucher: so(d.total_voucher), giam_diem: so(d.point2money),
+      // thu ngân = người hoàn tất đơn (báo cáo thu ngân của SalonHero tính theo người này, migration 0068)
+      thu_ngan_sh_id: d.completed_by ?? d.created_by ?? null, thu_ngan_ten: sach(d.completed_by_name ?? d.created_by_name) || null,
       ghi_chu: [sach(d.note), d.created_by_name ? `Người lập (SalonHero): ${sach(d.created_by_name)}` : "", d.customer_id && !khId ? `Khách gốc không còn trong AMIA: ${sach(d.customer_fullname)} ${sach(d.customer_phone)}` : ""].filter(Boolean).join(" · ") || null,
       ly_do_huy: huy ? sach(d.reason_to_void) || "Huỷ ở SalonHero" : null, tao_luc: l.created_at, chot_luc: d.completed_at ?? l.completed_at ?? null, huy_luc: d.void_at ?? null });
     for (const it of items) {
@@ -109,17 +111,17 @@ try {
   const moi = hd.filter((h) => !co.get(h.sh_id));
   await theoLo(nangCap, 500, (lo) => q(`update public.hoa_don h set la_so_du_dau = false, la_lich_su = true, trang_thai = x.trang_thai, ngay_hd = x.ngay, khach_id = coalesce(x.khach_id, h.khach_id), giam_gia_don = x.giam_gia_don,
       vat_pct = x.vat_pct, phu_phi = x.phu_phi, tip = x.tip, tong_hang = x.tong_hang, vat_tien = x.vat_tien, tong_phai_thu = x.tong_phai_thu, sh_ma = x.sh_ma, sh_trang_thai = x.sh_trang_thai, tien_tru_the = x.tien_tru_the,
-      giam_voucher = x.giam_voucher, giam_diem = x.giam_diem, ghi_chu = coalesce(x.ghi_chu, h.ghi_chu), nhap_dot = $2
+      giam_voucher = x.giam_voucher, giam_diem = x.giam_diem, thu_ngan_sh_id = x.thu_ngan_sh_id, thu_ngan_ten = x.thu_ngan_ten, ghi_chu = coalesce(x.ghi_chu, h.ghi_chu), nhap_dot = $2
      from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, trang_thai text, ngay date, khach_id uuid, giam_gia_don bigint, vat_pct numeric, phu_phi bigint, tip bigint, tong_hang bigint, vat_tien bigint, tong_phai_thu bigint, sh_ma text, sh_trang_thai text,
-       tien_tru_the bigint, giam_voucher bigint, giam_diem bigint, ghi_chu text) where h.sh_id = x.sh_id`, [JSON.stringify(lo), dot]));
+       tien_tru_the bigint, giam_voucher bigint, giam_diem bigint, thu_ngan_sh_id bigint, thu_ngan_ten text, ghi_chu text) where h.sh_id = x.sh_id`, [JSON.stringify(lo), dot]));
   let nHd = 0;
   await theoLo(moi, 500, async (lo) => {
     const r = await q(`insert into public.hoa_don (sh_id, ma, chi_nhanh_id, khach_id, trang_thai, ngay_hd, giam_gia_don, vat_pct, phu_phi, tip, tong_hang, vat_tien, tong_phai_thu, da_thu, con_no, nguoi_lap_id, ghi_chu, ly_do_huy,
-          tao_luc, chot_luc, huy_luc, la_lich_su, sh_ma, sh_trang_thai, tien_tru_the, giam_voucher, giam_diem, nhap_dot)
+          tao_luc, chot_luc, huy_luc, la_lich_su, sh_ma, sh_trang_thai, tien_tru_the, giam_voucher, giam_diem, thu_ngan_sh_id, thu_ngan_ten, nhap_dot)
        select x.sh_id, x.ma, (select id from public.chi_nhanh where ma = x.chi_nhanh), x.khach_id, x.trang_thai, x.ngay, x.giam_gia_don, x.vat_pct, x.phu_phi, x.tip, x.tong_hang, x.vat_tien, x.tong_phai_thu, x.da_thu, x.con_no, $2::uuid, x.ghi_chu, x.ly_do_huy,
-          coalesce(x.tao_luc, now()), x.chot_luc, x.huy_luc, true, x.sh_ma, x.sh_trang_thai, x.tien_tru_the, x.giam_voucher, x.giam_diem, $3
+          coalesce(x.tao_luc, now()), x.chot_luc, x.huy_luc, true, x.sh_ma, x.sh_trang_thai, x.tien_tru_the, x.giam_voucher, x.giam_diem, x.thu_ngan_sh_id, x.thu_ngan_ten, $3
        from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, ma text, chi_nhanh text, khach_id uuid, trang_thai text, ngay date, giam_gia_don bigint, vat_pct numeric, phu_phi bigint, tip bigint, tong_hang bigint, vat_tien bigint, tong_phai_thu bigint, da_thu bigint,
-          con_no bigint, ghi_chu text, ly_do_huy text, tao_luc timestamptz, chot_luc timestamptz, huy_luc timestamptz, sh_ma text, sh_trang_thai text, tien_tru_the bigint, giam_voucher bigint, giam_diem bigint)
+          con_no bigint, ghi_chu text, ly_do_huy text, tao_luc timestamptz, chot_luc timestamptz, huy_luc timestamptz, sh_ma text, sh_trang_thai text, tien_tru_the bigint, giam_voucher bigint, giam_diem bigint, thu_ngan_sh_id bigint, thu_ngan_ten text)
        on conflict (sh_id) do nothing returning 1`, [JSON.stringify(lo), he, dot]);
     nHd += r.length;
   });

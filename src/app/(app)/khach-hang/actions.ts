@@ -22,7 +22,8 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   const sdt = chuanSdt(chuoi(fd, "dien_thoai"));
   const nguon = chuoi(fd, "nguon");
   if (!chuoi(fd, "ho_ten")) return { loi: "Nhập họ tên khách." };
-  if (!coSdtHopLe(sdt)) return { loi: "Số điện thoại chưa hợp lệ (bắt đầu bằng 0, 10–11 số)." };
+  // Số trong nước: 0 + 9–10 số. Khách nước ngoài (Đà Lạt có nhiều, SalonHero cho nhập) : 9–15 chữ số có mã nước, không bắt đầu bằng 0.
+  if (!coSdtHopLe(sdt) && !/^[1-9]\d{8,14}$/.test(sdt)) return { loi: "Số điện thoại chưa hợp lệ (số trong nước bắt đầu bằng 0, 10–11 số; số nước ngoài ghi cả mã nước)." };
   if (!NGUON_HOP_LE.includes(nguon)) return { loi: "Chọn nguồn khách (bắt buộc)." };
   if (!chuoi(fd, "nguoi_phu_trach_id")) return { loi: "Chọn người phụ trách (bắt buộc)." };
   if (!chuoi(fd, "chi_nhanh_id")) return { loi: "Chọn chi nhánh." };
@@ -57,6 +58,8 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
     ngay_sinh: chuoiHoacNull(fd, "ngay_sinh"), dia_chi: chuoiHoacNull(fd, "dia_chi"), chi_nhanh_id: chuoi(fd, "chi_nhanh_id"),
     nguon, nguon_chi_tiet: chuoiHoacNull(fd, "nguon_chi_tiet"), nguoi_gioi_thieu_id: nguoiGt, nguoi_phu_trach_id: chuoi(fd, "nguoi_phu_trach_id"),
     ghi_chu: chuoiHoacNull(fd, "ghi_chu"), dong_y_dung_hinh: dongY, cap_nhat_luc: new Date().toISOString(),
+    // Các ô thêm như SalonHero. Khi SỬA mà form không gửi ô nào (gọi cũ) thì không đụng tới cột đó, tránh xoá dữ liệu chuyển từ SalonHero.
+    ...Object.fromEntries(["tinh_thanh", "quan_huyen", "quoc_gia", "sdt_phu", "facebook", "website", "nghe_nghiep", "cong_ty", "ma_so_thue", "ma_the_giay"].filter((k) => fd.has(k)).map((k) => [k, chuoiHoacNull(fd, k)])),
   };
   let khachId = id;
   if (id) {

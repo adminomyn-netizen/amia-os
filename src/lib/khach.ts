@@ -50,6 +50,12 @@ export function truongKhach(o: { dichVu: LuaChon[]; nhanVien: LuaChon[]; chiNhan
     { ten: "nguoi_phu_trach_id", nhan: "Người phụ trách (telesale/tư vấn)", loai: "chon", luaChon: o.nhanVien, batBuoc: true, rong: true },
     { ten: "quan_tam", nhan: "Dịch vụ quan tâm", loai: "nhieu", luaChon: o.dichVu },
     { ten: "dia_chi", nhan: "Địa chỉ", loai: "chu", rong: true }, { ten: "email", nhan: "Email", loai: "email" },
+    // Các ô còn lại của form "Thêm khách hàng mới" ở SalonHero (cột đã có từ 0055; trước đây chỉ hiện ở hồ sơ, không nhập/sửa được).
+    { ten: "tinh_thanh", nhan: "Tỉnh/thành", loai: "chu" }, { ten: "quan_huyen", nhan: "Quận/huyện (phường)", loai: "chu" },
+    { ten: "quoc_gia", nhan: "Quốc gia", loai: "chu", goiY: "VN" }, { ten: "sdt_phu", nhan: "Số điện thoại phụ", loai: "chu" },
+    { ten: "facebook", nhan: "Facebook", loai: "chu" }, { ten: "website", nhan: "Website", loai: "chu" },
+    { ten: "nghe_nghiep", nhan: "Nghề nghiệp", loai: "chu" }, { ten: "cong_ty", nhan: "Công ty", loai: "chu" },
+    { ten: "ma_so_thue", nhan: "Mã số thuế", loai: "chu" }, { ten: "ma_the_giay", nhan: "Mã thẻ giấy", loai: "chu" },
     { ten: "ghi_chu", nhan: "Ghi chú chung", loai: "nhieu_dong" },
     { ten: "dong_y_dung_hinh", nhan: "Khách đồng ý (bằng văn bản) cho dùng hình ảnh", loai: "gat" },
   ];

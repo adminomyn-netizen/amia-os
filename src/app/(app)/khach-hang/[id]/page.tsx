@@ -55,7 +55,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     k.nguoi_gioi_thieu_id ? db.from("khach_hang").select("ma, ho_ten").eq("id", k.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
     xemAnh ? demAnhKhach(id) : Promise.resolve(0),
     // Trường chuyển từ SalonHero (0055/0065) chưa có trong v_khach_hang: đọc thẳng bảng khách.
-    db.from("khach_hang").select("nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc").eq("id", id).maybeSingle(),
+    db.from("khach_hang").select("nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc, lan_den_cuoi").eq("id", id).maybeSingle(),
     db.from("khach_nhom").select("nhom_khach!inner(id, ten, mau)").eq("khach_id", id).eq("nhom_khach.hoat_dong", true),
     coQuyen(nd, "the.xem") ? docTaiKham(null, undefined, undefined, id, 1).catch(() => []) : Promise.resolve([]),
     coQuyen(nd, "the.xem") ? docTheSapHet(null, undefined, undefined, id, 5).catch(() => []) : Promise.resolve([]),
@@ -71,7 +71,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
   const tt = TRANG_THAI_KHACH[k.trang_thai ?? "lead"];
   const sua = coQuyen(nd, "khach.sua");
-  const giaTriSua = { id: k.id, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo ?? "", email: k.email ?? "", gioi_tinh: k.gioi_tinh ?? "", ngay_sinh: k.ngay_sinh ?? "", dia_chi: k.dia_chi ?? "", chi_nhanh_id: k.chi_nhanh_id, nguon: k.nguon, nguon_chi_tiet: k.nguon_chi_tiet ?? "", nguoi_gioi_thieu: nguoiGt?.ma ?? "", nguoi_phu_trach_id: k.nguoi_phu_trach_id, ghi_chu: k.ghi_chu ?? "", dong_y_dung_hinh: k.dong_y_dung_hinh, quan_tam: (qt ?? []).map((x) => x.dich_vu_id) };
+  const giaTriSua = { tinh_thanh: kx?.tinh_thanh ?? "", quan_huyen: kx?.quan_huyen ?? "", quoc_gia: kx?.quoc_gia ?? "", sdt_phu: kx?.sdt_phu ?? "", facebook: kx?.facebook ?? "", website: kx?.website ?? "",
+    nghe_nghiep: kx?.nghe_nghiep ?? "", cong_ty: kx?.cong_ty ?? "", ma_so_thue: kx?.ma_so_thue ?? "", ma_the_giay: kx?.ma_the_giay ?? "", id: k.id, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo ?? "", email: k.email ?? "", gioi_tinh: k.gioi_tinh ?? "", ngay_sinh: k.ngay_sinh ?? "", dia_chi: k.dia_chi ?? "", chi_nhanh_id: k.chi_nhanh_id, nguon: k.nguon, nguon_chi_tiet: k.nguon_chi_tiet ?? "", nguoi_gioi_thieu: nguoiGt?.ma ?? "", nguoi_phu_trach_id: k.nguoi_phu_trach_id, ghi_chu: k.ghi_chu ?? "", dong_y_dung_hinh: k.dong_y_dung_hinh, quan_tam: (qt ?? []).map((x) => x.dich_vu_id) };
 
   // Dữ liệu sức khoẻ: ghi vết mỗi lần mở tab ghi chú hoặc ảnh.
   if (tab === "ghi-chu" || tab === "anh") await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: `xem_${tab}`, doi_tuong: "khach_hang", doi_tuong_id: id });
@@ -86,7 +87,6 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
       ["Chiều cao / cân nặng", [kx?.chieu_cao_cm != null ? `${soVN(Number(kx.chieu_cao_cm))} cm` : "", kx?.can_nang_kg != null ? `${soVN(Number(kx.can_nang_kg))} kg` : ""].filter(Boolean).join(" · ")],
       ["Chi nhánh khách đã đến", coSo.length > 1 ? <span>{coSo.join(", ")} <span className="nhan-nho ml-1">Nhiều chi nhánh</span></span> : coSo.join("")],
       ["Mã thẻ giấy", kx?.ma_the_giay ?? ""],
-      ["Lịch hẹn ở SalonHero", kx?.tong_dat_lich_goc != null ? `${soVN(kx.tong_dat_lich_goc)} lần đặt · ${soVN(kx.tong_checkin_goc ?? 0)} lần đến · ${soVN(kx.tong_huy_lich_goc ?? 0)} lần huỷ` : ""],
       ["Nguồn khách", NHAN_NGUON[k.nguon ?? ""] ?? k.nguon], ["Chi tiết nguồn", k.nguon_chi_tiet ?? ""], ["Người giới thiệu", nguoiGt ? `${nguoiGt.ho_ten} (${nguoiGt.ma})` : k.nguon === "khach_cu_gioi_thieu" ? "Chưa nối người giới thiệu (dữ liệu SalonHero)" : ""], ["Người phụ trách", tenNv.get(k.nguoi_phu_trach_id ?? "") ?? ""],
       ["Đồng ý dùng hình ảnh", k.dong_y_dung_hinh ? `Có${k.dong_y_dung_hinh_luc ? ` (${ngayVN(k.dong_y_dung_hinh_luc)})` : ""}` : "Chưa"], ["Ghi chú chung", k.ghi_chu ?? ""],
     ];
@@ -262,6 +262,11 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const chiSo: [string, string][] = [
     ["Chi 12 tháng gần nhất", tienVN(k.chi_12_thang)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
   ];
+  // Như đầu hồ sơ SalonHero: ghé thăm lần cuối + 3 số đếm đặt / đến / huỷ (chỉ khách có số từ SalonHero; "đặt từ app" SalonHero không xuất nên không có).
+  const soDem: [string, string][] = [
+    ...(kx?.lan_den_cuoi ? [["Ghé thăm lần cuối", ngayVN(kx.lan_den_cuoi)] as [string, string]] : []),
+    ...(kx?.tong_dat_lich_goc != null ? [["Tổng số lần đặt trước", `${soVN(kx.tong_dat_lich_goc)} lần`], ["Tổng số lần đến trực tiếp", `${soVN(kx.tong_checkin_goc ?? 0)} lần`], ["Tổng số lần hủy đặt / không đến", `${soVN(kx.tong_huy_lich_goc ?? 0)} lần`]] as [string, string][] : []),
+  ];
   return (
     <>
       <Link href="/khach-hang" className="mb-3 inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
@@ -291,6 +296,11 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-5 lg:grid-cols-3 xl:grid-cols-5">
           {chiSo.map(([a, b]) => (<div key={a}><dt className="text-[12px] text-muc-3">{a}</dt><dd className="mt-0.5 text-[16px] font-medium tabular-nums text-muc">{b}</dd></div>))}
         </dl>
+        {soDem.length > 0 && (
+          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-4">
+            {soDem.map(([a, b]) => (<div key={a}><dt className="text-[12px] text-muc-3">{a}</dt><dd className="mt-0.5 text-[14px] font-medium tabular-nums text-muc">{b}</dd></div>))}
+          </dl>
+        )}
       </div>
       <div role="tablist" className="tab-khach mt-4 mb-4">
         {tabHopLe.map((m) => (

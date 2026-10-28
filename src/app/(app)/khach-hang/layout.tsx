@@ -30,8 +30,8 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
   const cnLC = (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: cnLC });
   const chiSo = [
-    { nhan: "Tổng số khách", so: so.tong }, { nhan: "Khách mới hôm nay", so: so.moiHomNay },
-    { nhan: "Sinh nhật hôm nay", so: so.sinhNhatHomNay }, { nhan: "Sinh nhật tháng này", so: so.sinhNhatThang },
+    { nhan: "Tổng số khách hàng", so: so.tong }, { nhan: "Khách hàng mới hôm nay", so: so.moiHomNay },
+    { nhan: "Khách hàng sinh nhật hôm nay", so: so.sinhNhatHomNay }, { nhan: "Khách hàng sinh nhật tháng này", so: so.sinhNhatThang },
   ];
 
   const dau = (
@@ -39,14 +39,14 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pb-3">
         <h1 className="chu-tieu-de text-[24px] text-muc lg:text-[28px]">Khách hàng</h1>
         <div className="flex flex-wrap items-center gap-2.5">
-          <Link href="/khach-hang/thong-ke" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><BarChart3 aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thống kê</Link>
-          <Link href="/khach-hang/gan-day" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><History aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách gần đây</Link>
+          <Link href="/khach-hang/thong-ke" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><BarChart3 aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thống kê khách hàng</Link>
+          <Link href="/khach-hang/gan-day" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><History aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách hàng gần đây</Link>
           <Link href="/khach-hang/nhom" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><Tags aria-hidden strokeWidth={1.7} className="h-4 w-4" />Quản lý nhóm</Link>
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/tai-kham" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CalendarClock aria-hidden strokeWidth={1.7} className="h-4 w-4" />Nhắc tái khám</Link>}
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/the-sap-het" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><TicketX aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thẻ sắp hết</Link>}
           {coQuyen(nd, "khach.nhap") && <NhapExcelKhach nguon={NGUON} nhanVien={nvLC} chiNhanh={cnLC} action={nhapKhachExcel} macDinh={{ nguoi: nd.nhanVienId, cn: nd.chiNhanhId ?? cn?.[0]?.id ?? "" }} />}
           {coQuyen(nd, "khach.sua") && (
-            <NutHop nhan="Thêm khách" tieuDe="Thêm khách hàng" moTa="Nguồn khách và người phụ trách là bắt buộc để tính hoa hồng và đánh giá quảng cáo." rong truong={truong}
+            <NutHop nhan="Thêm mới" tieuDe="Thêm khách hàng mới" moTa="Nguồn khách và người phụ trách là bắt buộc để tính hoa hồng và đánh giá quảng cáo." rong truong={truong}
               giaTri={{ chi_nhanh_id: nd.chiNhanhId ?? (cn?.[0]?.id ?? ""), nguoi_phu_trach_id: nd.nhanVienId, quan_tam: [] }} action={luuKhach} />
           )}
         </div>

@@ -26,17 +26,57 @@ export async function luuThongTinChung(fd: FormData): Promise<KQ> {
   return { ok: true };
 }
 
+/** Thêm / sửa tài khoản ngân hàng theo hộp "Thêm tài khoản" của SalonHero: ngân hàng, số tài khoản, chủ tài khoản, chức năng (Quẹt thẻ / Chuyển khoản), Mặc định. Ghi nhật ký (chỉ ghi 4 số cuối của số tài khoản). */
 export async function luuNganHang(fd: FormData): Promise<KQ> {
-  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
   const id = chuoi(fd, "id");
   const row = {
-    ngan_hang: chuoi(fd, "ngan_hang"), so_tai_khoan: chuoi(fd, "so_tai_khoan").replace(/\s/g, ""), chu_tai_khoan: chuoi(fd, "chu_tai_khoan").toUpperCase(),
-    chi_nhanh_id: chuoiHoacNull(fd, "chi_nhanh_id"), ghi_chu: chuoiHoacNull(fd, "ghi_chu"), hoat_dong: bat(fd, "hoat_dong"),
+    ngan_hang: chuoi(fd, "ngan_hang"), so_tai_khoan: chuoi(fd, "so_tai_khoan").replace(/\s/g, ""), chu_tai_khoan: chuoi(fd, "chu_tai_khoan"),
+    dung_quet_the: bat(fd, "dung_quet_the"), dung_chuyen_khoan: bat(fd, "dung_chuyen_khoan"),
   };
-  if (!row.ngan_hang || !row.so_tai_khoan || !row.chu_tai_khoan) return { loi: "Nhập ngân hàng, số tài khoản và chủ tài khoản." };
+  const macDinh = bat(fd, "mac_dinh");
+  if (!row.ngan_hang) return { loi: "Mời chọn tên ngân hàng." };
+  if (!row.so_tai_khoan) return { loi: "Số tài khoản là bắt buộc." };
+  if (!row.chu_tai_khoan) return { loi: "Không được để trống tên chủ tài khoản." };
   if (!/^\d{6,20}$/.test(row.so_tai_khoan)) return { loi: "Số tài khoản chỉ gồm chữ số (6–20 số)." };
-  const { error } = id ? await sb().from("tai_khoan_ngan_hang").update(row).eq("id", id) : await sb().from("tai_khoan_ngan_hang").insert(row);
+  const db = sb();
+  if (macDinh) await db.from("tai_khoan_ngan_hang").update({ mac_dinh: false }).eq("mac_dinh", true);
+  const luu = { ...row, ...(macDinh ? { mac_dinh: true } : id ? {} : { mac_dinh: false }) };
+  const { data: moi, error } = id ? await db.from("tai_khoan_ngan_hang").update(luu).eq("id", id).select("id").single() : await db.from("tai_khoan_ngan_hang").insert(luu).select("id").single();
   if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: id ? "sua_tai_khoan_ngan_hang" : "them_tai_khoan_ngan_hang", doi_tuong: "tai_khoan_ngan_hang", doi_tuong_id: moi.id, chi_tiet: { ngan_hang: row.ngan_hang, so_cuoi: row.so_tai_khoan.slice(-4), quet_the: row.dung_quet_the, chuyen_khoan: row.dung_chuyen_khoan, mac_dinh: macDinh } });
+  revalidatePath("/cai-dat/ngan-hang");
+  return { ok: true };
+}
+
+/** Nút "Đặt mặc định": đúng một tài khoản mặc định. */
+export async function datMacDinhNganHang(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  const db = sb();
+  const { data: tk } = await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, so_tai_khoan").eq("id", id).maybeSingle();
+  if (!tk) return { loi: "Không có tài khoản này." };
+  await db.from("tai_khoan_ngan_hang").update({ mac_dinh: false }).eq("mac_dinh", true);
+  const { error } = await db.from("tai_khoan_ngan_hang").update({ mac_dinh: true }).eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "dat_mac_dinh_ngan_hang", doi_tuong: "tai_khoan_ngan_hang", doi_tuong_id: id, chi_tiet: { ngan_hang: tk.ngan_hang, so_cuoi: tk.so_tai_khoan.slice(-4) } });
+  revalidatePath("/cai-dat/ngan-hang");
+  return { ok: true };
+}
+
+/** Nút "Xóa": xoá hẳn tài khoản khỏi danh sách (bảng này chưa có chứng từ nào trỏ tới); ghi nhật ký. */
+export async function xoaNganHang(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  const db = sb();
+  const { data: tk } = await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, so_tai_khoan, mac_dinh").eq("id", id).maybeSingle();
+  if (!tk) return { loi: "Không có tài khoản này." };
+  const { error } = await db.from("tai_khoan_ngan_hang").delete().eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_tai_khoan_ngan_hang", doi_tuong: "tai_khoan_ngan_hang", doi_tuong_id: id, chi_tiet: { ngan_hang: tk.ngan_hang, so_cuoi: tk.so_tai_khoan.slice(-4), mac_dinh: tk.mac_dinh } });
   revalidatePath("/cai-dat/ngan-hang");
   return { ok: true };
 }

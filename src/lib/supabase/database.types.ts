@@ -8357,9 +8357,12 @@ export type Database = {
         Row: {
           chi_nhanh_id: string | null
           chu_tai_khoan: string
+          dung_chuyen_khoan: boolean
+          dung_quet_the: boolean
           ghi_chu: string | null
           hoat_dong: boolean
           id: string
+          mac_dinh: boolean
           ngan_hang: string
           so_tai_khoan: string
           tao_luc: string
@@ -8367,9 +8370,12 @@ export type Database = {
         Insert: {
           chi_nhanh_id?: string | null
           chu_tai_khoan: string
+          dung_chuyen_khoan?: boolean
+          dung_quet_the?: boolean
           ghi_chu?: string | null
           hoat_dong?: boolean
           id?: string
+          mac_dinh?: boolean
           ngan_hang: string
           so_tai_khoan: string
           tao_luc?: string
@@ -8377,9 +8383,12 @@ export type Database = {
         Update: {
           chi_nhanh_id?: string | null
           chu_tai_khoan?: string
+          dung_chuyen_khoan?: boolean
+          dung_quet_the?: boolean
           ghi_chu?: string | null
           hoat_dong?: boolean
           id?: string
+          mac_dinh?: boolean
           ngan_hang?: string
           so_tai_khoan?: string
           tao_luc?: string

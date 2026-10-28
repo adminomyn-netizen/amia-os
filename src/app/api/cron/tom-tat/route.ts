@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   let daGui = 0;
   for (const n of nvs ?? []) {
     if (!laVaiTro(n.vai_tro)) continue;
-    const nd = { vaiTro: n.vai_tro, quyen: quyenHieuLuc(n.vai_tro, n.quyen_rieng), chiNhanhId: n.chi_nhanh_id };
+    const nd = { nhanVienId: n.id, vaiTro: n.vai_tro, quyen: quyenHieuLuc(n.vai_tro, n.quyen_rieng), chiNhanhId: n.chi_nhanh_id };
     const [cb, { count: lich }] = await Promise.all([layCanhBao(nd), db.from("lich_hen").select("id", { count: "exact", head: true }).eq("nhan_vien_id", n.id).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)")]);
     const phan = [lich ? `${lich} lịch của bạn` : "", cb.length ? `${cb.length} việc đang chờ` : ""].filter(Boolean);
     if (phan.length === 0) continue;

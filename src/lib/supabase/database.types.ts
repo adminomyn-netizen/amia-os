@@ -3404,6 +3404,27 @@ export type Database = {
         }
         Relationships: []
       }
+      nhac_da_gui: {
+        Row: {
+          gui_luc: string
+          loai: string
+          ngay: string
+          nhan_vien_id: string
+        }
+        Insert: {
+          gui_luc?: string
+          loai: string
+          ngay: string
+          nhan_vien_id: string
+        }
+        Update: {
+          gui_luc?: string
+          loai?: string
+          ngay?: string
+          nhan_vien_id?: string
+        }
+        Relationships: []
+      }
       nhan_vien: {
         Row: {
           anh_dai_dien: string | null
@@ -5902,6 +5923,7 @@ export type Database = {
         Args: { p_dem_truoc: number; p_id: string; p_nguoi: string }
         Returns: undefined
       }
+      kiem_token_cron: { Args: { p: string }; Returns: boolean }
       so_du_phep: { Args: { p_nam: number; p_nv: string }; Returns: number }
       so_quy_tong: {
         Args: { p_den: string; p_quy: string[]; p_tu: string }

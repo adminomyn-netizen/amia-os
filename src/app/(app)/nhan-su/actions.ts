@@ -7,6 +7,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang, so, soHoacNull } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { caCuaNgay, type Ca } from "@/lib/ca-lam";
+import { guiChoNhanVien } from "@/lib/push";
 import { isoVN, ngayCongThem, phutTrongNgayVN, phutTuGio, soNgayGiua, thuCuaNgay } from "@/lib/nhan-su";
 
 type KQ = { ok?: true; loi?: string };
@@ -315,6 +316,12 @@ export async function taoKyLuong(fd: FormData): Promise<KQ> {
   return { ok: true };
 }
 
+/** Gửi phiếu lương cho từng người (như nút "Gửi bảng lương" trên Lark): thông báo đẩy chung chung, không ghi số tiền để khỏi lộ trên màn hình khoá. */
+async function baoPhieuLuong(kyId: string, tieuDe: string, noiDung: string) {
+  const { data } = await sb().from("bang_luong_dong").select("nhan_vien_id").eq("ky_id", kyId);
+  await guiChoNhanVien((data ?? []).map((d) => d.nhan_vien_id), { tieuDe, noiDung, url: "/nhan-su/luong/phieu", tag: `luong-${kyId}` });
+}
+
 async function layKy(id: string) {
   const { data } = await sb().from("ky_luong").select("*").eq("id", id).maybeSingle();
   return data;
@@ -351,6 +358,7 @@ export async function duyetKyLuong(fd: FormData): Promise<KQ> {
   const { data, error } = await sb().from("ky_luong").update({ trang_thai: "da_duyet", nguoi_duyet_id: nd.nhanVienId, duyet_luc: new Date().toISOString() }).eq("id", ky.id).eq("trang_thai", "cho_duyet").select("id");
   if (error) return { loi: thongBaoLoi(error) };
   if (!data?.length) return { loi: "Kỳ lương vừa được xử lý bởi người khác." };
+  await baoPhieuLuong(ky.id, `Phiếu lương tháng ${String(ky.thang).padStart(2, "0")}/${ky.nam} đã có`, "Mở để xem chi tiết công và các khoản. Thắc mắc báo nhân sự trong 1 ngày làm việc.");
   lamMoi();
   return { ok: true };
 }
@@ -372,6 +380,8 @@ export async function chiKyLuong(fd: FormData): Promise<KQ> {
   if (!chuoi(fd, "quy_id")) return { loi: "Chọn quỹ chi lương." };
   const { error } = await sb().rpc("chi_ky_luong", { p_ky: chuoi(fd, "id"), p_quy: chuoi(fd, "quy_id"), p_ngay: ngay, p_nguoi: nd.nhanVienId, p_bo_qua_kiem: nd.vaiTro === "ky_thuat" });
   if (error) return { loi: thongBaoLoi(error) };
+  const kyChi = await layKy(chuoi(fd, "id"));
+  if (kyChi) await baoPhieuLuong(kyChi.id, `Lương tháng ${String(kyChi.thang).padStart(2, "0")}/${kyChi.nam} đã được chi`, "Kiểm tra tài khoản và xem phiếu lương trong AMIA OS.");
   revalidatePath("/tai-chinh", "layout");
   lamMoi();
   return { ok: true };

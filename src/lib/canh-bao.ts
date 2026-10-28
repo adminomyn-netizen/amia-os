@@ -2,12 +2,13 @@ import "server-only";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, type CoQuyen } from "@/lib/quyen";
+import { layNhacCong } from "@/lib/nhac-cong";
 
 /** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
-export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld"; nhan: string; href: string };
+export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
-export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null }): Promise<CanhBao[]> {
+export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null; nhanVienId?: string }): Promise<CanhBao[]> {
   const db = sb(), cn = nd.chiNhanhId, homNay = homNayHCM();
   const ra: CanhBao[] = [];
   const tu = new Date(`${homNay}T00:00:00+07:00`).toISOString(), den = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
@@ -26,6 +27,7 @@ export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null }): P
   if (dsNo.length > 0) ra.push({ ma: "no", nhan: `${dsNo.length} hoá đơn còn nợ, tổng ${tienVN(dsNo.reduce((s, r) => s + Number(r.con_no), 0))}`, href: "/bao-cao?tab=no" });
   if ((kho?.count ?? 0) > 0) ra.push({ ma: "kho", nhan: `${kho!.count} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
   await themCanhBaoNangCao(nd, ra, homNay);
+  ra.unshift(...(await layNhacCong(nd, homNay)));
   return ra;
 }
 

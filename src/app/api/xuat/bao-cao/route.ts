@@ -6,14 +6,13 @@ import { khoangNgay } from "@/lib/bao-cao";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
-import { gomTheoKy, kieuGom, layLichSuDungThe, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, kieuGom, layLichSuDungThe, layNhanVienSh, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
  *  Quyền chặn ở máy chủ: cần `baocao.xem`; tab có số tiền cần thêm `baocao.tien` (giống trang). Người gắn chi nhánh chỉ xuất được chi nhánh của mình. */
 const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia", "ti-le-chot"]);
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
-const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
 export async function GET(req: Request) {
   const nd = await kiemQuyen("baocao.xem");
   if (!nd) return new Response("Không đủ quyền xem báo cáo", { status: 403 });
@@ -93,10 +92,11 @@ export async function GET(req: Request) {
       { nhan: "Ngày", khoa: "ngayGio", rong: 20 }, { nhan: "Mã hóa đơn", khoa: "maHd", rong: 14 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 },
       { nhan: "Tên thẻ", khoa: "tenThe", rong: 40 }, { nhan: "Mã thẻ", khoa: "maThe", rong: 12 }, { nhan: "Loại thẻ", khoa: "loaiVn", rong: 10 }, { nhan: "Số lần sử dụng", khoa: "soLan", so: true }, { nhan: "Tiền tương đương trừ thẻ", khoa: "tien", tien: true }] });
   } else if (tab === "nhan-vien") {
-    const [{ data }, { data: nv }] = await Promise.all([db.rpc("bc_nhan_vien", { p_tu: tu, p_den: den, p_cn: cn as string }), db.from("nhan_vien").select("id, ho_ten")]);
-    const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
-    bangs.push({ ten: "Theo nhân viên", dong: (data ?? []).map((r) => ({ ...r, ten: ten.get(r.nhan_vien_id) ?? "", vai: VAI[r.vai] ?? r.vai })).sort((a, b) => Number(b.doanh_so) - Number(a.doanh_so)), cot: [
-      { nhan: "Nhân viên", khoa: "ten", rong: 34 }, { nhan: "Vai", khoa: "vai", rong: 12 }, { nhan: "Số lượt", khoa: "so_dong", so: true }, { nhan: "Doanh số", khoa: "doanh_so", tien: true }, { nhan: "Hoa hồng tạm tính", khoa: "hoa_hong", tien: true }] });
+    const ds = await layNhanVienSh(db, tu, den, cn);
+    bangs.push({ ten: "Theo nhân viên", dong: ds, cot: [
+      { nhan: "Nhân viên", khoa: "ten", rong: 40 }, { nhan: "Số lần phục vụ", khoa: "soPhucVu", so: true }, { nhan: "Doanh số dịch vụ", khoa: "dsDichVu", tien: true }, { nhan: "Số sản phẩm đã bán", khoa: "soSanPham", so: true },
+      { nhan: "Doanh số sản phẩm", khoa: "dsSanPham", tien: true }, { nhan: "Tổng số thẻ đã bán", khoa: "soThe", so: true }, { nhan: "Doanh số bán thẻ", khoa: "dsThe", tien: true },
+      { nhan: "Số lần tư vấn", khoa: "soTuVan", so: true }, { nhan: "Doanh số tư vấn", khoa: "dsTuVan", tien: true }, { nhan: "Tổng doanh số", khoa: "tong", tien: true }] });
   } else if (tab === "dich-vu") {
     const { data } = await db.rpc("bc_muc_ban", { p_tu: tu, p_den: den, p_cn: cn as string });
     bangs.push({ ten: "Theo dịch vụ, sản phẩm", dong: (data ?? []).map((r) => ({ ...r, loai: LOAI[r.loai] ?? r.loai })), cot: [

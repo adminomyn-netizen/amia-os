@@ -7,6 +7,7 @@ import { khoangNgay } from "@/lib/bao-cao";
 import { ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
+import { CotNgang } from "@/components/bieu-do/CotNgang";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
@@ -19,15 +20,15 @@ import { BaoCaoTiLeChot } from "@/components/bao-cao/BaoCaoTiLeChot";
 import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 import { BaoCaoLichSuDungThe, BaoCaoTheoChiNhanh, BaoCaoTheoKhachHang } from "@/components/bao-cao/BaoCaoGap";
 import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
-import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layNhanVienSh, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
 const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
 const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "danh-gia", "ti-le-chot"]);
 /** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
 const TAB_NHOM: Record<string, "tong" | "thang"> = { "thu-ngan": "tong", "dat-lich": "thang", "dung-dich-vu": "thang" };
+const TieuDeMuc = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-6 text-[15px] font-medium text-muc">{children}</h2>;
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
-const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
 
 export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; hang?: string; tt?: string; lt?: string; so?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
@@ -119,21 +120,23 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
       </>
     );
   } else if (tab === "nhan-vien") {
-    const [{ data }, { data: nv }] = await Promise.all([db.rpc("bc_nhan_vien", { p_tu: tu, p_den: den, p_cn: cn as string }), db.from("nhan_vien").select("id, ho_ten, vai_tro")]);
-    const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
-    const theo = new Map<string, Record<string, { doanh_so: number; hoa_hong: number; so_dong: number }>>();
-    for (const r of data ?? []) { const m = theo.get(r.nhan_vien_id) ?? {}; m[r.vai] = { doanh_so: Number(r.doanh_so), hoa_hong: Number(r.hoa_hong), so_dong: r.so_dong }; theo.set(r.nhan_vien_id, m); }
-    const dong = [...theo.entries()].map(([id, m]) => ({ id, m, tong: Object.values(m).reduce((s, x) => s + x.doanh_so, 0), hh: Object.values(m).reduce((s, x) => s + x.hoa_hong, 0) })).sort((a, b) => b.tong - a.tong);
+    const ds = await layNhanVienSh(db, tu, den, cn);
     noiDung = (
       <>
         {lc}
-        <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa có đơn nào có gán người hưởng trong khoảng này."
+        <TieuDeMuc>Biểu đồ doanh thu từng nhân viên</TieuDeMuc>
+        <CotNgang duLieu={ds.slice(0, 15).map((r) => ({ nhan: r.ten, gia_tri: r.tong }))} dinhDang={(n) => tienVN(n)} trong="Chưa có đơn nào có gán người hưởng trong khoảng này." />
+        <TieuDeMuc>Bảng số liệu chi tiết</TieuDeMuc>
+        <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có đơn nào có gán người hưởng trong khoảng này."
           cot={[
-            { nhan: "Nhân viên", hienThi: (r) => <span className="text-muc">{tenNv.get(r.id)}</span> },
-            ...(["phuc_vu", "tu_van", "ban"] as const).flatMap((v) => [{ nhan: `${VAI[v]} (lượt)`, hienThi: (r: (typeof dong)[number]) => r.m[v]?.so_dong ?? "", phai: true }, { nhan: `${VAI[v]} (doanh số)`, hienThi: (r: (typeof dong)[number]) => (r.m[v] ? tienVN(r.m[v].doanh_so) : ""), phai: true }]),
-            { nhan: "Tổng doanh số", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.tong)}</span>, phai: true }, { nhan: "Hoa hồng tạm tính", hienThi: (r) => tienVN(r.hh), phai: true },
+            { nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
+            { nhan: "Số lần phục vụ", hienThi: (r) => soVN(r.soPhucVu), phai: true }, { nhan: "Doanh số dịch vụ", hienThi: (r) => tienVN(r.dsDichVu), phai: true },
+            { nhan: "Số sản phẩm đã bán", hienThi: (r) => soVN(r.soSanPham), phai: true }, { nhan: "Doanh số sản phẩm", hienThi: (r) => tienVN(r.dsSanPham), phai: true },
+            { nhan: "Tổng số thẻ đã bán", hienThi: (r) => soVN(r.soThe), phai: true }, { nhan: "Doanh số bán thẻ", hienThi: (r) => tienVN(r.dsThe), phai: true },
+            { nhan: "Số lần tư vấn", hienThi: (r) => soVN(r.soTuVan), phai: true }, { nhan: "Doanh số tư vấn", hienThi: (r) => tienVN(r.dsTuVan), phai: true },
+            { nhan: "Tổng doanh số", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.tong)}</span>, phai: true },
           ]} />
-        <p className="mt-3 text-[12px] text-muc-3">Doanh số mỗi dòng = thành tiền × tỉ lệ chia của người đó, đã chia lại phần giảm giá cả đơn. Hoa hồng nhân theo tỉ lệ cài ở mục <Link href="/hoa-hong" className="text-nhan-dam hover:underline">Hoa hồng</Link>.</p>
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Doanh số mỗi dòng = thành tiền × tỉ lệ chia của người đó, đã chia lại phần giảm giá cả đơn. Dịch vụ làm bằng thẻ tính theo giá một buổi của thẻ (giá bán thẻ ÷ số buổi). Phục vụ: người đứng vai Phục vụ ở dòng dịch vụ; bán hàng / bán thẻ: vai Bán hàng ở dòng sản phẩm / thẻ; tư vấn: vai Tư vấn ở mọi dòng. Hoa hồng xem ở mục <Link href="/hoa-hong" className="text-nhan-dam hover:underline">Hoa hồng</Link>. Số sản phẩm đã bán và thẻ đã bán khớp SalonHero; doanh số dịch vụ và tư vấn có thể lệch vì một phần thẻ chưa có hồ sơ trong app.</p>
       </>
     );
   } else if (tab === "dich-vu") {

@@ -10301,6 +10301,21 @@ export type Database = {
           vai: string
         }[]
       }
+      bc_nhan_vien_sh: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          ds_dich_vu: number
+          ds_san_pham: number
+          ds_the: number
+          ds_tu_van: number
+          ho_ten: string
+          nhan_vien_id: string
+          so_phuc_vu: number
+          so_san_pham: number
+          so_the: number
+          so_tu_van: number
+        }[]
+      }
       bc_phan_bo: {
         Args: { p_cn?: string }
         Returns: {

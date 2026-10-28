@@ -113,3 +113,14 @@ describe("bc_doanh_thu_chi_so", () => {
     expect(r).toMatchObject({ so_don: 5, ban_moi: 5800000, thu_no: 200000, tm_ban: 2200000, tm_no: 200000, qt_ban: 600000, ck_ban: 3000000, no_moi_chua_thu: 1100000, thu_no_trong_ky: 200000, thu_no_ngoai_ky: 0, tru_the_tien: 400000, so_voucher: 0, tip: 0, vat: 0 });
   });
 });
+
+describe("bc_nhan_vien_sh", () => {
+  it("tách dịch vụ / sản phẩm / thẻ / tư vấn theo vai; dịch vụ làm bằng thẻ tính theo giá buổi", async () => {
+    const dong = (await q<{ id: string }>(`select d.id from hoa_don_dong d join hoa_don h on h.id=d.hoa_don_id where h.ma='SH-12'`))[0].id;
+    await q(`insert into dong_nhan_vien (dong_id, nhan_vien_id, vai, ti_le) values ($1,$2,'phuc_vu',100),($1,$3,'tu_van',50)`, [dong, u(2), u(3)]);
+    const r = await q<Record<string, number | string>>(`select ho_ten, so_phuc_vu, ds_dich_vu::int, so_tu_van, ds_tu_van::int from bc_nhan_vien_sh('2026-10-01','2026-10-31',$1) order by ho_ten`, [VINH]);
+    // dòng thẻ M77: 2 lần × (9.588.000 ÷ 30 = 319.600) = 639.200
+    expect(r.find((x) => x.ho_ten === "KTV Vinh")).toMatchObject({ so_phuc_vu: 1, ds_dich_vu: 639200 });
+    expect(r.find((x) => x.ho_ten === "KTV nghỉ")).toMatchObject({ so_tu_van: 1, ds_tu_van: 319600 });
+  });
+});

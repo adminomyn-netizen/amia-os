@@ -96,3 +96,12 @@ export async function layDoanhThuChiSo(db: Db, tu: string, den: string, cn?: str
   return { soDon: n(r?.so_don), banMoi: n(r?.ban_moi), thuNo: n(r?.thu_no), tmBan: n(r?.tm_ban), tmNo: n(r?.tm_no), qtBan: n(r?.qt_ban), qtNo: n(r?.qt_no), ckBan: n(r?.ck_ban), ckNo: n(r?.ck_no),
     noMoiChuaThu: n(r?.no_moi_chua_thu), thuNoTrongKy: n(r?.thu_no_trong_ky), thuNoNgoaiKy: n(r?.thu_no_ngoai_ky), truThe: n(r?.tru_the_tien), soVoucher: n(r?.so_voucher), truVoucher: n(r?.tru_voucher), tip: n(r?.tip), vat: n(r?.vat) };
 }
+
+export async function layNhanVienSh(db: Db, tu: string, den: string, cn?: string) {
+  const { data, error } = await db.rpc("bc_nhan_vien_sh", { p_tu: tu, p_den: den, p_cn: tuyChon(cn) });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => {
+    const x = { id: r.nhan_vien_id, ten: r.ho_ten, soPhucVu: Number(r.so_phuc_vu), dsDichVu: Number(r.ds_dich_vu), soSanPham: Number(r.so_san_pham), dsSanPham: Number(r.ds_san_pham), soThe: Number(r.so_the), dsThe: Number(r.ds_the), soTuVan: Number(r.so_tu_van), dsTuVan: Number(r.ds_tu_van) };
+    return { ...x, tong: x.dsDichVu + x.dsSanPham + x.dsThe + x.dsTuVan };
+  }).sort((a, b) => b.tong - a.tong);
+}

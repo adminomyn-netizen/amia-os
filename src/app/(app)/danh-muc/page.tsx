@@ -2,12 +2,13 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import Link from "next/link";
 import { sb } from "@/lib/db";
-import { tienVN, soVN, homNayHCM } from "@/lib/dinh-dang";
+import { tienVN, soVN, homNayHCM, boDau } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
+import { LocNhomDanhMuc } from "@/components/cai-dat/LocNhomDanhMuc";
 import { NHAN_VAN_DE, khoaTen, vanDeSanPham } from "@/lib/san-pham";
 import { luuChiNhanh, luuChoLam, luuDatLichOnline, luuDichVu, luuGoiThe, luuNhomDichVu, luuSanPham, xoaChiNhanh, xoaChoLam, xoaDichVu, xoaGoiThe, xoaNhomDichVu, xoaSanPham } from "./actions";
 
@@ -32,9 +33,10 @@ function truongSanPham(): Truong[] {
   ];
 }
 
-export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string; loai?: string }> }) {
+export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string; loai?: string; nhom?: string; q?: string }> }) {
   const nd = await yeuCauQuyen("danhmuc.xem");
-  const { tab: t, loai } = await searchParams;
+  const { tab: t, loai, nhom: nhomChon = "", q: tuKhoa = "" } = await searchParams;
+  const khoaTim = boDau(tuKhoa.trim());
   const tab = TAB.some((x) => x.ma === t) ? t! : "dich-vu";
   const sua = coQuyen(nd, "danhmuc.sua");
   const quanLy = coQuyen(nd, "nhanvien.quanly");
@@ -57,14 +59,20 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
       { ten: "dat_online", nhan: "Cho khách tự đặt lịch online (trang /dat-lich)", loai: "gat" },
     ];
     nutThem = sua && <NutHop nhan="Thêm dịch vụ" tieuDe="Thêm dịch vụ" truong={truong} giaTri={{ don_vi_tinh: "buổi", thoi_luong_phut: 60, hoat_dong: true }} action={luuDichVu} />;
+    const tatDv = dv.data ?? [];
+    const dvLoc = tatDv.filter((r) => (!nhomChon || r.nhom_id === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma}`).includes(khoaTim)));
+    const nhomDv = (nhom.data ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten, dem: tatDv.filter((r) => r.nhom_id === n.id).length })).filter((n) => n.dem > 0);
     noiDung = (
-      <Bang duLieu={dv.data ?? []} khoa={(r) => r.id} trong="Chưa có dịch vụ. Bấm Thêm dịch vụ để bắt đầu."
+      <>
+      <LocNhomDanhMuc tab="dich-vu" nhom={nhomDv} tong={tatDv.length} chon={nhomChon} q={tuKhoa} hien={dvLoc.length} />
+      <Bang duLieu={dvLoc} khoa={(r) => r.id} trong={tatDv.length ? "Không có dịch vụ nào khớp." : "Chưa có dịch vụ. Bấm Thêm dịch vụ để bắt đầu."}
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Dịch vụ", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm", hienThi: (r) => tenNhom.get(r.nhom_id) ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => r.don_vi_tinh }, { nhan: "Phút", hienThi: (r) => r.thoi_luong_phut, phai: true }, { nhan: "Giá bán", hienThi: (r) => tienVN(r.gia), phai: true },
           ...(xemVon ? [{ nhan: "Giá vốn", hienThi: (r: NonNullable<typeof dv.data>[number]) => tienVN(r.gia_von), phai: true }] : []), { nhan: "Đặt online", hienThi: (r) => <NhanTrangThai kieu={r.dat_online ? "tot" : "tram"}>{r.dat_online ? "Bật" : "Tắt"}</NhanTrangThai> }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof dv.data>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} action={luuDichVu} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaDichVu} /></span> }] : []),
         ]} />
+      </>
     );
   } else if (tab === "goi-the") {
     const [goi, lk] = await Promise.all([db.from("goi_the").select("*").order("ma"), db.from("goi_the_dich_vu").select("goi_id, dich_vu_id")]);
@@ -91,8 +99,17 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const { data: sp } = await db.from("san_pham").select("*").order("ma");
     const truong: Truong[] = truongSanPham();
     nutThem = sua && <NutHop nhan="Thêm sản phẩm / vật tư" tieuDe="Thêm sản phẩm / vật tư" rong truong={truong} giaTri={{ he_so_quy_doi: 1, theo_doi_kho: true, bat_buoc_han_dung: true, hoat_dong: true }} action={luuSanPham} />;
+    const tatSp = sp ?? [];
+    const KHONG_NHOM = "__khong";
+    const nhomCua = (r: (typeof tatSp)[number]) => (r.nhom && r.nhom.trim() ? r.nhom.trim() : KHONG_NHOM);
+    const spLoc = tatSp.filter((r) => (!nhomChon || nhomCua(r) === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ma_vach ?? ""}`).includes(khoaTim)));
+    const demNhom = new Map<string, number>();
+    for (const r of tatSp) demNhom.set(nhomCua(r), (demNhom.get(nhomCua(r)) ?? 0) + 1);
+    const nhomSp = [...demNhom.entries()].sort((x, y) => (x[0] === KHONG_NHOM ? 1 : y[0] === KHONG_NHOM ? -1 : x[0].localeCompare(y[0], "vi"))).map(([k, dem]) => ({ gia_tri: k, nhan: k === KHONG_NHOM ? "Chưa phân nhóm" : k, dem }));
     noiDung = (
-      <Bang duLieu={sp ?? []} khoa={(r) => r.id} trong="Chưa có sản phẩm hoặc vật tư."
+      <>
+      <LocNhomDanhMuc tab="san-pham" nhom={nhomSp} tong={tatSp.length} chon={nhomChon} q={tuKhoa} hien={spLoc.length} />
+      <Bang duLieu={spLoc} khoa={(r) => r.id} trong={tatSp.length ? "Không có sản phẩm nào khớp." : "Chưa có sản phẩm hoặc vật tư."}
         cot={[
           { nhan: "Mã", hienThi: (r) => <span>{r.ma}{r.ma_vach && r.ma_vach !== r.ma ? <span className="block text-[12px] text-muc-3">{r.ma_vach}</span> : null}</span> }, { chinh: true, nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => (r.don_vi_mua ? `${r.don_vi} (mua: ${r.don_vi_mua} = ${soVN(r.he_so_quy_doi)})` : r.don_vi) },
@@ -100,6 +117,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={{ ...r, nhom_cap: r.nhom_cap ?? "" }} action={luuSanPham} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaSanPham} /></span> }] : []),
         ]} />
+      </>
     );
   } else if (tab === "ra-soat") {
     const hom = homNayHCM();

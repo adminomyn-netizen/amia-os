@@ -23,7 +23,7 @@ import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaKhach, xoaNguoiThan }
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 /** Mỗi trang lịch sử điểm thưởng. */
 const DIEM_MOI_TRANG = 50;
@@ -195,6 +195,36 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             { nhan: "Mốc", hienThi: (r) => `${MOC[r.moc]}${r.ty_le_giam != null ? ` · ưu đãi ${Number(r.ty_le_giam)}%` : ""}` },
           ]} /></section>}
       </div>
+    );
+  } else if (tab === "nhac-nho") {
+    // Nhắc nhở chuyển từ SalonHero (60 nghìn dòng): đang nhắc lên trước, rồi theo ngày nhắc mới nhất.
+    const trang = Math.max(1, Math.min(10_000, Number(trangDiem) || 1));
+    const { data: ds, count } = await db.from("khach_nhac").select("id, ngay_nhac, noi_dung, ghi_chu, trang_thai, dich_vu_ten, kieu_lap, so_lan_lap, hoan_thanh_luc, nguoi_tao_ten, nguoi_phu_trach_ten", { count: "exact" })
+      .eq("khach_id", id).order("trang_thai", { ascending: true }).order("ngay_nhac", { ascending: false, nullsFirst: false }).range((trang - 1) * DIEM_MOI_TRANG, trang * DIEM_MOI_TRANG - 1);
+    const soTrang = Math.max(1, Math.ceil((count ?? 0) / DIEM_MOI_TRANG));
+    const lk = (n: number) => `/khach-hang/${id}?tab=nhac-nho&trang=${n}`;
+    const NHAN_NHAC: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = { dang_nhac: { nhan: "Chưa thực hiện", kieu: "cho" }, da_xong: { nhan: "Đã xong", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "tram" } };
+    const KIEU_LAP: Record<string, string> = { DAY: "Hằng ngày", WEEK: "Hằng tuần", MONTH: "Hằng tháng" };
+    noiDung = (
+      <>
+        <p className="mb-4 text-[13px] text-muc-3">{soVN(count ?? 0)} nhắc nhở (chưa thực hiện xếp trước).</p>
+        <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Khách chưa có nhắc nhở nào." cot={[
+          { nhan: "Ngày nhắc", chinh: true, hienThi: (r) => (r.ngay_nhac ? ngayGioVN(r.ngay_nhac) : "") },
+          { nhan: "Trạng thái", hienThi: (r) => { const n = NHAN_NHAC[r.trang_thai] ?? NHAN_NHAC.dang_nhac; return <NhanTrangThai kieu={n.kieu}>{n.nhan}</NhanTrangThai>; } },
+          { nhan: "Nội dung", hienThi: (r) => <span className="line-clamp-3 whitespace-pre-line text-[13px]">{r.noi_dung ?? ""}{r.ghi_chu ? ` — ${r.ghi_chu}` : ""}</span> },
+          { nhan: "Dịch vụ", hienThi: (r) => r.dich_vu_ten ?? "" },
+          { nhan: "Lặp", hienThi: (r) => (r.kieu_lap && r.kieu_lap !== "SINGLE" ? `${KIEU_LAP[r.kieu_lap] ?? r.kieu_lap}${r.so_lan_lap ? ` · ${r.so_lan_lap} lần` : ""}` : "") },
+          { nhan: "Người tạo", hienThi: (r) => r.nguoi_tao_ten ?? "" },
+          { nhan: "Phụ trách", hienThi: (r) => r.nguoi_phu_trach_ten ?? "" },
+        ]} />
+        {soTrang > 1 && (
+          <nav aria-label="Trang nhắc nhở" className="mt-4 flex items-center justify-between gap-3 text-[13px]">
+            {trang > 1 ? <Link scroll={false} href={lk(trang - 1)} className="font-medium text-nhan-dam hover:underline">← Trang trước</Link> : <span />}
+            <span className="tabular-nums">Trang {trang}/{soTrang}</span>
+            {trang < soTrang ? <Link scroll={false} href={lk(trang + 1)} className="font-medium text-nhan-dam hover:underline">Trang sau →</Link> : <span />}
+          </nav>
+        )}
+      </>
     );
   } else if (tab === "diem-thuong") {
     const trang = Math.max(1, Math.min(10_000, Number(trangDiem) || 1));

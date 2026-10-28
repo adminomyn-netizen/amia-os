@@ -41,6 +41,9 @@ describe("loc_khach", () => {
     expect((await loc({ tinh: "Lâm Đồng", quan: "Đà Lạt" })).map((x) => x.dong.ma)).toEqual(["KH2"]);
     expect((await loc({ nhieu_cn: "1" })).map((x) => x.dong.ma)).toEqual(["KH1"]);
     expect((await loc({ sinh_nhat: "hom_nay" })).map((x) => x.dong.ma)).toEqual(["KH1"]);
+    const ngayHn = (await q<{ d: number }>(`select extract(day from hom_nay())::int d`))[0].d;
+    expect((await loc({ sinh_ngay: String(ngayHn) })).map((x) => x.dong.ma)).toContain("KH1");
+    expect((await loc({ sinh_ngay: "1", sinh_nhat: "1" })).map((x) => x.dong.ma)).toEqual(["KH2"]);
     expect((await loc({ tuoi_tu: "40" })).map((x) => x.dong.ma)).toEqual(["KH2"]);
   });
   it("tìm kiếm có dấu nháy không vỡ câu lệnh; phân trang giữ tổng", async () => {

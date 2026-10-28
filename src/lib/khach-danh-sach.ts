@@ -15,7 +15,7 @@ const KIEU: Partial<Record<KhoaLoc, RegExp>> = {
   phu_trach: UUID, chi_nhanh: UUID, nhan_vien: UUID, nhom: /^([0-9a-f-]{36}|khong)$/i,
   diem_tu: SO, diem_den: SO, tuoi_tu: /^\d{1,3}$/, tuoi_den: /^\d{1,3}$/, ds_tu: SO, ds_den: SO,
   den_tu: NGAY, den_den: NGAY, tao_tu: NGAY, tao_den: NGAY,
-  the: /^(co|khong)$/, no: /^(co|khong)$/, nhieu_cn: /^1$/, sinh_nhat: /^(hom_nay|thang|[1-9]|1[0-2])$/,
+  the: /^(co|khong)$/, no: /^(co|khong)$/, nhieu_cn: /^1$/, sinh_nhat: /^(hom_nay|thang|[1-9]|1[0-2])$/, sinh_ngay: /^([1-9]|[12]\d|3[01])$/,
 };
 
 /** Đọc tham số lọc từ địa chỉ (API/xuất Excel), bỏ giá trị rỗng hoặc sai kiểu. */

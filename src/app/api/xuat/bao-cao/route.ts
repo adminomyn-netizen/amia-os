@@ -3,6 +3,7 @@ import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
+import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
@@ -100,6 +101,20 @@ export async function GET(req: Request) {
       { nhan: "Số thẻ liệu trình còn buổi", gia_tri: Number(t.so_the_lan) }, { nhan: "Buổi khách đã trả tiền mà chưa làm", gia_tri: Number(t.so_buoi) },
       { nhan: "Giá trị buổi chưa làm (đồng)", gia_tri: Number(t.gia_tri_buoi) }, { nhan: "Thẻ không giới hạn buổi (không cộng ở trên)", gia_tri: Number(t.so_the_khong_gioi_han) },
       { nhan: "Số thẻ tiền còn dư", gia_tri: Number(t.so_the_tien) }, { nhan: "Số dư thẻ tiền (đồng)", gia_tri: Number(t.du_tien) }] : [] });
+  } else if (tab === "hh-thuc-thu") {
+    const gomThe = u.searchParams.get("the") === "1", vai = u.searchParams.get("vai") ?? undefined;
+    const d = await layHoaHongThucThu(db, { tu, den, cn, vai, gomThe });
+    bangs.push({ ten: "Theo nhân viên", dong: d.nhanVien.map((r) => ({ ten: r.ten, pv: r.theoVai.phuc_vu?.hoaHong ?? 0, tv: r.theoVai.tu_van?.hoaHong ?? 0, ban: r.theoVai.ban?.hoaHong ?? 0, ds: r.doanhSo, nocu: r.doanhSoNoCu, hh: r.hoaHong })), cot: [
+      { nhan: "Nhân viên", khoa: "ten", rong: 34 }, { nhan: "Hoa hồng phục vụ", khoa: "pv", tien: true }, { nhan: "Hoa hồng tư vấn", khoa: "tv", tien: true }, { nhan: "Hoa hồng bán hàng", khoa: "ban", tien: true },
+      { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Trong đó thu nợ cũ", khoa: "nocu", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
+    bangs.push({ ten: "Theo vai", dong: d.theoVai.map((r) => ({ vai: NHAN_VAI_HH[r.vai], ds: r.doanhSo, hh: r.hoaHong })), cot: [{ nhan: "Vai", khoa: "vai", rong: 16 }, { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
+    bangs.push({ ten: "Theo chi nhánh", dong: d.chiNhanh.map((r) => ({ cn: r.ten, ds: r.doanhSo, hh: r.hoaHong })), cot: [{ nhan: "Chi nhánh", khoa: "cn", rong: 24 }, { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
+    const dc = dongDoiChieu(d.doiChieu, gomThe);
+    bangs.push({ ten: "Đối chiếu theo hoá đơn", dong: [...dc.rows.map((r) => ({ nhan: r.nhan, so: r.so, gc: r.ghiChu })), { nhan: "Hoa hồng theo thực thu (cả ba vai)", so: dc.ket, gc: "" }], cot: [{ nhan: "Khoản", khoa: "nhan", rong: 52 }, { nhan: "Số tiền", khoa: "so", tien: true }, { nhan: "Giải thích", khoa: "gc", rong: 52 }] });
+  } else if (tab === "hh-gioi-thieu") {
+    const d = await layHoaHongGioiThieu(db, { tu, den, cn, xemSdt: coQuyen(nd, "khach.xem") });
+    bangs.push({ ten: "Khách giới thiệu", dong: d.khach, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 30 }, { nhan: "Mã khách", khoa: "ma", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng", khoa: "hoaHong", tien: true }] });
+    bangs.push({ ten: "Số SalonHero đã tính", dong: d.sh, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 34 }, { nhan: "Mã nhân viên", khoa: "ma", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số dòng", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng SalonHero", khoa: "hoaHong", tien: true }] });
   } else {
     return new Response("Không có báo cáo này", { status: 404 });
   }
@@ -113,6 +128,7 @@ export async function GET(req: Request) {
     ws.views = [{ state: "frozen", ySplit: 1 }];
     b.cot.forEach((c, i) => { if (c.tien || c.so) ws.getColumn(i + 1).numFmt = "#,##0"; });
   }
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xuat_excel", doi_tuong: "bao_cao", chi_tiet: { tab, tu, den, chi_nhanh_id: cn ?? null, so_dong: bangs.reduce((s, b) => s + b.dong.length, 0) } });
   const buf = await wb.xlsx.writeBuffer();
   return new Response(buf as ArrayBuffer, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="bao-cao-${tab}-${tu}-${den}.xlsx"`, "Cache-Control": "no-store" } });
 }

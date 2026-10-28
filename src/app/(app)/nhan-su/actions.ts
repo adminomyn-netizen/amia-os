@@ -140,6 +140,38 @@ export async function xoaNgayLe(fd: FormData): Promise<KQ> {
 }
 
 // ─── Phiếu nhân sự ──────────────────────────────────────────────────────────
+/** Thông tin hiện ngay trong hộp "Tạo phiếu": phép năm còn bao nhiêu, nghỉ không lương trong tháng/năm đã bao nhiêu — đúng số của TỪNG người (chính mình hoặc người được tạo thay). */
+export async function thongTinNghi(fd: FormData): Promise<{ dong?: { chu: string; kieu?: "tot" | "cho" | "loi" }[] }> {
+  const nd = await kiemNoiBo();
+  if (!nd) return {};
+  const loai = chuoi(fd, "loai"), loaiNghi = chuoi(fd, "loai_nghi"), tu = chuoi(fd, "tu_ngay") || homNayHCM();
+  if (loai !== "nghi" || !NGAY.test(tu) || !["phep_nam", "nghi_khong_luong"].includes(loaiNghi)) return {};
+  const thay = chuoi(fd, "nhan_vien_id");
+  let nv = nd.nhanVienId;
+  if (thay && thay !== nd.nhanVienId) { if (!coQuyen(nd, "cong.sua")) return {}; nv = thay; }
+  const db = sb();
+  const { data: n } = await db.from("nhan_vien").select("ho_ten, chi_nhanh_id").eq("id", nv).maybeSingle();
+  if (!n || (nd.chiNhanhId && n.chi_nhanh_id !== nd.chiNhanhId && nv !== nd.nhanVienId)) return {};
+  const ten = nv === nd.nhanVienId ? "Bạn" : n.ho_ten, nam = Number(tu.slice(0, 4)), thang = tu.slice(0, 7);
+  const so1 = (x: number) => x.toLocaleString("vi-VN", { maximumFractionDigits: 1 });
+  if (loaiNghi === "phep_nam") {
+    const [{ data: du }, { data: cho }] = await Promise.all([db.rpc("so_du_phep", { p_nv: nv, p_nam: nam }), db.from("phieu_hr").select("so_ngay").eq("nhan_vien_id", nv).eq("loai", "nghi").eq("loai_nghi", "phep_nam").eq("trang_thai", "cho_duyet").gte("tu_ngay", `${nam}-01-01`).lte("tu_ngay", `${nam}-12-31`)]);
+    const dangCho = (cho ?? []).reduce((a, x) => a + Number(x.so_ngay), 0), conLai = Number(du ?? 0) - dangCho;
+    return { dong: [
+      { chu: `${ten} còn ${so1(Number(du ?? 0))} ngày phép năm ${nam}${dangCho ? `, đang có ${so1(dangCho)} ngày chờ duyệt` : ""}.`, kieu: conLai > 0 ? "tot" : "loi" },
+      { chu: conLai > 0 ? `Có thể xin tối đa ${so1(conLai)} ngày phép năm.` : "Đã hết phép năm: chọn Nghỉ không lương hoặc nhờ nhân sự chỉnh phép.", kieu: conLai > 0 ? "tot" : "loi" },
+    ] };
+  }
+  const { data: kl } = await db.from("phieu_hr").select("so_ngay, tu_ngay").eq("nhan_vien_id", nv).eq("loai", "nghi").eq("loai_nghi", "nghi_khong_luong").in("trang_thai", ["cho_duyet", "da_duyet"]).gte("tu_ngay", `${nam}-01-01`).lte("tu_ngay", `${nam}-12-31`);
+  const tThang = (kl ?? []).filter((x) => x.tu_ngay.startsWith(thang)).reduce((a, x) => a + Number(x.so_ngay), 0), tNam = (kl ?? []).reduce((a, x) => a + Number(x.so_ngay), 0);
+  const toiDa = Math.max(0, Math.min(7 - tThang, 15 - tNam));
+  return { dong: [
+    { chu: `Tháng ${thang.slice(5)}/${nam}: ${ten} đã nghỉ không lương ${so1(tThang)}/7 ngày (gồm phiếu chờ duyệt).`, kieu: tThang >= 7 ? "loi" : "cho" },
+    { chu: `Cả năm ${nam}: đã nghỉ ${so1(tNam)}/15 ngày.`, kieu: tNam >= 15 ? "loi" : "cho" },
+    { chu: toiDa > 0 ? `Còn được xin tối đa ${so1(toiDa)} ngày nghỉ không lương.` : "Đã hết hạn mức nghỉ không lương.", kieu: toiDa > 0 ? "tot" : "loi" },
+  ] };
+}
+
 export async function guiPhieuHr(fd: FormData): Promise<KQ> {
   const nd = await kiemNoiBo();
   if (!nd) return { loi: KHONG_DU_QUYEN };

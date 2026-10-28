@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Hop } from "./Hop";
 import { Chon, type LuaChon } from "./Chon";
@@ -38,6 +38,9 @@ const tachNhan = (t: Truong): { nhan: string; ghiChu?: string } => {
 const hien = (t: Truong, v: Record<string, unknown>) => !t.hienKhi || t.hienKhi.la.includes(String(v[t.hienKhi.ten] ?? ""));
 export type GiaTri = Record<string, string | number | boolean | string[] | null | undefined>;
 export type KetQuaHD = { ok?: boolean; loi?: string; [k: string]: unknown };
+/** Thông tin tính sẵn theo lựa chọn hiện tại trong biểu mẫu (vd: người này còn bao nhiêu ngày phép). */
+export type ThongTinDong = { chu: string; kieu?: "tot" | "cho" | "loi" };
+export type ThongTinBieuMau = { theoDoi: string[]; lay: (fd: FormData) => Promise<{ dong?: ThongTinDong[] } | void> };
 
 function ONhieu({ luaChon, giaTri, onDoi }: { luaChon: LuaChon[]; giaTri: string[]; onDoi: (v: string[]) => void }) {
   const [tim, setTim] = useState("");
@@ -67,8 +70,9 @@ function ONhieu({ luaChon, giaTri, onDoi }: { luaChon: LuaChon[]; giaTri: string
 
 /** Nút mở hộp thoại biểu mẫu. Không dùng <form> submit (tránh lỗi mất phiên của Server Action trên trang đã đăng nhập): gom giá trị vào FormData rồi gọi action. */
 export function NutHop({
-  nhan, tieuDe, moTa, truong = [], giaTri = {}, an = {}, action, kieu = "chinh", rong, nhanLuu = "Lưu", xacNhan, nguy,
+  nhan, tieuDe, moTa, truong = [], giaTri = {}, an = {}, action, kieu = "chinh", rong, nhanLuu = "Lưu", xacNhan, nguy, thongTin,
 }: {
+  thongTin?: ThongTinBieuMau;
   nhan: string; tieuDe: string; moTa?: string; truong?: Truong[]; giaTri?: GiaTri; an?: Record<string, string>;
   action: (fd: FormData) => Promise<KetQuaHD | void>; kieu?: "chinh" | "phu" | "chu"; rong?: boolean; nhanLuu?: string; xacNhan?: string; nguy?: boolean;
 }) {
@@ -78,7 +82,22 @@ export function NutHop({
   const [loi, setLoi] = useState("");
   const [v, setV] = useState<GiaTri>(giaTri);
   const laTao = !giaTri.id;
-  const dat = (ten: string, gt: GiaTri[string]) => setV((x) => ({ ...x, [ten]: gt }));
+  const [dongTin, setDongTin] = useState<ThongTinDong[]>([]);
+  const lanTin = useRef(0);
+  /** Hỏi máy chủ thông tin theo lựa chọn hiện tại; bỏ qua kết quả cũ nếu người dùng đã đổi tiếp. */
+  const hoiTin = (gt: GiaTri) => {
+    if (!thongTin) return;
+    const lan = ++lanTin.current;
+    const fd = new FormData();
+    for (const [k, x] of Object.entries(an)) fd.set(k, x);
+    for (const k of thongTin.theoDoi) fd.set(k, gt[k] == null ? "" : String(gt[k]));
+    thongTin.lay(fd).then((kq) => { if (lan === lanTin.current) setDongTin((kq && kq.dong) || []); }).catch(() => { if (lan === lanTin.current) setDongTin([]); });
+  };
+  const dat = (ten: string, gt: GiaTri[string]) => {
+    const moi = { ...v, [ten]: gt };
+    setV(moi);
+    if (thongTin?.theoDoi.includes(ten)) hoiTin(moi);
+  };
 
   const gui = () => {
     setLoi("");
@@ -113,7 +132,7 @@ export function NutHop({
   const lopNut = kieu === "chinh" ? NUT_CHINH : kieu === "phu" ? NUT_PHU : nguy ? NUT_CHU_NGUY : NUT_CHU;
   return (
     <>
-      <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setMo(true); }}>{nhan}</button>
+      <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setDongTin([]); setMo(true); hoiTin(giaTri); }}>{nhan}</button>
       <Hop mo={mo} dong={() => setMo(false)} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
         {xacNhan && <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p>}
         <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
@@ -141,6 +160,11 @@ export function NutHop({
             );
           })}
         </div>
+        {dongTin.length > 0 && (
+          <ul className="mt-4 space-y-1.5 rounded-nho border border-vien bg-giay-tram px-3.5 py-3 text-[13.5px]" aria-live="polite">
+            {dongTin.map((d, i) => <li key={i} className={d.kieu === "loi" ? "text-loi" : d.kieu === "cho" ? "text-canh-bao" : "text-muc-2"}>{d.chu}</li>)}
+          </ul>
+        )}
         {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
         <div className="mt-6 flex justify-end gap-2.5">
           <button type="button" className={NUT_PHU} onClick={() => setMo(false)}>Huỷ</button>

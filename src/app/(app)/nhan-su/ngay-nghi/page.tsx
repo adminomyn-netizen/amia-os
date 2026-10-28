@@ -10,7 +10,7 @@ import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
-import { guiPhieuHr, huyPhieuHr, dieuChinhPhep } from "../actions";
+import { guiPhieuHr, huyPhieuHr, dieuChinhPhep, thongTinNghi } from "../actions";
 
 export default async function TrangNgayNghi({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauNoiBo();
@@ -51,7 +51,7 @@ export default async function TrangNgayNghi({ searchParams }: { searchParams: Pr
     <div>
       <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
       <TieuDeTrang tieuDe="Quản lý ngày nghỉ" phu={<>Phiếu nghỉ, tăng ca, đi trễ, ra ngoài, làm online, công tác và điều chỉnh công. Duyệt ở <Link href="/noi-lam-viec/phe-duyet" className="text-nhan-dam hover:underline">Trung tâm phê duyệt</Link>; chỉ phiếu đã duyệt mới tính vào công.</>}>
-        <NutHop nhan="Tạo phiếu" tieuDe="Tạo phiếu" moTa="Nghỉ ≤ 2 ngày báo trước 5 ngày, từ 2 đến dưới 4 ngày báo trước 7 ngày, từ 4 ngày do Ban Giám đốc duyệt. Báo trễ vẫn gửi được nhưng bị gắn cờ." truong={truong} action={guiPhieuHr} giaTri={{ tu_ngay: hom, loai: "nghi", loai_nghi: "phep_nam", nhan_vien_id: "", nguoi_nhan_ban_giao_id: "" }} rong />
+        <NutHop nhan="Tạo phiếu" tieuDe="Tạo phiếu" moTa="Nghỉ ≤ 2 ngày báo trước 5 ngày, từ 2 đến dưới 4 ngày báo trước 7 ngày, từ 4 ngày do Ban Giám đốc duyệt. Báo trễ vẫn gửi được nhưng bị gắn cờ." truong={truong} thongTin={{ theoDoi: ["loai", "loai_nghi", "nhan_vien_id", "tu_ngay"], lay: thongTinNghi }} action={guiPhieuHr} giaTri={{ tu_ngay: hom, loai: "nghi", loai_nghi: "phep_nam", nhan_vien_id: "", nguoi_nhan_ban_giao_id: "" }} rong />
         {sua && <NutHop kieu="phu" nhan="Chỉnh phép năm" tieuDe="Chỉnh phép năm" truong={truongPhep} action={dieuChinhPhep} giaTri={{ nam }} />}
       </TieuDeTrang>
       <HangChiSo muc={[{ nhan: `Phép năm ${nam} còn lại`, so: soVN(du), ghiChu: "ngày (1 ngày/tháng từ ngày vào chính thức)" }]} />

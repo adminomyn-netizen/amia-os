@@ -10122,6 +10122,17 @@ export type Database = {
         Args: { p_id: string; p_ly_do: string; p_nguoi: string }
         Returns: undefined
       }
+      khach_cho_lich: {
+        Args: { p_ids: string[] }
+        Returns: {
+          dien_thoai: string
+          hang: string
+          ho_ten: string
+          id: string
+          ma: string
+          nguoi_phu_trach_id: string
+        }[]
+      }
       khoa_ky: {
         Args: { p_ghi_chu: string; p_nguoi: string; p_thang: string }
         Returns: undefined

@@ -185,7 +185,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     ];
     const dangMo = c["dat_online.mo"] === "1";
     nutThem = <span className="flex flex-wrap gap-2.5">
-      {quanLy && <NutHop kieu="phu" nhan="Đặt lịch online" tieuDe="Đặt lịch online cho khách" moTa="Khách vào trang /dat-lich, chọn dịch vụ và giờ còn trống rồi gửi YÊU CẦU; lễ tân duyệt trong màn Lịch hẹn. Cần có chỗ đang dùng ở chi nhánh và ít nhất một dịch vụ được bật đặt online." truong={truongOnline} giaTri={{ mo: dangMo, bao_truoc_phut: Number(c["dat_online.bao_truoc_phut"] ?? 120), toi_da_ngay: Number(c["dat_online.toi_da_ngay"] ?? 60) }} action={luuDatLichOnline} />}
+      {quanLy && <NutHop kieu="phu" nhan="Đặt lịch online" tieuDe="Đặt lịch online cho khách" moTa="Khách vào trang /dat-lich, chọn dịch vụ và giờ còn trống rồi gửi YÊU CẦU; lễ tân duyệt trong màn Lịch hẹn. Cần có chỗ đang dùng ở chi nhánh và ít nhất một dịch vụ được bật đặt online. Đầy đủ tuỳ chọn như SalonHero: Cài đặt › Web đặt Lịch." truong={truongOnline} giaTri={{ mo: dangMo, bao_truoc_phut: Number(c["dat_online.bao_truoc_phut"] ?? 120), toi_da_ngay: Number(c["dat_online.toi_da_ngay"] ?? 60) }} action={luuDatLichOnline} />}
       {sua && <NutHop nhan="Thêm chỗ" tieuDe="Thêm chỗ làm" truong={truong} giaTri={{ hoat_dong: true, thu_tu: 100, chi_nhanh_id: cn?.[0]?.id ?? "" }} action={luuChoLam} />}
     </span>;
     noiDung = (

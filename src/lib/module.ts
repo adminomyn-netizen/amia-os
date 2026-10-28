@@ -173,7 +173,7 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "Khách hàng & đặt lịch", the: [
         { ten: "Điểm thưởng theo hạng", moTa: "Chi bao nhiêu được 1 điểm, 1 điểm giảm bao nhiêu, theo từng hạng khách.", duongDan: "/cai-dat/diem-thuong", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
-        { ten: "Web đặt lịch", moTa: "Trang đặt lịch online cho khách: bật/tắt, đặt trước tối thiểu, số ngày nhận, dịch vụ và chi nhánh được hiện.", duongDan: "/danh-muc?tab=cho-lam", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Web đặt Lịch", moTa: "Trang đặt lịch online cho khách: đường dẫn, khoá trang, đặt trước tối thiểu, số ngày nhận, khung giờ, thông báo email.", duongDan: "/cai-dat/web-dat-lich", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Zalo OA / SMS", moTa: "Nhắn nhắc lịch, chăm sóc (cần tài khoản Zalo OA / nhà mạng).", trangThai: "sap_co" },
       ] },
       { nhan: "Các thiết lập khác", the: [

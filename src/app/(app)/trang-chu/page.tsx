@@ -10,6 +10,7 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { BangHieuSuatApp } from "@/components/trang-chu/BangHieuSuatApp";
 import { doHieuSuatApp, mocDo } from "@/lib/do-hieu-suat";
 import { BangDieuHanh } from "@/components/trang-chu/BangDieuHanh";
+import { BaoCaoSang } from "@/components/trang-chu/BaoCaoSang";
 import type { SoLieu } from "@/components/trang-chu/BangSoLieu";
 
 const LOI_TAT = [
@@ -173,6 +174,8 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         </section>
       )}
       {sp["khong-du-quyen"] && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p>}
+
+      {dieuHanh && coQuyen(nd, "baocao.xem") && <BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} />}
 
       {dieuHanh ? (
         <BangDieuHanh canhBao={canhBao} tin={tin.map((t) => ({ id: t.id, tieu_de: t.tieu_de, noi_dung: t.noi_dung }))} top={top}

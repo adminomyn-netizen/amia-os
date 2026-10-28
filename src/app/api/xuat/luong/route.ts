@@ -27,6 +27,7 @@ export async function GET(req: Request) {
   ws.getRow(1).font = { bold: true };
   ws.views = [{ state: "frozen", xSplit: 2, ySplit: 1 }];
   for (const [, k] of cot.slice(3)) if (!["cong_chuan", "cong_tinh", "ot_gio"].includes(k)) ws.getColumn(k).numFmt = "#,##0";
+  await sb().from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xuat_excel", doi_tuong: "bang_luong", doi_tuong_id: id || null, chi_tiet: { ky_id: id } });
   const buf = await wb.xlsx.writeBuffer();
   return new Response(buf as ArrayBuffer, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="bang-luong-${ky.nam}-${String(ky.thang).padStart(2, "0")}.xlsx"` } });
 }

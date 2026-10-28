@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, soVN, tienVN } from "@/lib/dinh-dang";
@@ -25,6 +26,7 @@ export default async function TrangDoiSoat({ searchParams }: { searchParams: Pro
           <label className="text-[12.5px] text-muc-3">Từ<NgayChon ten="tu" giaTriMacDinh={tu} tuNam={2024} denNam={2035} ariaLabel="Từ ngày" /></label>
           <label className="text-[12.5px] text-muc-3">Đến<NgayChon ten="den" giaTriMacDinh={den} tuNam={2024} denNam={2035} ariaLabel="Đến ngày" /></label>
           <button className="rounded bg-nhan px-3 py-1.5 text-[14px] text-white">Xem</button>
+          <NutXuatExcel loai="doi-soat" ten="đối soát bán hàng theo khoảng ngày đang chọn" tham={{ tu, den }} />
         </form>
       </TieuDeTrang>
       <HangChiSo muc={[

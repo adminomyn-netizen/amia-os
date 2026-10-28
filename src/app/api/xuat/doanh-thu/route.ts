@@ -22,6 +22,7 @@ export async function GET(req: Request) {
   ws.getRow(1).font = { bold: true };
   ws.views = [{ state: "frozen", ySplit: 1 }];
   for (const k of ["C", "D", "E", "F", "G", "H", "I", "J", "K", "M"]) ws.getColumn(k).numFmt = "#,##0";
+  await sb().from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xuat_excel", doi_tuong: "bao_cao", chi_tiet: { tab: "doanh-thu", tu, den, chi_nhanh_id: cn ?? null } });
   const buf = await wb.xlsx.writeBuffer();
   return new Response(buf as ArrayBuffer, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="doanh-thu-${tu}-${den}.xlsx"` } });
 }

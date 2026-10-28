@@ -39,7 +39,7 @@ export async function BaoCaoThuNgan({ loc }: { loc: Loc }) {
     <>
       <BaoDoiNhom loc={loc} />
       <HangChiSo muc={[{ nhan: "Doanh số", so: tienVN(cong("doanh_so")), ghiChu: `${soVN(cong("so_don"))} đơn` }, { nhan: "Trừ thẻ tiền", so: tienVN(cong("tru_the_tien")) },
-        { nhan: "Doanh thu sau trừ thẻ", so: tienVN(cong("doanh_thu")), ghiChu: "khớp cột “Doanh thu” SalonHero" }, { nhan: "Còn nợ", so: tienVN(cong("con_no")), ghiChu: `đã thu ${tienVN(cong("da_thu"))}` }]} />
+        { nhan: "Doanh thu sau trừ thẻ", so: tienVN(cong("doanh_thu")), ghiChu: "như cột “Doanh thu” SalonHero" }, { nhan: "Còn nợ", so: tienVN(cong("con_no")), ghiChu: `đã thu ${tienVN(cong("da_thu"))}` }]} />
       <div className="mt-6">
         <Bang duLieu={ds} khoa={(r) => `${r.ky}-${r.khoa}`} trong="Không có hoá đơn trong khoảng này."
           cot={[
@@ -49,8 +49,8 @@ export async function BaoCaoThuNgan({ loc }: { loc: Loc }) {
             { nhan: "Doanh thu sau trừ thẻ", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.doanh_thu)}</span>, phai: true }, { nhan: "Còn nợ", hienThi: (r) => tienVN(r.con_no), phai: true }, { nhan: "Đã thu", hienThi: (r) => tienVN(r.da_thu), phai: true },
           ]} />
       </div>
-      <GhiChu>Thu ngân = người hoàn tất hoá đơn (hoá đơn chuyển từ SalonHero) hoặc người lập (hoá đơn làm trong app). Doanh số = tiền hàng − giảm giá cả đơn; Doanh thu sau trừ thẻ = doanh số − phần trả bằng thẻ tiền; Đã thu = doanh thu sau trừ thẻ − còn nợ. Không tính hoá đơn huỷ và công nợ đầu kỳ.</GhiChu>
-      <DoiChieu dong={dongDc} ghiChu="SalonHero tính theo người hoàn tất đơn, cột “Doanh thu” = doanh thu sau trừ thẻ. Lệch duy nhất: SalonHero cộng cả VAT (đơn 25100220 có VAT 1.299.000), app tính doanh số trước VAT như báo cáo doanh thu." />
+      <GhiChu>Thu ngân = người hoàn tất hoá đơn (hoá đơn chuyển từ SalonHero) hoặc người lập (hoá đơn làm trong app). Doanh số = tổng đơn hoàn thành như SalonHero (tiền hàng − giảm giá + VAT + phụ phí + tip); Doanh thu sau trừ thẻ = doanh số − phần trả bằng thẻ tiền; Đã thu = doanh thu sau trừ thẻ − còn nợ. Không tính hoá đơn huỷ và công nợ đầu kỳ.</GhiChu>
+      <DoiChieu dong={dongDc} ghiChu="SalonHero tính theo người hoàn tất đơn, cột “Doanh thu” = doanh thu sau trừ thẻ. Từ 29/10/2026 app tính doanh thu y như SalonHero, gồm cả VAT (ví dụ đơn 25100220 có VAT 1.299.000 nằm trong số của Nguyễn Thị Vân Anh)." />
     </>
   );
 }

@@ -1,32 +1,17 @@
-import ExcelJS from "exceljs";
 import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
+import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat as Bang, type Cot } from "@/lib/xuat-excel";
 import { khoangNgay } from "@/lib/bao-cao";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
+import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
  *  Quyền chặn ở máy chủ: cần `baocao.xem`; tab có số tiền cần thêm `baocao.tien` (giống trang). Người gắn chi nhánh chỉ xuất được chi nhánh của mình. */
-type Cot = { nhan: string; khoa: string; rong?: number; tien?: boolean; so?: boolean };
-type Bang = { ten: string; cot: Cot[]; dong: Record<string, unknown>[] };
-
 const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia"]);
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
-const ngay = (s: string | null | undefined) => (s ? s.slice(0, 10).split("-").reverse().join("/") : "");
-
-/** Đọc hết dữ liệu qua API (mỗi lần tối đa 1.000 dòng). */
-async function docHet<T>(lay: (tu: number, den: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>) {
-  const ra: T[] = [];
-  for (let i = 0; ; i += 1000) {
-    const { data, error } = await lay(i, i + 999);
-    if (error) throw new Error(error.message);
-    ra.push(...(data ?? []));
-    if (!data || data.length < 1000) return ra;
-  }
-}
-
 export async function GET(req: Request) {
   const nd = await kiemQuyen("baocao.xem");
   if (!nd) return new Response("Không đủ quyền xem báo cáo", { status: 403 });
@@ -109,19 +94,23 @@ export async function GET(req: Request) {
       { nhan: "Số thẻ liệu trình còn buổi", gia_tri: Number(t.so_the_lan) }, { nhan: "Buổi khách đã trả tiền mà chưa làm", gia_tri: Number(t.so_buoi) },
       { nhan: "Giá trị buổi chưa làm (đồng)", gia_tri: Number(t.gia_tri_buoi) }, { nhan: "Thẻ không giới hạn buổi (không cộng ở trên)", gia_tri: Number(t.so_the_khong_gioi_han) },
       { nhan: "Số thẻ tiền còn dư", gia_tri: Number(t.so_the_tien) }, { nhan: "Số dư thẻ tiền (đồng)", gia_tri: Number(t.du_tien) }] : [] });
+  } else if (tab === "hh-thuc-thu") {
+    const gomThe = u.searchParams.get("the") === "1", vai = u.searchParams.get("vai") ?? undefined;
+    const d = await layHoaHongThucThu(db, { tu, den, cn, vai, gomThe });
+    bangs.push({ ten: "Theo nhân viên", dong: d.nhanVien.map((r) => ({ ten: r.ten, pv: r.theoVai.phuc_vu?.hoaHong ?? 0, tv: r.theoVai.tu_van?.hoaHong ?? 0, ban: r.theoVai.ban?.hoaHong ?? 0, ds: r.doanhSo, nocu: r.doanhSoNoCu, hh: r.hoaHong })), cot: [
+      { nhan: "Nhân viên", khoa: "ten", rong: 34 }, { nhan: "Hoa hồng phục vụ", khoa: "pv", tien: true }, { nhan: "Hoa hồng tư vấn", khoa: "tv", tien: true }, { nhan: "Hoa hồng bán hàng", khoa: "ban", tien: true },
+      { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Trong đó thu nợ cũ", khoa: "nocu", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
+    bangs.push({ ten: "Theo vai", dong: d.theoVai.map((r) => ({ vai: NHAN_VAI_HH[r.vai], ds: r.doanhSo, hh: r.hoaHong })), cot: [{ nhan: "Vai", khoa: "vai", rong: 16 }, { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
+    bangs.push({ ten: "Theo chi nhánh", dong: d.chiNhanh.map((r) => ({ cn: r.ten, ds: r.doanhSo, hh: r.hoaHong })), cot: [{ nhan: "Chi nhánh", khoa: "cn", rong: 24 }, { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
+    const dc = dongDoiChieu(d.doiChieu, gomThe);
+    bangs.push({ ten: "Đối chiếu theo hoá đơn", dong: [...dc.rows.map((r) => ({ nhan: r.nhan, so: r.so, gc: r.ghiChu })), { nhan: "Hoa hồng theo thực thu (cả ba vai)", so: dc.ket, gc: "" }], cot: [{ nhan: "Khoản", khoa: "nhan", rong: 52 }, { nhan: "Số tiền", khoa: "so", tien: true }, { nhan: "Giải thích", khoa: "gc", rong: 52 }] });
+  } else if (tab === "hh-gioi-thieu") {
+    const d = await layHoaHongGioiThieu(db, { tu, den, cn, xemSdt: coQuyen(nd, "khach.xem") });
+    bangs.push({ ten: "Khách giới thiệu", dong: d.khach, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 30 }, { nhan: "Mã khách", khoa: "ma", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng", khoa: "hoaHong", tien: true }] });
+    bangs.push({ ten: "Số SalonHero đã tính", dong: d.sh, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 34 }, { nhan: "Mã nhân viên", khoa: "ma", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số dòng", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng SalonHero", khoa: "hoaHong", tien: true }] });
   } else {
     return new Response("Không có báo cáo này", { status: 404 });
   }
 
-  const wb = new ExcelJS.Workbook();
-  for (const b of bangs) {
-    const ws = wb.addWorksheet(b.ten.slice(0, 31));
-    ws.columns = b.cot.map((c) => ({ header: c.nhan, key: c.khoa, width: c.rong ?? (c.tien ? 18 : 12) }));
-    for (const r of b.dong) ws.addRow(Object.fromEntries(b.cot.map((c) => [c.khoa, c.tien || c.so ? Number(r[c.khoa] ?? 0) : (r[c.khoa] ?? "")])));
-    ws.getRow(1).font = { bold: true };
-    ws.views = [{ state: "frozen", ySplit: 1 }];
-    b.cot.forEach((c, i) => { if (c.tien || c.so) ws.getColumn(i + 1).numFmt = "#,##0"; });
-  }
-  const buf = await wb.xlsx.writeBuffer();
-  return new Response(buf as ArrayBuffer, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="bao-cao-${tab}-${tu}-${den}.xlsx"`, "Cache-Control": "no-store" } });
+  return phanHoiExcel(db, nd, bangs, { tenTep: `bao-cao-${tab}-${tu}-${den}`, doiTuong: "bao_cao", chiTiet: { tab, tu, den, chi_nhanh_id: cn ?? null } });
 }

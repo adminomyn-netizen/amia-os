@@ -3,16 +3,17 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat as Bang, type Cot } from "@/lib/xuat-excel";
 import { khoangNgay } from "@/lib/bao-cao";
-import { congNgay } from "@/lib/dinh-dang";
+import { congNgay, ngayGioVN } from "@/lib/dinh-dang";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
 import { gomTheoKy, kieuGom, layLichSuDungThe, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
+import { layBanSanPham, layChiPhiDichVu, layNhapKho, layNhapXuatKho, layTonTheoLo, layXuatKho } from "@/lib/bao-cao-kho";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
  *  Quyền chặn ở máy chủ: cần `baocao.xem`; tab có số tiền cần thêm `baocao.tien` (giống trang). Người gắn chi nhánh chỉ xuất được chi nhánh của mình. */
-const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia", "ti-le-chot"]);
+const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia", "ti-le-chot", "ton-lo"]);
 export async function GET(req: Request) {
   const nd = await kiemQuyen("baocao.xem");
   if (!nd) return new Response("Không đủ quyền xem báo cáo", { status: 403 });
@@ -151,6 +152,39 @@ export async function GET(req: Request) {
     const d = await layHoaHongGioiThieu(db, { tu, den, cn, xemSdt: coQuyen(nd, "khach.xem") });
     bangs.push({ ten: "Khách giới thiệu", dong: d.khach, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 30 }, { nhan: "Mã khách", khoa: "ma", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng", khoa: "hoaHong", tien: true }] });
     bangs.push({ ten: "Số SalonHero đã tính", dong: d.sh, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 34 }, { nhan: "Mã nhân viên", khoa: "ma", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số dòng", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng SalonHero", khoa: "hoaHong", tien: true }] });
+  } else if (tab === "nhap-xuat-kho") {
+    const d = await layNhapXuatKho(db, { tu, den, cn, nhom: u.searchParams.get("nhom_sp") || undefined, q: u.searchParams.get("q") || undefined }, true);
+    bangs.push({ ten: "Nhập xuất kho hàng", dong: d.rows, cot: [
+      { nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 18 }, { nhan: "Nhóm", khoa: "nhom", rong: 22 }, { nhan: "Giá bán", khoa: "giaBan", tien: true }, { nhan: "Giá vốn", khoa: "giaVon", tien: true }, { nhan: "Giá nhập bình quân", khoa: "giaNhapTb", tien: true },
+      { nhan: "Tồn kho đầu kỳ", khoa: "dau", so: true }, { nhan: "Tổng nhập", khoa: "nhap", so: true }, { nhan: "Tổng xuất", khoa: "xuat", so: true }, { nhan: "Nhập từ chuyển kho", khoa: "nhapCd", so: true }, { nhan: "Xuất chuyển kho", khoa: "xuatCd", so: true }, { nhan: "Tồn kho cuối kỳ", khoa: "cuoi", so: true }] });
+  } else if (tab === "nhap-kho") {
+    const tq = u.searchParams.get("v") === "tq";
+    const d = await layNhapKho(db, { tu, den, cn, nguon: u.searchParams.get("nguon") || undefined, ncc: u.searchParams.get("ncc") || undefined, q: u.searchParams.get("q") || undefined, tong: tq }, true);
+    bangs.push({ ten: "Báo cáo nhập kho", dong: d.rows.map((r) => ({ ...r, thoiGian: r.luc ? ngayGioVN(r.luc) : "" })), cot: tq
+      ? [{ nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Nhóm", khoa: "nhom", rong: 22 }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Tổng tiền", khoa: "tongTien", tien: true }]
+      : [{ nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 18 }, { nhan: "Lô hàng", khoa: "lo", rong: 14 }, { nhan: "Hạn dùng", khoa: "han", rong: 12 }, { nhan: "Nhóm", khoa: "nhom", rong: 22 }, { nhan: "Mã phiếu nhập", khoa: "maPhieu", rong: 16 },
+        { nhan: "Thời gian", khoa: "thoiGian", rong: 18 }, { nhan: "Nhà cung cấp", khoa: "ncc", rong: 24 }, { nhan: "Giá nhập", khoa: "giaNhap", tien: true }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Giảm giá", khoa: "giamGia", tien: true }, { nhan: "Tổng tiền", khoa: "tongTien", tien: true }] });
+  } else if (tab === "xuat-kho") {
+    const tq = u.searchParams.get("v") === "tq";
+    const d = await layXuatKho(db, { tu, den, cn, loai: u.searchParams.get("loai") || undefined, q: u.searchParams.get("q") || undefined, tong: tq }, true);
+    bangs.push({ ten: "Xuất kho bởi nhân viên", dong: d.rows.map((r) => ({ ...r, thoiGian: r.luc ? ngayGioVN(r.luc) : "" })), cot: tq
+      ? [{ nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Nhóm", khoa: "nhom", rong: 22 }, { nhan: "Số lượng", khoa: "soLuong", so: true }]
+      : [{ nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 18 }, { nhan: "Lô hàng", khoa: "lo", rong: 14 }, { nhan: "Hạn dùng", khoa: "han", rong: 12 }, { nhan: "Nhóm", khoa: "nhom", rong: 22 }, { nhan: "Mã phiếu xuất", khoa: "maPhieu", rong: 16 },
+        { nhan: "Thời gian", khoa: "thoiGian", rong: 18 }, { nhan: "Người nhận", khoa: "nguoiNhan", rong: 24 }, { nhan: "Phân loại", khoa: "phanLoai", rong: 22 }, { nhan: "Giá vốn", khoa: "giaVon", tien: true }, { nhan: "Giá bình quân/sp", khoa: "giaTb", tien: true }, { nhan: "Số lượng", khoa: "soLuong", so: true }] });
+  } else if (tab === "ban-san-pham") {
+    const tq = u.searchParams.get("v") === "tq";
+    const d = await layBanSanPham(db, { tu, den, cn, q: u.searchParams.get("q") || undefined, tong: tq }, true);
+    bangs.push({ ten: "Báo cáo bán sản phẩm", dong: d.rows.map((r) => ({ ...r, thoiGian: r.luc ? ngayGioVN(r.luc) : "" })), cot: tq
+      ? [{ nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "S.Lượng", khoa: "soLuong", so: true }, { nhan: "Doanh thu", khoa: "doanhThu", tien: true }, { nhan: "Lợi nhuận", khoa: "loiNhuan", tien: true }]
+      : [{ nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 18 }, { nhan: "Mã HĐ", khoa: "maHd", rong: 14 }, { nhan: "Thời gian", khoa: "thoiGian", rong: 18 }, { nhan: "Giá/1 sp", khoa: "gia1sp", tien: true }, { nhan: "S.Lượng", khoa: "soLuong", so: true },
+        { nhan: "Giá sau khi giảm", khoa: "giaSau", tien: true }, { nhan: "Doanh thu", khoa: "doanhThu", tien: true }, { nhan: "Giá vốn", khoa: "giaVon", tien: true }, { nhan: "Lợi nhuận", khoa: "loiNhuan", tien: true }] });
+  } else if (tab === "ton-lo") {
+    const d = await layTonTheoLo(db, { cn, q: u.searchParams.get("q") || undefined, tt: u.searchParams.get("tt") || undefined, han: u.searchParams.get("han") || undefined }, true);
+    bangs.push({ ten: "Tồn theo lô hàng", dong: d.rows.map((r) => ({ ...r, han: r.han ? ngay(r.han) : "" })), cot: [{ nhan: "Sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 18 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 }, { nhan: "Lô hàng", khoa: "lo", rong: 16 }, { nhan: "Ngày hết hạn", khoa: "han", rong: 14 },
+      { nhan: "Số lượng nhập", khoa: "nhap", so: true }, { nhan: "Số lượng xuất", khoa: "xuat", so: true }, { nhan: "Số lượng tồn", khoa: "ton", so: true }] });
+  } else if (tab === "chi-phi-dv") {
+    const d = await layChiPhiDichVu(db, { tu, den, cn, dv: u.searchParams.get("dv") || undefined, nv: u.searchParams.get("nv") || undefined, q: u.searchParams.get("q") || undefined }, true);
+    bangs.push({ ten: "Báo cáo chi phí dịch vụ", dong: d.rows, cot: [{ nhan: "Tên sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 18 }, { nhan: "Số lượng dùng", khoa: "soLuong", so: true }, { nhan: "Số lần dùng", khoa: "soLan", so: true }, { nhan: "Chi phí khấu hao", khoa: "chiPhi", tien: true }, { nhan: "Tại chi nhánh", khoa: "chiNhanh", rong: 20 }] });
   } else {
     return new Response("Không có báo cáo này", { status: 404 });
   }

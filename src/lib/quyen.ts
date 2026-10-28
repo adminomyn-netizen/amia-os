@@ -26,7 +26,7 @@ export type Quyen =
   | "khach.xem" | "khach.sua" | "khach.nhap"
   | "hoso.xem" | "hoso.sua" | "anh.xem" | "anh.them"
   | "lich.xem" | "lich.sua"
-  | "ban.xem" | "ban.tao" | "ban.huy" | "no.thu"
+  | "ban.xem" | "ban.tao" | "ban.huy" | "no.thu" | "hd.vat"
   | "the.xem" | "the.thuchien" | "the.dieuchinh"
   | "danhmuc.xem" | "danhmuc.sua"
   | "kho.xem" | "kho.nhap" | "kho.duyet" | "ky.khoa" | "ky.mo_lai"
@@ -47,7 +47,7 @@ export type Quyen =
 // Chủ (chị Lâm chốt lại 28/10/2026, trước đó bỏ 26/10): người sở hữu, nhìn toàn cảnh điều hành và tự phân quyền, cài đặt hệ thống. Khác Kỹ thuật ở chỗ KHÔNG được bỏ qua quy tắc "người lập không tự duyệt".
 const TAT_CA: Quyen[] = [
   "khach.xem", "khach.sua", "khach.nhap", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
-  "ban.xem", "ban.tao", "ban.huy", "no.thu", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
+  "ban.xem", "ban.tao", "ban.huy", "no.thu", "hd.vat", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
   "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "hr.hoso", "qt.sua", "kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly", "tongquan.xem", "quy.xem", "quy.ghi", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
   "cong.xem", "cong.sua", "nghi.duyet", "nghi.duyet_bgd", "luong.xem", "luong.sua", "luong.duyet", "noibo.dung",
   "mkt.xem", "mkt.sua", "mkt.duyet", "lead.xu_ly", "vb.xem", "vb.soan", "vb.duyet",
@@ -59,12 +59,12 @@ export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
   quan_ly: TAT_CA,
   nhan_su: ["tongquan.xem", "khach.xem", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "viec.tatca", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem", "luong.sua", "hr.hoso", "vb.xem", "vb.soan", "mkt.xem"],
   le_tan: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
-  thu_ngan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "ban.xem", "ban.tao", "no.thu", "the.xem", "danhmuc.xem", "baocao.xem", "baocao.tien", "noibo.dung", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
+  thu_ngan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "ban.xem", "ban.tao", "no.thu", "hd.vat", "the.xem", "danhmuc.xem", "baocao.xem", "baocao.tien", "noibo.dung", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
   tu_van: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "ban.tao", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
   bac_si: ["khach.xem", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.chidinh", "noibo.dung", "bc.bao", "bc.xu_ly"],
   ktv: ["khach.xem", "hoso.xem", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.nhan", "noibo.dung", "bc.bao"],
   thu_kho: ["tongquan.xem", "danhmuc.xem", "kho.xem", "kho.nhap", "phieu.xem", "phieu.cap", "phieu.doichieu", "mua.xem", "mua.tao", "noibo.dung"],
-  ke_toan: ["tongquan.xem", "khach.xem", "ban.xem", "no.thu", "danhmuc.xem", "kho.xem", "kho.duyet", "ky.khoa", "baocao.xem", "baocao.tien", "phieu.xem", "quy.xem", "quy.ghi", "mua.xem", "cong.xem", "luong.xem", "luong.sua", "noibo.dung", "vb.xem"],
+  ke_toan: ["tongquan.xem", "khach.xem", "ban.xem", "no.thu", "hd.vat", "danhmuc.xem", "kho.xem", "kho.duyet", "ky.khoa", "baocao.xem", "baocao.tien", "phieu.xem", "quy.xem", "quy.ghi", "mua.xem", "cong.xem", "luong.xem", "luong.sua", "noibo.dung", "vb.xem"],
   marketing: ["tongquan.xem", "khach.xem", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "mkt.xem", "mkt.sua", "lead.xu_ly", "vb.xem", "vb.soan"],
   nha_dau_tu: ["tongquan.xem", "baocao.xem", "baocao.tien"],
   nhan_vien: ["noibo.dung"],
@@ -89,7 +89,7 @@ export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] 
   { nhom: "Tổng quan", muc: [{ ma: "tongquan.xem", nhan: "Có dashboard (Tổng quan)" }] },
   { nhom: "Khách hàng", muc: [{ ma: "khach.xem", nhan: "Xem khách" }, { ma: "khach.sua", nhan: "Thêm / sửa khách" }, { ma: "khach.nhap", nhan: "Nhập Excel khách" }, { ma: "hoso.xem", nhan: "Xem hồ sơ điều trị" }, { ma: "hoso.sua", nhan: "Ghi hồ sơ điều trị" }, { ma: "anh.xem", nhan: "Xem ảnh khách" }, { ma: "anh.them", nhan: "Thêm ảnh khách" }] },
   { nhom: "Lịch hẹn", muc: [{ ma: "lich.xem", nhan: "Xem lịch" }, { ma: "lich.sua", nhan: "Đặt / đổi / huỷ lịch" }] },
-  { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "no.thu", nhan: "Thu nợ" }] },
+  { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "no.thu", nhan: "Thu nợ" }, { ma: "hd.vat", nhan: "Ghi nhận đã xuất hoá đơn VAT" }] },
   { nhom: "Thẻ liệu trình", muc: [{ ma: "the.xem", nhan: "Xem thẻ" }, { ma: "the.thuchien", nhan: "Thực hiện buổi" }, { ma: "the.dieuchinh", nhan: "Điều chỉnh / cấp thẻ tay" }] },
   { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "KTV nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }, { ma: "kho.duyet", nhan: "Duyệt kiểm kê, xử lý vật tư, hậu kiểm xuất khẩn cấp" }] },
   { nhom: "Mua hàng", muc: [{ ma: "mua.xem", nhan: "Xem đơn mua, nhà cung cấp, công nợ" }, { ma: "mua.tao", nhan: "Lập đơn mua, nhà cung cấp" }, { ma: "mua.duyet", nhan: "Duyệt / từ chối đơn mua" }] },

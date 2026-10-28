@@ -14,7 +14,7 @@
 // Mặc định CHẠY THỬ (giao dịch rồi rollback) + in đối chiếu từng chi nhánh bằng chính các hàm báo cáo của app; --that mới commit, đối chiếu lệch thì tự huỷ.
 // Dùng: PW=$(security find-generic-password -s amia-os-db-password -w) node scripts/chuyen-salonhero/buoc6-kho-lich-su.mjs <thư-mục-xuất> [--dot SH-2910-02] [--that | --go]
 import { ketNoi, docNdjson, taoDot, nhanVienHeThong, cnTheoLoc, vnNgay, sach, inBang } from "./lib.mjs";
-import { readFileSync, writeFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync } from "node:fs";
 
 const arg = (t, mac) => { const i = process.argv.indexOf(t); return i > 0 ? process.argv[i + 1] : mac; };
 const thuMuc = process.argv[2]; if (!thuMuc || thuMuc.startsWith("--")) throw new Error("Thiếu thư mục xuất");
@@ -26,7 +26,6 @@ const XUAT_LOAI = { EX_RETURN: "tra_ncc", EX_CONSUME: "cap_ca", EX_DESTROY: "hao
 const db = await ketNoi(); const q = async (sql, p) => (await db.query(sql, p)).rows;
 const lech = []; // mọi chỗ đối chiếu lệch → nếu có thì --that tự huỷ
 const ket = { dot, che_do: go ? "go" : that ? "that" : "thu" };
-const chuoi = (n) => String(Math.round(n * 1e4) / 1e4);
 
 try {
   await db.query("begin");
@@ -58,7 +57,6 @@ try {
   const he = await nhanVienHeThong(db);
   const cn = Object.fromEntries((await q(`select ma, id from public.chi_nhanh`)).map((r) => [r.ma, r.id]));
   const sp = new Map((await q(`select sh_id, id from public.san_pham where sh_id is not null`)).map((r) => [Number(r.sh_id), r.id]));
-  const spInfo = new Map((await q(`select id, ma, ten, ban_le from public.san_pham`)).map((r) => [r.id, r]));
 
   // ───────── TRẠNG THÁI TRƯỚC ─────────
   const tonKey = (c, s) => `${c}|${s}`;
@@ -157,11 +155,11 @@ try {
       // bán hàng AMIA (hoá đơn lịch sử, hoàn thành) trong kỳ — CHỈ ĐỂ ĐỐI CHIẾU, không ghi sổ kho
       const ban = new Map((await q(`select p.sh_id, sum(d.so_luong)::float q from public.hoa_don_dong d join public.hoa_don h on h.id = d.hoa_don_id join public.san_pham p on p.id = d.san_pham_id
         where d.loai = 'san_pham' and h.trang_thai = 'hoan_thanh' and h.chi_nhanh_id = $1 and h.ngay_hd between $2::date and $3::date group by 1`, [cnId, a, b])).map((r) => [Number(r.sh_id), r.q]));
-      let nhapKhop = 0, xuatSauBan = 0, cuoiKhop = 0, cuoiLech = [], dauAm = 0, spCo = 0, banTong = 0, xuatSh = 0, nhapSh = 0, xuatTay = 0;
+      let nhapKhop = 0, xuatSauBan = 0, cuoiKhop = 0, cuoiLech = [], dauAm = 0, spCo = 0, banTong = 0, xuatSh = 0, xuatTay = 0;
       const mapSpMa = new Map((await q(`select sh_id, ma from public.san_pham where sh_id is not null`)).map((r) => [Number(r.sh_id), r.ma]));
       for (const r of ref) {
         const ma = mapSpMa.get(Number(r.id)); const o = ma && byId.get(ma); if (!o) continue; spCo++;
-        const bh = ban.get(Number(r.id)) ?? 0; banTong += bh; xuatSh += r.totalExport; nhapSh += r.totalImport; xuatTay += Number(o.xuat);
+        const bh = ban.get(Number(r.id)) ?? 0; banTong += bh; xuatSh += r.totalExport; xuatTay += Number(o.xuat);
         if (Number(o.nhap) === r.totalImport) nhapKhop++;
         if (Number(o.xuat) + bh === r.totalExport) xuatSauBan++;
         if (Number(o.dau) < 0) dauAm++;

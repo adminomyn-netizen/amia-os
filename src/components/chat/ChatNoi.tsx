@@ -10,6 +10,7 @@ const ANH_TULA = "/tula-avatar.svg";
 
 /** Lời nhắc ở bong bóng cạnh avatar khi khung chat đang đóng: thay phiên, thân thiện, xưng "em", gọi người dùng là "mình". */
 const LOI_NHAC = [
+  "Xin chào! Mình cần hỗ trợ gì thì cứ chat với Tula ở đây nhé.",
   "Xin chào, Tula đây! Cần em giúp gì không ạ?",
   "Mình cần tra lịch hẹn hay tìm khách? Em làm nhanh cho ạ.",
   "Cần xuất danh sách ra Excel không ạ? Cứ nhờ em nhé.",
@@ -17,10 +18,10 @@ const LOI_NHAC = [
 ];
 const LOI_NHAC_MOI = "Em có tin trả lời mới cho mình đây ạ.";
 const KHOA_TAT_BONG = "tula-bong-da-tat";
-const CHO_LAN_DAU = 6000;      // vào trang ~6 giây thì chào lần đầu
+const CHO_LAN_DAU = 2500;      // vào trang ~2,5 giây thì tự nhảy lên chào lần đầu
 const CHO_SAU_KHI_DONG = 20000; // vừa đóng khung chat thì đợi ~20 giây
 const GIAN_CACH_TOI_THIEU = 50000; // hai lần bật bong bóng cách nhau tối thiểu 50 giây (cộng thêm 0-10 giây ngẫu nhiên)
-const TU_AN_SAU = 6000;
+const TU_AN_SAU = 10000;
 
 const GOI_Y = ["Hôm nay có bao nhiêu lịch hẹn?", "Tìm khách theo số điện thoại", "Em cần làm việc này ở đâu trong app?", "Xuất danh sách ra Excel"];
 
@@ -105,7 +106,7 @@ export function ChatNoi({ choPhepSua, hoTen }: { choPhepSua: boolean; hoTen: str
     setBong(LOI_NHAC_MOI);
   }, [mo, soChuaDoc]);
 
-  // Tự ẩn sau ~6 giây; đang rê chuột/đang focus vào bong bóng thì giữ lại, rời ra mới đếm tiếp 3 giây.
+  // Tự ẩn sau ~10 giây; đang rê chuột/đang focus vào bong bóng thì giữ lại, rời ra mới đếm tiếp 3 giây.
   useEffect(() => {
     if (!bong || tamDung) return;
     const t = setTimeout(() => setBong(null), TU_AN_SAU);
@@ -173,7 +174,7 @@ export function ChatNoi({ choPhepSua, hoTen }: { choPhepSua: boolean; hoTen: str
           <div ref={cuonRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4" aria-live="polite">
             {tin.length === 0 && (
               <div>
-                <p className="rounded-nho bg-giay-tram px-3 py-2.5 text-[14px] text-muc">Em là Tula, trợ lý AI của chị Lâm. {hoTen.split(" ").slice(-1)[0]} cần em hỗ trợ gì ạ? Em tra cứu, hướng dẫn thao tác và xuất file Excel cho mình ngay đây.</p>
+                <p className="rounded-nho bg-giay-tram px-3 py-2.5 text-[14px] text-muc">Em là Tula, trợ lý AI. {hoTen.split(" ").slice(-1)[0]} cần em hỗ trợ gì ạ? Em tra cứu, hướng dẫn thao tác và xuất file Excel cho mình ngay đây.</p>
                 <div className="mt-3 flex flex-wrap gap-2">{GOI_Y.map((g) => <button key={g} type="button" onClick={() => gui(g)} className="rounded-nho border border-vien-dam px-2.5 py-1.5 text-[13px] text-muc-2 hover:bg-giay-tram">{g}</button>)}</div>
               </div>
             )}

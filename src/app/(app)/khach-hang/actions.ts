@@ -4,11 +4,12 @@ import { luuAnh, xoaAnh } from "@/lib/kho-anh";
 import { docAnhTheoMa, docTrangAnh } from "@/lib/anh-khach-doc";
 import type { AnhKhach } from "@/lib/anh-khach";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
-import { chuanSdt, coSdtHopLe, homNayHCM } from "@/lib/dinh-dang";
+import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
 import { docKhachTuExcel } from "@/lib/nhap-khach";
 
 type KQ = { ok?: true; loi?: string; id?: string };
@@ -22,7 +23,8 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   const sdt = chuanSdt(chuoi(fd, "dien_thoai"));
   const nguon = chuoi(fd, "nguon");
   if (!chuoi(fd, "ho_ten")) return { loi: "Nhập họ tên khách." };
-  if (!coSdtHopLe(sdt)) return { loi: "Số điện thoại chưa hợp lệ (bắt đầu bằng 0, 10–11 số)." };
+  // Số trong nước: 0 + 9–10 số. Khách nước ngoài (Đà Lạt có nhiều, SalonHero cho nhập) : 9–15 chữ số có mã nước, không bắt đầu bằng 0.
+  if (!coSdtHopLe(sdt) && !/^[1-9]\d{8,14}$/.test(sdt)) return { loi: "Số điện thoại chưa hợp lệ (số trong nước bắt đầu bằng 0, 10–11 số; số nước ngoài ghi cả mã nước)." };
   if (!NGUON_HOP_LE.includes(nguon)) return { loi: "Chọn nguồn khách (bắt buộc)." };
   if (!chuoi(fd, "nguoi_phu_trach_id")) return { loi: "Chọn người phụ trách (bắt buộc)." };
   if (!chuoi(fd, "chi_nhanh_id")) return { loi: "Chọn chi nhánh." };
@@ -57,6 +59,8 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
     ngay_sinh: chuoiHoacNull(fd, "ngay_sinh"), dia_chi: chuoiHoacNull(fd, "dia_chi"), chi_nhanh_id: chuoi(fd, "chi_nhanh_id"),
     nguon, nguon_chi_tiet: chuoiHoacNull(fd, "nguon_chi_tiet"), nguoi_gioi_thieu_id: nguoiGt, nguoi_phu_trach_id: chuoi(fd, "nguoi_phu_trach_id"),
     ghi_chu: chuoiHoacNull(fd, "ghi_chu"), dong_y_dung_hinh: dongY, cap_nhat_luc: new Date().toISOString(),
+    // Các ô thêm như SalonHero. Khi SỬA mà form không gửi ô nào (gọi cũ) thì không đụng tới cột đó, tránh xoá dữ liệu chuyển từ SalonHero.
+    ...Object.fromEntries(["tinh_thanh", "quan_huyen", "quoc_gia", "sdt_phu", "facebook", "website", "nghe_nghiep", "cong_ty", "ma_so_thue", "ma_the_giay"].filter((k) => fd.has(k)).map((k) => [k, chuoiHoacNull(fd, k)])),
   };
   let khachId = id;
   if (id) {
@@ -89,6 +93,46 @@ export async function danhDauMat(fd: FormData): Promise<KQ> {
   const { error } = await sb().from("khach_hang").update({ danh_dau_mat: bat(fd, "mat") }).eq("id", chuoi(fd, "id"));
   revalidatePath("/khach-hang", "layout");
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** Nút "Xoá" như SalonHero, nhưng chỉ xoá được KHÁCH NHẬP NHẦM: chưa có hoá đơn, lịch, thẻ, buổi, khiếu nại... (CSDL chặn bằng khoá ngoại), chưa có ảnh/ghi chú điều trị. Khách đã có lịch sử thì dùng "Đánh dấu đã mất". Cần quyền nhập khách (quản lý). */
+export async function xoaKhach(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("khach.nhap");
+  if (!nd) return { loi: "Chỉ quản lý (quyền nhập khách) mới xoá được hồ sơ khách." };
+  const id = chuoi(fd, "id");
+  const db = sb();
+  const { data: k } = await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai").eq("id", id).maybeSingle();
+  if (!k) return { loi: "Không tìm thấy khách." };
+  const [{ count: anh }, { count: gc }, { count: anhCu }] = await Promise.all([
+    db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id),
+    db.from("khach_ghi_chu").select("id", { count: "exact", head: true }).eq("khach_id", id),
+    db.from("khach_anh_luu_tru").select("khach_id", { count: "exact", head: true }).eq("khach_id", id),
+  ]);
+  if ((anh ?? 0) + (gc ?? 0) + (anhCu ?? 0) > 0) return { loi: "Khách đã có ảnh hoặc ghi chú điều trị nên không xoá được (hồ sơ điều trị phải giữ). Dùng “Đánh dấu đã mất”." };
+  const { error } = await db.from("khach_hang").delete().eq("id", id);
+  if (error) return { loi: error.code === "23503" ? "Khách đã có hoá đơn, lịch hẹn, thẻ, khiếu nại hoặc dữ liệu khác nên không xoá được. Dùng “Đánh dấu đã mất”." : thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_khach", doi_tuong: "khach_hang", doi_tuong_id: id, chi_tiet: { ma: k.ma, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai } });
+  revalidatePath("/khach-hang", "layout");
+  redirect("/khach-hang");
+}
+
+/** Nút "Điểm" ở hồ sơ (SalonHero): cộng/trừ điểm thưởng bằng tay. Sổ điểm chỉ thêm dòng (không sửa/xoá): sai thì thêm dòng ngược lại. Cần quyền nhập khách (quản lý). */
+export async function suaDiemKhach(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("khach.nhap");
+  if (!nd) return { loi: "Chỉ quản lý (quyền nhập khách) mới chỉnh điểm thưởng." };
+  const id = chuoi(fd, "khach_id");
+  const so = soTuChu(fd.get("so_diem"));
+  const lyDo = chuoi(fd, "ly_do");
+  if (!so || Math.abs(so) > 1_000_000) return { loi: "Nhập số điểm cộng (vd 50) hoặc trừ (vd -50), khác 0." };
+  if (!lyDo) return { loi: "Nhập lý do chỉnh điểm." };
+  const db = sb();
+  const { data: k } = await db.from("khach_hang").select("id, diem_so_du, chi_nhanh_id").eq("id", id).maybeSingle();
+  if (!k) return { loi: "Không tìm thấy khách." };
+  if (k.diem_so_du + so < 0) return { loi: `Khách chỉ còn ${k.diem_so_du} điểm, không trừ được ${-so}.` };
+  const { error } = await db.from("khach_diem_so").insert({ khach_id: id, loai: "sua_tay", so_diem: so, ly_do: lyDo, chi_nhanh_id: nd.chiNhanhId ?? k.chi_nhanh_id, nguoi_id: nd.nhanVienId, nguoi_tao_ten: nd.hoTen });
+  if (error) return { loi: thongBaoLoi(error) };
+  revalidatePath(`/khach-hang/${id}`);
+  return { ok: true };
 }
 
 export async function luuGhiChu(fd: FormData): Promise<KQ> {

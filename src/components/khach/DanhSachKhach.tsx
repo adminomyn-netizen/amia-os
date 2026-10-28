@@ -121,7 +121,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, choGanNhom,
         <div className="flex gap-2">
           <div className="relative min-w-0 flex-1">
             <Search aria-hidden strokeWidth={1.6} className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muc-3" />
-            <input value={o} onChange={(e) => setO(e.target.value)} placeholder="Tìm tên, SĐT, mã, email" aria-label="Tìm kiếm khách hàng" className={`${O_NHAP} !h-9 pl-8 !text-[13px]`} />
+            <input value={o} onChange={(e) => setO(e.target.value)} placeholder="Tìm kiếm khách hàng" aria-label="Tìm kiếm khách hàng" className={`${O_NHAP} !h-9 pl-8 !text-[13px]`} />
           </div>
           <button type="button" aria-expanded={moLoc} onClick={() => setMoLoc((x) => !x)} className="flex h-9 shrink-0 items-center gap-1.5 rounded-nho border border-vien-dam bg-giay-sang px-3 text-[13px] text-muc-2 hover:border-nhan">
             <SlidersHorizontal aria-hidden strokeWidth={1.7} className="h-4 w-4" />Lọc{soLoc > 0 && <span className="nhan-nho !bg-nhan !text-white">{soLoc}</span>}
@@ -135,6 +135,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, choGanNhom,
             <Chon nho ariaLabel="Nguồn" trong="Nguồn" giaTri={loc.nguon} onDoi={(v) => datLoc("nguon", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi nguồn" }, ...nguon]} />
             <Chon nho ariaLabel="Giới tính" giaTri={loc.gioi_tinh} onDoi={(v) => datLoc("gioi_tinh", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi giới tính" }, { gia_tri: "nữ", nhan: "Nữ" }, { gia_tri: "nam", nhan: "Nam" }, { gia_tri: "chua_ro", nhan: "Chưa rõ giới tính" }]} />
             <Chon nho ariaLabel="Sinh nhật" giaTri={loc.sinh_nhat} onDoi={(v) => datLoc("sinh_nhat", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi ngày sinh" }, { gia_tri: "hom_nay", nhan: "Sinh nhật hôm nay" }, { gia_tri: "thang", nhan: "Sinh nhật tháng này" }, ...THANG]} />
+            <Chon nho ariaLabel="Ngày sinh nhật" trong="Ngày sinh nhật" giaTri={loc.sinh_ngay} onDoi={(v) => datLoc("sinh_ngay", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi ngày trong tháng" }, ...Array.from({ length: 31 }, (_, i) => ({ gia_tri: String(i + 1), nhan: `Sinh nhật ngày ${i + 1}` }))]} />
             <Chon nho ariaLabel="Thẻ đang dùng" giaTri={loc.the} onDoi={(v) => datLoc("the", v)} luaChon={[{ ...TAT_CA, nhan: "Thẻ: tất cả" }, { gia_tri: "co", nhan: "Có thẻ đang dùng" }, { gia_tri: "khong", nhan: "Không có thẻ đang dùng" }]} />
             <Chon nho ariaLabel="Công nợ" giaTri={loc.no} onDoi={(v) => datLoc("no", v)} luaChon={[{ ...TAT_CA, nhan: "Nợ: tất cả" }, { gia_tri: "co", nhan: "Đang nợ" }, { gia_tri: "khong", nhan: "Không nợ" }]} />
             <Chon nho ariaLabel="Chi nhánh" giaTri={loc.chi_nhanh} onDoi={(v) => datLoc("chi_nhanh", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi chi nhánh" }, ...danhMuc.chiNhanh]} />

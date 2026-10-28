@@ -4454,6 +4454,7 @@ export type Database = {
           gioi_tinh: string | null
           hang_goc: string | null
           ho_ten: string
+          ho_ten_khong_dau: string | null
           id: string
           khong_gui_zns: boolean
           lan_den_cuoi: string | null
@@ -4505,6 +4506,7 @@ export type Database = {
           gioi_tinh?: string | null
           hang_goc?: string | null
           ho_ten: string
+          ho_ten_khong_dau?: string | null
           id?: string
           khong_gui_zns?: boolean
           lan_den_cuoi?: string | null
@@ -4556,6 +4558,7 @@ export type Database = {
           gioi_tinh?: string | null
           hang_goc?: string | null
           ho_ten?: string
+          ho_ten_khong_dau?: string | null
           id?: string
           khong_gui_zns?: boolean
           lan_den_cuoi?: string | null
@@ -9846,6 +9849,7 @@ export type Database = {
           tru_the_tien: number
         }[]
       }
+      bo_dau: { Args: { s: string }; Returns: string }
       cap_phieu: { Args: { p_id: string; p_nguoi: string }; Returns: undefined }
       cap_them_phieu: {
         Args: {

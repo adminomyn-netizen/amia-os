@@ -3,9 +3,10 @@
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuanSdt } from "@/lib/dinh-dang";
-import { tinhDon, type DonBan } from "@/lib/ban-hang";
+import { tinhDon, TOI_DA_NGUOI_HUONG, type DonBan } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
+import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
 
 export async function timKhach(q: string) {
   if (!(await kiemQuyen("khach.xem"))) return [];
@@ -29,6 +30,19 @@ export async function layDiemKhach(khachId: string) {
   const db = sb();
   const [{ data: k }, ch] = await Promise.all([db.from("khach_hang").select("diem_so_du").eq("id", khachId).maybeSingle(), cauHinhDiem(db)]);
   return k ? { soDu: Number(k.diem_so_du ?? 0), ...ch } : null;
+}
+
+/** Hộp "Áp dụng voucher" ở màn Bán hàng. "Kiểm tra mã": kiểm mã (có, không khoá, trong hạn, đúng chi nhánh/ngày/hạng khách, còn lượt) rồi trả định nghĩa để màn hình tự tính theo dòng hàng. Máy chủ tính lại và DB kiểm lại khi chốt. */
+export async function layVoucher(ma: string, chiNhanhId: string, khachId: string | null): Promise<{ ok: true; v: VoucherTim } | { ok: false; loi: string }> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return { ok: false, loi: KHONG_DU_QUYEN };
+  return timVoucher(sb(), ma, { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId });
+}
+/** Danh sách voucher hiện sẵn trong hộp "Áp dụng voucher" (SalonHero: "Hiển thị trên tìm kiếm thu ngân"). */
+export async function dsVoucher(chiNhanhId: string, khachId: string | null): Promise<VoucherTim[]> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd || !(nd.chiNhanhId ?? chiNhanhId)) return [];
+  return dsVoucherThuNgan(sb(), { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId });
 }
 
 type KQ = { ok: true; id: string; ma: string } | { ok?: false; loi: string };
@@ -66,6 +80,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     if (!Number.isInteger(d.giam) || d.giam < 0 || d.giam > m.gia * d.sl) return { loi: `Giảm giá của "${m.ten}" chưa hợp lệ.` };
     for (const vai of ["phuc_vu", "tu_van", "ban"] as const) {
       const ds = d.nv?.[vai] ?? [];
+      if (ds.length > TOI_DA_NGUOI_HUONG) return { loi: `"${m.ten}": mỗi vai chỉ có tối đa ${TOI_DA_NGUOI_HUONG} người hưởng.` };
       if (ds.length && Math.abs(ds.reduce((s, x) => s + Number(x.ti), 0) - 100) > 0.01) return { loi: `"${m.ten}": phần chia cho vai ${vai === "phuc_vu" ? "Phục vụ" : vai === "tu_van" ? "Tư vấn" : "Bán hàng"} phải cộng đủ 100%.` };
       if (new Set(ds.map((x) => x.id)).size !== ds.length) return { loi: `"${m.ten}": một người không được xuất hiện hai lần trong cùng một vai.` };
     }
@@ -84,9 +99,19 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     if ((k?.diem_so_du ?? 0) < diem) return { loi: `Khách chỉ còn ${k?.diem_so_du ?? 0} điểm.` };
     tienDiem = diem * ch.tienMoiDiem;
   }
-  if (don.giamDon + tienDiem > hang) return { loi: tienDiem ? "Giảm giá cả đơn cộng tiền đổi điểm lớn hơn tiền hàng." : "Giảm giá cả đơn lớn hơn tiền hàng." };
+  // Voucher: máy chủ tự tính tiền giảm từ giá trong DB (không tin số gửi lên), cộng vào giảm giá cả đơn như đổi điểm; DB kiểm lại lúc chốt.
+  const maVoucher = chuanMaVoucher(don.voucher);
+  let tienVoucher = 0;
+  if (maVoucher) {
+    const t = await timVoucher(db, maVoucher, { chiNhanhId: don.chiNhanhId, khachId: don.khachId });
+    if (!t.ok) return { loi: t.loi };
+    const g = giamTheoDong(t.v, don.dong.map((d) => ({ loai: d.loai, thanh: gia.get(`${d.loai}:${d.ref}`)!.gia * d.sl - d.giam })));
+    if (!g.ok) return { loi: g.loi };
+    tienVoucher = g.tien;
+  }
+  if (don.giamDon + tienDiem + tienVoucher > hang) return { loi: tienVoucher ? "Giảm giá cả đơn, voucher và tiền đổi điểm cộng lại lớn hơn tiền hàng." : tienDiem ? "Giảm giá cả đơn cộng tiền đổi điểm lớn hơn tiền hàng." : "Giảm giá cả đơn lớn hơn tiền hàng." };
   if (!(don.vatPct >= 0 && don.vatPct <= 100)) return { loi: "VAT chưa hợp lệ." };
-  const { phai } = tinhDon(hang, don.giamDon + tienDiem, don.vatPct, don.phuPhi, don.tip);
+  const { phai } = tinhDon(hang, don.giamDon + tienDiem + tienVoucher, don.vatPct, don.phuPhi, don.tip);
   const tongThu = (don.thu ?? []).reduce((s, t) => s + t.so_tien, 0);
   if ((don.thu ?? []).some((t) => !Number.isInteger(t.so_tien) || t.so_tien <= 0)) return { loi: "Có khoản thu chưa hợp lệ." };
   if (tongThu > phai) return { loi: "Tổng các khoản thu lớn hơn số phải thu." };
@@ -102,7 +127,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
 
   const ma = "HD" + String(Number((await db.rpc("so_tiep_theo", { p_khoa: "hoa_don" })).data ?? 0)).padStart(6, "0");
   const { data: h, error: eh } = await db.from("hoa_don").insert({
-    ma, chi_nhanh_id: don.chiNhanhId, khach_id: don.khachId, lich_hen_id: don.lichId, nguoi_lap_id: nd.nhanVienId, giam_gia_don: don.giamDon + tienDiem, vat_pct: don.vatPct,
+    ma, chi_nhanh_id: don.chiNhanhId, khach_id: don.khachId, lich_hen_id: don.lichId, nguoi_lap_id: nd.nhanVienId, giam_gia_don: don.giamDon + tienDiem + tienVoucher, vat_pct: don.vatPct,
     phu_phi: don.phuPhi, tip: don.tip, nguoi_gioi_thieu_id: don.nguoiGioiThieu || null, ghi_chu: don.ghiChu?.trim() || null,
   }).select("id").single();
   if (eh || !h) return { loi: thongBaoLoi(eh) };
@@ -129,9 +154,11 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
       return { loi: thongBaoLoi(et) };
     }
   }
-  const { error: ex } = diem > 0
-    ? await db.rpc("chot_hoa_don_doi_diem", { p_id: h.id, p_nguoi: nd.nhanVienId, p_diem: diem, p_tien: tienDiem })
-    : await db.rpc("chot_hoa_don", { p_id: h.id, p_nguoi: nd.nhanVienId });
+  const { error: ex } = maVoucher
+    ? await db.rpc("chot_hoa_don_voucher", { p_id: h.id, p_nguoi: nd.nhanVienId, p_ma: maVoucher, p_tien_voucher: tienVoucher, p_diem: diem, p_tien_diem: tienDiem })
+    : diem > 0
+      ? await db.rpc("chot_hoa_don_doi_diem", { p_id: h.id, p_nguoi: nd.nhanVienId, p_diem: diem, p_tien: tienDiem })
+      : await db.rpc("chot_hoa_don", { p_id: h.id, p_nguoi: nd.nhanVienId });
   if (ex) {
     const daCo = await db.from("thanh_toan").select("id", { count: "exact", head: true }).eq("hoa_don_id", h.id);
     if ((daCo.count ?? 0) === 0) await huyNhap(); else await db.rpc("huy_hoa_don", { p_id: h.id, p_ly_do: "Tự huỷ do lỗi khi chốt đơn", p_nguoi: nd.nhanVienId });

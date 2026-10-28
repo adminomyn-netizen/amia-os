@@ -3,6 +3,7 @@ import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
+import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
@@ -10,7 +11,7 @@ import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG
 type Cot = { nhan: string; khoa: string; rong?: number; tien?: boolean; so?: boolean };
 type Bang = { ten: string; cot: Cot[]; dong: Record<string, unknown>[] };
 
-const TAB_KHONG_TIEN = new Set(["dat-lich"]);
+const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia"]);
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
 const ngay = (s: string | null | undefined) => (s ? s.slice(0, 10).split("-").reverse().join("/") : "");
@@ -51,6 +52,14 @@ export async function GET(req: Request) {
       { nhan: "Kỳ", khoa: "ky", rong: 24 }, { nhan: "Thu ngân", khoa: "thu_ngan", rong: 28 }, { nhan: "Các tên của tài khoản", khoa: "cac_ten", rong: 36 }, { nhan: "Số đơn", khoa: "so_don", so: true },
       { nhan: "Doanh số", khoa: "doanh_so", tien: true }, { nhan: "Trừ thẻ tiền", khoa: "tru_the_tien", tien: true }, { nhan: "Doanh thu sau trừ thẻ", khoa: "doanh_thu", tien: true },
       { nhan: "Còn nợ", khoa: "con_no", tien: true }, { nhan: "Đã thu", khoa: "da_thu", tien: true }] });
+  } else if (tab === "danh-gia") {
+    const ds = await layDanhGia(db, tu, den, cn);
+    bangs.push({ ten: "Tổng hợp theo nhân viên", dong: tongTheoNhanVien(ds).map((r) => ({ ten: r.ten, so: r.so, tb: Number(chuSao(r.tb).replace(",", ".")), s5: r.phanBo[4], s4: r.phanBo[3], s3: r.phanBo[2], s2: r.phanBo[1], s1: r.phanBo[0] })), cot: [
+      { nhan: "Nhân viên", khoa: "ten", rong: 30 }, { nhan: "Số đánh giá", khoa: "so", so: true }, { nhan: "Trung bình sao", khoa: "tb", rong: 16 }, { nhan: "5 sao", khoa: "s5", so: true }, { nhan: "4 sao", khoa: "s4", so: true },
+      { nhan: "3 sao", khoa: "s3", so: true }, { nhan: "2 sao", khoa: "s2", so: true }, { nhan: "1 sao", khoa: "s1", so: true }] });
+    bangs.push({ ten: "Đánh giá theo đơn hàng", dong: ds.map((r) => ({ ngay: ngay(r.ngay), ma: r.ma, ten: r.ten, diem: r.diem, y_kien: r.yKien, dich_vu: r.dichVu })), cot: [
+      { nhan: "Ngày", khoa: "ngay", rong: 12 }, { nhan: "Mã hóa đơn", khoa: "ma", rong: 16 }, { nhan: "Tên Nhân Viên", khoa: "ten", rong: 28 }, { nhan: "Đánh giá (sao)", khoa: "diem", so: true },
+      { nhan: "Ý kiến đánh giá", khoa: "y_kien", rong: 48 }, { nhan: "Dịch vụ đã thực hiện", khoa: "dich_vu", rong: 48 }] });
   } else if (tab === "dat-lich") {
     const { nhom } = chonNhom(u.searchParams.get("nhom") ?? undefined, tu, den, "thang");
     const d = await layDatLich(db, tu, den, cn, nhom);

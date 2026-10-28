@@ -3,7 +3,7 @@ import { sb } from "@/lib/db";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Pos } from "@/components/ban-hang/Pos";
 import type { DongDon, MucBan } from "@/lib/ban-hang";
-import { chotDonBanHang, layDiemKhach, layTheTien, timKhach } from "./actions";
+import { chotDonBanHang, dsVoucher, layDiemKhach, layTheTien, layVoucher, timKhach } from "./actions";
 
 export default async function TrangBanHang({ searchParams }: { searchParams: Promise<{ khach?: string; lich?: string }> }) {
   const nd = await yeuCauQuyen("ban.tao");
@@ -47,7 +47,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
       <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} lichId={lichDung}
-        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} chot={chotDonBanHang} />
+        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} />
     </>
   );
 }

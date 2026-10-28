@@ -39,6 +39,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat }: { nhanVie
   const lan = useRef(0);
   const dsRef = useRef<Dong[]>([]);
   const mocCu = useRef(moc);
+  const daTai = useRef("");
 
   const thamSo = useCallback(() => new URLSearchParams({ q, ...loc, sx }), [q, loc, sx]);
   /** `tu` = vị trí bắt đầu; `ghiDe` = thay cả danh sách (đổi bộ lọc) thay vì nối thêm (Tải thêm). Kết quả của lần gọi cũ hơn bị bỏ. */
@@ -72,11 +73,17 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat }: { nhanVie
 
   useEffect(() => {
     if (!hoatDong) return;
-    const lamMoi = mocCu.current !== moc;
-    mocCu.current = moc;
-    const t = setTimeout(() => void tai(0, lamMoi ? Math.min(200, Math.max(MOI_LAN, dsRef.current.length)) : MOI_LAN, true), 0);
+    const khoa = `${thamSo()}|${moc}`;
+    const t = setTimeout(() => {
+      // Quay lại danh sách từ hồ sơ (điện thoại) mà bộ lọc không đổi thì giữ nguyên các trang đã tải, không tải lại từ đầu.
+      if (daTai.current === khoa) return;
+      const lamMoi = mocCu.current !== moc;
+      mocCu.current = moc;
+      daTai.current = khoa;
+      void tai(0, lamMoi ? Math.min(200, Math.max(MOI_LAN, dsRef.current.length)) : MOI_LAN, true);
+    }, 0);
     return () => clearTimeout(t);
-  }, [tai, hoatDong, moc]);
+  }, [tai, thamSo, hoatDong, moc]);
 
   const soLoc = Object.values(loc).filter(Boolean).length;
   const datLoc = (k: keyof Loc, v: string) => setLoc((x) => ({ ...x, [k]: v }));

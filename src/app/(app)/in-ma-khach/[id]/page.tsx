@@ -12,11 +12,15 @@ export default async function TrangInMaKhach({ params }: { params: Promise<{ id:
   if (!k) notFound();
   const qr = await QRCode.toString(k.ma, { type: "svg", margin: 1, width: 220 });
   return (
+    <>
+      {/* Khi in chỉ giữ phần mã: ẩn mọi khối đứng sau vùng nội dung (nút chat nổi, thanh tab dưới). */}
+      <style>{"@media print{#noi-dung-chinh ~ *{display:none !important}}"}</style>
     <div className="mx-auto flex max-w-sm flex-col items-center gap-3 py-8 text-center">
       <div className="khong-in flex w-full justify-end"><InNgay /></div>
       <div aria-label={`Mã QR của khách ${k.ma}`} role="img" className="h-[220px] w-[220px]" dangerouslySetInnerHTML={{ __html: qr }} />
       <p className="text-[20px] font-bold uppercase tracking-wide text-muc">{k.ma}</p>
       <p className="text-[14px] uppercase text-muc-2">{k.ho_ten}</p>
     </div>
+    </>
   );
 }

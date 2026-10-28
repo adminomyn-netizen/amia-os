@@ -5,6 +5,8 @@ import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { apLocKhach, COT_KHACH } from "@/lib/khach-danh-sach";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 
+/** Xuất cả vài chục nghìn khách cần nhiều lượt đọc: cho phép chạy tới 60 giây. */
+export const maxDuration = 60;
 const MOI_LAN = 1000;
 const TOI_DA = 30_000;
 
@@ -27,18 +29,22 @@ export async function GET(req: Request) {
     { header: "Người phụ trách", key: "pt", width: 20 }, { header: "Thẻ đang dùng", key: "the", width: 12 }, { header: "Chi 12 tháng", key: "chi", width: 16 }, { header: "Ngày tạo", key: "tao", width: 12 },
   ];
   let tong = 0;
-  for (let tu = 0; tu < TOI_DA; tu += MOI_LAN) {
-    const { data, error } = await apLocKhach(db.from("v_khach_hang").select(COT_KHACH), tham).range(tu, tu + MOI_LAN - 1);
-    if (error) return new Response("Không xuất được, thử lại.", { status: 500 });
-    for (const r of data ?? []) {
-      ws.addRow({
-        ma: r.ma, ten: r.ho_ten, sdt: r.dien_thoai, zalo: r.zalo ?? "", email: r.email ?? "", gt: r.gioi_tinh ?? "", ns: ngayVN(r.ngay_sinh), dc: r.dia_chi ?? "", cn: tenCn.get(r.chi_nhanh_id ?? "") ?? "",
-        nguon: NHAN_NGUON[r.nguon ?? ""] ?? r.nguon, ct: r.nguon_chi_tiet ?? "", tt: TRANG_THAI_KHACH[r.trang_thai ?? "lead"]?.nhan ?? "", hang: r.hang ?? "", pt: tenNv.get(r.nguoi_phu_trach_id ?? "") ?? "",
-        the: r.so_the_dang_dung ?? 0, chi: Number(r.chi_12_thang ?? 0), tao: ngayVN(r.tao_luc),
-      });
+  // Đọc 4 lượt 1000 dòng song song (mỗi lượt ~1-2 giây trên bộ dữ liệu thật) rồi ghi theo đúng thứ tự; lượt nào ít hơn 1000 dòng là hết.
+  let het = false;
+  for (let dau = 0; dau < TOI_DA && !het; dau += MOI_LAN * 4) {
+    const cacLuot = await Promise.all([0, 1, 2, 3].map((i) => apLocKhach(db.from("v_khach_hang").select(COT_KHACH), tham).range(dau + i * MOI_LAN, dau + (i + 1) * MOI_LAN - 1)));
+    for (const { data, error } of cacLuot) {
+      if (error) return new Response("Không xuất được, thử lại.", { status: 500 });
+      for (const r of data ?? []) {
+        ws.addRow({
+          ma: r.ma, ten: r.ho_ten, sdt: r.dien_thoai, zalo: r.zalo ?? "", email: r.email ?? "", gt: r.gioi_tinh ?? "", ns: ngayVN(r.ngay_sinh), dc: r.dia_chi ?? "", cn: tenCn.get(r.chi_nhanh_id ?? "") ?? "",
+          nguon: NHAN_NGUON[r.nguon ?? ""] ?? r.nguon, ct: r.nguon_chi_tiet ?? "", tt: TRANG_THAI_KHACH[r.trang_thai ?? "lead"]?.nhan ?? "", hang: r.hang ?? "", pt: tenNv.get(r.nguoi_phu_trach_id ?? "") ?? "",
+          the: r.so_the_dang_dung ?? 0, chi: Number(r.chi_12_thang ?? 0), tao: ngayVN(r.tao_luc),
+        });
+      }
+      tong += data?.length ?? 0;
+      if ((data?.length ?? 0) < MOI_LAN) { het = true; break; }
     }
-    tong += data?.length ?? 0;
-    if ((data?.length ?? 0) < MOI_LAN) break;
   }
   // Điện thoại/Zalo để dạng chữ, Excel không cắt số 0 đầu.
   for (const k of ["C", "D"]) ws.getColumn(k).numFmt = "@";

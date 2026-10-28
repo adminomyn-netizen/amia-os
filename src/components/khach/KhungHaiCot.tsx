@@ -9,7 +9,7 @@ export function KhungHaiCot({ dau, danhSach, children }: { dau: React.ReactNode;
   return (
     <>
       <div className={coHoSo ? "hidden lg:block" : ""}>{dau}</div>
-      <div className="lg:grid lg:grid-cols-[320px_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="lg:grid lg:grid-cols-[300px_minmax(0,1fr)] lg:items-start lg:gap-5 xl:grid-cols-[360px_minmax(0,1fr)]">
         <aside aria-label="Danh sách khách" className={`${coHoSo ? "hidden lg:flex" : "flex"} flex-col lg:sticky lg:top-[88px] lg:h-[calc(100dvh-104px)]`}>{danhSach}</aside>
         <section aria-label="Hồ sơ khách" className={`min-w-0 ${coHoSo ? "" : "hidden lg:block"}`}>{children}</section>
       </div>

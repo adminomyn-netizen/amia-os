@@ -35,9 +35,12 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   let nguoiGt: string | null = cu?.nguoi_gioi_thieu_id ?? null;
   const gt = chuoi(fd, "nguoi_gioi_thieu");
   if (nguon === "khach_cu_gioi_thieu") {
+    const maCu = nguoiGt ? ((await db.from("khach_hang").select("ma").eq("id", nguoiGt).maybeSingle()).data?.ma ?? "") : "";
     if (!gt && !nguoiGt) return { loi: "Khách cũ giới thiệu: nhập mã hoặc số điện thoại của người giới thiệu." };
-    if (gt) {
-      const { data } = await db.from("khach_hang").select("id").or(`ma.eq.${gt.toUpperCase()},dien_thoai.eq.${chuanSdt(gt)}`).maybeSingle();
+    if (gt && gt.toLowerCase() !== maCu.toLowerCase()) {
+      // Khớp mã khách trước (không phân biệt hoa thường), không có mới tra theo số điện thoại hợp lệ.
+      let { data } = await db.from("khach_hang").select("id").ilike("ma", gt.replace(/[%_\\]/g, "")).maybeSingle();
+      if (!data && coSdtHopLe(gt)) data = (await db.from("khach_hang").select("id").eq("dien_thoai", chuanSdt(gt)).maybeSingle()).data;
       if (!data) return { loi: "Không tìm thấy người giới thiệu theo mã/số điện thoại đó." };
       if (data.id === id) return { loi: "Khách không thể tự giới thiệu chính mình." };
       nguoiGt = data.id;

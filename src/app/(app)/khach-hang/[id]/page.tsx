@@ -244,7 +244,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
           </div>
         </div>
-        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-4">
+        <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4">
           {chiSo.map(([a, b]) => (<div key={a}><dt className="text-[12px] text-muc-3">{a}</dt><dd className="mt-0.5 text-[16px] font-medium tabular-nums text-muc">{b}</dd></div>))}
         </dl>
       </div>

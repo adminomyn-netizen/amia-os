@@ -31,12 +31,14 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   if (trung && trung.id !== id) return { loi: `Số này đã có khách: ${trung.ho_ten} (${trung.ma}).` };
 
   // Khi sửa: đọc bản ghi hiện tại để giữ người giới thiệu nếu người dùng không đổi (form hiện sẵn mã người giới thiệu cũ).
-  const { data: cu } = id ? await db.from("khach_hang").select("dong_y_dung_hinh, nguon, nguoi_gioi_thieu_id").eq("id", id).maybeSingle() : { data: null };
+  const { data: cu } = id ? await db.from("khach_hang").select("dong_y_dung_hinh, dong_y_dung_hinh_luc, nguon, nguoi_gioi_thieu_id").eq("id", id).maybeSingle() : { data: null };
   let nguoiGt: string | null = cu?.nguoi_gioi_thieu_id ?? null;
   const gt = chuoi(fd, "nguoi_gioi_thieu");
   if (nguon === "khach_cu_gioi_thieu") {
     const maCu = nguoiGt ? ((await db.from("khach_hang").select("ma").eq("id", nguoiGt).maybeSingle()).data?.ma ?? "") : "";
-    if (!gt && !nguoiGt) return { loi: "Khách cũ giới thiệu: nhập mã hoặc số điện thoại của người giới thiệu." };
+    // Bắt buộc người giới thiệu khi tạo khách mới hoặc khi đổi nguồn sang "khách cũ giới thiệu". Khách chuyển từ SalonHero đã mang nguồn này
+    // nhưng chưa nối được người giới thiệu (670 khách, 28/10/2026) thì vẫn cho sửa các trường khác, không chặn lưu.
+    if (!gt && !nguoiGt && (!id || cu?.nguon !== "khach_cu_gioi_thieu")) return { loi: "Khách cũ giới thiệu: nhập mã hoặc số điện thoại của người giới thiệu." };
     if (gt && gt.toLowerCase() !== maCu.toLowerCase()) {
       // Khớp mã khách trước (không phân biệt hoa thường), không có mới tra theo số điện thoại hợp lệ.
       let { data } = await db.from("khach_hang").select("id").ilike("ma", gt.replace(/[%_\\]/g, "")).maybeSingle();
@@ -58,10 +60,12 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   };
   let khachId = id;
   if (id) {
-    // `dong_y_dung_hinh_luc` là mốc đổi trạng thái đồng ý gần nhất: bật (đồng ý) hoặc tắt (rút đồng ý) đều ghi giờ hiện tại; không đổi thì giữ.
+    // `dong_y_dung_hinh_luc` = mốc khách ĐỒNG Ý. Bật đồng ý: ghi giờ hiện tại. Bỏ tích (rút đồng ý): XOÁ mốc cũ để không còn hiện như đang đồng ý,
+    // còn việc rút đồng ý (ai, lúc nào) ghi vào nhật ký truy cập. Không đổi thì giữ nguyên.
     const doiDongY = dongY !== !!cu?.dong_y_dung_hinh;
-    const { error } = await db.from("khach_hang").update({ ...row, ...(doiDongY ? { dong_y_dung_hinh_luc: new Date().toISOString() } : {}) }).eq("id", id);
+    const { error } = await db.from("khach_hang").update({ ...row, ...(doiDongY ? { dong_y_dung_hinh_luc: dongY ? new Date().toISOString() : null } : {}) }).eq("id", id);
     if (error) return { loi: thongBaoLoi(error) };
+    if (doiDongY && !dongY) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "rut_dong_y_hinh", doi_tuong: "khach_hang", doi_tuong_id: id, chi_tiet: { moc_dong_y_cu: cu?.dong_y_dung_hinh_luc ?? null } });
   } else {
     const ma = "KH" + String(await soTiep("khach")).padStart(6, "0");
     const { data, error } = await db.from("khach_hang").insert({ ...row, ma, tao_boi: nd.nhanVienId, dong_y_dung_hinh_luc: dongY ? new Date().toISOString() : null }).select("id").single();

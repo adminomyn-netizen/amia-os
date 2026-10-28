@@ -142,25 +142,31 @@ export const MODULE: Module[] = [
     ma: "cai-dat", ten: "Cài đặt", duongDan: "/cai-dat", quyen: ["danhmuc.xem", "nhanvien.quanly", "hethong.phanquyen", "baocao.tien"],
     moTa: "Thiết lập cửa hàng, danh mục, hoa hồng, phân quyền.",
     nhom: [
-      { nhan: "Cửa hàng", the: [
+      { nhan: "Thông tin cửa hàng", the: [
         { ten: "Thông tin chung", moTa: "Tên, địa chỉ, pháp nhân, giờ làm việc.", duongDan: "/cai-dat/thong-tin-chung", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Chi nhánh", moTa: "Chi nhánh và phân quyền vận hành.", duongDan: "/danh-muc?tab=chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Tài khoản ngân hàng", moTa: "Tài khoản dùng khi thu tiền chuyển khoản và sổ quỹ.", duongDan: "/cai-dat/ngan-hang", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Bảng tin công ty", moTa: "Thông báo hiển thị cho toàn công ty.", duongDan: "/cai-dat/bang-tin", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
-      { nhan: "Sản phẩm / dịch vụ", the: [
+      { nhan: "Sản phẩm & dịch vụ", the: [
         { ten: "Danh mục dịch vụ", moTa: "Dịch vụ, giá và nhóm dịch vụ.", duongDan: "/danh-muc?tab=dich-vu", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
-        { ten: "Danh mục sản phẩm", moTa: "Sản phẩm, vật tư, giá bán.", duongDan: "/danh-muc?tab=san-pham", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Danh mục sản phẩm", moTa: "Sản phẩm, vật tư, giá bán, hạn dùng.", duongDan: "/danh-muc?tab=san-pham", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Loại thẻ / gói liệu trình", moTa: "Gói buổi, giá trị, dịch vụ trong gói.", duongDan: "/danh-muc?tab=goi-the", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Rà soát danh mục", moTa: "Sản phẩm thiếu mã, trùng tên, thiếu hạn dùng.", duongDan: "/danh-muc?tab=ra-soat", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
-      { nhan: "Hoa hồng & phân quyền", the: [
+      { nhan: "Nhân viên", the: [
+        { ten: "Tài khoản & phân quyền", moTa: "Tài khoản đăng nhập, vai trò, quyền riêng từng người.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
+        { ten: "Vai trò & quyền", moTa: "Bảng mỗi vai trò mặc định làm được những gì.", duongDan: "/cai-dat/vai-tro", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Cấu hình hoa hồng", moTa: "Tỉ lệ hoa hồng theo loại và vai.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },
-        { ten: "Tài khoản & phân quyền", moTa: "Tài khoản đăng nhập, vai trò, quyền riêng.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Chính sách phê duyệt", moTa: "Thao tác nào cần duyệt, ai duyệt, ngưỡng tiền.", duongDan: "/cai-dat/chinh-sach-duyet", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
       ] },
-      { nhan: "Kết nối", the: [
+      { nhan: "Khách hàng & đặt lịch", the: [
         { ten: "Web đặt lịch", moTa: "Trang đặt lịch online cho khách.", trangThai: "sap_co" },
         { ten: "Zalo OA / SMS", moTa: "Nhắn nhắc lịch, chăm sóc (cần tài khoản Zalo OA / nhà mạng).", trangThai: "sap_co" },
+      ] },
+      { nhan: "Các thiết lập khác", the: [
+        { ten: "Quy tắc kho & hạn dùng", moTa: "Chặn bán khi hết tồn, bắt buộc hạn dùng, mã vạch.", trangThai: "sap_co" },
+        { ten: "Chấm công & ca làm", moTa: "Ca văn phòng / chi nhánh, ngày lễ, trừ công trễ sớm.", trangThai: "sap_co" },
       ] },
     ],
   },

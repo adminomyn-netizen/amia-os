@@ -216,8 +216,8 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         <span className="flex items-center gap-2"><span>Nhân viên</span><span className="w-[170px]"><LocNhanVien giaTri={sp.nv ?? ""} luaChon={(nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }))} /></span></span>
         <span className="flex items-center gap-2"><span>Chỗ</span><span className="w-[140px]"><LocCho giaTri={sp.cho ?? ""} luaChon={[...new Set([...choCn.map((c) => c.ten), ...lich.map((l) => (l.phong ?? "").trim()).filter(Boolean)])].map((t) => ({ gia_tri: t, nhan: t }))} /></span></span>
         <span className="tabular-nums" aria-live="polite">{lich.filter(homLich).length} lịch đang hiệu lực{sp.nv || sp.cho || q || tt || nguon ? " theo bộ lọc" : ""} trong khoảng ngày</span>
-        <span className="flex flex-wrap items-center gap-3 sm:ml-auto">
-          <div className="w-[190px]"><LocNguon giaTri={nguon} /></div>
+        <span className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:ml-auto">
+          <div className="mr-1 w-[190px]"><LocNguon giaTri={nguon} /></div>
           <a href={xuat(ngay, ngay)} download className="text-nhan-dam hover:underline" aria-label={`Xuất Excel lịch hẹn ngày ${ngayVN(ngay)}`}>Xuất Excel ngày</a>
           <a href={xuat(dauThang, cuoiThang)} download className="text-nhan-dam hover:underline" aria-label={`Xuất Excel lịch hẹn tháng ${ngay.slice(5, 7)}/${ngay.slice(0, 4)}`}>Xuất cả tháng</a>
         </span>

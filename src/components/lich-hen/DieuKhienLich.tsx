@@ -22,7 +22,7 @@ function useDoiUrl() {
 export function ChonKhoang({ tu, den }: { tu: string; den: string }) {
   const doi = useDoiUrl();
   return (
-    <div className="flex items-center gap-1.5 rounded-nho border border-vien-dam bg-giay-sang px-1.5" role="group" aria-label="Khoảng ngày xem lịch">
+    <div className="flex items-center gap-2" role="group" aria-label="Khoảng ngày xem lịch">
       <NgayChon giaTri={tu} ariaLabel="Từ ngày" tuNam={2018} denNam={2030} className="w-[150px]" onDoi={(v) => v && doi({ tu: v, den: v > den ? v : den })} />
       <span className="text-muc-3" aria-hidden>-</span>
       <NgayChon giaTri={den} ariaLabel="Đến ngày" tuNam={2018} denNam={2030} className="w-[150px]" onDoi={(v) => v && doi({ den: v, tu: v < tu ? v : tu })} />

@@ -26,7 +26,7 @@ export function DuongMien({ nhan, chuoi, dinhDang = (n: number) => n.toLocaleStr
             </g>
           );
         })}
-        {nhan.map((n, i) => (i % buoc === 0 || i === nhan.length - 1) && <text key={n} x={x(i)} y={H - 8} textAnchor="middle" fontSize="10.5" fill="var(--muc-3)">{n}</text>)}
+        {nhan.map((n, i) => (i % buoc === 0 || i === nhan.length - 1) && <text key={n} x={x(i)} y={H - 8} textAnchor={i === nhan.length - 1 && nhan.length > 1 ? "end" : "middle"} fontSize="10.5" fill="var(--muc-3)">{n}</text>)}
       </svg>
       <ul className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[12.5px] text-muc-2">
         {chuoi.map((c, k) => <li key={c.ten} className="flex items-center gap-2"><span aria-hidden className="h-2.5 w-5" style={{ background: c.mau ?? MAU_BIEU_DO[k], borderRadius: 3 }} />{c.ten}</li>)}

@@ -121,3 +121,14 @@ describe("chuông thông báo: ràng buộc mã cảnh báo khớp kiểu CanhBa
     for (const m of ma) expect(await loi(`insert into thong_bao_trang_thai (nhan_vien_id, ma, dau_van, trang_thai) values ($1,$2,'x','da_doc') on conflict do nothing`, [NV.leTan, m])).toBe("");
   });
 });
+
+describe("chat nổi: chỉ Chủ và Kỹ thuật được nhờ sửa hoặc duyệt đưa lên", () => {
+  let cuoc: string;
+  const gui = (loai: string, vaiTro: string) => loi(`insert into chat_tin (cuoc_id, nhan_vien_id, vai, loai, vai_tro_chup, noi_dung) values ($1,$2,'nguoi',$3,$4,'x')`, [cuoc, NV.leTan, loai, vaiTro]);
+  beforeAll(async () => { cuoc = (await q<{ id: string }>(`insert into chat_cuoc (nhan_vien_id) values ($1) returning id`, [NV.leTan]))[0].id; });
+  it("hỏi đáp ai cũng gửi được", async () => { expect(await gui("hoi", "le_tan")).toBe(""); });
+  it("lễ tân, quản lý không gửi được loại sửa hay duyệt", async () => {
+    for (const vt of ["le_tan", "quan_ly", "tu_van"]) for (const l of ["sua", "duyet"]) expect(await gui(l, vt)).toMatch(/chat_tin_sua_chi_chu_va_ky_thuat/);
+  });
+  it("Chủ và Kỹ thuật gửi được", async () => { for (const vt of ["chu", "ky_thuat"]) for (const l of ["sua", "duyet"]) expect(await gui(l, vt)).toBe(""); });
+});

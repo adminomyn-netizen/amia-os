@@ -1,11 +1,12 @@
 "use client";
+import { tienGon } from "@/lib/dinh-dang";
 
 import { useState } from "react";
 
 export type DiemNgay = { ngay: string; doanhThu: number; thucThu: number; noMoi: number };
 const SO = new Intl.NumberFormat("vi-VN");
 const tien = (n: number) => `${SO.format(Math.round(n))} đ`;
-const gon = (n: number) => (n >= 1e9 ? `${(n / 1e9).toFixed(1)} tỷ` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}tr` : n >= 1e3 ? `${Math.round(n / 1e3)}k` : String(Math.round(n)));
+const gon = tienGon;
 const DUONG = [
   { khoa: "thucThu", nhan: "Đã thu", mau: "var(--sac-xanh-mau)" },
   { khoa: "doanhThu", nhan: "Doanh thu", mau: "var(--sac-luc-mau)" },

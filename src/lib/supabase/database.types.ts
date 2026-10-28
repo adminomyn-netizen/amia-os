@@ -784,6 +784,129 @@ export type Database = {
           },
         ]
       }
+      chat_cuoc: {
+        Row: {
+          id: string
+          nhan_vien_id: string
+          tao_luc: string
+        }
+        Insert: {
+          id?: string
+          nhan_vien_id: string
+          tao_luc?: string
+        }
+        Update: {
+          id?: string
+          nhan_vien_id?: string
+          tao_luc?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_cuoc_nhan_vien_id_fkey"
+            columns: ["nhan_vien_id"]
+            isOneToOne: true
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      chat_nhip: {
+        Row: {
+          id: number
+          luc: string
+        }
+        Insert: {
+          id: number
+          luc?: string
+        }
+        Update: {
+          id?: number
+          luc?: string
+        }
+        Relationships: []
+      }
+      chat_tin: {
+        Row: {
+          cuoc_id: string
+          da_duyet_luc: string | null
+          han_thong_hanh: string | null
+          hoi_tin_id: string | null
+          id: string
+          loai: string
+          nhan_vien_id: string
+          nhanh_sua: string | null
+          noi_dung: string
+          tao_luc: string
+          tep_duong_dan: string | null
+          tep_ten: string | null
+          thong_hanh: string | null
+          trang_thai: string
+          vai: string
+          vai_tro_chup: string | null
+          xong_luc: string | null
+        }
+        Insert: {
+          cuoc_id: string
+          da_duyet_luc?: string | null
+          han_thong_hanh?: string | null
+          hoi_tin_id?: string | null
+          id?: string
+          loai?: string
+          nhan_vien_id: string
+          nhanh_sua?: string | null
+          noi_dung: string
+          tao_luc?: string
+          tep_duong_dan?: string | null
+          tep_ten?: string | null
+          thong_hanh?: string | null
+          trang_thai?: string
+          vai: string
+          vai_tro_chup?: string | null
+          xong_luc?: string | null
+        }
+        Update: {
+          cuoc_id?: string
+          da_duyet_luc?: string | null
+          han_thong_hanh?: string | null
+          hoi_tin_id?: string | null
+          id?: string
+          loai?: string
+          nhan_vien_id?: string
+          nhanh_sua?: string | null
+          noi_dung?: string
+          tao_luc?: string
+          tep_duong_dan?: string | null
+          tep_ten?: string | null
+          thong_hanh?: string | null
+          trang_thai?: string
+          vai?: string
+          vai_tro_chup?: string | null
+          xong_luc?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_tin_cuoc_id_fkey"
+            columns: ["cuoc_id"]
+            isOneToOne: false
+            referencedRelation: "chat_cuoc"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_tin_hoi_tin_id_fkey"
+            columns: ["hoi_tin_id"]
+            isOneToOne: false
+            referencedRelation: "chat_tin"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_tin_nhan_vien_id_fkey"
+            columns: ["nhan_vien_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chi_nhanh: {
         Row: {
           dia_chi: string | null

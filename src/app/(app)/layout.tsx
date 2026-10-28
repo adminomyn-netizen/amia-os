@@ -8,6 +8,7 @@ import { DauTrangMay } from "@/components/layout/DauTrangMay";
 import { DauTrang } from "@/components/layout/DauTrang";
 import { ThanhTabDuoi } from "@/components/layout/ThanhTabDuoi";
 import { CuonVeDau } from "@/components/layout/CuonVeDau";
+import { ChatNoi } from "@/components/chat/ChatNoi";
 
 /** Khung dùng chung: thanh menu ngang (máy tính) / đầu trang + thanh tab dưới (điện thoại) đứng yên khi đổi trang, chỉ phần nội dung bên dưới đổi (kèm loading.tsx). */
 export default async function KhungUngDung({ children }: { children: React.ReactNode }) {
@@ -31,6 +32,7 @@ export default async function KhungUngDung({ children }: { children: React.React
           <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-10 lg:pb-16 lg:pt-6">{children}</main>
           <CuonVeDau />
           {muc.length > 0 && <ThanhTabDuoi muc={muc} />}
+          {!nd.phaiDoiMatKhau && <ChatNoi choPhepSua={nd.vaiTro === "chu" || nd.vaiTro === "ky_thuat"} hoTen={nd.hoTen} />}
         </div>
       </div>
     </div>

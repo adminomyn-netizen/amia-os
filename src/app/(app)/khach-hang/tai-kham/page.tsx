@@ -6,6 +6,7 @@ import { ngayVN, soVN } from "@/lib/dinh-dang";
 import { chiNhanhXem, docNguongCSKH, docTaiKham, soTrongKhoang } from "@/lib/cham-soc-khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NUT_PHU } from "@/components/ui/dinh-dang";
 import { Chon } from "@/components/ui/Chon";
@@ -19,20 +20,24 @@ const TRUONG_TT: Truong[] = [
   { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong" },
 ];
 const BAO_TRUOC = [0, 3, 7, 14, 30], TRE = [30, 60, 90, 180, 365];
+const MOI_TRANG = 50;
 
 /** /khach-hang/tai-kham — Nhắc tái khám: khách có thẻ liệu trình còn buổi/còn hạn đã tới (hoặc sắp tới) hẹn mà chưa có lịch hẹn sắp tới. Không gửi SMS/Zalo. */
-export default async function NhacTaiKham({ searchParams }: { searchParams: Promise<{ cn?: string; truoc?: string; tre?: string }> }) {
+export default async function NhacTaiKham({ searchParams }: { searchParams: Promise<{ cn?: string; truoc?: string; tre?: string; trang?: string }> }) {
   const nd = await yeuCauQuyen("the.xem");
   const sp = await searchParams;
-  const ng = await docNguongCSKH();
-  const { cn, ds: dsCn, khoa } = await chiNhanhXem(nd, sp.cn);
+  const [ng, { cn, ds: dsCn, khoa }] = await Promise.all([docNguongCSKH(), chiNhanhXem(nd, sp.cn)]);
   const truoc = soTrongKhoang(sp.truoc, 0, 60, ng.baoTruoc)!, tre = soTrongKhoang(sp.tre, 1, 730, ng.treToiDa)!;
-  const [ds, { data: goi }] = await Promise.all([
-    docTaiKham(cn, truoc, tre),
+  const trang = Math.max(1, Math.min(Number(sp.trang) || 1, Math.ceil(2000 / MOI_TRANG)));
+  const [dsDau, { data: goi }] = await Promise.all([
+    docTaiKham(cn, truoc, tre, undefined, Math.min(trang * MOI_TRANG, 2000)),
     coQuyen(nd, "danhmuc.sua") ? sb().from("goi_the").select("id, ten, khoang_cach_ngay").eq("loai", "lan").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
   ]);
   const tenCn = new Map(dsCn.map((c) => [c.id, c.ten]));
-  const tong = ds[0]?.tong ?? 0;
+  const tong = dsDau[0]?.tong ?? 0;
+  // Danh sách dài (hàng trăm khách): mỗi trang 50 khách để trang nhẹ, hiện nhanh.
+  const ds = dsDau.slice((trang - 1) * MOI_TRANG, trang * MOI_TRANG);
+  const gan = (t: number | undefined) => `/khach-hang/tai-kham?${new URLSearchParams(Object.entries({ cn: cn ?? undefined, truoc: sp.truoc, tre: sp.tre, trang: t && t > 1 ? String(t) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`;
   const sua = coQuyen(nd, "khach.sua");
   const dat = (goi ?? []).filter((g) => g.khoang_cach_ngay != null);
 
@@ -60,7 +65,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
         )}
       </form>
 
-      <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> khách đến hẹn tái khám{tong > ds.length ? ` (hiện ${ds.length} khách đầu, theo hẹn sớm nhất)` : ""}{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
+      <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> khách đến hẹn tái khám{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
 
       <Bang duLieu={ds} khoa={(r) => r.khach_id} trong="Không có khách nào cần nhắc tái khám với điều kiện này."
         cot={[
@@ -76,6 +81,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
               {sua && !r.nhac_id && <NutHop kieu="chu" nhan="Ghi nhắc" tieuDe="Ghi nhắc tái khám" xacNhan={`Ghi nhắc tái khám cho ${r.ho_ten} vào mục nhắc chăm sóc của khách? (Không gửi tin nhắn cho khách.)`} nhanLuu="Ghi nhắc" an={{ khach_id: r.khach_id, lan_cuoi: r.lan_cuoi, den_han: r.den_han, ten_goi: r.ten_goi, chi_nhanh_id: r.chi_nhanh_id }} action={ghiNhacTaiKham} />}
             </span>) },
         ]} />
+      <ThanhTrang trang={trang} tong={Math.min(tong, 2000)} moi={MOI_TRANG} gan={gan} don="khách" />
 
       {dat.length > 0 && (
         <details className="rounded-the border border-vien bg-giay-sang px-4 py-3 text-[13px]">

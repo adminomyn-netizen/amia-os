@@ -1,3 +1,4 @@
+import { chiNhanhHoatDong } from "@/lib/chi-nhanh";
 import "server-only";
 import { sb } from "@/lib/db";
 import type { NguoiDung } from "@/lib/auth";
@@ -15,8 +16,7 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Chi nhánh đang xem: người gắn một chi nhánh bị KHOÁ ở chi nhánh đó; lãnh đạo không gắn chi nhánh chọn bằng ?cn=… hoặc xem tất cả. */
 export async function chiNhanhXem(nd: Pick<NguoiDung, "chiNhanhId">, cn: string | undefined) {
-  const { data } = await sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
-  const ds = data ?? [];
+  const ds = (await chiNhanhHoatDong().catch(() => [])).map((c) => ({ id: c.id, ten: c.ten }));
   if (nd.chiNhanhId) return { cn: nd.chiNhanhId, ds: ds.filter((c) => c.id === nd.chiNhanhId), khoa: true };
   return { cn: cn && UUID.test(cn) && ds.some((c) => c.id === cn) ? cn : null, ds, khoa: false };
 }

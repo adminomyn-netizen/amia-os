@@ -112,10 +112,10 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
             { nhan: "Phép", phai: true, hienThi: (r) => soVN(r.phep_co_luong) }, { nhan: "Lễ", phai: true, hienThi: (r) => soVN(r.nghi_le) }, { nhan: "Công tác/online", phai: true, hienThi: (r) => soVN(r.cong_tac) },
             { nhan: "Không lương", phai: true, hienThi: (r) => soVN(r.nghi_khong_luong) }, { nhan: "Vắng", phai: true, hienThi: (r) => (r.ngay_vang ? <span className="text-loi">{r.ngay_vang}</span> : "0") },
             { nhan: "Trễ (lần/phút)", phai: true, hienThi: (r) => (r.so_lan_tre ? `${r.so_lan_tre} / ${r.phut_tre}` : "") }, { nhan: "Về sớm", phai: true, hienThi: (r) => (r.so_lan_ve_som ? `${r.so_lan_ve_som} / ${r.phut_ve_som}` : "") },
-            { nhan: "OT (giờ)", phai: true, hienThi: (r) => (Number(r.ot_gio) ? soVN(r.ot_gio) : "") }, { nhan: "Công tính lương", phai: true, hienThi: (r) => <b>{soVN(r.cong_tinh_luong)}</b> },
+            { nhan: "OT (giờ)", phai: true, hienThi: (r) => (Number(r.ot_gio) ? soVN(r.ot_gio) : "") }, { nhan: "Trừ công trễ/sớm", phai: true, hienThi: (r) => (Number(r.cong_tru_tre) ? <span className="text-canh-bao">−{soVN(r.cong_tru_tre)}</span> : "") }, { nhan: "Công tính lương", phai: true, hienThi: (r) => <b>{soVN(r.cong_tinh_luong)}</b> },
             { nhan: "Phạt gợi ý", phai: true, hienThi: (r) => (phatNv.get(r.nhan_vien_id) ? tienVN(phatNv.get(r.nhan_vien_id)) : "") },
           ]} />
-        <p className="mt-3 text-[12px] text-muc-3">Công: đủ hai lượt vào/ra = 1, thiếu một lượt = 0,5. Phép, lễ, công tác tính trọn công. Phạt trễ/về sớm chỉ là gợi ý theo bảng mức phạt (chờ chị Lâm xác nhận bảng nào đang hiệu lực), không tự trừ lương. Vắng = ngày có lịch làm mà không chấm công và không có phiếu nghỉ đã duyệt.</p>
+        <p className="mt-3 text-[12px] text-muc-3">Công: đủ hai lượt vào/ra = 1, thiếu một lượt = 0,5. Phép, lễ, công tác tính trọn công. Đi trễ/về sớm bị trừ công = (phút trễ + phút về sớm) ÷ 480 (có phiếu Đi trễ/về sớm đã duyệt thì trừ theo giờ trong phiếu). Tiền phạt trễ/về sớm chỉ là gợi ý theo bảng mức phạt (chờ chị Lâm xác nhận bảng nào đang hiệu lực), không tự trừ lương. Vắng = ngày có lịch làm mà không chấm công và không có phiếu nghỉ đã duyệt.</p>
       </>
     );
   }

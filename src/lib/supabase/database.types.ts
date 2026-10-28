@@ -5999,6 +5999,7 @@ export type Database = {
           cong_chuan: number
           cong_di_lam: number
           cong_tac: number
+          cong_tru_tre: number
           cong_tinh_luong: number
           khung: string
           ngay_vang: number

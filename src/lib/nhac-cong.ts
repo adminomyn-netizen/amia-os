@@ -78,9 +78,9 @@ async function nhacQuanLy(nd: Nd, hom: string, phutNay: number): Promise<CanhBao
   if (xemLuong && ky) {
     const cho = ky.filter((k) => k.trang_thai === "cho_duyet").length;
     if (cho > 0 && coQuyen(nd, "luong.duyet")) ra.push({ ma: "klduyet", href: "/nhan-su/luong", nhan: `${cho} kỳ lương đang chờ duyệt.` });
-    // Hạn trả lương muộn nhất ngày 10 hằng tháng (quy định trả lương MSC): chưa lập / chưa gửi duyệt từ ngày 3, đã duyệt mà chưa chi từ ngày 8.
+    // Hạn trả lương muộn nhất ngày 10 hằng tháng (quy định trả lương MSC): chưa lập / chưa gửi duyệt nhắc từ ngày 3 đến 12, đã duyệt mà chưa chi nhắc từ ngày 8 cho tới khi chi.
     const kt = ky.find((k) => k.nam === tt.nam && k.thang === tt.thang), nhanKy = `${String(tt.thang).padStart(2, "0")}/${tt.nam}`;
-    if (coQuyen(nd, "luong.sua") && ngayTrongThang >= 3 && (!kt || kt.trang_thai === "nhap")) ra.push({ ma: "klhan", href: "/nhan-su/luong", nhan: `Kỳ lương tháng ${nhanKy} ${kt ? "chưa gửi duyệt" : "chưa được lập"}, hạn trả lương muộn nhất ngày 10.` });
+    if (coQuyen(nd, "luong.sua") && ngayTrongThang >= 3 && ngayTrongThang <= 12 && (!kt || kt.trang_thai === "nhap")) ra.push({ ma: "klhan", href: "/nhan-su/luong", nhan: `Kỳ lương tháng ${nhanKy} ${kt ? "chưa gửi duyệt" : "chưa được lập"}, hạn trả lương muộn nhất ngày 10.` });
     else if (kt?.trang_thai === "da_duyet" && ngayTrongThang >= 8) ra.push({ ma: "klhan", href: "/nhan-su/luong", nhan: `Lương tháng ${nhanKy} đã duyệt nhưng chưa chi, hạn trả muộn nhất ngày 10.` });
   }
   return ra;

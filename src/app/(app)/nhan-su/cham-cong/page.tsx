@@ -10,7 +10,7 @@ import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
-import { caCuaNgay } from "@/lib/ca-lam";
+import { caCuaNgayChiTiet } from "@/lib/ca-lam";
 import { KhungChamCong } from "@/components/nhan-su/KhungChamCong";
 import { chamCongVao, chamCongRa, nhapCongThuCong, khoaThangCong } from "../actions";
 
@@ -47,11 +47,11 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
       db.rpc("so_du_phep", { p_nv: nd.nhanVienId, p_nam: nam }),
     ]);
     const homNay = (cc ?? []).find((c) => c.ngay === hom);
-    const ca = await caCuaNgay(nd.nhanVienId, hom);
+    const { ca, lyDo: lyDoKhongCa } = await caCuaNgayChiTiet(nd.nhanVienId, hom);
     const tongCong = (cc ?? []).reduce((a, c) => a + Number(c.cong), 0);
     noiDung = (
       <>
-        <KhungChamCong ngay={ngayVN(hom)}
+        <KhungChamCong ngay={ngayVN(hom)} lyDoKhongCa={lyDoKhongCa}
           ca={ca ? { ten: ca.ten, vao: ca.gio_vao, ra: ca.gio_ra, dungSai: ca.dung_sai_phut } : null}
           vao={homNay?.vao ? { gio: gioVN(homNay.vao), trePhut: homNay.tre_phut } : null}
           ra={homNay?.ra ? { gio: gioVN(homNay.ra), veSomPhut: homNay.ve_som_phut } : null}

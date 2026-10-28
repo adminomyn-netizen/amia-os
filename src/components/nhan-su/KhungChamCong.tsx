@@ -6,6 +6,7 @@ import { Clock, LogIn, LogOut } from "lucide-react";
 type Props = {
   ngay: string;
   ca: { ten: string; vao: string; ra: string; dungSai: number } | null;
+  lyDoKhongCa?: string | null;
   vao: { gio: string; trePhut: number } | null;
   ra: { gio: string; veSomPhut: number } | null;
   nutVao: React.ReactNode;
@@ -23,7 +24,7 @@ type Tin = { mau: "tot" | "canh" | "trung"; chu: string };
 /** Khung chấm công theo kiểu Lark Attendance: hai khung xếp dọc (giờ vào, giờ ra), mỗi khung nêu giờ của ca, tình trạng thời gian thực và nút bấm riêng.
  *  Chưa tới giờ hoặc còn trong dung sai thì chấm vào bình thường; quá giờ vẫn chấm được nhưng báo trễ. Giờ ra: chưa tới giờ vẫn chấm được nhưng báo về sớm.
  *  Cập nhật mỗi 30 giây, tạm nghỉ khi tab bị ẩn. */
-export function KhungChamCong({ ngay, ca, vao, ra, nutVao, nutRa }: Props) {
+export function KhungChamCong({ ngay, ca, lyDoKhongCa, vao, ra, nutVao, nutRa }: Props) {
   const [phut, setPhut] = useState<number | null>(null);
   useEffect(() => {
     let t: ReturnType<typeof setInterval> | undefined;
@@ -50,12 +51,23 @@ export function KhungChamCong({ ngay, ca, vao, ra, nutVao, nutRa }: Props) {
     <section aria-label="Chấm công hôm nay" className="mb-6 space-y-4">
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[14px] text-muc-2">
         <span className="inline-flex items-center gap-2 font-medium text-muc"><Clock strokeWidth={1.7} className="h-[18px] w-[18px] text-nhan" aria-hidden />Hôm nay {ngay}</span>
-        {ca ? <span>Ca <b className="font-medium text-muc">{ca.ten}</b> · làm việc {hhmm(ca.vao)} – {hhmm(ca.ra)}</span> : <span>Hôm nay bạn không có ca làm (nghỉ theo lịch hoặc không phải chấm công).</span>}
+        {ca && <span>Ca <b className="font-medium text-muc">{ca.ten}</b> · làm việc {hhmm(ca.vao)} – {hhmm(ca.ra)}</span>}
       </div>
+      {!ca && !vao && !ra && (
+        <div className="the-noi the-noi-thap flex items-start gap-4 p-5">
+          <span className="o-bieu-tuong" aria-hidden><Clock strokeWidth={1.7} className="h-6 w-6" /></span>
+          <div className="min-w-0 text-[14.5px]">
+            <div className="font-medium text-muc">Hôm nay bạn không có ca làm</div>
+            <p className="mt-1 text-muc-2">{lyDoKhongCa ?? "Hôm nay không phải ngày chấm công của bạn."}</p>
+          </div>
+        </div>
+      )}
+      {(ca || vao || ra) && <>
       <Khung bieuTuong={<LogIn strokeWidth={1.7} className="h-6 w-6" aria-hidden />} nhan="Giờ vào làm" gio={ca ? hhmm(ca.vao) : "—"}
         xong={vao ? { gio: vao.gio, ghiChu: vao.trePhut > 0 ? `Trễ ${doi(vao.trePhut)}` : "Đúng giờ", canh: vao.trePhut > 0 } : null} tin={tinVao} nut={nutVao} nhanXong="Đã chấm công vào" />
       <Khung bieuTuong={<LogOut strokeWidth={1.7} className="h-6 w-6" aria-hidden />} nhan="Giờ ra về" gio={ca ? hhmm(ca.ra) : "—"}
         xong={ra ? { gio: ra.gio, ghiChu: ra.veSomPhut > 0 ? `Về sớm ${doi(ra.veSomPhut)}` : "Đủ giờ", canh: ra.veSomPhut > 0 } : null} tin={tinRa} nut={nutRa} nhanXong="Đã chấm công ra" />
+      </>}
     </section>
   );
 }

@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { sb } from "@/lib/db";
 import { caCuaNhieuNguoi } from "@/lib/ca-lam";
-import { guiChoNhanVien } from "@/lib/push";
+import { guiChoNhanVien, nguoiCoQuyen } from "@/lib/push";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { phutTrongNgayVN, phutTuGio } from "@/lib/nhan-su";
 import { laVaiTro, quyenHieuLuc, type Quyen } from "@/lib/quyen";
+import { kyCanBaoHomNay, tinhTongHop } from "@/lib/tong-hop-hieu-suat";
 
 export const maxDuration = 60;
 const hhmm = (g: string) => g.slice(0, 5);
@@ -56,6 +57,17 @@ export async function GET(req: Request) {
         if (trong.length > 0) daGui += await gui(n.id, "tong_hop_09", "Chấm công lúc 09:00", `Đã chấm công vào ${daVao}/${trong.length} người có ca hôm nay${trong.length - daVao ? `, còn ${trong.length - daVao} người chưa vào` : ""}.`, "/nhan-su/cham-cong?tab=bang-cong");
       }
       if (hom.slice(8) === "25" && co(n, "cong.sua")) daGui += await gui(n.id, "nghi_tuan_25", "Nhắc đăng ký lịch nghỉ hằng tuần", "Đã đến ngày 25: xếp ca và ngày nghỉ hằng tuần cho tháng sau.", "/nhan-su/ca-kip");
+    }
+  }
+  // Tổng hợp hiệu suất tuần (Thứ Hai) / tháng (ngày 1) / năm (1/1) từ 08:00; cửa sổ rộng đến 12:00, mỗi kỳ chỉ ghi và báo một lần nên trễ giờ cũng không sao.
+  if (phut >= 8 * 60 && phut < 12 * 60) {
+    for (const k of kyCanBaoHomNay(hom)) {
+      const tt = await tinhTongHop(k);
+      const { data: moi } = await db.from("tong_hop_hieu_suat").upsert({ loai: k.loai, ky: k.ky, tieu_de: tt.tieuDe, noi_dung: tt.noiDung, chi_tiet: tt.chiTiet }, { onConflict: "loai,ky", ignoreDuplicates: true }).select("id");
+      if (moi?.length) {
+        // Người xem được số liệu tiền mới nhận; thông báo đẩy chung chung, số liệu nằm trong chuông.
+        for (const u of await nguoiCoQuyen("baocao.tien", null)) daGui += await gui(u, `tong_hop_${k.loai}`, tt.tieuDe, "Đã có tổng hợp mới. Mở chuông thông báo để xem số liệu.", "/bao-cao");
+      }
     }
   }
   await db.from("nhac_da_gui").delete().lt("ngay", new Date(Date.now() - 60 * 86_400_000).toISOString().slice(0, 10));

@@ -4943,6 +4943,36 @@ export type Database = {
           },
         ]
       }
+      tong_hop_hieu_suat: {
+        Row: {
+          chi_tiet: Json
+          id: string
+          ky: string
+          loai: string
+          noi_dung: string
+          tao_luc: string
+          tieu_de: string
+        }
+        Insert: {
+          chi_tiet?: Json
+          id?: string
+          ky: string
+          loai: string
+          noi_dung: string
+          tao_luc?: string
+          tieu_de: string
+        }
+        Update: {
+          chi_tiet?: Json
+          id?: string
+          ky?: string
+          loai?: string
+          noi_dung?: string
+          tao_luc?: string
+          tieu_de?: string
+        }
+        Relationships: []
+      }
       van_ban: {
         Row: {
           chi_nhanh_id: string | null

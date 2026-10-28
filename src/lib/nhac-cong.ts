@@ -57,6 +57,17 @@ async function nhacQuanLy(nd: Nd, hom: string, phutNay: number): Promise<CanhBao
   const db = sb(), ra: CanhBao[] = [], ngayTrongThang = Number(hom.slice(8)), tt = thangLech(hom, -1), ts = thangLech(hom, 1);
   const xemCong = coQuyen(nd, "cong.xem"), suaCong = coQuyen(nd, "cong.sua");
   const xemLuong = coQuyen(nd, "luong.xem") || coQuyen(nd, "luong.sua") || coQuyen(nd, "luong.duyet");
+  // Tổng hợp hiệu suất tuần/tháng/năm gần nhất cho người xem được số liệu tiền (doanh số).
+  if (coQuyen(nd, "baocao.tien")) {
+    const { data: th } = await db.from("tong_hop_hieu_suat").select("loai, tieu_de, noi_dung, tao_luc").gte("tao_luc", new Date(Date.now() - 370 * 86_400_000).toISOString()).order("tao_luc", { ascending: false }).limit(12);
+    const HAN = { tuan: 8, thang: 35, nam: 370 } as const, co = new Set<string>();
+    for (const t of th ?? []) {
+      const loai = t.loai as keyof typeof HAN;
+      if (co.has(loai) || !(loai in HAN) || Date.now() - Date.parse(t.tao_luc) > HAN[loai] * 86_400_000) continue;
+      co.add(loai);
+      ra.push({ ma: `tomtat_${loai}`, href: "/bao-cao", nhan: `${t.tieu_de}. ${t.noi_dung}` });
+    }
+  }
   if (!xemCong && !suaCong && !xemLuong) return ra;
   const [caMap, { data: ccHom }, { data: khoa }, { count: ccThangTruoc }, { count: lichThangSau }, { data: ky }] = await Promise.all([
     xemCong && phutNay >= 9 * 60 - 60 ? caCuaNhieuNguoi(hom) : null,

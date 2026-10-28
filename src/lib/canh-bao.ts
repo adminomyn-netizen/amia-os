@@ -5,7 +5,7 @@ import { coQuyen, type CoQuyen } from "@/lib/quyen";
 import { layNhacCong } from "@/lib/nhac-cong";
 
 /** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
-export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan"; nhan: string; href: string };
+export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
 export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null; nhanVienId?: string }): Promise<CanhBao[]> {

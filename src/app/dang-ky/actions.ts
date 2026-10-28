@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { sb, thongBaoLoi } from "@/lib/db";
+import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { coSdtHopLe, chuanSdt } from "@/lib/dinh-dang";
 
@@ -37,5 +38,7 @@ export async function dangKyTaiKhoan(_: KQ, fd: FormData): Promise<KQ> {
     await createAdminClient().auth.admin.deleteUser(data.user.id);
     return { loi: thongBaoLoi(e2) };
   }
-  redirect("/dang-nhap?dk=1");
+  // Đăng ký xong vào luôn, không bắt gõ lại email/mật khẩu; nếu đăng nhập tự động trục trặc thì về trang đăng nhập như cũ.
+  const { error: loiVao } = await (await createClient()).auth.signInWithPassword({ email, password: mk });
+  redirect(loiVao ? "/dang-nhap?dk=1" : "/");
 }

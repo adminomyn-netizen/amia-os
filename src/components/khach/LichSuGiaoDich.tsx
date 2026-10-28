@@ -13,7 +13,8 @@ export type ThamSoLichSu = { tu?: string; den?: string; hd?: string; the?: strin
 /** Trang hiện tại (1…) của một mục, lấy từ địa chỉ. */
 const soTrang = (v?: string) => Math.max(1, Math.min(10_000, Number(v) || 1));
 
-/** Tab "Lịch sử giao dịch" của hồ sơ khách: hoá đơn, lịch sử dùng thẻ (từ dòng hoá đơn SalonHero "SERVICE:USING"), buổi đã thực hiện, lịch hẹn.
+/** Tab "Lịch sử giao dịch" của hồ sơ khách: hoá đơn, lịch sử dùng thẻ, buổi đã thực hiện, lịch hẹn.
+ *  Dùng thẻ = dòng dịch vụ trên hoá đơn SalonHero có mã thẻ (the_khach_sh_id, giá 0 — trừ vào thẻ) hoặc loại gốc "SERVICE:USING" (có dòng không ghi mã thẻ).
  *  Mỗi mục phân trang riêng (20 dòng), chung một khoảng ngày. Chỉ đọc. */
 export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamSoLichSu }) {
   const db = sb();
@@ -23,13 +24,18 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
   const r = (p: number) => [(p - 1) * MOI_TRANG, p * MOI_TRANG - 1] as const;
 
   let qHd = db.from("hoa_don").select("id, ma, sh_ma, ngay_hd, trang_thai, tong_phai_thu, da_thu, con_no", { count: "exact" }).eq("khach_id", khachId);
-  let qThe = db.from("hoa_don_dong").select("id, ten, the_khach_sh_id, hoa_don!inner(id, ma, sh_ma, ngay_hd, khach_id, trang_thai), dong_nhan_vien(vai, nhan_vien_id)", { count: "exact" })
-    .eq("hoa_don.khach_id", khachId).eq("loai_goc", "SERVICE:USING").neq("hoa_don.trang_thai", "huy");
   let qBt = db.from("buoi_thuc_hien").select("id, ngay_lam, dich_vu_id, the_id, nv_thuc_hien_id, trang_thai, doanh_thu_buoi", { count: "exact" }).eq("khach_id", khachId);
   let qLh = db.from("lich_hen").select("id, bat_dau, trang_thai, dich_vu_ten, nhan_vien_ten, lich_hen_dich_vu(dich_vu_id)", { count: "exact" }).eq("khach_id", khachId);
-  if (tu) { qHd = qHd.gte("ngay_hd", tu); qThe = qThe.gte("hoa_don.ngay_hd", tu); qBt = qBt.gte("ngay_lam", tu); qLh = qLh.gte("bat_dau", `${tu}T00:00:00+07:00`); }
-  if (den) { qHd = qHd.lte("ngay_hd", den); qThe = qThe.lte("hoa_don.ngay_hd", den); qBt = qBt.lte("ngay_lam", den); qLh = qLh.lte("bat_dau", `${den}T23:59:59.999+07:00`); }
+  // Dùng thẻ: lấy mã các hoá đơn (không huỷ) của khách trong khoảng ngày trước (tối đa ~200/khách), rồi mới lọc dòng —
+  // lọc thẳng qua bảng cha làm CSDL quét cả ~70 nghìn dòng hoá đơn và hết giờ chờ.
+  let qIdHd = db.from("hoa_don").select("id").eq("khach_id", khachId).neq("trang_thai", "huy");
+  if (tu) { qHd = qHd.gte("ngay_hd", tu); qIdHd = qIdHd.gte("ngay_hd", tu); qBt = qBt.gte("ngay_lam", tu); qLh = qLh.gte("bat_dau", `${tu}T00:00:00+07:00`); }
+  if (den) { qHd = qHd.lte("ngay_hd", den); qIdHd = qIdHd.lte("ngay_hd", den); qBt = qBt.lte("ngay_lam", den); qLh = qLh.lte("bat_dau", `${den}T23:59:59.999+07:00`); }
 
+  const { data: idHd } = await qIdHd.limit(1000);
+  const dsIdHd = (idHd ?? []).map((x) => x.id);
+  const qThe = db.from("hoa_don_dong").select("id, ten, the_khach_sh_id, hoa_don(id, ma, sh_ma, ngay_hd), dong_nhan_vien(vai, nhan_vien_id)", { count: "exact" })
+    .in("hoa_don_id", dsIdHd.length ? dsIdHd : ["00000000-0000-0000-0000-000000000000"]).neq("loai", "san_pham").or("the_khach_sh_id.not.is.null,loai_goc.eq.SERVICE:USING");
   const [hd, the, bt, lh, { data: dvAll }] = await Promise.all([
     qHd.order("ngay_hd", { ascending: false }).order("id").range(...r(pHd)),
     // Sắp theo ngày hoá đơn (bảng cha, quan hệ nhiều-một) — PostgREST cho phép order=hoa_don(ngay_hd).
@@ -38,6 +44,8 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
     qLh.order("bat_dau", { ascending: false }).order("id").range(...r(pLh)),
     db.from("dich_vu").select("id, ten"),
   ]);
+  for (const [ten, kq] of [["hoa_don", hd], ["dung_the", the], ["buoi", bt], ["lich_hen", lh]] as const) if (kq.error) console.error("[lich-su-khach]", ten, kq.error.code, kq.error.message);
+  const loiDoc = [hd, the, bt, lh].some((x) => x.error);
   type DongThe = { id: string; ten: string; the_khach_sh_id: number | null; hoa_don: { id: string; ma: string; sh_ma: string | null; ngay_hd: string }; dong_nhan_vien: { vai: string; nhan_vien_id: string }[] };
   const dongThe = (the.data ?? []) as unknown as DongThe[];
 
@@ -80,6 +88,7 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
         {(tu || den) && <Link scroll={false} href={`/khach-hang/${khachId}?tab=lich-su`} className="flex h-9 items-center text-[13px] font-medium text-nhan-dam hover:underline">Bỏ lọc ngày</Link>}
       </form>
 
+      {loiDoc && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Có mục chưa tải được (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
       <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Hoá đơn</h3>
         <Bang duLieu={hd.data ?? []} khoa={(x) => x.id} trong="Không có hoá đơn trong khoảng này." cot={[
           { nhan: "Mã", chinh: true, hienThi: (x) => <Link className="font-medium text-nhan-dam hover:underline" href={`/hoa-don/${x.id}`}>{x.sh_ma ?? x.ma}</Link> }, { nhan: "Ngày", hienThi: (x) => ngayVN(x.ngay_hd) },

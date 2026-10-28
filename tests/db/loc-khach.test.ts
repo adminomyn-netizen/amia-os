@@ -60,3 +60,19 @@ describe("loc_khach", () => {
     expect(t.tinh.map((x) => x.tinh).sort()).toEqual(["Lâm Đồng", "Nghệ An"]);
   });
 });
+
+describe("thong_ke_khach (0070)", () => {
+  it("đếm theo giới tính, tỉnh, nhóm tuổi, khách mới tháng này, điểm", async () => {
+    const t = (await q<{ t: Record<string, unknown> }>(`select thong_ke_khach() t`))[0].t as {
+      tong: number; gioi_tinh: Record<string, number>; tinh: { ten: string; so: number }[]; tuoi: Record<string, number>; moi_theo_thang: { so: number }[]; co_diem: number; tong_diem: number;
+    };
+    expect(t.tong).toBe(3);
+    expect(t.gioi_tinh).toEqual({ "nữ": 1, nam: 1, chua_ro: 1 });
+    expect(t.tinh.length).toBe(2);
+    expect(t.tuoi.chua_ro).toBe(1);
+    expect(t.moi_theo_thang.length).toBe(12);
+    expect(t.moi_theo_thang.at(-1)!.so).toBe(3);
+    expect(t.co_diem).toBe(1);
+    expect(t.tong_diem).toBe(120);
+  });
+});

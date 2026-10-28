@@ -172,7 +172,7 @@ export const MODULE: Module[] = [
         { ten: "Chính sách phê duyệt", moTa: "Thao tác nào cần duyệt, ai duyệt, ngưỡng tiền.", duongDan: "/cai-dat/chinh-sach-duyet", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
       ] },
       { nhan: "Khách hàng & đặt lịch", the: [
-        { ten: "Điểm thưởng theo hạng", moTa: "Chi bao nhiêu được 1 điểm, 1 điểm giảm bao nhiêu, theo từng hạng khách.", duongDan: "/cai-dat/diem-thuong", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
+        { ten: "Điểm khách hàng", moTa: "Quy đổi tiền thành điểm, điểm thành tiền, mức điểm từng hạng khách.", duongDan: "/cai-dat/diem-thuong", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Web đặt Lịch", moTa: "Trang đặt lịch online cho khách: đường dẫn, khoá trang, đặt trước tối thiểu, số ngày nhận, khung giờ, thông báo email.", duongDan: "/cai-dat/web-dat-lich", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Zalo OA / SMS", moTa: "Nhắn nhắc lịch, chăm sóc (cần tài khoản Zalo OA / nhà mạng).", trangThai: "sap_co" },
       ] },

@@ -71,7 +71,7 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
         </div>
       )}
       {moCD && (
-        <div role="dialog" aria-label="Cài đặt hệ thống" className="the-noi the-noi-thap vao fixed inset-x-3 top-[70px] z-50 mx-auto max-h-[calc(100vh-90px)] max-w-[1080px] overflow-y-auto p-5 sm:inset-x-6 lg:p-6">
+        <div role="dialog" aria-label="Cài đặt hệ thống" className="the-noi the-noi-thap vao fixed inset-x-3 top-[76px] z-50 mx-auto max-h-[calc(100vh-96px)] max-w-[1080px] overflow-y-auto p-5 sm:inset-x-6 lg:left-[268px] lg:right-6 lg:p-6">
           <div className="mb-4 flex items-center justify-between gap-3 border-b border-vien pb-3">
             <h2 className="flex items-center gap-2.5 text-[16px] font-semibold text-muc"><Settings strokeWidth={1.6} className="h-[19px] w-[19px] text-nhan" aria-hidden />Cài đặt hệ thống</h2>
             <button type="button" onClick={() => setMoCD(false)} className="rounded-nho px-3 py-1.5 text-[13px] text-muc-2 hover:bg-giay-tram">Đóng</button>

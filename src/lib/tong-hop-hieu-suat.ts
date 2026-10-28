@@ -26,16 +26,18 @@ export function kyCanBaoHomNay(homNay: string): KyTongHop[] {
 export async function tinhTongHop(k: KyTongHop): Promise<{ tieuDe: string; noiDung: string; chiTiet: Record<string, number> }> {
   const db = sb(), tu = `${k.tu}T00:00:00+07:00`, den = `${congNgay(k.den, 1)}T00:00:00+07:00`;
   const [hd, khach, lich, lead, cc] = await Promise.all([
-    db.from("hoa_don").select("tong_phai_thu, con_no").eq("trang_thai", "hoan_thanh").gte("ngay_hd", k.tu).lte("ngay_hd", k.den).limit(50000),
+    db.from("hoa_don").select("tong_phai_thu, con_no, la_so_du_dau").eq("trang_thai", "hoan_thanh").gte("ngay_hd", k.tu).lte("ngay_hd", k.den).limit(50000),
     db.from("khach_hang").select("id", { count: "exact", head: true }).gte("tao_luc", tu).lt("tao_luc", den),
     db.from("lich_hen").select("trang_thai").gte("bat_dau", tu).lt("bat_dau", den).limit(50000),
     db.from("lead").select("id", { count: "exact", head: true }).gte("tao_luc", tu).lt("tao_luc", den),
     db.from("cham_cong").select("tre_phut, cong").gte("ngay", k.tu).lte("ngay", k.den).limit(50000),
   ]);
-  const doanhSo = (hd.data ?? []).reduce((a, r) => a + Number(r.tong_phai_thu), 0), conNo = (hd.data ?? []).reduce((a, r) => a + Number(r.con_no), 0);
+  // Hoá đơn nợ đầu kỳ (la_so_du_dau) là SỐ DƯ chuyển từ SalonHero, không phải doanh số: loại khỏi doanh số và số hoá đơn, nhưng vẫn tính vào còn nợ.
+  const banHang = (hd.data ?? []).filter((r) => !r.la_so_du_dau);
+  const doanhSo = banHang.reduce((a, r) => a + Number(r.tong_phai_thu), 0), conNo = (hd.data ?? []).reduce((a, r) => a + Number(r.con_no), 0);
   const nLich = lich.data?.length ?? 0, huy = (lich.data ?? []).filter((l) => l.trang_thai === "huy" || l.trang_thai === "khong_den").length;
   const luot = cc.data?.length ?? 0, tre = (cc.data ?? []).filter((c) => c.tre_phut > 0).length;
-  const chiTiet = { doanhSo, soHoaDon: hd.data?.length ?? 0, conNo, khachMoi: khach.count ?? 0, lich: nLich, lichHuy: huy, leadMoi: lead.count ?? 0, luotChamCong: luot, luotTre: tre };
+  const chiTiet = { doanhSo, soHoaDon: banHang.length, conNo, khachMoi: khach.count ?? 0, lich: nLich, lichHuy: huy, leadMoi: lead.count ?? 0, luotChamCong: luot, luotTre: tre };
   const noiDung = [
     `Bán hàng: ${chiTiet.soHoaDon} hoá đơn, doanh số ${tienVN(doanhSo)}${conNo > 0 ? `, còn nợ ${tienVN(conNo)}` : ""}.`,
     `Khách: ${chiTiet.khachMoi} khách mới, ${chiTiet.leadMoi} lead mới. Lịch hẹn: ${nLich} (huỷ/không đến ${huy}).`,

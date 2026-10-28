@@ -83,9 +83,10 @@ try {
   const am = await q(`select to_char(bat_dau at time zone 'Asia/Ho_Chi_Minh', 'YYYY-MM') m, trang_thai t, count(*)::int n from public.lich_hen where sh_id = any($1::bigint[]) group by 1, 2`, [ids]);
   const amTheo = new Map(am.map((r) => [r.m + "|" + r.t, r.n]));
   const nguonTheo = new Map();
-  for (const r of nguon) { if (daCo.has(Number(r.id))) continue; const k = vnNgay(r.booked_at).slice(0, 7) + "|" + (TT[r.status] ?? "chua_xac_nhan"); nguonTheo.set(k, (nguonTheo.get(k) ?? 0) + 1); }
+  const daDem = new Set();
+  for (const r of nguon) { if (daCo.has(Number(r.id)) || daDem.has(Number(r.id))) continue; daDem.add(Number(r.id)); const k = vnNgay(r.booked_at).slice(0, 7) + "|" + (TT[r.status] ?? "chua_xac_nhan"); nguonTheo.set(k, (nguonTheo.get(k) ?? 0) + 1); }
   const song = new Map();
-  if (tepSong && existsSync(tepSong)) for (const [m, tong, st] of JSON.parse(readFileSync(tepSong, "utf8"))) { for (const [s, n] of Object.entries(st)) song.set(m + "|" + (TT[s] ?? s), n); }
+  if (tepSong && existsSync(tepSong) && !process.argv.includes("--bo-song")) for (const [m, tong, st] of JSON.parse(readFileSync(tepSong, "utf8"))) { for (const [s, n] of Object.entries(st)) song.set(m + "|" + (TT[s] ?? s), n); }
   const keys = [...new Set([...amTheo.keys(), ...nguonTheo.keys()])].sort();
   const bang = keys.map((k) => { const a = amTheo.get(k) ?? 0, g = (nguonTheo.get(k) ?? 0) - (boQua.get(k) ?? 0), s = song.has(k) ? song.get(k) - (boQua.get(k) ?? 0) : null; return { thang_trangthai: k, tep_xuat: g, AMIA: a, SalonHero_song: s, lech_so_voi_tep: a - g, lech_so_voi_song: s == null ? "-" : a - s }; });
   inBang(bang);

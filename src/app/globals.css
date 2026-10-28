@@ -129,8 +129,8 @@
   --color-sac-cam-nen: var(--sac-cam-nen);
   --color-sac-hong: var(--sac-hong);
   --color-sac-hong-nen: var(--sac-hong-nen);
-  --font-sans: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-be-vietnam), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-roboto), "Helvetica Neue", Helvetica, ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-roboto), "Helvetica Neue", Helvetica, ui-sans-serif, system-ui, sans-serif;
   --radius-tag: 5px;
   --radius-nho: 8px;
   --radius-the: 10px;
@@ -341,12 +341,12 @@ body {
 @media print { .khung-di-dong { height: auto; overflow: visible; } .noi-dung-cuon { overflow: visible; } }
 .bang-duoi { padding-bottom: env(safe-area-inset-bottom); }
 
-/* Tiêu đề: cùng họ Be Vietnam Pro, đậm vừa, khít chữ. Không dùng chữ có chân. */
+/* Tiêu đề: Roboto đậm 700, giãn chữ -0.015em như tiêu đề SalonHero (23px/700/-0.345px). */
 .chu-tieu-de {
   font-family: var(--font-sans);
-  font-weight: 600;
-  line-height: 1.18;
-  letter-spacing: -0.028em;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
 }
 .nhan-muc {
   font-size: 12px;

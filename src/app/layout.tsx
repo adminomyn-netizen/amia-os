@@ -1,10 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Be_Vietnam_Pro } from "next/font/google";
+import { Roboto } from "next/font/google";
 import "./globals.css";
 import { DangKyUngDung } from "@/components/layout/DangKyUngDung";
 
-/** Be Vietnam Pro: phông do nhà thiết kế Việt vẽ riêng cho tiếng Việt (dấu cân, không méo). Một họ duy nhất cho cả tiêu đề lẫn nội dung, thay cặp chữ có chân + Roboto quen mắt của các bản mẫu AI (chủ yêu cầu 26/10/2026). */
-const beVietnam = Be_Vietnam_Pro({ variable: "--font-be-vietnam", subsets: ["latin", "latin-ext", "vietnamese"], weight: ["400", "500", "600", "700"], display: "swap" });
+/** Roboto (giấy phép Apache 2.0, dùng thương mại được): cùng phông với SalonHero để nhân viên chuyển sang không thấy lạ mắt (chị Lâm yêu cầu 28/10/2026, thay Be Vietnam Pro chọn 26/10). Một họ duy nhất cho cả tiêu đề lẫn nội dung; đổi phông chỉ cần sửa dòng này và `--font-sans` trong globals.css. */
+const chuChinh = Roboto({ variable: "--font-chinh", subsets: ["latin", "latin-ext", "vietnamese"], weight: ["400", "500", "700"], display: "swap" });
 
 export const metadata: Metadata = {
   title: "AMIA OS",
@@ -17,7 +17,7 @@ const DAT_GIAO_DIEN = `var t="light";try{if(localStorage.getItem("amia_giao_dien
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="vi" className={`${beVietnam.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="vi" className={`${chuChinh.variable} h-full antialiased`} suppressHydrationWarning>
       <head><script dangerouslySetInnerHTML={{ __html: DAT_GIAO_DIEN }} /></head>
       <body className="flex min-h-full flex-col bg-background text-foreground">{children}<DangKyUngDung /></body>
     </html>

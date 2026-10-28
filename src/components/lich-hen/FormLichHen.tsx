@@ -9,10 +9,12 @@ import { GioChon } from "@/components/ui/GioChon";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { timKhach } from "@/app/(app)/ban-hang/actions";
+import { KIEU_LAP, laKieuLap, LUA_CHON_NGUON, nhanNguon, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
+import { ngayVN } from "@/lib/dinh-dang";
 
 type DV = { id: string; ma: string; ten: string; thoiLuong: number };
 export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string; thoiLuong: number; nhanVienId: string; phong: string; nguon: string; ghiChu: string; dichVuIds: string[]; chiNhanhId: string };
-const NGUON_LICH = ["Điện thoại", "Tại quầy", "Zalo", "Messenger", "TikTok", "Web đặt lịch", "Telesale", "Khách giới thiệu", "Sự kiện"].map((x) => ({ gia_tri: x, nhan: x }));
+const LUA_CHON_LAP = [{ gia_tri: "", nhan: "Không lặp" }, ...Object.entries(KIEU_LAP).map(([gia_tri, k]) => ({ gia_tri, nhan: k.nhan }))];
 
 /** Đặt lịch / đổi lịch. Thời lượng tự cộng theo dịch vụ chọn nhưng sửa tay được. */
 export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, tim, action, ban, sua, mo: moSan, homNay }: {
@@ -33,6 +35,12 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   const [phong, setPhong] = useState(sua?.phong ?? "");
   const [nguon, setNguon] = useState(sua?.nguon ?? "");
   const [ghiChu, setGhiChu] = useState(sua?.ghiChu ?? "");
+  const [kieuLap, setKieuLap] = useState("");
+  const [khoang, setKhoang] = useState("1");
+  const [tongBuoi, setTongBuoi] = useState("4");
+  // Nguồn cũ không thuộc danh sách (chữ nhập tay trước đây) vẫn hiện để không mất khi đổi lịch.
+  const dsNguon = nguon && !LUA_CHON_NGUON.some((x) => x.gia_tri === nguon) ? [...LUA_CHON_NGUON, { gia_tri: nguon, nhan: nhanNguon(nguon) }] : LUA_CHON_NGUON;
+  const xemLap = laKieuLap(kieuLap) && Number(tongBuoi) >= 2 ? ngayLap(ngay, kieuLap, Math.max(1, Number(khoang) || 1), Math.min(Number(tongBuoi), TOI_DA_BUOI_LAP)) : [];
   const [tim_, setTim] = useState("");
   const doiDv = (id: string) => {
     const moi = dvs.includes(id) ? dvs.filter((x) => x !== id) : [...dvs, id];
@@ -44,7 +52,9 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     const fd = new FormData();
     if (sua) fd.set("id", sua.id);
     fd.set("khach_id", khach?.id ?? ""); fd.set("ngay", ngay); fd.set("gio", gio); fd.set("thoi_luong", phut); fd.set("nhan_vien_id", nv); fd.set("chi_nhanh_id", cn);
-    fd.set("phong", phong); fd.set("nguon", nguon); fd.set("ghi_chu", ghiChu); dvs.forEach((d) => fd.append("dich_vu_ids", d));
+    fd.set("phong", phong); fd.set("nguon", nguon); fd.set("ghi_chu", ghiChu);
+    if (!sua && kieuLap) { fd.set("kieu_lap", kieuLap); fd.set("lap_khoang", khoang || "1"); fd.set("lap_tong", tongBuoi); }
+    dvs.forEach((d) => fd.append("dich_vu_ids", d));
     bat(async () => { const kq = await action(fd); if (kq.loi) setLoi(kq.loi); else { setMo(false); router.refresh(); } });
   };
   const dsDv = dichVu.filter((d) => !tim_ || `${d.ma} ${d.ten}`.toLowerCase().includes(tim_.toLowerCase()));
@@ -75,8 +85,21 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
             <div><label className={NHAN_O}>Người thực hiện</label><Chon trong="Chưa phân" ariaLabel="Người thực hiện" giaTri={nv} onDoi={setNv} luaChon={[{ gia_tri: "", nhan: "Chưa phân" }, ...nhanVien]} /></div>
             <div><label className={NHAN_O}>Chi nhánh</label><Chon ariaLabel="Chi nhánh" giaTri={cn} onDoi={setCn} luaChon={chiNhanh} /></div>
             <div><label htmlFor="lh-phong" className={NHAN_O}>Phòng / giường</label><input id="lh-phong" value={phong} onChange={(e) => setPhong(e.target.value)} className={O_NHAP} /></div>
-            <div><label className={NHAN_O}>Nguồn đặt lịch</label><Chon trong="Chọn nguồn" ariaLabel="Nguồn đặt lịch" giaTri={nguon} onDoi={setNguon} luaChon={[{ gia_tri: "", nhan: "Không ghi" }, ...NGUON_LICH]} /></div>
+            <div><label className={NHAN_O}>Nguồn đặt lịch</label><Chon trong="Chọn nguồn" ariaLabel="Nguồn đặt lịch" giaTri={nguon} onDoi={setNguon} luaChon={[{ gia_tri: "", nhan: "Không ghi" }, ...dsNguon]} /></div>
           </div>
+          {!sua && (
+            <fieldset className="rounded-nho border border-vien px-3 pb-3 pt-1">
+              <legend className="px-1 text-[13px] font-medium text-muc-2">Lặp định kì</legend>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div><label className={NHAN_O}>Kiểu lặp</label><Chon ariaLabel="Kiểu lặp" giaTri={kieuLap} onDoi={setKieuLap} luaChon={LUA_CHON_LAP} /></div>
+                {laKieuLap(kieuLap) && <>
+                  <div><label htmlFor="lh-khoang" className={NHAN_O}>Khoảng lặp ({KIEU_LAP[kieuLap].don_vi})</label><input id="lh-khoang" inputMode="numeric" value={khoang} onChange={(e) => setKhoang(e.target.value.replace(/\D/g, "").slice(0, 2))} className={`${O_NHAP} text-right`} /></div>
+                  <div><label htmlFor="lh-tong" className={NHAN_O}>Tổng số buổi</label><input id="lh-tong" inputMode="numeric" value={tongBuoi} onChange={(e) => setTongBuoi(e.target.value.replace(/\D/g, "").slice(0, 2))} className={`${O_NHAP} text-right`} /></div>
+                </>}
+              </div>
+              {xemLap.length > 1 && <p className="mt-2 text-[12px] text-muc-3" aria-live="polite">{xemLap.length} buổi: {xemLap.slice(0, 6).map(ngayVN).join(", ")}{xemLap.length > 6 ? ` … ${ngayVN(xemLap[xemLap.length - 1])}` : ""}</p>}
+            </fieldset>
+          )}
           <div><label htmlFor="lh-gc" className={NHAN_O}>Ghi chú</label><textarea id="lh-gc" value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} className={O_NHIEU_DONG} style={{ minHeight: 64 }} /></div>
         </div>
         {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}

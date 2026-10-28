@@ -1,0 +1,12 @@
+import { docBang, chu, so, ngay, nguoiLark } from "./lib-hr.mjs";
+const C=(a)=>{const c={};for(const x of a){c[x]=(c[x]||0)+1}return JSON.stringify(c)};
+const a=docBang("4.1"); console.log("4.1 năm|tháng", C(a.map(r=>chu(r["Năm"])+"|"+chu(r["Tháng"]))).slice(0,500));
+console.log("4.1 Lưu trữ", C(a.map(r=>String(r["Lưu trữ bảng lương"]))), "mã NV rỗng", a.filter(r=>!chu(r["Mã nhân viên"])).length, "họ tên rỗng", a.filter(r=>!nguoiLark(r["Họ và tên"])).length);
+const b=docBang("4.4"); console.log("4.4 theo tháng(Ngày tạo)", C(b.map(r=>String(ngay(r["🤖Ngày tạo"])).slice(0,7))).slice(0,500));
+console.log("4.4 tổng thực trả rows", b.length, "tổng", b.reduce((s,r)=>s+(so(r["🤖Tổng thực trả"])||0),0));
+const k=docBang("4.1").filter(r=>true).reduce((s,r)=>s+(so(r["Tổng thực trả"])||0),0); console.log("4.1 tổng thực trả", k);
+console.log("4.1 key mẫu số (kiểu):", ["Công chuẩn","Tổng công","Tổng thu nhập Gross","Tổng thực trả","Lương cơ bản","OT CT 100%","Thuế TNCN"].map(f=>f+"="+typeof a[3][f]+":"+String(a[3][f]).slice(0,12)).join(" ; "));
+const t2=docBang("4.2"); console.log("4.2 năm tháng", C(t2.map(r=>String(ngay(r["✏️Ngày tạo"])).slice(0,7))), Object.keys(t2[0]).join("|"));
+const p=docBang("5.1"); console.log("5.1", Object.keys(p[0]).join("|"));
+console.log("6.1 loại", C(docBang("6.1").map(r=>chu(r["✏️Loại tài sản"]))), "tình trạng", C(docBang("6.1").map(r=>chu(r["✏️Tình trạng"]))));
+console.log("4.6", Object.keys(docBang("4.6")[0]).join("|"), "| 4.3", Object.keys(docBang("4.3")[0]).slice(0,12).join("|"));

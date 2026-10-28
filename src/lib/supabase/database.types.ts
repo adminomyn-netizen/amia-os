@@ -10230,6 +10230,35 @@ export type Database = {
           vai: string
         }[]
       }
+      bc_lich_su_dung_the: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_loai?: string
+          p_so?: number
+          p_ten_the?: string
+          p_tim?: string
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          chi_nhanh: string
+          dien_thoai: string
+          hoa_don_id: string
+          khach: string
+          khach_id: string
+          loai_the: string
+          ma_hd: string
+          ma_the: string
+          ngay: string
+          so_lan: number
+          ten_the: string
+          tien: number
+          tong_dong: number
+          tong_lan: number
+          tong_tien: number
+        }[]
+      }
       bc_muc_ban: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {
@@ -10281,35 +10310,6 @@ export type Database = {
           so_the_khong_gioi_han: number
           so_the_lan: number
           so_the_tien: number
-        }[]
-      }
-      bc_lich_su_dung_the: {
-        Args: {
-          p_cn?: string
-          p_den: string
-          p_loai?: string
-          p_so?: number
-          p_ten_the?: string
-          p_tim?: string
-          p_tu: string
-          p_tu_dong?: number
-        }
-        Returns: {
-          chi_nhanh: string
-          dien_thoai: string
-          hoa_don_id: string
-          khach: string
-          khach_id: string
-          loai_the: string
-          ma_hd: string
-          ma_the: string
-          ngay: string
-          so_lan: number
-          ten_the: string
-          tien: number
-          tong_dong: number
-          tong_lan: number
-          tong_tien: number
         }[]
       }
       bc_theo_chi_nhanh: {

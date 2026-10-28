@@ -166,6 +166,8 @@ export const MODULE: Module[] = [
         { ten: "Rà soát danh mục", moTa: "Sản phẩm thiếu mã, trùng tên, thiếu hạn dùng.", duongDan: "/danh-muc?tab=ra-soat", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
       { nhan: "Nhân viên", the: [
+        { ten: "Nhân viên phục vụ", moTa: "Người làm dịch vụ: chức danh, nhóm, chi nhánh, hiển thị ở trang đặt lịch.", duongDan: "/cai-dat/nhan-vien-phuc-vu", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Tài khoản đăng nhập", moTa: "Danh sách tài khoản theo vai trò và chi nhánh; thiết lập quyền.", duongDan: "/cai-dat/tai-khoan-dang-nhap", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Tài khoản & phân quyền", moTa: "Tài khoản đăng nhập, vai trò, quyền riêng từng người.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Vai trò & quyền", moTa: "Bảng mỗi vai trò mặc định làm được những gì.", duongDan: "/cai-dat/vai-tro", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Cấu hình hoa hồng", moTa: "Tỉ lệ hoa hồng theo loại và vai.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },

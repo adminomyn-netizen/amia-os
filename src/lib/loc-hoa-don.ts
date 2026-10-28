@@ -2,6 +2,9 @@
 import { homNayHCM } from "@/lib/dinh-dang";
 import type { sb } from "@/lib/db";
 
+/** Nhãn trạng thái hoá đơn (dùng ở danh sách và chi tiết; không để trong page.tsx vì Next chặn export lạ từ trang). */
+export const TRANG_THAI_HD = { nhap: { nhan: "Nháp", kieu: "tram" }, hoan_thanh: { nhan: "Hoàn thành", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "loi" } } as const;
+
 export type LocHoaDon = { tu: string; den: string; tt: string; no: boolean; q: string; vat: "" | "co" | "chua" };
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 

@@ -11,6 +11,8 @@ export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string }
 export type DonBan = {
   khachId: string | null; lichId: string | null; chiNhanhId: string;
   dong: DongDon[]; giamDon: number; vatPct: number; phuPhi: number; tip: number; nguoiGioiThieu: string; ghiChu: string; thu: KhoanThu[];
+  /** Số điểm thưởng khách đổi lấy giảm giá (0 = không đổi). Tiền giảm = điểm × tỉ lệ cấu hình, máy chủ tự tính lại. */
+  doiDiem?: number;
 };
 export const tinhDon = (hang: number, giamDon: number, vatPct: number, phuPhi: number, tip: number) => {
   const sauGiam = Math.max(hang - giamDon, 0);

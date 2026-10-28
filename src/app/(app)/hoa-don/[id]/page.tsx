@@ -12,7 +12,7 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { ghiNhanVat, huyHoaDon, thuNo } from "../actions";
-import { TRANG_THAI_HD } from "../page";
+import { TRANG_THAI_HD } from "@/lib/loc-hoa-don";
 
 export default async function ChiTietHoaDon({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ moi?: string }> }) {
   const nd = await yeuCauQuyen("ban.xem");

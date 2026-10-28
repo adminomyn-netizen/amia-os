@@ -2,14 +2,13 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
-import { apLocHoaDon, docLocHoaDon, khachKhopTim } from "@/lib/loc-hoa-don";
+import { apLocHoaDon, docLocHoaDon, khachKhopTim, TRANG_THAI_HD } from "@/lib/loc-hoa-don";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { LocHoaDon } from "@/components/hoa-don/LocHoaDon";
 
 const MOI_TRANG = 40;
-export const TRANG_THAI_HD = { nhap: { nhan: "Nháp", kieu: "tram" }, hoan_thanh: { nhan: "Hoàn thành", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "loi" } } as const;
 
 export default async function TrangHoaDon({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const nd = await yeuCauQuyen("ban.xem");

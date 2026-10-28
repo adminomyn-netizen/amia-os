@@ -68,3 +68,19 @@ export async function luuQuyTacDuyet(fd: FormData): Promise<KQ> {
   revalidatePath("/cai-dat", "layout");
   return { ok: true };
 }
+
+/** Đổi điểm thưởng thành giảm giá ở Thu ngân: bật/tắt + số đồng cho 1 điểm (SalonHero: 1 điểm = 10.000đ, đang tắt). Chỉ Chủ / Kỹ thuật. */
+export async function luuDoiDiem(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("hethong.phanquyen");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const tien = Math.round(so(fd, "tien_moi_diem"));
+  if (!Number.isInteger(tien) || tien < 100 || tien > 10_000_000) return { loi: "Số tiền cho 1 điểm từ 100đ đến 10.000.000đ." };
+  const db = sb();
+  const { error } = await db.from("cau_hinh").upsert([
+    { khoa: "diem.doi_bat", gia_tri: bat(fd, "bat") ? "1" : "0", ghi_chu: "Cho đổi điểm thưởng thành giảm giá ở Thu ngân: 1 = bật, 0 = tắt (SalonHero đang tắt)" },
+    { khoa: "diem.doi_tien", gia_tri: String(tien), ghi_chu: "Số đồng được giảm cho 1 điểm thưởng (SalonHero: convert2money 1 điểm = 10.000đ)" },
+  ]);
+  if (!error) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_cau_hinh", doi_tuong: "cau_hinh", chi_tiet: { khoa: "diem.doi", bat: bat(fd, "bat"), tien_moi_diem: tien } });
+  revalidatePath("/cai-dat/thong-tin-chung");
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}

@@ -383,6 +383,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .xh-vuong-mien { animation: none; }
+  .xh-buc, .xh-hien, .xh-thanh { animation-delay: 0s !important; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
 

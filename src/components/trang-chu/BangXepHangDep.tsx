@@ -20,7 +20,7 @@ const mau = (i: number) => MAU[i % MAU.length];
 const chuCai = (ten: string) => ten.replace(/[^\p{L}\s]/gu, "").trim().split(/\s+/).slice(-2).map((p) => p[0]?.toUpperCase() ?? "").join("") || "?";
 /** Tách mã đứng đầu tên ("0017.Nguyễn Hoài Thương" → mã "0017", tên "Nguyễn Hoài Thương") để tên đọc trọn, mã để nhỏ. */
 const tachMa = (ten: string) => {
-  const m = ten.match(/^\s*(\d{2,})\s*[.\-–·:]\s*(.+)$/);
+  const m = ten.match(/^\s*(\d{3,})\.\s*(\p{L}.*)$/u);
   return m ? { ma: m[1], ten: m[2] } : { ma: "", ten };
 };
 
@@ -70,8 +70,8 @@ function CotBuc({ x, hang }: { x: DongXepHang; hang: 1 | 2 | 3 }) {
   return (
     <li className={`flex min-w-0 flex-col ${THU_TU[hang]}`}>
       <NoiChiTiet cls="flex min-w-0 flex-1 flex-col" tieuDe={`Hạng ${hang} · ${x.ten}`} dong={x.chiTiet}>
-        <div tabIndex={0} className="flex min-w-0 flex-1 flex-col items-center rounded-nho px-0.5 pb-2 text-center" aria-label={`Hạng ${hang}, huy chương ${k.ten.toLowerCase()}: ${x.ten}, ${x.chu}`}>
-          <div className="xh-hien flex min-w-0 flex-col items-center" style={{ animationDelay: `${tre + 160}ms` }}>
+        <div tabIndex={0} role="group" className="flex w-full min-w-0 flex-1 flex-col items-center rounded-nho px-0.5 pb-2 text-center" aria-label={`Hạng ${hang}, huy chương ${k.ten.toLowerCase()}: ${x.ten}, ${x.chu}`}>
+          <div className="xh-hien flex w-full min-w-0 flex-col items-center" style={{ animationDelay: `${tre + 160}ms` }}>
             <span className="flex h-[20px] items-end">{hang === 1 && <VuongMien />}</span>
             <span className="relative mt-0.5">
               <Dau ten={x.ten} i={hang - 1} co={hang === 1 ? "lon" : "vua"} vong={k.vong} />
@@ -79,7 +79,7 @@ function CotBuc({ x, hang }: { x: DongXepHang; hang: 1 | 2 | 3 }) {
                 style={{ borderRadius: "50%", background: k.huy, color: k.so === "#ffffff" ? "#3a1f0a" : k.so, boxShadow: "0 0 0 2px var(--giay-sang), 0 2px 4px rgb(0 0 0 / 0.18)" }} aria-hidden>{hang}</span>
             </span>
             <span className={`mt-2.5 line-clamp-2 max-w-full break-words font-semibold leading-tight text-muc ${hang === 1 ? "text-[13.5px]" : "text-[12.5px]"}`}>{ten}</span>
-            {(ma || phu) && <span className="mt-0.5 max-w-full truncate text-[11px] text-muc-3" title={phu}>{ma ? `Mã ${ma}` : phu}</span>}
+            {phu && <span className="mt-0.5 line-clamp-2 max-w-full break-words text-[11px] leading-tight text-muc-3" title={ma ? `Mã ${ma} · ${phu}` : phu}>{phu}</span>}
             <span className={`mt-1.5 inline-flex max-w-full items-center truncate rounded-nho px-2 py-0.5 font-semibold tabular-nums ${hang === 1 ? "text-[13px] text-sac-cam" : "text-[12px] text-nhan-dam"}`}
               style={{ background: hang === 1 ? "var(--sac-cam-nen)" : "var(--nhan-nhat)" }}>{x.chu}</span>
           </div>
@@ -135,7 +135,7 @@ export function BangXepHangDep({ tieuDe, Icon, href, nhanHref, dong, trong, cls 
         </div>
       ) : (
         <>
-          <ol className="xh-san mt-4 grid grid-cols-[1fr_1.25fr_1fr] items-end gap-1.5 rounded-vua px-2.5 pt-3 sm:gap-2.5 sm:px-4" aria-label={`Ba hạng đầu: ${tieuDe}`}>
+          <ol className="xh-san mt-4 grid grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)_minmax(0,1fr)] items-end gap-1.5 rounded-vua px-2.5 pt-3 sm:gap-2.5 sm:px-4" aria-label={`Ba hạng đầu: ${tieuDe}`}>
             <CotBuc x={mot} hang={1} />
             {hai ? <CotBuc x={hai} hang={2} /> : <CotTrong hang={2} />}
             {ba ? <CotBuc x={ba} hang={3} /> : <CotTrong hang={3} />}
@@ -158,7 +158,7 @@ export function BangXepHangDep({ tieuDe, Icon, href, nhanHref, dong, trong, cls 
                 return (
                   <li key={x.ten + i}>
                     <NoiChiTiet tieuDe={`Hạng ${i + 1} · ${x.ten}`} dong={x.chiTiet}>
-                      <div tabIndex={0} className="xh-dong xh-hien rounded-nho px-2 py-2" style={{ animationDelay: `${Math.min(j, 8) * 45 + 280}ms` }} aria-label={`Hạng ${i + 1}: ${x.ten}, ${x.chu}`}>
+                      <div tabIndex={0} role="group" className="xh-dong xh-hien rounded-nho px-2 py-2" style={{ animationDelay: `${Math.min(j, 8) * 45 + 280}ms` }} aria-label={`Hạng ${i + 1}: ${x.ten}, ${x.chu}`}>
                         <div className="flex items-center gap-2.5">
                           <span className="w-6 shrink-0 text-center text-[13px] font-semibold tabular-nums text-muc-3" aria-hidden>{i + 1}</span>
                           <Dau ten={x.ten} i={i} co="nho" />

@@ -10283,6 +10283,87 @@ export type Database = {
           so_the_tien: number
         }[]
       }
+      bc_lich_su_dung_the: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_loai?: string
+          p_so?: number
+          p_ten_the?: string
+          p_tim?: string
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          chi_nhanh: string
+          dien_thoai: string
+          hoa_don_id: string
+          khach: string
+          khach_id: string
+          loai_the: string
+          ma_hd: string
+          ma_the: string
+          ngay: string
+          so_lan: number
+          ten_the: string
+          tien: number
+          tong_dong: number
+          tong_lan: number
+          tong_tien: number
+        }[]
+      }
+      bc_theo_chi_nhanh: {
+        Args: { p_den: string; p_tu: string }
+        Returns: {
+          chi_nhanh_id: string
+          ck_ban: number
+          ck_no: number
+          con_no: number
+          da_thu: number
+          doanh_thu: number
+          so_don: number
+          so_nhan_vien: number
+          ten: string
+          tm_ban: number
+          tm_no: number
+        }[]
+      }
+      bc_theo_khach_hang: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_hang?: string
+          p_nhom?: string[]
+          p_so?: number
+          p_tim?: string
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          dien_thoai: string
+          doanh_thu: number
+          hang: string
+          ho_ten: string
+          khach_id: string
+          la_moi: boolean
+          ma: string
+          no_moi: number
+          so_don: number
+          t_doanh_thu: number
+          t_dt_cu: number
+          t_dt_moi: number
+          t_khach: number
+          t_khach_cu: number
+          t_khach_moi: number
+          t_thu_cu: number
+          t_thu_moi: number
+          t_thu_no: number
+          t_thuc_thu: number
+          thu_no: number
+          thuc_thu: number
+          tong_dong: number
+        }[]
+      }
       bc_thu_ngan: {
         Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
         Returns: {

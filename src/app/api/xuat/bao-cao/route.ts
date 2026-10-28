@@ -6,6 +6,7 @@ import { khoangNgay } from "@/lib/bao-cao";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
+import { layLichSuDungThe, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
@@ -71,6 +72,24 @@ export async function GET(req: Request) {
     bangs.push({ ten: "Theo nhân viên thực hiện", cot: cot("Nhân viên"), dong: them(d.nhanVien) });
     bangs.push({ ten: nhom === "ngay" ? "Theo ngày" : "Theo tháng", cot: cot(nhom === "ngay" ? "Ngày" : "Tháng"), dong: them(d.ky.map((r) => ({ ...r, nhan: tenKy(r.khoa, nhom === "ngay" ? "ngay" : "thang") }))) });
     bangs.push({ ten: "Theo chi nhánh", cot: cot("Chi nhánh"), dong: them(d.chiNhanh) });
+  } else if (tab === "chi-nhanh") {
+    const { ds, tong } = await layTheoChiNhanh(db, tu, den, cn);
+    bangs.push({ ten: "Theo chi nhánh", dong: [...ds, { ten: "Tổng", soNhanVien: ds.reduce((s, r) => s + r.soNhanVien, 0), soDon: tong.soDon, daThu: tong.daThu, conNo: tong.conNo, doanhThu: tong.doanhThu, tmBan: tong.tmBan, tmNo: tong.tmNo, ckBan: tong.ckBan, ckNo: tong.ckNo }], cot: [
+      { nhan: "Chi nhánh", khoa: "ten", rong: 30 }, { nhan: "Số nhân viên", khoa: "soNhanVien", so: true }, { nhan: "Số đơn hàng", khoa: "soDon", so: true }, { nhan: "Đã thu", khoa: "daThu", tien: true }, { nhan: "Còn nợ", khoa: "conNo", tien: true },
+      { nhan: "Doanh thu", khoa: "doanhThu", tien: true }, { nhan: "Tiền mặt · bán hàng", khoa: "tmBan", tien: true }, { nhan: "Tiền mặt · thu nợ", khoa: "tmNo", tien: true },
+      { nhan: "Quẹt thẻ và chuyển khoản · bán hàng", khoa: "ckBan", tien: true }, { nhan: "Quẹt thẻ và chuyển khoản · thu nợ", khoa: "ckNo", tien: true }] });
+  } else if (tab === "khach-hang") {
+    const xemSdt = coQuyen(nd, "khach.xem");
+    const { rows } = await layTheoKhachHang(db, { tu, den, cn, nhom: u.searchParams.get("nk") || undefined, hang: u.searchParams.get("hang") || undefined, q: u.searchParams.get("q") || undefined }, true);
+    bangs.push({ ten: "Theo khách hàng", dong: rows.map((r) => ({ ...r, dienThoai: xemSdt ? r.dienThoai : "", loai: `Hạng ${r.hang} · ${r.laMoi ? "Khách mới" : "Khách quay lại"}` })), cot: [
+      { nhan: "Khách hàng", khoa: "ten", rong: 30 }, { nhan: "Mã khách", khoa: "ma", rong: 16 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Loại khách", khoa: "loai", rong: 28 }, { nhan: "Số đơn hàng", khoa: "soDon", so: true },
+      { nhan: "Doanh thu hóa đơn", khoa: "doanhThu", tien: true }, { nhan: "Tổng thực thu", khoa: "thucThu", tien: true }, { nhan: "Thu nợ cũ", khoa: "thuNo", tien: true }, { nhan: "Nợ mới", khoa: "noMoi", tien: true }] });
+  } else if (tab === "lich-su-the") {
+    const xemSdt = coQuyen(nd, "khach.xem");
+    const { rows } = await layLichSuDungThe(db, { tu, den, cn, q: u.searchParams.get("q") || undefined, tenThe: u.searchParams.get("tt") || undefined, loai: u.searchParams.get("lt") || undefined }, true);
+    bangs.push({ ten: "Lịch sử dùng thẻ", dong: rows.map((r) => ({ ...r, ngayGio: new Date(r.ngay).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false }), dienThoai: xemSdt ? r.dienThoai : "", loaiVn: r.loai === "tien" ? "Thẻ tiền" : "Thẻ lần" })), cot: [
+      { nhan: "Ngày", khoa: "ngayGio", rong: 20 }, { nhan: "Mã hóa đơn", khoa: "maHd", rong: 14 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 },
+      { nhan: "Tên thẻ", khoa: "tenThe", rong: 40 }, { nhan: "Mã thẻ", khoa: "maThe", rong: 12 }, { nhan: "Loại thẻ", khoa: "loaiVn", rong: 10 }, { nhan: "Số lần sử dụng", khoa: "soLan", so: true }, { nhan: "Tiền tương đương trừ thẻ", khoa: "tien", tien: true }] });
   } else if (tab === "nhan-vien") {
     const [{ data }, { data: nv }] = await Promise.all([db.rpc("bc_nhan_vien", { p_tu: tu, p_den: den, p_cn: cn as string }), db.from("nhan_vien").select("id, ho_ten")]);
     const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));

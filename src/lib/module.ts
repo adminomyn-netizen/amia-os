@@ -162,6 +162,7 @@ export const MODULE: Module[] = [
         { ten: "Danh mục sản phẩm", moTa: "Sản phẩm, vật tư, giá bán, hạn dùng.", duongDan: "/danh-muc?tab=san-pham", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Loại thẻ / gói liệu trình", moTa: "Gói buổi, giá trị, dịch vụ trong gói.", duongDan: "/danh-muc?tab=goi-the", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Voucher / thẻ giảm giá", moTa: "Mã giảm giá khách đưa ở quầy: hạn dùng, số lần, chi nhánh, áp dụng cho dịch vụ hay sản phẩm.", duongDan: "/cai-dat/voucher", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Cài đặt chi phí dịch vụ", moTa: "Công thức chi phí: vật tư và số lượng dùng cho từng dịch vụ, chi phí khấu hao mỗi ca.", duongDan: "/dinh-muc", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Rà soát danh mục", moTa: "Sản phẩm thiếu mã, trùng tên, thiếu hạn dùng.", duongDan: "/danh-muc?tab=ra-soat", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
       { nhan: "Nhân viên", the: [

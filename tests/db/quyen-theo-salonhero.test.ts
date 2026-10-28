@@ -35,3 +35,11 @@ describe("Thu ngân (SalonHero: Thu ngân)", () => {
     expect(ten("thu_ngan")).toEqual(expect.arrayContaining(["Lịch hẹn", "Bán hàng", "Hoá đơn"]));
   });
 });
+
+describe("Bác sĩ (SalonHero: Bác sỹ)", () => {
+  it("được thêm/sửa khách như SalonHero; chưa nới số tiền: báo cáo tiền của SalonHero để chị Lâm duyệt", () => {
+    expect(co("bac_si", "khach.sua")).toBe(true);
+    for (const q of ["baocao.xem", "baocao.tien", "ban.xem", "khach.nhap"] as const) expect(co("bac_si", q)).toBe(false);
+    expect(ten("bac_si")).not.toContain("Báo cáo");
+  });
+});

@@ -2,15 +2,17 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Minus, Plus, Search, Trash2, UserRound, X } from "lucide-react";
+import { Minus, Plus, Search, Ticket, Trash2, UserRound, X } from "lucide-react";
 import { Chon } from "@/components/ui/Chon";
 import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
-import { PHUONG_THUC, tinhDon, VAI, type DongDon, type KhoanThu, type MucBan, type Vai } from "@/lib/ban-hang";
+import { GIOI_HAN_VOUCHER, PHUONG_THUC, tinhDon, tinhGiamVoucher, VAI, type DongDon, type KhoanThu, type MucBan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
-import type { chotDonBanHang, layDiemKhach, layTheTien, timKhach } from "@/app/(app)/ban-hang/actions";
+import type { VoucherTim } from "@/lib/voucher";
+import { HopVoucher } from "./HopVoucher";
+import type { chotDonBanHang, dsVoucher, layDiemKhach, layTheTien, layVoucher, timKhach } from "@/app/(app)/ban-hang/actions";
 
 type Nv = { id: string; ten: string; vaiTro: string };
 type TheTien = { id: string; ma: string; soDu: number };
@@ -19,7 +21,7 @@ const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 type PropsPos = {
   muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null;
-  tim: typeof timKhach; layThe: typeof layTheTien; layDiem: typeof layDiemKhach; chot: typeof chotDonBanHang;
+  tim: typeof timKhach; layThe: typeof layTheTien; layDiem: typeof layDiemKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher;
 };
 type Tab = { k: number; ten: string; soDong: number };
 const TOI_DA_DON = 8;
@@ -109,7 +111,7 @@ export function Pos(props: PropsPos) {
 }
 
 /** Một đơn. Dựng đơn trong trình duyệt, gửi MỘT lần lên máy chủ; máy chủ tự đọc lại giá từ danh mục và chốt trong một giao dịch. */
-function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, tim, layThe, layDiem, chot, k, dauTien, onDoi, onXong }: PropsPos & {
+function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, tim, layThe, layDiem, chot, voucher, dsVoucher: dsVc, k, dauTien, onDoi, onXong }: PropsPos & {
   k: number; dauTien: boolean; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
@@ -131,6 +133,8 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const [suaNv, setSuaNv] = useState<number | null>(null);
   const [diemTai, setDiemTai] = useState<{ khachId: string; soDu: number; bat: boolean; tienMoiDiem: number } | null>(null);
   const [diemNhap, setDiemNhap] = useState("");
+  const [moVc, setMoVc] = useState(false);
+  const [vc, setVc] = useState<VoucherTim | null>(null);
 
   const tuMuc = useMemo(() => new Map(muc.map((m) => [khoaDong({ loai: m.loai, ref: m.id }), m])), [muc]);
   useEffect(() => {
@@ -144,12 +148,16 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
 
   const theTien = khach ? theTienTai : [];
   const hang = dong.reduce((s, d) => s + (tuMuc.get(khoaDong(d))?.gia ?? 0) * d.sl - d.giam, 0);
+  // Voucher: tính lại theo dòng hàng hiện tại (đổi dòng thì tiền giảm đổi theo). Đơn chưa đủ điều kiện thì tiền giảm = 0 và báo lý do.
+  const thanhDong = dong.map((d) => ({ loai: d.loai, thanh: (tuMuc.get(khoaDong(d))?.gia ?? 0) * d.sl - d.giam }));
+  const tienVoucher = vc && hang >= vc.donToiThieu ? tinhGiamVoucher(vc.def, thanhDong) : 0;
+  const lyDoVoucher = !vc || tienVoucher > 0 ? "" : hang < vc.donToiThieu ? `Voucher ${vc.ma} chỉ áp dụng cho đơn từ ${tienVN(vc.donToiThieu)}.` : `Voucher ${vc.ma} chưa áp dụng được: đơn chưa có mục thuộc "${GIOI_HAN_VOUCHER.find((g) => g.gia_tri === vc.def.gioi_han)?.nhan}".`;
   // Đổi điểm: chỉ khi cấu hình bật; không vượt số dư và không vượt phần tiền hàng còn lại sau giảm giá.
   const diemKhach = khach && diemTai?.khachId === khach.id ? diemTai : null;
-  const diemToiDa = diemKhach?.bat ? Math.max(0, Math.min(diemKhach.soDu, Math.floor(Math.max(hang - giamDon, 0) / diemKhach.tienMoiDiem))) : 0;
+  const diemToiDa = diemKhach?.bat ? Math.max(0, Math.min(diemKhach.soDu, Math.floor(Math.max(hang - giamDon - tienVoucher, 0) / diemKhach.tienMoiDiem))) : 0;
   const diem = Math.min(Number(diemNhap) || 0, diemToiDa);
   const tienDiem = diemKhach ? diem * diemKhach.tienMoiDiem : 0;
-  const { vat, phai } = tinhDon(hang, giamDon + tienDiem, Number(vatPct) || 0, phuPhi, tip);
+  const { vat, phai } = tinhDon(hang, giamDon + tienDiem + tienVoucher, Number(vatPct) || 0, phuPhi, tip);
   const daThu = thu.reduce((s, t) => s + t.so_tien, 0);
   const conNo = phai - daThu;
 
@@ -169,11 +177,13 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const gui = () => {
     setLoi("");
     if (!dong.length) return setLoi("Đơn chưa có dòng hàng nào.");
+    if (vc && tienVoucher <= 0) return setLoi(lyDoVoucher || "Voucher chưa áp dụng được. Bỏ voucher hoặc chọn đúng mục.");
+    if (giamDon + tienDiem + tienVoucher > hang) return setLoi("Giảm giá cả đơn, voucher và đổi điểm cộng lại lớn hơn tiền hàng.");
     if (conNo < 0) return setLoi("Tổng các khoản thu lớn hơn số phải thu.");
     if (conNo > 0 && !khach) return setLoi("Còn nợ thì phải chọn khách hàng.");
     for (const t of thu) if (t.phuong_thuc === "the_tien" && !t.the_id) return setLoi("Chọn thẻ tiền cho khoản trừ thẻ.");
     bat(async () => {
-      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem }));
+      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "" }));
       if ("loi" in kq && kq.loi) setLoi(kq.loi);
       else if ("id" in kq) onXong({ id: kq.id, ma: kq.ma });
     });
@@ -183,9 +193,9 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
     <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
       <section className="min-w-0">
         <div className="mb-4 text-[13px] text-muc-2"><span className="mb-1 block">Chi nhánh bán</span>
-          <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={setCnId} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
+          <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
         </div>
-        <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
+        <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
         {diemKhach && (
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>
             {diemKhach.bat ? ` · 1 điểm = ${tienVN(diemKhach.tienMoiDiem)}` : " · đổi điểm đang tắt"}</p>
@@ -251,8 +261,8 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
           {dong.length > 0 && (
             <div className="space-y-3 border-t border-vien px-4 py-4">
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={NHAN_O}>Giảm cả đơn (đ)</label><OTien giaTri={giamDon} onDoi={(n) => { setGiamDon(Math.min(n, hang)); setGiamPct(""); }} /></div>
-                <div><label className={NHAN_O}>hoặc giảm %</label><input inputMode="decimal" {...CHON_HET} className={`${O_NHAP} text-right`} value={giamPct} onChange={(e) => { const p = e.target.value.replace(/[^\d.]/g, ""); setGiamPct(p); setGiamDon(Math.round((hang * Math.min(Number(p) || 0, 100)) / 100)); }} /></div>
+                <div><label className={NHAN_O}>Giảm cả đơn (đ)</label><OTien giaTri={giamDon} onDoi={(n) => { setGiamDon(Math.min(n, Math.max(hang - tienVoucher, 0))); setGiamPct(""); }} /></div>
+                <div><label className={NHAN_O}>hoặc giảm %</label><input inputMode="decimal" {...CHON_HET} className={`${O_NHAP} text-right`} value={giamPct} onChange={(e) => { const p = e.target.value.replace(/[^\d.]/g, ""); setGiamPct(p); setGiamDon(Math.min(Math.round((hang * Math.min(Number(p) || 0, 100)) / 100), Math.max(hang - tienVoucher, 0))); }} /></div>
                 <div><label className={NHAN_O}>VAT (%)</label><input inputMode="decimal" {...CHON_HET} className={`${O_NHAP} text-right`} value={vatPct} onChange={(e) => setVatPct(e.target.value.replace(/[^\d.]/g, ""))} /></div>
                 <div><label className={NHAN_O}>Phụ phí</label><OTien giaTri={phuPhi} onDoi={setPhuPhi} /></div>
                 <div className="col-span-2"><label className={NHAN_O}>Tip cho nhân viên</label><OTien giaTri={tip} onDoi={setTip} /></div>
@@ -271,6 +281,10 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
               <dl className="space-y-1.5 border-t border-vien pt-3 text-[14px]">
                 <div className="flex justify-between"><dt className="text-muc-3">Tiền hàng</dt><dd className="tabular-nums">{tienVN(hang)}</dd></div>
                 {giamDon > 0 && <div className="flex justify-between"><dt className="text-muc-3">Giảm giá</dt><dd className="tabular-nums">− {tienVN(giamDon)}</dd></div>}
+                <div className="flex items-start justify-between gap-3"><dt className="text-muc-3">Thẻ giảm giá/voucher <button type="button" className={NUT_CHU} onClick={() => setMoVc(true)}>(Chọn thẻ)</button>
+                  {vc && <span className="mt-0.5 flex items-center gap-1.5 text-[12px] text-muc-2"><Ticket aria-hidden strokeWidth={1.6} className="h-3.5 w-3.5 text-nhan-dam" />{vc.ma}<button type="button" aria-label={`Bỏ voucher ${vc.ma}`} className="p-1 text-muc-3 hover:text-loi" onClick={() => setVc(null)}><X strokeWidth={1.6} className="h-3 w-3" /></button></span>}
+                  {lyDoVoucher && <span role="alert" className="mt-0.5 block text-[12px] text-canh-bao">{lyDoVoucher}</span>}</dt>
+                  <dd className="tabular-nums">{tienVoucher > 0 ? `− ${tienVN(tienVoucher)}` : "0"}</dd></div>
                 {tienDiem > 0 && <div className="flex justify-between"><dt className="text-muc-3">Đổi {diem.toLocaleString("vi-VN")} điểm</dt><dd className="tabular-nums">− {tienVN(tienDiem)}</dd></div>}
                 {vat > 0 && <div className="flex justify-between"><dt className="text-muc-3">VAT</dt><dd className="tabular-nums">{tienVN(vat)}</dd></div>}
                 {(phuPhi > 0 || tip > 0) && <div className="flex justify-between"><dt className="text-muc-3">Phụ phí và tip</dt><dd className="tabular-nums">{tienVN(phuPhi + tip)}</dd></div>}
@@ -309,6 +323,9 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
         </div>
       </aside>
 
+      {moVc && (
+        <HopVoucher dong={() => setMoVc(false)} chiNhanhId={cnId} khachId={khach?.id ?? null} dangDung={vc} lay={voucher} ds={dsVc} apDung={(v) => { setVc(v); setMoVc(false); }} />
+      )}
       {suaNv !== null && dong[suaNv] && (
         <NguoiHuong d={dong[suaNv]} ten={tuMuc.get(khoaDong(dong[suaNv]))?.ten ?? ""} nhanVien={nhanVien} dong={() => setSuaNv(null)} luu={(nv) => { capNhat(suaNv, { nv }); setSuaNv(null); }} />
       )}

@@ -5,7 +5,7 @@ import { coQuyen, type CoQuyen } from "@/lib/quyen";
 import { layNhacCong } from "@/lib/nhac-cong";
 
 /** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
-export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam"; nhan: string; href: string };
+export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
 export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null; nhanVienId?: string }): Promise<CanhBao[]> {
@@ -34,7 +34,7 @@ export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null; nhan
 /** Cảnh báo kho nâng cao, hoá đơn đầu vào, văn bản và hợp đồng lao động (mỗi loại chỉ hỏi khi người này có quyền). */
 async function themCanhBaoNangCao(nd: CoQuyen & { chiNhanhId: string | null }, ra: CanhBao[], homNay: string) {
   const db = sb(), cn = nd.chiNhanhId;
-  const [han, chuyen, xk, hdv, vbHet, vbCho, hd] = await Promise.all([
+  const [han, chuyen, xk, hdv, vbHet, vbCho, hd, tonAm] = await Promise.all([
     coQuyen(nd, "kho.xem") ? (cn ? db.from("v_ton_lo").select("san_pham_id", { count: "exact", head: true }).eq("chi_nhanh_id", cn) : db.from("v_ton_lo").select("san_pham_id", { count: "exact", head: true })).gt("con_lai", 0).lte("han_dung", congNgay(homNay, 30)) : null,
     coQuyen(nd, "kho.xem") ? db.from("phieu_chuyen_kho").select("id, trang_thai, den_chi_nhanh_id, han_nhan").in("trang_thai", ["dang_chuyen", "cho_xu_ly_chenh_lech"]) : null,
     coQuyen(nd, "kho.duyet") ? (cn ? db.from("phieu_xuat_khan").select("id", { count: "exact", head: true }).eq("chi_nhanh_id", cn) : db.from("phieu_xuat_khan").select("id", { count: "exact", head: true })).eq("trang_thai", "cho_hau_kiem") : null,
@@ -42,7 +42,9 @@ async function themCanhBaoNangCao(nd: CoQuyen & { chiNhanhId: string | null }, r
     coQuyen(nd, "vb.xem") ? db.from("van_ban").select("id", { count: "exact", head: true }).eq("trang_thai", "da_ky").lte("hieu_luc_den", congNgay(homNay, 30)) : null,
     coQuyen(nd, "vb.duyet") ? db.from("van_ban").select("id", { count: "exact", head: true }).eq("trang_thai", "cho_duyet") : null,
     coQuyen(nd, "cong.xem") ? db.from("hd_lao_dong").select("nhan_vien_id, giai_doan, den_ngay") : null,
+    coQuyen(nd, "kho.xem") ? (cn ? db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true }).eq("chi_nhanh_id", cn) : db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true })).lt("ton", 0) : null,
   ]);
+  if ((tonAm?.count ?? 0) > 0) ra.push({ ma: "tonam", nhan: `${tonAm!.count} mặt hàng tồn kho đang ÂM (sổ kho sai): kiểm kê hoặc điều chỉnh`, href: "/danh-muc?tab=ra-soat&loai=ton_am" });
   if ((han?.count ?? 0) > 0) ra.push({ ma: "han", nhan: `${han!.count} lô vật tư hết hạn trong 30 ngày hoặc đã quá hạn`, href: "/kho?tab=han" });
   const ck = ((chuyen?.data ?? []) as { trang_thai: string; den_chi_nhanh_id: string; han_nhan: string }[]).filter((c) => (!cn || c.den_chi_nhanh_id === cn) && (c.trang_thai === "cho_xu_ly_chenh_lech" || new Date(c.han_nhan).getTime() < Date.now()));
   if (ck.length > 0) ra.push({ ma: "chuyen", nhan: `${ck.length} phiếu chuyển kho quá 24 giờ chưa nhận hoặc đang chờ xử lý chênh lệch`, href: "/kho/chuyen-kho" });

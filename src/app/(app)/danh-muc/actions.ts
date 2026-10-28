@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
+import { chuanHoaTen, khoaTen, loiMa, loiMaVach, loiTen, tienToTheoNhom } from "@/lib/san-pham";
 import { bat, chuoi, chuoiHoacNull, mang, so, soHoacNull } from "@/lib/form";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 
@@ -61,17 +62,30 @@ export async function luuGoiThe(fd: FormData): Promise<KQ> {
 
 export async function luuSanPham(fd: FormData): Promise<KQ> {
   if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
-  const id = chuoi(fd, "id");
+  const db = sb(), id = chuoi(fd, "id");
   const nhomCap = chuoi(fd, "nhom_cap");
+  const ten = chuanHoaTen(chuoi(fd, "ten")), nhom = chuoiHoacNull(fd, "nhom"), maVach = chuoi(fd, "ma_vach").replace(/\s+/g, "");
+  let ma = chuoi(fd, "ma").toUpperCase().replace(/\s+/g, "");
+  if (!ten || !chuoi(fd, "don_vi")) return { loi: "Nhập tên và đơn vị dùng." };
+  const goc = id ? (await db.from("san_pham").select("ma, ten, ma_vach").eq("id", id).maybeSingle()).data : null;
+  // Quy ước chỉ ép khi tạo mới hoặc khi người dùng đổi mã/tên: hàng cũ nhập từ SalonHero chưa theo quy ước vẫn lưu được các sửa khác (giá, tồn tối thiểu...).
+  if (!id || ten !== goc?.ten) { const l = loiTen(ten); if (l) return { loi: l }; }
+  if (!ma && !id) ma = `${tienToTheoNhom(nhom)}-${String(Number((await db.rpc("so_tiep_theo", { p_khoa: `sp_${tienToTheoNhom(nhom)}` })).data ?? 0)).padStart(4, "0")}`;
+  if (!ma) return { loi: "Nhập mã sản phẩm." };
+  if (!id || ma !== goc?.ma) { const l = loiMa(ma); if (l) return { loi: l }; }
+  if (!id || maVach !== (goc?.ma_vach ?? "")) { const l = loiMaVach(maVach); if (l) return { loi: l }; }
+  const { data: ds } = await db.from("san_pham").select("id, ma, ten, ma_vach");
+  const trung = (ds ?? []).find((x) => x.id !== id && khoaTen(x.ten) === khoaTen(ten));
+  if (trung) return { loi: `Tên này trùng sản phẩm đã có (${trung.ma}: ${trung.ten}). Sửa sản phẩm đó hoặc đặt tên khác (thêm quy cách, dung tích).` };
+  if (maVach && (ds ?? []).some((x) => x.id !== id && x.ma_vach === maVach)) return { loi: "Mã vạch này đã gắn cho sản phẩm khác." };
   const row: TablesInsert<"san_pham"> = {
-    ma: chuoi(fd, "ma").toUpperCase(), ten: chuoi(fd, "ten"), nhom: chuoiHoacNull(fd, "nhom"),
+    ma, ten, nhom,
     nhom_cap: nhomCap === "A" || nhomCap === "B" || nhomCap === "C" ? nhomCap : null,
     don_vi: chuoi(fd, "don_vi"), don_vi_mua: chuoiHoacNull(fd, "don_vi_mua"), he_so_quy_doi: so(fd, "he_so_quy_doi") || 1,
-    gia_nhap_don_vi: soHoacNull(fd, "gia_nhap_don_vi"), gia_ban: so(fd, "gia_ban"),
+    gia_nhap_don_vi: soHoacNull(fd, "gia_nhap_don_vi"), gia_ban: so(fd, "gia_ban"), ma_vach: maVach || null, bat_buoc_han_dung: bat(fd, "bat_buoc_han_dung"),
     ban_le: bat(fd, "ban_le"), tieu_hao: bat(fd, "tieu_hao"), theo_doi_kho: bat(fd, "theo_doi_kho"), ton_toi_thieu: so(fd, "ton_toi_thieu"), hoat_dong: bat(fd, "hoat_dong"),
   };
-  if (!row.ma || !row.ten || !row.don_vi) return { loi: "Nhập mã, tên và đơn vị dùng." };
-  const { error } = id ? await sb().from("san_pham").update(row).eq("id", id) : await sb().from("san_pham").insert(row);
+  const { error } = id ? await db.from("san_pham").update(row).eq("id", id) : await db.from("san_pham").insert(row);
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
 

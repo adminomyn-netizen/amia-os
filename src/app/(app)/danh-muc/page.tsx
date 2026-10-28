@@ -1,24 +1,40 @@
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
+import Link from "next/link";
 import { sb } from "@/lib/db";
-import { tienVN, soVN } from "@/lib/dinh-dang";
+import { tienVN, soVN, homNayHCM } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
+import { NHAN_VAN_DE, khoaTen, vanDeSanPham } from "@/lib/san-pham";
 import { luuChiNhanh, luuDichVu, luuGoiThe, luuNhomDichVu, luuSanPham, xoaChiNhanh, xoaDichVu, xoaGoiThe, xoaNhomDichVu, xoaSanPham } from "./actions";
 
 const TAB = [
   { ma: "dich-vu", ten: "Dịch vụ" }, { ma: "goi-the", ten: "Gói thẻ" }, { ma: "san-pham", ten: "Sản phẩm và vật tư" },
-  { ma: "nhom", ten: "Nhóm dịch vụ" }, { ma: "chi-nhanh", ten: "Chi nhánh" },
+  { ma: "ra-soat", ten: "Rà soát sản phẩm" }, { ma: "nhom", ten: "Nhóm dịch vụ" }, { ma: "chi-nhanh", ten: "Chi nhánh" },
 ];
 const DON_VI = ["buổi", "vùng", "shot", "line", "lần", "liệu trình"].map((x) => ({ gia_tri: x, nhan: x }));
 const NHOM_CAP = [{ gia_tri: "", nhan: "Không phải vật tư cấp theo ca" }, { gia_tri: "A", nhan: "A · đắt, đếm được (cấp từng ca)" }, { gia_tri: "B", nhan: "B · chai dùng chung (cấp theo ngày)" }, { gia_tri: "C", nhan: "C · rẻ, khó đếm (cấp theo tuần)" }];
 
-export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+/** Biểu mẫu sản phẩm / vật tư, dùng ở tab Sản phẩm và tab Rà soát. Mã để trống khi thêm mới thì hệ thống tự sinh theo nhóm (MP-0001...). */
+function truongSanPham(): Truong[] {
+  return [
+    { ten: "ma", nhan: "Mã nội bộ (để trống = tự sinh)", loai: "chu", goiY: "MP-0001, VT-0001..." }, { ten: "ma_vach", nhan: "Mã vạch (8–14 chữ số)", loai: "chu" },
+    { ten: "ten", nhan: "Tên (loại hàng + thương hiệu + tên + quy cách)", loai: "chu", batBuoc: true, rong: true, goiY: "Kem chống nắng Heliocare 360 SPF50+ 50ml" },
+    { ten: "nhom", nhan: "Nhóm hàng", loai: "chu", goiY: "Mỹ phẩm, vật tư tiêm..." }, { ten: "nhom_cap", nhan: "Nhóm cấp vật tư", loai: "chon", luaChon: NHOM_CAP },
+    { ten: "don_vi", nhan: "Đơn vị DÙNG/CẤP", loai: "chu", batBuoc: true, goiY: "ml, shot, cái..." }, { ten: "don_vi_mua", nhan: "Đơn vị MUA", loai: "chu", goiY: "chai, hộp..." },
+    { ten: "he_so_quy_doi", nhan: "1 đơn vị mua = ? đơn vị dùng", loai: "so" }, { ten: "gia_nhap_don_vi", nhan: "Giá vốn / 1 đơn vị dùng", loai: "so" },
+    { ten: "gia_ban", nhan: "Giá bán lẻ", loai: "tien" }, { ten: "ton_toi_thieu", nhan: "Tồn tối thiểu", loai: "so" },
+    { ten: "ban_le", nhan: "Bán lẻ cho khách", loai: "gat" }, { ten: "tieu_hao", nhan: "Vật tư tiêu hao dịch vụ", loai: "gat" },
+    { ten: "theo_doi_kho", nhan: "Theo dõi tồn kho", loai: "gat" }, { ten: "bat_buoc_han_dung", nhan: "Bắt buộc nhập hạn dùng khi nhập kho", loai: "gat" }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" },
+  ];
+}
+
+export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string; loai?: string }> }) {
   const nd = await yeuCauQuyen("danhmuc.xem");
-  const { tab: t } = await searchParams;
+  const { tab: t, loai } = await searchParams;
   const tab = TAB.some((x) => x.ma === t) ? t! : "dich-vu";
   const sua = coQuyen(nd, "danhmuc.sua");
   const quanLy = coQuyen(nd, "nhanvien.quanly");
@@ -72,25 +88,56 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     );
   } else if (tab === "san-pham") {
     const { data: sp } = await db.from("san_pham").select("*").order("ma");
-    const truong: Truong[] = [
-      { ten: "ma", nhan: "Mã", loai: "chu", batBuoc: true }, { ten: "nhom", nhan: "Nhóm hàng", loai: "chu", goiY: "Mỹ phẩm, vật tư tiêm..." },
-      { ten: "ten", nhan: "Tên", loai: "chu", batBuoc: true, rong: true }, { ten: "nhom_cap", nhan: "Nhóm cấp vật tư", loai: "chon", luaChon: NHOM_CAP, rong: true },
-      { ten: "don_vi", nhan: "Đơn vị DÙNG/CẤP", loai: "chu", batBuoc: true, goiY: "ml, shot, cái..." }, { ten: "don_vi_mua", nhan: "Đơn vị MUA", loai: "chu", goiY: "chai, hộp..." },
-      { ten: "he_so_quy_doi", nhan: "1 đơn vị mua = ? đơn vị dùng", loai: "so" }, { ten: "gia_nhap_don_vi", nhan: "Giá vốn / 1 đơn vị dùng", loai: "so" },
-      { ten: "gia_ban", nhan: "Giá bán lẻ", loai: "tien" }, { ten: "ton_toi_thieu", nhan: "Tồn tối thiểu", loai: "so" },
-      { ten: "ban_le", nhan: "Bán lẻ cho khách", loai: "gat" }, { ten: "tieu_hao", nhan: "Vật tư tiêu hao dịch vụ", loai: "gat" },
-      { ten: "theo_doi_kho", nhan: "Theo dõi tồn kho", loai: "gat" }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" },
-    ];
-    nutThem = sua && <NutHop nhan="Thêm sản phẩm / vật tư" tieuDe="Thêm sản phẩm / vật tư" rong truong={truong} giaTri={{ he_so_quy_doi: 1, theo_doi_kho: true, hoat_dong: true }} action={luuSanPham} />;
+    const truong: Truong[] = truongSanPham();
+    nutThem = sua && <NutHop nhan="Thêm sản phẩm / vật tư" tieuDe="Thêm sản phẩm / vật tư" rong truong={truong} giaTri={{ he_so_quy_doi: 1, theo_doi_kho: true, bat_buoc_han_dung: true, hoat_dong: true }} action={luuSanPham} />;
     noiDung = (
       <Bang duLieu={sp ?? []} khoa={(r) => r.id} trong="Chưa có sản phẩm hoặc vật tư."
         cot={[
-          { nhan: "Mã", hienThi: (r) => r.ma }, { chinh: true, nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
+          { nhan: "Mã", hienThi: (r) => <span>{r.ma}{r.ma_vach && r.ma_vach !== r.ma ? <span className="block text-[12px] text-muc-3">{r.ma_vach}</span> : null}</span> }, { chinh: true, nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
           { nhan: "Đơn vị", hienThi: (r) => (r.don_vi_mua ? `${r.don_vi} (mua: ${r.don_vi_mua} = ${soVN(r.he_so_quy_doi)})` : r.don_vi) },
           ...(xemVon ? [{ nhan: "Giá vốn / đv", hienThi: (r: NonNullable<typeof sp>[number]) => (r.gia_nhap_don_vi == null ? "chưa có" : tienVN(r.gia_nhap_don_vi)), phai: true }] : []), { nhan: "Giá bán", hienThi: (r) => (r.ban_le ? tienVN(r.gia_ban) : ""), phai: true },
           { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={{ ...r, nhom_cap: r.nhom_cap ?? "" }} action={luuSanPham} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaSanPham} /></span> }] : []),
         ]} />
+    );
+  } else if (tab === "ra-soat") {
+    const hom = homNayHCM();
+    const [{ data: sp }, { data: ton }, { data: lo }] = await Promise.all([db.from("san_pham").select("*").order("ma"), db.from("v_ton_kho").select("san_pham_id, ton"), db.from("v_ton_lo").select("san_pham_id, han_dung, con_lai")]);
+    const tenDem = new Map<string, number>();
+    for (const x of sp ?? []) if (x.hoat_dong) tenDem.set(khoaTen(x.ten), (tenDem.get(khoaTen(x.ten)) ?? 0) + 1);
+    const tonAm = new Set((ton ?? []).filter((x) => Number(x.ton) < 0).map((x) => x.san_pham_id));
+    const tongTon = new Map<string, number>();
+    for (const x of ton ?? []) if (x.san_pham_id) tongTon.set(x.san_pham_id, (tongTon.get(x.san_pham_id) ?? 0) + Number(x.ton));
+    const hetHan = new Set((lo ?? []).filter((x) => x.han_dung && x.han_dung < hom && Number(x.con_lai) > 0).map((x) => x.san_pham_id));
+    const coHan = new Set((lo ?? []).filter((x) => x.han_dung).map((x) => x.san_pham_id));
+    const NHAN: Record<string, string> = { ...NHAN_VAN_DE, ton_am: "Tồn kho âm", het_han: "Còn tồn hàng đã hết hạn", thieu_han: "Có tồn nhưng chưa ghi hạn dùng" };
+    const dong = (sp ?? []).flatMap((x) => {
+      const vd = vanDeSanPham(x, (tenDem.get(khoaTen(x.ten)) ?? 0) > 1);
+      if (x.hoat_dong && tonAm.has(x.id)) vd.push("ton_am");
+      if (x.hoat_dong && hetHan.has(x.id)) vd.push("het_han");
+      if (x.hoat_dong && x.bat_buoc_han_dung && (tongTon.get(x.id) ?? 0) > 0 && !coHan.has(x.id)) vd.push("thieu_han");
+      return vd.length ? [{ sp: x, vd }] : [];
+    });
+    const dem = new Map<string, number>();
+    for (const d of dong) for (const v of d.vd) dem.set(v, (dem.get(v) ?? 0) + 1);
+    const loc = loai && NHAN[loai] ? loai : "";
+    const hien = (loc ? dong.filter((d) => d.vd.includes(loc)) : dong).slice(0, 300);
+    const truong: Truong[] = truongSanPham();
+    noiDung = (
+      <>
+        <p className="mb-4 max-w-3xl text-[13.5px] leading-snug text-muc-3">Danh sách việc cần làm để danh mục và kho sạch: mã và tên theo quy ước, đủ nhóm, tồn tối thiểu, giá, mã vạch, tồn âm và hàng hết hạn. Sửa dần từng nhóm; mỗi dòng có nút Sửa. Quy ước mã: chữ in hoa + số, không dấu cách (MP-0012). Quy ước tên: loại hàng + thương hiệu + tên + quy cách.</p>
+        <nav aria-label="Lọc theo vấn đề" className="mb-5 flex flex-wrap gap-2 text-[13px]">
+          <Link href="/danh-muc?tab=ra-soat" className={`rounded-nho px-3 py-1.5 ${!loc ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-2 hover:text-muc"}`}>Tất cả ({dong.length})</Link>
+          {Object.entries(NHAN).filter(([k]) => dem.get(k)).map(([k, n]) => <Link key={k} href={`/danh-muc?tab=ra-soat&loai=${k}`} className={`rounded-nho px-3 py-1.5 ${loc === k ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-2 hover:text-muc"}`}>{n} ({dem.get(k)})</Link>)}
+        </nav>
+        <Bang duLieu={hien} khoa={(r) => r.sp.id} trong="Không có vấn đề nào. Danh mục đã sạch."
+          cot={[
+            { nhan: "Mã", hienThi: (r) => r.sp.ma }, { chinh: true, nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.sp.ten}</span> }, { nhan: "Nhóm", hienThi: (r) => r.sp.nhom ?? "" },
+            { nhan: "Cần xử lý", hienThi: (r) => <span className="text-canh-bao">{r.vd.map((v) => NHAN[v]).join(" · ")}</span> },
+            ...(sua ? [{ nhan: "", hienThi: (r: (typeof hien)[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.sp.ten}`} rong truong={truong} giaTri={{ ...r.sp, ma_vach: r.sp.ma_vach ?? "", nhom_cap: r.sp.nhom_cap ?? "" }} action={luuSanPham} /> }] : []),
+          ]} />
+        {dong.length > hien.length && <p className="mt-3 text-[12px] text-muc-3">Đang hiện {hien.length}/{dong.length} dòng đầu; lọc theo vấn đề để xem tiếp.</p>}
+      </>
     );
   } else if (tab === "nhom") {
     const truong: Truong[] = [{ ten: "ten", nhan: "Tên nhóm", loai: "chu", batBuoc: true }, { ten: "thu_tu", nhan: "Thứ tự hiển thị", loai: "so" }];

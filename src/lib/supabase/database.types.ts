@@ -4472,6 +4472,8 @@ export type Database = {
       }
       san_pham: {
         Row: {
+          ma_vach: string | null
+          bat_buoc_han_dung: boolean
           ban_le: boolean
           don_vi: string
           don_vi_mua: string | null
@@ -4491,6 +4493,8 @@ export type Database = {
           ton_toi_thieu: number
         }
         Insert: {
+          ma_vach?: string | null
+          bat_buoc_han_dung?: boolean
           ban_le?: boolean
           don_vi: string
           don_vi_mua?: string | null
@@ -4510,6 +4514,8 @@ export type Database = {
           ton_toi_thieu?: number
         }
         Update: {
+          ma_vach?: string | null
+          bat_buoc_han_dung?: boolean
           ban_le?: boolean
           don_vi?: string
           don_vi_mua?: string | null

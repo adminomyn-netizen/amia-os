@@ -150,6 +150,15 @@ export async function nhanHangDonMua(fd: FormData): Promise<KQ> {
   let dong: unknown;
   try { dong = JSON.parse(chuoi(fd, "dong")); } catch { return { loi: "Dữ liệu nhận hàng không đọc được." }; }
   if (!Array.isArray(dong) || dong.every((d) => !(Number(d?.so_luong) > 0))) return { loi: "Nhập số lượng nhận cho ít nhất một dòng." };
+  // Hàng bắt buộc có hạn dùng thì phải nhập hạn dùng khi nhận; hàng đã hết hạn thì không nhận vào kho.
+  const dongNhan = (dong as { dong_id?: string; so_luong?: number; han_dung?: string | null }[]).filter((d) => Number(d?.so_luong) > 0 && d.dong_id);
+  const { data: spDong } = await sb().from("don_mua_dong").select("id, san_pham:san_pham_id(ten, bat_buoc_han_dung)").in("id", dongNhan.map((d) => d.dong_id!));
+  const thongTin = new Map((spDong ?? []).map((r) => [r.id, r.san_pham as { ten: string; bat_buoc_han_dung: boolean } | null]));
+  for (const d of dongNhan) {
+    const sp = thongTin.get(d.dong_id!), han = String(d.han_dung ?? "");
+    if (sp?.bat_buoc_han_dung && !han) return { loi: `"${sp.ten}" bắt buộc nhập hạn dùng (và số lô) khi nhận hàng.` };
+    if (han && han < homNayHCM()) return { loi: `"${sp?.ten ?? "Hàng"}" đã hết hạn dùng ${han}, không nhận vào kho. Báo nhà cung cấp đổi hàng.` };
+  }
   const { error } = await sb().rpc("nhan_hang_don_mua", { p_don: don.id, p_nguoi: nd.nhanVienId, p_dong: dong });
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();

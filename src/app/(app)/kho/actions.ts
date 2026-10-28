@@ -28,6 +28,8 @@ export async function nhapKho(fd: FormData): Promise<KQ> {
   const sl = so(fd, "so_luong");
   if (!(sl > 0)) return { loi: "Số lượng nhập phải lớn hơn 0." };
   if (han && !NGAY.test(han)) return { loi: "Hạn dùng chưa đúng." };
+  const { data: spNhap } = await db.from("san_pham").select("ten, bat_buoc_han_dung").eq("id", chuoi(fd, "san_pham_id")).maybeSingle();
+  if (spNhap?.bat_buoc_han_dung && !han) return { loi: `"${spNhap.ten}" bắt buộc nhập hạn dùng (và nên ghi số lô) khi nhập kho.` };
   if (han && han < congNgay(homNayHCM(), HAN_NHAP_TOI_THIEU) && !bat(fd, "ngoai_le")) {
     return { loi: `Hàng còn dưới ${HAN_NHAP_TOI_THIEU} ngày hạn dùng. Chỉ nhập khi đã được đồng ý ngoại lệ: bật “Ngoại lệ hạn dùng” và ghi lý do vào ghi chú.` };
   }

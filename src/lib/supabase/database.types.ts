@@ -1027,31 +1027,46 @@ export type Database = {
         Row: {
           dia_chi: string | null
           dien_thoai: string | null
+          gio_lam_viec: Json | null
+          hien_dat_lich: boolean
           hoat_dong: boolean
           id: string
           ma: string
+          mo_ta: string | null
+          phuong_quan: string | null
           tao_luc: string
           ten: string
+          thanh_pho: string | null
           thu_tu: number
         }
         Insert: {
           dia_chi?: string | null
           dien_thoai?: string | null
+          gio_lam_viec?: Json | null
+          hien_dat_lich?: boolean
           hoat_dong?: boolean
           id?: string
           ma: string
+          mo_ta?: string | null
+          phuong_quan?: string | null
           tao_luc?: string
           ten: string
+          thanh_pho?: string | null
           thu_tu?: number
         }
         Update: {
           dia_chi?: string | null
           dien_thoai?: string | null
+          gio_lam_viec?: Json | null
+          hien_dat_lich?: boolean
           hoat_dong?: boolean
           id?: string
           ma?: string
+          mo_ta?: string | null
+          phuong_quan?: string | null
           tao_luc?: string
           ten?: string
+          thanh_pho?: string | null
           thu_tu?: number
         }
         Relationships: []

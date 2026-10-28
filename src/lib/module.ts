@@ -150,7 +150,10 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Thông tin cửa hàng", the: [
         { ten: "Thông tin chung", moTa: "Tên, địa chỉ, pháp nhân, giờ làm việc.", duongDan: "/cai-dat/thong-tin-chung", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
-        { ten: "Chi nhánh", moTa: "Chi nhánh và phân quyền vận hành.", duongDan: "/danh-muc?tab=chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Chi nhánh", moTa: "Chi nhánh: địa chỉ, điện thoại, hiện ở web đặt lịch, giờ làm việc.", duongDan: "/cai-dat/chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Giờ làm việc", moTa: "Giờ mở cửa và ngày nghỉ của từng chi nhánh.", duongDan: "/cai-dat/gio-lam-viec", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Ngày tháng & tiền tệ & thuế", moTa: "Định dạng ngày giờ, ngôn ngữ, đơn vị tiền, VAT, phụ phí, tiền tip.", duongDan: "/cai-dat/thiet-lap-khac", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Thiết lập in", moTa: "Khổ giấy, dòng hiện trên tờ in hoá đơn / lịch hẹn, nội dung cuối tờ, mã QR thanh toán.", duongDan: "/cai-dat/thiet-lap-in", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Tài khoản ngân hàng", moTa: "Tài khoản dùng khi thu tiền chuyển khoản và sổ quỹ.", duongDan: "/cai-dat/ngan-hang", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Bảng tin công ty", moTa: "Thông báo hiển thị cho toàn công ty.", duongDan: "/cai-dat/bang-tin", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
@@ -159,6 +162,7 @@ export const MODULE: Module[] = [
         { ten: "Danh mục sản phẩm", moTa: "Sản phẩm, vật tư, giá bán, hạn dùng.", duongDan: "/danh-muc?tab=san-pham", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Loại thẻ / gói liệu trình", moTa: "Gói buổi, giá trị, dịch vụ trong gói.", duongDan: "/danh-muc?tab=goi-the", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Voucher / thẻ giảm giá", moTa: "Mã giảm giá khách đưa ở quầy: hạn dùng, số lần, chi nhánh, áp dụng cho dịch vụ hay sản phẩm.", duongDan: "/cai-dat/voucher", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Cài đặt chi phí dịch vụ", moTa: "Công thức chi phí: vật tư và số lượng dùng cho từng dịch vụ, chi phí khấu hao mỗi ca.", duongDan: "/dinh-muc", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Rà soát danh mục", moTa: "Sản phẩm thiếu mã, trùng tên, thiếu hạn dùng.", duongDan: "/danh-muc?tab=ra-soat", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
       { nhan: "Nhân viên", the: [
@@ -169,7 +173,7 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "Khách hàng & đặt lịch", the: [
         { ten: "Điểm thưởng theo hạng", moTa: "Chi bao nhiêu được 1 điểm, 1 điểm giảm bao nhiêu, theo từng hạng khách.", duongDan: "/cai-dat/diem-thuong", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
-        { ten: "Web đặt lịch", moTa: "Trang đặt lịch online cho khách.", trangThai: "sap_co" },
+        { ten: "Web đặt lịch", moTa: "Trang đặt lịch online cho khách: bật/tắt, đặt trước tối thiểu, số ngày nhận, dịch vụ và chi nhánh được hiện.", duongDan: "/danh-muc?tab=cho-lam", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Zalo OA / SMS", moTa: "Nhắn nhắc lịch, chăm sóc (cần tài khoản Zalo OA / nhà mạng).", trangThai: "sap_co" },
       ] },
       { nhan: "Các thiết lập khác", the: [

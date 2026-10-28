@@ -12,7 +12,7 @@ export default async function TrangDatLich() {
   const db = sb();
   const [{ data: mo }, { data: cn }, { data: dv }, { data: nhom }, { data: cho }] = await Promise.all([
     db.from("cau_hinh").select("gia_tri").eq("khoa", "dat_online.mo").maybeSingle(),
-    db.from("chi_nhanh").select("id, ten, dia_chi, dien_thoai").eq("hoat_dong", true).order("thu_tu").order("ma"),
+    db.from("chi_nhanh").select("id, ten, dia_chi, dien_thoai").eq("hoat_dong", true).eq("hien_dat_lich", true).order("thu_tu").order("ma"),
     db.from("dich_vu").select("id, ten, thoi_luong_phut, nhom_id").eq("hoat_dong", true).eq("dat_online", true).order("ma"),
     db.from("dich_vu_nhom").select("id, ten, thu_tu").order("thu_tu"),
     db.from("cho_lam").select("chi_nhanh_id").eq("hoat_dong", true),

@@ -4,7 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
-import { ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { congNgay, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { Tab } from "@/components/ui/Tab";
@@ -22,9 +22,9 @@ import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 import { BaoCaoLichSuDungThe, BaoCaoTheoChiNhanh, BaoCaoTheoKhachHang } from "@/components/bao-cao/BaoCaoGap";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
-import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
-const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }];
+const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
 const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "danh-gia", "ti-le-chot"]);
 /** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
@@ -54,7 +54,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
   const loc = { tu, den, cn, nhom, doiTuNgay };
   const coChiNhanh = !cn && (dsCn ?? []).length > 1;
-  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "no" && sp.nt === "tra" ? `&nt=tra${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "dich-vu" ? `${sp.loai ? `&loai=${sp.loai}` : ""}${sp.lm ? `&lm=${sp.lm}` : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
+  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "dung-the-ma" && sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${tab === "no" && sp.nt === "tra" ? `&nt=tra${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "dich-vu" ? `${sp.loai ? `&loai=${sp.loai}` : ""}${sp.lm ? `&lm=${sp.lm}` : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
   let noiDung: React.ReactNode;
 
   const dsChiNhanh = nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
@@ -73,6 +73,44 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
       <LocKhachThe kieu="the" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} loai={sp.lt} q={sp.q} tenThe={sp.tt} so={loaiT.so} />
       <BaoCaoLichSuDungThe loc={loaiT} xemSdt={coQuyen(nd, "khach.xem")} />
     </>;
+  } else if (tab === "dung-the-ma") {
+    const quaDai = congNgay(tu, 93) < den, tuDung = quaDai ? congNgay(den, -93) : tu;
+    const tatCa = await layThongKeDungDichVu(db, tuDung, den, cn, sp.q || undefined);
+    const so = 30, trang = Math.min(soTrang(sp.trang), Math.max(1, Math.ceil(tatCa.length / so)));
+    const hien = tatCa.slice((trang - 1) * so, trang * so);
+    const xemSdt = coQuyen(nd, "khach.xem");
+    const goc = { tab: "dung-the-ma", tu, den, cn: sp.cn, q: sp.q };
+    noiDung = (
+      <>
+        {lc}
+        {quaDai && <p role="status" className="mb-3 text-[12px] text-muc-3">Khoảng dài hơn 93 ngày nên chỉ tính 93 ngày cuối ({ngayVN(tuDung)} – {ngayVN(den)}).</p>}
+        <form method="get" action="/bao-cao" className="mb-5 flex gap-2">
+          <input type="hidden" name="tab" value="dung-the-ma" /><input type="hidden" name="tu" value={tu} /><input type="hidden" name="den" value={den} />
+          {sp.cn && <input type="hidden" name="cn" value={sp.cn} />}
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm kiếm theo mã / tên sản phẩm" aria-label="Tìm kiếm theo mã hoặc tên sản phẩm" className={O_NHAP} />
+          <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
+        </form>
+        <Bang duLieu={hien} khoa={(r) => r.khoa} trong="Không tìm thấy kết quả nào"
+          cot={[
+            { nhan: "Mã sản phẩm", hienThi: (r) => r.ma },
+            { nhan: "Phân loại", hienThi: (r) => (r.phanLoai === "ban" ? "Bán thẻ / liệu trình" : "Sử dụng thẻ / liệu trình") },
+            { nhan: "Tên sản phẩm", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
+            { nhan: "Số lượng", hienThi: (r) => soVN(r.soLuong), phai: true },
+            { nhan: "Xem danh sách", hienThi: (r) => (
+              <details>
+                <summary className="cursor-pointer text-[13px] font-medium text-nhan-dam">Xem danh sách ({r.khach.length})</summary>
+                <ul className="mt-2 space-y-1 text-[13px]">
+                  {r.khach.slice(0, 50).map((k, i) => (
+                    <li key={i}>{k.khachId ? <Link href={`/khach-hang/${k.khachId}`} className="text-muc hover:underline">{k.ten}</Link> : k.ten}{k.dienThoai ? <span className="text-muc-3"> · {xemSdt ? k.dienThoai : "•••"}</span> : null} · <span className="text-muc-3">{k.maHd} · {ngayVN(k.ngay)}{k.soLuong > 1 ? ` · ${k.soLuong} lần` : ""}</span></li>
+                  ))}
+                  {r.khach.length > 50 && <li className="text-muc-3">… còn {r.khach.length - 50} dòng, xem đủ trong tệp Excel.</li>}
+                </ul>
+              </details>) },
+          ]} />
+        <ThanhTrang trang={trang} tong={tatCa.length} moi={so} gan={(t) => `/bao-cao?${new URLSearchParams(Object.entries({ ...goc, trang: t ? String(t) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`} />
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Thống kê số lượng khách hàng sử dụng dịch vụ: mỗi dòng là một dịch vụ theo mã thẻ (“Sử dụng thẻ / liệu trình”, mã dạng DV… - M…) hoặc một thẻ / liệu trình đã bán (“Bán thẻ / liệu trình”) trong khoảng ngày, tính theo hoá đơn hoàn thành. Số lượng là tổng số lần ở các hoá đơn đó. Thẻ chưa có trong hồ sơ thẻ của app không có mã thẻ.</p>
+      </>
+    );
   } else if (tab === "danh-gia") {
     noiDung = <>{lc}<BaoCaoDanhGia loc={{ tu, den, cn }} sao={sp.sao} q={sp.q} trang={sp.trang} /></>;
   } else if (tab === "ti-le-chot") {

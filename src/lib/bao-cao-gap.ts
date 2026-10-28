@@ -128,3 +128,48 @@ export async function layCacLanTraNo(db: Db, l: { tu: string; den: string; cn?: 
   const rows = (data ?? []).map((r) => ({ id: r.thanh_toan_id, ngay: r.ngay, hoaDonId: r.hoa_don_id, maHd: r.ma_hd, khachId: r.khach_id, khach: r.khach, dienThoai: r.dien_thoai, chiNhanh: r.chi_nhanh, tongHd: Number(r.tong_hd), soTien: Number(r.so_tien), phuongThuc: PHUONG_THUC_VN[r.phuong_thuc] ?? r.phuong_thuc, nguoiThu: r.nguoi_thu }));
   return { rows, tong: { dong: Number(data?.[0]?.tong_dong ?? 0), tien: Number(data?.[0]?.tong_tien ?? 0) } };
 }
+
+/** Thống kê sử dụng dịch vụ theo mã thẻ (kiểu SalonHero): gom dòng hoá đơn thành (phân loại, mã, tên); mỗi dòng kèm danh sách khách. Giới hạn 93 ngày (đọc qua API, không có hàm riêng). */
+export type KhachDung = { khachId: string | null; ten: string; dienThoai: string | null; maHd: string; ngay: string; soLuong: number };
+export type DongDungDichVu = { khoa: string; phanLoai: "dung" | "ban"; ma: string; ten: string; soLuong: number; khach: KhachDung[] };
+export async function layThongKeDungDichVu(db: Db, tu: string, den: string, cn?: string, q?: string) {
+  const dong: { id: string; loai: string; ten: string; so_luong: number; the_khach_sh_id: number | null; dich_vu_id: string | null; goi_id: string | null; hd: { id: string; ma: string; sh_ma: string | null; ngay_hd: string; khach_id: string | null } }[] = [];
+  for (let i = 0; ; i += 1000) {
+    let qr = db.from("hoa_don_dong")
+      .select("id, loai, ten, so_luong, the_khach_sh_id, dich_vu_id, goi_id, hd:hoa_don!inner(id, ma, sh_ma, ngay_hd, khach_id)")
+      .eq("hd.trang_thai", "hoan_thanh").eq("hd.la_so_du_dau", false).gte("hd.ngay_hd", tu).lte("hd.ngay_hd", den)
+      .or("the_khach_sh_id.not.is.null,loai.eq.goi_the").order("id").range(i, i + 999);
+    if (cn) qr = qr.eq("hd.chi_nhanh_id", cn);
+    const { data, error } = await qr;
+    if (error) throw new Error(error.message);
+    dong.push(...((data ?? []) as unknown as typeof dong));
+    if (!data || data.length < 1000) break;
+  }
+  const shIds = [...new Set(dong.map((d) => d.the_khach_sh_id).filter((x): x is number => x != null))];
+  const theMa = new Map<number, string>();
+  for (let i = 0; i < shIds.length; i += 300) {
+    const { data } = await db.from("the_khach").select("sh_id, ma").in("sh_id", shIds.slice(i, i + 300));
+    for (const t of data ?? []) if (t.sh_id != null) theMa.set(t.sh_id, t.ma);
+  }
+  const [{ data: dvs }, { data: gois }] = await Promise.all([db.from("dich_vu").select("id, ma"), db.from("goi_the").select("id, ma")]);
+  const maDv = new Map((dvs ?? []).map((d) => [d.id, d.ma])), maGoi = new Map((gois ?? []).map((g) => [g.id, g.ma]));
+  const kIds = [...new Set(dong.map((d) => d.hd.khach_id).filter((x): x is string => !!x))];
+  const kh = new Map<string, { ho_ten: string; dien_thoai: string | null }>();
+  for (let i = 0; i < kIds.length; i += 300) {
+    const { data } = await db.from("khach_hang").select("id, ho_ten, dien_thoai").in("id", kIds.slice(i, i + 300));
+    for (const k of data ?? []) kh.set(k.id, k);
+  }
+  const m = new Map<string, DongDungDichVu>();
+  for (const d of dong) {
+    const phanLoai = d.loai === "goi_the" ? "ban" : "dung";
+    const ma = phanLoai === "ban" ? (maGoi.get(d.goi_id ?? "") ?? "") : [maDv.get(d.dich_vu_id ?? "") ?? "", d.the_khach_sh_id != null ? theMa.get(d.the_khach_sh_id) ?? "" : ""].filter(Boolean).join(" - ");
+    const khoa = `${phanLoai}|${ma}|${d.ten}`;
+    const r = m.get(khoa) ?? { khoa, phanLoai, ma, ten: d.ten, soLuong: 0, khach: [] };
+    r.soLuong += d.so_luong;
+    const k = d.hd.khach_id ? kh.get(d.hd.khach_id) : undefined;
+    r.khach.push({ khachId: d.hd.khach_id, ten: k?.ho_ten ?? "Khách lẻ", dienThoai: k?.dien_thoai ?? null, maHd: d.hd.sh_ma ?? d.hd.ma, ngay: d.hd.ngay_hd, soLuong: d.so_luong });
+    m.set(khoa, r);
+  }
+  const tuKhoa = (q ?? "").trim().toLowerCase();
+  return [...m.values()].filter((r) => !tuKhoa || r.ma.toLowerCase().includes(tuKhoa) || r.ten.toLowerCase().includes(tuKhoa)).sort((a, b) => b.soLuong - a.soLuong || a.ten.localeCompare(b.ten, "vi"));
+}

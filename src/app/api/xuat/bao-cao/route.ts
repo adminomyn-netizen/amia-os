@@ -3,10 +3,11 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat as Bang, type Cot } from "@/lib/xuat-excel";
 import { khoangNgay } from "@/lib/bao-cao";
+import { congNgay } from "@/lib/dinh-dang";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
-import { gomTheoKy, kieuGom, layLichSuDungThe, layCacLanTraNo, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, kieuGom, layLichSuDungThe, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
@@ -103,6 +104,13 @@ export async function GET(req: Request) {
     bangs.push({ ten: "Theo dịch vụ, sản phẩm", dong: ds, cot: [
       { nhan: "Tên", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 16 }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Trước giảm giá", khoa: "truoc", tien: true },
       { nhan: "Sau giảm giá", khoa: "sau", tien: true }, { nhan: "Trừ thẻ tiền", khoa: "truThe", tien: true }, { nhan: "Thực nhận", khoa: "thucNhan", tien: true }] });
+  } else if (tab === "dung-the-ma") {
+    const xemSdt = coQuyen(nd, "khach.xem");
+    const ds = await layThongKeDungDichVu(db, congNgay(tu, 93) < den ? congNgay(den, -93) : tu, den, cn, u.searchParams.get("q") || undefined);
+    bangs.push({ ten: "Thống kê sử dụng dịch vụ", dong: ds.map((r) => ({ ...r, loai: r.phanLoai === "ban" ? "Bán thẻ / liệu trình" : "Sử dụng thẻ / liệu trình", soKhach: r.khach.length })), cot: [
+      { nhan: "Mã sản phẩm", khoa: "ma", rong: 24 }, { nhan: "Phân loại", khoa: "loai", rong: 26 }, { nhan: "Tên sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Số dòng khách", khoa: "soKhach", so: true }] });
+    bangs.push({ ten: "Danh sách khách", dong: ds.flatMap((r) => r.khach.map((k) => ({ ma: r.ma, ten: r.ten, khach: k.ten, dienThoai: xemSdt ? k.dienThoai : "", maHd: k.maHd, ngay: ngay(k.ngay), soLuong: k.soLuong }))), cot: [
+      { nhan: "Mã sản phẩm", khoa: "ma", rong: 24 }, { nhan: "Tên sản phẩm", khoa: "ten", rong: 40 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Mã hóa đơn", khoa: "maHd", rong: 14 }, { nhan: "Ngày", khoa: "ngay", rong: 12 }, { nhan: "Số lượng", khoa: "soLuong", so: true }] });
   } else if (tab === "no" && u.searchParams.get("nt") === "tra") {
     const xemSdt = coQuyen(nd, "khach.xem");
     const { rows } = await layCacLanTraNo(db, { tu, den, cn, q: u.searchParams.get("q") || undefined }, true);

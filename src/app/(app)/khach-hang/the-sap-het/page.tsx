@@ -5,29 +5,34 @@ import { ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { chiNhanhXem, docNguongCSKH, docTheSapHet, soTrongKhoang } from "@/lib/cham-soc-khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NutHop } from "@/components/ui/BieuMau";
 import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { Chon } from "@/components/ui/Chon";
 import { ghiNhacTheSapHet } from "../cham-soc/actions";
 
 /** Chọn nhanh "Tình trạng" như SalonHero (Khách hàng dùng thẻ): sắp hết tiền/lần · hết hạn sau 1 tuần · hết hạn sau 1 tháng. */
+const MOI_TRANG = 50;
 const TINH_TRANG = [{ ma: "", nhan: "Tất cả" }, { ma: "sap_het", nhan: "Sắp hết tiền/lần" }, { ma: "tuan", nhan: "Hết hạn sau 1 tuần" }, { ma: "thang", nhan: "Hết hạn sau 1 tháng" }];
 
 /** /khach-hang/the-sap-het — Thẻ sắp hết: thẻ lần còn ít buổi hoặc thẻ (lần/tiền) sắp hết hạn, kèm khách và nút ghi nhắc. Ngưỡng chỉnh được. */
-export default async function TheSapHet({ searchParams }: { searchParams: Promise<{ cn?: string; tt?: string; buoi?: string; ngay?: string }> }) {
+export default async function TheSapHet({ searchParams }: { searchParams: Promise<{ cn?: string; tt?: string; buoi?: string; ngay?: string; trang?: string }> }) {
   const nd = await yeuCauQuyen("the.xem");
   const sp = await searchParams;
-  const ng = await docNguongCSKH();
-  const { cn, ds: dsCn, khoa } = await chiNhanhXem(nd, sp.cn);
+  const [ng, { cn, ds: dsCn, khoa }] = await Promise.all([docNguongCSKH(), chiNhanhXem(nd, sp.cn)]);
   const tt = TINH_TRANG.some((x) => x.ma === sp.tt) ? (sp.tt ?? "") : "";
   let buoi = soTrongKhoang(sp.buoi, 0, 50, ng.sapHetBuoi)!;
   const ngay = soTrongKhoang(sp.ngay, 0, 365, ng.sapHetNgay)!;
   const buoiHieuLuc = tt === "tuan" || tt === "thang" ? -1 : buoi;           // -1 = không xét số buổi
   const ngayHieuLuc = tt === "sap_het" ? -1 : tt === "tuan" ? 7 : tt === "thang" ? 30 : ngay; // -1 = không xét hạn
   if (tt === "tuan" || tt === "thang") buoi = ng.sapHetBuoi;
-  const ds = await docTheSapHet(cn, buoiHieuLuc, ngayHieuLuc);
+  const trang = Math.max(1, Math.min(Number(sp.trang) || 1, Math.ceil(2000 / MOI_TRANG)));
+  const dsDau = await docTheSapHet(cn, buoiHieuLuc, ngayHieuLuc, undefined, Math.min(trang * MOI_TRANG, 2000));
   const tenCn = new Map(dsCn.map((c) => [c.id, c.ten]));
-  const tong = ds[0]?.tong ?? 0;
+  const tong = dsDau[0]?.tong ?? 0;
+  // Danh sách dài (hàng trăm thẻ): mỗi trang 50 thẻ để trang nhẹ, hiện nhanh.
+  const ds = dsDau.slice((trang - 1) * MOI_TRANG, trang * MOI_TRANG);
+  const gan = (t: number | undefined) => `/khach-hang/the-sap-het?${new URLSearchParams(Object.entries({ cn: cn ?? undefined, tt: sp.tt, buoi: sp.buoi, ngay: sp.ngay, trang: t && t > 1 ? String(t) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`;
   const sua = coQuyen(nd, "khach.sua");
 
   return (
@@ -50,7 +55,7 @@ export default async function TheSapHet({ searchParams }: { searchParams: Promis
           <input name="ngay" inputMode="numeric" defaultValue={ngay} className={`${O_NHAP} !h-10 !w-28 tabular-nums`} /></label>
         <button type="submit" className={NUT_PHU}>Lọc</button>
       </form>
-      <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ sắp hết{tong > ds.length ? ` (hiện ${ds.length} thẻ đầu, hết hạn sớm nhất trước)` : ""}{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
+      <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ sắp hết{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
       <Bang duLieu={ds} khoa={(r) => r.the_id} trong="Không có thẻ nào sắp hết với điều kiện này."
         cot={[
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => <div><Link href={`/khach-hang/${r.khach_id}`} className="font-medium text-muc hover:underline">{r.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{r.dien_thoai} · {r.ma}</div></div> },
@@ -65,6 +70,7 @@ export default async function TheSapHet({ searchParams }: { searchParams: Promis
               {sua && <NutHop kieu="chu" nhan="Ghi nhắc" tieuDe="Ghi nhắc thẻ sắp hết" xacNhan={`Ghi nhắc thẻ ${r.ma_the} sắp hết cho ${r.ho_ten} vào mục nhắc chăm sóc của khách? (Không gửi tin nhắn cho khách.)`} nhanLuu="Ghi nhắc" an={{ khach_id: r.khach_id, the_id: r.the_id, han_dung: r.han_dung ?? "" }} action={ghiNhacTheSapHet} />}
             </span>) },
         ]} />
+      <ThanhTrang trang={trang} tong={Math.min(tong, 2000)} moi={MOI_TRANG} gan={gan} don="thẻ" />
     </div>
   );
 }

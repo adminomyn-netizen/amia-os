@@ -3,7 +3,6 @@ import { AlertTriangle, CalendarDays, CircleDollarSign, ClipboardCheck, Clock, P
 import type { CanhBao } from "@/lib/canh-bao";
 import { tienGon, tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
-import { BangSoLieu, type SoLieu } from "./BangSoLieu";
 import { BangXepHangDep } from "./BangXepHangDep";
 
 type Tin = { id: string; tieu_de: string; noi_dung: string };
@@ -34,7 +33,7 @@ export const MA_CHO_DUYET = NHOM[0].ma;
 const THUONG = (c: CanhBao["ma"]) => !c.startsWith("tomtat");
 
 /** Dashboard của lãnh đạo, bố cục theo BeDental: dải cảnh báo, ba khối (bảng tin, top nhân viên, việc của tôi), rồi hàng ô số lớn. */
-export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhBao: CanhBao[]; tin: Tin[]; top: NguoiTop[]; so: So; soLieu: SoLieu | null; xemTien: boolean }) {
+export function BangDieuHanh({ canhBao, tin, top, so, soLieuNode }: { canhBao: CanhBao[]; tin: Tin[]; top: NguoiTop[]; so: So; soLieuNode: React.ReactNode }) {
   const gap = canhBao.filter((c) => THUONG(c.ma));
   const nhan = NHOM.map((g) => ({ nhan: g.nhan, ds: gap.filter((c) => g.ma.includes(c.ma)), n: gap.filter((c) => g.ma.includes(c.ma)).length })).filter((g) => g.n > 0);
   const choDuyet = gap.filter((c) => MA_CHO_DUYET.includes(c.ma)).length;
@@ -116,7 +115,7 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
         </ul>
       </section>
 
-      {soLieu && <BangSoLieu d={soLieu} xemTien={xemTien} />}
+      {soLieuNode}
 
       <section aria-label="Cảnh báo vận hành" className="the-noi vao p-5 pt-6">
         <h2 className="flex items-center gap-2 border-b border-vien pb-2.5 text-[15px] font-semibold text-muc"><AlertTriangle strokeWidth={1.7} className="h-4 w-4 text-nhan" aria-hidden />Cảnh báo vận hành</h2>

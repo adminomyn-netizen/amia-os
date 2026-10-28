@@ -17,7 +17,7 @@ export function AnhCuLuuTru({ khachId, canLay, dangLay }: { khachId: string; can
   // Đang chờ tiến trình lấy ảnh: hỏi lại máy chủ mỗi 5 giây cho tới khi xong.
   useEffect(() => {
     if (!dangLay) return;
-    const t = setInterval(() => router.refresh(), 5000);
+    const t = setInterval(() => { if (document.visibilityState === "visible") router.refresh(); }, 5000); // tab ẩn thì khỏi dựng lại cả hồ sơ
     return () => clearInterval(t);
   }, [dangLay, router]);
   return dangLay ? <p role="status" className="mb-4 text-[13px] text-muc-3">Đang tải ảnh cũ về…</p> : null;

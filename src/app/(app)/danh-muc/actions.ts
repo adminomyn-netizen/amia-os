@@ -1,6 +1,6 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, updateTag } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuanHoaTen, khoaTen, loiMa, loiMaVach, loiTen, tienToTheoNhom } from "@/lib/san-pham";
@@ -95,6 +95,7 @@ export async function luuChiNhanh(fd: FormData): Promise<KQ> {
   const row = { ma: chuoi(fd, "ma").toUpperCase(), ten: chuoi(fd, "ten"), dia_chi: chuoiHoacNull(fd, "dia_chi"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"), thu_tu: so(fd, "thu_tu") || 100, hoat_dong: bat(fd, "hoat_dong") };
   if (!row.ma || !row.ten) return { loi: "Nhập mã và tên chi nhánh." };
   const { error } = id ? await sb().from("chi_nhanh").update(row).eq("id", id) : await sb().from("chi_nhanh").insert(row);
+  if (!error) updateTag("chi-nhanh");
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
 
@@ -107,6 +108,7 @@ async function xoaMuc(quyen: "danhmuc.sua" | "nhanvien.quanly", bang: "dich_vu" 
   const { error, count } = await sb().from(bang).delete({ count: "exact" }).eq("id", id);
   if (error) return { loi: error.code === "23503" ? MUC_DA_DUNG : thongBaoLoi(error) };
   if (!count) return { loi: "Mục này không còn tồn tại." };
+  if (bang === "chi_nhanh") updateTag("chi-nhanh");
   return xong();
 }
 export const xoaDichVu = async (fd: FormData) => xoaMuc("danhmuc.sua", "dich_vu", fd);

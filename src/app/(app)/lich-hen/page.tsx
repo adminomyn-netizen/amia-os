@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { CalendarDays, ChevronDown, Gem, Info, Medal, Trophy } from "lucide-react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
@@ -59,7 +60,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const tt = TT[sp.tt ?? ""] ? sp.tt! : "";
   const nguon = sp.nguon && (NGUON_DAT[sp.nguon] || /^[A-Z0-9_]{2,20}$/.test(sp.nguon)) ? sp.nguon : "";
   const db = sb();
-  const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
+  const { data: dsCn } = await dsChiNhanhRutGon();
   const cnId = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
   // Đường dẫn giữ mọi bộ lọc hiện có, chỉ đổi phần được nêu (chuỗi rỗng = bỏ tham số).
   const url = (doi: Record<string, string> = {}) => {
@@ -82,7 +83,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     db.from("yeu_cau_dat_lich").select("id, dich_vu_ids, bat_dau, thoi_luong_phut, ho_ten, dien_thoai, ghi_chu, tao_luc").eq("chi_nhanh_id", cnId).eq("trang_thai", "cho").gte("bat_dau", new Date().toISOString()).order("bat_dau").limit(100),
   ]);
   const idsK = [...new Set((lichTho ?? []).map((l) => l.khach_id))];
-  const ks = await theoLo(idsK, (lo) => db.from("v_khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, hang").in("id", lo));
+  const ks = await theoLo(idsK, (lo) => db.rpc("khach_cho_lich", { p_ids: lo })); // hàm riêng thay cho view v_khach_hang (nặng): cùng 6 cột, cùng luật hạng
   const tenK = new Map(ks.map((k) => [k.id as string, k]));
   const qThuong = q.toLowerCase();
   const lich = (lichTho ?? []).filter((l) => {

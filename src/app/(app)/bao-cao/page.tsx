@@ -19,7 +19,7 @@ import { BaoCaoTiLeChot } from "@/components/bao-cao/BaoCaoTiLeChot";
 import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 import { BaoCaoLichSuDungThe, BaoCaoTheoChiNhanh, BaoCaoTheoKhachHang } from "@/components/bao-cao/BaoCaoGap";
 import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
-import { HANG_KHACH, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
 const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
@@ -29,7 +29,7 @@ const TAB_NHOM: Record<string, "tong" | "thang"> = { "thu-ngan": "tong", "dat-li
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
 
-export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; hang?: string; tt?: string; lt?: string; so?: string }> }) {
+export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; hang?: string; tt?: string; lt?: string; so?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
   const sp = await searchParams;
   const tien = coQuyen(nd, "baocao.tien");
@@ -46,7 +46,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
   const loc = { tu, den, cn, nhom, doiTuNgay };
   const coChiNhanh = !cn && (dsCn ?? []).length > 1;
-  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
+  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
   let noiDung: React.ReactNode;
 
   const dsChiNhanh = nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
@@ -80,23 +80,42 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   } else if (tab === "dung-dich-vu") {
     noiDung = <>{lc}<BaoCaoDungDichVu loc={loc} coChiNhanh={coChiNhanh} /></>;
   } else if (tab === "doanh-thu") {
-    const { data } = await db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string });
-    const ds = data ?? [];
-    const cong = (k: "so_don" | "doanh_thu" | "thu_don_moi" | "thu_no_cu" | "thuc_thu" | "tien_mat" | "chuyen_khoan" | "quet_the" | "tru_the_tien" | "no_moi" | "so_buoi" | "doanh_thu_buoi") => ds.reduce((s, r) => s + Number(r[k]), 0);
+    const gom = kieuGom(sp.gom);
+    const [{ data }, cs] = await Promise.all([db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string }), layDoanhThuChiSo(db, tu, den, cn)]);
+    const ngayRows = (data ?? []).map((r) => ({ ngay: r.ngay, so_don: Number(r.so_don), doanh_thu: Number(r.doanh_thu), thu_don_moi: Number(r.thu_don_moi), thu_no_cu: Number(r.thu_no_cu), thuc_thu: Number(r.thuc_thu), tien_mat: Number(r.tien_mat), chuyen_khoan: Number(r.chuyen_khoan), quet_the: Number(r.quet_the), tru_the_tien: Number(r.tru_the_tien), no_moi: Number(r.no_moi), so_buoi: Number(r.so_buoi), doanh_thu_buoi: Number(r.doanh_thu_buoi) }));
+    const ds = gomTheoKy(ngayRows.filter((r) => r.so_don > 0 || r.thuc_thu !== 0 || r.so_buoi > 0 || r.tru_the_tien !== 0), gom, ["so_don", "doanh_thu", "thu_don_moi", "thu_no_cu", "thuc_thu", "tien_mat", "chuyen_khoan", "quet_the", "tru_the_tien", "no_moi", "so_buoi", "doanh_thu_buoi"]);
+    const tongBuoi = ngayRows.reduce((t, r) => t + r.so_buoi, 0), tongDtBuoi = ngayRows.reduce((t, r) => t + r.doanh_thu_buoi, 0);
+    const linkGom = (g: string) => `/bao-cao?tab=doanh-thu&gom=${g}${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
     noiDung = (
       <>
         {lc}
-        <HangChiSo muc={[{ nhan: "Doanh thu bán hàng", so: tienVN(cong("doanh_thu")), ghiChu: `${cong("so_don")} đơn` }, { nhan: "Thực thu", so: tienVN(cong("thuc_thu")), ghiChu: `thu nợ cũ ${tienVN(cong("thu_no_cu"))}` }, { nhan: "Nợ phát sinh", so: tienVN(cong("no_moi")) }, { nhan: "Doanh thu buổi đã làm", so: tienVN(cong("doanh_thu_buoi")), ghiChu: `${cong("so_buoi")} buổi` }]} />
-        <div className="mt-6">
-          <Bang duLieu={ds.filter((r) => r.so_don > 0 || Number(r.thuc_thu) !== 0 || r.so_buoi > 0 || Number(r.tru_the_tien) !== 0)} khoa={(r) => r.ngay} trong="Không có phát sinh trong khoảng này."
-            cot={[
-              { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Đơn mới", hienThi: (r) => r.so_don, phai: true }, { nhan: "Doanh thu", hienThi: (r) => tienVN(r.doanh_thu), phai: true },
-              { nhan: "Thu đơn mới", hienThi: (r) => tienVN(r.thu_don_moi), phai: true }, { nhan: "Thu nợ cũ", hienThi: (r) => tienVN(r.thu_no_cu), phai: true }, { nhan: "Thực thu", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.thuc_thu)}</span>, phai: true },
-              { nhan: "Tiền mặt", hienThi: (r) => tienVN(r.tien_mat), phai: true }, { nhan: "Chuyển khoản", hienThi: (r) => tienVN(r.chuyen_khoan), phai: true }, { nhan: "Quẹt thẻ", hienThi: (r) => tienVN(r.quet_the), phai: true },
-              { nhan: "Trừ thẻ tiền", hienThi: (r) => tienVN(r.tru_the_tien), phai: true }, { nhan: "Nợ mới", hienThi: (r) => tienVN(r.no_moi), phai: true }, { nhan: "Buổi làm", hienThi: (r) => r.so_buoi, phai: true },
-            ]} />
-        </div>
-        <p className="mt-3 text-[12px] text-muc-3">Doanh thu = tổng đơn hoàn thành như SalonHero (tiền hàng − giảm giá + VAT + phụ phí + tip) trừ phần thanh toán bằng thẻ tiền. Thực thu = tiền mặt + chuyển khoản + quẹt thẻ; trừ thẻ tiền không phải tiền vào quỹ vì tiền đã vào lúc bán thẻ.</p>
+        <HangChiSo muc={[
+          { nhan: "Tổng tiền đã thu", so: tienVN(cs.banMoi + cs.thuNo), ghiChu: `Bán mới ${tienVN(cs.banMoi)} · Thu nợ ${tienVN(cs.thuNo)}` },
+          { nhan: "Tổng số đơn hàng", so: soVN(cs.soDon) },
+          { nhan: "Thu tiền mặt", so: tienVN(cs.tmBan + cs.tmNo), ghiChu: `Bán mới ${tienVN(cs.tmBan)} · Thu nợ ${tienVN(cs.tmNo)}` },
+          { nhan: "Thu quẹt thẻ", so: tienVN(cs.qtBan + cs.qtNo), ghiChu: `Bán mới ${tienVN(cs.qtBan)} · Thu nợ ${tienVN(cs.qtNo)}` },
+          { nhan: "Thu chuyển khoản", so: tienVN(cs.ckBan + cs.ckNo), ghiChu: `Bán mới ${tienVN(cs.ckBan)} · Thu nợ ${tienVN(cs.ckNo)}` },
+          { nhan: "Tình trạng nợ · nợ mới chưa thu", so: tienVN(cs.noMoiChuaThu), ghiChu: `Thu nợ đơn trong kỳ ${tienVN(cs.thuNoTrongKy)} · ngoài kỳ ${tienVN(cs.thuNoNgoaiKy)}` },
+          { nhan: "Trừ thẻ tiền", so: tienVN(cs.truThe) },
+          { nhan: `Trừ voucher (số lượng: ${cs.soVoucher})`, so: tienVN(cs.truVoucher) },
+          { nhan: "Tổng tiền tip", so: tienVN(cs.tip) },
+          { nhan: "Tổng thuế (VAT)", so: tienVN(cs.vat) },
+          { nhan: "Tổng khoản chi", so: tienVN(0), ghiChu: "app chưa ghi khoản chi gắn với đơn" },
+          { nhan: "Doanh thu buổi đã làm", so: tienVN(tongDtBuoi), ghiChu: `${soVN(tongBuoi)} buổi (phần thêm của AMIA OS)` },
+        ]} />
+        <nav aria-label="Gom số liệu theo" className="mb-3 mt-6 flex gap-2 overflow-x-auto pb-1">
+          {KIEU_GOM.map((k) => (
+            <Link key={k.ma} href={linkGom(k.ma)} scroll={false} aria-current={gom === k.ma ? "page" : undefined} className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${gom === k.ma ? "bg-nhan text-white" : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{k.ten}</Link>
+          ))}
+        </nav>
+        <Bang duLieu={ds} khoa={(r) => r.nhan} trong="Không có phát sinh trong khoảng này."
+          cot={[
+            { nhan: "Thời gian", hienThi: (r) => r.nhan }, { nhan: "Đơn mới", hienThi: (r) => r.so_don, phai: true }, { nhan: "Doanh thu", hienThi: (r) => tienVN(r.doanh_thu), phai: true },
+            { nhan: "Thu đơn mới", hienThi: (r) => tienVN(r.thu_don_moi), phai: true }, { nhan: "Thu nợ cũ", hienThi: (r) => tienVN(r.thu_no_cu), phai: true }, { nhan: "Thực thu", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.thuc_thu)}</span>, phai: true },
+            { nhan: "Tiền mặt", hienThi: (r) => tienVN(r.tien_mat), phai: true }, { nhan: "Chuyển khoản", hienThi: (r) => tienVN(r.chuyen_khoan), phai: true }, { nhan: "Quẹt thẻ", hienThi: (r) => tienVN(r.quet_the), phai: true },
+            { nhan: "Trừ thẻ tiền", hienThi: (r) => tienVN(r.tru_the_tien), phai: true }, { nhan: "Nợ mới", hienThi: (r) => tienVN(r.no_moi), phai: true }, { nhan: "Buổi làm", hienThi: (r) => r.so_buoi, phai: true },
+          ]} />
+        <p className="mt-3 text-[12px] text-muc-3">Doanh thu = tổng đơn hoàn thành như SalonHero (tiền hàng − giảm giá + VAT + phụ phí + tip) trừ phần thanh toán bằng thẻ tiền. Thực thu = tiền mặt + chuyển khoản + quẹt thẻ; trừ thẻ tiền không phải tiền vào quỹ vì tiền đã vào lúc bán thẻ. “Bán mới” = thu cùng ngày với đơn, “thu nợ” = thu sau ngày đơn. Nợ mới chưa thu = nợ còn lại của các đơn trong kỳ. Gom Tuần tính từ thứ Hai.</p>
       </>
     );
   } else if (tab === "nhan-vien") {

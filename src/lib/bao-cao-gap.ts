@@ -58,3 +58,41 @@ export const SH_MAU_GAP = {
   khach: { chiNhanh: "AMIA Vinh", soKhach: 330, doanhThu: 1066014000, thucThu: 1036114000 },
   theDung: { soDong: 986, soLan: 1002, tien: 1046378837 },
 };
+
+/** Gom các dòng theo ngày thành tuần (thứ Hai–Chủ nhật) / tháng / quý — các cột đều là số cộng được. */
+export type KieuGom = "ngay" | "tuan" | "thang" | "quy";
+export const KIEU_GOM: { ma: KieuGom; ten: string }[] = [{ ma: "ngay", ten: "Ngày" }, { ma: "tuan", ten: "Tuần" }, { ma: "thang", ten: "Tháng" }, { ma: "quy", ten: "Quý" }];
+export const kieuGom = (s?: string): KieuGom => (KIEU_GOM.some((k) => k.ma === s) ? (s as KieuGom) : "ngay");
+const dmy = (iso: string) => iso.split("-").reverse().join("-");
+function khoaKy(ngay: string, k: KieuGom): { khoa: string; nhan: string } {
+  if (k === "ngay") return { khoa: ngay, nhan: dmy(ngay) };
+  const d = new Date(`${ngay}T00:00:00Z`);
+  if (k === "tuan") {
+    const t2 = new Date(d); t2.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7));
+    const cn = new Date(t2); cn.setUTCDate(t2.getUTCDate() + 6);
+    const a = t2.toISOString().slice(0, 10), b = cn.toISOString().slice(0, 10);
+    return { khoa: a, nhan: `${dmy(a)} → ${dmy(b)}` };
+  }
+  if (k === "thang") return { khoa: ngay.slice(0, 7), nhan: `${ngay.slice(5, 7)}-${ngay.slice(0, 4)}` };
+  const q = Math.floor((Number(ngay.slice(5, 7)) - 1) / 3) + 1;
+  return { khoa: `${ngay.slice(0, 4)}-Q${q}`, nhan: `Quý ${q}-${ngay.slice(0, 4)}` };
+}
+export function gomTheoKy<T extends { ngay: string }>(rows: T[], k: KieuGom, cong: (keyof T)[]): (T & { nhan: string })[] {
+  const m = new Map<string, T & { nhan: string }>();
+  for (const r of rows) {
+    const { khoa, nhan } = khoaKy(r.ngay, k);
+    const cu = m.get(khoa);
+    if (!cu) { m.set(khoa, { ...r, nhan }); continue; }
+    for (const c of cong) (cu[c] as number) = Number(cu[c]) + Number(r[c]);
+  }
+  return [...m.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([, v]) => v);
+}
+
+export async function layDoanhThuChiSo(db: Db, tu: string, den: string, cn?: string) {
+  const { data, error } = await db.rpc("bc_doanh_thu_chi_so", { p_tu: tu, p_den: den, p_cn: tuyChon(cn) });
+  if (error) throw new Error(error.message);
+  const r = data?.[0];
+  const n = (v: unknown) => Number(v ?? 0);
+  return { soDon: n(r?.so_don), banMoi: n(r?.ban_moi), thuNo: n(r?.thu_no), tmBan: n(r?.tm_ban), tmNo: n(r?.tm_no), qtBan: n(r?.qt_ban), qtNo: n(r?.qt_no), ckBan: n(r?.ck_ban), ckNo: n(r?.ck_no),
+    noMoiChuaThu: n(r?.no_moi_chua_thu), thuNoTrongKy: n(r?.thu_no_trong_ky), thuNoNgoaiKy: n(r?.thu_no_ngoai_ky), truThe: n(r?.tru_the_tien), soVoucher: n(r?.so_voucher), truVoucher: n(r?.tru_voucher), tip: n(r?.tip), vat: n(r?.vat) };
+}

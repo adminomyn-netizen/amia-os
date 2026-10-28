@@ -105,3 +105,11 @@ describe("bc_lich_su_dung_the", () => {
     expect((await q(`select 1 from bc_lich_su_dung_the('2026-10-01','2026-10-31',null,null,null,null,1,0)`)).length).toBe(1);
   });
 });
+
+describe("bc_doanh_thu_chi_so", () => {
+  it("bán mới / thu nợ, tách tiền mặt-quẹt thẻ-chuyển khoản, nợ chưa thu, thu nợ trong kỳ, trừ thẻ", async () => {
+    const [r] = await q<Record<string, number>>(`select * from bc_doanh_thu_chi_so('2026-10-01','2026-10-31',$1)`, [VINH]);
+    // Vinh tháng 10: bán mới 3M ck + 1,5M tm + 0,6M quẹt + 0,7M tm = 5,8M; thu nợ 0,2M tiền mặt (đơn SH-11, trong kỳ)
+    expect(r).toMatchObject({ so_don: 5, ban_moi: 5800000, thu_no: 200000, tm_ban: 2200000, tm_no: 200000, qt_ban: 600000, ck_ban: 3000000, no_moi_chua_thu: 1100000, thu_no_trong_ky: 200000, thu_no_ngoai_ky: 0, tru_the_tien: 400000, so_voucher: 0, tip: 0, vat: 0 });
+  });
+});

@@ -10146,6 +10146,28 @@ export type Database = {
           so_lich: number
         }[]
       }
+      bc_doanh_thu_chi_so: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          ban_moi: number
+          ck_ban: number
+          ck_no: number
+          no_moi_chua_thu: number
+          qt_ban: number
+          qt_no: number
+          so_don: number
+          so_voucher: number
+          thu_no: number
+          thu_no_ngoai_ky: number
+          thu_no_trong_ky: number
+          tip: number
+          tm_ban: number
+          tm_no: number
+          tru_the_tien: number
+          tru_voucher: number
+          vat: number
+        }[]
+      }
       bc_doanh_thu_ngay: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {

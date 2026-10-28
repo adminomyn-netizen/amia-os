@@ -163,7 +163,7 @@ try {
       o.dong += t.length; o.thanhtien += th; o.tt_the += so(d.total_amount_card); }
     return o;
   };
-  const sh = dichSh(nhap);
+  const sh = dichSh(nhap.filter((r) => dsHd.has(Number(r.l.id)))); // chỉ những đơn lần chạy này ghi/nâng cấp (đơn đã đổ từ trước không tính lại)
   const am = (await q(`select count(*)::int dem, coalesce(sum(tong_phai_thu),0)::bigint phai, coalesce(sum(greatest(tong_hang - giam_gia_don,0)),0)::bigint doanhthu, coalesce(sum(da_thu),0)::bigint thu, coalesce(sum(con_no),0)::bigint "no",
        coalesce(sum(tien_tru_the),0)::bigint tt_the from public.hoa_don where sh_id = any($1::bigint[]) and trang_thai = 'hoan_thanh'`, [ids]))[0];
   const amDong = (await q(`select count(*)::int dong, coalesce(sum(thanh_tien),0)::bigint thanhtien from public.hoa_don_dong d join public.hoa_don h on h.id = d.hoa_don_id where h.sh_id = any($1::bigint[]) and h.trang_thai = 'hoan_thanh'`, [ids]))[0];
@@ -174,7 +174,7 @@ try {
   // số đếm của chính SalonHero (đếm trực tiếp ngày 28/10 trước khi xuất)
   // Số đếm TRỰC TIẾP của SalonHero theo tháng (đếm bằng hàm đọc của SalonHero trước khi xuất): [tháng, tất cả, hoàn thành, nháp, huỷ, tổng đơn hoàn thành, tổng nháp, tổng nợ]
   const tepDem = `${thuMuc}/_dem_song_hoa_don.json`;
-  if (existsSync(tepDem)) {
+  if (existsSync(tepDem) && !process.argv.includes("--bo-song")) { // --bo-song: bỏ so số đếm sống theo tháng (dùng khi nạp bổ sung; so theo tháng làm bằng doi-chieu-thang.mjs)
     const song = JSON.parse(readFileSync(tepDem, "utf8")).filter((x) => x[1] !== "ERR");
     const cacThang = [...new Set(nhap.map((r) => vnNgay(r.l.created_at).slice(0, 7)))].sort();
     const amThang = new Map((await q(`select to_char(ngay_hd,'YYYY-MM') m, count(*) filter (where trang_thai='hoan_thanh')::int ht, count(*) filter (where trang_thai='huy')::int huy,
@@ -189,7 +189,7 @@ try {
     them(`[SalonHero trực tiếp] CỘNG ${cacThang.length} tháng — tổng tiền đơn hoàn thành`, sumSh, sumAm);
   }
   them("Số hoá đơn hoàn thành", sh.dem, am.dem, `nhập ${nHd} đơn mới + ${bao.no_dau_nang_cap} nâng cấp từ nợ đầu kỳ; bỏ qua ${bao.nhap_bo_qua} đơn nháp`);
-  them("Số hoá đơn huỷ", nhap.filter((r) => r.d.status === "VOID").length, amVoid);
+  them("Số hoá đơn huỷ", nhap.filter((r) => r.d.status === "VOID" && dsHd.has(Number(r.l.id))).length, amVoid);
   them("Tổng phải thu (sau giảm, VAT, tip, phụ phí)", sh.phai, am.phai);
   them("Tổng doanh thu (tổng hàng − giảm giá cả đơn)", sh.doanhthu, am.doanhthu);
   them("Tổng đã thu (tiền + trừ thẻ)", sh.thu, Number(amTT.tien) + Number(amTT.the));

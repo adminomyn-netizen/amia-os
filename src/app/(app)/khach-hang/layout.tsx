@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { BarChart3, History } from "lucide-react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -37,6 +39,8 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pb-3">
         <h1 className="chu-tieu-de text-[24px] text-muc lg:text-[28px]">Khách hàng</h1>
         <div className="flex flex-wrap items-center gap-2.5">
+          <Link href="/khach-hang/thong-ke" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><BarChart3 aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thống kê</Link>
+          <Link href="/khach-hang/gan-day" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><History aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách gần đây</Link>
           {coQuyen(nd, "khach.nhap") && <NhapExcelKhach nguon={NGUON} nhanVien={nvLC} chiNhanh={cnLC} action={nhapKhachExcel} macDinh={{ nguoi: nd.nhanVienId, cn: nd.chiNhanhId ?? cn?.[0]?.id ?? "" }} />}
           {coQuyen(nd, "khach.sua") && (
             <NutHop nhan="Thêm khách" tieuDe="Thêm khách hàng" moTa="Nguồn khách và người phụ trách là bắt buộc để tính hoa hồng và đánh giá quảng cáo." rong truong={truong}

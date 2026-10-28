@@ -2356,6 +2356,10 @@ export type Database = {
           tong_hang: number
           tong_phai_thu: number
           trang_thai: string
+          vat_hd_ky_hieu: string | null
+          vat_hd_luc: string | null
+          vat_hd_nguoi_id: string | null
+          vat_hd_so: string | null
           vat_pct: number
           vat_tien: number
         }
@@ -2390,6 +2394,10 @@ export type Database = {
           tong_hang?: number
           tong_phai_thu?: number
           trang_thai?: string
+          vat_hd_ky_hieu?: string | null
+          vat_hd_luc?: string | null
+          vat_hd_nguoi_id?: string | null
+          vat_hd_so?: string | null
           vat_pct?: number
           vat_tien?: number
         }
@@ -2424,6 +2432,10 @@ export type Database = {
           tong_hang?: number
           tong_phai_thu?: number
           trang_thai?: string
+          vat_hd_ky_hieu?: string | null
+          vat_hd_luc?: string | null
+          vat_hd_nguoi_id?: string | null
+          vat_hd_so?: string | null
           vat_pct?: number
           vat_tien?: number
         }
@@ -2483,6 +2495,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "nhap_dot"
             referencedColumns: ["ma"]
+          },
+          {
+            foreignKeyName: "hoa_don_vat_hd_nguoi_id_fkey"
+            columns: ["vat_hd_nguoi_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -4017,6 +4036,7 @@ export type Database = {
       khach_diem_so: {
         Row: {
           chi_nhanh_id: string | null
+          hoa_don_id: string | null
           hoa_don_sh_id: number | null
           id: number
           khach_id: string
@@ -4036,6 +4056,7 @@ export type Database = {
         }
         Insert: {
           chi_nhanh_id?: string | null
+          hoa_don_id?: string | null
           hoa_don_sh_id?: number | null
           id?: never
           khach_id: string
@@ -4055,6 +4076,7 @@ export type Database = {
         }
         Update: {
           chi_nhanh_id?: string | null
+          hoa_don_id?: string | null
           hoa_don_sh_id?: number | null
           id?: never
           khach_id?: string
@@ -5260,6 +5282,10 @@ export type Database = {
           khach_id: string
           kieu_lap: string | null
           la_lich_su: boolean
+          lap_khoang: number | null
+          lap_nhom: string | null
+          lap_thu_tu: number | null
+          lap_tong: number | null
           ly_do_huy: string | null
           ma_dat_lich: string | null
           nguoi_tao_ten: string | null
@@ -5292,6 +5318,10 @@ export type Database = {
           khach_id: string
           kieu_lap?: string | null
           la_lich_su?: boolean
+          lap_khoang?: number | null
+          lap_nhom?: string | null
+          lap_thu_tu?: number | null
+          lap_tong?: number | null
           ly_do_huy?: string | null
           ma_dat_lich?: string | null
           nguoi_tao_ten?: string | null
@@ -5324,6 +5354,10 @@ export type Database = {
           khach_id?: string
           kieu_lap?: string | null
           la_lich_su?: boolean
+          lap_khoang?: number | null
+          lap_nhom?: string | null
+          lap_thu_tu?: number | null
+          lap_tong?: number | null
           ly_do_huy?: string | null
           ma_dat_lich?: string | null
           nguoi_tao_ten?: string | null
@@ -9156,6 +9190,10 @@ export type Database = {
         Args: { p_id: string; p_nguoi: string }
         Returns: undefined
       }
+      chot_hoa_don_doi_diem: {
+        Args: { p_diem: number; p_id: string; p_nguoi: string; p_tien: number }
+        Returns: undefined
+      }
       cong_chuan_thang: {
         Args: { p_khung: string; p_nam: number; p_thang: number }
         Returns: number
@@ -9303,6 +9341,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      thong_ke_khach: { Args: never; Returns: Json }
       thuc_hien_buoi: {
         Args: {
           p_bac_si: string

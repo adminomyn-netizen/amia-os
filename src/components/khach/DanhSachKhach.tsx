@@ -47,6 +47,12 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, danhMuc }: 
   const [loc, setLoc] = useState<Loc>(() => Object.fromEntries(KHOA_LOC.map((k) => [k, sp.get(k) ?? ""])) as Loc);
   const [sx, setSx] = useState(sp.get("sx") ?? "ten");
   const [moLoc, setMoLoc] = useState(() => KHOA_LOC.some((k) => sp.get(k)));
+  // Đi tới /khach-hang?… từ trang Thống kê (khung đã mở sẵn): áp bộ lọc trên địa chỉ mới.
+  const [diaChiCu, setDiaChiCu] = useState(sp.toString());
+  if (sp.toString() !== diaChiCu) {
+    setDiaChiCu(sp.toString());
+    if (KHOA_LOC.some((k) => sp.get(k))) { setLoc(Object.fromEntries(KHOA_LOC.map((k) => [k, sp.get(k) ?? ""])) as Loc); setMoLoc(true); }
+  }
   const [ds, setDs] = useState<Dong[]>([]);
   const [tong, setTong] = useState(0);
   const [dang, setDang] = useState(false);

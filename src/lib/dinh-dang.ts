@@ -18,6 +18,8 @@ export const chuanSdt = (s: string) => {
   const so = s.replace(/[^\d+]/g, "").replace(/^\+84/, "0").replace(/^84(?=\d{9}$)/, "0");
   return so.replace(/\D/g, "");
 };
+/** Bỏ dấu tiếng Việt + chữ thường (đ → d): khớp với hàm bo_dau ở CSDL (cột khach_hang.ho_ten_khong_dau) để tìm tên gõ không dấu. */
+export const boDau = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase();
 export const coSdtHopLe = (s: string) => /^0\d{9,10}$/.test(chuanSdt(s));
 export const soTuChu = (v: FormDataEntryValue | null | undefined) => Number(String(v ?? "").replace(/[^\d-]/g, "")) || 0;
 /** Tháng của ngày YYYY-MM-DD cộng/trừ số ngày (không dùng múi giờ máy). */

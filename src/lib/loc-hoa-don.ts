@@ -1,5 +1,5 @@
 // Bộ lọc danh sách hoá đơn dùng CHUNG cho màn /hoa-don và tệp Excel xuất ra, để số dòng xuất luôn khớp đúng thứ đang xem.
-import { homNayHCM } from "@/lib/dinh-dang";
+import { boDau, homNayHCM } from "@/lib/dinh-dang";
 import type { sb } from "@/lib/db";
 
 /** Nhãn trạng thái hoá đơn (dùng ở danh sách và chi tiết; không để trong page.tsx vì Next chặn export lạ từ trang). */
@@ -30,7 +30,7 @@ interface BoLoc<T> {
 export async function khachKhopTim(db: ReturnType<typeof sb>, loc: LocHoaDon): Promise<string[]> {
   if (!loc.q) return [];
   const an = loc.q.replace(/[%,()]/g, " ");
-  const { data } = await db.from("khach_hang").select("id").or(`ho_ten.ilike.%${an}%,dien_thoai.like.%${loc.q.replace(/\D/g, "") || "~"}%`).limit(50);
+  const { data } = await db.from("khach_hang").select("id").or(`ho_ten_khong_dau.ilike.%${boDau(an)}%,dien_thoai.like.%${loc.q.replace(/\D/g, "") || "~"}%`).limit(50);
   return (data ?? []).map((k) => k.id);
 }
 

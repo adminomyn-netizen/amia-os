@@ -51,6 +51,26 @@ describe("loc_khach", () => {
     expect(tr2[0].tong).toBe(3);
     expect(tr2[0].dong.ma).toBe("KH2");
   });
+  it("tìm tên không dấu, nhiều từ, đ → d, ký tự đặc biệt không vỡ (0090)", async () => {
+    await q(`insert into khach_hang (ma, ho_ten, dien_thoai, chi_nhanh_id, nguon, nguoi_phu_trach_id) values
+      ('KH4','Hồ Thị Thanh Đào','0900000004',(select id from chi_nhanh where ma='VINH'),'mkt','${u(1)}'),
+      ('KH5','ZZ_TEST_100%','0900000005',(select id from chi_nhanh where ma='VINH'),'mkt','${u(1)}')`);
+    expect((await loc({ q: "ho thi thanh dao" })).map((x) => x.dong.ma)).toEqual(["KH4"]);
+    expect((await loc({ q: "HỒ THỊ" })).map((x) => x.dong.ma)).toEqual(["KH4"]);
+    expect((await loc({ q: "dao ho" })).map((x) => x.dong.ma)).toEqual(["KH4"]);
+    expect((await loc({ q: "binh nam" })).map((x) => x.dong.ma)).toEqual(["KH2"]);
+    expect((await loc({ q: "100%" })).map((x) => x.dong.ma)).toEqual(["KH5"]);
+    expect((await loc({ q: "zz_test" })).map((x) => x.dong.ma)).toEqual(["KH5"]);
+    expect((await loc({ q: "z%" })).length).toBe(0);
+    // 0091: tên bắt đầu bằng cụm gõ lên trước; từ chỉ khớp ĐẦU từ (không khớp giữa từ khi gõ nhiều từ)
+    await q(`insert into khach_hang (ma, ho_ten, dien_thoai, chi_nhanh_id, nguon, nguoi_phu_trach_id) values
+      ('KH6','Bùi Thị Hồng Thanh','0900000006',(select id from chi_nhanh where ma='VINH'),'mkt','${u(1)}'),
+      ('KH7','Hồ Thị Thanh','0900000007',(select id from chi_nhanh where ma='VINH'),'mkt','${u(1)}')`);
+    expect((await loc({ q: "ho thi thanh" })).map((x) => x.dong.ma)).toEqual(["KH7", "KH4", "KH6"]);
+    expect((await loc({ q: "hi anh" })).length).toBe(0);
+    await q(`delete from khach_hang where ma in ('KH6','KH7')`);
+    await q(`delete from khach_hang where ma in ('KH4','KH5')`);
+  });
   it("số đầu trang và danh mục lọc", async () => {
     const s = (await q<{ s: Record<string, number> }>(`select so_lieu_khach() s`))[0].s;
     expect(s.tong).toBe(3);

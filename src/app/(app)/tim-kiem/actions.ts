@@ -2,7 +2,7 @@
 
 import { layNguoiDungHienTai } from "@/lib/auth";
 import { sb } from "@/lib/db";
-import { chuanSdt } from "@/lib/dinh-dang";
+import { boDau, chuanSdt } from "@/lib/dinh-dang";
 import { coMotQuyen, locMenu } from "@/lib/nav";
 import { MODULE } from "@/lib/module";
 import { coQuyen } from "@/lib/quyen";
@@ -37,7 +37,7 @@ export async function timChung(tu: string): Promise<KqTim[]> {
 
   const [rkh, rhd, rsp, rdv, rnv] = await Promise.all([
     coQuyen(nd, "khach.xem") ? (() => {
-      let q = db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, email").or([`ho_ten.ilike.%${an}%`, `ma.ilike.%${an}%`, `email.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("lan_den_cuoi", { ascending: false, nullsFirst: false }).limit(6);
+      let q = db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, email").or([`ho_ten_khong_dau.ilike.%${boDau(an)}%`, `ma.ilike.%${an}%`, `email.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("lan_den_cuoi", { ascending: false, nullsFirst: false }).limit(6);
       if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
       return q;
     })() : Promise.resolve({ data: null }),

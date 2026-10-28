@@ -2,7 +2,7 @@
 
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
-import { chuanSdt } from "@/lib/dinh-dang";
+import { boDau, chuanSdt } from "@/lib/dinh-dang";
 import { tinhDon, TOI_DA_NGUOI_HUONG, type DonBan } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
@@ -14,7 +14,7 @@ export async function timKhach(q: string) {
   if (an.length < 2) return [];
   const so = chuanSdt(an);
   const { data } = await sb().from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, ngay_sinh")
-    .or([`ho_ten.ilike.%${an}%`, `ma.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("ho_ten").limit(8);
+    .or([`ho_ten_khong_dau.ilike.%${boDau(an)}%`, `ma.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("ho_ten").limit(8);
   return data ?? [];
 }
 

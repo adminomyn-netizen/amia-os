@@ -2,7 +2,7 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { ngayVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
+import { boDau, ngayVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
@@ -27,7 +27,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   // Tìm ở máy chủ trên TOÀN BỘ thẻ (mã thẻ, mã/tên/SĐT khách), không lọc trên 200 thẻ mới nhất.
   const tuKhoa = (sp.q ?? "").trim().replace(/[%,()*\\]/g, " ").trim();
   if (tuKhoa) {
-    const { data: kt } = await db.from("khach_hang").select("id").or(`ho_ten.ilike.%${tuKhoa}%,dien_thoai.ilike.%${tuKhoa.replace(/^0/, "")}%,ma.ilike.%${tuKhoa}%`).limit(300);
+    const { data: kt } = await db.from("khach_hang").select("id").or(`ho_ten_khong_dau.ilike.%${boDau(tuKhoa)}%,dien_thoai.ilike.%${tuKhoa.replace(/^0/, "")}%,ma.ilike.%${tuKhoa}%`).limit(300);
     const ids = (kt ?? []).map((k) => k.id);
     q = q.or(ids.length ? `ma.ilike.%${tuKhoa}%,khach_id.in.(${ids.join(",")})` : `ma.ilike.%${tuKhoa}%`);
   }

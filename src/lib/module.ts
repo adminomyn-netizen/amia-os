@@ -153,6 +153,7 @@ export const MODULE: Module[] = [
         { ten: "Chi nhánh", moTa: "Chi nhánh và phân quyền vận hành.", duongDan: "/danh-muc?tab=chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Giờ làm việc", moTa: "Giờ mở cửa và ngày nghỉ của từng chi nhánh.", duongDan: "/cai-dat/gio-lam-viec", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Ngày tháng & tiền tệ & thuế", moTa: "Định dạng ngày giờ, ngôn ngữ, đơn vị tiền, VAT, phụ phí, tiền tip.", duongDan: "/cai-dat/thiet-lap-khac", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Thiết lập in", moTa: "Khổ giấy, dòng hiện trên tờ in hoá đơn / lịch hẹn, nội dung cuối tờ, mã QR thanh toán.", duongDan: "/cai-dat/thiet-lap-in", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Tài khoản ngân hàng", moTa: "Tài khoản dùng khi thu tiền chuyển khoản và sổ quỹ.", duongDan: "/cai-dat/ngan-hang", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Bảng tin công ty", moTa: "Thông báo hiển thị cho toàn công ty.", duongDan: "/cai-dat/bang-tin", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },

@@ -234,6 +234,38 @@ export type Database = {
           },
         ]
       }
+      bao_cao_sang: {
+        Row: {
+          chi_nhanh_id: string | null
+          du_lieu: Json
+          id: string
+          ngay: string
+          tao_luc: string
+        }
+        Insert: {
+          chi_nhanh_id?: string | null
+          du_lieu: Json
+          id?: string
+          ngay: string
+          tao_luc?: string
+        }
+        Update: {
+          chi_nhanh_id?: string | null
+          du_lieu?: Json
+          id?: string
+          ngay?: string
+          tao_luc?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bao_cao_sang_chi_nhanh_id_fkey"
+            columns: ["chi_nhanh_id"]
+            isOneToOne: false
+            referencedRelation: "chi_nhanh"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       bao_gia_don_mua: {
         Row: {
           don_mua_id: string
@@ -9645,6 +9677,10 @@ export type Database = {
       }
     }
     Functions: {
+      bao_cao_sang_tinh: {
+        Args: { p_cn?: string; p_ngay?: string }
+        Returns: Json
+      }
       bc_dat_lich: {
         Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
         Returns: {
@@ -10105,6 +10141,7 @@ export type Database = {
           tong: number
         }[]
       }
+      luu_bao_cao_sang: { Args: { p_ngay?: string }; Returns: number }
       mo_lai_ky: {
         Args: { p_ly_do: string; p_nguoi: string; p_thang: string }
         Returns: undefined

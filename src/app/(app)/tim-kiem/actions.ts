@@ -37,7 +37,7 @@ export async function timChung(tu: string): Promise<KqTim[]> {
 
   const [rkh, rhd, rsp, rdv, rnv] = await Promise.all([
     coQuyen(nd, "khach.xem") ? (() => {
-      let q = db.from("khach_hang").select("id, ma, ho_ten, dien_thoai").or([`ho_ten.ilike.%${an}%`, `ma.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("lan_den_cuoi", { ascending: false, nullsFirst: false }).limit(6);
+      let q = db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, email").or([`ho_ten.ilike.%${an}%`, `ma.ilike.%${an}%`, `email.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("lan_den_cuoi", { ascending: false, nullsFirst: false }).limit(6);
       if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
       return q;
     })() : Promise.resolve({ data: null }),
@@ -51,7 +51,7 @@ export async function timChung(tu: string): Promise<KqTim[]> {
     coQuyen(nd, "nhanvien.quanly") ? db.from("nhan_vien").select("id, ho_ten, chuc_danh, ma_nv").or(`ho_ten.ilike.%${an}%,ma_nv.ilike.%${an}%`).eq("hoat_dong", true).limit(5) : Promise.resolve({ data: null }),
   ]);
   const kh = rkh.data, hd = rhd.data, sp = rsp.data, dv = rdv.data, nv = rnv.data;
-  if (kh?.length) ra.push({ nhom: "Khách hàng", muc: kh.map((k) => ({ ten: k.ho_ten, phu: `${k.ma} · ${k.dien_thoai}`, href: `/khach-hang/${k.id}` })) });
+  if (kh?.length) ra.push({ nhom: "Khách hàng", muc: kh.map((k) => ({ ten: k.ho_ten, phu: `${k.ma} · ${k.dien_thoai}${k.email && k.email.toLowerCase().includes(an.toLowerCase()) ? ` · ${k.email}` : ""}`, href: `/khach-hang/${k.id}` })) });
   if (hd?.length) ra.push({ nhom: "Hoá đơn", muc: hd.map((h) => ({ ten: h.ma, phu: `${h.ngay_hd.slice(8)}/${h.ngay_hd.slice(5, 7)}/${h.ngay_hd.slice(0, 4)}`, href: `/hoa-don/${h.id}` })) });
   const dm = [...(sp ?? []).map((x) => ({ ten: x.ten, phu: `Sản phẩm · ${x.ma}`, href: "/danh-muc?tab=san-pham" })), ...(dv ?? []).map((x) => ({ ten: x.ten, phu: `Dịch vụ · ${x.ma}`, href: "/danh-muc?tab=dich-vu" }))];
   if (dm.length) ra.push({ nhom: "Sản phẩm & dịch vụ", muc: dm });

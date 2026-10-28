@@ -150,7 +150,7 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Thông tin cửa hàng", the: [
         { ten: "Thông tin chung", moTa: "Tên, địa chỉ, pháp nhân, giờ làm việc.", duongDan: "/cai-dat/thong-tin-chung", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
-        { ten: "Chi nhánh", moTa: "Chi nhánh và phân quyền vận hành.", duongDan: "/danh-muc?tab=chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Chi nhánh", moTa: "Chi nhánh: địa chỉ, điện thoại, hiện ở web đặt lịch, giờ làm việc.", duongDan: "/cai-dat/chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Giờ làm việc", moTa: "Giờ mở cửa và ngày nghỉ của từng chi nhánh.", duongDan: "/cai-dat/gio-lam-viec", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Ngày tháng & tiền tệ & thuế", moTa: "Định dạng ngày giờ, ngôn ngữ, đơn vị tiền, VAT, phụ phí, tiền tip.", duongDan: "/cai-dat/thiet-lap-khac", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Thiết lập in", moTa: "Khổ giấy, dòng hiện trên tờ in hoá đơn / lịch hẹn, nội dung cuối tờ, mã QR thanh toán.", duongDan: "/cai-dat/thiet-lap-in", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
@@ -173,7 +173,7 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "Khách hàng & đặt lịch", the: [
         { ten: "Điểm thưởng theo hạng", moTa: "Chi bao nhiêu được 1 điểm, 1 điểm giảm bao nhiêu, theo từng hạng khách.", duongDan: "/cai-dat/diem-thuong", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
-        { ten: "Web đặt lịch", moTa: "Trang đặt lịch online cho khách.", trangThai: "sap_co" },
+        { ten: "Web đặt lịch", moTa: "Trang đặt lịch online cho khách: bật/tắt, đặt trước tối thiểu, số ngày nhận, dịch vụ và chi nhánh được hiện.", duongDan: "/danh-muc?tab=cho-lam", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Zalo OA / SMS", moTa: "Nhắn nhắc lịch, chăm sóc (cần tài khoản Zalo OA / nhà mạng).", trangThai: "sap_co" },
       ] },
       { nhan: "Các thiết lập khác", the: [

@@ -1,0 +1,46 @@
+"use server";
+
+import { revalidatePath, updateTag } from "next/cache";
+import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
+import { sb, thongBaoLoi } from "@/lib/db";
+import { bat, chuoi, chuoiHoacNull, so } from "@/lib/form";
+
+type KQ = { ok?: true; loi?: string };
+const XONG = (): KQ => { updateTag("chi-nhanh"); revalidatePath("/cai-dat/chi-nhanh"); revalidatePath("/dat-lich"); revalidatePath("/danh-muc"); return { ok: true }; };
+const COT = "ma, ten, mo_ta, dien_thoai, dia_chi, thanh_pho, phuong_quan, hien_dat_lich, hoat_dong, thu_tu";
+
+/** Thêm / sửa chi nhánh theo hộp "Sửa thông tin chi nhánh" của SalonHero. Quyền như cũ (nhanvien.quanly = Sửa chi nhánh); nhật ký ghi giá trị trước và sau. */
+export async function luuChiNhanhCaiDat(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("nhanvien.quanly");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  const row = {
+    ma: chuoi(fd, "ma").toUpperCase(), ten: chuoi(fd, "ten"), mo_ta: chuoiHoacNull(fd, "mo_ta"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"), dia_chi: chuoiHoacNull(fd, "dia_chi"),
+    thanh_pho: chuoiHoacNull(fd, "thanh_pho"), phuong_quan: chuoiHoacNull(fd, "phuong_quan"), hien_dat_lich: chuoi(fd, "hien_dat_lich") !== "an", hoat_dong: bat(fd, "hoat_dong"), thu_tu: so(fd, "thu_tu") || 100,
+  };
+  if (!row.ma || !row.ten) return { loi: "Nhập mã và tên chi nhánh." };
+  if (!row.dia_chi) return { loi: "Nhập địa chỉ chi nhánh." };
+  if ((row.mo_ta ?? "").length > 500) return { loi: "Mô tả tối đa 500 ký tự." };
+  const db = sb();
+  const { data: cu } = id ? await db.from("chi_nhanh").select(COT).eq("id", id).maybeSingle() : { data: null };
+  if (id && !cu) return { loi: "Không có chi nhánh này." };
+  const { data: moi, error } = id ? await db.from("chi_nhanh").update(row).eq("id", id).select("id").single() : await db.from("chi_nhanh").insert(row).select("id").single();
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: id ? "sua_chi_nhanh" : "them_chi_nhanh", doi_tuong: "chi_nhanh", doi_tuong_id: moi.id, chi_tiet: { truoc: cu, sau: row } });
+  return XONG();
+}
+
+/** Xoá chi nhánh: chi nhánh đã có hoá đơn, thẻ, kho, lịch hẹn... bị khoá ngoại chặn ở DB → hướng người dùng tắt "Đang hoạt động". */
+export async function xoaChiNhanhCaiDat(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("nhanvien.quanly");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  const db = sb();
+  const { data: cu } = await db.from("chi_nhanh").select(COT).eq("id", id).maybeSingle();
+  if (!cu) return { loi: "Không có chi nhánh này." };
+  const { error } = await db.from("chi_nhanh").delete().eq("id", id);
+  if (error?.code === "23503") return { loi: "Chi nhánh này đã có hoá đơn, thẻ, kho hay lịch hẹn nên không xoá được. Hãy Sửa và tắt \"Đang hoạt động\" để ngừng dùng." };
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_chi_nhanh", doi_tuong: "chi_nhanh", doi_tuong_id: id, chi_tiet: { truoc: cu } });
+  return XONG();
+}

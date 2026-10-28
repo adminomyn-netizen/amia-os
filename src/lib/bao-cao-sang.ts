@@ -9,6 +9,7 @@ export type BaoCaoSang = {
 
 /** Tên khối theo giờ Việt Nam: sáng là báo cáo sáng, trong ngày là cập nhật, tối là tổng kết (tránh gọi 'báo cáo sáng' vào buổi tối). */
 export const gioVNHienTai = () => new Date(Date.now() + 7 * 3600e3).getUTCHours();
+export const namVNHienTai = () => new Date(Date.now() + 7 * 3600e3).getUTCFullYear();
 export function tieuDeTheoGio(gio: number): { tieuDe: string; phu: string } {
   if (gio < 11) return { tieuDe: "Báo cáo sáng", phu: "hôm qua và việc cần làm hôm nay" };
   if (gio < 18) return { tieuDe: "Cập nhật trong ngày", phu: "tình hình hôm nay đến lúc này" };

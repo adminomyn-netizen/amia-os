@@ -9,26 +9,44 @@ import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
+import { BaoCaoDatLich, BaoCaoDungDichVu, BaoCaoThuNgan } from "@/components/bao-cao/BaoCaoMoi";
+import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 
-const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }];
+const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }];
+/** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
+const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich"]);
+/** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
+const TAB_NHOM: Record<string, "tong" | "thang"> = { "thu-ngan": "tong", "dat-lich": "thang", "dung-dich-vu": "thang" };
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
 
-export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string }> }) {
+export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
   const sp = await searchParams;
   const tien = coQuyen(nd, "baocao.tien");
-  const tabs = TAB.filter((t) => tien || t.ma === "doanh-thu");
+  const tabs = TAB.filter((t) => tien || TAB_KHONG_TIEN.has(t.ma));
   const tab = tabs.some((t) => t.ma === sp.tab) ? sp.tab! : "doanh-thu";
   const { tu, den } = khoangNgay(sp.tu, sp.den);
   const db = sb();
   const { data: dsCn } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
   const cn = nd.chiNhanhId ?? (sp.cn || undefined);
-  const lc = <LocBaoCao goc="/bao-cao" tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />;
+  const coNhom = tab in TAB_NHOM;
+  const { nhom, doiTuNgay } = chonNhom(sp.nhom, tu, den, TAB_NHOM[tab] ?? "tong");
+  const cacNhom = tab === "thu-ngan" ? NHOM_KY : NHOM_KY.filter((n) => n.gia_tri !== "tong");
+  const lc = <LocBaoCao goc="/bao-cao" tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} nhom={coNhom ? nhom : undefined} cacNhom={coNhom ? cacNhom : undefined} />;
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
+  const loc = { tu, den, cn, nhom, doiTuNgay };
+  const coChiNhanh = !cn && (dsCn ?? []).length > 1;
+  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}`;
   let noiDung: React.ReactNode;
 
-  if (tab === "doanh-thu") {
+  if (tab === "thu-ngan") {
+    noiDung = <>{lc}<BaoCaoThuNgan loc={loc} /></>;
+  } else if (tab === "dat-lich") {
+    noiDung = <>{lc}<BaoCaoDatLich loc={loc} coChiNhanh={coChiNhanh} /></>;
+  } else if (tab === "dung-dich-vu") {
+    noiDung = <>{lc}<BaoCaoDungDichVu loc={loc} coChiNhanh={coChiNhanh} /></>;
+  } else if (tab === "doanh-thu") {
     const { data } = await db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string });
     const ds = data ?? [];
     const cong = (k: "so_don" | "doanh_thu" | "thu_don_moi" | "thu_no_cu" | "thuc_thu" | "tien_mat" | "chuyen_khoan" | "quet_the" | "tru_the_tien" | "no_moi" | "so_buoi" | "doanh_thu_buoi") => ds.reduce((s, r) => s + Number(r[k]), 0);
@@ -107,7 +125,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   return (
     <>
       <TieuDeTrang tieuDe="Báo cáo" phu={tien ? "Số liệu tính trực tiếp từ sổ hoá đơn, sổ thu tiền, sổ thẻ và sổ kho" : "Báo cáo vận hành"}>
-        {tien && tab === "doanh-thu" && <a href={`/api/xuat/doanh-thu?tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
+        {(tien || tab === "dat-lich") && <a href={xuat} download aria-label={`Xuất Excel báo cáo ${tabs.find((t) => t.ma === tab)?.ten ?? ""} theo bộ lọc đang chọn`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
       </TieuDeTrang>
       <Tab muc={tabs} dang={tab} goc="/bao-cao" them={them} />
       {noiDung}

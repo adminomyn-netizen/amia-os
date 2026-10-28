@@ -10,6 +10,8 @@ export async function dangNhap(_: { loi?: string } | undefined, formData: FormDa
   if (!email || !matKhau) return { loi: "Nhập email và mật khẩu." };
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password: matKhau });
+  // Máy chủ đăng nhập quá chậm/quá tải (504, mất kết nối) không phải sai mật khẩu: đừng bảo người dùng gõ lại.
+  if (error && (error.name === "AuthRetryableFetchError" || (error.status ?? 0) >= 500)) return { loi: "Hệ thống đang chậm, chưa đăng nhập được. Chờ vài phút rồi thử lại, không cần đổi mật khẩu." };
   if (error || !data.user) return { loi: "Email hoặc mật khẩu chưa đúng." };
   const { data: nv } = await sb().from("nhan_vien").select("hoat_dong").eq("user_id", data.user.id).maybeSingle();
   if (!nv || !nv.hoat_dong) {

@@ -41,7 +41,7 @@ export default async function KhachGanDay() {
                 <span className="shrink-0 text-right"><span className="block tabular-nums text-muc">{ngayVN(ngay)}</span><Link href={`/hoa-don/${h.id}`} className="tabular-nums text-nhan-dam hover:underline">{h.ma}</Link><span className="ml-1 tabular-nums text-muc-3">{tienVN(h.tien)}</span></span>
               </li>
             ))}
-            {vuaDen.length === 0 && <li className="px-4 py-6 text-center text-muc-3">Chưa có hoá đơn nào.</li>}
+            {vuaDen.length === 0 && <li role={loiHd ? "alert" : undefined} className="px-4 py-6 text-center text-muc-3">{loiHd ? "Chưa tải được (hệ thống đang chậm). Tải lại trang để thử lại." : "Chưa có hoá đơn nào."}</li>}
           </ul>
         </section>
         <section className="rounded-the border border-vien bg-giay-sang">

@@ -4,9 +4,10 @@ import type { CanhBao } from "@/lib/canh-bao";
 import { tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
 import { BangSoLieu, type SoLieu } from "./BangSoLieu";
+import { BangXepHangDep } from "./BangXepHangDep";
 
 type Tin = { id: string; tieu_de: string; noi_dung: string };
-type NguoiTop = { ten: string; doanhSo: number; hoaHong?: number; soDong?: number };
+type NguoiTop = { ten: string; phu?: string; doanhSo: number; hoaHong?: number; soDong?: number };
 type So = {
   lich: number; dangCho: number; khongDen: number; hoanThanh: number; choXacNhan: number; dangPhucVu: number;
   thuHomNay: number | null; noMoi: number | null; thuChiTiet: string; tongNo: number; khoThap: number; leadChua: number;
@@ -36,9 +37,6 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
   const gap = canhBao.filter((c) => THUONG(c.ma));
   const nhan = NHOM.map((g) => ({ nhan: g.nhan, ds: gap.filter((c) => g.ma.includes(c.ma)), n: gap.filter((c) => g.ma.includes(c.ma)).length })).filter((g) => g.n > 0);
   const choDuyet = gap.filter((c) => MA_CHO_DUYET.includes(c.ma)).length;
-  const tren3 = top.slice(0, 3), con = top.slice(3, 6);
-  const doiCho = [tren3[1], tren3[0], tren3[2]].map((x, i) => x && { ...x, hang: [2, 1, 3][i] });
-  const cao: Record<number, string> = { 1: "h-24", 2: "h-16", 3: "h-12" };
   const tile: Tile[] = [
     { nhan: "Lịch hẹn hôm nay", so: String(so.lich), phu: `${so.hoanThanh} hoàn thành · ${so.khongDen} không đến`, mau: "xanh", Icon: CalendarDays, href: "/lich-hen" },
     { nhan: "Đang chờ / phục vụ", so: String(so.dangCho), phu: `${so.choXacNhan + Math.max(0, so.dangCho - so.choXacNhan - so.dangPhucVu)} chờ · ${so.dangPhucVu} đang phục vụ`, mau: "luc", Icon: Clock, href: "/lich-hen" },
@@ -81,23 +79,8 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
           </div>
         </section>
 
-        <section className="the-noi vao min-w-0 p-5 pt-6" aria-label="Top nhân viên tháng này">
-          <div className="flex items-center gap-2 border-b border-vien pb-2.5"><Star strokeWidth={1.7} className="h-4 w-4 text-nhan" aria-hidden /><h2 className="text-[15px] font-semibold text-muc">Top nhân viên tháng này</h2></div>
-          {tren3.length === 0 ? <p className="pt-4 text-[14px] text-muc-3">Chưa có doanh số tháng này.</p> : (
-            <>
-              <ol className="grid grid-cols-3 items-end gap-2 pt-5">
-                {doiCho.map((x, i) => x ? (
-                  <li key={i} className="min-w-0"><NoiChiTiet cls="flex min-w-0 flex-col items-center" tieuDe={`Hạng ${x.hang}: ${x.ten}`} dong={[{ nhan: "Doanh số tháng", gt: tienVN(x.doanhSo) }, ...(x.hoaHong != null ? [{ nhan: "Hoa hồng tạm tính", gt: tienVN(x.hoaHong) }] : []), ...(x.soDong != null ? [{ nhan: "Số dòng bán", gt: String(x.soDong) }] : [])]}>
-                    <span className="mb-1 max-w-full truncate text-[12.5px] font-medium text-muc">{x.ten}</span>
-                    <span className="mb-1.5 text-[12px] tabular-nums text-muc-3">{tienVN(x.doanhSo)}</span>
-                    <span className={`flex w-full items-start justify-center rounded-t-nho pt-2 text-[18px] font-semibold text-white ${cao[x.hang]} ${x.hang === 1 ? "bg-sac-cam-1" : "bg-sac-luc-1"}`} style={{ background: x.hang === 1 ? "var(--sac-cam-1)" : x.hang === 2 ? "var(--sac-xanh-1)" : "var(--sac-luc-1)" }}>{x.hang}</span>
-                  </NoiChiTiet></li>
-                ) : <li key={i} />)}
-              </ol>
-              {con.length > 0 && <ul className="mt-3 divide-y divide-vien border-t border-vien">{con.map((x, i) => <li key={x.ten + i} className="flex items-center justify-between gap-3 py-2 text-[13.5px]"><span className="truncate"><span className="mr-2 text-muc-3">{i + 4}</span>{x.ten}</span><span className="shrink-0 tabular-nums text-muc-2">{tienVN(x.doanhSo)}</span></li>)}</ul>}
-            </>
-          )}
-        </section>
+        <BangXepHangDep tieuDe="Top nhân viên tháng này" Icon={Star} trong="Chưa có doanh số nhân viên trong tháng này."
+          dong={top.map((x) => ({ ten: x.ten, phu: x.phu, phu2: `${tienVN(x.doanhSo)}${x.soDong != null ? ` · ${x.soDong} dòng bán` : ""}`, chu: tienVN(x.doanhSo), gt: x.doanhSo, chiTiet: [{ nhan: "Doanh số tháng", gt: tienVN(x.doanhSo) }, ...(x.hoaHong != null ? [{ nhan: "Hoa hồng tạm tính", gt: tienVN(x.hoaHong) }] : []), ...(x.soDong != null ? [{ nhan: "Số dòng bán", gt: String(x.soDong) }] : [])] }))} />
 
         <section id="viec-cua-toi" className="the-noi vao min-w-0 scroll-mt-24 p-5 pt-6" aria-label="Việc cần hoàn thành của tôi">
           <div className="flex items-baseline justify-between border-b border-vien pb-2.5"><h2 className="text-[15px] font-semibold text-muc">Việc cần hoàn thành của tôi{gap.length ? ` (${gap.length})` : ""}</h2></div>

@@ -64,7 +64,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   const hn = (dtNgay ?? []).find((n) => n.ngay === homNay);
   let soLich = 0, dangCho = 0, khongDen = 0;
   let lichDs: { gio: string; ten: string; tt: string }[] = [];
-  let top: { ten: string; doanhSo: number; hoaHong?: number; soDong?: number }[] = [];
+  let top: { ten: string; phu?: string; doanhSo: number; hoaHong?: number; soDong?: number }[] = [];
   let soLieu: SoLieu | null = null;
   const NHAN_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành" };
   if (dieuHanh) {
@@ -88,13 +88,13 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
     let nvq = db.from("nhan_vien").select("id", { count: "exact", head: true }).eq("hoat_dong", true).eq("trang_thai_lam", "dang_lam");
     if (cn) { kq = kq.eq("chi_nhanh_id", cn); tk = tk.eq("chi_nhanh_id", cn); no = no.eq("chi_nhanh_id", cn); nvq = nvq.eq("chi_nhanh_id", cn); }
     let dq = db.from("hoa_don_dong").select("ten, loai, so_luong, thanh_tien, hoa_don!inner(ngay_hd, trang_thai, chi_nhanh_id)").gte("hoa_don.ngay_hd", dauThang).eq("hoa_don.trang_thai", "hoan_thanh").limit(4000);
-    let tkq = db.from("v_khach_hang").select("ho_ten, chi_12_thang").gt("chi_12_thang", 0).order("chi_12_thang", { ascending: false }).limit(5);
+    let tkq = db.from("v_khach_hang").select("ho_ten, chi_12_thang").gt("chi_12_thang", 0).order("chi_12_thang", { ascending: false }).limit(10);
     if (cn) { dq = dq.eq("hoa_don.chi_nhanh_id", cn); tkq = tkq.eq("chi_nhanh_id", cn); }
     const [{ data: khMoi, count: nKhMoi }, { count: nKh }, { data: dsNo }, { count: nCc }, { count: nNv }, { data: dongBan }, { data: khTop }] = await Promise.all([kq, tk, no, tc, nvq, dq, tkq]);
     const gomXep = (loaiDat: (l: string) => boolean) => {
       const m = new Map<string, { so: number; tien: number }>();
       for (const r of dongBan ?? []) { if (!loaiDat(r.loai)) continue; const x = m.get(r.ten) ?? { so: 0, tien: 0 }; x.so += Number(r.so_luong); x.tien += Number(r.thanh_tien ?? 0); m.set(r.ten, x); }
-      return [...m].map(([ten, v]) => ({ ten, ...v })).sort((a, b) => b.tien - a.tien).slice(0, 5);
+      return [...m].map(([ten, v]) => ({ ten, ...v })).sort((a, b) => b.tien - a.tien).slice(0, 10);
     };
     const dem = new Map<string, number>();
     for (const k of khMoi ?? []) dem.set(k.nguon || "Khác", (dem.get(k.nguon || "Khác") ?? 0) + 1);
@@ -111,11 +111,13 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
       topSanPham: gomXep((l) => l === "san_pham"),
       topKhach: (khTop ?? []).map((k) => ({ ten: k.ho_ten ?? "Khách", chi: Number(k.chi_12_thang ?? 0) })),
     };
-    const xep = [...(ban ?? [])].filter((r) => Number(r.doanh_so) > 0).sort((a, b) => Number(b.doanh_so) - Number(a.doanh_so)).slice(0, 6);
+    const xep = [...(ban ?? [])].filter((r) => Number(r.doanh_so) > 0).sort((a, b) => Number(b.doanh_so) - Number(a.doanh_so)).slice(0, 10);
     if (xep.length) {
-      const { data: tenNv } = await db.from("nhan_vien").select("id, ho_ten").in("id", xep.map((r) => r.nhan_vien_id));
+      const [{ data: tenNv }, { data: tatCaCn }] = await Promise.all([db.from("nhan_vien").select("id, ho_ten, chuc_danh, chi_nhanh_id").in("id", xep.map((r) => r.nhan_vien_id)), db.from("chi_nhanh").select("id, ten")]);
+      const tenCnTop = new Map((tatCaCn ?? []).map((c) => [c.id, c.ten]));
+      const phuNv = new Map((tenNv ?? []).map((n) => [n.id, [n.chi_nhanh_id ? tenCnTop.get(n.chi_nhanh_id) : "Mọi chi nhánh", n.chuc_danh].filter(Boolean).join(" · ")]));
       const ten = new Map((tenNv ?? []).map((n) => [n.id, n.ho_ten.replace(/^MSC[^.]*\.[^.]*\./, "")]));
-      top = xep.map((r) => ({ ten: ten.get(r.nhan_vien_id) ?? "Nhân viên", doanhSo: Number(r.doanh_so), hoaHong: Number(r.hoa_hong), soDong: Number(r.so_dong) }));
+      top = xep.map((r) => ({ ten: ten.get(r.nhan_vien_id) ?? "Nhân viên", phu: phuNv.get(r.nhan_vien_id), doanhSo: Number(r.doanh_so), hoaHong: Number(r.hoa_hong), soDong: Number(r.so_dong) }));
     }
   }
   let lich = lichToi ?? [], tieuDeLich = "Lịch của tôi hôm nay";

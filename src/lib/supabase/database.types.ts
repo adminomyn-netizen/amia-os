@@ -8357,9 +8357,12 @@ export type Database = {
         Row: {
           chi_nhanh_id: string | null
           chu_tai_khoan: string
+          dung_chuyen_khoan: boolean
+          dung_quet_the: boolean
           ghi_chu: string | null
           hoat_dong: boolean
           id: string
+          mac_dinh: boolean
           ngan_hang: string
           so_tai_khoan: string
           tao_luc: string
@@ -8367,9 +8370,12 @@ export type Database = {
         Insert: {
           chi_nhanh_id?: string | null
           chu_tai_khoan: string
+          dung_chuyen_khoan?: boolean
+          dung_quet_the?: boolean
           ghi_chu?: string | null
           hoat_dong?: boolean
           id?: string
+          mac_dinh?: boolean
           ngan_hang: string
           so_tai_khoan: string
           tao_luc?: string
@@ -8377,9 +8383,12 @@ export type Database = {
         Update: {
           chi_nhanh_id?: string | null
           chu_tai_khoan?: string
+          dung_chuyen_khoan?: boolean
+          dung_quet_the?: boolean
           ghi_chu?: string | null
           hoat_dong?: boolean
           id?: string
+          mac_dinh?: boolean
           ngan_hang?: string
           so_tai_khoan?: string
           tao_luc?: string
@@ -10133,6 +10142,35 @@ export type Database = {
         Args: { p_cn?: string; p_ngay?: string }
         Returns: Json
       }
+      bc_ban_san_pham: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_so?: number
+          p_tim?: string
+          p_tong?: boolean
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          doanh_thu: number
+          gia_1sp: number
+          gia_sau: number
+          gia_von: number
+          hoa_don_id: string
+          khoa: string
+          loi_nhuan: number
+          ma: string
+          ma_hd: string
+          san_pham_id: string
+          so_luong: number
+          ten: string
+          thoi_gian: string
+          tong_doanh_thu: number
+          tong_dong: number
+          tong_nhap: number
+        }[]
+      }
       bc_cac_lan_tra_no: {
         Args: {
           p_cn?: string
@@ -10157,6 +10195,49 @@ export type Database = {
           tong_dong: number
           tong_hd: number
           tong_tien: number
+        }[]
+      }
+      bc_chi_phi_dich_vu: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_dv?: string
+          p_nv?: string
+          p_so?: number
+          p_tim?: string
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          chi_nhanh: string
+          chi_nhanh_id: string
+          chi_phi: number
+          ma: string
+          san_pham_id: string
+          so_lan: number
+          so_luong: number
+          ten: string
+          tong_chi_phi: number
+          tong_dong: number
+        }[]
+      }
+      bc_chi_phi_dich_vu_ct: {
+        Args: {
+          p_cn: string
+          p_den: string
+          p_dv?: string
+          p_nv?: string
+          p_sp: string
+          p_tu: string
+        }
+        Returns: {
+          chi_phi: number
+          dich_vu: string
+          ma: string
+          ngay: string
+          nguoi_lam: string
+          phieu_id: string
+          so_luong: number
         }[]
       }
       bc_dat_lich: {
@@ -10276,6 +10357,97 @@ export type Database = {
           nhan_vien_id: string
           so_hd: number
           vai: string
+        }[]
+      }
+      bc_kho_nhap: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_ncc?: string
+          p_nguon?: string
+          p_so?: number
+          p_tim?: string
+          p_tong?: boolean
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          gia_nhap: number
+          giam_gia: number
+          han: string
+          khoa: string
+          lo: string
+          ma: string
+          ma_phieu: string
+          ncc: string
+          nhom: string
+          san_pham_id: string
+          so_luong: number
+          ten: string
+          thoi_gian: string
+          tong_chi_phi: number
+          tong_dong: number
+          tong_tien: number
+        }[]
+      }
+      bc_kho_nhap_xuat: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_nhom?: string
+          p_so?: number
+          p_tim?: string
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          cuoi: number
+          dau: number
+          gia_ban: number
+          gia_nhap_tb: number
+          gia_von: number
+          ma: string
+          nhap: number
+          nhap_cd: number
+          nhom: string
+          san_pham_id: string
+          ten: string
+          tong_cuoi: number
+          tong_dau: number
+          tong_dong: number
+          tong_nhap: number
+          tong_xuat: number
+          xuat: number
+          xuat_cd: number
+        }[]
+      }
+      bc_kho_xuat: {
+        Args: {
+          p_cn?: string
+          p_den: string
+          p_loai?: string
+          p_so?: number
+          p_tim?: string
+          p_tong?: boolean
+          p_tu: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          gia_tb: number
+          gia_von: number
+          han: string
+          khoa: string
+          lo: string
+          ma: string
+          ma_phieu: string
+          nguoi_nhan: string
+          nhom: string
+          phan_loai: string
+          san_pham_id: string
+          so_luong: number
+          ten: string
+          thoi_gian: string
+          tong_dong: number
         }[]
       }
       bc_lich_su_dung_the: {
@@ -10465,6 +10637,29 @@ export type Database = {
           tong_bao_gia: number
           tong_bao_gia_chot: number
           tu_van_vien_id: string
+        }[]
+      }
+      bc_ton_theo_lo: {
+        Args: {
+          p_cn?: string
+          p_han?: string
+          p_so?: number
+          p_tim?: string
+          p_tt?: string
+          p_tu_dong?: number
+        }
+        Returns: {
+          chi_nhanh: string
+          han: string
+          khoa: string
+          lo: string
+          ma: string
+          nhap: number
+          san_pham_id: string
+          ten: string
+          ton: number
+          tong_dong: number
+          xuat: number
         }[]
       }
       bo_dau: { Args: { s: string }; Returns: string }

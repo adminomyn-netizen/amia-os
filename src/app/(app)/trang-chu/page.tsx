@@ -3,12 +3,14 @@ import { layNguoiDungDangNhap } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { layCanhBao } from "@/lib/canh-bao";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { locMenu } from "@/lib/nav";
 import { coQuyen, NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
 import { DongHo } from "@/components/layout/DongHo";
-import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { BangHieuSuatApp } from "@/components/trang-chu/BangHieuSuatApp";
+import { doHieuSuatApp, mocDo } from "@/lib/do-hieu-suat";
+import { BangDieuHanh } from "@/components/trang-chu/BangDieuHanh";
+import type { SoLieu } from "@/components/trang-chu/BangSoLieu";
 import { CaiUngDung } from "@/components/trang-chu/CaiUngDung";
 import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 
@@ -36,19 +38,10 @@ const VIEC_CHINH: Partial<Record<VaiTro, string>> = {
   nhan_vien: "Chấm công, đề xuất, lịch làm việc và phiếu lương của tôi.",
 };
 
-/** Lối tắt quản trị chỉ Chủ / Kỹ thuật thấy. */
-const QUAN_TRI = [
-  { href: "/nhan-vien", nhan: "Tài khoản & phân quyền", phu: "Cấp tài khoản, chỉnh quyền từng người" },
-  { href: "/cai-dat/vai-tro", nhan: "Vai trò & quyền", phu: "Mỗi vai trò làm được gì" },
-  { href: "/cai-dat/chinh-sach-duyet", nhan: "Chính sách phê duyệt", phu: "Ai duyệt, ngưỡng tiền" },
-  { href: "/hoa-hong", nhan: "Hoa hồng", phu: "Tỉ lệ theo loại và vai" },
-  { href: "/danh-muc", nhan: "Danh mục", phu: "Dịch vụ, sản phẩm, chi nhánh" },
-  { href: "/cai-dat", nhan: "Cài đặt cửa hàng", phu: "Thông tin chung, ngân hàng, bảng tin" },
-];
-
 /** Trang chủ cá nhân của MỌI nhân viên (kể cả người không có dashboard): việc đang chờ, hiệu suất của tôi tháng này,
  *  lịch hôm nay, lối tắt theo quyền và toàn bộ chức năng. Dashboard điều hành nằm ở mục Tổng quan. */
 export default async function TrangChu({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string }> }) {
+  const batDau = mocDo();
   const nd = await layNguoiDungDangNhap();
   const sp = await searchParams;
   const db = sb(), homNay = homNayHCM(), dauThang = `${homNay.slice(0, 8)}01`, cn = nd.chiNhanhId;
@@ -56,16 +49,53 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   const tin = (dsTin ?? []).filter((t) => !t.hien_den || t.hien_den >= homNay).slice(0, 3);
   const tu = new Date(`${homNay}T00:00:00+07:00`).toISOString(), den = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
 
+  const congThang = (ngay: string, n: number) => { const d = new Date(`${ngay}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
   const dieuHanh = nd.vaiTro === "chu" || nd.vaiTro === "ky_thuat" || nd.vaiTro === "quan_ly";
-  const laChu = nd.vaiTro === "chu" || nd.vaiTro === "ky_thuat";
   const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: dtNgay }] = await Promise.all([
     layCanhBao(nd),
     db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: (cn ?? undefined) as string }),
     db.from("buoi_thuc_hien").select("khach_id, doanh_thu_buoi").eq("nv_thuc_hien_id", nd.nhanVienId).eq("trang_thai", "da_lam").gte("ngay_lam", dauThang).lte("ngay_lam", homNay).limit(1000),
     db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8),
-    dieuHanh && coQuyen(nd, "baocao.xem") ? db.rpc("bc_doanh_thu_ngay", { p_tu: homNay, p_den: homNay, p_cn: (cn ?? undefined) as string }) : Promise.resolve({ data: null }),
+    dieuHanh && coQuyen(nd, "baocao.xem") ? db.rpc("bc_doanh_thu_ngay", { p_tu: `${congThang(dauThang, -1)}`, p_den: homNay, p_cn: (cn ?? undefined) as string }) : Promise.resolve({ data: null }),
   ]);
   const hn = (dtNgay ?? []).find((n) => n.ngay === homNay);
+  let soLich = 0, dangCho = 0;
+  let top: { ten: string; doanhSo: number }[] = [];
+  let soLieu: SoLieu | null = null;
+  const NHAN_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành" };
+  if (dieuHanh) {
+    let lq = db.from("lich_hen").select("trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").limit(500);
+    if (cn) lq = lq.eq("chi_nhanh_id", cn);
+    const ds = (await lq).data ?? [];
+    soLich = ds.length; dangCho = ds.filter((l) => l.trang_thai !== "hoan_thanh").length;
+    const dauTruoc = congThang(dauThang, -1), rows = dtNgay ?? [];
+    const thangNay = rows.filter((r) => r.ngay >= dauThang), thangTruoc = rows.filter((r) => r.ngay >= dauTruoc && r.ngay < dauThang);
+    const tong = (a: typeof rows, k: "doanh_thu" | "so_don" | "so_buoi" | "tien_mat" | "chuyen_khoan" | "quet_the") => a.reduce((x, r) => x + Number(r[k] ?? 0), 0);
+    let kq = db.from("khach_hang").select("nguon", { count: "exact" }).gte("tao_luc", new Date(`${dauThang}T00:00:00+07:00`).toISOString()).limit(2000);
+    let tk = db.from("khach_hang").select("id", { count: "exact", head: true });
+    let no = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0).limit(3000);
+    const tc = db.from("cham_cong").select("id", { count: "exact", head: true }).eq("ngay", homNay).not("vao", "is", null);
+    let nvq = db.from("nhan_vien").select("id", { count: "exact", head: true }).eq("hoat_dong", true).eq("trang_thai_lam", "dang_lam");
+    if (cn) { kq = kq.eq("chi_nhanh_id", cn); tk = tk.eq("chi_nhanh_id", cn); no = no.eq("chi_nhanh_id", cn); nvq = nvq.eq("chi_nhanh_id", cn); }
+    const [{ data: khMoi, count: nKhMoi }, { count: nKh }, { data: dsNo }, { count: nCc }, { count: nNv }] = await Promise.all([kq, tk, no, tc, nvq]);
+    const dem = new Map<string, number>();
+    for (const k of khMoi ?? []) dem.set(k.nguon || "Khác", (dem.get(k.nguon || "Khác") ?? 0) + 1);
+    soLieu = {
+      homNay,
+      ngay: rows.filter((r) => r.ngay > congNgay(homNay, -14)).map((r) => ({ ngay: r.ngay, doanhThu: Number(r.doanh_thu) })).sort((a, b) => a.ngay.localeCompare(b.ngay)),
+      thang: { doanhThu: tong(thangNay, "doanh_thu"), thangTruoc: tong(thangTruoc, "doanh_thu"), donHang: tong(thangNay, "so_don"), buoi: tong(thangNay, "so_buoi"), khachMoi: nKhMoi ?? (khMoi ?? []).length, tongKhach: nKh ?? 0, congNo: (dsNo ?? []).reduce((x, r) => x + Number(r.con_no), 0), theSapHet: canhBao.filter((c) => c.ma === "the").reduce((x, c) => x + (Number(c.nhan.match(/^\d+/)?.[0]) || 0), 0) },
+      coCauThu: { tienMat: tong(thangNay, "tien_mat"), chuyenKhoan: tong(thangNay, "chuyen_khoan"), quetThe: tong(thangNay, "quet_the") },
+      nguon: [...dem].map(([ten, so]) => ({ ten, so })).sort((a, b) => b.so - a.so).slice(0, 5),
+      lich: Object.entries(NHAN_LICH).map(([m, nhan]) => ({ nhan, so: ds.filter((l) => l.trang_thai === m).length })),
+      chamCong: { da: nCc ?? 0, tong: nNv ?? 0 },
+    };
+    const xep = [...(ban ?? [])].filter((r) => Number(r.doanh_so) > 0).sort((a, b) => Number(b.doanh_so) - Number(a.doanh_so)).slice(0, 6);
+    if (xep.length) {
+      const { data: tenNv } = await db.from("nhan_vien").select("id, ho_ten").in("id", xep.map((r) => r.nhan_vien_id));
+      const ten = new Map((tenNv ?? []).map((n) => [n.id, n.ho_ten.replace(/^MSC[^.]*\.[^.]*\./, "")]));
+      top = xep.map((r) => ({ ten: ten.get(r.nhan_vien_id) ?? "Nhân viên", doanhSo: Number(r.doanh_so) }));
+    }
+  }
   let lich = lichToi ?? [], tieuDeLich = "Lịch của tôi hôm nay";
   if (lich.length === 0 && coQuyen(nd, "lich.xem")) {
     let q = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(6);
@@ -79,8 +109,16 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   const toi = (ban ?? []).filter((r) => r.nhan_vien_id === nd.nhanVienId);
   const doanhSo = toi.reduce((s, r) => s + Number(r.doanh_so), 0), hoaHong = toi.reduce((s, r) => s + Number(r.hoa_hong), 0);
   const soBuoi = (buoi ?? []).length, soKhach = new Set((buoi ?? []).map((b) => b.khach_id)).size;
+  const coHieuSuat = nd.vaiTro !== "nhan_vien" && nd.vaiTro !== "nha_dau_tu";
+  const tileNv = [
+    { nhan: "Việc đang chờ", so: soVN(canhBao.length), mau: "hong", phu: canhBao.length ? "mở danh sách bên dưới" : "đã xong hết" },
+    { nhan: tieuDeLich.includes("chi nhánh") ? "Lịch hôm nay của chi nhánh" : "Lịch của tôi hôm nay", so: soVN(lich.length), mau: "xanh", phu: "" },
+    ...(coHieuSuat ? [
+      { nhan: "Buổi đã thực hiện tháng này", so: soVN(soBuoi), mau: "luc", phu: `${soVN(soKhach)} khách đã phục vụ` },
+      ...(coQuyen(nd, "baocao.tien") || ["thu_ngan", "tu_van", "ktv", "bac_si"].includes(nd.vaiTro) ? [{ nhan: "Doanh số / hoa hồng tạm tính", so: tienVN(doanhSo), mau: "tim", phu: `hoa hồng ${tienVN(hoaHong)}` }] : []),
+    ] : []),
+  ];
   const loiTat = LOI_TAT.filter((l) => coQuyen(nd, l.q));
-  const tatCa = locMenu(nd).filter((m) => m.duong_dan !== "/trang-chu");
 
   return (
     <div className="space-y-8">
@@ -93,7 +131,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         </div>
         <DongHo />
       </div>
-      {tin.length > 0 && (
+      {!dieuHanh && tin.length > 0 && (
         <section aria-label="Bảng tin công ty" className="space-y-2.5">
           {tin.map((t) => (
             <article key={t.id} className="the-noi the-noi-thap px-4 py-3.5">
@@ -106,35 +144,27 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
       {sp["khong-du-quyen"] && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p>}
 
       {dieuHanh ? (
-        <section aria-label="Điều hành hôm nay">
-          <h2 className="mb-3 text-[15px] font-semibold text-muc">Cửa hàng hôm nay{cn ? " · chi nhánh của tôi" : " · toàn hệ thống"}</h2>
-          {hn || coQuyen(nd, "baocao.xem") ? (
-            <HangChiSo muc={[
-              { nhan: "Doanh thu hôm nay", so: tienVN(Number(hn?.doanh_thu ?? 0)) }, { nhan: "Số đơn", so: soVN(Number(hn?.so_don ?? 0)) },
-              { nhan: "Buổi liệu trình", so: soVN(Number(hn?.so_buoi ?? 0)) }, { nhan: "Việc chờ xử lý", so: soVN(canhBao.length), ghiChu: canhBao.length ? "xem ở mục bên dưới" : "đã xong hết" },
-            ]} />
-          ) : <HangChiSo muc={[{ nhan: "Việc chờ xử lý", so: soVN(canhBao.length) }, { nhan: "Lịch hôm nay", so: soVN(lich.length) }]} />}
-          {coQuyen(nd, "tongquan.xem") && <p className="mt-3 text-[13.5px]"><Link href="/tong-quan" className="font-medium text-nhan-dam hover:underline">Mở bảng Tổng quan đầy đủ →</Link></p>}
-        </section>
-      ) : nd.vaiTro === "nhan_vien" ? null : (
-      <section aria-label="Hiệu suất của tôi">
-        <h2 className="mb-3 text-[15px] font-semibold text-muc">Hiệu suất của tôi · tháng này</h2>
-        <HangChiSo muc={[
-          { nhan: "Buổi đã thực hiện", so: soVN(soBuoi) }, { nhan: "Khách đã phục vụ", so: soVN(soKhach) },
-          { nhan: "Doanh số của tôi", so: tienVN(doanhSo), ghiChu: "theo tỉ lệ chia trên hoá đơn" }, { nhan: "Hoa hồng tạm tính", so: tienVN(hoaHong) },
-        ]} />
-      </section>
+        <BangDieuHanh canhBao={canhBao} tin={tin.map((t) => ({ id: t.id, tieu_de: t.tieu_de, noi_dung: t.noi_dung }))} top={top}
+          so={{ lich: soLich, dangCho, thuHomNay: coQuyen(nd, "baocao.tien") ? Number(hn?.thuc_thu ?? 0) : null, noMoi: coQuyen(nd, "baocao.tien") ? Number(hn?.no_moi ?? 0) : null }} soLieu={soLieu} xemTien={coQuyen(nd, "baocao.tien")} />
+      ) : (
+        <>
+          {canhBao.length > 0 && <p role="status" className="rounded-nho border border-loi/30 bg-loi-nen px-4 py-3 text-[14px] font-semibold text-loi">{canhBao.length} việc cần xử lý hôm nay</p>}
+          <dl className={`grid grid-cols-2 gap-3 sm:gap-4 ${tileNv.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+            {tileNv.map((t) => (
+              <div key={t.nhan} className="min-w-0 rounded-nho px-4 pb-4 pt-4 text-white shadow-sm" style={{ background: `linear-gradient(135deg, var(--sac-${t.mau}-1), var(--sac-${t.mau}-2))` }}>
+                <dt className="text-[13px] opacity-90">{t.nhan}</dt>
+                <dd className={`mt-2 font-semibold leading-none tabular-nums ${t.so.length > 11 ? "text-[19px]" : "text-[26px]"}`}>{t.so}</dd>
+                {t.phu && <dd className="mt-2 text-[12px] opacity-85">{t.phu}</dd>}
+              </div>
+            ))}
+          </dl>
+        </>
       )}
 
-      {laChu && (
-        <section aria-label="Quản trị hệ thống">
-          <h2 className="mb-3 text-[15px] font-semibold text-muc">Quản trị hệ thống</h2>
-          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {QUAN_TRI.map((q) => <li key={q.href}><Link href={q.href} className="the-noi the-noi-nang block px-4 pb-4 pt-5"><span className="block text-[14.5px] font-medium text-muc">{q.nhan}</span><span className="mt-1 block text-[12.5px] text-muc-3">{q.phu}</span></Link></li>)}
-          </ul>
-        </section>
-      )}
+      {nd.vaiTro === "ky_thuat" && <BangHieuSuatApp d={await doHieuSuatApp(batDau)} />}
 
+      {!dieuHanh && (
+        <>
       <div className="grid gap-6 lg:grid-cols-2">
         <MucTrang noi tieuDe={`Việc đang chờ${canhBao.length ? ` (${canhBao.length})` : ""}`}>
           {canhBao.length === 0 ? <p className="text-[14px] text-muc-3">Không có việc nào đang chờ.</p> : (
@@ -159,16 +189,11 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         </section>
       )}
 
+        </>
+      )}
+
       <div className="grid gap-4"><BatThongBao /><CaiUngDung /></div>
 
-      <section aria-label="Tất cả chức năng">
-        <h2 className="mb-3 text-[15px] font-semibold text-muc">Tất cả chức năng</h2>
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {tatCa.map((m) => { const Icon = m.icon; return (
-            <li key={m.duong_dan}><Link href={m.duong_dan} className="the-noi the-noi-thap flex h-full items-center gap-3 px-4 pb-3.5 pt-4.5 text-[14px] text-muc"><Icon strokeWidth={1.6} className="h-[22px] w-[22px] shrink-0 text-nhan" /><span className="min-w-0"><span className="block font-medium">{m.ten}</span><span className="mt-0.5 block text-[12px] leading-snug text-muc-3">{m.moTa}</span></span></Link></li>
-          ); })}
-        </ul>
-      </section>
     </div>
   );
 }

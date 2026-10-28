@@ -11,8 +11,8 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
-import { huyHoaDon, thuNo } from "../actions";
-import { TRANG_THAI_HD } from "../page";
+import { ghiNhanVat, huyHoaDon, thuNo } from "../actions";
+import { TRANG_THAI_HD } from "@/lib/loc-hoa-don";
 
 export default async function ChiTietHoaDon({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ moi?: string }> }) {
   const nd = await yeuCauQuyen("ban.xem");
@@ -57,7 +57,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
             { nhan: "Người hưởng", hienThi: (r) => VAI.map((v) => { const ds = (chia ?? []).filter((c) => c.dong_id === r.id && c.vai === v.ma); return ds.length ? `${v.ten}: ${ds.map((c) => `${tenNv.get(c.nhan_vien_id)} ${Number(c.ti_le)}%`).join(", ")}` : null; }).filter(Boolean).join(" · ") },
           ]} />
           <dl className="ml-auto mt-3 w-full max-w-xs space-y-1 text-[14px]">
-            {Number(h.giam_gia_don) > 0 && <div className="flex justify-between"><dt className="text-muc-3">Giảm giá cả đơn</dt><dd className="tabular-nums">− {tienVN(h.giam_gia_don)}</dd></div>}
+            {Number(h.giam_gia_don) > 0 && <div className="flex justify-between"><dt className="text-muc-3">Giảm giá cả đơn{Number(h.giam_diem) > 0 ? ` (gồm đổi điểm ${tienVN(h.giam_diem)})` : ""}</dt><dd className="tabular-nums">− {tienVN(h.giam_gia_don)}</dd></div>}
             {Number(h.vat_tien) > 0 && <div className="flex justify-between"><dt className="text-muc-3">VAT {Number(h.vat_pct)}%</dt><dd className="tabular-nums">{tienVN(h.vat_tien)}</dd></div>}
             {Number(h.phu_phi) > 0 && <div className="flex justify-between"><dt className="text-muc-3">Phụ phí</dt><dd className="tabular-nums">{tienVN(h.phu_phi)}</dd></div>}
             {Number(h.tip) > 0 && <div className="flex justify-between"><dt className="text-muc-3">Tip</dt><dd className="tabular-nums">{tienVN(h.tip)}</dd></div>}
@@ -70,6 +70,19 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
             { nhan: "Số tiền", hienThi: (r) => <span className={r.loai === "hoan" ? "text-loi" : ""}>{r.loai === "hoan" ? "− " : ""}{tienVN(r.so_tien)}</span>, phai: true },
           ]} />
         </MucTrang>
+        {h.trang_thai === "hoan_thanh" && (
+          <MucTrang tieuDe="Hoá đơn VAT">
+            <div className="flex flex-wrap items-center justify-between gap-3 text-[14px]">
+              <p className={h.vat_hd_luc ? "text-nhan-dam" : "text-muc-3"}>
+                {h.vat_hd_luc ? `Đã có hoá đơn${h.vat_hd_so ? ` số ${h.vat_hd_so}` : ""}${h.vat_hd_ky_hieu ? `, ký hiệu ${h.vat_hd_ky_hieu}` : ""} · ghi nhận ${ngayGioVN(h.vat_hd_luc)}${h.vat_hd_nguoi_id ? ` bởi ${tenNv.get(h.vat_hd_nguoi_id) ?? ""}` : ""}` : "Chưa có hoá đơn VAT."}
+              </p>
+              {coQuyen(nd, "hd.vat") && (
+                <NutHop kieu="chu" nhan={h.vat_hd_luc ? "Sửa thông tin HĐ VAT" : "Ghi nhận đã xuất HĐ VAT"} tieuDe="Hoá đơn VAT" moTa="Ghi số và ký hiệu hoá đơn VAT đã xuất cho đơn này. Xoá trống số hoá đơn rồi lưu nếu đã ghi nhầm." an={{ hoa_don_id: id }}
+                  giaTri={{ vat_hd_so: h.vat_hd_so ?? "", vat_hd_ky_hieu: h.vat_hd_ky_hieu ?? "" }} truong={[{ ten: "vat_hd_so", nhan: "Số hoá đơn VAT", loai: "chu" }, { ten: "vat_hd_ky_hieu", nhan: "Ký hiệu hoá đơn", loai: "chu", goiY: "Ví dụ 1C26TAA" }]} action={ghiNhanVat} />
+              )}
+            </div>
+          </MucTrang>
+        )}
         {h.ghi_chu && <MucTrang tieuDe="Ghi chú"><p className="whitespace-pre-line text-[14px] text-muc-2">{h.ghi_chu}</p></MucTrang>}
       </div>
     </>

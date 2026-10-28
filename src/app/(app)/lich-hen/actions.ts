@@ -6,6 +6,8 @@ import { guiChoNhanVien } from "@/lib/push";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
+import { ngayVN } from "@/lib/dinh-dang";
+import { laKieuLap, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => revalidatePath("/lich-hen");
@@ -25,33 +27,49 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   if (dv.length === 0) return { loi: "Chọn ít nhất một dịch vụ." };
   const phut = so(fd, "thoi_luong") || 60;
   if (phut < 5 || phut > 600) return { loi: "Thời lượng phải từ 5 đến 600 phút." };
-  const batDau = new Date(`${ngay}T${gio}:00${MUI}`);
-  const ketThuc = new Date(batDau.getTime() + phut * 60000);
+  // Lịch lặp (chỉ khi đặt mới, giống SalonHero): kiểu DAILY/WEEKLY/MONTHLY, mỗi N ngày/tuần/tháng, tổng số buổi.
+  const kieuLap = id ? "" : chuoi(fd, "kieu_lap");
+  if (kieuLap && !laKieuLap(kieuLap)) return { loi: "Kiểu lặp không hợp lệ." };
+  const khoang = kieuLap ? so(fd, "lap_khoang") || 1 : 1;
+  const tong = kieuLap ? so(fd, "lap_tong") : 1;
+  if (kieuLap && (!Number.isInteger(khoang) || khoang < 1 || khoang > 12)) return { loi: "Khoảng lặp từ 1 đến 12." };
+  if (kieuLap && (!Number.isInteger(tong) || tong < 2 || tong > TOI_DA_BUOI_LAP)) return { loi: `Tổng số buổi lặp từ 2 đến ${TOI_DA_BUOI_LAP}.` };
+  const cacNgay = laKieuLap(kieuLap) ? ngayLap(ngay, kieuLap, khoang, tong) : [ngay];
+  const buoi = cacNgay.map((n) => { const bd = new Date(`${n}T${gio}:00${MUI}`); return { bd, kt: new Date(bd.getTime() + phut * 60000) }; });
   const nv = chuoiHoacNull(fd, "nhan_vien_id");
   if (nv) {
-    let q = db.from("lich_hen").select("id, bat_dau, ket_thuc").eq("nhan_vien_id", nv).not("trang_thai", "in", "(huy,khong_den)").lt("bat_dau", ketThuc.toISOString()).gt("ket_thuc", batDau.toISOString());
+    // Một truy vấn cho cả chuỗi: lấy lịch của người này trong khoảng từ buổi đầu đến buổi cuối rồi so từng buổi.
+    let q = db.from("lich_hen").select("id, bat_dau, ket_thuc").eq("nhan_vien_id", nv).not("trang_thai", "in", "(huy,khong_den)")
+      .lt("bat_dau", buoi[buoi.length - 1].kt.toISOString()).gt("ket_thuc", buoi[0].bd.toISOString());
     if (id) q = q.neq("id", id);
-    const { data: trung } = await q.limit(1);
-    if (trung?.length) return { loi: "Nhân viên này đã có lịch trùng giờ. Chọn giờ khác hoặc người khác." };
+    const { data: trung } = await q.limit(1000);
+    const vuong = buoi.findIndex((b) => (trung ?? []).some((t) => new Date(t.bat_dau) < b.kt && new Date(t.ket_thuc) > b.bd));
+    if (vuong >= 0) return { loi: `Nhân viên này đã có lịch trùng giờ${buoi.length > 1 ? ` vào ngày ${ngayVN(cacNgay[vuong])}` : ""}. Chọn giờ khác hoặc người khác.` };
   }
-  const row = { khach_id: khachId, chi_nhanh_id: chuoi(fd, "chi_nhanh_id"), bat_dau: batDau.toISOString(), ket_thuc: ketThuc.toISOString(), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
+  const row = { khach_id: khachId, chi_nhanh_id: chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
-  let lichId = id;
+  let ids: string[];
   if (id) {
-    const { error } = await db.from("lich_hen").update(row).eq("id", id).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]);
+    const { error } = await db.from("lich_hen").update({ ...row, bat_dau: buoi[0].bd.toISOString(), ket_thuc: buoi[0].kt.toISOString() }).eq("id", id).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]);
     if (error) return { loi: thongBaoLoi(error) };
+    ids = [id];
   } else {
-    const { data, error } = await db.from("lich_hen").insert({ ...row, tao_boi: nd.nhanVienId }).select("id").single();
-    if (error || !data) return { loi: thongBaoLoi(error) };
-    lichId = data.id;
+    const nhom = buoi.length > 1 ? crypto.randomUUID() : null;
+    const { data, error } = await db.from("lich_hen").insert(buoi.map((b, i) => ({
+      ...row, bat_dau: b.bd.toISOString(), ket_thuc: b.kt.toISOString(), tao_boi: nd.nhanVienId,
+      ...(nhom ? { kieu_lap: kieuLap, lap_nhom: nhom, lap_khoang: khoang, lap_tong: buoi.length, lap_thu_tu: i + 1 } : {}),
+    }))).select("id");
+    if (error || !data?.length) return { loi: thongBaoLoi(error) };
+    ids = data.map((x) => x.id);
   }
-  await db.from("lich_hen_dich_vu").delete().eq("lich_id", lichId);
-  await db.from("lich_hen_dich_vu").insert(dv.map((d) => ({ lich_id: lichId, dich_vu_id: d })));
-  // Báo cho người được giao lịch (trừ khi chính họ vừa tạo). Gửi sau khi trả lời để không làm chậm màn hình.
+  if (id) await db.from("lich_hen_dich_vu").delete().eq("lich_id", id);
+  await db.from("lich_hen_dich_vu").insert(ids.flatMap((l) => dv.map((d) => ({ lich_id: l, dich_vu_id: d }))));
+  // Báo cho người được giao lịch (trừ khi chính họ vừa tạo), một lần cho cả chuỗi. Gửi sau khi trả lời để không làm chậm màn hình.
   if (nv && nv !== nd.nhanVienId) {
     after(async () => {
       const { data: k } = await db.from("khach_hang").select("ho_ten").eq("id", khachId).maybeSingle();
-      await guiChoNhanVien([nv], { tieuDe: id ? "Lịch hẹn của bạn thay đổi" : "Bạn có lịch hẹn mới", noiDung: `${gio} ngày ${ngay.split("-").reverse().join("/")} · ${k?.ho_ten ?? "khách"}`, url: "/lich-hen", tag: `lich-${lichId}` });
+      const them = ids.length > 1 ? ` · lặp ${ids.length} buổi` : "";
+      await guiChoNhanVien([nv], { tieuDe: id ? "Lịch hẹn đã đổi giờ" : "Có lịch hẹn mới được giao", noiDung: `${gio} ngày ${ngay.split("-").reverse().join("/")} · ${k?.ho_ten ?? "khách"}${them}`, url: "/lich-hen", tag: `lich-${ids[0]}` });
     });
   }
   lamMoi();

@@ -13,6 +13,8 @@ import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
 import { thucHienBuoi } from "../the/actions";
 import { doiTrangThaiLich, luuLichHen } from "./actions";
+import { LocNguon } from "@/components/lich-hen/LocNguon";
+import { moTaLap, NGUON_DAT, nhanNguon } from "@/lib/lich-hen";
 
 const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram"; mau: string }> = {
   chua_xac_nhan: { nhan: "Chưa xác nhận", kieu: "tram", mau: "bg-giay-tram border-vien-dam text-muc-2" },
@@ -26,7 +28,7 @@ const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram"; m
 const NHAN_PHIEU: Record<string, string> = { cho_cap: "Phiếu chờ cấp", da_cap: "Đã cấp, chờ KTV nhận", da_nhan: "KTV đã nhận", da_lam: "Đã làm xong", da_doi_chieu: "Đã đối chiếu", huy: "Phiếu đã huỷ" };
 const GIO_DAU = 7, GIO_CUOI = 21, BUOC = 30;
 
-export default async function TrangLichHen({ searchParams }: { searchParams: Promise<{ ngay?: string; cn?: string; khach?: string }> }) {
+export default async function TrangLichHen({ searchParams }: { searchParams: Promise<{ ngay?: string; cn?: string; khach?: string; nguon?: string }> }) {
   const nd = await yeuCauQuyen("lich.xem");
   const sp = await searchParams;
   const homNay = homNayHCM();
@@ -36,8 +38,14 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const cnId = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
   const tu = new Date(`${ngay}T00:00:00+07:00`).toISOString();
   const den = new Date(`${congNgay(ngay, 1)}T00:00:00+07:00`).toISOString();
+  const nguon = sp.nguon && (NGUON_DAT[sp.nguon] || /^[A-Z0-9_]{2,20}$/.test(sp.nguon)) ? sp.nguon : "";
+  const duoi = nguon ? `&nguon=${nguon}` : "";
+  let qLich = db.from("lich_hen").select("*").eq("chi_nhanh_id", cnId).gte("bat_dau", tu).lt("bat_dau", den);
+  if (nguon) qLich = qLich.eq("nguon", nguon);
+  const dauThang = ngay.slice(0, 8) + "01", cuoiThang = congNgay(congNgay(dauThang, 32).slice(0, 8) + "01", -1);
+  const xuat = (a: string, b: string) => `/api/xuat/lich-hen?tu=${a}&den=${b}&cn=${cnId}${duoi}`;
   const [{ data: lich }, { data: nv }, { data: dv }] = await Promise.all([
-    db.from("lich_hen").select("*").eq("chi_nhanh_id", cnId).gte("bat_dau", tu).lt("bat_dau", den).order("bat_dau"),
+    qLich.order("bat_dau"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
     db.from("dich_vu").select("id, ma, ten, thoi_luong_phut").eq("hoat_dong", true).order("ma"),
   ]);
@@ -72,10 +80,15 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         {sua && <FormLichHen nhan="Đặt lịch" dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
       </TieuDeTrang>
       <div className="mb-5 flex flex-wrap items-center gap-3 text-[14px]">
-        <Link href={`/lich-hen?ngay=${congNgay(ngay, -1)}&cn=${cnId}`} className="rounded-nho border border-vien-dam px-3 py-2 hover:bg-giay-tram">Hôm trước</Link>
-        <Link href={`/lich-hen?ngay=${homNay}&cn=${cnId}`} className={`rounded-nho border px-3 py-2 ${ngay === homNay ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam hover:bg-giay-tram"}`}>Hôm nay</Link>
-        <Link href={`/lich-hen?ngay=${congNgay(ngay, 1)}&cn=${cnId}`} className="rounded-nho border border-vien-dam px-3 py-2 hover:bg-giay-tram">Hôm sau</Link>
-        {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && (dsCn ?? []).map((c) => <Link key={c.id} href={`/lich-hen?ngay=${ngay}&cn=${c.id}`} className={`rounded-nho px-3 py-2 ${c.id === cnId ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}
+        <Link href={`/lich-hen?ngay=${congNgay(ngay, -1)}&cn=${cnId}${duoi}`} className="rounded-nho border border-vien-dam px-3 py-2 hover:bg-giay-tram">Hôm trước</Link>
+        <Link href={`/lich-hen?ngay=${homNay}&cn=${cnId}${duoi}`} className={`rounded-nho border px-3 py-2 ${ngay === homNay ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam hover:bg-giay-tram"}`}>Hôm nay</Link>
+        <Link href={`/lich-hen?ngay=${congNgay(ngay, 1)}&cn=${cnId}${duoi}`} className="rounded-nho border border-vien-dam px-3 py-2 hover:bg-giay-tram">Hôm sau</Link>
+        {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && (dsCn ?? []).map((c) => <Link key={c.id} href={`/lich-hen?ngay=${ngay}&cn=${c.id}${duoi}`} className={`rounded-nho px-3 py-2 ${c.id === cnId ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}
+        <span className="flex w-full flex-wrap items-center gap-3 sm:ml-auto sm:w-auto">
+          <LocNguon giaTri={nguon} />
+          <a href={xuat(ngay, ngay)} download className="rounded-nho border border-vien-dam px-3 py-2 hover:bg-giay-tram" aria-label={`Xuất Excel lịch hẹn ngày ${ngayVN(ngay)}`}>Xuất Excel ngày</a>
+          <a href={xuat(dauThang, cuoiThang)} download className="rounded-nho border border-vien-dam px-3 py-2 hover:bg-giay-tram" aria-label={`Xuất Excel lịch hẹn tháng ${ngay.slice(5, 7)}/${ngay.slice(0, 4)}`}>Xuất cả tháng</a>
+        </span>
       </div>
 
       {cot.length > 0 && (
@@ -108,7 +121,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       )}
 
       <div className="divide-y divide-vien border-y border-vien">
-        {(lich ?? []).length === 0 && <p className="chu-tieu-de py-12 text-center text-[24px] text-muc-3">Chưa có lịch hẹn nào trong ngày.</p>}
+        {(lich ?? []).length === 0 && <p className="chu-tieu-de py-12 text-center text-[24px] text-muc-3">{nguon ? `Không có lịch hẹn nào từ nguồn ${nhanNguon(nguon)} trong ngày.` : "Chưa có lịch hẹn nào trong ngày."}</p>}
         {(lich ?? []).map((l) => {
           const k = tenK.get(l.khach_id);
           const t = TT[l.trang_thai];
@@ -125,6 +138,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
                 </div>
                 <div className="mt-1 text-[15px]"><Link href={`/khach-hang/${l.khach_id}`} className="font-medium text-nhan-dam hover:underline">{k?.ho_ten}</Link> <span className="text-muc-3">· {k?.dien_thoai}</span></div>
                 <div className="text-[13px] text-muc-2">{dvIds.map((d) => tenDv.get(d)).join(", ")}{l.nhan_vien_id ? ` · ${tenNv.get(l.nhan_vien_id)}` : ""}{l.phong ? ` · ${l.phong}` : ""}</div>
+                {(l.nguon || l.kieu_lap) && <div className="text-[12px] text-muc-3">{[l.nguon ? `Nguồn: ${nhanNguon(l.nguon)}` : "", moTaLap(l)].filter(Boolean).join(" · ")}</div>}
                 {l.ghi_chu && <div className="text-[13px] text-muc-3">{l.ghi_chu}</div>}
                 {phieu.length > 0 && <div className="mt-0.5 text-[12px] text-dat-dam">{phieu.join(" · ")}</div>}
                 {(coQuyen(nd, "bc.bao") || coQuyen(nd, "kn.ghi")) && ["cho_phuc_vu", "dang_phuc_vu", "hoan_thanh"].includes(l.trang_thai) && (

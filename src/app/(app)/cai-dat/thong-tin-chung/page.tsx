@@ -4,14 +4,16 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
-import { luuThongTinChung } from "../actions";
+import { luuDoiDiem, luuThongTinChung } from "../actions";
+import { cauHinhDiem } from "@/lib/diem-thuong";
+import { tienVN } from "@/lib/dinh-dang";
 
 const NGAY = [{ gia_tri: "t2", nhan: "Thứ hai" }, { gia_tri: "t3", nhan: "Thứ ba" }, { gia_tri: "t4", nhan: "Thứ tư" }, { gia_tri: "t5", nhan: "Thứ năm" }, { gia_tri: "t6", nhan: "Thứ sáu" }, { gia_tri: "t7", nhan: "Thứ bảy" }, { gia_tri: "cn", nhan: "Chủ nhật" }];
 type Gio = { mo?: string; dong?: string; nghi?: string[] };
 
 export default async function TrangThongTinChung() {
   const nd = await yeuCauQuyen("danhmuc.xem");
-  const { data: ch } = await sb().from("cua_hang").select("*").eq("id", 1).single();
+  const [{ data: ch }, diem] = await Promise.all([sb().from("cua_hang").select("*").eq("id", 1).single(), cauHinhDiem(sb())]);
   const gio = (ch?.gio_lam_viec ?? {}) as Gio;
   const nghi = (gio.nghi ?? []).map((n) => NGAY.find((x) => x.gia_tri === n)?.nhan).filter(Boolean).join(", ");
   const truong: Truong[] = [
@@ -42,6 +44,18 @@ export default async function TrangThongTinChung() {
           </div>
         ))}
       </dl>
+      <section className="mt-8" aria-labelledby="tt-diem">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <h2 id="tt-diem" className="text-[16px] font-semibold text-muc">Điểm thưởng</h2>
+          {coQuyen(nd, "hethong.phanquyen") && (
+            <NutHop kieu="chu" nhan="Sửa" tieuDe="Đổi điểm thưởng thành giảm giá" moTa="Theo SalonHero: 1 điểm = 10.000đ, đang tắt. Bật thì Thu ngân thấy ô đổi điểm khi chọn khách có điểm." action={luuDoiDiem}
+              giaTri={{ bat: diem.bat, tien_moi_diem: diem.tienMoiDiem }} truong={[{ ten: "bat", nhan: "Cho đổi điểm ở Thu ngân", loai: "gat" }, { ten: "tien_moi_diem", nhan: "Số tiền giảm cho 1 điểm", loai: "tien", batBuoc: true }]} />
+          )}
+        </div>
+        <dl className="the-noi the-noi-thap divide-y divide-vien p-2 sm:p-4">
+          <div className="grid gap-1 py-3 sm:grid-cols-[200px_1fr] sm:gap-4"><dt className="text-[13px] text-muc-3">Đổi điểm thành giảm giá</dt><dd className="text-[14.5px] text-muc">{diem.bat ? "Đang bật" : "Đang tắt"} · 1 điểm = {tienVN(diem.tienMoiDiem)}</dd></div>
+        </dl>
+      </section>
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { chuanSdt } from "@/lib/dinh-dang";
 import { tinhDon, type DonBan } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
+import { cauHinhDiem } from "@/lib/diem-thuong";
 
 export async function timKhach(q: string) {
   if (!(await kiemQuyen("khach.xem"))) return [];
@@ -20,6 +21,14 @@ export async function layTheTien(khachId: string) {
   if (!(await kiemQuyen("ban.tao"))) return [];
   const { data } = await sb().from("v_the_khach").select("id, ma, so_du_tien, han_dung, tinh_trang").eq("khach_id", khachId).eq("loai", "tien").in("tinh_trang", ["hoat_dong", "sap_het"]);
   return (data ?? []).filter((t) => Number(t.so_du_tien) > 0).map((t) => ({ id: t.id as string, ma: t.ma as string, soDu: Number(t.so_du_tien) }));
+}
+
+/** Số dư điểm thưởng của khách + cấu hình đổi điểm (cho màn Thu ngân). */
+export async function layDiemKhach(khachId: string) {
+  if (!(await kiemQuyen("ban.tao"))) return null;
+  const db = sb();
+  const [{ data: k }, ch] = await Promise.all([db.from("khach_hang").select("diem_so_du").eq("id", khachId).maybeSingle(), cauHinhDiem(db)]);
+  return k ? { soDu: Number(k.diem_so_du ?? 0), ...ch } : null;
 }
 
 type KQ = { ok: true; id: string; ma: string } | { ok?: false; loi: string };
@@ -63,9 +72,21 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     hang += m.gia * d.sl - d.giam;
   }
   for (const v of [don.giamDon, don.phuPhi, don.tip]) if (!Number.isInteger(v) || v < 0) return { loi: "Giảm giá, phụ phí hoặc tip chưa hợp lệ." };
-  if (don.giamDon > hang) return { loi: "Giảm giá cả đơn lớn hơn tiền hàng." };
+  // Đổi điểm: máy chủ tự tính tiền theo cấu hình, cộng vào giảm giá cả đơn; trừ điểm cùng giao dịch với chốt đơn (chot_hoa_don_doi_diem).
+  const diem = don.doiDiem ?? 0;
+  if (!Number.isInteger(diem) || diem < 0) return { loi: "Số điểm đổi chưa hợp lệ." };
+  let tienDiem = 0;
+  if (diem > 0) {
+    if (!don.khachId) return { loi: "Đổi điểm phải chọn khách hàng." };
+    const ch = await cauHinhDiem(db);
+    if (!ch.bat) return { loi: "Đổi điểm thưởng đang tắt (Cài đặt › Thông tin chung)." };
+    const { data: k } = await db.from("khach_hang").select("diem_so_du").eq("id", don.khachId).maybeSingle();
+    if ((k?.diem_so_du ?? 0) < diem) return { loi: `Khách chỉ còn ${k?.diem_so_du ?? 0} điểm.` };
+    tienDiem = diem * ch.tienMoiDiem;
+  }
+  if (don.giamDon + tienDiem > hang) return { loi: tienDiem ? "Giảm giá cả đơn cộng tiền đổi điểm lớn hơn tiền hàng." : "Giảm giá cả đơn lớn hơn tiền hàng." };
   if (!(don.vatPct >= 0 && don.vatPct <= 100)) return { loi: "VAT chưa hợp lệ." };
-  const { phai } = tinhDon(hang, don.giamDon, don.vatPct, don.phuPhi, don.tip);
+  const { phai } = tinhDon(hang, don.giamDon + tienDiem, don.vatPct, don.phuPhi, don.tip);
   const tongThu = (don.thu ?? []).reduce((s, t) => s + t.so_tien, 0);
   if ((don.thu ?? []).some((t) => !Number.isInteger(t.so_tien) || t.so_tien <= 0)) return { loi: "Có khoản thu chưa hợp lệ." };
   if (tongThu > phai) return { loi: "Tổng các khoản thu lớn hơn số phải thu." };
@@ -81,7 +102,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
 
   const ma = "HD" + String(Number((await db.rpc("so_tiep_theo", { p_khoa: "hoa_don" })).data ?? 0)).padStart(6, "0");
   const { data: h, error: eh } = await db.from("hoa_don").insert({
-    ma, chi_nhanh_id: don.chiNhanhId, khach_id: don.khachId, lich_hen_id: don.lichId, nguoi_lap_id: nd.nhanVienId, giam_gia_don: don.giamDon, vat_pct: don.vatPct,
+    ma, chi_nhanh_id: don.chiNhanhId, khach_id: don.khachId, lich_hen_id: don.lichId, nguoi_lap_id: nd.nhanVienId, giam_gia_don: don.giamDon + tienDiem, vat_pct: don.vatPct,
     phu_phi: don.phuPhi, tip: don.tip, nguoi_gioi_thieu_id: don.nguoiGioiThieu || null, ghi_chu: don.ghiChu?.trim() || null,
   }).select("id").single();
   if (eh || !h) return { loi: thongBaoLoi(eh) };
@@ -108,7 +129,9 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
       return { loi: thongBaoLoi(et) };
     }
   }
-  const { error: ex } = await db.rpc("chot_hoa_don", { p_id: h.id, p_nguoi: nd.nhanVienId });
+  const { error: ex } = diem > 0
+    ? await db.rpc("chot_hoa_don_doi_diem", { p_id: h.id, p_nguoi: nd.nhanVienId, p_diem: diem, p_tien: tienDiem })
+    : await db.rpc("chot_hoa_don", { p_id: h.id, p_nguoi: nd.nhanVienId });
   if (ex) {
     const daCo = await db.from("thanh_toan").select("id", { count: "exact", head: true }).eq("hoa_don_id", h.id);
     if ((daCo.count ?? 0) === 0) await huyNhap(); else await db.rpc("huy_hoa_don", { p_id: h.id, p_ly_do: "Tự huỷ do lỗi khi chốt đơn", p_nguoi: nd.nhanVienId });

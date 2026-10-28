@@ -2,10 +2,11 @@
 // ASSUMPTION: ma trận quyền dưới đây là đề xuất mặc định theo vai trò SalonHero đang dùng (Quản lý / Leader, Thu ngân, Thủ kho, Bác sĩ, Kế toán, Tư vấn, Marketing, Nhà đầu tư) + Lễ tân + KTV.
 // Chủ chốt lại thì chỉ sửa bảng này.
 
-export const VAI_TRO = ["ky_thuat", "quan_ly", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien"] as const;
+export const VAI_TRO = ["chu", "ky_thuat", "quan_ly", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien"] as const;
 export type VaiTro = (typeof VAI_TRO)[number];
 
 export const NHAN_VAI_TRO: Record<VaiTro, string> = {
+  chu: "Chủ",
   ky_thuat: "Kỹ thuật",
   quan_ly: "Quản lý / Leader",
   le_tan: "Lễ tân",
@@ -40,7 +41,8 @@ export type Quyen =
   | "tongquan.xem"
   | "hethong.phanquyen";
 
-// Quyền quản trị hệ thống (tài khoản, vai trò, phân quyền) chỉ vai trò Kỹ thuật nắm (chủ chốt 26/10/2026) — không nằm trong TAT_CA của Quản lý / Leader (vai trò cao nhất sau Kỹ thuật; bỏ Chủ và Giám đốc 26/10/2026).
+// Quyền quản trị hệ thống (tài khoản, vai trò, phân quyền, cài đặt) chỉ Chủ và Kỹ thuật nắm; không nằm trong TAT_CA của Quản lý / Leader.
+// Chủ (chị Lâm chốt lại 28/10/2026, trước đó bỏ 26/10): người sở hữu, nhìn toàn cảnh điều hành và tự phân quyền, cài đặt hệ thống. Khác Kỹ thuật ở chỗ KHÔNG được bỏ qua quy tắc "người lập không tự duyệt".
 const TAT_CA: Quyen[] = [
   "khach.xem", "khach.sua", "khach.nhap", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
   "ban.xem", "ban.tao", "ban.huy", "no.thu", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
@@ -50,6 +52,7 @@ const TAT_CA: Quyen[] = [
 ];
 
 export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
+  chu: [...TAT_CA, "hethong.phanquyen"],
   ky_thuat: [...TAT_CA, "hethong.phanquyen"],
   quan_ly: TAT_CA,
   le_tan: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan"],
@@ -66,10 +69,10 @@ export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
 
 export const QUYEN_MAC_DINH = (vt: VaiTro): Quyen[] => QUYEN_THEO_VAI_TRO[vt];
 
-/** Tập quyền thật của một người: Kỹ thuật luôn đủ; người khác theo danh sách riêng (nếu Kỹ thuật đã đặt) hoặc mặc định của vai trò.
- *  "hethong.phanquyen" không bao giờ cấp được cho vai trò khác Kỹ thuật, dù danh sách riêng có ghi. */
+/** Tập quyền thật của một người: Chủ và Kỹ thuật luôn đủ; người khác theo danh sách riêng (nếu Kỹ thuật đã đặt) hoặc mặc định của vai trò.
+ *  "hethong.phanquyen" không bao giờ cấp được cho vai trò khác Chủ và Kỹ thuật, dù danh sách riêng có ghi. */
 export function quyenHieuLuc(vt: VaiTro, rieng: readonly string[] | null | undefined): Quyen[] {
-  if (vt === "ky_thuat") return QUYEN_THEO_VAI_TRO.ky_thuat;
+  if (vt === "ky_thuat" || vt === "chu") return QUYEN_THEO_VAI_TRO[vt];
   const goc = rieng ? TAT_CA.filter((q) => rieng.includes(q)) : QUYEN_THEO_VAI_TRO[vt];
   return goc.filter((q) => q !== "hethong.phanquyen");
 }

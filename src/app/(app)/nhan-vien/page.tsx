@@ -50,10 +50,10 @@ export default async function TrangNhanVien() {
         { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={r.hoat_dong && r.trang_thai_lam === "dang_lam" ? "tot" : r.hoat_dong ? "cho" : "tram"}>{TT_LAM[r.trang_thai_lam] ?? (r.hoat_dong ? "Đang làm" : "Đã khoá")}</NhanTrangThai> },
         { nhan: "", hienThi: (r) => (
           <span className="flex gap-4">
-            {laVaiTro(r.vai_tro) && r.vai_tro !== "ky_thuat" && <NutPhanQuyen id={r.id} hoTen={r.ho_ten} vaiTro={NHAN_VAI_TRO[r.vai_tro]} dangDung={quyenHieuLuc(r.vai_tro, r.quyen_rieng)} macDinh={!r.quyen_rieng} coRieng={!!r.quyen_rieng} />}
+            {laVaiTro(r.vai_tro) && r.vai_tro !== "ky_thuat" && r.vai_tro !== "chu" && <NutPhanQuyen id={r.id} hoTen={r.ho_ten} vaiTro={NHAN_VAI_TRO[r.vai_tro]} dangDung={quyenHieuLuc(r.vai_tro, r.quyen_rieng)} macDinh={!r.quyen_rieng} coRieng={!!r.quyen_rieng} />}
             <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ho_ten}`} truong={truongSua} giaTri={{ ...r, chuc_danh: r.chuc_danh ?? "", dien_thoai: r.dien_thoai ?? "", chi_nhanh_id: r.chi_nhanh_id ?? "", chuc_danh_tai_chinh: r.chuc_danh_tai_chinh ?? "", han_muc_duyet: r.han_muc_duyet ?? "", trang_thai_lam: r.trang_thai_lam, ngay_vao_lam: r.ngay_vao_lam ?? "", ngay_vao_chinh_thuc: r.ngay_vao_chinh_thuc ?? "", khung_lam_viec: r.khung_lam_viec, vai_tro_chuyen_mon: r.vai_tro_chuyen_mon ?? [] }} action={suaNhanVien} />
             {r.user_id && <NutHop kieu="chu" nhan="Đặt lại mật khẩu" tieuDe={`Đặt lại mật khẩu: ${r.ho_ten}`} truong={[{ ten: "mat_khau", nhan: "Mật khẩu mới (≥ 8 ký tự)", loai: "mat_khau", batBuoc: true, rong: true }]} giaTri={{ id: r.id }} action={datLaiMatKhau} />}
-            {r.vai_tro !== "ky_thuat" && <NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá nhân viên: ${r.ho_ten}`} xacNhan="Xoá hồ sơ này (kèm tài khoản đăng nhập nếu có)? Không hoàn lại được. Người đã có hoá đơn, lịch hay phiếu liên quan sẽ không xoá được; khi đó hãy khoá tài khoản." an={{ id: r.id }} nhanLuu="Xoá" action={xoaNhanVien} />}
+            {r.vai_tro !== "ky_thuat" && r.vai_tro !== "chu" && <NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá nhân viên: ${r.ho_ten}`} xacNhan="Xoá hồ sơ này (kèm tài khoản đăng nhập nếu có)? Không hoàn lại được. Người đã có hoá đơn, lịch hay phiếu liên quan sẽ không xoá được; khi đó hãy khoá tài khoản." an={{ id: r.id }} nhanLuu="Xoá" action={xoaNhanVien} />}
           </span>
         ) },
       ]} />

@@ -85,7 +85,7 @@ export async function datQuyen(fd: FormData): Promise<KQ> {
   const id = chuoi(fd, "id");
   const { data: nv } = await sb().from("nhan_vien").select("vai_tro").eq("id", id).maybeSingle();
   if (!nv) return { loi: "Không tìm thấy nhân viên." };
-  if (nv.vai_tro === "ky_thuat") return { loi: "Kỹ thuật luôn có đủ mọi quyền, không chỉnh được." };
+  if (nv.vai_tro === "ky_thuat" || nv.vai_tro === "chu") return { loi: `${nv.vai_tro === "chu" ? "Chủ" : "Kỹ thuật"} luôn có đủ mọi quyền, không chỉnh được.` };
   const hopLe = new Set(NHOM_QUYEN.flatMap((g) => g.muc.map((m) => m.ma as string)));
   const chon = bat(fd, "mac_dinh") ? null : [...new Set(mang(fd, "quyen"))].filter((q) => hopLe.has(q));
   const { error } = await sb().from("nhan_vien").update({ quyen_rieng: chon }).eq("id", id);
@@ -101,7 +101,7 @@ export async function xoaNhanVien(fd: FormData): Promise<KQ> {
   const db = sb();
   const { data: nv } = await db.from("nhan_vien").select("user_id, vai_tro").eq("id", id).maybeSingle();
   if (!nv) return { loi: "Không tìm thấy nhân viên." };
-  if (nv.vai_tro === "ky_thuat") return { loi: "Không xoá được tài khoản Kỹ thuật." };
+  if (nv.vai_tro === "ky_thuat" || nv.vai_tro === "chu") return { loi: "Không xoá được tài khoản Chủ / Kỹ thuật." };
   const { error } = await db.from("nhan_vien").delete().eq("id", id);
   if (error) {
     if (error.code === "23503") return { loi: "Nhân viên này đã có dữ liệu liên quan (hoá đơn, lịch hẹn, phiếu cấp, hoa hồng...) nên không xoá được. Hãy bấm Sửa rồi tắt \"Đang làm việc\" để khoá." };

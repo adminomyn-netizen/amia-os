@@ -16,6 +16,7 @@ describe("menu theo vai trò", () => {
     expect(ten("bac_si")).not.toContain("Tổng quan");
     expect(ten("quan_ly")).toContain("Tổng quan");
     expect(ten("ky_thuat")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt", "Nhân sự"]));
+    expect(ten("chu")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt", "Nhân sự"]));
     expect(ten("bac_si")).not.toContain("Tài chính - Kế toán");
     expect(ten("ktv", ["tongquan.xem"])).toContain("Tổng quan");
   });
@@ -35,6 +36,7 @@ describe("các mục lớn và thẻ chức năng", () => {
     for (const t of the) {
       expect(t.quyen).toEqual(["hethong.phanquyen"]);
       expect(t.quyen!.some((q) => nguoi("ky_thuat").quyen.includes(q))).toBe(true);
+      expect(t.quyen!.some((q) => nguoi("chu").quyen.includes(q))).toBe(true);
       expect(t.quyen!.some((q) => nguoi("quan_ly").quyen.includes(q))).toBe(false);
     }
   });

@@ -12,7 +12,7 @@ import { TongQuanKyThuat } from "./KyThuat";
 import { Tab } from "@/components/ui/Tab";
 import { BangDoanhThu, BangHeThong, BangKho, BangKhach, BangTheNo } from "./bang";
 
-const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { ky_thuat: "Bảng điều khiển kỹ thuật", quan_ly: "Bảng điều hành", ke_toan: "Bảng kế toán", thu_kho: "Bảng kho", thu_ngan: "Bảng thu ngân", marketing: "Bảng marketing", nha_dau_tu: "Bảng nhà đầu tư" };
+const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { chu: "Bảng điều hành của Chủ", ky_thuat: "Bảng điều khiển kỹ thuật", quan_ly: "Bảng điều hành", ke_toan: "Bảng kế toán", thu_kho: "Bảng kho", thu_ngan: "Bảng thu ngân", marketing: "Bảng marketing", nha_dau_tu: "Bảng nhà đầu tư" };
 
 export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string }> }) {
   const nd = await yeuCauQuyen("tongquan.xem");

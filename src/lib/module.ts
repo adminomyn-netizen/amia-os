@@ -20,6 +20,7 @@ export const MODULE: Module[] = [
         { ten: "Việc cần hoàn thành", moTa: "Việc được giao cho tôi, việc tôi giao và việc quá hạn.", duongDan: "/noi-lam-viec/viec", trangThai: "san_sang" },
         { ten: "Bảng chấm công", moTa: "Chấm công và giờ làm thực tế.", duongDan: "/nhan-su/cham-cong", trangThai: "san_sang" },
         { ten: "Đơn nghỉ & phiếu nhân sự", moTa: "Xin nghỉ, tăng ca, đi trễ, điều chỉnh công; xem phép năm.", duongDan: "/nhan-su/ngay-nghi", trangThai: "san_sang" },
+        { ten: "Hồ sơ của tôi", moTa: "Tự điền thông tin cá nhân, người thân, tải giấy tờ; xin nghỉ việc.", duongDan: "/nhan-su/ho-so-cua-toi", trangThai: "san_sang" },
         { ten: "Phiếu lương của tôi", moTa: "Lương các kỳ đã được duyệt.", duongDan: "/nhan-su/luong/phieu", trangThai: "san_sang" },
         { ten: "Báo cáo ngày", moTa: "Nhân viên nộp báo cáo công việc cuối ngày.", duongDan: "/noi-lam-viec/bao-cao-ngay", trangThai: "san_sang" },
       ] },
@@ -84,11 +85,14 @@ export const MODULE: Module[] = [
     ],
   },
   {
-    ma: "nhan-su", ten: "Nhân sự", duongDan: "/nhan-su", quyen: ["nhanvien.quanly", "baocao.tien", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem"],
+    ma: "nhan-su", ten: "Nhân sự", duongDan: "/nhan-su", quyen: ["nhanvien.quanly", "hr.hoso", "baocao.tien", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem"],
     moTa: "Hồ sơ, chấm công, ca, nghỉ phép, hoa hồng và lương.",
     nhom: [
       { nhan: "Hồ sơ", the: [
-        { ten: "Hồ sơ nhân viên", moTa: "Thông tin, vai trò, chi nhánh, trạng thái.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
+        { ten: "Hồ sơ nhân sự", moTa: "Hồ sơ từng người: thông tin cá nhân, giấy tờ, người thân, lộ trình, công phép; thống kê quân số.", duongDan: "/nhan-su/ho-so", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Nghỉ việc", moTa: "Đơn xin nghỉ, duyệt, bàn giao, biên bản, khoá tài khoản.", duongDan: "/nhan-su/nghi-viec", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Phòng ban & chức danh", moTa: "Danh mục dùng cho hồ sơ và lộ trình thăng tiến.", duongDan: "/nhan-su/danh-muc", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Tài khoản & phân quyền", moTa: "Tài khoản đăng nhập, vai trò, quyền, đặt lại mật khẩu.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Onboarding thử việc", moTa: "Các mốc 0, 3, 7, 30, 60 ngày cho nhân viên mới.", duongDan: "/nhan-su/onboarding", trangThai: "san_sang", quyen: ["cong.xem"] },
         { ten: "Tuyển dụng", moTa: "Yêu cầu tuyển, tin tuyển dụng, ứng viên theo bước, kênh đăng và chi phí.", duongDan: "/nhan-su/tuyen-dung", trangThai: "san_sang", quyen: ["cong.xem"] },
         { ten: "Hợp đồng lao động", moTa: "Thử việc → HĐLĐ lần 1 → lần 2 → không xác định thời hạn; nhắc trước 45 ngày.", duongDan: "/nhan-su/hop-dong", trangThai: "san_sang", quyen: ["cong.xem"] },

@@ -16,7 +16,7 @@ export const MENU: MucMenu[] = [
   { ten: "Nơi làm việc", duong_dan: "/noi-lam-viec", icon: Briefcase, nhom: "Vận hành", quyen: ["noibo.dung", "lich.xem", "khach.xem", "the.xem", "phieu.xem", "ban.xem"], moTa: "Việc cần làm, chấm công, đề xuất, wiki" },
   { ten: "Kho & Mua sắm", duong_dan: "/kho-mua-sam", icon: Warehouse, nhom: "Vận hành", quyen: ["kho.xem", "phieu.xem"], moTa: "Tồn kho, vật tư cấp theo ca, mua hàng, kiểm kê" },
   { ten: "Tài chính - Kế toán", ngan: "Tài chính", duong_dan: "/tai-chinh", icon: Landmark, nhom: "Vận hành", quyen: ["quy.xem", "baocao.tien", "no.thu"], moTa: "Sổ quỹ, công nợ, hoá đơn, quyết toán" },
-  { ten: "Nhân sự", duong_dan: "/nhan-su", icon: UsersRound, nhom: "Vận hành", quyen: ["nhanvien.quanly", "baocao.tien"], moTa: "Hồ sơ, chấm công, ca, nghỉ phép, lương" },
+  { ten: "Nhân sự", duong_dan: "/nhan-su", icon: UsersRound, nhom: "Vận hành", quyen: ["nhanvien.quanly", "hr.hoso", "baocao.tien"], moTa: "Hồ sơ, chấm công, ca, nghỉ phép, lương" },
   { ten: "Văn bản & Hợp đồng", ngan: "Văn bản", duong_dan: "/van-ban", icon: FileText, nhom: "Vận hành", quyen: ["vb.xem"], moTa: "Hợp đồng, quyết định, quy định" },
   { ten: "Marketing", duong_dan: "/marketing", icon: Megaphone, nhom: "Phát triển", quyen: ["mkt.xem", "lead.xu_ly"], moTa: "Khách tiềm năng, nguồn giới thiệu, chiến dịch" },
   { ten: "Báo cáo", duong_dan: "/bao-cao", icon: BarChart3, nhom: "Phát triển", quyen: "baocao.xem", moTa: "Doanh thu, nhân viên, nợ, vật tư" },

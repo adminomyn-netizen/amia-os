@@ -2,13 +2,14 @@
 // ASSUMPTION: ma trận quyền dưới đây là đề xuất mặc định theo vai trò SalonHero đang dùng (Quản lý / Leader, Thu ngân, Thủ kho, Bác sĩ, Kế toán, Tư vấn, Marketing, Nhà đầu tư) + Lễ tân + KTV.
 // Chủ chốt lại thì chỉ sửa bảng này.
 
-export const VAI_TRO = ["chu", "ky_thuat", "quan_ly", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien"] as const;
+export const VAI_TRO = ["chu", "ky_thuat", "quan_ly", "nhan_su", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien"] as const;
 export type VaiTro = (typeof VAI_TRO)[number];
 
 export const NHAN_VAI_TRO: Record<VaiTro, string> = {
   chu: "Chủ",
   ky_thuat: "Kỹ thuật",
   quan_ly: "Quản lý / Leader",
+  nhan_su: "Nhân sự (HCNS)",
   le_tan: "Lễ tân",
   thu_ngan: "Thu ngân",
   tu_van: "Tư vấn",
@@ -37,7 +38,7 @@ export type Quyen =
   | "noibo.dung"
   | "mkt.xem" | "mkt.sua" | "mkt.duyet" | "lead.xu_ly" | "vb.xem" | "vb.soan" | "vb.duyet"
   | "cong.xem" | "cong.sua" | "nghi.duyet" | "nghi.duyet_bgd" | "luong.xem" | "luong.sua" | "luong.duyet"
-  | "nhanvien.quanly"
+  | "nhanvien.quanly" | "hr.hoso"
   | "tongquan.xem"
   | "hethong.phanquyen";
 
@@ -46,7 +47,7 @@ export type Quyen =
 const TAT_CA: Quyen[] = [
   "khach.xem", "khach.sua", "khach.nhap", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
   "ban.xem", "ban.tao", "ban.huy", "no.thu", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
-  "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "tongquan.xem", "quy.xem", "quy.ghi", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
+  "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "hr.hoso", "tongquan.xem", "quy.xem", "quy.ghi", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
   "cong.xem", "cong.sua", "nghi.duyet", "nghi.duyet_bgd", "luong.xem", "luong.sua", "luong.duyet", "noibo.dung",
   "mkt.xem", "mkt.sua", "mkt.duyet", "lead.xu_ly", "vb.xem", "vb.soan", "vb.duyet",
 ];
@@ -55,6 +56,7 @@ export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
   chu: [...TAT_CA, "hethong.phanquyen"],
   ky_thuat: [...TAT_CA, "hethong.phanquyen"],
   quan_ly: TAT_CA,
+  nhan_su: ["tongquan.xem", "khach.xem", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "viec.tatca", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem", "luong.sua", "hr.hoso", "vb.xem", "vb.soan", "mkt.xem"],
   le_tan: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan"],
   thu_ngan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "ban.xem", "ban.tao", "no.thu", "the.xem", "danhmuc.xem", "baocao.xem", "baocao.tien", "noibo.dung", "vb.xem", "vb.soan"],
   tu_van: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "ban.tao", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan"],
@@ -91,7 +93,7 @@ export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] 
   { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "KTV nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }, { ma: "kho.duyet", nhan: "Duyệt kiểm kê, xử lý vật tư, hậu kiểm xuất khẩn cấp" }] },
   { nhom: "Mua hàng", muc: [{ ma: "mua.xem", nhan: "Xem đơn mua, nhà cung cấp, công nợ" }, { ma: "mua.tao", nhan: "Lập đơn mua, nhà cung cấp" }, { ma: "mua.duyet", nhan: "Duyệt / từ chối đơn mua" }] },
   { nhom: "Nơi làm việc", muc: [{ ma: "noibo.dung", nhan: "Dùng Nơi làm việc (việc, chấm công, đề xuất, phiếu của tôi)" }, { ma: "viec.tatca", nhan: "Xem việc và báo cáo ngày của mọi người" }, { ma: "dexuat.duyet", nhan: "Duyệt / từ chối đề xuất" }, { ma: "wiki.sua", nhan: "Viết, sửa Wiki công ty" }] },
-  { nhom: "Nhân sự", muc: [{ ma: "cong.xem", nhan: "Xem chấm công, lịch ca, phiếu của mọi người" }, { ma: "cong.sua", nhan: "Phân ca, nhập công tay, khoá tháng, chỉnh phép" }, { ma: "nghi.duyet", nhan: "Duyệt phiếu nghỉ, tăng ca, điều chỉnh công" }, { ma: "nghi.duyet_bgd", nhan: "Duyệt nghỉ từ 4 ngày (Ban Giám đốc)" }, { ma: "luong.xem", nhan: "Xem bảng lương và điều kiện lương" }, { ma: "luong.sua", nhan: "Lập kỳ lương, sửa điều kiện lương, cộng/trừ" }, { ma: "luong.duyet", nhan: "Duyệt kỳ lương" }] },
+  { nhom: "Nhân sự", muc: [{ ma: "cong.xem", nhan: "Xem chấm công, lịch ca, phiếu của mọi người" }, { ma: "cong.sua", nhan: "Phân ca, nhập công tay, khoá tháng, chỉnh phép" }, { ma: "nghi.duyet", nhan: "Duyệt phiếu nghỉ, tăng ca, điều chỉnh công" }, { ma: "nghi.duyet_bgd", nhan: "Duyệt nghỉ từ 4 ngày (Ban Giám đốc)" }, { ma: "luong.xem", nhan: "Xem bảng lương và điều kiện lương" }, { ma: "luong.sua", nhan: "Lập kỳ lương, sửa điều kiện lương, cộng/trừ" }, { ma: "luong.duyet", nhan: "Duyệt kỳ lương" }, { ma: "hr.hoso", nhan: "Hồ sơ nhân sự đầy đủ của mọi người (CCCD, thuế, BHXH, ngân hàng, giấy tờ), nghỉ việc, danh mục phòng ban" }] },
   { nhom: "Marketing", muc: [{ ma: "mkt.xem", nhan: "Xem chiến dịch, quảng cáo, nội dung, báo cáo marketing" }, { ma: "mkt.sua", nhan: "Tạo/sửa chiến dịch, quảng cáo, nội dung, link, đối tác" }, { ma: "mkt.duyet", nhan: "Duyệt chiến dịch và nội dung" }, { ma: "lead.xu_ly", nhan: "Nhận và xử lý lead (liên hệ, chuyển thành khách)" }] },
   { nhom: "Văn bản & Hợp đồng", muc: [{ ma: "vb.xem", nhan: "Xem sổ văn bản, hợp đồng, đồng ý dùng ảnh" }, { ma: "vb.soan", nhan: "Soạn, nộp duyệt, ghi nhận đã ký, lưu bản điện tử" }, { ma: "vb.duyet", nhan: "Duyệt văn bản (vượt ngưỡng chi nhánh thì cần người không gắn chi nhánh)" }] },
   { nhom: "Sổ quỹ", muc: [{ ma: "quy.xem", nhan: "Xem sổ quỹ thu/chi" }, { ma: "quy.ghi", nhan: "Ghi thu/chi, chuyển quỹ, đảo phiếu" }, { ma: "ky.khoa", nhan: "Khoá kỳ kế toán theo tháng" }, { ma: "ky.mo_lai", nhan: "Mở lại kỳ đã khoá (phải ghi lý do)" }] },

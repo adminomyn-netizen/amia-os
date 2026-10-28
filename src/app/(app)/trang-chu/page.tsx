@@ -109,8 +109,17 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   const toi = (ban ?? []).filter((r) => r.nhan_vien_id === nd.nhanVienId);
   const doanhSo = toi.reduce((s, r) => s + Number(r.doanh_so), 0), hoaHong = toi.reduce((s, r) => s + Number(r.hoa_hong), 0);
   const soBuoi = (buoi ?? []).length, soKhach = new Set((buoi ?? []).map((b) => b.khach_id)).size;
+  const [{ data: ccThang }, { count: phieuCho }] = dieuHanh ? [{ data: null }, { count: 0 }] : await Promise.all([
+    db.from("cham_cong").select("ngay, vao, ra, cong, tre_phut").eq("nhan_vien_id", nd.nhanVienId).gte("ngay", dauThang).lte("ngay", homNay).limit(40),
+    db.from("phieu_hr").select("id", { count: "exact", head: true }).eq("nhan_vien_id", nd.nhanVienId).eq("trang_thai", "cho_duyet"),
+  ]);
+  const ccHom = (ccThang ?? []).find((c) => c.ngay === homNay);
+  const congThangNay = (ccThang ?? []).reduce((x, c) => x + Number(c.cong ?? 0), 0), lanTre = (ccThang ?? []).filter((c) => Number(c.tre_phut) > 0).length;
   const coHieuSuat = nd.vaiTro !== "nhan_vien" && nd.vaiTro !== "nha_dau_tu";
   const tileNv = [
+    { nhan: "Chấm công hôm nay", so: ccHom?.vao ? `${gioVN(ccHom.vao)}${ccHom.ra ? ` – ${gioVN(ccHom.ra)}` : ""}` : "Chưa chấm", mau: ccHom?.vao ? "luc" : "cam", phu: ccHom?.vao ? (ccHom.ra ? "đã chấm vào và ra" : "nhớ chấm ra khi hết ca") : "bấm Chấm công để ghi giờ vào" },
+    { nhan: "Công tháng này", so: `${soVN(congThangNay)} công`, mau: "xanh", phu: `${lanTre} lần đi trễ` },
+    { nhan: "Phiếu của tôi chờ duyệt", so: soVN(phieuCho ?? 0), mau: "tim", phu: "nghỉ phép, điều chỉnh công, đề xuất" },
     { nhan: "Việc đang chờ", so: soVN(canhBao.length), mau: "hong", phu: canhBao.length ? "mở danh sách bên dưới" : "đã xong hết" },
     { nhan: tieuDeLich.includes("chi nhánh") ? "Lịch hôm nay của chi nhánh" : "Lịch của tôi hôm nay", so: soVN(lich.length), mau: "xanh", phu: "" },
     ...(coHieuSuat ? [
@@ -149,7 +158,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
       ) : (
         <>
           {canhBao.length > 0 && <p role="status" className="rounded-nho border border-loi/30 bg-loi-nen px-4 py-3 text-[14px] font-semibold text-loi">{canhBao.length} việc cần xử lý hôm nay</p>}
-          <dl className={`grid grid-cols-2 gap-3 sm:gap-4 ${tileNv.length >= 4 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
+          <dl className={`grid grid-cols-2 gap-3 sm:gap-4 ${tileNv.length === 5 ? "lg:grid-cols-5" : "lg:grid-cols-4"}`}>
             {tileNv.map((t) => (
               <div key={t.nhan} className="min-w-0 rounded-nho px-4 pb-4 pt-4 text-white shadow-sm" style={{ background: `linear-gradient(135deg, var(--sac-${t.mau}-1), var(--sac-${t.mau}-2))` }}>
                 <dt className="text-[13px] opacity-90">{t.nhan}</dt>

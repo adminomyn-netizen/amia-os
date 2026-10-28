@@ -59,7 +59,7 @@ export async function layDungDichVu(db: Db, tu: string, den: string, cn: string 
 }
 
 /** Số SalonHero đọc trực tiếp (chỉ đọc) ngày 28/10/2026 cho kỳ mẫu tháng 10/2025 — dùng cho bảng đối chiếu nhỏ dưới mỗi báo cáo.
- *  Chênh lệch còn lại là đơn/lịch chưa kéo hết từ SalonHero (đợt bổ sung đang chạy), không phải do cách tính. */
+ *  Sau migration 0071 app khớp SalonHero, trừ phần VAT SalonHero cộng vào doanh thu thu ngân. */
 export const SH_MAU = {
   ky: { tu: "2025-10-01", den: "2025-10-31", nhan: "tháng 10/2025" },
   thuNgan: [

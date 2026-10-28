@@ -50,7 +50,7 @@ export async function BaoCaoThuNgan({ loc }: { loc: Loc }) {
           ]} />
       </div>
       <GhiChu>Thu ngân = người hoàn tất hoá đơn (hoá đơn chuyển từ SalonHero) hoặc người lập (hoá đơn làm trong app). Doanh số = tiền hàng − giảm giá cả đơn; Doanh thu sau trừ thẻ = doanh số − phần trả bằng thẻ tiền; Đã thu = doanh thu sau trừ thẻ − còn nợ. Không tính hoá đơn huỷ và công nợ đầu kỳ.</GhiChu>
-      <DoiChieu dong={dongDc} ghiChu="SalonHero tính theo người hoàn tất đơn; cột App là số app đang có. Người lệch là do còn đơn SalonHero chưa chuyển hết (đợt bổ sung đang chạy: SalonHero 940 đơn, app 902)." />
+      <DoiChieu dong={dongDc} ghiChu="SalonHero tính theo người hoàn tất đơn, cột “Doanh thu” = doanh thu sau trừ thẻ. Lệch duy nhất: SalonHero cộng cả VAT (đơn 25100220 có VAT 1.299.000), app tính doanh số trước VAT như báo cáo doanh thu." />
     </>
   );
 }
@@ -92,7 +92,7 @@ export async function BaoCaoDatLich({ loc, coChiNhanh }: { loc: Loc; coChiNhanh:
       <Bang duLieu={d.nhanVien} khoa={(r) => r.khoa} trong="Không có lịch hẹn." cot={cotLich({ nhan: "Nhân viên", hienThi: (r) => r.nhan })} />
       {coChiNhanh && (<><TieuDeMuc id="lich-cn">Theo chi nhánh</TieuDeMuc><Bang duLieu={d.chiNhanh} khoa={(r) => r.khoa} cot={cotLich({ nhan: "Chi nhánh", hienThi: (r) => r.nhan })} /></>)}
       <GhiChu>Lịch tính theo giờ hẹn (giờ Việt Nam). Khách đến = lịch hoàn thành. Lịch chuyển từ SalonHero giữ nguồn đặt và tên nhân viên gốc.</GhiChu>
-      <DoiChieu dong={dongDc} ghiChu="SalonHero đếm theo ngày hẹn. Chênh lệch là lịch SalonHero chưa chuyển hết (đợt bổ sung lịch hẹn đang chạy)." />
+      <DoiChieu dong={dongDc} ghiChu="SalonHero đếm theo ngày hẹn (Thống kê đặt lịch)." />
     </>
   );
 }
@@ -125,7 +125,7 @@ export async function BaoCaoDungDichVu({ loc, coChiNhanh }: { loc: Loc; coChiNha
       <Bang duLieu={d.ky} khoa={(r) => r.khoa} trong="Không có lượt dịch vụ." cot={cot({ nhan: loc.nhom === "ngay" ? "Ngày" : "Tháng", hienThi: (r) => tenKy(r.khoa, loc.nhom === "ngay" ? "ngay" : "thang") })} />
       {coChiNhanh && (<><TieuDeMuc id="dv-cn">Theo chi nhánh</TieuDeMuc><Bang duLieu={d.chiNhanh} khoa={(r) => r.khoa} cot={cot({ nhan: "Chi nhánh", hienThi: (r) => r.nhan })} /></>)}
       <GhiChu>Một lượt = một dịch vụ trên hoá đơn hoặc một buổi trừ thẻ. Dùng thẻ = làm bằng thẻ liệu trình (không thu tiền lúc làm); trả tiền = dịch vụ bán lẻ, doanh số đã chia giảm giá cả đơn. Nhân viên = người phục vụ; một lượt nhiều người làm thì mỗi người đều được tính lượt, tiền chia theo tỉ lệ.</GhiChu>
-      <DoiChieu dong={dongDc} ghiChu="SalonHero lấy từ báo cáo theo sản phẩm/dịch vụ (dòng dịch vụ có thẻ = dùng thẻ). Giá trị buổi SalonHero tính bằng giá bán thẻ ÷ số buổi nên không đối chiếu cột này. Chênh lệch lượt là đơn chưa chuyển hết." />
+      <DoiChieu dong={dongDc} ghiChu="SalonHero lấy từ báo cáo theo sản phẩm/dịch vụ (dòng dịch vụ có thẻ = dùng thẻ). Giá trị buổi SalonHero tính bằng giá bán thẻ ÷ số buổi nên không đối chiếu cột này." />
     </>
   );
 }

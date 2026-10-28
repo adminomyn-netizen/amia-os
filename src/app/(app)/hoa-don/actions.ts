@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
+import { homNayHCM } from "@/lib/dinh-dang";
+import { lapPhieuThuNo } from "@/lib/thu-no";
 
 type KQ = { ok?: true; loi?: string };
 const PT_THU_NO = ["tien_mat", "chuyen_khoan", "quet_the"];
@@ -23,6 +25,28 @@ export async function thuNo(fd: FormData): Promise<KQ> {
   revalidatePath(`/hoa-don/${id}`);
   revalidatePath("/hoa-don");
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** Nút "Trả nợ" của báo cáo Khách hàng nợ (như SalonHero): thu NỐT toàn bộ số còn nợ của các hoá đơn được chọn.
+ *  Cùng quyền "no.thu" và cùng sổ thu tiền (thanh_toan, chỉ-thêm) như thuNo; ghi một lần để hoặc thu hết hoặc không thu gì. */
+export async function thuNoNhieuDon(fd: FormData): Promise<KQ & { soDon?: number; tong?: number }> {
+  const nd = await kiemQuyen("no.thu");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const pt = chuoi(fd, "phuong_thuc"), ngay = chuoi(fd, "ngay") || homNayHCM();
+  if (!PT_THU_NO.includes(pt)) return { loi: "Chọn phương thức thu." };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || ngay > homNayHCM()) return { loi: "Ngày thu không hợp lệ (không được ở tương lai)." };
+  const ids = fd.getAll("hoa_don_id").map(String);
+  const db = sb();
+  const { data: hds, error: loiDoc } = await db.from("hoa_don").select("id, ma, trang_thai, con_no, chi_nhanh_id").in("id", ids.slice(0, 200));
+  if (loiDoc) return { loi: thongBaoLoi(loiDoc) };
+  const phieu = lapPhieuThuNo(ids, hds ?? [], nd.chiNhanhId);
+  if (phieu.loi !== undefined) return { loi: phieu.loi };
+  const { error } = await db.from("thanh_toan").insert(phieu.dong.map((d) => ({ hoa_don_id: d.hoa_don_id, loai: "thu", phuong_thuc: pt, so_tien: d.so_tien, nguoi_id: nd.nhanVienId, ghi_chu: chuoi(fd, "ghi_chu") || "Thu nợ", ngay })));
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "thu_no_nhieu_don", doi_tuong: "hoa_don", chi_tiet: { so_don: phieu.dong.length, tong: phieu.tong, phuong_thuc: pt, ngay, ma: phieu.dong.map((d) => d.ma) } });
+  revalidatePath("/bao-cao");
+  revalidatePath("/hoa-don");
+  return { ok: true, soDon: phieu.dong.length, tong: phieu.tong };
 }
 
 export async function huyHoaDon(fd: FormData): Promise<KQ> {

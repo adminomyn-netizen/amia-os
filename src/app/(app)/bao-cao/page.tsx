@@ -23,6 +23,7 @@ import { BaoCaoLichSuDungThe, BaoCaoTheoChiNhanh, BaoCaoTheoKhachHang } from "@/
 import { BaoCaoBanSanPham, BaoCaoChiPhiDichVu, BaoCaoNhapKho, BaoCaoNhapXuatKho, BaoCaoTonTheoLo, BaoCaoXuatKho } from "@/components/bao-cao/BaoCaoKho";
 import { soDongKho } from "@/lib/bao-cao-kho";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
+import { BangNoKhach } from "@/components/bao-cao/BangNoKhach";
 import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
 import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
@@ -273,10 +274,8 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
         <ChipNo nt="ds" them={them} />
         {lc}
         <HangChiSo muc={[{ nhan: "Tổng nợ", so: tienVN((data ?? []).reduce((s, r) => s + Number(r.con_no), 0)) }, { nhan: "Số hoá đơn nợ", so: String((data ?? []).length) }]} />
-        <div className="mt-6"><Bang duLieu={data ?? []} khoa={(r) => r.id} trong="Không có khách nào còn nợ."
-          cot={[{ nhan: "Khách", hienThi: (r) => <Link href={`/khach-hang/${r.khach_id}`} className="text-muc hover:underline">{tenK.get(r.khach_id ?? "")?.ho_ten}</Link> }, { nhan: "Điện thoại", hienThi: (r) => tenK.get(r.khach_id ?? "")?.dien_thoai ?? "" },
-            { nhan: "Hoá đơn", hienThi: (r) => <Link href={`/hoa-don/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> }, { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_hd) },
-            { nhan: "Tổng", hienThi: (r) => tienVN(r.tong_phai_thu), phai: true }, { nhan: "Đã thu", hienThi: (r) => tienVN(r.da_thu), phai: true }, { nhan: "Còn nợ", hienThi: (r) => <span className="font-medium text-canh-bao">{tienVN(r.con_no)}</span>, phai: true }]} /></div>
+        <div className="mt-6"><BangNoKhach choPhepThu={coQuyen(nd, "no.thu")} homNay={kn.homNay}
+          dong={(data ?? []).map((r) => ({ id: r.id, ma: r.ma, khachId: r.khach_id, khach: tenK.get(r.khach_id ?? "")?.ho_ten ?? "", dienThoai: tenK.get(r.khach_id ?? "")?.dien_thoai ?? "", ngay: r.ngay_hd, tong: Number(r.tong_phai_thu), daThu: Number(r.da_thu), conNo: Number(r.con_no) }))} /></div>
       </>
     );
   } else {

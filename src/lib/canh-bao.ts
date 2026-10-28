@@ -5,7 +5,7 @@ import { coQuyen, type CoQuyen } from "@/lib/quyen";
 import { layNhacCong } from "@/lib/nhac-cong";
 
 /** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
-export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin"; nhan: string; href: string };
+export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin" | "knai" | "bchung"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
 export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null; nhanVienId?: string }): Promise<CanhBao[]> {
@@ -27,6 +27,7 @@ export async function layCanhBao(nd: CoQuyen & { chiNhanhId: string | null; nhan
   if (dsNo.length > 0) ra.push({ ma: "no", nhan: `${dsNo.length} hoá đơn còn nợ, tổng ${tienVN(dsNo.reduce((s, r) => s + Number(r.con_no), 0))}`, href: "/bao-cao?tab=no" });
   if ((kho?.count ?? 0) > 0) ra.push({ ma: "kho", nhan: `${kho!.count} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
   await themCanhBaoNangCao(nd, ra, homNay);
+  await themCanhBaoKhieuNai(nd, ra);
   ra.unshift(...(await layNhacCong(nd, homNay)));
   return ra;
 }
@@ -59,4 +60,19 @@ async function themCanhBaoNangCao(nd: CoQuyen & { chiNhanhId: string | null }, r
     const sap = [...moiNhat.values()].filter((r) => r.giai_doan !== "kxd" && r.den_ngay && r.den_ngay <= congNgay(homNay, 45)).length;
     if (sap > 0) ra.push({ ma: "hdld", nhan: `${sap} hợp đồng lao động sắp hết hạn hoặc đã hết hạn`, href: "/nhan-su/hop-dong" });
   }
+}
+
+/** Khiếu nại đang xử lý (người ghi nhận/xử lý/duyệt) và biến chứng chưa đóng (bác sĩ, lãnh đạo): biến chứng luôn báo, không có SLA nào làm nó chậm đi. */
+async function themCanhBaoKhieuNai(nd: CoQuyen & { chiNhanhId: string | null }, ra: CanhBao[]) {
+  const db = sb(), cn = nd.chiNhanhId;
+  const xemKn = coQuyen(nd, "kn.ghi") || coQuyen(nd, "kn.duyet"), xemBc = coQuyen(nd, "bc.xu_ly") || coQuyen(nd, "kn.duyet");
+  const loc = <T extends { eq: (c: string, v: string) => T }>(q: T) => (cn ? q.eq("chi_nhanh_id", cn) : q);
+  const [kn, bc] = await Promise.all([
+    xemKn ? loc(db.from("khieu_nai").select("trang_thai").in("trang_thai", ["moi", "cho_duyet", "da_duyet"]).limit(500)) : null,
+    xemBc ? loc(db.from("bien_chung").select("trang_thai").neq("trang_thai", "dong").limit(500)) : null,
+  ]);
+  const dsBc = (bc?.data ?? []) as { trang_thai: string }[];
+  if (dsBc.length > 0) { const moi = dsBc.filter((x) => x.trang_thai === "moi").length; ra.push({ ma: "bchung", nhan: `${dsBc.length} ca biến chứng chưa đóng${moi ? `, ${moi} ca chờ bác sĩ` : ""}`, href: "/khieu-nai?tab=bien-chung" }); }
+  const dsKn = (kn?.data ?? []) as { trang_thai: string }[];
+  if (dsKn.length > 0) { const cho = coQuyen(nd, "kn.duyet") ? dsKn.filter((x) => x.trang_thai === "cho_duyet").length : 0; ra.push({ ma: "knai", nhan: `${dsKn.length} khiếu nại đang xử lý${cho ? `, ${cho} chờ duyệt phương án` : ""}`, href: "/khieu-nai" }); }
 }

@@ -6,6 +6,8 @@ import { congNgay, gioVN, homNayHCM, ngayCuaIso, ngayVN } from "@/lib/dinh-dang"
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
+import { baoBienChung } from "../khieu-nai/actions";
+import { truongBaoBatThuong } from "@/lib/khieu-nai-form";
 import { FormLichHen } from "@/components/lich-hen/FormLichHen";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
@@ -125,6 +127,9 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
                 <div className="text-[13px] text-muc-2">{dvIds.map((d) => tenDv.get(d)).join(", ")}{l.nhan_vien_id ? ` · ${tenNv.get(l.nhan_vien_id)}` : ""}{l.phong ? ` · ${l.phong}` : ""}</div>
                 {l.ghi_chu && <div className="text-[13px] text-muc-3">{l.ghi_chu}</div>}
                 {phieu.length > 0 && <div className="mt-0.5 text-[12px] text-dat-dam">{phieu.join(" · ")}</div>}
+                {(coQuyen(nd, "bc.bao") || coQuyen(nd, "kn.ghi")) && ["cho_phuc_vu", "dang_phuc_vu", "hoan_thanh"].includes(l.trang_thai) && (
+                  <div className="mt-1.5"><NutHop kieu="chu" nguy nhan="Báo bất thường" tieuDe={`Báo bất thường: ${k?.ho_ten ?? ""}`} moTa="Thấy đỏ, rát, phồng, sưng, chóng mặt...: ngừng thao tác gây rủi ro, đưa khách đến bác sĩ rồi ghi vào đây. Bác sĩ và lãnh đạo nhận thông báo ngay." action={baoBienChung} an={{ khach_id: l.khach_id }} giaTri={{ dich_vu_id: dvIds.length === 1 ? dvIds[0] : "" }} rong nhanLuu="Báo ngay" truong={truongBaoBatThuong((dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), false)} /></div>
+                )}
               </div>
               {sua && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2">

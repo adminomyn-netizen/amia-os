@@ -2,8 +2,8 @@
 
 Sinh tự động từ `scripts/sinh-khung-kd.py`. Đây là danh sách nghiệm thu: mỗi bước quy trình và mỗi biểu mẫu đang được làm ở màn nào, hay còn thiếu.
 
-- **Biểu mẫu BM01–BM26:** 9 có · 7 một phần · 10 thiếu.
-- **Bước quy trình (80 bước, 14 quy trình):** 23 có · 13 một phần · 23 thiếu · 21 là thao tác con người (không đưa vào phần mềm).
+- **Biểu mẫu BM01–BM26:** 10 có · 9 một phần · 7 thiếu.
+- **Bước quy trình (80 bước, 14 quy trình):** 33 có · 14 một phần · 15 thiếu · 18 là thao tác con người (không đưa vào phần mềm).
 
 ## Biểu mẫu
 
@@ -25,9 +25,9 @@ Sinh tự động từ `scripts/sinh-khung-kd.py`. Đây là danh sách nghiệm
 | BM14 | Phiếu hướng dẫn chăm sóc tại nhà | THIẾU | — | Chưa có phiếu hướng dẫn chăm sóc tại nhà. |
 | BM15 | Phiếu nhắc lịch | MỘT PHẦN | /lich-hen | Có lịch hẹn và thông báo đẩy nội bộ; nhắc lịch gửi tới khách (Zalo, SMS) cần tài khoản bên thứ ba. |
 | BM16 | Phiếu khảo sát hài lòng | THIẾU | — | Chưa có khảo sát hài lòng. |
-| BM17 | Phiếu tiếp nhận khiếu nại | THIẾU | — | Chưa có phiếu tiếp nhận khiếu nại. |
-| BM18 | Biên bản xử lý biến chứng | THIẾU | — | Chưa có biên bản xử lý biến chứng. |
-| BM19 | Phiếu bảo hành dịch vụ | THIẾU | — | Chưa có phiếu bảo hành dịch vụ. |
+| BM17 | Phiếu tiếp nhận khiếu nại | CÓ | /khieu-nai | Phiếu tiếp nhận khiếu nại: khách, kênh, loại, nội dung, người và giờ tiếp nhận, phương án, duyệt, khách xác nhận đóng. Số giờ SLA tiếp nhận chờ chị chốt. |
+| BM18 | Biên bản xử lý biến chứng | MỘT PHẦN | /khieu-nai?tab=bien-chung | Biên bản biến chứng: dấu hiệu, chẩn đoán, phương án, cam kết, nguyên nhân gốc, báo lãnh đạo; chẩn đoán chỉ người xem hồ sơ điều trị đọc được. Chưa có chữ ký khách trên biên bản. |
+| BM19 | Phiếu bảo hành dịch vụ | MỘT PHẦN | /khach-hang | Tab Khiếu nại & bảo hành tính mốc từ buổi cuối (3–6 tháng 50%, 6–12 tháng 40%, quá 12 tháng giá mới, triệt lông 1 năm/lần) và ghi từng lần làm lại. Chưa in phiếu điều kiện bảo hành từng dịch vụ. |
 | BM20 | Thẻ khách hàng | CÓ | /the | Thẻ khách: liệu trình / giá trị, số dư, hạn dùng. |
 | BM21 | Phiếu chuyển đổi / chuyển nhượng thẻ | MỘT PHẦN | /the | Có điều chỉnh và cấp thẻ tay; chưa có phiếu chuyển đổi / chuyển nhượng thẻ. |
 | BM22 | Phiếu giới thiệu (referral) | MỘT PHẦN | /marketing/doi-tac | Khách có người giới thiệu; đối tác/CTV có mã giới thiệu. Chưa có thưởng referral. |
@@ -150,22 +150,22 @@ Sinh tự động từ `scripts/sinh-khung-kd.py`. Đây là danh sách nghiệm
 
 | Bước | Người làm | Việc | Trạng thái | Làm ở / ghi chú |
 |---|---|---|---|---|
-| B1 | CSKH | Tiếp nhận & lắng nghe; xin lỗi khách; ghi nhận đầy đủ. | THIẾU | Chưa có phiếu khiếu nại, SLA và đóng khiếu nại. |
-| B2 | CSKH | Phân loại (dịch vụ/thái độ/tài chính/y khoa) & chuyển đúng tuyến. | THIẾU | Chưa có phiếu khiếu nại, SLA và đóng khiếu nại. |
-| B3 | Bộ phận liên quan | Xác minh nguyên nhân; đề xuất phương án khắc phục. | NGOÀI PHẦN MỀM | Xác minh nguyên nhân là việc của người phụ trách. |
-| B4 | Trưởng BP/LĐ | Duyệt phương án; vượt thẩm quyền báo lãnh đạo. | THIẾU | Chưa có luồng duyệt phương án và báo lãnh đạo. |
-| B5 | CSKH | Thực hiện khắc phục & phản hồi KH; xác nhận đồng ý. | THIẾU | Chưa có phiếu khiếu nại, SLA và đóng khiếu nại. |
-| B6 | CSKH | Lưu hồ sơ; rà nguyên nhân gốc để phòng ngừa lặp lại. | THIẾU | Chưa có phiếu khiếu nại, SLA và đóng khiếu nại. |
+| B1 | CSKH | Tiếp nhận & lắng nghe; xin lỗi khách; ghi nhận đầy đủ. | CÓ | /khieu-nai · Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt. |
+| B2 | CSKH | Phân loại (dịch vụ/thái độ/tài chính/y khoa) & chuyển đúng tuyến. | CÓ | /khieu-nai · Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt. |
+| B3 | Bộ phận liên quan | Xác minh nguyên nhân; đề xuất phương án khắc phục. | CÓ | /khieu-nai · Ghi nguyên nhân đã xác minh và phương án ngay trên phiếu. |
+| B4 | Trưởng BP/LĐ | Duyệt phương án; vượt thẩm quyền báo lãnh đạo. | CÓ | /khieu-nai · Phương án có chi phí chờ Quản lý duyệt (thông báo đẩy); người ghi/đề xuất không tự duyệt. |
+| B5 | CSKH | Thực hiện khắc phục & phản hồi KH; xác nhận đồng ý. | CÓ | /khieu-nai · Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt. |
+| B6 | CSKH | Lưu hồ sơ; rà nguyên nhân gốc để phòng ngừa lặp lại. | CÓ | /khieu-nai · Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt. |
 
 ### QT-12 QUY TRÌNH XỬ LÝ BIẾN CHỨNG (PHỐI HỢP BÁC SĨ)
 
 | Bước | Người làm | Việc | Trạng thái | Làm ở / ghi chú |
 |---|---|---|---|---|
-| B1 | KTV/CSKH | Phát hiện dấu hiệu bất thường → ngừng thao tác gây rủi ro, đưa KH đến bác sĩ ngay. | NGOÀI PHẦN MỀM | Ngừng thao tác, đưa khách tới bác sĩ. |
-| B2 | Bác sĩ | Khám, chẩn đoán, lập phương án khắc phục bằng văn bản. | NGOÀI PHẦN MỀM | Bác sĩ khám và đánh giá; biên bản BM18 chưa có trên hệ thống. |
-| B3 | Bác sĩ/CSKH | Cam kết mức khắc phục với KH; áp chính sách bảo hành biến chứng. | THIẾU | Chưa có biên bản biến chứng, bảo hành và báo cáo lãnh đạo. |
-| B4 | CSKH | Báo cáo lãnh đạo; vượt xử lý → xin ý kiến lãnh đạo. | THIẾU | Chưa có biên bản biến chứng, bảo hành và báo cáo lãnh đạo. |
-| B5 | Bác sĩ/BLĐ | Lưu hồ sơ đầy đủ; rà nguyên nhân gốc → hành động phòng ngừa. | THIẾU | Chưa có biên bản biến chứng, bảo hành và báo cáo lãnh đạo. |
+| B1 | KTV/CSKH | Phát hiện dấu hiệu bất thường → ngừng thao tác gây rủi ro, đưa KH đến bác sĩ ngay. | MỘT PHẦN | /lich-hen · Nút Báo bất thường trên lịch hẹn và hồ sơ khách; ngừng thao tác và đưa khách tới bác sĩ vẫn là việc con người. |
+| B2 | Bác sĩ | Khám, chẩn đoán, lập phương án khắc phục bằng văn bản. | CÓ | /khieu-nai?tab=bien-chung · Bác sĩ ghi chẩn đoán và phương án bằng văn bản trên ca. |
+| B3 | Bác sĩ/CSKH | Cam kết mức khắc phục với KH; áp chính sách bảo hành biến chứng. | CÓ | /khieu-nai?tab=bien-chung · Báo dấu hiệu bất thường, bác sĩ khám và lập phương án, cam kết, báo lãnh đạo tự động 100% ca, nguyên nhân gốc và phòng ngừa. |
+| B4 | CSKH | Báo cáo lãnh đạo; vượt xử lý → xin ý kiến lãnh đạo. | CÓ | /khieu-nai?tab=bien-chung · Báo dấu hiệu bất thường, bác sĩ khám và lập phương án, cam kết, báo lãnh đạo tự động 100% ca, nguyên nhân gốc và phòng ngừa. |
+| B5 | Bác sĩ/BLĐ | Lưu hồ sơ đầy đủ; rà nguyên nhân gốc → hành động phòng ngừa. | CÓ | /khieu-nai?tab=bien-chung · Báo dấu hiệu bất thường, bác sĩ khám và lập phương án, cam kết, báo lãnh đạo tự động 100% ca, nguyên nhân gốc và phòng ngừa. |
 
 ### QT-13 QUY TRÌNH QUẢN LÝ & CHUYỂN GIAO THÔNG TIN KHÁCH HÀNG
 

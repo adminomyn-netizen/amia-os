@@ -84,19 +84,19 @@ export const PHU_BM: Record<string, Phu> = {
     "ghi": "Chưa có khảo sát hài lòng."
   },
   "BM17": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có phiếu tiếp nhận khiếu nại."
+    "tt": "co",
+    "link": "/khieu-nai",
+    "ghi": "Phiếu tiếp nhận khiếu nại: khách, kênh, loại, nội dung, người và giờ tiếp nhận, phương án, duyệt, khách xác nhận đóng. Số giờ SLA tiếp nhận chờ chị chốt."
   },
   "BM18": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có biên bản xử lý biến chứng."
+    "tt": "mot_phan",
+    "link": "/khieu-nai?tab=bien-chung",
+    "ghi": "Biên bản biến chứng: dấu hiệu, chẩn đoán, phương án, cam kết, nguyên nhân gốc, báo lãnh đạo; chẩn đoán chỉ người xem hồ sơ điều trị đọc được. Chưa có chữ ký khách trên biên bản."
   },
   "BM19": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có phiếu bảo hành dịch vụ."
+    "tt": "mot_phan",
+    "link": "/khach-hang",
+    "ghi": "Tab Khiếu nại & bảo hành tính mốc từ buổi cuối (3–6 tháng 50%, 6–12 tháng 40%, quá 12 tháng giá mới, triệt lông 1 năm/lần) và ghi từng lần làm lại. Chưa in phiếu điều kiện bảo hành từng dịch vụ."
   },
   "BM20": {
     "tt": "co",
@@ -426,59 +426,59 @@ export const PHU_BUOC: Record<string, Phu> = {
     "ghi": "Lead nguồn Khách cũ giới thiệu."
   },
   "QT-11.B1": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có phiếu khiếu nại, SLA và đóng khiếu nại."
+    "tt": "co",
+    "link": "/khieu-nai",
+    "ghi": "Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt."
   },
   "QT-11.B2": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có phiếu khiếu nại, SLA và đóng khiếu nại."
+    "tt": "co",
+    "link": "/khieu-nai",
+    "ghi": "Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt."
   },
   "QT-11.B3": {
-    "tt": "ngoai",
-    "link": "",
-    "ghi": "Xác minh nguyên nhân là việc của người phụ trách."
+    "tt": "co",
+    "link": "/khieu-nai",
+    "ghi": "Ghi nguyên nhân đã xác minh và phương án ngay trên phiếu."
   },
   "QT-11.B4": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có luồng duyệt phương án và báo lãnh đạo."
+    "tt": "co",
+    "link": "/khieu-nai",
+    "ghi": "Phương án có chi phí chờ Quản lý duyệt (thông báo đẩy); người ghi/đề xuất không tự duyệt."
   },
   "QT-11.B5": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có phiếu khiếu nại, SLA và đóng khiếu nại."
+    "tt": "co",
+    "link": "/khieu-nai",
+    "ghi": "Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt."
   },
   "QT-11.B6": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có phiếu khiếu nại, SLA và đóng khiếu nại."
+    "tt": "co",
+    "link": "/khieu-nai",
+    "ghi": "Tiếp nhận, phân loại, phương án, duyệt (người ghi/đề xuất không tự duyệt), khách xác nhận mới đóng, nguyên nhân gốc. SLA tiếp nhận và hạn mức tự xử lý chờ chốt."
   },
   "QT-12.B1": {
-    "tt": "ngoai",
-    "link": "",
-    "ghi": "Ngừng thao tác, đưa khách tới bác sĩ."
+    "tt": "mot_phan",
+    "link": "/lich-hen",
+    "ghi": "Nút Báo bất thường trên lịch hẹn và hồ sơ khách; ngừng thao tác và đưa khách tới bác sĩ vẫn là việc con người."
   },
   "QT-12.B2": {
-    "tt": "ngoai",
-    "link": "",
-    "ghi": "Bác sĩ khám và đánh giá; biên bản BM18 chưa có trên hệ thống."
+    "tt": "co",
+    "link": "/khieu-nai?tab=bien-chung",
+    "ghi": "Bác sĩ ghi chẩn đoán và phương án bằng văn bản trên ca."
   },
   "QT-12.B3": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có biên bản biến chứng, bảo hành và báo cáo lãnh đạo."
+    "tt": "co",
+    "link": "/khieu-nai?tab=bien-chung",
+    "ghi": "Báo dấu hiệu bất thường, bác sĩ khám và lập phương án, cam kết, báo lãnh đạo tự động 100% ca, nguyên nhân gốc và phòng ngừa."
   },
   "QT-12.B4": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có biên bản biến chứng, bảo hành và báo cáo lãnh đạo."
+    "tt": "co",
+    "link": "/khieu-nai?tab=bien-chung",
+    "ghi": "Báo dấu hiệu bất thường, bác sĩ khám và lập phương án, cam kết, báo lãnh đạo tự động 100% ca, nguyên nhân gốc và phòng ngừa."
   },
   "QT-12.B5": {
-    "tt": "thieu",
-    "link": "",
-    "ghi": "Chưa có biên bản biến chứng, bảo hành và báo cáo lãnh đạo."
+    "tt": "co",
+    "link": "/khieu-nai?tab=bien-chung",
+    "ghi": "Báo dấu hiệu bất thường, bác sĩ khám và lập phương án, cam kết, báo lãnh đạo tự động 100% ca, nguyên nhân gốc và phòng ngừa."
   },
   "QT-13.B1": {
     "tt": "co",

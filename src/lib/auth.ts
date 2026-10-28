@@ -27,6 +27,15 @@ export async function yeuCauQuyen(q: Quyen) {
   return nd;
 }
 
+/** Như yeuCauQuyen nhưng chỉ cần một trong các quyền. */
+export async function yeuCauMotTrong(qs: Quyen[]) {
+  const nd = await layNguoiDungHienTai();
+  if (!nd) redirect("/dang-nhap");
+  if (nd.phaiDoiMatKhau) redirect("/tai-khoan?doi-mat-khau=1");
+  if (!qs.some((q) => coQuyen(nd, q))) redirect(trangDau(nd, true));
+  return nd;
+}
+
 /** `choDoiMatKhau`: chỉ trang Tài khoản được mở khi còn phải đổi mật khẩu mặc định. */
 export async function layNguoiDungDangNhap(choDoiMatKhau = false) {
   const nd = await layNguoiDungHienTai();

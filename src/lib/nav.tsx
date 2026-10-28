@@ -1,4 +1,4 @@
-import { Home, LayoutDashboard, CalendarDays, ShoppingBag, Receipt, Users, CreditCard, Warehouse, BarChart3, Settings, Briefcase, Landmark, UsersRound, FileText, Megaphone, ListChecks } from "lucide-react";
+import { Home, LayoutDashboard, CalendarDays, ShoppingBag, Receipt, Users, CreditCard, Warehouse, BarChart3, Settings, Briefcase, Landmark, UsersRound, FileText, Megaphone, ListChecks, ShieldAlert } from "lucide-react";
 import type { ComponentType } from "react";
 import { coQuyen, type CoQuyen, type Quyen } from "@/lib/quyen";
 import { MODULE } from "@/lib/module";
@@ -14,6 +14,7 @@ export const MENU: MucMenu[] = [
   { ten: "Khách hàng", duong_dan: "/khach-hang", icon: Users, nhom: "Hằng ngày", quyen: "khach.xem", moTa: "Hồ sơ, ghi chú điều trị, ảnh" },
   { ten: "Thẻ liệu trình", duong_dan: "/the", icon: CreditCard, nhom: "Hằng ngày", quyen: "the.xem", moTa: "Thẻ lần, thẻ tiền, thực hiện buổi" },
   { ten: "Nơi làm việc", duong_dan: "/noi-lam-viec", icon: Briefcase, nhom: "Vận hành", quyen: ["noibo.dung", "lich.xem", "khach.xem", "the.xem", "phieu.xem", "ban.xem"], moTa: "Việc cần làm, chấm công, đề xuất, wiki" },
+  { ten: "Khiếu nại", duong_dan: "/khieu-nai", icon: ShieldAlert, nhom: "Hằng ngày", quyen: ["kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly"], moTa: "Khiếu nại, biến chứng, bảo hành (QT-11, QT-12)" },
   { ten: "Quy trình", duong_dan: "/quy-trinh", icon: ListChecks, nhom: "Vận hành", quyen: ["khach.xem", "qt.sua"], moTa: "14 quy trình kinh doanh, checklist, biểu mẫu, kịch bản, KPI, rủi ro, kế hoạch triển khai" },
   { ten: "Kho & Mua sắm", duong_dan: "/kho-mua-sam", icon: Warehouse, nhom: "Vận hành", quyen: ["kho.xem", "phieu.xem"], moTa: "Tồn kho, vật tư cấp theo ca, mua hàng, kiểm kê" },
   { ten: "Tài chính - Kế toán", ngan: "Tài chính", duong_dan: "/tai-chinh", icon: Landmark, nhom: "Vận hành", quyen: ["quy.xem", "baocao.tien", "no.thu"], moTa: "Sổ quỹ, công nợ, hoá đơn, quyết toán" },
@@ -55,7 +56,7 @@ export function mucDangChon(pathname: string, duongDan: string) {
 }
 
 /** Thứ tự các mục lớn trên thanh menu ngang (máy tính): mục dùng nhiều nhất đứng trước, màn hình hẹp thì mục cuối gom vào nút "Thêm". */
-const THU_TU_NGANG = ["/trang-chu", "/lich-hen", "/ban-hang", "/khach-hang", "/the", "/noi-lam-viec", "/quy-trinh", "/kho-mua-sam", "/tai-chinh", "/nhan-su", "/marketing", "/bao-cao", "/tong-quan", "/hoa-don", "/van-ban", "/cai-dat"];
+const THU_TU_NGANG = ["/trang-chu", "/lich-hen", "/ban-hang", "/khach-hang", "/khieu-nai", "/the", "/noi-lam-viec", "/quy-trinh", "/kho-mua-sam", "/tai-chinh", "/nhan-su", "/marketing", "/bao-cao", "/tong-quan", "/hoa-don", "/van-ban", "/cai-dat"];
 export const sapXepNgang = <T extends { duong_dan: string }>(ds: T[]) => [...ds].sort((a, b) => THU_TU_NGANG.indexOf(a.duong_dan) - THU_TU_NGANG.indexOf(b.duong_dan));
 
 export const coMotQuyen = (nd: CoQuyen, qs?: Quyen[] | null) => !qs || qs.length === 0 || qs.some((q) => coQuyen(nd, q));

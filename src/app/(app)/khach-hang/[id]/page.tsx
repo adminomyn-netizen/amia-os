@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
+import { homNayHCM, ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
 import { NHAN_NGUON, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -15,18 +15,22 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
 import { LuoiAnh } from "@/components/khach/LuoiAnh";
+import { thamSoBaoHanh, thangTron, tinhBaoHanh, LOAI_KN, TT_BC, TT_KN } from "@/lib/khieu-nai";
+import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
+import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú điều trị" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "anh", ten: "Ảnh khách hàng" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú điều trị" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauQuyen("khach.xem");
   const { id } = await params;
   const { tab: t } = await searchParams;
   const xemSucKhoe = coQuyen(nd, "hoso.xem");
-  const tabHopLe = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd, "ban.xem")));
+  const kn4 = (["kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly"] as const).some((q) => coQuyen(nd, q));
+  const tabHopLe = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd, "ban.xem")) && (x.ma !== "khieu-nai" || kn4));
   const tab = tabHopLe.some((x) => x.ma === t) ? t! : "thong-tin";
   const db = sb();
   const { data: k } = await db.from("v_khach_hang").select("*").eq("id", id).maybeSingle();
@@ -133,6 +137,56 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
           ]} /></section>
         <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Lịch hẹn gần đây</h3>
           <Bang duLieu={lich ?? []} khoa={(r) => r.id} trong="Chưa có lịch hẹn." cot={[{ nhan: "Giờ hẹn", hienThi: (r) => ngayGioVN(r.bat_dau) }, { nhan: "Trạng thái", hienThi: (r) => r.trang_thai }]} /></section>
+      </div>
+    );
+  } else if (tab === "khieu-nai") {
+    const xemKn = coQuyen(nd, "kn.ghi") || coQuyen(nd, "kn.duyet");
+    const [{ data: kns }, { data: bcs }, { data: bhs }, { data: buoiDa }, { data: dvAll }, { data: chBh }] = await Promise.all([
+      xemKn ? db.from("khieu_nai").select("id, ma, loai, noi_dung, trang_thai, tiep_nhan_luc").eq("khach_id", id).order("tiep_nhan_luc", { ascending: false }).limit(30) : Promise.resolve({ data: [] }),
+      db.from("bien_chung").select("id, ma, dau_hieu, trang_thai, bao_luc").eq("khach_id", id).order("bao_luc", { ascending: false }).limit(30),
+      xemKn ? db.from("bao_hanh_lan").select("id, dich_vu_id, ngay_lam_lai, moc, ty_le_giam").eq("khach_id", id).order("ngay_lam_lai", { ascending: false }).limit(30) : Promise.resolve({ data: [] }),
+      db.from("buoi_thuc_hien").select("dich_vu_id, ngay_lam").eq("khach_id", id).eq("trang_thai", "da_lam").order("ngay_lam", { ascending: false }).limit(500),
+      db.from("dich_vu").select("id, ma, ten, dich_vu_nhom(kieu_bao_hanh)"),
+      db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "bh_%"),
+    ]);
+    const dvMap = new Map((dvAll ?? []).map((d) => [d.id, d as unknown as { id: string; ma: string; ten: string; dich_vu_nhom: { kieu_bao_hanh: string } | null }]));
+    const cuoi = new Map<string, string>();
+    for (const b of buoiDa ?? []) if (!cuoi.has(b.dich_vu_id)) cuoi.set(b.dich_vu_id, b.ngay_lam);
+    const ts = thamSoBaoHanh(chBh ?? []), homNay = homNayHCM();
+    const dongBh = [...cuoi.entries()].map(([dvId, ngay]) => ({ dvId, ngay, kq: tinhBaoHanh(ngay, homNay, dvMap.get(dvId)?.dich_vu_nhom?.kieu_bao_hanh ?? "chuan", ts), thang: thangTron(ngay, homNay) })).sort((a, b) => (a.ngay < b.ngay ? 1 : -1));
+    const dvLc = (dvAll ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` }));
+    const MOC: Record<string, string> = { duoi_moc_1: "Dưới mốc đầu", moc_1: "Mốc 3–6 tháng", moc_2: "Mốc 6–12 tháng", tren_moc_3: "Trên 12 tháng", nam_mot_lan: "Triệt lông 1 năm/lần" };
+    noiDung = (
+      <div className="space-y-8">
+        <div className="flex flex-wrap gap-2.5">
+          {coQuyen(nd, "kn.ghi") && <NutHop nhan="Ghi khiếu nại" tieuDe={`Ghi nhận khiếu nại: ${k.ho_ten}`} action={ghiKhieuNai} an={{ khach_id: id }} giaTri={{ kenh: "truc_tiep", loai: "dich_vu" }} rong truong={truongKhieuNai(dvLc, false)} nhanLuu="Ghi nhận" />}
+          {(coQuyen(nd, "bc.bao") || coQuyen(nd, "kn.ghi")) && <NutHop kieu="phu" nhan="Báo dấu hiệu bất thường" tieuDe={`Báo bất thường: ${k.ho_ten}`} moTa="Ngừng thao tác gây rủi ro, đưa khách đến bác sĩ rồi mới ghi. Bác sĩ và lãnh đạo nhận thông báo ngay." action={baoBienChung} an={{ khach_id: id }} rong truong={truongBaoBatThuong(dvLc, false)} nhanLuu="Báo ngay" />}
+        </div>
+        <section><h3 className="mb-1 text-[15px] font-semibold text-muc">Bảo hành theo dịch vụ</h3>
+          <p className="mb-3 text-[13px] text-muc-3">Tính từ buổi cuối của từng dịch vụ (Khung nghiệp vụ 4.4.2). Chỉ bấm “Ghi làm lại” khi khách thật sự được làm lại theo bảo hành.</p>
+          <Bang duLieu={dongBh} khoa={(r) => r.dvId} trong="Khách chưa có buổi nào đã làm nên chưa có mốc bảo hành." cot={[
+            { nhan: "Dịch vụ", chinh: true, hienThi: (r) => dvMap.get(r.dvId)?.ten ?? "" },
+            { nhan: "Buổi cuối", hienThi: (r) => <div className="text-[13px]">{ngayVN(r.ngay)}<div className="text-muc-3">cách {r.thang} tháng</div></div> },
+            { nhan: "Mốc hiện tại", hienThi: (r) => <div className="text-[13px]"><span className="font-medium text-muc">{r.kq.nhan}</span><div className="text-muc-3">{r.kq.chiTiet}</div></div> },
+            ...(coQuyen(nd, "kn.ghi") ? [{ nhan: "", hienThi: (r: (typeof dongBh)[number]) => <NutHop kieu="chu" nhan="Ghi làm lại" tieuDe={`Làm lại theo bảo hành: ${dvMap.get(r.dvId)?.ten ?? ""}`} moTa={`${r.kq.nhan}: ${r.kq.chiTiet} Mốc và % ưu đãi do hệ thống tính, lưu lại như lúc này.`} action={ghiBaoHanh} an={{ khach_id: id, dich_vu_id: r.dvId }} truong={[{ ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong", rong: true }]} nhanLuu="Ghi nhận" /> }] : []),
+          ]} /></section>
+        {xemKn && <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Khiếu nại</h3>
+          <Bang duLieu={kns ?? []} khoa={(r) => r.id} trong="Khách chưa có khiếu nại nào." cot={[
+            { nhan: "Mã", chinh: true, hienThi: (r) => <Link className="font-medium text-nhan-dam hover:underline" href={`/khieu-nai/${r.id}`}>{r.ma}</Link> },
+            { nhan: "Loại", hienThi: (r) => LOAI_KN[r.loai]?.replace(" (chuyển biến chứng)", "") }, { nhan: "Nội dung", hienThi: (r) => <span className="line-clamp-2 text-[13px]">{r.noi_dung}</span> },
+            { nhan: "Ngày", hienThi: (r) => ngayGioVN(r.tiep_nhan_luc) }, { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_KN[r.trang_thai].kieu}>{TT_KN[r.trang_thai].ten}</NhanTrangThai> },
+          ]} /></section>}
+        <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Biến chứng</h3>
+          <Bang duLieu={bcs ?? []} khoa={(r) => r.id} trong="Khách chưa có ca biến chứng nào." cot={[
+            { nhan: "Mã", chinh: true, hienThi: (r) => <Link className="font-medium text-nhan-dam hover:underline" href={`/khieu-nai/bien-chung/${r.id}`}>{r.ma}</Link> },
+            { nhan: "Dấu hiệu", hienThi: (r) => <span className="line-clamp-2 text-[13px]">{r.dau_hieu}</span> }, { nhan: "Báo lúc", hienThi: (r) => ngayGioVN(r.bao_luc) },
+            { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_BC[r.trang_thai].kieu}>{TT_BC[r.trang_thai].ten}</NhanTrangThai> },
+          ]} /></section>
+        {xemKn && (bhs ?? []).length > 0 && <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Đã làm lại theo bảo hành</h3>
+          <Bang duLieu={bhs ?? []} khoa={(r) => r.id} trong="" cot={[
+            { nhan: "Dịch vụ", chinh: true, hienThi: (r) => dvMap.get(r.dich_vu_id)?.ten ?? "" }, { nhan: "Ngày làm lại", hienThi: (r) => ngayVN(r.ngay_lam_lai) },
+            { nhan: "Mốc", hienThi: (r) => `${MOC[r.moc]}${r.ty_le_giam != null ? ` · ưu đãi ${Number(r.ty_le_giam)}%` : ""}` },
+          ]} /></section>}
       </div>
     );
   } else {

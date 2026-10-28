@@ -23,6 +23,7 @@ const TRUY_CAP = [
 /** Nhóm cảnh báo để gom thành các nhãn nhỏ trên dải "việc cần xử lý gấp". */
 const NHOM: { nhan: string; ma: CanhBao["ma"][] }[] = [
   { nhan: "khoản chờ duyệt", ma: ["vb", "klduyet", "tdyc", "tduv", "xuatkhan", "chuyen", "hdv", "ccnguoi"] },
+  { nhan: "vụ khiếu nại, biến chứng", ma: ["bchung", "knai"] },
   { nhan: "mục kho cần xem", ma: ["kho", "han", "tonam"] },
   { nhan: "thẻ sắp hết buổi", ma: ["the"] },
   { nhan: "khoản công nợ", ma: ["no"] },

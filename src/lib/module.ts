@@ -27,6 +27,7 @@ export const MODULE: Module[] = [
       { nhan: "Kiến thức nội bộ", the: [
         { ten: "Wiki công ty", moTa: "Quy định, quy trình và tài liệu đã ban hành.", duongDan: "/noi-lam-viec/wiki", trangThai: "san_sang" },
         { ten: "Quy trình & khung vận hành", moTa: "14 quy trình kinh doanh, checklist thao tác, kịch bản mẫu, biểu mẫu, KPI và kế hoạch triển khai.", duongDan: "/quy-trinh", trangThai: "san_sang" },
+        { ten: "Khiếu nại, biến chứng & bảo hành", moTa: "Ghi nhận khiếu nại, xử lý theo QT-11/12, báo biến chứng cho bác sĩ, tra mốc bảo hành.", duongDan: "/khieu-nai", trangThai: "san_sang", quyen: ["kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly"] },
       ] },
       { nhan: "Đề xuất & phê duyệt", the: [
         { ten: "Trung tâm phê duyệt", moTa: "Một nơi duyệt đề xuất nội bộ và đơn mua hàng, rồi thực hiện ngay.", duongDan: "/noi-lam-viec/phe-duyet", trangThai: "san_sang" },

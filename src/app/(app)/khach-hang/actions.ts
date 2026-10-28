@@ -9,7 +9,7 @@ import { randomUUID } from "node:crypto";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
-import { chuanSdt, coSdtHopLe, homNayHCM } from "@/lib/dinh-dang";
+import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
 import { docKhachTuExcel } from "@/lib/nhap-khach";
 
 type KQ = { ok?: true; loi?: string; id?: string };
@@ -114,6 +114,25 @@ export async function xoaKhach(fd: FormData): Promise<KQ> {
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_khach", doi_tuong: "khach_hang", doi_tuong_id: id, chi_tiet: { ma: k.ma, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai } });
   revalidatePath("/khach-hang", "layout");
   redirect("/khach-hang");
+}
+
+/** Nút "Điểm" ở hồ sơ (SalonHero): cộng/trừ điểm thưởng bằng tay. Sổ điểm chỉ thêm dòng (không sửa/xoá): sai thì thêm dòng ngược lại. Cần quyền nhập khách (quản lý). */
+export async function suaDiemKhach(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("khach.nhap");
+  if (!nd) return { loi: "Chỉ quản lý (quyền nhập khách) mới chỉnh điểm thưởng." };
+  const id = chuoi(fd, "khach_id");
+  const so = soTuChu(fd.get("so_diem"));
+  const lyDo = chuoi(fd, "ly_do");
+  if (!so || Math.abs(so) > 1_000_000) return { loi: "Nhập số điểm cộng (vd 50) hoặc trừ (vd -50), khác 0." };
+  if (!lyDo) return { loi: "Nhập lý do chỉnh điểm." };
+  const db = sb();
+  const { data: k } = await db.from("khach_hang").select("id, diem_so_du, chi_nhanh_id").eq("id", id).maybeSingle();
+  if (!k) return { loi: "Không tìm thấy khách." };
+  if (k.diem_so_du + so < 0) return { loi: `Khách chỉ còn ${k.diem_so_du} điểm, không trừ được ${-so}.` };
+  const { error } = await db.from("khach_diem_so").insert({ khach_id: id, loai: "sua_tay", so_diem: so, ly_do: lyDo, chi_nhanh_id: nd.chiNhanhId ?? k.chi_nhanh_id, nguoi_id: nd.nhanVienId, nguoi_tao_ten: nd.hoTen });
+  if (error) return { loi: thongBaoLoi(error) };
+  revalidatePath(`/khach-hang/${id}`);
+  return { ok: true };
 }
 
 export async function luuGhiChu(fd: FormData): Promise<KQ> {

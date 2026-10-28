@@ -19,7 +19,7 @@ import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
 import { ganNhomChoKhach } from "../nhom/actions";
 import { docTaiKham, docTheSapHet } from "@/lib/cham-soc-khach";
-import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, xoaKhach, xoaNguoiThan } from "../actions";
+import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
@@ -321,6 +321,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             <Link href={`/in-ma-khach/${id}`} target="_blank" className={NUT_LIEN_KET}>In mã</Link>
             <Link href={`/in-ma-khach/${id}?kieu=phieu`} target="_blank" className={NUT_LIEN_KET}>In phiếu</Link>
             {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
+            {coQuyen(nd, "khach.nhap") && <NutHop kieu="phu" nhan="Điểm" tieuDe={`Chỉnh điểm thưởng: ${k.ho_ten}`} moTa={`Số dư hiện tại ${soVN(kx?.diem_so_du ?? 0)} điểm. Sổ điểm chỉ thêm dòng: nhập số dương để cộng, số âm để trừ.`} truong={[{ ten: "so_diem", nhan: "Số điểm (+ cộng, − trừ)", loai: "chu", batBuoc: true, goiY: "vd 50 hoặc -50" }, { ten: "ly_do", nhan: "Lý do", loai: "nhieu_dong", batBuoc: true }]} an={{ khach_id: id }} nhanLuu="Ghi điểm" action={suaDiemKhach} />}
             {coQuyen(nd, "khach.nhap") && <NutHop kieu="phu" nguy nhan="Xoá" tieuDe={`Xoá khách ${k.ho_ten}`} xacNhan="Chỉ xoá được khách nhập nhầm (chưa có hoá đơn, lịch, thẻ, ảnh, ghi chú điều trị). Xoá rồi không khôi phục được. Tiếp tục?" an={{ id }} nhanLuu="Xoá khách" action={xoaKhach} />}
           </div>
         </div>

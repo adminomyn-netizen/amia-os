@@ -71,12 +71,12 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
         </div>
       )}
       {moCD && (
-        <div role="dialog" aria-label="Cài đặt hệ thống" className="the-noi the-noi-thap vao fixed inset-x-3 top-[76px] z-50 mx-auto max-h-[calc(100vh-96px)] max-w-[1080px] overflow-y-auto p-5 sm:inset-x-6 lg:left-[268px] lg:right-6 lg:p-6">
+        <div role="dialog" aria-label="Cài đặt hệ thống" style={{ position: "fixed" }} className="the-noi the-noi-thap vao fixed left-3 right-3 top-[80px] z-50 max-h-[calc(100vh-100px)] overflow-y-auto overflow-x-hidden p-5 sm:left-6 sm:right-6 lg:left-[268px] lg:right-6 lg:p-6">
           <div className="mb-4 flex items-center justify-between gap-3 border-b border-vien pb-3">
             <h2 className="flex items-center gap-2.5 text-[16px] font-semibold text-muc"><Settings strokeWidth={1.6} className="h-[19px] w-[19px] text-nhan" aria-hidden />Cài đặt hệ thống</h2>
             <button type="button" onClick={() => setMoCD(false)} className="rounded-nho px-3 py-1.5 text-[13px] text-muc-2 hover:bg-giay-tram">Đóng</button>
           </div>
-          <div className="grid gap-x-6 gap-y-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-x-6 gap-y-6 [grid-template-columns:repeat(auto-fit,minmax(min(100%,230px),1fr))]">
             {caiDat.map((g) => (
               <section key={g.nhan} className="min-w-0">
                 <h3 className="nhan-muc mb-2">{g.nhan}</h3>
@@ -86,7 +86,7 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
                       {t.duongDan ? (
                         <Link href={t.duongDan} onClick={() => setMoCD(false)} title={t.moTa} className="block rounded-nho px-2.5 py-2 text-[14px] text-muc hover:bg-giay-tram">{t.ten}</Link>
                       ) : (
-                        <span className="flex items-center justify-between gap-2 rounded-nho px-2.5 py-2 text-[14px] text-muc-3">{t.ten}<span className="text-[11px]">Sắp có</span></span>
+                        <span className="flex flex-wrap items-center justify-between gap-x-2 rounded-nho px-2.5 py-2 text-[14px] text-muc-3"><span className="min-w-0">{t.ten}</span><span className="text-[11px]">Sắp có</span></span>
                       )}
                     </li>
                   ))}

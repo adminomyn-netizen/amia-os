@@ -22,14 +22,16 @@ export default async function KhungUngDung({ children }: { children: React.React
   let chiNhanh: string | null = null;
   if (nd.chiNhanhId) chiNhanh = (await sb().from("chi_nhanh").select("ten").eq("id", nd.chiNhanhId).maybeSingle()).data?.ten ?? null;
   return (
-    <div className="khung-di-dong flex min-h-screen w-full">
-      <ThanhBen muc={mucNgang} />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <DauTrangMay hoTen={nd.hoTen} vaiTro={NHAN_VAI_TRO[nd.vaiTro]} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} />
-        <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} />
-        <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-12 lg:pb-16 lg:pt-8">{children}</main>
-        <CuonVeDau />
-        {muc.length > 0 && <ThanhTabDuoi muc={muc} />}
+    <div className="khung-di-dong flex min-h-screen w-full flex-col">
+      <DauTrangMay hoTen={nd.hoTen} vaiTro={NHAN_VAI_TRO[nd.vaiTro]} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} />
+      <div className="flex min-h-0 min-w-0 flex-1">
+        <ThanhBen muc={mucNgang} />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+          <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} />
+          <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-10 lg:pb-16 lg:pt-6">{children}</main>
+          <CuonVeDau />
+          {muc.length > 0 && <ThanhTabDuoi muc={muc} />}
+        </div>
       </div>
     </div>
   );

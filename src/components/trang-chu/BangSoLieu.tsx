@@ -1,14 +1,18 @@
 import Link from "next/link";
 import { tienVN } from "@/lib/dinh-dang";
+import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
 
 export type SoLieu = {
-  ngay: { ngay: string; doanhThu: number }[];            // 14 ngày gần nhất, cũ → mới
+  ngay: { ngay: string; doanhThu: number; soDon: number; thucThu: number }[];            // 14 ngày gần nhất, cũ → mới
   homNay: string;
   thang: { doanhThu: number; thangTruoc: number; donHang: number; buoi: number; khachMoi: number; tongKhach: number; congNo: number; theSapHet: number };
   coCauThu: { tienMat: number; chuyenKhoan: number; quetThe: number };
   nguon: { ten: string; so: number }[];
   lich: { nhan: string; so: number }[];
   chamCong: { da: number; tong: number };
+  topDichVu: { ten: string; so: number; tien: number }[];
+  topSanPham: { ten: string; so: number; tien: number }[];
+  topKhach: { ten: string; chi: number }[];
 };
 
 const MAU = ["xanh", "luc", "tim", "cam", "hong"] as const;
@@ -70,11 +74,13 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
       <h2 className="text-[15px] font-semibold text-muc">Số liệu kinh doanh</h2>
       <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-6">
         {o.map((x) => (
-          <div key={x.nhan} className="min-w-0 rounded-nho border border-vien bg-giay px-4 py-3.5" style={{ borderTop: `4px solid var(--sac-${x.mau}-mau)` }}>
+          <NoiChiTiet key={x.nhan} cls="min-w-0" vi="duoi" tieuDe={x.nhan} dong={[{ nhan: "Giá trị", gt: x.so }, { nhan: "Ghi chú", gt: x.phu }]}>
+          <div className="h-full min-w-0 rounded-nho border border-vien bg-giay px-4 py-3.5" style={{ borderTop: `4px solid var(--sac-${x.mau}-mau)` }}>
             <dt className="text-[12.5px] text-muc-3">{x.nhan}</dt>
             <dd className={`mt-1.5 font-semibold leading-tight tabular-nums text-muc ${x.so.length > 11 ? "text-[17px]" : "text-[22px]"}`}>{x.so}</dd>
             <dd className="mt-1 text-[12px] text-muc-3">{x.phu}</dd>
           </div>
+          </NoiChiTiet>
         ))}
       </dl>
 
@@ -83,21 +89,21 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
           <Khung cls="lg:col-span-2" tieuDe="Doanh thu 14 ngày gần nhất" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Xem báo cáo</Link>}>
             <div className="flex h-48 items-end gap-1.5" role="img" aria-label="Biểu đồ cột doanh thu 14 ngày">
               {d.ngay.map((n, i) => (
-                <div key={n.ngay} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" title={`${n.ngay.slice(8)}/${n.ngay.slice(5, 7)}: ${tienVN(n.doanhThu)}`}>
+                <NoiChiTiet key={n.ngay} cls="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1" tieuDe={`Ngày ${n.ngay.slice(8)}/${n.ngay.slice(5, 7)}`} dong={[{ nhan: "Doanh thu", gt: tienVN(n.doanhThu) }, { nhan: "Thực thu", gt: tienVN(n.thucThu) }, { nhan: "Số đơn", gt: String(n.soDon) }]}>
                   {n.doanhThu > 0 && <span className="hidden text-[10px] tabular-nums text-muc-3 xl:block">{n.doanhThu >= 1e6 ? `${(n.doanhThu / 1e6).toFixed(1)}tr` : `${Math.round(n.doanhThu / 1e3)}k`}</span>}
                   <div className="w-full rounded-t-[4px]" style={{ height: `${Math.max(3, (n.doanhThu / max) * 150)}px`, background: n.ngay === d.homNay ? "var(--sac-cam-mau)" : `linear-gradient(180deg, ${mau(i % 2 ? 0 : 1)}, var(--sac-luc-2))` }} />
                   <span className="text-[10.5px] text-muc-3">{n.ngay.slice(8)}</span>
-                </div>
+                </NoiChiTiet>
               ))}
             </div>
-            <p className="mt-2 text-[12px] text-muc-3">Cột vàng là hôm nay. Rê chuột vào cột để xem số tiền.</p>
+            <p className="mt-2 text-[12px] text-muc-3">Cột vàng là hôm nay. Rê chuột vào cột để xem chi tiết từng ngày.</p>
           </Khung>
         )}
         {xemTien && (
           <Khung tieuDe="Cơ cấu thu tháng này">
             <div className="flex flex-wrap items-center justify-center gap-4">
               <Vong phan={cc} giua={tongThu >= 1e6 ? `${(tongThu / 1e6).toFixed(1)}tr` : String(tongThu)} nhanGiua="tổng thu" />
-              <ul className="min-w-0 space-y-2 text-[13px]">{cc.map((c) => <li key={c.nhan} className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 shrink-0 rounded-sm" style={{ background: c.mau }} /><span className="text-muc-2">{c.nhan}</span><span className="ml-auto tabular-nums text-muc">{phanTram(c.gt, tongThu)}%</span></li>)}</ul>
+              <ul className="min-w-0 space-y-2 text-[13px]">{cc.map((c) => <li key={c.nhan}><NoiChiTiet tieuDe={c.nhan} dong={[{ nhan: "Số tiền", gt: tienVN(c.gt) }, { nhan: "Tỉ trọng", gt: `${phanTram(c.gt, tongThu)}%` }]}><div className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 shrink-0 rounded-sm" style={{ background: c.mau }} /><span className="text-muc-2">{c.nhan}</span><span className="ml-auto pl-3 tabular-nums text-muc">{phanTram(c.gt, tongThu)}%</span></div></NoiChiTiet></li>)}</ul>
             </div>
           </Khung>
         )}
@@ -123,6 +129,54 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
             <ul className="space-y-2 text-[13px]"><li className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 rounded-sm" style={{ background: "var(--sac-luc-mau)" }} />Đã chấm {d.chamCong.da}</li><li className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 rounded-sm" style={{ background: "var(--sac-hong-mau)" }} />Chưa chấm {Math.max(0, d.chamCong.tong - d.chamCong.da)}</li><li className="text-muc-3">Tổng {d.chamCong.tong} người đang làm</li></ul>
           </div>
         </Khung>
+      </div>
+      <BangXepHang d={d} xemTien={xemTien} />
+    </div>
+  );
+}
+
+const HUY_HIEU = ["var(--sac-cam-mau)", "var(--sac-xanh-mau)", "var(--sac-luc-mau)"];
+
+/** Một bảng xếp hạng: số thứ tự có màu (top 3 là huy hiệu), thanh tỉ lệ so với người đứng đầu, rê chuột ra chi tiết. */
+function XepHang({ tieuDe, href, nhanHref, dong, trong }: { tieuDe: string; href: string; nhanHref: string; dong: { ten: string; gt: number; chu: string; chiTiet: { nhan: string; gt: string }[] }[]; trong: string }) {
+  const max = Math.max(1, ...dong.map((x) => x.gt));
+  return (
+    <Khung tieuDe={tieuDe} phai={<Link href={href} className="font-medium text-nhan-dam hover:underline">{nhanHref}</Link>}>
+      {dong.length === 0 ? <p className="text-[14px] text-muc-3">{trong}</p> : (
+        <ol className="space-y-2.5">
+          {dong.map((x, i) => (
+            <li key={x.ten + i}>
+              <NoiChiTiet tieuDe={`#${i + 1} ${x.ten}`} dong={x.chiTiet}>
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-nho text-[12.5px] font-semibold text-white" style={{ background: i < 3 ? HUY_HIEU[i] : "var(--muc-3)" }}>{i + 1}</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex justify-between gap-3 text-[13.5px]"><span className="truncate text-muc">{x.ten}</span><span className="shrink-0 tabular-nums text-muc-2">{x.chu}</span></div>
+                    <div className="mt-1 h-1.5 rounded-sm bg-giay-tram"><div className="h-full rounded-sm" style={{ width: `${(x.gt / max) * 100}%`, background: i < 3 ? HUY_HIEU[i] : "var(--muc-3)" }} /></div>
+                  </div>
+                </div>
+              </NoiChiTiet>
+            </li>
+          ))}
+        </ol>
+      )}
+    </Khung>
+  );
+}
+
+/** Xếp hạng trong tháng: dịch vụ, sản phẩm, khách chi nhiều. Số tiền chỉ hiện cho người xem được số tiền. */
+function BangXepHang({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
+  return (
+    <div className="space-y-5">
+      <h2 className="text-[15px] font-semibold text-muc">Xếp hạng tháng này</h2>
+      <div className="grid items-start gap-5 lg:grid-cols-3">
+        <XepHang tieuDe="Top dịch vụ" href="/bao-cao" nhanHref="Báo cáo" trong="Chưa có dịch vụ nào được bán tháng này."
+          dong={d.topDichVu.map((x) => ({ ten: x.ten, gt: xemTien ? x.tien : x.so, chu: xemTien ? tienVN(x.tien) : `${x.so} lượt`, chiTiet: [{ nhan: "Số lượt", gt: String(x.so) }, ...(xemTien ? [{ nhan: "Doanh thu", gt: tienVN(x.tien) }] : [])] }))} />
+        <XepHang tieuDe="Top sản phẩm" href="/kho" nhanHref="Kho" trong="Chưa bán sản phẩm nào tháng này."
+          dong={d.topSanPham.map((x) => ({ ten: x.ten, gt: xemTien ? x.tien : x.so, chu: xemTien ? tienVN(x.tien) : `${x.so} cái`, chiTiet: [{ nhan: "Số lượng", gt: String(x.so) }, ...(xemTien ? [{ nhan: "Doanh thu", gt: tienVN(x.tien) }] : [])] }))} />
+        {xemTien && (
+          <XepHang tieuDe="Top khách chi nhiều (12 tháng)" href="/khach-hang" nhanHref="Khách hàng" trong="Chưa có khách nào phát sinh chi tiêu."
+            dong={d.topKhach.map((x) => ({ ten: x.ten, gt: x.chi, chu: tienVN(x.chi), chiTiet: [{ nhan: "Chi 12 tháng", gt: tienVN(x.chi) }] }))} />
+        )}
       </div>
     </div>
   );

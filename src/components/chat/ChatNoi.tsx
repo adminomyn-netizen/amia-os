@@ -52,16 +52,22 @@ export function ChatNoi({ choPhepSua, hoTen }: { choPhepSua: boolean; hoTen: str
   }, []);
 
   // Đang mở: hỏi lại mỗi 2,5 giây khi chờ Tula, 8 giây khi rảnh. Đang đóng: chỉ hỏi 30 giây một lần để hiện chấm "có trả lời mới".
+  // Tiết kiệm máy chủ (không đổi gì người dùng nhìn thấy): tab đang ẩn thì KHÔNG hỏi (quay lại tab là hỏi ngay); rảnh lâu (không chờ Tula) thì thưa dần: mở 8→15 giây, đóng 30→60 giây.
   useEffect(() => {
-    let dung = false, t: ReturnType<typeof setTimeout>;
+    let dung = false, t: ReturnType<typeof setTimeout>, ranh = 0;
+    const hen = (ms: number) => { clearTimeout(t); t = setTimeout(vong, ms); };
     const vong = async () => {
+      if (document.visibilityState !== "visible") { hen(mo ? 8000 : 30000); return; }
       const kq = await tai();
       if (dung) return;
       if (kq && !mo) setSoChuaDoc(Math.max(0, kq.tin.filter((x) => x.vai === "agent").length - daDoc.current));
-      t = setTimeout(vong, mo ? (kq?.dangCho ? 2500 : 8000) : 30000);
+      ranh = kq?.dangCho ? 0 : ranh + 1;
+      hen(mo ? (kq?.dangCho ? 2500 : ranh > 6 ? 15000 : 8000) : (ranh > 4 ? 60000 : 30000));
     };
-    t = setTimeout(vong, mo ? 0 : 4000);
-    return () => { dung = true; clearTimeout(t); };
+    const hienLai = () => { if (document.visibilityState === "visible" && !dung) { ranh = 0; hen(0); } };
+    document.addEventListener("visibilitychange", hienLai);
+    hen(mo ? 0 : 4000);
+    return () => { dung = true; clearTimeout(t); document.removeEventListener("visibilitychange", hienLai); };
   }, [mo, tai]);
 
   useEffect(() => { if (mo && chat) daDoc.current = chat.tin.filter((x) => x.vai === "agent").length; }, [mo, chat]);

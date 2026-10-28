@@ -52,7 +52,8 @@ describe("khung giờ trống", () => {
   it("quá khứ, hôm nay trong khung đặt-trước và quá 60 ngày đều không có giờ", async () => {
     expect(await gioTrong(CN, await ngayVN(-1), 60)).toEqual([]);
     expect(await gioTrong(CN, await ngayVN(61), 60)).toEqual([]);
-    expect((await gioTrong(CN, await ngayVN(60), 60)).length).toBeGreaterThan(0);
+    // Ngày thứ 60 chỉ mở tới đúng giờ-trong-ngày hiện tại (ngưỡng = now()+60 ngày) nên phụ thuộc giờ chạy test; dùng ngày 59 để ổn định.
+    expect((await gioTrong(CN, await ngayVN(59), 60)).length).toBeGreaterThan(0);
   });
   it("hết chỗ khi số lịch chạy cùng lúc bằng số chỗ; huỷ thì trống lại", async () => {
     const d = await ngayVN(7);

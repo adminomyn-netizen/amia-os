@@ -2351,6 +2351,8 @@ export type Database = {
           sh_ma: string | null
           sh_trang_thai: string | null
           tao_luc: string
+          thu_ngan_sh_id: number | null
+          thu_ngan_ten: string | null
           tien_tru_the: number
           tip: number
           tong_hang: number
@@ -2389,6 +2391,8 @@ export type Database = {
           sh_ma?: string | null
           sh_trang_thai?: string | null
           tao_luc?: string
+          thu_ngan_sh_id?: number | null
+          thu_ngan_ten?: string | null
           tien_tru_the?: number
           tip?: number
           tong_hang?: number
@@ -2427,6 +2431,8 @@ export type Database = {
           sh_ma?: string | null
           sh_trang_thai?: string | null
           tao_luc?: string
+          thu_ngan_sh_id?: number | null
+          thu_ngan_ten?: string | null
           tien_tru_the?: number
           tip?: number
           tong_hang?: number
@@ -9067,6 +9073,19 @@ export type Database = {
       }
     }
     Functions: {
+      bc_dat_lich: {
+        Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
+        Returns: {
+          chieu: string
+          chua_den: number
+          hoan_thanh: number
+          huy: number
+          khoa: string
+          khong_den: number
+          nhan: string
+          so_lich: number
+        }[]
+      }
       bc_doanh_thu_ngay: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {
@@ -9098,6 +9117,18 @@ export type Database = {
           sl_huy: number
           sl_xuat_kho: number
           ten: string
+        }[]
+      }
+      bc_dung_dich_vu: {
+        Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
+        Returns: {
+          chieu: string
+          doanh_so: number
+          gia_tri_the: number
+          khoa: string
+          luot_the: number
+          luot_tien: number
+          nhan: string
         }[]
       }
       bc_muc_ban: {
@@ -9151,6 +9182,21 @@ export type Database = {
           so_the_khong_gioi_han: number
           so_the_lan: number
           so_the_tien: number
+        }[]
+      }
+      bc_thu_ngan: {
+        Args: { p_cn?: string; p_den: string; p_nhom?: string; p_tu: string }
+        Returns: {
+          cac_ten: string
+          con_no: number
+          da_thu: number
+          doanh_so: number
+          doanh_thu: number
+          khoa: string
+          ky: string
+          so_don: number
+          thu_ngan: string
+          tru_the_tien: number
         }[]
       }
       cap_phieu: { Args: { p_id: string; p_nguoi: string }; Returns: undefined }

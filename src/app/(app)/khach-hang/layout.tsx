@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { BarChart3, CalendarClock, History, Tags, TicketX } from "lucide-react";
+import { BarChart3, CalendarClock, History, MessagesSquare, Tags, TicketX } from "lucide-react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -41,6 +41,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
         <div className="flex flex-wrap items-center gap-2.5">
           <Link href="/khach-hang/thong-ke" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><BarChart3 aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thống kê khách hàng</Link>
           <Link href="/khach-hang/gan-day" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><History aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách hàng gần đây</Link>
+          <Link href="/khach-hang/tu-van" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><MessagesSquare aria-hidden strokeWidth={1.7} className="h-4 w-4" />Tư vấn</Link>
           <Link href="/khach-hang/nhom" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><Tags aria-hidden strokeWidth={1.7} className="h-4 w-4" />Quản lý nhóm</Link>
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/tai-kham" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CalendarClock aria-hidden strokeWidth={1.7} className="h-4 w-4" />Nhắc tái khám</Link>}
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/the-sap-het" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><TicketX aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thẻ sắp hết</Link>}

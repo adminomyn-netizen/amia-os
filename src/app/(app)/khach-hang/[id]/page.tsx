@@ -19,11 +19,14 @@ import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
 import { ganNhomChoKhach } from "../nhom/actions";
 import { docTaiKham, docTheSapHet } from "@/lib/cham-soc-khach";
+import { DanhSachPhieuTuVan, gomNhuCau } from "@/components/khach/PhieuTuVan";
+import { truongPhieuTuVan } from "@/lib/tu-van";
+import { luuPhieuTuVan } from "../tu-van/actions";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 /** Mỗi trang lịch sử điểm thưởng. */
 const DIEM_MOI_TRANG = 50;
@@ -146,6 +149,23 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     );
   } else if (tab === "lich-su") {
     noiDung = <LichSuGiaoDich khachId={id} t={sp} />;
+  } else if (tab === "tu-van") {
+    const [{ data: pv }, { data: dvTv }] = await Promise.all([
+      db.from("phieu_tu_van").select("*").eq("khach_id", id).order("ngay_tu_van", { ascending: false }).order("tao_luc", { ascending: false }).limit(50),
+      db.from("dich_vu").select("id, ma, ten").order("ma"),
+    ]);
+    const idP = (pv ?? []).map((p) => p.id);
+    const { data: ncTv } = idP.length ? await db.from("phieu_tu_van_nhu_cau").select("phieu_id, noi_dung").in("phieu_id", idP).order("tao_luc") : { data: [] as { phieu_id: string; noi_dung: string }[] };
+    const dvLcTv = (dvTv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` }));
+    const trTv = truongPhieuTuVan(nvLC, dvLcTv, false);
+    noiDung = (
+      <>
+        <h3 className="mb-3 text-[14px] font-medium text-muc">Phiếu tư vấn</h3>
+        {sua0 && <div className="mb-5"><NutHop nhan="Ghi phiếu tư vấn" tieuDe={`Phiếu tư vấn: ${k.ho_ten}`} moTa="Đặt vấn đề → phân tích → chứng minh → kết quả. Phiếu sửa được (có nhật ký), không xoá." rong truong={trTv} an={{ khach_id: id }}
+          giaTri={{ tu_van_vien_id: nd.nhanVienId, ngay_tu_van: homNayHCM(), ket_qua: "cho_chot" }} action={luuPhieuTuVan} /></div>}
+        <DanhSachPhieuTuVan phieu={pv ?? []} nhuCau={gomNhuCau(ncTv ?? [])} tenNv={tenNv} tenDv={new Map((dvTv ?? []).map((d) => [d.id, d.ten]))} truong={trTv} duocSua={sua0} luu={luuPhieuTuVan} />
+      </>
+    );
   } else if (tab === "khieu-nai") {
     const xemKn = coQuyen(nd, "kn.ghi") || coQuyen(nd, "kn.duyet");
     const [{ data: kns }, { data: bcs }, { data: bhs }, { data: buoiDa }, { data: dvAll }, { data: chBh }] = await Promise.all([

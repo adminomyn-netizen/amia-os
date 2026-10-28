@@ -69,6 +69,8 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Kho & tồn kho", the: [
         { ten: "Tồn kho", moTa: "Số tồn hiện tại theo chi nhánh và mặt hàng.", duongDan: "/kho", trangThai: "san_sang", quyen: ["kho.xem"] },
+        { ten: "Quản lý kho hàng bán", moTa: "Sản phẩm bán lẻ: tồn theo nhóm, còn hàng / sắp hết / hết / bị âm, tổng giá trị kho.", duongDan: "/kho/hang-ban", trangThai: "san_sang", quyen: ["kho.xem"] },
+        { ten: "Quản lý kho nội bộ", moTa: "Vật tư tiêu hao dùng trong phòng khám (chỉ xem).", duongDan: "/kho/noi-bo", trangThai: "san_sang", quyen: ["kho.xem"] },
         { ten: "Sổ kho", moTa: "Sổ cái biến động nhập/xuất.", duongDan: "/kho?tab=so", trangThai: "san_sang", quyen: ["kho.xem"] },
         { ten: "Định mức vật tư", moTa: "Vật tư dùng cho từng dịch vụ.", duongDan: "/dinh-muc", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Phiếu cấp vật tư", moTa: "Cấp vật tư trước ca, trả, đối chiếu.", duongDan: "/phieu-cap", trangThai: "san_sang", quyen: ["phieu.xem"] },
@@ -163,6 +165,8 @@ export const MODULE: Module[] = [
         { ten: "Loại thẻ / gói liệu trình", moTa: "Gói buổi, giá trị, dịch vụ trong gói.", duongDan: "/danh-muc?tab=goi-the", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Voucher / thẻ giảm giá", moTa: "Mã giảm giá khách đưa ở quầy: hạn dùng, số lần, chi nhánh, áp dụng cho dịch vụ hay sản phẩm.", duongDan: "/cai-dat/voucher", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Cài đặt chi phí dịch vụ", moTa: "Công thức chi phí: vật tư và số lượng dùng cho từng dịch vụ, chi phí khấu hao mỗi ca.", duongDan: "/dinh-muc", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Quản lý kho hàng bán", moTa: "Tồn kho sản phẩm bán lẻ theo nhóm và tình trạng.", duongDan: "/kho/hang-ban", trangThai: "san_sang", quyen: ["kho.xem"] },
+        { ten: "Quản lý kho nội bộ", moTa: "Vật tư tiêu hao dùng trong phòng khám.", duongDan: "/kho/noi-bo", trangThai: "san_sang", quyen: ["kho.xem"] },
         { ten: "Rà soát danh mục", moTa: "Sản phẩm thiếu mã, trùng tên, thiếu hạn dùng.", duongDan: "/danh-muc?tab=ra-soat", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
       { nhan: "Nhân viên", the: [

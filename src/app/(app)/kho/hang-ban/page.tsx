@@ -1,0 +1,88 @@
+import Link from "next/link";
+import { yeuCauQuyen } from "@/lib/auth";
+import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
+import { sb } from "@/lib/db";
+import { soVN, tienVN } from "@/lib/dinh-dang";
+import { demTinhTrang, khopTinhTrang, laTinhTrang, tongGiaTriKho, TINH_TRANG_KHO } from "@/lib/kho-hang-ban";
+import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { Bang } from "@/components/ui/Table";
+import { ThanhTrang } from "@/components/ui/ThanhTrang";
+import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { Chon } from "@/components/ui/Chon";
+import { NHAN_O, NUT_CHINH, NUT_PHU } from "@/components/ui/dinh-dang";
+
+const MOI_TRANG = 50;
+type Sp = { cn?: string; nhom?: string; tt?: string; trang?: string };
+const LIEN_KET = [{ ten: "Tồn kho", url: "/kho/hang-ban" }, { ten: "Phiếu nhập", url: "/kho?tab=so" }, { ten: "Phiếu xuất", url: "/kho/xu-ly" }, { ten: "Phiếu chuyển kho", url: "/kho/chuyen-kho" }, { ten: "Quản lý nhà cung cấp", url: "/kho-mua-sam/nha-cung-cap" }];
+
+/** Quản lý kho hàng bán, đối chiếu SalonHero #/inventory: thanh liên kết (Tồn kho · Phiếu nhập · Phiếu xuất · Phiếu chuyển kho · Quản lý nhà cung cấp), cây Phân nhóm sản phẩm, lọc chi nhánh, 5 nhóm đếm, TỔNG GIÁ TRỊ KHO, cột Tên sản phẩm / Chi nhánh / Đ.Vị / Số lượng / Giá nhập TB. Kho hàng bán = sản phẩm bán lẻ. */
+export default async function TrangKhoHangBan({ searchParams }: { searchParams: Promise<Sp> }) {
+  const nd = await yeuCauQuyen("kho.xem");
+  const sp = await searchParams;
+  const db = sb();
+  const { data: dsCn } = await dsChiNhanhRutGon();
+  const cn = nd.chiNhanhId ?? (dsCn?.some((c) => c.id === sp.cn) ? sp.cn! : "");
+  const tt = laTinhTrang(sp.tt) ? sp.tt : "tat_ca";
+  const [{ data: spAll }, { data: ton }] = await Promise.all([
+    db.from("san_pham").select("id, ma, ten, nhom, don_vi, ton_toi_thieu, gia_nhap_don_vi").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
+    cn ? db.from("v_ton_kho").select("san_pham_id, ton").eq("chi_nhanh_id", cn) : db.from("v_ton_kho").select("san_pham_id, ton"),
+  ]);
+  const tonMap = new Map<string, number>();
+  for (const t of ton ?? []) tonMap.set(t.san_pham_id!, (tonMap.get(t.san_pham_id!) ?? 0) + Number(t.ton));
+  const nhomDem = new Map<string, number>();
+  for (const s of spAll ?? []) nhomDem.set(s.nhom ?? "", (nhomDem.get(s.nhom ?? "") ?? 0) + 1);
+  const nhom = sp.nhom && nhomDem.has(sp.nhom) ? sp.nhom : "";
+  const theoNhom = (spAll ?? []).filter((s) => !nhom || s.nhom === nhom).map((s) => ({ ...s, ton: tonMap.get(s.id) ?? 0, toiThieu: Number(s.ton_toi_thieu ?? 0), gia: s.gia_nhap_don_vi == null ? null : Number(s.gia_nhap_don_vi) }));
+  const dem = demTinhTrang(theoNhom), tong = tongGiaTriKho(theoNhom);
+  const loc = theoNhom.filter((s) => khopTinhTrang(s.ton, s.toiThieu, tt));
+  const cuoi = Math.max(1, Math.ceil(loc.length / MOI_TRANG));
+  const trang = Math.min(Math.max(1, Math.floor(Number(sp.trang)) || 1), cuoi);
+  const hien = loc.slice((trang - 1) * MOI_TRANG, trang * MOI_TRANG);
+  const url = (o: Partial<Sp>) => `/kho/hang-ban?${new URLSearchParams(Object.entries({ cn: cn || undefined, nhom: nhom || undefined, tt: tt === "tat_ca" ? undefined : tt, ...o }).filter((e): e is [string, string] => !!e[1])).toString()}`;
+  const tenCn = new Map((dsCn ?? []).map((c) => [c.id, c.ten]));
+  return (
+    <div>
+      <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho & Mua sắm</Link>
+      <TieuDeTrang tieuDe="Quản lý kho hàng bán" phu="Sản phẩm bán lẻ. Số tồn là tổng sổ kho; nhập, xuất, chuyển kho làm ở các mục bên dưới.">
+        <Link href="/bao-cao" className={`${NUT_PHU} inline-flex items-center`}>Báo Cáo Kho</Link>
+      </TieuDeTrang>
+      <nav aria-label="Kho hàng bán" className="mb-5 flex gap-1 overflow-x-auto border-b border-vien">
+        {LIEN_KET.map((l, i) => <Link key={l.ten} href={l.url} className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-[14px] ${i === 0 ? "border-nhan font-medium text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}>{l.ten}</Link>)}
+      </nav>
+      <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
+        <aside aria-label="Phân nhóm sản phẩm" className="text-[14px]">
+          <h2 className="mb-2 flex items-center justify-between text-[13px] font-medium text-muc-2">Phân nhóm sản phẩm <Link href="/danh-muc?tab=san-pham" className="font-normal text-nhan-dam hover:underline">Cài đặt</Link></h2>
+          <ul className="flex gap-1 overflow-x-auto lg:flex-col lg:overflow-visible">
+            {[{ ten: "", nhan: "Tất cả sản phẩm", n: (spAll ?? []).length }, ...[...nhomDem].sort((a, b) => a[0].localeCompare(b[0], "vi")).map(([ten, n]) => ({ ten, nhan: ten || "Chưa phân nhóm", n }))].map((g) => (
+              <li key={g.ten || "tat-ca"} className="shrink-0"><Link href={url({ nhom: g.ten || undefined, trang: undefined })} className={`flex items-center justify-between gap-3 rounded-nho px-3 py-2 ${g.ten === nhom ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-2 hover:bg-giay-tram"}`}><span className="whitespace-nowrap">{g.nhan}</span><span className="text-[12px] tabular-nums text-muc-3">{g.n}</span></Link></li>
+            ))}
+          </ul>
+        </aside>
+        <div className="min-w-0">
+          {!nd.chiNhanhId && (
+            <form method="get" action="/kho/hang-ban" className="mb-4 flex flex-wrap items-end gap-3">
+              {nhom && <input type="hidden" name="nhom" value={nhom} />}
+              <div className="min-w-[240px]"><label className={NHAN_O}>Chi nhánh</label><Chon ten="cn" giaTriMacDinh={cn} luaChon={[{ gia_tri: "", nhan: "Tất cả các chi nhánh" }, ...(dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div>
+              <button type="submit" className={NUT_CHINH}>Lọc</button>
+            </form>
+          )}
+          <div role="tablist" aria-label="Tình trạng tồn" className="mb-4 flex gap-1 overflow-x-auto border-b border-vien">
+            {TINH_TRANG_KHO.map((t) => (
+              <Link key={t.ma} href={url({ tt: t.ma === "tat_ca" ? undefined : t.ma, trang: undefined })} role="tab" aria-selected={tt === t.ma} scroll={false}
+                className={`-mb-px whitespace-nowrap border-b-2 px-4 py-2.5 text-[14px] ${tt === t.ma ? "border-nhan font-medium text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}>{t.nhan} ({soVN(dem[t.ma])})</Link>
+            ))}
+          </div>
+          <div className="mb-5"><div className={`text-[26px] font-semibold tabular-nums ${tong < 0 ? "text-loi" : "text-muc"}`}>{tienVN(tong)}</div><div className="nhan-muc mt-1">Tổng giá trị kho (theo giá nhập TB)</div></div>
+          <Bang duLieu={hien} khoa={(r) => r.id} trong="Không có sản phẩm nào."
+            cot={[
+              { nhan: "Tên sản phẩm", chinh: true, hienThi: (r) => <span><span className="text-muc">{r.ten}</span><span className="block text-[12.5px] text-muc-3">{r.ma}</span></span> },
+              { nhan: "Chi nhánh", hienThi: () => (cn ? tenCn.get(cn) ?? "" : "Tất cả các chi nhánh") }, { nhan: "Đ.Vị", hienThi: (r) => r.don_vi },
+              { nhan: "Số lượng", phai: true, hienThi: (r) => <span className="inline-flex items-center justify-end gap-2">{khopTinhTrang(r.ton, r.toiThieu, "sap_het") && <NhanTrangThai kieu="cho">Sắp hết</NhanTrangThai>}<span className={r.ton < 0 ? "font-medium text-loi" : ""}>{soVN(r.ton)}</span></span> },
+              { nhan: "Giá nhập TB", phai: true, hienThi: (r) => (r.gia == null ? "0" : soVN(r.gia)) },
+            ]} />
+          <ThanhTrang trang={trang} tong={loc.length} moi={MOI_TRANG} gan={(n) => url({ trang: n ? String(n) : undefined })} don="sản phẩm" />
+        </div>
+      </div>
+    </div>
+  );
+}

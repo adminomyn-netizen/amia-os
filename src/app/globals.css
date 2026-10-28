@@ -407,7 +407,27 @@ body {
 }
 @keyframes tula-bong-hien { from { opacity: 0; transform: translateY(8px) scale(0.85); } to { opacity: 1; transform: none; } }
 
+/* Bảng xếp hạng (BangXepHangDep): sân khấu bục 1-2-3, bục mọc lên, thanh tỉ lệ chạy dần. Tắt chuyển động đã có ở khối prefers-reduced-motion bên dưới. */
+.xh-san {
+  background:
+    radial-gradient(70% 90% at 50% 0%, color-mix(in srgb, #e3b54a 20%, transparent) 0%, transparent 70%),
+    linear-gradient(180deg, var(--giay-tram) 0%, color-mix(in srgb, var(--giay-tram) 45%, var(--giay-sang)) 100%);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--vien) 70%, transparent);
+}
+.xh-buc { transform-origin: bottom; animation: xh-moc 620ms cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.xh-hien { animation: xh-hien 520ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+.xh-thanh { transform-origin: left; animation: xh-chay 900ms cubic-bezier(0.2, 0.7, 0.2, 1) 200ms both; }
+.xh-vuong-mien { animation: xh-lap-lanh 3.6s ease-in-out 900ms infinite; }
+.xh-dong { transition: background-color 160ms ease, box-shadow 160ms ease; }
+.xh-dong:hover, .xh-dong:focus-visible { background: color-mix(in srgb, var(--giay-tram) 70%, transparent); box-shadow: inset 0 0 0 1px var(--vien); }
+@keyframes xh-moc { from { transform: scaleY(0.2); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes xh-hien { from { opacity: 0; transform: translateY(8px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes xh-chay { from { transform: scaleX(0); } to { transform: none; } }
+@keyframes xh-lap-lanh { 0%, 82%, 100% { transform: translateY(0) rotate(0); filter: none; } 88% { transform: translateY(-1.5px) rotate(-4deg); filter: brightness(1.15); } 94% { transform: translateY(0) rotate(2deg); } }
+
 @media (prefers-reduced-motion: reduce) {
+  .xh-vuong-mien { animation: none; }
+  .xh-buc, .xh-hien, .xh-thanh { animation-delay: 0s !important; }
   * { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
   .tula-nay, .tula-bong { animation: none !important; }
   .tula-nut:active { transform: none; }

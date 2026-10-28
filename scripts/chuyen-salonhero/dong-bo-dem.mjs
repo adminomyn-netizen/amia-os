@@ -205,9 +205,17 @@ try {
     if (kMoi.length) await q(`delete from public.khach_hang where id = any($1::uuid[])`, [kMoi.map((r) => r.id)]);
     await db.query("set local session_replication_role = origin");
     gl.khach_xoa = kMoi.length;
-    const theGia = await q(`select t.id from public.the_khach t where t.sh_id is not null and t.loai = 'lan' order by t.tao_luc desc limit 2`);
+    const mocS = (r) => String(r.updated_at ?? r.updatedAt ?? "") >= mocIso || String(r.created_at ?? r.createdAt ?? "") >= mocIso;
+    const idsThe = [...theSh.values()].filter((c) => !c.is_deleted && (mocS(c) || theCt.some((x) => Number(x.id) === Number(c.id)))).map((c) => Number(c.id));
+    const theGia = await q(`select t.id from public.the_khach t where t.sh_id = any($1::bigint[]) and t.loai = 'lan' limit 2`, [idsThe]);
     for (const t of theGia) await q(`insert into public.the_so_cai (the_id, loai, so_buoi, so_tien, nguoi_id, ghi_chu, nhap_dot) values ($1, 'dieu_chinh', 1, 0, $2, 'TỰ KIỂM: lệch giả lập', $3)`, [t.id, he, dot]);
     gl.the_lech = theGia.length;
+    await db.query("set local session_replication_role = replica");
+    const kSua = await q(`update public.khach_hang set nghe_nghiep = 'TU-KIEM', diem_goc = coalesce(diem_goc,0) + 7 where id in (select id from public.khach_hang where sh_id = any($1::bigint[]) limit 2) returning id`, [[...chiTiet.keys()]]);
+    gl.khach_sua = kSua.length;
+    await db.query("set local session_replication_role = origin");
+    const lichXd = await q(`update public.lich_hen set trang_thai = 'huy' where id = (select id from public.lich_hen where sh_id = any($1::bigint[]) and la_lich_su and trang_thai <> 'huy' limit 1) returning id`, [lichSh.map((r) => Number(r.id))]); // sửa "trong app" (trigger đặt cap_nhat_luc = now) → phải bị báo XUNG ĐỘT, không bị ghi đè
+    gl.lich_xung_dot = lichXd.length;
     await db.query("select set_config('amia.go_dot','off',true)");
     tom.tu_kiem = gl; console.log("TỰ KIỂM đã giả lập:", JSON.stringify(gl));
   }
@@ -319,7 +327,8 @@ try {
     [theCan.map((c) => Number(c.id))])).map((r) => [Number(r.sh_id), r]));
   const moiThe = theCan.some((c) => !theCoIds.has(Number(c.id)));
   const maThe = new Set(moiThe ? (await q(`select ma from public.the_khach`)).map((r) => r.ma) : []);
-  const dieuChinh = [], theMoi = [], dichTrangThai = [], baoT = { khong_co_khach: 0, khong_co_goi: 0, trang_thai_doi: 0, da_xoa_bo_qua: 0, can_xem: theCan.length };
+  const dieuChinh = [], theMoi = [], dichTrangThai = [], baoT = { khong_co_khach: 0, khong_co_goi: 0, khong_nap_cu: 0, khong_nap_moi: 0, mau_khong_nap_moi: [], trang_thai_doi: 0, da_xoa_bo_qua: 0, can_xem: theCan.length };
+  const tuMoc = (c) => String(c.created_at ?? c.createdAt ?? "") >= mocIso; // thẻ tạo sau mốc mà không nạp được = danh mục SalonHero mới → phải xử lý; thẻ cũ thiếu gói/khách = ngoại lệ đã biết từ 28–29/10
   const tinhDich = (c) => { const lan = c.card_type === "USING"; const limit = Math.max(1, Math.round(Number(c.use_limit) || 1)); const da = Math.min(limit, Math.max(0, Math.round(Number(c.use_count) || 0))); return { lan, limit, da, buoi: lan ? limit - da : 0, tien: lan ? 0 : Math.max(0, so(c.account_balance)) }; };
   for (const c of theCan) {
     const t = tinhDich(c); const tt = c.is_revoked ? "thu_hoi" : c.is_locked ? "khoa" : "hoat_dong";
@@ -332,8 +341,11 @@ try {
       if (lechTT) { dichTrangThai.push({ id: cu.id, trang_thai: tt }); baoT.trang_thai_doi++; }
       continue;
     }
-    if (!khachTheMap.has(Number(c.customer_id))) { baoT.khong_co_khach++; continue; }
-    if (!goi.has(Number(c.card_id))) { baoT.khong_co_goi++; continue; }
+    if (!khachTheMap.has(Number(c.customer_id)) || !goi.has(Number(c.card_id))) {
+      if (!khachTheMap.has(Number(c.customer_id))) baoT.khong_co_khach++; else baoT.khong_co_goi++;
+      if (tuMoc(c)) { baoT.khong_nap_moi++; baoT.mau_khong_nap_moi.push({ id: Number(c.id), ma: c.code, goi: Number(c.card_id), khach: Number(c.customer_id) }); } else baoT.khong_nap_cu++;
+      continue;
+    }
     theMoi.push({ sh_id: Number(c.id), ma: dedupe(sach(c.code) || `TSH${c.id}`, maThe, c.id), khach_sh: Number(c.customer_id), goi_sh: Number(c.card_id), cn: cnTheoLoc(c.init_location_id), loai: t.lan ? "lan" : "tien",
       so_buoi_tong: t.lan ? t.limit : null, tong_tien: t.lan ? so(c.card_sale_price) : so(c.card_default_account_balance) || so(c.account_balance),
       gia_tri_buoi: t.lan ? (t.limit < 999999 ? Math.round((Number(c.card_sale_price) || 0) / t.limit) : so(c.card_use_price)) : 0, ngay_cap: vnNgay(c.created_at ?? c.createdAt), han_dung: vnNgay(c.expiry_date), trang_thai: tt,
@@ -355,7 +367,7 @@ try {
       else sc.push({ the_id: id, loai: "cap", so_buoi: 0, so_tien: t.so_du_tien, ghi_chu: "Số dư còn lại chuyển từ SalonHero" }); }
     if (sc.length) await q(`insert into public.the_so_cai (the_id, loai, so_buoi, so_tien, nguoi_id, ghi_chu, nhap_dot) select x.the_id, x.loai, x.so_buoi, x.so_tien, $2::uuid, x.ghi_chu, $3 from jsonb_to_recordset($1::jsonb) as x(the_id uuid, loai text, so_buoi int, so_tien bigint, ghi_chu text)`, [JSON.stringify(sc), he, dot]);
   });
-  tom.the = { moi: nTheMoi, dieu_chinh: dieuChinh.length, ...baoT };
+  tom.the = { moi: nTheMoi, moi_ids: theMoi.slice(0, 10).map((t) => ({ sh_id: t.sh_id, ma: t.ma, ngay_cap: t.ngay_cap })), dieu_chinh: dieuChinh.length, ...baoT };
 
   tik('thẻ xong');
   // ════ C. HOÁ ĐƠN ════
@@ -636,7 +648,8 @@ try {
   const THE_LECH_DA_BIET = new Set([1659933, 1657443, 2714250, 2713923, 2714416, 2714248]); // 6 thẻ lệch đã biết từ 28/10 (ghi trong memory chuyển SalonHero)
   const theLechMoi = theLech.filter((id) => !THE_LECH_DA_BIET.has(id));
   them("Thẻ lệch số dư (trừ 6 thẻ lệch đã biết 28/10)", 0, theLechMoi.length, JSON.stringify(theLechMoi.slice(0, 12)) + (theLech.length !== theLechMoi.length ? ` (+${theLech.length - theLechMoi.length} thẻ đã biết)` : ""));
-  them("Thẻ mới còn thiếu gói/khách ở AMIA (không nạp được)", 0, baoT.khong_co_khach + baoT.khong_co_goi, `khách ${baoT.khong_co_khach}, gói ${baoT.khong_co_goi}`);
+  them("Thẻ MỚI (tạo sau mốc) thiếu gói/khách ở AMIA — cần bổ sung danh mục", 0, baoT.khong_nap_moi, JSON.stringify(baoT.mau_khong_nap_moi.slice(0, 5)));
+  console.log(`  (thẻ cũ thiếu gói/khách = ngoại lệ đã biết, không chặn: ${baoT.khong_nap_cu})`);
   them("Khách còn thiếu chi tiết (khách mới)", 0, baoK.thieu_chi_tiet_moi);
   them("Mục xuất lỗi từ SalonHero", 0, loiXuat.length);
   const soXungDot = Object.values(xungDot).reduce((s, a) => s + a.length, 0);

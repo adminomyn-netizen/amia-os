@@ -123,6 +123,7 @@ export function NutHop({
       const kq = await action(fd);
       if (kq && kq.loi) setLoi(kq.loi);
       else {
+        if (kq && typeof kq.canhBao === "string") window.alert(kq.canhBao);
         setMo(false);
         router.refresh();
       }

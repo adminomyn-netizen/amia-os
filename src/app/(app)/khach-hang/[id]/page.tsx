@@ -24,6 +24,7 @@ import { truongPhieuTuVan } from "@/lib/tu-van";
 import { luuPhieuTuVan } from "../tu-van/actions";
 import { luuDanhGiaSauDieuTri } from "../../hoa-don/sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
+import { nhanHang, nhanTrangThaiGoi } from "@/lib/cham-soc-hang-doi";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
@@ -263,8 +264,25 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     const lk = (n: number) => `/khach-hang/${id}?tab=nhac-nho&trang=${n}`;
     const NHAN_NHAC: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = { dang_nhac: { nhan: "Chưa thực hiện", kieu: "cho" }, da_xong: { nhan: "Đã xong", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "tram" } };
     const KIEU_LAP: Record<string, string> = { DAY: "Hằng ngày", WEEK: "Hằng tuần", MONTH: "Hằng tháng" };
+    // Lịch sử gọi chăm sóc (ghi từ trang Chăm sóc khách): 20 lần gần nhất.
+    const { data: goiRaw } = await db.from("cham_soc_cuoc_goi").select("id, loai, ngay_goc, trang_thai, chi_tiet, noi_dung, ngay_goi_lai, khong_can_goi_lai, nguoi_id, tao_luc").eq("khach_id", id).order("tao_luc", { ascending: false }).limit(20);
+    const nguoiGoi = new Map<string, string>();
+    const idNguoi = [...new Set((goiRaw ?? []).map((g) => g.nguoi_id).filter((x): x is string => !!x))];
+    if (idNguoi.length) for (const n of (await db.from("nhan_vien").select("id, ho_ten").in("id", idNguoi)).data ?? []) nguoiGoi.set(n.id, n.ho_ten);
     noiDung = (
       <>
+        {(goiRaw ?? []).length > 0 && (
+          <section className="mb-6">
+            <h3 className="mb-2 text-[15px] font-semibold text-muc">Lịch sử chăm sóc (gọi điện)</h3>
+            <Bang duLieu={goiRaw ?? []} khoa={(r) => r.id} trong="" cot={[
+              { nhan: "Lúc gọi", chinh: true, hienThi: (r) => ngayGioVN(r.tao_luc) },
+              { nhan: "Lý do gọi", hienThi: (r) => <span className="text-[13px]">{nhanHang(r.loai)} · {ngayVN(r.ngay_goc)}</span> },
+              { nhan: "Kết quả", hienThi: (r) => { const t = nhanTrangThaiGoi(r.trang_thai); return <div className="text-[13px]">{t && <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>}{r.ngay_goi_lai && <div className="text-muc-3">Gọi lại {ngayVN(r.ngay_goi_lai)}</div>}{r.khong_can_goi_lai && <div className="text-muc-3">Không cần gọi lại</div>}</div>; } },
+              { nhan: "Nội dung", hienThi: (r) => <span className="line-clamp-3 whitespace-pre-line text-[13px]">{[r.chi_tiet, r.noi_dung].filter(Boolean).join(" — ")}</span> },
+              { nhan: "Người gọi", hienThi: (r) => nguoiGoi.get(r.nguoi_id ?? "") ?? "" },
+            ]} />
+          </section>
+        )}
         <p className="mb-4 text-[13px] text-muc-3">{soVN(count ?? 0)} nhắc nhở (chưa thực hiện xếp trước).</p>
         <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Khách chưa có nhắc nhở nào." cot={[
           { nhan: "Ngày nhắc", chinh: true, hienThi: (r) => (r.ngay_nhac ? ngayGioVN(r.ngay_nhac) : "") },

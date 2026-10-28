@@ -2,8 +2,8 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { ngayVN, soVN } from "@/lib/dinh-dang";
-import { chiNhanhXem, docNguongCSKH, docTaiKham, soTrongKhoang } from "@/lib/cham-soc-khach";
+import { homNayHCM, ngayVN, soVN } from "@/lib/dinh-dang";
+import { chiNhanhXem, docHenKeTiep, docNguongCSKH, docTaiKham, soTrongKhoang } from "@/lib/cham-soc-khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -27,13 +27,15 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
   const ng = await docNguongCSKH();
   const { cn, ds: dsCn, khoa } = await chiNhanhXem(nd, sp.cn);
   const truoc = soTrongKhoang(sp.truoc, 0, 60, ng.baoTruoc)!, tre = soTrongKhoang(sp.tre, 1, 730, ng.treToiDa)!;
-  const [ds, { data: goi }] = await Promise.all([
+  const [ds, hen, { data: goi }] = await Promise.all([
     docTaiKham(cn, truoc, tre),
+    docHenKeTiep(cn, homNayHCM()),
     coQuyen(nd, "danhmuc.sua") ? sb().from("goi_the").select("id, ten, khoang_cach_ngay").eq("loai", "lan").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
   ]);
   const tenCn = new Map(dsCn.map((c) => [c.id, c.ten]));
   const tong = ds[0]?.tong ?? 0;
   const sua = coQuyen(nd, "khach.sua");
+  const henTheoKhach = new Map(hen.map((h) => [h.khach_id, h]));
   const dat = (goi ?? []).filter((g) => g.khoang_cach_ngay != null);
 
   return (
@@ -62,13 +64,27 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
 
       <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> khách đến hẹn tái khám{tong > ds.length ? ` (hiện ${ds.length} khách đầu, theo hẹn sớm nhất)` : ""}{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
 
+      {hen.length > 0 && (
+        <section>
+          <h2 className="mb-1 text-[15px] font-semibold text-muc">Đã hẹn buổi kế tiếp ({hen.length})</h2>
+          <p className="mb-2 text-[13px] text-muc-3">Ghi lúc trừ buổi thẻ hoặc ở hồ sơ thẻ; đã tự tạo nhắc trong hồ sơ khách. Hiện các hẹn từ 14 ngày trước trở đi.</p>
+          <Bang duLieu={hen} khoa={(r) => r.id} cot={[
+            { chinh: true, nhan: "Khách hàng", hienThi: (r) => <div><Link href={`/khach-hang/${r.khach_id}`} className="font-medium text-muc hover:underline">{r.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{r.dien_thoai} · {r.ma}</div></div> },
+            { nhan: "Đã hẹn buổi kế tiếp ngày", hienThi: (r) => <div className="text-[13px] tabular-nums">{ngayVN(r.ngay_hen)}<div className="text-muc-3">{r.noi_dung ?? ""}</div></div> },
+            { nhan: "Thẻ", hienThi: (r) => <Link href={`/the/${r.the_id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">{r.ma_the}</Link> },
+            { nhan: "Lịch hẹn", hienThi: (r) => (r.da_co_lich ? <NhanTrangThai kieu="tot">Đã có lịch sắp tới</NhanTrangThai> : <NhanTrangThai kieu="cho">Chưa đặt lịch</NhanTrangThai>) },
+            { nhan: "", hienThi: (r) => (coQuyen(nd, "lich.sua") && !r.da_co_lich ? <Link href={`/lich-hen?khach=${r.khach_id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Đặt lịch</Link> : null) },
+          ]} />
+        </section>
+      )}
+
       <Bang duLieu={ds} khoa={(r) => r.khach_id} trong="Không có khách nào cần nhắc tái khám với điều kiện này."
         cot={[
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => <div><Link href={`/khach-hang/${r.khach_id}`} className="font-medium text-muc hover:underline">{r.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{r.dien_thoai} · {r.ma}</div></div> },
           { nhan: "Thẻ liệu trình", hienThi: (r) => <div className="text-[13px]"><Link href={`/the/${r.the_id}`} className="font-medium text-nhan-dam hover:underline">{r.ma_the}</Link> · {r.ten_goi}{r.so_the > 1 && <span className="nhan-nho ml-1">+{r.so_the - 1} thẻ</span>}<div className="text-muc-3">{r.khong_gioi_han ? "Không giới hạn buổi" : `Còn ${r.so_buoi_con} buổi`}{r.han_dung && r.han_dung >= "2000-01-01" ? ` · hạn ${ngayVN(r.han_dung)}` : ""}</div></div> },
           { nhan: "Làm gần nhất", hienThi: (r) => <div className="text-[13px] tabular-nums">{ngayVN(r.lan_cuoi)}<div className="text-muc-3">cách {r.khoang_cach} ngày/buổi</div></div> },
           { nhan: "Hẹn tái khám", hienThi: (r) => <div className="text-[13px] tabular-nums">{ngayVN(r.den_han)}<div className={r.so_ngay_tre > 0 ? "text-loi" : "text-muc-3"}>{r.so_ngay_tre > 0 ? `Trễ ${r.so_ngay_tre} ngày` : r.so_ngay_tre === 0 ? "Hôm nay" : `Còn ${-r.so_ngay_tre} ngày`}</div></div> },
-          { nhan: "Trạng thái", hienThi: (r) => <div className="text-[13px]">{r.trang_thai ? <NhanTrangThai kieu={NHAN_TT[r.trang_thai].kieu}>{NHAN_TT[r.trang_thai].nhan}</NhanTrangThai> : <span className="text-muc-3">Chưa xử lý</span>}{r.nhac_id && <div className="text-muc-3">Đã ghi nhắc</div>}{r.ghi_chu && <div className="mt-0.5 line-clamp-2 text-muc-3">{r.ghi_chu}</div>}</div> },
+          { nhan: "Trạng thái", hienThi: (r) => <div className="text-[13px]">{r.trang_thai ? <NhanTrangThai kieu={NHAN_TT[r.trang_thai].kieu}>{NHAN_TT[r.trang_thai].nhan}</NhanTrangThai> : <span className="text-muc-3">Chưa xử lý</span>}{r.nhac_id && <div className="text-muc-3">Đã ghi nhắc</div>}{henTheoKhach.get(r.khach_id) && <div className="text-muc-3">Đã hẹn buổi kế tiếp ngày {ngayVN(henTheoKhach.get(r.khach_id)!.ngay_hen)}</div>}{r.ghi_chu && <div className="mt-0.5 line-clamp-2 text-muc-3">{r.ghi_chu}</div>}</div> },
           { nhan: "", hienThi: (r) => (
             <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
               {coQuyen(nd, "lich.sua") && <Link href={`/lich-hen?khach=${r.khach_id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Đặt lịch</Link>}

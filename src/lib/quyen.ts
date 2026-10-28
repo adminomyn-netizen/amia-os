@@ -59,7 +59,7 @@ export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
   quan_ly: TAT_CA,
   nhan_su: ["tongquan.xem", "khach.xem", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "viec.tatca", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem", "luong.sua", "hr.hoso", "vb.xem", "vb.soan", "mkt.xem"],
   le_tan: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
-  thu_ngan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "ban.xem", "ban.tao", "no.thu", "hd.vat", "the.xem", "danhmuc.xem", "baocao.xem", "baocao.tien", "noibo.dung", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
+  thu_ngan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "ban.tao", "no.thu", "hd.vat", "the.xem", "danhmuc.xem", "baocao.xem", "baocao.tien", "noibo.dung", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"], // SalonHero: Thu ngân đặt/sửa lịch (booking create+update)
   tu_van: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "ban.tao", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
   bac_si: ["khach.xem", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.chidinh", "noibo.dung", "bc.bao", "bc.xu_ly"],
   ktv: ["khach.xem", "hoso.xem", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.nhan", "noibo.dung", "bc.bao"],

@@ -27,3 +27,11 @@ describe("quyền theo SalonHero: các điểm khoá (không nới)", () => {
     expect(vai("khach.nhap")).toEqual(["chu", "ky_thuat", "quan_ly"]);
   });
 });
+
+describe("Thu ngân (SalonHero: Thu ngân)", () => {
+  it("được đặt/đổi/huỷ lịch như SalonHero, vẫn không xem sổ quỹ, lương, công", () => {
+    expect(co("thu_ngan", "lich.sua")).toBe(true);
+    for (const q of ["quy.xem", "quy.ghi", "luong.xem", "cong.xem", "cong.sua", "ban.huy"] as const) expect(co("thu_ngan", q)).toBe(false);
+    expect(ten("thu_ngan")).toEqual(expect.arrayContaining(["Lịch hẹn", "Bán hàng", "Hoá đơn"]));
+  });
+});

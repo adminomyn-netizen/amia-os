@@ -10259,6 +10259,22 @@ export type Database = {
           so_lan_ve_som: number
         }[]
       }
+      top_ban_thang: {
+        Args: { p_cn?: string; p_tu: string }
+        Returns: {
+          nhom: string
+          so: number
+          ten: string
+          tien: number
+        }[]
+      }
+      top_khach_chi_12_thang: {
+        Args: { p_cn?: string; p_so?: number }
+        Returns: {
+          chi: number
+          ho_ten: string
+        }[]
+      }
       tuy_chon_loc_khach: { Args: never; Returns: Json }
       voucher_loai_dong: { Args: { p_gioi_han: string }; Returns: string[] }
       xu_ly_lech_chuyen_kho: {

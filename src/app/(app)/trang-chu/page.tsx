@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { layNguoiDungDangNhap } from "@/lib/auth";
+import { Suspense } from "react";
 import { sb } from "@/lib/db";
+import { chiNhanhHoatDong, tatCaChiNhanh } from "@/lib/chi-nhanh";
 import { layCanhBao } from "@/lib/canh-bao";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
@@ -45,20 +47,40 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   const sp = await searchParams;
   const db = sb(), homNay = homNayHCM(), dauThang = `${homNay.slice(0, 8)}01`;
   const dieuHanh = nd.vaiTro === "chu" || nd.vaiTro === "ky_thuat" || nd.vaiTro === "quan_ly";
-  // Lãnh đạo không gắn chi nhánh được chọn xem từng chi nhánh (?cn=…) hoặc tất cả.
-  const dsCn = dieuHanh && !nd.chiNhanhId ? ((await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu")).data ?? []) : [];
+  // Lãnh đạo không gắn chi nhánh được chọn xem từng chi nhánh (?cn=…) hoặc tất cả. Danh sách chi nhánh nhớ đệm; hỏi cùng lúc với bảng tin.
+  const [dsCnTatCa, { data: dsTin }] = await Promise.all([
+    dieuHanh && !nd.chiNhanhId ? chiNhanhHoatDong().catch(() => []) : Promise.resolve([]),
+    db.from("bang_tin").select("id, tieu_de, noi_dung, hien_den").eq("hoat_dong", true).lte("hien_tu", homNay).order("ghim", { ascending: false }).order("hien_tu", { ascending: false }).limit(10),
+  ]);
+  const dsCn = dsCnTatCa.map((c) => ({ id: c.id, ten: c.ten }));
   const cn = nd.chiNhanhId ?? (dsCn.some((c) => c.id === sp.cn) ? sp.cn! : null);
-  const { data: dsTin } = await db.from("bang_tin").select("id, tieu_de, noi_dung, hien_den").eq("hoat_dong", true).lte("hien_tu", homNay).order("ghim", { ascending: false }).order("hien_tu", { ascending: false }).limit(10);
   const tin = (dsTin ?? []).filter((t) => !t.hien_den || t.hien_den >= homNay).slice(0, 3);
   const tu = new Date(`${homNay}T00:00:00+07:00`).toISOString(), den = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
 
   const congThang = (ngay: string, n: number) => { const d = new Date(`${ngay}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
-  const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: dtNgay }] = await Promise.all([
+  const coHieuSuat = nd.vaiTro !== "nhan_vien" && nd.vaiTro !== "nha_dau_tu";
+  // Ô "Doanh số / hoa hồng tạm tính" chỉ hiện cho người được phép (xem phần tileNv bên dưới) → người khác không cần chạy báo cáo bc_nhan_vien (nặng nhất trang).
+  const thayDoanhSo = coHieuSuat && (coQuyen(nd, "baocao.tien") || ["thu_ngan", "tu_van", "ktv", "bac_si"].includes(nd.vaiTro));
+  // Lịch hôm nay của chi nhánh (cho lãnh đạo) và các số đếm của bảng điều hành: độc lập nhau → hỏi CÙNG LÚC với mọi thứ khác (trước đây nối đuôi 3 chặng).
+  let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).order("bat_dau").limit(500);
+  let kq = db.from("khach_hang").select("nguon", { count: "exact" }).gte("tao_luc", new Date(`${dauThang}T00:00:00+07:00`).toISOString()).limit(2000);
+  let tk = db.from("khach_hang").select("id", { count: "exact", head: true });
+  let no = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0).limit(3000);
+  const tc = db.from("cham_cong").select("id", { count: "exact", head: true }).eq("ngay", homNay).not("vao", "is", null);
+  let nvq = db.from("nhan_vien").select("id", { count: "exact", head: true }).eq("hoat_dong", true).eq("trang_thai_lam", "dang_lam");
+  if (cn) { lq = lq.eq("chi_nhanh_id", cn); kq = kq.eq("chi_nhanh_id", cn); tk = tk.eq("chi_nhanh_id", cn); no = no.eq("chi_nhanh_id", cn); nvq = nvq.eq("chi_nhanh_id", cn); }
+  const rong = Promise.resolve({ data: null, count: null });
+  const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: dtNgay }, tatCaLichKq, khMoiKq, tkKq, noKq, tcKq, nvKq, { data: topBan }, { data: topKh }, { data: ccThang }, { count: phieuCho }] = await Promise.all([
     layCanhBao(nd),
-    db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: (cn ?? undefined) as string }),
-    db.from("buoi_thuc_hien").select("khach_id, doanh_thu_buoi").eq("nv_thuc_hien_id", nd.nhanVienId).eq("trang_thai", "da_lam").gte("ngay_lam", dauThang).lte("ngay_lam", homNay).limit(1000),
-    db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8),
+    dieuHanh || thayDoanhSo ? db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: (cn ?? undefined) as string }) : Promise.resolve({ data: null }),
+    !dieuHanh ? db.from("buoi_thuc_hien").select("khach_id, doanh_thu_buoi").eq("nv_thuc_hien_id", nd.nhanVienId).eq("trang_thai", "da_lam").gte("ngay_lam", dauThang).lte("ngay_lam", homNay).limit(1000) : Promise.resolve({ data: null }),
+    !dieuHanh ? db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8) : Promise.resolve({ data: null }),
     dieuHanh && coQuyen(nd, "baocao.xem") ? db.rpc("bc_doanh_thu_ngay", { p_tu: `${congThang(dauThang, -1)}`, p_den: homNay, p_cn: (cn ?? undefined) as string }) : Promise.resolve({ data: null }),
+    dieuHanh ? lq : rong, dieuHanh ? kq : rong, dieuHanh ? tk : rong, dieuHanh ? no : rong, dieuHanh ? tc : rong, dieuHanh ? nvq : rong,
+    dieuHanh ? db.rpc("top_ban_thang", { p_tu: dauThang, ...(cn ? { p_cn: cn } : {}) }) : Promise.resolve({ data: null }),
+    dieuHanh ? db.rpc("top_khach_chi_12_thang", { p_so: 10, ...(cn ? { p_cn: cn } : {}) }) : Promise.resolve({ data: null }),
+    dieuHanh ? Promise.resolve({ data: null }) : db.from("cham_cong").select("ngay, vao, ra, cong, tre_phut").eq("nhan_vien_id", nd.nhanVienId).gte("ngay", dauThang).lte("ngay", homNay).limit(40),
+    dieuHanh ? Promise.resolve({ count: 0 }) : db.from("phieu_hr").select("id", { count: "exact", head: true }).eq("nhan_vien_id", nd.nhanVienId).eq("trang_thai", "cho_duyet"),
   ]);
   const hn = (dtNgay ?? []).find((n) => n.ngay === homNay);
   let soLich = 0, dangCho = 0, khongDen = 0;
@@ -67,34 +89,26 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   let soLieu: SoLieu | null = null;
   const NHAN_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành" };
   if (dieuHanh) {
-    let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).order("bat_dau").limit(500);
-    if (cn) lq = lq.eq("chi_nhanh_id", cn);
-    const tatCaLich = (await lq).data ?? [];
+    const tatCaLich = tatCaLichKq.data ?? [];
     const ds = tatCaLich.filter((l) => l.trang_thai !== "huy" && l.trang_thai !== "khong_den");
     khongDen = tatCaLich.filter((l) => l.trang_thai === "khong_den").length;
     soLich = ds.length; dangCho = ds.filter((l) => l.trang_thai !== "hoan_thanh").length;
     const idsK = [...new Set(ds.slice(0, 6).map((l) => l.khach_id))];
-    const { data: ksL } = idsK.length ? await db.from("khach_hang").select("id, ho_ten").in("id", idsK) : { data: [] };
+    const xep = [...(ban ?? [])].filter((r) => Number(r.doanh_so) > 0).sort((a, b) => Number(b.doanh_so) - Number(a.doanh_so)).slice(0, 10);
+    // Tên khách trong lịch hôm nay + tên nhân viên xếp hạng: hai truy vấn độc lập, hỏi cùng lúc (danh sách chi nhánh lấy từ bộ nhớ đệm).
+    const [{ data: ksL }, { data: tenNv }, tatCaCn] = await Promise.all([
+      idsK.length ? db.from("khach_hang").select("id, ho_ten").in("id", idsK) : Promise.resolve({ data: [] as { id: string; ho_ten: string }[] }),
+      xep.length ? db.from("nhan_vien").select("id, ho_ten, chuc_danh, chi_nhanh_id").in("id", xep.map((r) => r.nhan_vien_id)) : Promise.resolve({ data: [] as { id: string; ho_ten: string; chuc_danh: string | null; chi_nhanh_id: string | null }[] }),
+      xep.length ? tatCaChiNhanh().catch(() => []) : Promise.resolve([]),
+    ]);
     const tenKL = new Map((ksL ?? []).map((k) => [k.id, k.ho_ten]));
     lichDs = ds.slice(0, 6).map((l) => ({ gio: gioVN(l.bat_dau), ten: tenKL.get(l.khach_id) ?? "Khách", tt: NHAN_LICH[l.trang_thai] ?? l.trang_thai }));
-    const dauTruoc = congThang(dauThang, -1), rows = dtNgay ?? [];
+    const rows = dtNgay ?? [], dauTruoc = congThang(dauThang, -1);
     const thangNay = rows.filter((r) => r.ngay >= dauThang), thangTruoc = rows.filter((r) => r.ngay >= dauTruoc && r.ngay < dauThang);
     const tong = (a: typeof rows, k: "doanh_thu" | "so_don" | "so_buoi" | "tien_mat" | "chuyen_khoan" | "quet_the") => a.reduce((x, r) => x + Number(r[k] ?? 0), 0);
-    let kq = db.from("khach_hang").select("nguon", { count: "exact" }).gte("tao_luc", new Date(`${dauThang}T00:00:00+07:00`).toISOString()).limit(2000);
-    let tk = db.from("khach_hang").select("id", { count: "exact", head: true });
-    let no = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0).limit(3000);
-    const tc = db.from("cham_cong").select("id", { count: "exact", head: true }).eq("ngay", homNay).not("vao", "is", null);
-    let nvq = db.from("nhan_vien").select("id", { count: "exact", head: true }).eq("hoat_dong", true).eq("trang_thai_lam", "dang_lam");
-    if (cn) { kq = kq.eq("chi_nhanh_id", cn); tk = tk.eq("chi_nhanh_id", cn); no = no.eq("chi_nhanh_id", cn); nvq = nvq.eq("chi_nhanh_id", cn); }
-    let dq = db.from("hoa_don_dong").select("ten, loai, so_luong, thanh_tien, hoa_don!inner(ngay_hd, trang_thai, chi_nhanh_id)").gte("hoa_don.ngay_hd", dauThang).eq("hoa_don.trang_thai", "hoan_thanh").limit(4000);
-    let tkq = db.from("v_khach_hang").select("ho_ten, chi_12_thang").gt("chi_12_thang", 0).order("chi_12_thang", { ascending: false }).limit(10);
-    if (cn) { dq = dq.eq("hoa_don.chi_nhanh_id", cn); tkq = tkq.eq("chi_nhanh_id", cn); }
-    const [{ data: khMoi, count: nKhMoi }, { count: nKh }, { data: dsNo }, { count: nCc }, { count: nNv }, { data: dongBan }, { data: khTop }] = await Promise.all([kq, tk, no, tc, nvq, dq, tkq]);
-    const gomXep = (loaiDat: (l: string) => boolean) => {
-      const m = new Map<string, { so: number; tien: number }>();
-      for (const r of dongBan ?? []) { if (!loaiDat(r.loai)) continue; const x = m.get(r.ten) ?? { so: 0, tien: 0 }; x.so += Number(r.so_luong); x.tien += Number(r.thanh_tien ?? 0); m.set(r.ten, x); }
-      return [...m].map(([ten, v]) => ({ ten, ...v })).sort((a, b) => b.tien - a.tien).slice(0, 10);
-    };
+    const { data: khMoi, count: nKhMoi } = khMoiKq, { count: nKh } = tkKq, { data: dsNo } = noKq, { count: nCc } = tcKq, { count: nNv } = nvKq;
+    // 10 dịch vụ + 10 sản phẩm bán chạy tháng này: gộp ở CSDL (hàm top_ban_thang) thay vì tải tới 4000 dòng hoá đơn về gộp.
+    const hangBan = (nhom: string) => (topBan ?? []).filter((r) => r.nhom === nhom).map((r) => ({ ten: r.ten, so: Number(r.so), tien: Number(r.tien) }));
     const dem = new Map<string, number>();
     for (const k of khMoi ?? []) dem.set(k.nguon || "Khác", (dem.get(k.nguon || "Khác") ?? 0) + 1);
     soLieu = {
@@ -106,39 +120,36 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
       nguon: [...dem].map(([ten, so]) => ({ ten, so })).sort((a, b) => b.so - a.so).slice(0, 5),
       lich: Object.entries(NHAN_LICH).map(([m, nhan]) => ({ nhan, so: ds.filter((l) => l.trang_thai === m).length })),
       chamCong: { da: nCc ?? 0, tong: nNv ?? 0 },
-      topDichVu: gomXep((l) => l !== "san_pham"),
-      topSanPham: gomXep((l) => l === "san_pham"),
-      topKhach: (khTop ?? []).map((k) => ({ ten: k.ho_ten ?? "Khách", chi: Number(k.chi_12_thang ?? 0) })),
+      topDichVu: hangBan("dich_vu"),
+      topSanPham: hangBan("san_pham"),
+      topKhach: (topKh ?? []).map((k) => ({ ten: k.ho_ten ?? "Khách", chi: Number(k.chi ?? 0) })),
     };
-    const xep = [...(ban ?? [])].filter((r) => Number(r.doanh_so) > 0).sort((a, b) => Number(b.doanh_so) - Number(a.doanh_so)).slice(0, 10);
     if (xep.length) {
-      const [{ data: tenNv }, { data: tatCaCn }] = await Promise.all([db.from("nhan_vien").select("id, ho_ten, chuc_danh, chi_nhanh_id").in("id", xep.map((r) => r.nhan_vien_id)), db.from("chi_nhanh").select("id, ten")]);
-      const tenCnTop = new Map((tatCaCn ?? []).map((c) => [c.id, c.ten]));
+      const tenCnTop = new Map(tatCaCn.map((c) => [c.id, c.ten]));
       const phuNv = new Map((tenNv ?? []).map((n) => [n.id, [n.chi_nhanh_id ? tenCnTop.get(n.chi_nhanh_id) : "Mọi chi nhánh", n.chuc_danh].filter(Boolean).join(" · ")]));
       const ten = new Map((tenNv ?? []).map((n) => [n.id, n.ho_ten.replace(/^MSC[^.]*\.[^.]*\./, "")]));
       top = xep.map((r) => ({ ten: ten.get(r.nhan_vien_id) ?? "Nhân viên", phu: phuNv.get(r.nhan_vien_id), doanhSo: Number(r.doanh_so), hoaHong: Number(r.hoa_hong), soDong: Number(r.so_dong) }));
     }
   }
   let lich = lichToi ?? [], tieuDeLich = "Lịch của tôi hôm nay";
-  if (lich.length === 0 && coQuyen(nd, "lich.xem")) {
-    let q = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(6);
-    if (cn) q = q.eq("chi_nhanh_id", cn);
-    lich = (await q).data ?? []; tieuDeLich = "Lịch hôm nay của chi nhánh";
+  let tenK = new Map<string, string>();
+  // Lịch hôm nay + tên khách chỉ hiện ở trang chủ của nhân viên thường (lãnh đạo dùng bảng điều hành) → khỏi hỏi cho lãnh đạo.
+  if (!dieuHanh) {
+    if (lich.length === 0 && coQuyen(nd, "lich.xem")) {
+      let q = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(6);
+      if (cn) q = q.eq("chi_nhanh_id", cn);
+      lich = (await q).data ?? []; tieuDeLich = "Lịch hôm nay của chi nhánh";
+    }
+    const ids = [...new Set(lich.map((l) => l.khach_id))];
+    const { data: ks } = ids.length ? await db.from("khach_hang").select("id, ho_ten").in("id", ids) : { data: [] };
+    tenK = new Map((ks ?? []).map((k) => [k.id, k.ho_ten]));
   }
-  const ids = [...new Set(lich.map((l) => l.khach_id))];
-  const { data: ks } = ids.length ? await db.from("khach_hang").select("id, ho_ten").in("id", ids) : { data: [] };
-  const tenK = new Map((ks ?? []).map((k) => [k.id, k.ho_ten]));
 
   const toi = (ban ?? []).filter((r) => r.nhan_vien_id === nd.nhanVienId);
   const doanhSo = toi.reduce((s, r) => s + Number(r.doanh_so), 0), hoaHong = toi.reduce((s, r) => s + Number(r.hoa_hong), 0);
   const soBuoi = (buoi ?? []).length, soKhach = new Set((buoi ?? []).map((b) => b.khach_id)).size;
-  const [{ data: ccThang }, { count: phieuCho }] = dieuHanh ? [{ data: null }, { count: 0 }] : await Promise.all([
-    db.from("cham_cong").select("ngay, vao, ra, cong, tre_phut").eq("nhan_vien_id", nd.nhanVienId).gte("ngay", dauThang).lte("ngay", homNay).limit(40),
-    db.from("phieu_hr").select("id", { count: "exact", head: true }).eq("nhan_vien_id", nd.nhanVienId).eq("trang_thai", "cho_duyet"),
-  ]);
   const ccHom = (ccThang ?? []).find((c) => c.ngay === homNay);
   const congThangNay = (ccThang ?? []).reduce((x, c) => x + Number(c.cong ?? 0), 0), lanTre = (ccThang ?? []).filter((c) => Number(c.tre_phut) > 0).length;
-  const coHieuSuat = nd.vaiTro !== "nhan_vien" && nd.vaiTro !== "nha_dau_tu";
   const tileNv = [
     { nhan: "Chấm công hôm nay", so: ccHom?.vao ? `${gioVN(ccHom.vao)}${ccHom.ra ? ` – ${gioVN(ccHom.ra)}` : ""}` : "Chưa chấm", mau: ccHom?.vao ? "luc" : "cam", phu: ccHom?.vao ? (ccHom.ra ? "đã chấm vào và ra" : "nhớ chấm ra khi hết ca") : "bấm Chấm công để ghi giờ vào" },
     { nhan: "Công tháng này", so: `${soVN(congThangNay)} công`, mau: "xanh", phu: `${lanTre} lần đi trễ` },
@@ -175,7 +186,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
       )}
       {sp["khong-du-quyen"] && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p>}
 
-      {dieuHanh && coQuyen(nd, "baocao.xem") && <BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} />}
+      {dieuHanh && coQuyen(nd, "baocao.xem") && <Suspense fallback={<div aria-busy="true" aria-label="Đang tải báo cáo sáng" className="h-[236px] animate-pulse rounded-nho bg-giay-tram sm:h-[196px]" />}><BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} /></Suspense>}
 
       {dieuHanh ? (
         <BangDieuHanh canhBao={canhBao} tin={tin.map((t) => ({ id: t.id, tieu_de: t.tieu_de, noi_dung: t.noi_dung }))} top={top}

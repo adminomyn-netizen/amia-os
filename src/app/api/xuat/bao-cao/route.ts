@@ -3,13 +3,14 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat as Bang, type Cot } from "@/lib/xuat-excel";
 import { khoangNgay } from "@/lib/bao-cao";
+import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
  *  Quyền chặn ở máy chủ: cần `baocao.xem`; tab có số tiền cần thêm `baocao.tien` (giống trang). Người gắn chi nhánh chỉ xuất được chi nhánh của mình. */
-const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia"]);
+const TAB_KHONG_TIEN = new Set(["dat-lich", "danh-gia", "ti-le-chot"]);
 const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ" };
 const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng" };
 export async function GET(req: Request) {
@@ -45,6 +46,11 @@ export async function GET(req: Request) {
     bangs.push({ ten: "Đánh giá theo đơn hàng", dong: ds.map((r) => ({ ngay: ngay(r.ngay), ma: r.ma, ten: r.ten, diem: r.diem, y_kien: r.yKien, dich_vu: r.dichVu })), cot: [
       { nhan: "Ngày", khoa: "ngay", rong: 12 }, { nhan: "Mã hóa đơn", khoa: "ma", rong: 16 }, { nhan: "Tên Nhân Viên", khoa: "ten", rong: 28 }, { nhan: "Đánh giá (sao)", khoa: "diem", so: true },
       { nhan: "Ý kiến đánh giá", khoa: "y_kien", rong: 48 }, { nhan: "Dịch vụ đã thực hiện", khoa: "dich_vu", rong: 48 }] });
+  } else if (tab === "ti-le-chot") {
+    const ds = await layTiLeChot(db, tu, den, cn), xemTien = coQuyen(nd, "baocao.tien");
+    bangs.push({ ten: "Tỉ lệ chốt tư vấn", dong: ds.map((r) => ({ ten: r.ten, so: r.soPhieu, cho: r.choChot, chot: r.chot, khong: r.khongChot, tl: phanTram(r.tiLe), gt: r.tongBaoGiaChot, bg: r.tongBaoGia })), cot: [
+      { nhan: "Tư vấn viên", khoa: "ten", rong: 30 }, { nhan: "Số phiếu", khoa: "so", so: true }, { nhan: "Chờ chốt", khoa: "cho", so: true }, { nhan: "Chốt", khoa: "chot", so: true }, { nhan: "Không chốt", khoa: "khong", so: true },
+      { nhan: "Tỉ lệ chốt (chốt / tổng phiếu)", khoa: "tl", rong: 26 }, ...(xemTien ? [{ nhan: "Tổng báo giá chốt", khoa: "gt", tien: true }, { nhan: "Tổng báo giá mọi phiếu", khoa: "bg", tien: true }] : [])] });
   } else if (tab === "dat-lich") {
     const { nhom } = chonNhom(u.searchParams.get("nhom") ?? undefined, tu, den, "thang");
     const d = await layDatLich(db, tu, den, cn, nhom);

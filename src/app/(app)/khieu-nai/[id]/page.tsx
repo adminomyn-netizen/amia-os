@@ -54,6 +54,7 @@ export default async function ChiTietKhieuNai({ params }: { params: Promise<{ id
         <Khoi tieuDe="Khách">{kh ? <Link href={`/khach-hang/${kh.id}?tab=khieu-nai`} className="font-medium text-nhan-dam hover:underline">{kh.ho_ten}</Link> : ""}{kh ? ` · ${kh.ma} · ${kh.dien_thoai}` : ""}</Khoi>
         <Khoi tieuDe="Tiếp nhận">{`${ngayGioVN(k.tiep_nhan_luc)} · ${ten.get(k.nguoi_tiep_nhan_id) ?? ""} · qua ${KENH_KN[k.kenh] ?? k.kenh} · loại ${LOAI_KN[k.loai]?.replace(" (chuyển biến chứng)", "")}${dv ? ` · dịch vụ ${dv.ten}` : ""}`}</Khoi>
         <Khoi tieuDe="Khách phản ánh">{k.noi_dung}</Khoi>
+        {k.danh_gia_sau_dt_id && <Khoi tieuDe="Nguồn">Tự tạo từ đánh giá “Không hài lòng” sau điều trị.{k.hoa_don_id ? <> <Link href={`/hoa-don/${k.hoa_don_id}`} className="font-medium text-nhan-dam hover:underline">Xem hoá đơn</Link></> : ""}</Khoi>}
         {k.nguyen_nhan && <Khoi tieuDe="Nguyên nhân đã xác minh">{k.nguyen_nhan}</Khoi>}
         {k.phuong_an && <Khoi tieuDe={`Phương án${k.co_chi_phi ? ` · chi phí ${tienVN(k.chi_phi)}${k.can_duyet ? " · cần duyệt" : ""}` : ""}`}>{`${k.phuong_an}\n(đề xuất bởi ${ten.get(k.nguoi_de_xuat_id ?? "") ?? ""}, ${ngayGioVN(k.de_xuat_luc)})`}</Khoi>}
         {k.nguoi_duyet_id && <Khoi tieuDe="Duyệt">{`${ten.get(k.nguoi_duyet_id) ?? ""} · ${ngayGioVN(k.duyet_luc)}`}</Khoi>}

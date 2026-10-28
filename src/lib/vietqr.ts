@@ -1,5 +1,5 @@
 // Mã VietQR (chuẩn EMVCo/Napas "chuyển nhanh 247 tới tài khoản") dựng ngay trên máy chủ, KHÔNG gọi dịch vụ ngoài.
-// Chỉ liệt kê ngân hàng có mã BIN đã chắc chắn; ngân hàng khác thì người dùng nhập "nội dung QRCode" có sẵn. Sai mã BIN là tiền chuyển nhầm ngân hàng nên không đoán.
+// Chỉ liệt kê ngân hàng có mã BIN đã chắc chắn (20 mã đã đối chiếu với danh sách công khai api.vietqr.io/v2/banks ngày 29/10/2026; LienVietPostBank = LPBank 970449); ngân hàng khác thì người dùng nhập "nội dung QRCode" có sẵn. Sai mã BIN là tiền chuyển nhầm ngân hàng nên không đoán.
 export const NGAN_HANG_QR: { ma: string; nhan: string; bin: string }[] = [
   { ma: "VietinBank", nhan: "VietinBank", bin: "970415" }, { ma: "Vietcombank", nhan: "Vietcombank", bin: "970436" }, { ma: "BIDV", nhan: "BIDV", bin: "970418" },
   { ma: "Agribank", nhan: "Agribank", bin: "970405" }, { ma: "OCB", nhan: "OCB", bin: "970448" }, { ma: "MBBank", nhan: "MBBank", bin: "970422" },

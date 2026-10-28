@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { AlertTriangle, CalendarDays, CircleDollarSign, ClipboardCheck, Clock, Package, Plus, Star, TrendingUp, Users, ShoppingBag, BarChart3, Warehouse, UsersRound, type LucideIcon } from "lucide-react";
 import type { CanhBao } from "@/lib/canh-bao";
-import { tienVN } from "@/lib/dinh-dang";
+import { tienGon, tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
 import { BangSoLieu, type SoLieu } from "./BangSoLieu";
 import { BangXepHangDep } from "./BangXepHangDep";
@@ -40,8 +40,8 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
   const tile: Tile[] = [
     { nhan: "Lịch hẹn hôm nay", so: String(so.lich), phu: `${so.hoanThanh} hoàn thành · ${so.khongDen} không đến`, mau: "xanh", Icon: CalendarDays, href: "/lich-hen" },
     { nhan: "Đang chờ / phục vụ", so: String(so.dangCho), phu: `${so.choXacNhan + Math.max(0, so.dangCho - so.choXacNhan - so.dangPhucVu)} chờ · ${so.dangPhucVu} đang phục vụ`, mau: "luc", Icon: Clock, href: "/lich-hen" },
-    ...(so.thuHomNay != null ? [{ nhan: "Đã thu hôm nay", so: tienVN(so.thuHomNay), phu: so.thuChiTiet || "chưa có doanh thu", mau: "tim", Icon: CircleDollarSign, href: "/bao-cao" }] : []),
-    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienVN(so.noMoi), phu: `tổng nợ treo ${tienVN(so.tongNo)}`, mau: "cam", Icon: TrendingUp, href: "/bao-cao?tab=no" }] : []),
+    ...(so.thuHomNay != null ? [{ nhan: "Đã thu hôm nay", so: tienGon(so.thuHomNay), phu: so.thuChiTiet || "chưa có doanh thu", mau: "tim", Icon: CircleDollarSign, href: "/bao-cao" }] : []),
+    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienGon(so.noMoi), phu: `tổng nợ treo ${tienGon(so.tongNo)}`, mau: "cam", Icon: TrendingUp, href: "/bao-cao?tab=no" }] : []),
     { nhan: "Cần phê duyệt", so: String(choDuyet), phu: choDuyet ? "bấm để xem danh sách" : "đã duyệt hết", mau: "hong", Icon: ClipboardCheck, href: "#viec-cua-toi" },
     { nhan: "Kho thấp", so: String(so.khoThap), phu: "mặt hàng dưới mức tối thiểu", mau: "cam", Icon: Package, href: "/kho?thieu=1" },
   ];
@@ -49,7 +49,7 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
     { nhan: "Việc cần duyệt", so: String(choDuyet), khan: choDuyet > 0 },
     { nhan: "Kho sắp hết", so: String(so.khoThap), khan: false },
     { nhan: "Lịch chưa xác nhận", so: String(so.choXacNhan), khan: false },
-    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienVN(so.noMoi), khan: false }] : []),
+    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienGon(so.noMoi), khan: false }] : []),
   ];
 
   return (
@@ -80,7 +80,7 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieu, xemTien }: { canhB
         </section>
 
         <BangXepHangDep tieuDe="Top nhân viên tháng này" Icon={Star} trong="Chưa có doanh số nhân viên trong tháng này."
-          dong={top.map((x) => ({ ten: x.ten, phu: x.phu, phu2: `${tienVN(x.doanhSo)}${x.soDong != null ? ` · ${x.soDong} dòng bán` : ""}`, chu: tienVN(x.doanhSo), gt: x.doanhSo, chiTiet: [{ nhan: "Doanh số tháng", gt: tienVN(x.doanhSo) }, ...(x.hoaHong != null ? [{ nhan: "Hoa hồng tạm tính", gt: tienVN(x.hoaHong) }] : []), ...(x.soDong != null ? [{ nhan: "Số dòng bán", gt: String(x.soDong) }] : [])] }))} />
+          dong={top.map((x) => ({ ten: x.ten, phu: x.phu, phu2: `${tienGon(x.doanhSo)}${x.soDong != null ? ` · ${x.soDong} dòng bán` : ""}`, chu: tienGon(x.doanhSo), gt: x.doanhSo, chiTiet: [{ nhan: "Doanh số tháng", gt: tienVN(x.doanhSo) }, ...(x.hoaHong != null ? [{ nhan: "Hoa hồng tạm tính", gt: tienVN(x.hoaHong) }] : []), ...(x.soDong != null ? [{ nhan: "Số dòng bán", gt: String(x.soDong) }] : [])] }))} />
 
         <section id="viec-cua-toi" className="the-noi vao min-w-0 scroll-mt-24 p-5 pt-6" aria-label="Việc cần hoàn thành của tôi">
           <div className="flex items-baseline justify-between border-b border-vien pb-2.5"><h2 className="text-[15px] font-semibold text-muc">Việc cần hoàn thành của tôi{gap.length ? ` (${gap.length})` : ""}</h2></div>

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { layNguoiDungDangNhap } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { layCanhBao } from "@/lib/canh-bao";
-import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
 import { DongHo } from "@/components/layout/DongHo";
 import { MucTrang } from "@/components/ui/MucTrang";
@@ -12,7 +12,6 @@ import { doHieuSuatApp, mocDo } from "@/lib/do-hieu-suat";
 import { BangDieuHanh } from "@/components/trang-chu/BangDieuHanh";
 import type { SoLieu } from "@/components/trang-chu/BangSoLieu";
 import { CaiUngDung } from "@/components/trang-chu/CaiUngDung";
-import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 
 const LOI_TAT = [
   { href: "/nhan-su/cham-cong", nhan: "Chấm công", q: "noibo.dung" as const },
@@ -148,7 +147,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
     { nhan: tieuDeLich.includes("chi nhánh") ? "Lịch hôm nay của chi nhánh" : "Lịch của tôi hôm nay", so: soVN(lich.length), mau: "xanh", phu: "" },
     ...(coHieuSuat ? [
       { nhan: "Buổi đã thực hiện tháng này", so: soVN(soBuoi), mau: "luc", phu: `${soVN(soKhach)} khách đã phục vụ` },
-      ...(coQuyen(nd, "baocao.tien") || ["thu_ngan", "tu_van", "ktv", "bac_si"].includes(nd.vaiTro) ? [{ nhan: "Doanh số / hoa hồng tạm tính", so: tienVN(doanhSo), mau: "tim", phu: `hoa hồng ${tienVN(hoaHong)}` }] : []),
+      ...(coQuyen(nd, "baocao.tien") || ["thu_ngan", "tu_van", "ktv", "bac_si"].includes(nd.vaiTro) ? [{ nhan: "Doanh số / hoa hồng tạm tính", so: tienGon(doanhSo), mau: "tim", phu: `hoa hồng ${tienVN(hoaHong)}` }] : []),
     ] : []),
   ];
   const loiTat = LOI_TAT.filter((l) => coQuyen(nd, l.q));
@@ -225,7 +224,7 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
         </>
       )}
 
-      <div className="grid gap-4"><BatThongBao /><CaiUngDung /></div>
+      <CaiUngDung />
 
     </div>
   );

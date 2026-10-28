@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { tienVN } from "@/lib/dinh-dang";
+import { tienGon, tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
 import { Package, Sparkles, Users } from "lucide-react";
 import { BieuDoNhanh, type DiemNgay } from "./BieuDoNhanh";
@@ -64,8 +64,8 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
   const tongLich = d.lich.reduce((s, x) => s + x.so, 0);
   const o = [
     ...(xemTien ? [
-      { nhan: "Doanh thu tháng này", so: tienVN(t.doanhThu), phu: doi == null ? "chưa có tháng trước để so" : `${doi >= 0 ? "▲" : "▼"} ${Math.abs(doi)}% so với tháng trước`, mau: "luc" },
-      { nhan: "Công nợ đang treo", so: tienVN(t.congNo), phu: "hoá đơn còn nợ", mau: "cam" },
+      { nhan: "Doanh thu tháng này", so: tienGon(t.doanhThu), phu: doi == null ? "chưa có tháng trước để so" : `${doi >= 0 ? "▲" : "▼"} ${Math.abs(doi)}% so với tháng trước`, mau: "luc" },
+      { nhan: "Công nợ đang treo", so: tienGon(t.congNo), phu: "hoá đơn còn nợ", mau: "cam" },
     ] : []),
     { nhan: "Đơn tháng này", so: String(t.donHang), phu: "hoá đơn đã chốt", mau: "xanh" },
     { nhan: "Buổi liệu trình", so: String(t.buoi), phu: "đã thực hiện trong tháng", mau: "tim" },
@@ -97,7 +97,7 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
         {xemTien && (
           <Khung tieuDe="Cơ cấu thu tháng này">
             <div className="flex flex-wrap items-center justify-center gap-4">
-              <Vong phan={cc} giua={tongThu >= 1e6 ? `${(tongThu / 1e6).toFixed(1)}tr` : String(tongThu)} nhanGiua="tổng thu" />
+              <Vong phan={cc} giua={tienGon(tongThu)} nhanGiua="tổng thu" />
               <ul className="min-w-0 space-y-2 text-[13px]">{cc.map((c) => <li key={c.nhan}><NoiChiTiet tieuDe={c.nhan} dong={[{ nhan: "Số tiền", gt: tienVN(c.gt) }, { nhan: "Tỉ trọng", gt: `${phanTram(c.gt, tongThu)}%` }]}><div className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 shrink-0 rounded-sm" style={{ background: c.mau }} /><span className="text-muc-2">{c.nhan}</span><span className="ml-auto pl-3 tabular-nums text-muc">{phanTram(c.gt, tongThu)}%</span></div></NoiChiTiet></li>)}</ul>
             </div>
           </Khung>
@@ -140,7 +140,7 @@ function BangXepHang({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
       <div className="grid items-start gap-5 md:grid-cols-2 xl:grid-cols-3">
         <BangXepHangDep tieuDe="Top dịch vụ" Icon={Sparkles} href="/bao-cao" nhanHref="Báo cáo" trong="Chưa có dịch vụ nào được bán tháng này." dong={hang(d.topDichVu, "lượt")} />
         <BangXepHangDep tieuDe="Top sản phẩm" Icon={Package} href="/kho" nhanHref="Kho" trong="Chưa bán sản phẩm nào tháng này." dong={hang(d.topSanPham, "cái")} />
-        {xemTien && <BangXepHangDep tieuDe="Top khách chi nhiều (12 tháng)" Icon={Users} href="/khach-hang" nhanHref="Khách hàng" trong="Chưa có khách nào phát sinh chi tiêu 12 tháng gần đây." dong={d.topKhach.map((x) => ({ ten: x.ten, chu: tienVN(x.chi), gt: x.chi, chiTiet: [{ nhan: "Chi 12 tháng", gt: tienVN(x.chi) }] }))} />}
+        {xemTien && <BangXepHangDep tieuDe="Top khách chi nhiều (12 tháng)" Icon={Users} href="/khach-hang" nhanHref="Khách hàng" trong="Chưa có khách nào phát sinh chi tiêu 12 tháng gần đây." dong={d.topKhach.map((x) => ({ ten: x.ten, chu: tienGon(x.chi), gt: x.chi, chiTiet: [{ nhan: "Chi 12 tháng", gt: tienVN(x.chi) }] }))} />}
       </div>
     </div>
   );

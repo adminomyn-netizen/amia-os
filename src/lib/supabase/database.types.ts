@@ -2156,6 +2156,416 @@ export type Database = {
         }
         Relationships: []
       }
+      kd_bieu_mau: {
+        Row: {
+          cum: string | null
+          ma: string
+          muc_dich: string | null
+          nguoi_dung: string | null
+          ten: string
+          thu_tu: number
+          truong: string | null
+        }
+        Insert: {
+          cum?: string | null
+          ma: string
+          muc_dich?: string | null
+          nguoi_dung?: string | null
+          ten: string
+          thu_tu: number
+          truong?: string | null
+        }
+        Update: {
+          cum?: string | null
+          ma?: string
+          muc_dich?: string | null
+          nguoi_dung?: string | null
+          ten?: string
+          thu_tu?: number
+          truong?: string | null
+        }
+        Relationships: []
+      }
+      kd_checklist: {
+        Row: {
+          cong_cu: string | null
+          lam_gi: string | null
+          ma: string
+          nhom: string
+          ten_nhom: string
+          thao_tac: string
+          thu_tu: number
+          tieu_chuan: string | null
+        }
+        Insert: {
+          cong_cu?: string | null
+          lam_gi?: string | null
+          ma: string
+          nhom: string
+          ten_nhom: string
+          thao_tac: string
+          thu_tu: number
+          tieu_chuan?: string | null
+        }
+        Update: {
+          cong_cu?: string | null
+          lam_gi?: string | null
+          ma?: string
+          nhom?: string
+          ten_nhom?: string
+          thao_tac?: string
+          thu_tu?: number
+          tieu_chuan?: string | null
+        }
+        Relationships: []
+      }
+      kd_cum: {
+        Row: {
+          muc_tieu: string | null
+          so: number
+          ten: string
+        }
+        Insert: {
+          muc_tieu?: string | null
+          so: number
+          ten: string
+        }
+        Update: {
+          muc_tieu?: string | null
+          so?: number
+          ten?: string
+        }
+        Relationships: []
+      }
+      kd_dau_viec: {
+        Row: {
+          cap_nhat_boi: string | null
+          cap_nhat_luc: string | null
+          chu_tri: string | null
+          dod: string | null
+          ghi_chu: string | null
+          giai_doan: number
+          han: string | null
+          hang_muc_ma: string
+          ma: string
+          mo_ta: string
+          nguoi_phu_trach_id: string | null
+          phoi_hop: string | null
+          san_pham: string | null
+          thu_tu: number
+          trang_thai: string
+        }
+        Insert: {
+          cap_nhat_boi?: string | null
+          cap_nhat_luc?: string | null
+          chu_tri?: string | null
+          dod?: string | null
+          ghi_chu?: string | null
+          giai_doan: number
+          han?: string | null
+          hang_muc_ma: string
+          ma: string
+          mo_ta: string
+          nguoi_phu_trach_id?: string | null
+          phoi_hop?: string | null
+          san_pham?: string | null
+          thu_tu: number
+          trang_thai?: string
+        }
+        Update: {
+          cap_nhat_boi?: string | null
+          cap_nhat_luc?: string | null
+          chu_tri?: string | null
+          dod?: string | null
+          ghi_chu?: string | null
+          giai_doan?: number
+          han?: string | null
+          hang_muc_ma?: string
+          ma?: string
+          mo_ta?: string
+          nguoi_phu_trach_id?: string | null
+          phoi_hop?: string | null
+          san_pham?: string | null
+          thu_tu?: number
+          trang_thai?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kd_dau_viec_cap_nhat_boi_fkey"
+            columns: ["cap_nhat_boi"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kd_dau_viec_hang_muc_ma_fkey"
+            columns: ["hang_muc_ma"]
+            isOneToOne: false
+            referencedRelation: "kd_hang_muc"
+            referencedColumns: ["ma"]
+          },
+          {
+            foreignKeyName: "kd_dau_viec_nguoi_phu_trach_id_fkey"
+            columns: ["nguoi_phu_trach_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      kd_hang_muc: {
+        Row: {
+          cum_so: number
+          ma: string
+          muc_tieu: string | null
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          cum_so: number
+          ma: string
+          muc_tieu?: string | null
+          ten: string
+          thu_tu: number
+        }
+        Update: {
+          cum_so?: number
+          ma?: string
+          muc_tieu?: string | null
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kd_hang_muc_cum_so_fkey"
+            columns: ["cum_so"]
+            isOneToOne: false
+            referencedRelation: "kd_cum"
+            referencedColumns: ["so"]
+          },
+        ]
+      }
+      kd_kich_ban: {
+        Row: {
+          loi_thoai: string | null
+          luu_y: string | null
+          ma: string
+          muc_tieu: string | null
+          thu_tu: number
+          tinh_huong: string
+        }
+        Insert: {
+          loi_thoai?: string | null
+          luu_y?: string | null
+          ma: string
+          muc_tieu?: string | null
+          thu_tu: number
+          tinh_huong: string
+        }
+        Update: {
+          loi_thoai?: string | null
+          luu_y?: string | null
+          ma?: string
+          muc_tieu?: string | null
+          thu_tu?: number
+          tinh_huong?: string
+        }
+        Relationships: []
+      }
+      kd_kpi: {
+        Row: {
+          chi_tieu: string | null
+          chu_tri: string | null
+          cong_thuc: string | null
+          id: string
+          nguon: string | null
+          nhom: string
+          tan_suat: string | null
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          chi_tieu?: string | null
+          chu_tri?: string | null
+          cong_thuc?: string | null
+          id?: string
+          nguon?: string | null
+          nhom: string
+          tan_suat?: string | null
+          ten: string
+          thu_tu: number
+        }
+        Update: {
+          chi_tieu?: string | null
+          chu_tri?: string | null
+          cong_thuc?: string | null
+          id?: string
+          nguon?: string | null
+          nhom?: string
+          tan_suat?: string | null
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      kd_nhip: {
+        Row: {
+          chu_ky: string
+          chu_tri: string | null
+          dau_ra: string | null
+          hoat_dong: string
+          id: string
+          nhom: string
+          noi_dung: string | null
+          thu_tu: number
+        }
+        Insert: {
+          chu_ky: string
+          chu_tri?: string | null
+          dau_ra?: string | null
+          hoat_dong: string
+          id?: string
+          nhom: string
+          noi_dung?: string | null
+          thu_tu: number
+        }
+        Update: {
+          chu_ky?: string
+          chu_tri?: string | null
+          dau_ra?: string | null
+          hoat_dong?: string
+          id?: string
+          nhom?: string
+          noi_dung?: string | null
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      kd_qt_buoc: {
+        Row: {
+          bieu_mau: string | null
+          buoc: string
+          dau_ra: string | null
+          hanh_dong: string
+          nguoi: string | null
+          qt_ma: string
+          thu_tu: number
+          tieu_chuan: string | null
+        }
+        Insert: {
+          bieu_mau?: string | null
+          buoc: string
+          dau_ra?: string | null
+          hanh_dong: string
+          nguoi?: string | null
+          qt_ma: string
+          thu_tu: number
+          tieu_chuan?: string | null
+        }
+        Update: {
+          bieu_mau?: string | null
+          buoc?: string
+          dau_ra?: string | null
+          hanh_dong?: string
+          nguoi?: string | null
+          qt_ma?: string
+          thu_tu?: number
+          tieu_chuan?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kd_qt_buoc_qt_ma_fkey"
+            columns: ["qt_ma"]
+            isOneToOne: false
+            referencedRelation: "kd_quy_trinh"
+            referencedColumns: ["ma"]
+          },
+        ]
+      }
+      kd_quy_trinh: {
+        Row: {
+          bieu_mau: string | null
+          bieu_mau_chinh: string | null
+          chu_tri: string | null
+          cum: string | null
+          dau_ra: string | null
+          dau_vao: string | null
+          kpi: string | null
+          ma: string
+          muc_dich: string | null
+          nguoi_lien_quan: string | null
+          pham_vi: string | null
+          ten: string
+          tham_chieu: string | null
+          thu_tu: number
+        }
+        Insert: {
+          bieu_mau?: string | null
+          bieu_mau_chinh?: string | null
+          chu_tri?: string | null
+          cum?: string | null
+          dau_ra?: string | null
+          dau_vao?: string | null
+          kpi?: string | null
+          ma: string
+          muc_dich?: string | null
+          nguoi_lien_quan?: string | null
+          pham_vi?: string | null
+          ten: string
+          tham_chieu?: string | null
+          thu_tu: number
+        }
+        Update: {
+          bieu_mau?: string | null
+          bieu_mau_chinh?: string | null
+          chu_tri?: string | null
+          cum?: string | null
+          dau_ra?: string | null
+          dau_vao?: string | null
+          kpi?: string | null
+          ma?: string
+          muc_dich?: string | null
+          nguoi_lien_quan?: string | null
+          pham_vi?: string | null
+          ten?: string
+          tham_chieu?: string | null
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      kd_rui_ro: {
+        Row: {
+          bien_phap: string | null
+          ma: string
+          mo_ta: string | null
+          muc: string | null
+          nhom: string | null
+          ten: string
+          thu_tu: number
+          trach_nhiem: string | null
+        }
+        Insert: {
+          bien_phap?: string | null
+          ma: string
+          mo_ta?: string | null
+          muc?: string | null
+          nhom?: string | null
+          ten: string
+          thu_tu: number
+          trach_nhiem?: string | null
+        }
+        Update: {
+          bien_phap?: string | null
+          ma?: string
+          mo_ta?: string | null
+          muc?: string | null
+          nhom?: string | null
+          ten?: string
+          thu_tu?: number
+          trach_nhiem?: string | null
+        }
+        Relationships: []
+      }
       khach_anh: {
         Row: {
           duong_dan: string

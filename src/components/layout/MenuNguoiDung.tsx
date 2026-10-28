@@ -6,6 +6,7 @@ import { ChevronDown, LogOut, Settings, UserCog } from "lucide-react";
 import { dangXuat } from "@/app/dang-nhap/actions";
 import { AnhDaiDien } from "./AnhDaiDien";
 import { ChonGiaoDien } from "./ChonGiaoDien";
+import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 
 export type NhomCaiDat = { nhan: string; the: { ten: string; moTa: string; duongDan?: string }[] };
 type Props = { hoTen: string; vaiTro: string; chucDanh: string | null; email: string; chiNhanh: string | null; anh: string | null; toi?: boolean; caiDat?: NhomCaiDat[] };
@@ -52,6 +53,7 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
             <div><dt className="nhan-muc">Chi nhánh</dt><dd className="mt-0.5 text-muc-2">{chiNhanh ?? "Mọi chi nhánh"}</dd></div>
           </dl>
           <ChonGiaoDien />
+          <BatThongBao />
           <div className="border-t border-vien p-2">
             {caiDat.length > 0 && (
               <button type="button" role="menuitem" onClick={() => { setMo(false); setMoCD(true); }} className="flex w-full items-center gap-3 rounded-nho px-3 py-2.5 text-left text-[14px] font-medium text-muc hover:bg-giay-tram">

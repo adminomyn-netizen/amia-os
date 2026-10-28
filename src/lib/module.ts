@@ -151,6 +151,7 @@ export const MODULE: Module[] = [
       { nhan: "Thông tin cửa hàng", the: [
         { ten: "Thông tin chung", moTa: "Tên, địa chỉ, pháp nhân, giờ làm việc.", duongDan: "/cai-dat/thong-tin-chung", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Chi nhánh", moTa: "Chi nhánh và phân quyền vận hành.", duongDan: "/danh-muc?tab=chi-nhanh", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Giờ làm việc", moTa: "Giờ mở cửa và ngày nghỉ của từng chi nhánh.", duongDan: "/cai-dat/gio-lam-viec", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Tài khoản ngân hàng", moTa: "Tài khoản dùng khi thu tiền chuyển khoản và sổ quỹ.", duongDan: "/cai-dat/ngan-hang", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Bảng tin công ty", moTa: "Thông báo hiển thị cho toàn công ty.", duongDan: "/cai-dat/bang-tin", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },

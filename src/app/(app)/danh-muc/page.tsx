@@ -181,7 +181,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
       </>
     );
   } else {
-    const { data: cn } = await db.from("chi_nhanh").select("*").order("thu_tu").order("ma");
+    const { data: cn } = await db.from("chi_nhanh").select("id, ma, ten, dia_chi, dien_thoai, thu_tu, hoat_dong, tao_luc").order("thu_tu").order("ma");
     const truong: Truong[] = [
       { ten: "ma", nhan: "Mã", loai: "chu", batBuoc: true }, { ten: "ten", nhan: "Tên chi nhánh", loai: "chu", batBuoc: true },
       { ten: "dia_chi", nhan: "Địa chỉ", loai: "chu", rong: true }, { ten: "dien_thoai", nhan: "Điện thoại", loai: "chu" }, { ten: "thu_tu", nhan: "Thứ tự hiện (nhỏ đứng trước)", loai: "so" }, { ten: "hoat_dong", nhan: "Đang hoạt động", loai: "gat" },

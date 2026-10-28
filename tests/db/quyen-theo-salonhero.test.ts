@@ -61,3 +61,22 @@ describe("Kế toán (SalonHero: Kế toán)", () => {
     expect(co("ke_toan", "quy.ghi") && co("ke_toan", "ky.khoa") && co("ke_toan", "luong.sua")).toBe(true);
   });
 });
+
+describe("Marketing (SalonHero: Marketing CSKH)", () => {
+  it("thêm/sửa khách như SalonHero; chưa nới: xem hoá đơn, xem số tiền, thẻ liệu trình", () => {
+    expect(co("marketing", "khach.sua")).toBe(true);
+    for (const q of ["ban.xem", "baocao.tien", "the.xem", "lich.sua", "khach.nhap"] as const) expect(co("marketing", q)).toBe(false);
+    expect(ten("marketing")).toEqual(expect.arrayContaining(["Marketing", "Báo cáo", "Khách hàng"]));
+  });
+});
+
+describe("Quản lý, Tư vấn, Thủ kho: đã khớp SalonHero, không đổi", () => {
+  it("Tư vấn có lịch, bán hàng, thẻ; Thủ kho chỉ kho, cấp vật tư, mua; Quản lý đủ nghiệp vụ nhưng không phân quyền", () => {
+    for (const q of ["khach.sua", "lich.sua", "ban.tao", "the.xem", "lead.xu_ly"] as const) expect(co("tu_van", q)).toBe(true);
+    for (const q of ["baocao.tien", "quy.xem", "ban.huy"] as const) expect(co("tu_van", q)).toBe(false);
+    expect(co("thu_kho", "kho.nhap") && co("thu_kho", "phieu.cap")).toBe(true);
+    for (const q of ["khach.xem", "ban.xem", "baocao.xem"] as const) expect(co("thu_kho", q)).toBe(false);
+    expect(co("quan_ly", "baocao.tien")).toBe(true);
+    expect(co("quan_ly", "hethong.phanquyen")).toBe(false);
+  });
+});

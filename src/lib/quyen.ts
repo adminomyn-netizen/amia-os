@@ -65,7 +65,7 @@ export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
   ktv: ["khach.xem", "khach.sua", "hoso.xem", "anh.xem", "anh.them", "lich.xem", "lich.sua", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.nhan", "noibo.dung", "bc.bao"], // SalonHero: Nhân viên/Tư vấn đặt lịch và thêm/sửa khách (booking+customer create/update)
   thu_kho: ["tongquan.xem", "danhmuc.xem", "kho.xem", "kho.nhap", "phieu.xem", "phieu.cap", "phieu.doichieu", "mua.xem", "mua.tao", "noibo.dung"],
   ke_toan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "ban.xem", "no.thu", "hd.vat", "danhmuc.xem", "kho.xem", "kho.duyet", "ky.khoa", "baocao.xem", "baocao.tien", "phieu.xem", "quy.xem", "quy.ghi", "mua.xem", "cong.xem", "luong.xem", "luong.sua", "noibo.dung", "vb.xem"], // SalonHero: Kế toán xem lịch, thêm/sửa khách (booking read, customer create+update)
-  marketing: ["tongquan.xem", "khach.xem", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "mkt.xem", "mkt.sua", "lead.xu_ly", "vb.xem", "vb.soan"],
+  marketing: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "mkt.xem", "mkt.sua", "lead.xu_ly", "vb.xem", "vb.soan"], // SalonHero: Marketing CSKH thêm/sửa khách (customer create+update)
   nha_dau_tu: ["tongquan.xem", "baocao.xem", "baocao.tien"],
   nhan_vien: ["noibo.dung"],
 };

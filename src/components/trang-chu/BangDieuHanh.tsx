@@ -33,23 +33,17 @@ export const MA_CHO_DUYET = NHOM[0].ma;
 const THUONG = (c: CanhBao["ma"]) => !c.startsWith("tomtat");
 
 /** Dashboard của lãnh đạo, bố cục theo BeDental: dải cảnh báo, ba khối (bảng tin, top nhân viên, việc của tôi), rồi hàng ô số lớn. */
-export function BangDieuHanh({ canhBao, tin, top, so, soLieuNode }: { canhBao: CanhBao[]; tin: Tin[]; top: NguoiTop[]; so: So; soLieuNode: React.ReactNode }) {
+export function BangDieuHanh({ canhBao, tin, top, so, soLieuNode, baoCaoNode }: { canhBao: CanhBao[]; tin: Tin[]; top: NguoiTop[]; so: So; soLieuNode: React.ReactNode; baoCaoNode?: React.ReactNode }) {
   const gap = canhBao.filter((c) => THUONG(c.ma));
   const nhan = NHOM.map((g) => ({ nhan: g.nhan, ds: gap.filter((c) => g.ma.includes(c.ma)), n: gap.filter((c) => g.ma.includes(c.ma)).length })).filter((g) => g.n > 0);
   const choDuyet = gap.filter((c) => MA_CHO_DUYET.includes(c.ma)).length;
   const tile: Tile[] = [
     { nhan: "Lịch hẹn hôm nay", so: String(so.lich), phu: `${so.hoanThanh} hoàn thành · ${so.khongDen} không đến`, mau: "xanh", Icon: CalendarDays, href: "/lich-hen" },
-    { nhan: "Đang chờ / phục vụ", so: String(so.dangCho), phu: `${so.choXacNhan + Math.max(0, so.dangCho - so.choXacNhan - so.dangPhucVu)} chờ · ${so.dangPhucVu} đang phục vụ`, mau: "luc", Icon: Clock, href: "/lich-hen" },
+    { nhan: "Đang chờ / phục vụ", so: String(so.dangCho), phu: `${so.choXacNhan + Math.max(0, so.dangCho - so.choXacNhan - so.dangPhucVu)} chờ (${so.choXacNhan} chưa xác nhận) · ${so.dangPhucVu} đang phục vụ`, mau: "luc", Icon: Clock, href: "/lich-hen" },
     ...(so.thuHomNay != null ? [{ nhan: "Đã thu hôm nay", so: tienGon(so.thuHomNay), phu: so.thuChiTiet || "chưa có doanh thu", mau: "tim", Icon: CircleDollarSign, href: "/bao-cao" }] : []),
     ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienGon(so.noMoi), phu: `tổng nợ treo ${tienGon(so.tongNo)}`, mau: "cam", Icon: TrendingUp, href: "/bao-cao?tab=no" }] : []),
     { nhan: "Cần phê duyệt", so: String(choDuyet), phu: choDuyet ? "bấm để xem danh sách" : "đã duyệt hết", mau: "hong", Icon: ClipboardCheck, href: "#viec-cua-toi" },
     { nhan: "Kho thấp", so: String(so.khoThap), phu: "mặt hàng dưới mức tối thiểu", mau: "cam", Icon: Package, href: "/kho?thieu=1" },
-  ];
-  const canhVanHanh = [
-    { nhan: "Việc cần duyệt", so: String(choDuyet), khan: choDuyet > 0 },
-    { nhan: "Kho sắp hết", so: String(so.khoThap), khan: false },
-    { nhan: "Lịch chưa xác nhận", so: String(so.choXacNhan), khan: false },
-    ...(so.noMoi != null ? [{ nhan: "Nợ phát sinh hôm nay", so: tienGon(so.noMoi), khan: false }] : []),
   ];
 
   return (
@@ -105,6 +99,8 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieuNode }: { canhBao: C
         ))}
       </dl>
 
+      {baoCaoNode}
+
       <section aria-label="Truy cập nhanh">
         <h2 className="mb-3 flex items-center gap-2 text-[14px] font-semibold text-muc"><TrendingUp strokeWidth={1.7} className="h-4 w-4 text-nhan" aria-hidden />Truy cập nhanh <span className="text-[12px] font-normal text-muc-3">theo quyền tài khoản</span></h2>
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
@@ -116,18 +112,6 @@ export function BangDieuHanh({ canhBao, tin, top, so, soLieuNode }: { canhBao: C
       </section>
 
       {soLieuNode}
-
-      <section aria-label="Cảnh báo vận hành" className="the-noi vao p-5 pt-6">
-        <h2 className="flex items-center gap-2 border-b border-vien pb-2.5 text-[15px] font-semibold text-muc"><AlertTriangle strokeWidth={1.7} className="h-4 w-4 text-nhan" aria-hidden />Cảnh báo vận hành</h2>
-        <ul className="grid gap-3 pt-4 sm:grid-cols-2 lg:grid-cols-4">
-          {canhVanHanh.map((c) => (
-            <li key={c.nhan} className="flex items-center justify-between gap-3 rounded-nho border border-vien px-4 py-3">
-              <div className="min-w-0"><p className="text-[13px] text-muc-2">{c.nhan}</p><p className="mt-1 text-[22px] font-semibold leading-none tabular-nums text-muc">{c.so}</p></div>
-              <span className={`shrink-0 rounded-nho px-2 py-0.5 text-[11px] font-semibold ${c.khan ? "bg-loi-nen text-loi" : "bg-sac-xanh-nen text-sac-xanh"}`}>{c.khan ? "KHẨN" : "THÔNG TIN"}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
     </div>
   );
 }

@@ -130,9 +130,9 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
 
       <BangDieuHanh canhBao={canhBao} tin={tin.map((t) => ({ id: t.id, tieu_de: t.tieu_de, noi_dung: t.noi_dung }))} top={top}
           so={{ lich: soLich, dangCho, khongDen, hoanThanh: Math.max(0, soLich - dangCho), choXacNhan: demLich("chua_xac_nhan"), dangPhucVu: demLich("dang_phuc_vu"), thuChiTiet: hn ? `doanh thu ${tienVN(Number(hn.doanh_thu))}` : "", tongNo: dsNo.reduce((x, r) => x + Number(r.con_no), 0), khoThap: canhBao.filter((c) => c.ma === "kho").length, leadChua: 0, nhanCn: dsCn, cnDangChon: cn, thuHomNay: coQuyen(nd, "baocao.tien") ? Number(hn?.thuc_thu ?? 0) : null, noMoi: coQuyen(nd, "baocao.tien") ? Number(hn?.no_moi ?? 0) : null }} soLieuNode={<Suspense fallback={<Xuong cao="h-96" nhan="Đang tải số liệu kinh doanh" />}><KhoiSoLieu nd={nd} homNay={homNay} dauThang={dauThang} rows={dtNgay ?? []} ds={ds} canhBao={canhBao} dsNo={dsNo} pKhMoi={pKhMoi} pTk={pTk} pTc={pTc} pNv={pNv} pTopBan={pTopBan} pTopKh={pTopKh} />
-</Suspense>} />
+</Suspense>}
+          baoCaoNode={coQuyen(nd, "baocao.xem") && <Suspense fallback={<BaoCaoNgayDangTai />}><BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} /></Suspense>} />
 
-      {coQuyen(nd, "baocao.xem") && <Suspense fallback={<BaoCaoNgayDangTai />}><BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} /></Suspense>}
 
       {nd.vaiTro === "ky_thuat" && <BangHieuSuatApp d={await doHieuSuatApp(batDau)} />}
     </>

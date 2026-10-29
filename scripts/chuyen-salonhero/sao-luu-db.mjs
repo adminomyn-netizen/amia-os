@@ -9,14 +9,30 @@ import { createHash } from "node:crypto";
 import { pipeline } from "node:stream/promises";
 import { Readable } from "node:stream";
 
-const nhan = process.argv[2] ?? "thu";
+// LUẬT 29/10/2026 (chị Lâm, giữ gói Supabase Free; egress 14/5GB do ~47 bản sao lưu toàn DB): sao lưu TOÀN DB chỉ chạy 23:00–05:00 (giờ VN) và TỐI ĐA 1 bản/đêm,
+// chỉ khi có nạp/migration trong đêm đó. Ban ngày chỉ được sao lưu MỘT SỐ bảng sẽ đổi: --bang=ten1,ten2 (≤ 8 bảng). Mỗi bản toàn DB đọc ~0,3GB ra khỏi Supabase.
+const dayDu = !process.argv.some((a) => a.startsWith("--bang="));
+const dsBang = (process.argv.find((a) => a.startsWith("--bang=")) ?? "").slice(7).split(",").map((x) => x.trim()).filter(Boolean);
+const doiSo = process.argv.slice(2).filter((a) => !a.startsWith("--"));
+const gioVN = new Date(Date.now() + 7 * 3600e3);
+const gio = gioVN.getUTCHours();
+if (dayDu) {
+  if (gio >= 5 && gio < 23) { console.error("TỪ CHỐI: không sao lưu TOÀN DB ban ngày (luật 29/10, tiết kiệm egress). Chạy 23:00–05:00, hoặc dùng --bang=bang1,bang2 cho vài bảng sắp đổi."); process.exit(2); }
+  const dau = new Date(gioVN.getTime()); if (gio < 5) dau.setUTCDate(dau.getUTCDate() - 1); dau.setUTCHours(23, 0, 0, 0);
+  const moc = dau.toISOString().slice(0, 10).replace(/-/g, "");
+  const { readdirSync } = await import("node:fs");
+  const daCo = readdirSync("sao-luu").filter((d) => d.startsWith("db-") && d.slice(3, 11) >= moc && !/-bang-/.test(d)).filter((d) => { const t = d.slice(3, 15); return t >= moc + (gio < 5 ? "2300" : "2300"); });
+  if (daCo.length) { console.error(`TỪ CHỐI: đêm nay đã có bản sao lưu toàn DB (${daCo[0]}); tối đa 1 bản/đêm.`); process.exit(2); }
+} else if (dsBang.length === 0 || dsBang.length > 8) { console.error("TỪ CHỐI: --bang cần 1–8 tên bảng."); process.exit(2); }
+const nhan = (dayDu ? "" : "bang-") + (doiSo[0] ?? "thu");
 const luc = new Date(Date.now() + 7 * 3600e3).toISOString().slice(0, 16).replace(/[-:T]/g, "").replace(/^(\d{8})(\d{4})$/, "$1-$2");
 const thuMuc = `sao-luu/db-${luc}-${nhan}`;
 mkdirSync(thuMuc, { recursive: true });
 const db = new pg.Client({ connectionString: `postgresql://postgres.odhbmsjfbfefczienpda:${encodeURIComponent(process.env.PW)}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`, ssl: { rejectUnauthorized: false } });
 await db.connect();
 await db.query("begin read only isolation level repeatable read");
-const bang = (await db.query(`select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' order by 1`)).rows.map((r) => r.relname);
+const bang = (await db.query(`select c.relname from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' order by 1`)).rows.map((r) => r.relname).filter((b) => dayDu || dsBang.includes(b));
+if (!dayDu && bang.length !== dsBang.length) { console.error(`TỪ CHỐI: có bảng không tồn tại trong public: ${dsBang.filter((x) => !bang.includes(x)).join(", ")}`); process.exit(2); }
 const manifest = { luc: new Date().toISOString(), nhan, bang: {} };
 for (const b of bang) {
   const f = `${thuMuc}/${b}.ndjson.gz`;

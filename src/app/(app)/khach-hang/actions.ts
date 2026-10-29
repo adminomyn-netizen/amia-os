@@ -178,6 +178,13 @@ export async function layAnhCu(fd: FormData): Promise<KQ> {
   return { ok: true };
 }
 
+/** Hỏi nhẹ (1 dòng) xem việc lấy ảnh cũ của khách đã xong chưa — thay cho làm mới cả hồ sơ khách mỗi vài giây (tiết kiệm egress Supabase Free). */
+export async function trangThaiLayAnh(khachId: string): Promise<{ dangLay: boolean }> {
+  if (!(await kiemQuyen("anh.xem")) || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(khachId)) return { dangLay: false };
+  const { data } = await sb().from("yeu_cau_lay_anh").select("trang_thai").eq("khach_id", khachId).order("tao_luc", { ascending: false }).limit(1).maybeSingle();
+  return { dangLay: data?.trang_thai === "cho" || data?.trang_thai === "dang_lay" };
+}
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Trang ảnh kế tiếp của khách (cuộn xuống thì lấy thêm). `tu` = số ảnh đã có. */
 export async function trangAnh(khachId: string, tu: number): Promise<{ ds: AnhKhach[]; loi?: string }> {

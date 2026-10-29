@@ -42,8 +42,12 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
       setTruc(noi);
       if (noi) lamMoi(); // vừa nối (hoặc nối lại): lấy bù những thay đổi đã lỡ
     });
-    const hoiLai = () => { if (document.visibilityState === "visible") lamMoi(); };
-    const t = setInterval(() => { if (document.visibilityState === "visible" && (!trucRef.current || Date.now() % 300000 < 30000)) lamMoi(); }, 30000);
+    // Chuông hỏi lại mỗi 120 giây (khi chưa nối realtime; nối rồi thì ~5 phút/lần); tab ẩn thì DỪNG hẳn bộ đếm, hiện lại mới chạy tiếp (tiết kiệm egress Supabase Free).
+    let t: ReturnType<typeof setInterval> | undefined;
+    const tick = () => { if (document.visibilityState === "visible" && (!trucRef.current || Date.now() % 300000 < 120000)) lamMoi(); };
+    const chay = () => { clearInterval(t); t = undefined; if (document.visibilityState === "visible") t = setInterval(tick, 120000); };
+    const hoiLai = () => { chay(); if (document.visibilityState === "visible") lamMoi(); };
+    chay();
     document.addEventListener("visibilitychange", hoiLai); window.addEventListener("online", hoiLai);
     return () => { clearTimeout(dau); clearTimeout(tre); clearInterval(t); document.removeEventListener("visibilitychange", hoiLai); window.removeEventListener("online", hoiLai); void sb.removeChannel(kenh); };
   }, [lamMoi]);

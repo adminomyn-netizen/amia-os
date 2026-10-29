@@ -27,7 +27,7 @@ const LC_TT = [{ gia_tri: "", nhan: "Tất cả trạng thái" }, ...Object.entr
 const NHAN_PHIEU: Record<string, string> = { cho_cap: "Phiếu chờ cấp", da_cap: "Đã cấp, chờ Chuyên viên trị liệu nhận", da_nhan: "Chuyên viên trị liệu đã nhận", da_lam: "Đã làm xong", da_doi_chieu: "Đã đối chiếu", huy: "Phiếu đã huỷ" };
 const KIEU_XEM = [{ ma: "cho", nhan: "Vị trí chỗ" }, { ma: "nv", nhan: "Nhân viên" }, { ma: "gio", nhan: "Thời gian" }] as const;
 const DAT = /^\d{4}-\d{2}-\d{2}$/;
-const TOI_DA_THEO_O = 3;
+const TOI_DA_THEO_O = 5;
 const MAU_VONG = ["bg-sac-xanh-nen text-sac-xanh", "bg-sac-luc-nen text-sac-luc", "bg-sac-cam-nen text-sac-cam", "bg-sac-tim-nen text-sac-tim", "bg-sac-hong-nen text-sac-hong"];
 
 type Sp = { ngay?: string; tu?: string; den?: string; cn?: string; khach?: string; nguon?: string; nv?: string; cho?: string; kieu?: string; q?: string; tt?: string };
@@ -156,7 +156,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const dauThang = ngay.slice(0, 8) + "01", cuoiThang = congNgay(congNgay(dauThang, 32).slice(0, 8) + "01", -1);
   const duoi = nguon ? `&nguon=${nguon}` : "";
   const xuat = (a: string, b: string) => `/api/xuat/lich-hen?tu=${a}&den=${b}&cn=${cnId}${duoi}`;
-  const cotLuoi = `230px repeat(${cacNgay.length}, minmax(176px, 1fr))`;
+  const cotLuoi = `${kieu === "gio" ? 64 : 176}px repeat(${cacNgay.length}, minmax(148px, 1fr))`;
   const nutKieu = (on: boolean) => `px-3.5 py-2 text-[13px] font-medium ${on ? "bg-nhan text-white" : "bg-giay-sang text-muc-2 hover:bg-giay-tram"}`;
   const nutPhu = "rounded-nho border border-vien-dam bg-giay-sang px-3.5 py-2 text-[13px] font-medium text-muc-2 hover:bg-giay-tram";
   const lichNgayHieuLuc = lichNgay.filter(homLich).length;
@@ -257,32 +257,30 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
             })}
             {hang.map((h) => (
               <div key={h.khoa || "_"} className="contents">
-                <div className="sticky left-0 z-10 flex min-h-[72px] items-center gap-2.5 border-b border-r border-vien bg-giay-sang px-3 py-2">
-                  {h.vong ? <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-[50%] text-[12px] font-semibold ${MAU_VONG[h.mau ?? 0]}`} aria-hidden>{h.vong}</span>
-                    : kieu === "gio" ? null : <span className="h-9 w-9 shrink-0 rounded-[50%] border border-dashed border-vien-dam" aria-hidden />}
-                  <div className="min-w-0"><div className="break-words text-[12px] font-semibold leading-tight text-muc">{h.ten}</div>{h.phu && <div className="mt-0.5 truncate text-[12px] text-muc-3">{h.phu}</div>}</div>
+                <div title={[h.ten, h.phu].filter(Boolean).join(" · ")} className="sticky left-0 z-10 flex min-h-[44px] items-center gap-2 border-b border-r border-vien bg-giay-sang px-2.5 py-1">
+                  {h.vong ? <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-[50%] text-[10.5px] font-semibold ${MAU_VONG[h.mau ?? 0]}`} aria-hidden>{h.vong}</span>
+                    : kieu === "gio" ? null : <span className="h-7 w-7 shrink-0 rounded-[50%] border border-dashed border-vien-dam" aria-hidden />}
+                  <div className="min-w-0"><div className="truncate text-[12px] font-semibold leading-tight text-muc">{h.ten}</div></div>
                 </div>
                 {cacNgay.map((d) => {
                   const ds = o.get(`${h.khoa}|${d}`) ?? [];
                   return (
-                    <div key={d} className="min-h-[72px] space-y-1.5 border-b border-l border-vien p-1.5">
+                    <div key={d} className="min-h-[44px] space-y-1 border-b border-l border-vien p-1">
                       {ds.slice(0, TOI_DA_THEO_O).map((l) => {
                         const k = tenK.get(l.khach_id);
                         return (
-                          <Link key={l.id} href={url({ ngay: d })} title={`${k?.ho_ten ?? ""} · ${TT[l.trang_thai].nhan}`} className={`block rounded-nho border border-vien border-l-[3px] border-l-nhan bg-giay-sang px-2 py-1 hover:bg-giay-tram ${l.trang_thai === "hoan_thanh" ? "opacity-60" : ""}`}>
-                            <div className="truncate text-[12px] font-semibold uppercase text-muc">{k?.ho_ten}</div>
-                            <div className="truncate text-[11px] text-muc-3">Hạng {k?.hang ?? "Thường"}</div>
-                            <div className="text-[11px] font-medium tabular-nums text-loi">{gioVN(l.bat_dau)} ~ {gioVN(l.ket_thuc)}</div>
+                          <Link key={l.id} href={url({ ngay: d })} title={`${k?.ho_ten ?? ""} · Hạng ${k?.hang ?? "Thường"} · ${gioVN(l.bat_dau)}–${gioVN(l.ket_thuc)} · ${TT[l.trang_thai].nhan}`} className={`block rounded-nho border border-vien border-l-[3px] border-l-nhan bg-giay-sang px-1.5 py-0.5 hover:bg-giay-tram ${l.trang_thai === "hoan_thanh" ? "opacity-60" : ""}`}>
+                            <div className="truncate text-[11px] font-semibold uppercase leading-tight text-muc">{k?.ho_ten}</div>
+                            <div className="text-[10.5px] font-medium leading-tight tabular-nums text-loi">{gioVN(l.bat_dau)} ~ {gioVN(l.ket_thuc)}</div>
                           </Link>
                         );
                       })}
                       {ds.length > TOI_DA_THEO_O && <XemThemO so={ds.length - TOI_DA_THEO_O}>{ds.slice(TOI_DA_THEO_O).map((l) => {
                         const k = tenK.get(l.khach_id);
                         return (
-                          <Link key={l.id} href={url({ ngay: d })} title={`${k?.ho_ten ?? ""} · ${TT[l.trang_thai].nhan}`} className={`block rounded-nho border border-vien border-l-[3px] border-l-nhan bg-giay-sang px-2 py-1 hover:bg-giay-tram ${l.trang_thai === "hoan_thanh" ? "opacity-60" : ""}`}>
-                            <div className="truncate text-[12px] font-semibold uppercase text-muc">{k?.ho_ten}</div>
-                            <div className="truncate text-[11px] text-muc-3">Hạng {k?.hang ?? "Thường"}</div>
-                            <div className="text-[11px] font-medium tabular-nums text-loi">{gioVN(l.bat_dau)} ~ {gioVN(l.ket_thuc)}</div>
+                          <Link key={l.id} href={url({ ngay: d })} title={`${k?.ho_ten ?? ""} · Hạng ${k?.hang ?? "Thường"} · ${gioVN(l.bat_dau)}–${gioVN(l.ket_thuc)} · ${TT[l.trang_thai].nhan}`} className={`block rounded-nho border border-vien border-l-[3px] border-l-nhan bg-giay-sang px-1.5 py-0.5 hover:bg-giay-tram ${l.trang_thai === "hoan_thanh" ? "opacity-60" : ""}`}>
+                            <div className="truncate text-[11px] font-semibold uppercase leading-tight text-muc">{k?.ho_ten}</div>
+                            <div className="text-[10.5px] font-medium leading-tight tabular-nums text-loi">{gioVN(l.bat_dau)} ~ {gioVN(l.ket_thuc)}</div>
                           </Link>
                         );
                       })}</XemThemO>}

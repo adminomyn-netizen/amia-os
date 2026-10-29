@@ -1,3 +1,4 @@
+import { tenGonNv } from "@/lib/ten-nv";
 // Lịch hẹn: nguồn đặt và lịch lặp theo đúng mã SalonHero (dữ liệu chuyển sang giữ nguyên mã), nhãn tiếng Việt lấy từ bản dịch của SalonHero.
 
 /** Nguồn đặt lịch: mã SalonHero → nhãn. Thứ tự = thường gặp trước (theo 51.875 lịch đã chuyển). */
@@ -62,7 +63,7 @@ export const nhanNgayDai = (ngay: string, homNay: string) => `${THU_DAI[thuCuaNg
 export const ngayGach = (ngay: string) => ngay.split("-").reverse().join("-");
 
 /** Tên nhân viên hiển thị IN HOA: "MSC.TV-25.0115.Nguyễn Thị Thư" → "MSC.TV-25.0115.NGUYỄN THỊ THƯ". */
-export const tenNvHoa = (ten: string) => ten.trim().toLocaleUpperCase("vi-VN");
+export const tenNvHoa = (ten: string) => tenGonNv(ten).toLocaleUpperCase("vi-VN");
 /** Chữ tắt trong vòng tròn: bỏ phần mã "MSC.…." ở đầu, lấy chữ cái đầu của từ CUỐI rồi từ ĐẦU ("Đinh Thị Hôngg Mây" → "MĐ"); một từ thì lấy hai chữ đầu. */
 export function chuTatTen(ten: string) {
   const t = ten.trim();

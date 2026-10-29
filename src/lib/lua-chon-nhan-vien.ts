@@ -1,8 +1,9 @@
 import type { LuaChon } from "@/components/ui/Chon";
+import { tenGonNv } from "@/lib/ten-nv";
 import { laVaiTro, NHAN_VAI_TRO } from "@/lib/quyen";
 
 /** "MSC.CT-24.0017.Nguyễn Hoài Thương" → "Nguyễn Hoài Thương" (bỏ tiền tố mã nhân viên khi hiển thị trong ô chọn). */
-export const tenGonNv = (t: string) => t.replace(/^MSC[^.]*\.[^.]*\./, "");
+export { tenGonNv } from "@/lib/ten-nv";
 
 /** Lựa chọn nhân viên cho ô Chon: tên gọn, gom theo vai (Bác sĩ, Chuyên viên trị liệu…), sắp theo vai rồi tên. */
 export function luaChonNhanVien(ds: { id: string; ho_ten: string; vai_tro?: string | null }[]): LuaChon[] {

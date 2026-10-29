@@ -9,7 +9,7 @@ import { soVN } from "@/lib/dinh-dang";
 
 export type DongPhieu = { id: string; ten: string; don_vi: string; so_cap: number; dinh_muc: number };
 
-/** KTV làm xong: nhập số TRẢ lại cho từng vật tư (0 nếu dùng hết) + số đếm máy sau ca. Dùng thật = cấp − trả; vượt định mức quá ngưỡng thì phải ghi lý do và chọn bác sĩ xác nhận. */
+/** Chuyên viên trị liệu làm xong: nhập số TRẢ lại cho từng vật tư (0 nếu dùng hết) + số đếm máy sau ca. Dùng thật = cấp − trả; vượt định mức quá ngưỡng thì phải ghi lý do và chọn bác sĩ xác nhận. */
 export function FormHoanTat({ id, dong, bacSi, nguongPct, action }: { id: string; dong: DongPhieu[]; bacSi: LuaChon[]; nguongPct: number; action: (fd: FormData) => Promise<{ ok?: boolean; loi?: string }> }) {
   const router = useRouter();
   const [mo, setMo] = useState(false);

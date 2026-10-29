@@ -96,7 +96,7 @@ export const TRUONG_CHINH = ["gioi_tinh", "ngay_sinh", "que_quan", "dien_thoai_r
 export const tyLeDienHoSo = (h: Record<string, unknown> | null) => (h ? Math.round((TRUONG_CHINH.filter((k) => String(h[k] ?? "").trim() !== "").length / TRUONG_CHINH.length) * 100) : 0);
 
 export const QUAN_HE_THAN_NHAN = ["Vợ", "Chồng", "Con", "Cha", "Mẹ", "Anh chị em", "Người giám hộ"] as const;
-export const VAI_TRO_CHUYEN_MON: Record<string, string> = { bac_si_da_lieu: "Bác sĩ da liễu", ky_thuat_vien: "Kỹ thuật viên", tu_van: "Tư vấn", le_tan: "Lễ tân", thu_ngan: "Thu ngân", quan_ly: "Quản lý", cskh: "Chăm sóc khách hàng" };
+export const VAI_TRO_CHUYEN_MON: Record<string, string> = { bac_si_da_lieu: "Bác sĩ da liễu", ky_thuat_vien: "Chuyên viên trị liệu", tu_van: "Tư vấn", le_tan: "Lễ tân", thu_ngan: "Thu ngân", quan_ly: "Quản lý", cskh: "Chăm sóc khách hàng" };
 
 // ───────── Lộ trình thăng tiến (Lark 1.6, 1.10) ─────────
 export const VI_TRI: Record<string, string> = { giam_doc: "Giám đốc", truong_phong: "Trưởng phòng", truong_bo_phan: "Trưởng bộ phận", nhan_vien: "Nhân viên" };

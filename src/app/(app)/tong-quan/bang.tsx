@@ -26,7 +26,7 @@ const doiNhan = (dl: { nhan: string; gia_tri: number }[], bang: Record<string, s
 const NHAN_TRANG_THAI_KHACH = { dang_lieu_trinh: "Đang liệu trình", het_lieu_trinh: "Hết liệu trình", da_den: "Đã đến", lead: "Khách tiềm năng", mat: "Lâu không đến" };
 const NHAN_NGUON = { mkt: "Marketing", telesale: "Telesale", tu_van: "Tư vấn", khach_cu_gioi_thieu: "Khách cũ giới thiệu", khac: "Khác / chưa rõ" };
 const NHAN_THE = { hoat_dong: "Đang dùng", sap_het: "Sắp hết", het_han: "Hết hạn", hoan_thanh: "Đã dùng hết", thu_hoi: "Thu hồi", khoa: "Khoá" };
-const NHAN_PHIEU = { cho_cap: "Chờ kho cấp", da_cap: "Đã cấp", da_nhan: "KTV đã nhận", da_lam: "Đã làm", da_doi_chieu: "Đã đối chiếu", huy: "Huỷ" };
+const NHAN_PHIEU = { cho_cap: "Chờ kho cấp", da_cap: "Đã cấp", da_nhan: "Chuyên viên trị liệu đã nhận", da_lam: "Đã làm", da_doi_chieu: "Đã đối chiếu", huy: "Huỷ" };
 const NHAN_LOAI_BAN = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Gói thẻ" };
 
 const luoi = "grid gap-6 lg:grid-cols-2";

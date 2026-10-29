@@ -83,7 +83,7 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
       if ((count ?? 0) > 0) canhBao.push({ nhan: `${count} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
     }
   }
-  if ((phieuCho ?? 0) > 0) canhBao.push({ nhan: `${phieuCho} phiếu cấp vật tư đang chờ kho cấp hoặc KTV nhận`, href: "/phieu-cap" });
+  if ((phieuCho ?? 0) > 0) canhBao.push({ nhan: `${phieuCho} phiếu cấp vật tư đang chờ kho cấp hoặc Chuyên viên trị liệu nhận`, href: "/phieu-cap" });
   if (chua > 0 && coQuyen(nd, "lich.xem")) canhBao.push({ nhan: `${chua} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
   if (coQuyen(nd, "the.xem")) {
     let tq = db.from("v_the_khach").select("id", { count: "exact", head: true }).eq("tinh_trang", "sap_het").eq("loai", "lan");

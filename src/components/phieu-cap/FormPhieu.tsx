@@ -41,7 +41,7 @@ export function FormPhieu({ dichVu, khachId, lichId, chiNhanhId, bacSi, ktv, mac
         <div className="grid gap-4 sm:grid-cols-3">
           <div><label className={NHAN_O}>Dịch vụ</label><Chon trong="Chọn dịch vụ" ariaLabel="Dịch vụ" giaTri={dv} onDoi={(v) => { setDv(v); setChon({}); }} luaChon={dichVu.map((x) => ({ gia_tri: x.id, nhan: x.ten }))} /></div>
           <div><label className={NHAN_O}>Bác sĩ chỉ định</label><Chon trong="Chọn bác sĩ" ariaLabel="Bác sĩ" giaTri={bs} onDoi={setBs} luaChon={bacSi} /></div>
-          <div><label className={NHAN_O}>KTV thực hiện</label><Chon trong="Chưa chọn" ariaLabel="KTV" giaTri={kt} onDoi={setKt} luaChon={[{ gia_tri: "", nhan: "Chưa chọn" }, ...ktv]} /></div>
+          <div><label className={NHAN_O}>Chuyên viên trị liệu thực hiện</label><Chon trong="Chưa chọn" ariaLabel="Chuyên viên trị liệu" giaTri={kt} onDoi={setKt} luaChon={[{ gia_tri: "", nhan: "Chưa chọn" }, ...ktv]} /></div>
         </div>
         {d && (
           <div className="mt-5 space-y-4">

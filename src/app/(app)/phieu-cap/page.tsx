@@ -11,7 +11,7 @@ import { FormPhieu, type DichVuPhieu } from "@/components/phieu-cap/FormPhieu";
 import { taoPhieu } from "./actions";
 
 export const TT_PHIEU: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
-  cho_cap: { nhan: "Chờ cấp", kieu: "cho" }, da_cap: { nhan: "Đã cấp", kieu: "cho" }, da_nhan: { nhan: "KTV đã nhận", kieu: "tot" },
+  cho_cap: { nhan: "Chờ cấp", kieu: "cho" }, da_cap: { nhan: "Đã cấp", kieu: "cho" }, da_nhan: { nhan: "Chuyên viên trị liệu đã nhận", kieu: "tot" },
   da_lam: { nhan: "Đã làm, chờ đối chiếu", kieu: "cho" }, da_doi_chieu: { nhan: "Đã đối chiếu", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "loi" },
 };
 const TAB = [{ ma: "phieu", ten: "Phiếu trong ngày" }, { ma: "doi-chieu", ten: "Đối chiếu ngày" }];
@@ -73,7 +73,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
     noiDung = (
       <>
         <div className="mb-4 flex flex-wrap gap-2 text-[13px]">
-          {[["", "Tất cả"], ["cho_cap", "Chờ cấp"], ["da_cap", "Đã cấp"], ["da_nhan", "KTV đã nhận"], ["da_lam", "Chờ đối chiếu"], ["da_doi_chieu", "Đã đối chiếu"], ["huy", "Đã huỷ"]].map(([ma, ten]) => (
+          {[["", "Tất cả"], ["cho_cap", "Chờ cấp"], ["da_cap", "Đã cấp"], ["da_nhan", "Chuyên viên trị liệu đã nhận"], ["da_lam", "Chờ đối chiếu"], ["da_doi_chieu", "Đã đối chiếu"], ["huy", "Đã huỷ"]].map(([ma, ten]) => (
             <Link key={ma} href={`/phieu-cap?ngay=${ngay}${ma ? `&tt=${ma}` : ""}`} className={`rounded-nho px-3 py-1.5 ${(sp.tt ?? "") === ma ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{ten}</Link>
           ))}
         </div>
@@ -81,7 +81,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
           cot={[
             { nhan: "Mã phiếu", hienThi: (r) => <Link href={`/phieu-cap/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> }, { nhan: "Giờ", hienThi: (r) => gioVN(r.tao_luc) },
             { chinh: true, nhan: "Khách", hienThi: (r) => tenK.get(r.khach_id) ?? "" }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
-            { nhan: "Bác sĩ", hienThi: (r) => tenNv.get(r.bac_si_id) ?? "" }, { nhan: "KTV", hienThi: (r) => tenNv.get(r.ktv_id ?? "") ?? "" },
+            { nhan: "Bác sĩ", hienThi: (r) => tenNv.get(r.bac_si_id) ?? "" }, { nhan: "Chuyên viên trị liệu", hienThi: (r) => tenNv.get(r.ktv_id ?? "") ?? "" },
             { nhan: "Giá trị cấp", hienThi: (r) => tienVN((dong ?? []).filter((d) => d.phieu_id === r.id).reduce((s, d) => s + Number(d.so_cap) * Number(d.don_gia ?? 0), 0)), phai: true },
             { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_PHIEU[r.trang_thai].kieu}>{TT_PHIEU[r.trang_thai].nhan}</NhanTrangThai> },
           ]} />
@@ -122,7 +122,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
   }
   return (
     <>
-      <TieuDeTrang tieuDe="Phiếu cấp vật tư" phu={`Ngày ${ngayVN(ngay)}. Vật tư nhóm A cấp trước ca: có phiếu, kho cấp, KTV nhận rồi mới được mở ca.`}>
+      <TieuDeTrang tieuDe="Phiếu cấp vật tư" phu={`Ngày ${ngayVN(ngay)}. Vật tư nhóm A cấp trước ca: có phiếu, kho cấp, Chuyên viên trị liệu nhận rồi mới được mở ca.`}>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${congNgay(ngay, -1)}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm trước</Link>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${homNayHCM()}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm nay</Link>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${congNgay(ngay, 1)}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm sau</Link>

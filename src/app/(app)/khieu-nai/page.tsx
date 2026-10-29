@@ -21,7 +21,7 @@ export default async function TrangKhieuNai({ searchParams }: { searchParams: Pr
   const nd = await yeuCauMotTrong(["kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly"]);
   const { tab: t } = await searchParams;
   const xemKn = coQuyen(nd, "kn.ghi") || coQuyen(nd, "kn.duyet");
-  // Người chỉ có quyền báo/xử lý biến chứng (bác sĩ, KTV) không thấy nội dung khiếu nại của khách.
+  // Người chỉ có quyền báo/xử lý biến chứng (bác sĩ, Chuyên viên trị liệu) không thấy nội dung khiếu nại của khách.
   const tabHopLe = xemKn ? TAB : TAB.filter((x) => x.ma === "bien-chung");
   const tab = tabHopLe.some((x) => x.ma === t) ? t! : tabHopLe[0].ma;
   const db = sb(), cn = nd.chiNhanhId;

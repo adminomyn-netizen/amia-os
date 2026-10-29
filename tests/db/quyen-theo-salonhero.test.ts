@@ -44,7 +44,7 @@ describe("Bác sĩ (SalonHero: Bác sỹ)", () => {
   });
 });
 
-describe("Kỹ thuật viên (SalonHero: Nhân viên, Tư vấn bán hàng)", () => {
+describe("Chuyên viên trị liệu (SalonHero: Nhân viên, Tư vấn bán hàng)", () => {
   it("được đặt lịch và thêm/sửa khách như SalonHero; chưa cho bán hàng (thu tiền), vẫn giữ thẻ để thực hiện buổi", () => {
     expect(co("ktv", "lich.sua")).toBe(true);
     expect(co("ktv", "khach.sua")).toBe(true);

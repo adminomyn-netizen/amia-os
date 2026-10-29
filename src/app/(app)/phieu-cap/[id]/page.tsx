@@ -42,7 +42,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
       <TieuDeTrang tieuDe={p.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><span>{dv?.ten}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
         {p.trang_thai === "cho_cap" && coQuyen(nd, "phieu.cap") && <NutNhanh chinh nhan="Kho cấp vật tư" action={capPhieu} du={{ id }} />}
         {p.trang_thai === "da_cap" && coQuyen(nd, "phieu.nhan") && (
-          <NutHop nhan="KTV nhận vật tư" tieuDe="Xác nhận đã nhận vật tư" moTa="Kiểm đủ số lượng trên phiếu. Chưa nhận thì không mở ca được." an={{ id }} nhanLuu="Đã nhận đủ" truong={[{ ten: "dem_truoc", nhan: "Số đếm máy TRƯỚC ca (nếu máy có bộ đếm)", loai: "so", rong: true }]} action={nhanPhieu} />
+          <NutHop nhan="Chuyên viên trị liệu nhận vật tư" tieuDe="Xác nhận đã nhận vật tư" moTa="Kiểm đủ số lượng trên phiếu. Chưa nhận thì không mở ca được." an={{ id }} nhanLuu="Đã nhận đủ" truong={[{ ten: "dem_truoc", nhan: "Số đếm máy TRƯỚC ca (nếu máy có bộ đếm)", loai: "so", rong: true }]} action={nhanPhieu} />
         )}
         {p.trang_thai === "da_nhan" && coQuyen(nd, "phieu.nhan") && <FormHoanTat id={id} nguongPct={ng} bacSi={bsLC} action={hoanTatPhieu}
           dong={(dong ?? []).map((d) => ({ id: d.id, ten: sp.get(d.san_pham_id)?.ten ?? "", don_vi: sp.get(d.san_pham_id)?.don_vi ?? "", so_cap: Number(d.so_cap), dinh_muc: Number(d.dinh_muc) }))} />}
@@ -54,7 +54,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
         {p.trang_thai === "da_lam" && coQuyen(nd, "phieu.doichieu") && <NutNhanh chinh nhan="Đã đối chiếu" action={doiChieuPhieu} du={{ id }} />}
         {["cho_cap", "da_cap", "da_nhan"].includes(p.trang_thai) && coQuyen(nd, "phieu.cap") && <NutHop kieu="phu" nhan="Huỷ phiếu" tieuDe="Huỷ phiếu cấp" moTa="Vật tư đã cấp sẽ được hoàn lại kho." an={{ id }} nhanLuu="Huỷ phiếu" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={huyPhieu} />}
       </TieuDeTrang>
-      <HangChiSo muc={[{ nhan: "Bác sĩ chỉ định", so: tenNv.get(p.bac_si_id) ?? "" }, { nhan: "KTV nhận", so: tenNv.get(p.ktv_id ?? "") ?? "Chưa" }, { nhan: "Giá trị đã cấp", so: tienVN(Math.round(tongCap)) }, { nhan: "Giá trị dùng thật", so: lamXong ? tienVN(Math.round(tongDung)) : "Chưa làm xong" }]} />
+      <HangChiSo muc={[{ nhan: "Bác sĩ chỉ định", so: tenNv.get(p.bac_si_id) ?? "" }, { nhan: "Chuyên viên trị liệu nhận", so: tenNv.get(p.ktv_id ?? "") ?? "Chưa" }, { nhan: "Giá trị đã cấp", so: tienVN(Math.round(tongCap)) }, { nhan: "Giá trị dùng thật", so: lamXong ? tienVN(Math.round(tongDung)) : "Chưa làm xong" }]} />
       <div className="mt-8 space-y-8">
         <MucTrang tieuDe="Vật tư trên phiếu">
           <Bang duLieu={dong ?? []} khoa={(r) => r.id} cot={[
@@ -69,7 +69,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
           <ol className="space-y-1.5 text-[14px] text-muc-2">
             <li>Ra phiếu: {ngayGioVN(p.tao_luc)} · {tenNv.get(p.tao_boi ?? "") ?? ""}</li>
             {p.cap_luc && <li>Kho cấp: {ngayGioVN(p.cap_luc)} · {tenNv.get(p.cap_boi ?? "") ?? ""}</li>}
-            {p.nhan_luc && <li>KTV nhận: {ngayGioVN(p.nhan_luc)} · {tenNv.get(p.nhan_boi ?? "") ?? ""}{p.dem_may_truoc != null ? ` · đếm máy trước ${p.dem_may_truoc}` : ""}</li>}
+            {p.nhan_luc && <li>Chuyên viên trị liệu nhận: {ngayGioVN(p.nhan_luc)} · {tenNv.get(p.nhan_boi ?? "") ?? ""}{p.dem_may_truoc != null ? ` · đếm máy trước ${p.dem_may_truoc}` : ""}</li>}
             {p.lam_xong_luc && <li>Làm xong: {ngayGioVN(p.lam_xong_luc)}{p.dem_may_sau != null ? ` · đếm máy sau ${p.dem_may_sau}${p.dem_may_truoc != null ? ` (chênh ${p.dem_may_sau - p.dem_may_truoc})` : ""}` : ""}</li>}
             {p.doi_chieu_luc && <li>Đối chiếu: {ngayGioVN(p.doi_chieu_luc)} · {tenNv.get(p.doi_chieu_boi ?? "") ?? ""}</li>}
             {p.ly_do_huy && <li className="text-loi">Huỷ: {p.ly_do_huy}</li>}

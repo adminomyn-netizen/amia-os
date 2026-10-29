@@ -45,7 +45,7 @@ export async function capPhieu(fd: FormData): Promise<KQ> {
   const { error } = await sb().rpc("cap_phieu", { p_id: chuoi(fd, "id"), p_nguoi: nd.nhanVienId });
   lamMoi(chuoi(fd, "id"));
   if (error) return { loi: thongBaoLoi(error) };
-  // Báo cho bác sĩ chỉ định và KTV thực hiện: vật tư đã sẵn sàng để nhận.
+  // Báo cho bác sĩ chỉ định và Chuyên viên trị liệu thực hiện: vật tư đã sẵn sàng để nhận.
   const id = chuoi(fd, "id");
   after(async () => {
     const { data: p } = await sb().from("phieu_cap").select("ma, ktv_id, bac_si_id").eq("id", id).maybeSingle();

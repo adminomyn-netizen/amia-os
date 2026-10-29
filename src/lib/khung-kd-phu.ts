@@ -56,12 +56,12 @@ export const PHU_BM: Record<string, Phu> = {
   "BM11": {
     "tt": "thieu",
     "link": "",
-    "ghi": "Chưa có phiếu bàn giao Tư vấn → KTV (hiện có lịch hẹn và phiếu cấp vật tư)."
+    "ghi": "Chưa có phiếu bàn giao Tư vấn → Chuyên viên trị liệu (hiện có lịch hẹn và phiếu cấp vật tư)."
   },
   "BM12": {
     "tt": "co",
     "link": "/the",
-    "ghi": "Buổi thực hiện theo thẻ liệu trình: KTV, bác sĩ, tham số buổi."
+    "ghi": "Buổi thực hiện theo thẻ liệu trình: Chuyên viên trị liệu, bác sĩ, tham số buổi."
   },
   "BM13": {
     "tt": "co",

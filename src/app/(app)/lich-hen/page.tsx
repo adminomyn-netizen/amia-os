@@ -23,7 +23,7 @@ const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }>
   dang_phuc_vu: { nhan: "Đang phục vụ", kieu: "tot" }, hoan_thanh: { nhan: "Hoàn thành", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "loi" }, khong_den: { nhan: "Khách không đến", kieu: "loi" },
 };
 const LC_TT = [{ gia_tri: "", nhan: "Tất cả trạng thái" }, ...Object.entries(TT).map(([gia_tri, v]) => ({ gia_tri, nhan: v.nhan }))];
-const NHAN_PHIEU: Record<string, string> = { cho_cap: "Phiếu chờ cấp", da_cap: "Đã cấp, chờ KTV nhận", da_nhan: "KTV đã nhận", da_lam: "Đã làm xong", da_doi_chieu: "Đã đối chiếu", huy: "Phiếu đã huỷ" };
+const NHAN_PHIEU: Record<string, string> = { cho_cap: "Phiếu chờ cấp", da_cap: "Đã cấp, chờ Chuyên viên trị liệu nhận", da_nhan: "Chuyên viên trị liệu đã nhận", da_lam: "Đã làm xong", da_doi_chieu: "Đã đối chiếu", huy: "Phiếu đã huỷ" };
 const KIEU_XEM = [{ ma: "cho", nhan: "Vị trí chỗ" }, { ma: "nv", nhan: "Nhân viên" }, { ma: "gio", nhan: "Thời gian" }] as const;
 const DAT = /^\d{4}-\d{2}-\d{2}$/;
 const TOI_DA_THEO_O = 3;
@@ -349,7 +349,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
           </KhungNgay>
         </aside>
       </div>
-      <p className="mt-3 text-[12px] text-muc-3">Mở ca chỉ được khi dịch vụ có vật tư nhóm A đã có phiếu cấp và KTV bấm Đã nhận. Lưới chỉ hiện lịch còn hiệu lực; số huỷ nằm ở thanh ngày bên phải.</p>
+      <p className="mt-3 text-[12px] text-muc-3">Mở ca chỉ được khi dịch vụ có vật tư nhóm A đã có phiếu cấp và Chuyên viên trị liệu bấm Đã nhận. Lưới chỉ hiện lịch còn hiệu lực; số huỷ nằm ở thanh ngày bên phải.</p>
     </>
   );
 }

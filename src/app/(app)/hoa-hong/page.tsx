@@ -37,7 +37,7 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
         <LocBaoCao goc="/hoa-hong" tu={tu} den={den} />
         <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có doanh số nào có gán người hưởng trong khoảng này."
           cot={[{ nhan: "Nhân viên", hienThi: (r) => <span className="text-muc">{tenNv.get(r.id)}</span> }, { nhan: "Doanh số", hienThi: (r) => tienVN(r.ds), phai: true }, { nhan: "Theo vai", hienThi: (r) => r.chiTiet.join(" · ") }, { nhan: "Hoa hồng", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.hh)}</span>, phai: true }]} />
-        <p className="mt-3 text-[12px] text-muc-3">Hoa hồng tạm tính theo tỉ lệ đang cài. Mục chưa cài tỉ lệ tính 0. Phí thực hiện theo buổi cho KTV và hoa hồng giới thiệu chưa có trong bản này.</p>
+        <p className="mt-3 text-[12px] text-muc-3">Hoa hồng tạm tính theo tỉ lệ đang cài. Mục chưa cài tỉ lệ tính 0. Phí thực hiện theo buổi cho Chuyên viên trị liệu và hoa hồng giới thiệu chưa có trong bản này.</p>
       </>
     );
   } else {

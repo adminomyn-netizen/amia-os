@@ -1,5 +1,5 @@
 // Vai trò và quyền. Một nơi duy nhất: menu, trang, Server Action đều hỏi ở đây.
-// ASSUMPTION: ma trận quyền dưới đây là đề xuất mặc định theo vai trò SalonHero đang dùng (Quản lý / Leader, Thu ngân, Thủ kho, Bác sĩ, Kế toán, Tư vấn, Marketing, Nhà đầu tư) + Lễ tân + KTV.
+// ASSUMPTION: ma trận quyền dưới đây là đề xuất mặc định theo vai trò SalonHero đang dùng (Quản lý / Leader, Thu ngân, Thủ kho, Bác sĩ, Kế toán, Tư vấn, Marketing, Nhà đầu tư) + Lễ tân + Chuyên viên trị liệu.
 // Chủ chốt lại thì chỉ sửa bảng này.
 
 export const VAI_TRO = ["chu", "ky_thuat", "quan_ly", "nhan_su", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien"] as const;
@@ -14,7 +14,7 @@ export const NHAN_VAI_TRO: Record<VaiTro, string> = {
   thu_ngan: "Thu ngân",
   tu_van: "Tư vấn",
   bac_si: "Bác sĩ",
-  ktv: "Kỹ thuật viên",
+  ktv: "Chuyên viên trị liệu",
   thu_kho: "Thủ kho",
   ke_toan: "Kế toán",
   marketing: "Marketing",
@@ -91,7 +91,7 @@ export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] 
   { nhom: "Lịch hẹn", muc: [{ ma: "lich.xem", nhan: "Xem lịch" }, { ma: "lich.sua", nhan: "Đặt / đổi / huỷ lịch" }] },
   { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "no.thu", nhan: "Thu nợ" }, { ma: "hd.vat", nhan: "Ghi nhận đã xuất hoá đơn VAT" }] },
   { nhom: "Thẻ liệu trình", muc: [{ ma: "the.xem", nhan: "Xem thẻ" }, { ma: "the.thuchien", nhan: "Thực hiện buổi" }, { ma: "the.dieuchinh", nhan: "Điều chỉnh / cấp thẻ tay" }] },
-  { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "KTV nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }, { ma: "kho.duyet", nhan: "Duyệt kiểm kê, xử lý vật tư, hậu kiểm xuất khẩn cấp" }] },
+  { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "Chuyên viên trị liệu nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }, { ma: "kho.duyet", nhan: "Duyệt kiểm kê, xử lý vật tư, hậu kiểm xuất khẩn cấp" }] },
   { nhom: "Mua hàng", muc: [{ ma: "mua.xem", nhan: "Xem đơn mua, nhà cung cấp, công nợ" }, { ma: "mua.tao", nhan: "Lập đơn mua, nhà cung cấp" }, { ma: "mua.duyet", nhan: "Duyệt / từ chối đơn mua" }] },
   { nhom: "Nơi làm việc", muc: [{ ma: "noibo.dung", nhan: "Dùng Nơi làm việc (việc, chấm công, đề xuất, phiếu của tôi)" }, { ma: "viec.tatca", nhan: "Xem việc và báo cáo ngày của mọi người" }, { ma: "dexuat.duyet", nhan: "Duyệt / từ chối đề xuất" }, { ma: "wiki.sua", nhan: "Viết, sửa Wiki công ty" }, { ma: "qt.sua", nhan: "Cập nhật tiến độ Khung vận hành Kinh doanh (giao việc, hạn, trạng thái)" }] },
   { nhom: "Nhân sự", muc: [{ ma: "cong.xem", nhan: "Xem chấm công, lịch ca, phiếu của mọi người" }, { ma: "cong.sua", nhan: "Phân ca, nhập công tay, khoá tháng, chỉnh phép" }, { ma: "nghi.duyet", nhan: "Duyệt phiếu nghỉ, tăng ca, điều chỉnh công" }, { ma: "nghi.duyet_bgd", nhan: "Duyệt nghỉ từ 4 ngày (Ban Giám đốc)" }, { ma: "luong.xem", nhan: "Xem bảng lương và điều kiện lương" }, { ma: "luong.sua", nhan: "Lập kỳ lương, sửa điều kiện lương, cộng/trừ" }, { ma: "luong.duyet", nhan: "Duyệt kỳ lương" }, { ma: "hr.hoso", nhan: "Hồ sơ nhân sự đầy đủ của mọi người (CCCD, thuế, BHXH, ngân hàng, giấy tờ), nghỉ việc, danh mục phòng ban" }] },

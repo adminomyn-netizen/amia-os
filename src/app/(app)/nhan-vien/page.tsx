@@ -33,7 +33,7 @@ export default async function TrangNhanVien() {
     { ten: "trang_thai_lam", nhan: "Trạng thái làm việc (Nghỉ việc / Khoá = không đăng nhập được)", loai: "chon", rong: true, luaChon: Object.entries(TT_LAM).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
     { ten: "ngay_vao_lam", nhan: "Ngày vào làm", loai: "ngay" }, { ten: "ngay_vao_chinh_thuc", nhan: "Ngày vào chính thức (tính phép năm)", loai: "ngay" },
     { ten: "khung_lam_viec", nhan: "Khung làm việc / chấm công", loai: "chon", rong: true, luaChon: Object.entries(KHUNG_LAM).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
-    { ten: "vai_tro_chuyen_mon", nhan: "Vai trò chuyên môn (chọn nhiều)", loai: "nhieu", luaChon: [["bac_si_da_lieu", "Bác sĩ da liễu"], ["ky_thuat_vien", "Kỹ thuật viên"], ["tu_van", "Tư vấn"], ["le_tan", "Lễ tân"], ["thu_ngan", "Thu ngân"], ["quan_ly", "Quản lý"], ["cskh", "Chăm sóc khách hàng"]].map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
+    { ten: "vai_tro_chuyen_mon", nhan: "Vai trò chuyên môn (chọn nhiều)", loai: "nhieu", luaChon: [["bac_si_da_lieu", "Bác sĩ da liễu"], ["ky_thuat_vien", "Chuyên viên trị liệu"], ["tu_van", "Tư vấn"], ["le_tan", "Lễ tân"], ["thu_ngan", "Thu ngân"], ["quan_ly", "Quản lý"], ["cskh", "Chăm sóc khách hàng"]].map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
     { ten: "chuc_danh_tai_chinh", nhan: "Chức danh tài chính (nếu có)", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Không có" }, ...Object.entries(CHUC_DANH_TC).map(([gia_tri, nhan]) => ({ gia_tri, nhan }))] },
     { ten: "han_muc_duyet", nhan: "Hạn mức duyệt chi (đ). Bỏ trống = theo vai trò (Kỹ thuật, Quản lý không giới hạn; vai trò khác không duyệt tiền)", loai: "so", rong: true },
     { ten: "hoat_dong", nhan: "Đang làm việc / được đăng nhập", loai: "gat" }];

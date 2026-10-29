@@ -10,12 +10,15 @@ import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
 
 export async function timKhach(q: string) {
-  if (!(await kiemQuyen("khach.xem"))) return [];
+  const nd = await kiemQuyen("khach.xem");
+  if (!nd) return [];
   const an = q.trim().replace(/[%,()]/g, " ");
   if (an.length < 2) return [];
   const so = chuanSdt(an);
-  const { data } = await sb().from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, ngay_sinh")
+  let q2 = sb().from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, ngay_sinh")
     .or([`ho_ten_khong_dau.ilike.%${boDau(an)}%`, `ma.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("ho_ten").limit(8);
+  if (nd.chiNhanhId) q2 = q2.eq("chi_nhanh_id", nd.chiNhanhId);  // luật 29/10: chỉ khách của chi nhánh được gán
+  const { data } = await q2;
   return data ?? [];
 }
 
@@ -59,6 +62,10 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   if (!coQuyen(nd, "ban.giamgia") && (don.giamDon > 0 || don.dong.some((d) => d.giam > 0))) return { loi: "Tài khoản này chưa có quyền giảm giá." };
   if (!coQuyen(nd, "ban.tip") && don.tip > 0) return { loi: "Tài khoản này chưa có quyền nhập tip." };
   const db = sb();
+  if (nd.chiNhanhId && don.khachId) {
+    const { data: kc } = await db.from("khach_hang").select("chi_nhanh_id").eq("id", don.khachId).maybeSingle();
+    if (!kc || kc.chi_nhanh_id !== nd.chiNhanhId) return { loi: "Khách này thuộc chi nhánh khác." };
+  }
   // Người có chi nhánh cố định chỉ bán ở chi nhánh của mình; người xem mọi chi nhánh phải chọn rõ, không tự rơi về chi nhánh đầu.
   if (nd.chiNhanhId) don.chiNhanhId = nd.chiNhanhId;
   else if (!don.chiNhanhId || !(await db.from("chi_nhanh").select("id").eq("id", don.chiNhanhId).eq("hoat_dong", true).maybeSingle()).data) return { loi: "Chọn chi nhánh bán trước khi chốt đơn." };

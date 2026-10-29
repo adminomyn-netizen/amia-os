@@ -16,8 +16,10 @@ export default async function TrangDongYAnh() {
   const db = sb(), hom = homNayHCM();
   const { data: ds } = await db.from("consent_anh").select("*").order("tao_luc", { ascending: false }).limit(300);
   const ids = [...new Set((ds ?? []).map((c) => c.khach_id))];
-  const { data: khach } = ids.length ? await db.from("khach_hang").select("id, ma, ho_ten").in("id", ids) : { data: [] as { id: string; ma: string; ho_ten: string }[] };
-  const ten = new Map((khach ?? []).map((k) => [k.id, `${k.ho_ten} (${k.ma})`]));
+  const { data: khach } = ids.length ? await db.from("khach_hang").select("id, ma, ho_ten, chi_nhanh_id").in("id", ids) : { data: [] as { id: string; ma: string; ho_ten: string; chi_nhanh_id: string | null }[] };
+  // luật 29/10: chỉ thấy đồng ý ảnh của khách thuộc chi nhánh được gán
+  const khachDuocXem = new Set((khach ?? []).filter((k) => !nd.chiNhanhId || k.chi_nhanh_id === nd.chiNhanhId).map((k) => k.id));
+  const ten = new Map((khach ?? []).filter((k) => khachDuocXem.has(k.id)).map((k) => [k.id, `${k.ho_ten} (${k.ma})`]));
   const truong: Truong[] = [
     { ten: "sdt_khach", nhan: "Số điện thoại khách", loai: "chu", batBuoc: true },
     { ten: "loai", nhan: "Loại đồng ý", loai: "chon", batBuoc: true, luaChon: Object.entries(LOAI_CONSENT).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
@@ -31,7 +33,7 @@ export default async function TrangDongYAnh() {
       <TieuDeTrang tieuDe="Đồng ý dùng ảnh" phu="Đồng ý chụp ảnh để theo dõi điều trị khác với đồng ý dùng ảnh cho truyền thông. Truyền thông là tự nguyện, ký riêng, có hạn và phạm vi kênh, khách rút lại lúc nào cũng được; hết hạn hoặc rút thì phải gỡ ảnh.">
         {soan && <NutHop nhan="Ghi nhận đồng ý" tieuDe="Ghi nhận đồng ý" truong={truong} action={luuConsent} giaTri={{ loai: "truyen_thong", ngay_ky: hom }} rong />}
       </TieuDeTrang>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có ghi nhận nào."
+      <Bang duLieu={(ds ?? []).filter((c) => khachDuocXem.has(c.khach_id))} khoa={(r) => r.id} trong="Chưa có ghi nhận nào."
         cot={[
           { nhan: "Khách", chinh: true, hienThi: (r) => <Link href={`/khach-hang/${r.khach_id}`} className="text-nhan-dam hover:underline">{ten.get(r.khach_id) ?? ""}</Link> },
           { nhan: "Loại", hienThi: (r) => LOAI_CONSENT[r.loai] }, { nhan: "Phạm vi kênh", hienThi: (r) => r.pham_vi_kenh ?? "" },

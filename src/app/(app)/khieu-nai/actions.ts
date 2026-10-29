@@ -24,13 +24,16 @@ async function bao(quyen: Quyen[], cn: string | null, tin: { tieuDe: string; noi
 }
 
 /** Khách theo mã (nút trên hồ sơ khách) hoặc theo số điện thoại (nhập ở danh sách). */
-async function timKhach(fd: FormData) {
+async function timKhach(fd: FormData, cnKhoa: string | null = null) {
   const db = sb();
+  const loc = <T extends { chi_nhanh_id: string | null } | null>(k: T): T | null => (k && cnKhoa && k.chi_nhanh_id !== cnKhoa ? null : k);
   const id = chuoi(fd, "khach_id");
-  if (id) return (await db.from("khach_hang").select("id, ho_ten, chi_nhanh_id").eq("id", id).maybeSingle()).data;
+  if (id) return loc((await db.from("khach_hang").select("id, ho_ten, chi_nhanh_id").eq("id", id).maybeSingle()).data);
   const sdt = chuanSdt(chuoi(fd, "dien_thoai"));
   if (!sdt) return null;
-  return (await db.from("khach_hang").select("id, ho_ten, chi_nhanh_id").eq("dien_thoai", sdt).limit(1).maybeSingle()).data;
+  let q = db.from("khach_hang").select("id, ho_ten, chi_nhanh_id").eq("dien_thoai", sdt);
+  if (cnKhoa) q = q.eq("chi_nhanh_id", cnKhoa);
+  return (await q.limit(1).maybeSingle()).data;
 }
 const KHONG_THAY_KHACH = "Chưa có khách với số điện thoại này. Thêm khách trước rồi ghi lại.";
 
@@ -50,7 +53,7 @@ async function chuyenBienChung(kn: { id: string; khach_id: string; chi_nhanh_id:
 export async function ghiKhieuNai(fd: FormData): Promise<KQ> {
   const nd = await layNguoiDungHienTai();
   if (!nd || !coQuyen(nd, "kn.ghi")) return { loi: KHONG_DU_QUYEN };
-  const k = await timKhach(fd);
+  const k = await timKhach(fd, nd.chiNhanhId);
   if (!k) return { loi: KHONG_THAY_KHACH };
   const loai = chuoi(fd, "loai"), noiDung = chuoi(fd, "noi_dung");
   if (!["dich_vu", "thai_do", "tai_chinh", "y_khoa"].includes(loai)) return { loi: "Chọn loại khiếu nại." };
@@ -151,7 +154,7 @@ export async function dongKhieuNai(fd: FormData): Promise<KQ> {
 export async function baoBienChung(fd: FormData): Promise<KQ> {
   const nd = await layNguoiDungHienTai();
   if (!nd || !(coQuyen(nd, "bc.bao") || coQuyen(nd, "kn.ghi"))) return { loi: KHONG_DU_QUYEN };
-  const k = await timKhach(fd);
+  const k = await timKhach(fd, nd.chiNhanhId);
   if (!k) return { loi: KHONG_THAY_KHACH };
   const dauHieu = chuoi(fd, "dau_hieu");
   if (!dauHieu) return { loi: "Ghi dấu hiệu bất thường bạn thấy." };

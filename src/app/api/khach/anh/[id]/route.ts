@@ -11,8 +11,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   if (!UUID.test(id)) return new Response("Yêu cầu không hợp lệ", { status: 400 });
   const db = sb();
-  const { data: a } = await db.from("khach_anh").select("khach_id, duong_dan, ngay_chup, loai, khach_hang(ma)").eq("id", id).maybeSingle();
-  if (!a) return new Response("Không tìm thấy ảnh", { status: 404 });
+  const { data: a } = await db.from("khach_anh").select("khach_id, duong_dan, ngay_chup, loai, khach_hang(ma, chi_nhanh_id)").eq("id", id).maybeSingle();
+  if (!a || (nd.chiNhanhId && (a.khach_hang as unknown as { chi_nhanh_id: string | null } | null)?.chi_nhanh_id !== nd.chiNhanhId)) return new Response("Không tìm thấy ảnh", { status: 404 });
   const url = (await linkAnh([a.duong_dan], 120)).get(a.duong_dan);
   const r = url ? await fetch(url) : null;
   if (!r?.ok || !r.body) return new Response("Không lấy được ảnh từ kho, thử lại.", { status: 502 });

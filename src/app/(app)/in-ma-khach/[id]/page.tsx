@@ -16,7 +16,7 @@ export default async function TrangInMaKhach({ params, searchParams }: { params:
   const { kieu } = await searchParams;
   const db = sb();
   const { data: k } = await db.from("khach_hang").select("ma, ho_ten, dien_thoai, ngay_sinh, dia_chi, tinh_thanh, quan_huyen, diem_so_du, chi_nhanh_id").eq("id", id).maybeSingle();
-  if (!k) notFound();
+  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) notFound();
   const qr = await QRCode.toString(k.ma, { type: "svg", margin: 1, width: 180 });
   let maVach = "";
   try { maVach = svgMaVach(k.ma, { cao: 56, mo: 2 }); } catch { /* mã có ký tự ngoài Code 128 B: chỉ in QR */ }

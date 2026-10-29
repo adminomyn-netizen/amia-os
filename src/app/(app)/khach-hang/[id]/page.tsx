@@ -50,7 +50,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const { data: k, error: loiDoc } = await db.from("v_khach_hang").select("*").eq("id", id).maybeSingle();
   // Lỗi đọc (mạng, CSDL quá tải) ≠ không có khách: báo lỗi để thử lại, không hiện "không tìm thấy".
   if (loiDoc) { console.error("[ho-so-khach]", loiDoc.code, loiDoc.message); throw new Error("Không đọc được hồ sơ khách, thử lại."); }
-  if (!k) notFound();
+  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) notFound();  // luật 29/10: chỉ khách của chi nhánh được gán
   const xemAnh = coQuyen(nd, "anh.xem");
   const sua0 = coQuyen(nd, "khach.sua");
   const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab, { data: kx }, { data: nhomKh }, taiKham, theSapHet, { data: moiNhom }] = await Promise.all([

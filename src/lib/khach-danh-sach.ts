@@ -18,6 +18,11 @@ const KIEU: Partial<Record<KhoaLoc, RegExp>> = {
   the: /^(co|khong)$/, no: /^(co|khong)$/, nhieu_cn: /^1$/, sinh_nhat: /^(hom_nay|thang|[1-9]|1[0-2])$/, sinh_ngay: /^([1-9]|[12]\d|3[01])$/,
 };
 
+/** Luật chị Lâm 29/10: mọi vai trừ Chủ chỉ thấy khách của chi nhánh được gán. Ghi đè tham số lọc (người dùng không tự đổi được). */
+export function khoaCnKhach(t: ThamSoKhach, nd: { chiNhanhId: string | null }): ThamSoKhach {
+  return nd.chiNhanhId ? { ...t, chi_nhanh: nd.chiNhanhId, nhieu_cn: undefined } : t;
+}
+
 /** Đọc tham số lọc từ địa chỉ (API/xuất Excel), bỏ giá trị rỗng hoặc sai kiểu. */
 export function docThamSo(u: URLSearchParams): ThamSoKhach {
   const t: ThamSoKhach = { q: (u.get("q") ?? "").trim().slice(0, 80), sx: u.get("sx") ?? "ten" };

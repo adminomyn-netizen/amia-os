@@ -2,7 +2,7 @@ import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
-import { docNhomQuanLy, docThamSo, nhomTrungTen } from "@/lib/khach-danh-sach";
+import { docNhomQuanLy, docThamSo, khoaCnKhach, nhomTrungTen } from "@/lib/khach-danh-sach";
 import { KHOA_LOC } from "@/lib/khach";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NhanNhom } from "@/components/khach/DanhSachKhach";
@@ -34,7 +34,7 @@ export default async function NhomKhach({ searchParams }: { searchParams: Promis
   // Bộ lọc đang chọn = các tham số địa chỉ giống danh sách khách (đọc lại ở máy chủ khi gán).
   const u = new URLSearchParams();
   for (const k of [...KHOA_LOC, "q"] as const) { const v = sp[k]; if (typeof v === "string" && v) u.set(k, v); }
-  const ts = docThamSo(u);
+  const ts = khoaCnKhach(docThamSo(u), nd);
   const boLoc = new URLSearchParams(Object.entries(ts).filter(([k, v]) => v && k !== "sx") as [string, string][]);
   const soDieuKien = [...boLoc.keys()].length;
 

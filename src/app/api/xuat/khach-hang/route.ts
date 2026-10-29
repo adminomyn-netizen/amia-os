@@ -3,7 +3,7 @@ import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
-import { docThamSo, locKhach } from "@/lib/khach-danh-sach";
+import { docThamSo, khoaCnKhach, locKhach } from "@/lib/khach-danh-sach";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 
 /** Xuất cả vài chục nghìn khách cần nhiều lượt đọc: cho phép chạy tới 60 giây. */
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   const nd = await kiemQuyen("khach.xuat");
   if (!nd) return new Response("Không đủ quyền", { status: 403 });
   const u = new URL(req.url).searchParams;
-  const tham = docThamSo(u);
+  const tham = khoaCnKhach(docThamSo(u), nd);
   const db = sb();
   const [{ data: nv }, { data: cn }] = await Promise.all([db.from("nhan_vien").select("id, ho_ten"), db.from("chi_nhanh").select("id, ten")]);
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten])), tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));

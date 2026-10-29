@@ -8,13 +8,14 @@ type KhachNho = { id: string; ma: string; ho_ten: string; dien_thoai: string };
 
 /** /khach-hang/gan-day — Khách gần đây: khách vừa đến (theo hoá đơn hoàn thành mới nhất) và khách vừa tạo hồ sơ. Chỉ đọc. */
 export default async function KhachGanDay() {
-  await yeuCauQuyen("khach.xem");
+  const nd = await yeuCauQuyen("khach.xem");
   const db = sb();
+  const cnNd = nd.chiNhanhId;
   // hoa_don có 2 khoá sang khach_hang (khách, người giới thiệu): chỉ rõ khach_id.
   const [{ data: hd, error: loiHd }, { data: moi }] = await Promise.all([
     db.from("hoa_don").select("id, ma, sh_ma, ngay_hd, tong_phai_thu, khach_hang!khach_id(id, ma, ho_ten, dien_thoai)").eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).not("khach_id", "is", null).lte("ngay_hd", homNayHCM())
-      .order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).limit(150),
-    db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, tao_luc").order("tao_luc", { ascending: false }).limit(SO_KHACH),
+      .or(cnNd ? `chi_nhanh_id.eq.${cnNd}` : "id.not.is.null").order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).limit(150),
+    db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, tao_luc").or(cnNd ? `chi_nhanh_id.eq.${cnNd}` : "id.not.is.null").order("tao_luc", { ascending: false }).limit(SO_KHACH),
   ]);
   if (loiHd) console.error("[khach-gan-day]", loiHd.message);
   // Mỗi khách một dòng: lần đến gần nhất + hoá đơn của lần đó.

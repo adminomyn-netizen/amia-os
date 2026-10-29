@@ -118,7 +118,7 @@ export async function capTheTay(fd: FormData): Promise<KQ> {
   const db = sb();
   const kh = chuoi(fd, "khach");
   const { data: k } = await db.from("khach_hang").select("id, chi_nhanh_id").or(`ma.eq.${kh.toUpperCase()},dien_thoai.eq.${chuanSdt(kh)}`).maybeSingle();
-  if (!k) return { loi: "Không tìm thấy khách theo mã hoặc số điện thoại đó." };
+  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy khách theo mã hoặc số điện thoại đó." };
   const { data: g } = await db.from("goi_the").select("*").eq("id", chuoi(fd, "goi_id")).maybeSingle();
   if (!g) return { loi: "Chọn gói thẻ." };
   const soBuoi = g.loai === "lan" ? Math.trunc(so(fd, "so_buoi")) || g.so_buoi || 0 : null;

@@ -405,7 +405,7 @@ function NguoiHuong({ d, ten, nhanVien, dong, luu }: { d: DongDon; ten: string; 
               {nv[v.ma].map((x, i) => (
                 <li key={`${v.ma}-${i}`} className="grid grid-cols-[1fr_96px] gap-2">
                   <Chon nho trong="Chọn nhân viên" ariaLabel={`${v.ten} ${i + 1}`} giaTri={x.id} luaChon={lc} onDoi={(id) => doiNguoi(v.ma, i, id)} />
-                  <div className="relative"><input inputMode="decimal" {...CHON_HET} aria-label={`Phần trăm ${v.ten} ${i + 1}`} value={String(x.ti)} onChange={(e) => doiTi(v.ma, i, Number(e.target.value.replace(/[^\d.]/g, "")) || 0)} className={`${O_NHAP} h-9 pr-7 text-right`} /><span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px] text-muc-3">%</span></div>
+                  <div className="relative"><input inputMode="decimal" {...CHON_HET} aria-label={`Phần trăm ${v.ten} ${i + 1}`} value={String(x.ti)} onChange={(e) => doiTi(v.ma, i, Number(e.target.value.replace(/[^\d.]/g, "")) || 0)} className={`${O_NHAP.replace("h-11 ", "")} h-9 pr-7 text-right text-[13px]`} /><span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[13px] text-muc-3">%</span></div>
                 </li>
               ))}
             </ul>

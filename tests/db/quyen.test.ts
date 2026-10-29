@@ -1,3 +1,4 @@
+import { QUYEN_TU_SH } from "../../src/lib/quyen-salonhero";
 import { describe, expect, it } from "vitest";
 import { QUYEN_THEO_VAI_TRO, VAI_TRO, coQuyen, quyenHieuLuc, type VaiTro } from "../../src/lib/quyen";
 
@@ -10,8 +11,13 @@ describe("ma trận quyền", () => {
     for (const q of QUYEN_THEO_VAI_TRO.quan_ly) { expect(coQuyen(nguoi("ky_thuat"), q)).toBe(true); expect(coQuyen(nguoi("chu"), q)).toBe(true); }
   });
 
-  it("Quản lý / Leader có sẵn mọi tính năng nghiệp vụ, trừ phân quyền hệ thống", () => {
-    for (const v of ["quan_ly"] as const) for (const q of QUYEN_THEO_VAI_TRO.ky_thuat.filter((x) => x !== "hethong.phanquyen")) expect(coQuyen(nguoi(v), q)).toBe(true);
+  it("Quản lý / Leader có mọi quyền nghiệp vụ AMIA-only (không có trong SalonHero), trừ phân quyền hệ thống; quyền có trong SalonHero theo đúng ma trận", () => {
+    // 29/10: quyền có ánh xạ SalonHero thì BẰNG ma trận (xem quyen-theo-salonhero.test.ts); quyền chỉ AMIA có thì giữ mặc định cũ.
+    for (const q of QUYEN_THEO_VAI_TRO.ky_thuat) {
+      if (q === "hethong.phanquyen" || q in QUYEN_TU_SH) continue;
+      expect(coQuyen(nguoi("quan_ly"), q), q).toBe(true);
+    }
+    expect(coQuyen(nguoi("quan_ly"), "hethong.phanquyen")).toBe(false);
   });
 
   it("danh sách riêng thay hẳn mặc định; không ghi thì theo vai trò", () => {

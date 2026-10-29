@@ -2,6 +2,8 @@
 // ASSUMPTION: ma trận quyền dưới đây là đề xuất mặc định theo vai trò SalonHero đang dùng (Quản lý / Leader, Thu ngân, Thủ kho, Bác sĩ, Kế toán, Tư vấn, Marketing, Nhà đầu tư) + Lễ tân + Chuyên viên trị liệu.
 // Chủ chốt lại thì chỉ sửa bảng này.
 
+import { ganSalonHero } from "@/lib/quyen-salonhero";
+
 export const VAI_TRO = ["chu", "ky_thuat", "quan_ly", "nhan_su", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien"] as const;
 export type VaiTro = (typeof VAI_TRO)[number];
 
@@ -23,10 +25,10 @@ export const NHAN_VAI_TRO: Record<VaiTro, string> = {
 };
 
 export type Quyen =
-  | "khach.xem" | "khach.sua" | "khach.nhap"
+  | "khach.xem" | "khach.sua" | "khach.nhap" | "khach.xuat" | "khach.sdt" | "khach.email"
   | "hoso.xem" | "hoso.sua" | "anh.xem" | "anh.them"
-  | "lich.xem" | "lich.sua"
-  | "ban.xem" | "ban.tao" | "ban.huy" | "no.thu" | "hd.vat"
+  | "lich.xem" | "lich.sua" | "lich.xuat"
+  | "ban.xem" | "ban.tao" | "ban.huy" | "ban.giamgia" | "ban.sua_khoa" | "ban.toan_co_so" | "ban.tip" | "no.thu" | "hd.vat"
   | "the.xem" | "the.thuchien" | "the.dieuchinh"
   | "danhmuc.xem" | "danhmuc.sua"
   | "kho.xem" | "kho.nhap" | "kho.duyet" | "ky.khoa" | "ky.mo_lai"
@@ -46,19 +48,19 @@ export type Quyen =
 // Quyền quản trị hệ thống (tài khoản, vai trò, phân quyền, cài đặt) chỉ Chủ và Kỹ thuật nắm; không nằm trong TAT_CA của Quản lý / Leader.
 // Chủ (chị Lâm chốt lại 28/10/2026, trước đó bỏ 26/10): người sở hữu, nhìn toàn cảnh điều hành và tự phân quyền, cài đặt hệ thống. Khác Kỹ thuật ở chỗ KHÔNG được bỏ qua quy tắc "người lập không tự duyệt".
 const TAT_CA: Quyen[] = [
-  "khach.xem", "khach.sua", "khach.nhap", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
+  "khach.xem", "khach.sua", "khach.nhap", "khach.xuat", "khach.sdt", "khach.email", "lich.xuat", "ban.giamgia", "ban.sua_khoa", "ban.toan_co_so", "ban.tip", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
   "ban.xem", "ban.tao", "ban.huy", "no.thu", "hd.vat", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
   "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "hr.hoso", "qt.sua", "kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly", "tongquan.xem", "quy.xem", "quy.ghi", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
   "cong.xem", "cong.sua", "nghi.duyet", "nghi.duyet_bgd", "luong.xem", "luong.sua", "luong.duyet", "noibo.dung",
   "mkt.xem", "mkt.sua", "mkt.duyet", "lead.xu_ly", "vb.xem", "vb.soan", "vb.duyet",
 ];
 
-export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
+const MAC_DINH_CU: Record<VaiTro, Quyen[]> = {
   chu: [...TAT_CA, "hethong.phanquyen"],
   ky_thuat: [...TAT_CA, "hethong.phanquyen"],
   quan_ly: TAT_CA,
-  nhan_su: ["tongquan.xem", "khach.xem", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "viec.tatca", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem", "luong.sua", "hr.hoso", "vb.xem", "vb.soan", "mkt.xem"],
-  le_tan: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
+  nhan_su: ["tongquan.xem", "khach.xem", "khach.sdt", "khach.email", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "viec.tatca", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem", "luong.sua", "hr.hoso", "vb.xem", "vb.soan", "mkt.xem"],
+  le_tan: ["khach.xem", "khach.sdt", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
   thu_ngan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "ban.tao", "no.thu", "hd.vat", "the.xem", "danhmuc.xem", "baocao.xem", "baocao.tien", "noibo.dung", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"], // SalonHero: Thu ngân đặt/sửa lịch (booking create+update)
   tu_van: ["khach.xem", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "ban.tao", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],
   bac_si: ["khach.xem", "khach.sua", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.chidinh", "noibo.dung", "bc.bao", "bc.xu_ly"], // SalonHero: Bác sĩ thêm/sửa khách (customer create+update)
@@ -69,6 +71,9 @@ export const QUYEN_THEO_VAI_TRO: Record<VaiTro, Quyen[]> = {
   nha_dau_tu: ["tongquan.xem", "baocao.xem", "baocao.tien"],
   nhan_vien: ["noibo.dung"],
 };
+
+/** Chị Lâm 29/10: quyền các vai có bản SalonHero lấy THEO ma trận SalonHero (quyen-salonhero.ts); vai riêng của AMIA giữ mặc định. */
+export const QUYEN_THEO_VAI_TRO = Object.fromEntries((Object.keys(MAC_DINH_CU) as VaiTro[]).map((v) => [v, ganSalonHero(v, MAC_DINH_CU[v])])) as Record<VaiTro, Quyen[]>;
 
 export const QUYEN_MAC_DINH = (vt: VaiTro): Quyen[] => QUYEN_THEO_VAI_TRO[vt];
 
@@ -87,9 +92,9 @@ export const laVaiTro = (v: unknown): v is VaiTro => (VAI_TRO as readonly unknow
 /** Danh sách quyền Kỹ thuật được tích chọn cho từng người (không gồm quyền hệ thống), gom theo nhóm cho dễ đọc. */
 export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] = [
   { nhom: "Tổng quan", muc: [{ ma: "tongquan.xem", nhan: "Có dashboard (Tổng quan)" }] },
-  { nhom: "Khách hàng", muc: [{ ma: "khach.xem", nhan: "Xem khách" }, { ma: "khach.sua", nhan: "Thêm / sửa khách" }, { ma: "khach.nhap", nhan: "Nhập Excel khách" }, { ma: "hoso.xem", nhan: "Xem hồ sơ điều trị" }, { ma: "hoso.sua", nhan: "Ghi hồ sơ điều trị" }, { ma: "anh.xem", nhan: "Xem ảnh khách" }, { ma: "anh.them", nhan: "Thêm ảnh khách" }] },
-  { nhom: "Lịch hẹn", muc: [{ ma: "lich.xem", nhan: "Xem lịch" }, { ma: "lich.sua", nhan: "Đặt / đổi / huỷ lịch" }] },
-  { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "no.thu", nhan: "Thu nợ" }, { ma: "hd.vat", nhan: "Ghi nhận đã xuất hoá đơn VAT" }] },
+  { nhom: "Khách hàng", muc: [{ ma: "khach.xem", nhan: "Xem khách" }, { ma: "khach.sua", nhan: "Thêm / sửa khách" }, { ma: "khach.nhap", nhan: "Nhập Excel khách" }, { ma: "khach.xuat", nhan: "Xuất Excel khách" }, { ma: "khach.sdt", nhan: "Xem SĐT khách" }, { ma: "khach.email", nhan: "Xem email khách" }, { ma: "hoso.xem", nhan: "Xem hồ sơ điều trị" }, { ma: "hoso.sua", nhan: "Ghi hồ sơ điều trị" }, { ma: "anh.xem", nhan: "Xem ảnh khách" }, { ma: "anh.them", nhan: "Thêm ảnh khách" }] },
+  { nhom: "Lịch hẹn", muc: [{ ma: "lich.xem", nhan: "Xem lịch" }, { ma: "lich.sua", nhan: "Đặt / đổi / huỷ lịch" }, { ma: "lich.xuat", nhan: "Xuất Excel lịch hẹn" }] },
+  { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "ban.giamgia", nhan: "Giảm giá khi bán" }, { ma: "ban.sua_khoa", nhan: "Sửa hoá đơn đã khoá" }, { ma: "ban.toan_co_so", nhan: "Xem hoá đơn toàn cơ sở" }, { ma: "ban.tip", nhan: "Nhập tiền tip" }, { ma: "no.thu", nhan: "Thu nợ" }, { ma: "hd.vat", nhan: "Ghi nhận đã xuất hoá đơn VAT" }] },
   { nhom: "Thẻ liệu trình", muc: [{ ma: "the.xem", nhan: "Xem thẻ" }, { ma: "the.thuchien", nhan: "Thực hiện buổi" }, { ma: "the.dieuchinh", nhan: "Điều chỉnh / cấp thẻ tay" }] },
   { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "Chuyên viên trị liệu nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }, { ma: "kho.duyet", nhan: "Duyệt kiểm kê, xử lý vật tư, hậu kiểm xuất khẩn cấp" }] },
   { nhom: "Mua hàng", muc: [{ ma: "mua.xem", nhan: "Xem đơn mua, nhà cung cấp, công nợ" }, { ma: "mua.tao", nhan: "Lập đơn mua, nhà cung cấp" }, { ma: "mua.duyet", nhan: "Duyệt / từ chối đơn mua" }] },

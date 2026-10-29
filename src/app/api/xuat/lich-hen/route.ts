@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { kiemQuyen } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, gioVN, homNayHCM, ngayCuaIso, ngayGioVN, ngayVN } from "@/lib/dinh-dang";
 import { moTaLap, nhanNguon } from "@/lib/lich-hen";
@@ -12,7 +13,7 @@ const COT = `id, ma_dat_lich, bat_dau, ket_thuc, trang_thai, nguon, phong, ghi_c
 
 /** Xuất Excel lịch hẹn theo đúng bộ lọc đang xem (khoảng ngày, chi nhánh, nguồn). Chặn quyền + chi nhánh ở máy chủ, ghi nhật ký vì tệp có SĐT khách. */
 export async function GET(req: Request) {
-  const nd = await kiemQuyen("lich.xem");
+  const nd = await kiemQuyen("lich.xuat");
   if (!nd) return new Response("Không đủ quyền", { status: 403 });
   const u = new URL(req.url);
   const homNay = homNayHCM();
@@ -53,7 +54,7 @@ export async function GET(req: Request) {
   for (const l of dong) {
     const dvs = (l.lich_hen_dich_vu ?? []).map((x) => x.dich_vu?.ten).filter(Boolean).join(", ");
     ws.addRow({
-      ngay: ngayVN(ngayCuaIso(l.bat_dau)), gio: `${gioVN(l.bat_dau)}–${gioVN(l.ket_thuc)}`, ma: l.ma_dat_lich ?? "", kh: l.khach?.ho_ten ?? "", mk: l.khach?.ma ?? "", sdt: l.khach?.dien_thoai ?? "",
+      ngay: ngayVN(ngayCuaIso(l.bat_dau)), gio: `${gioVN(l.bat_dau)}–${gioVN(l.ket_thuc)}`, ma: l.ma_dat_lich ?? "", kh: l.khach?.ho_ten ?? "", mk: l.khach?.ma ?? "", sdt: coQuyen(nd, "khach.sdt") ? l.khach?.dien_thoai ?? "" : "",
       dv: dvs || l.dich_vu_ten || "", nv: l.nv?.ho_ten ?? l.nhan_vien_ten ?? "", phong: l.phong ?? "", cn: l.cn?.ten ?? "", nguon: nhanNguon(l.nguon), tt: TT[l.trang_thai] ?? l.trang_thai,
       lap: moTaLap(l), gc: l.ghi_chu ?? "", ldh: l.ly_do_huy ?? "", nt: l.nguoi_tao_ten ?? "", tl: ngayGioVN(l.tao_luc),
     });

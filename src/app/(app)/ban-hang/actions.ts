@@ -1,6 +1,7 @@
 "use server";
 
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { boDau, chuanSdt } from "@/lib/dinh-dang";
 import { tinhDon, TOI_DA_NGUOI_HUONG, type DonBan } from "@/lib/ban-hang";
@@ -54,6 +55,9 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   let don: DonBan;
   try { don = JSON.parse(json) as DonBan; } catch { return { loi: "Dữ liệu đơn không đọc được." }; }
   if (!don.dong?.length) return { loi: "Đơn chưa có dòng hàng nào." };
+  // Theo SalonHero: giảm giá và tip là quyền riêng, chặn ở máy chủ chứ không chỉ ẩn ô nhập.
+  if (!coQuyen(nd, "ban.giamgia") && (don.giamDon > 0 || don.dong.some((d) => d.giam > 0))) return { loi: "Tài khoản này chưa có quyền giảm giá." };
+  if (!coQuyen(nd, "ban.tip") && don.tip > 0) return { loi: "Tài khoản này chưa có quyền nhập tip." };
   const db = sb();
   // Người có chi nhánh cố định chỉ bán ở chi nhánh của mình; người xem mọi chi nhánh phải chọn rõ, không tự rơi về chi nhánh đầu.
   if (nd.chiNhanhId) don.chiNhanhId = nd.chiNhanhId;

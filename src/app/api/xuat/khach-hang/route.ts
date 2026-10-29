@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { kiemQuyen } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { docThamSo, locKhach } from "@/lib/khach-danh-sach";
@@ -12,7 +13,7 @@ const TOI_DA = 30_000;
 
 /** Xuất Excel danh sách khách theo đúng bộ lọc đang chọn ở màn Khách hàng. Không xuất ghi chú (chung hay điều trị). Chặn quyền ở máy chủ và ghi nhật ký. */
 export async function GET(req: Request) {
-  const nd = await kiemQuyen("khach.xem");
+  const nd = await kiemQuyen("khach.xuat");
   if (!nd) return new Response("Không đủ quyền", { status: 403 });
   const u = new URL(req.url).searchParams;
   const tham = docThamSo(u);
@@ -39,7 +40,7 @@ export async function GET(req: Request) {
       const data = kq.ds;
       for (const r of data) {
         ws.addRow({
-          ma: r.ma, ten: r.ho_ten, sdt: r.dien_thoai, zalo: r.zalo ?? "", email: r.email ?? "", gt: r.gioi_tinh ?? "", ns: ngayVN(r.ngay_sinh), dc: r.dia_chi ?? "", cn: tenCn.get(r.chi_nhanh_id ?? "") ?? "",
+          ma: r.ma, ten: r.ho_ten, sdt: coQuyen(nd, "khach.sdt") ? r.dien_thoai : "", zalo: coQuyen(nd, "khach.sdt") ? r.zalo ?? "" : "", email: coQuyen(nd, "khach.email") ? r.email ?? "" : "", gt: r.gioi_tinh ?? "", ns: ngayVN(r.ngay_sinh), dc: r.dia_chi ?? "", cn: tenCn.get(r.chi_nhanh_id ?? "") ?? "",
           nguon: NHAN_NGUON[r.nguon ?? ""] ?? r.nguon, ct: r.nguon_chi_tiet ?? "", tt: TRANG_THAI_KHACH[r.trang_thai ?? "lead"]?.nhan ?? "", hang: r.hang ?? "", pt: tenNv.get(r.nguoi_phu_trach_id ?? "") ?? "",
           the: r.so_the_dang_dung ?? 0, chi: Number(r.chi_12_thang ?? 0), tao: ngayVN(r.tao_luc),
           tinh: r.tinh_thanh ?? "", quan: r.quan_huyen ?? "", diem: r.diem_so_du ?? 0, nhom: r.nhom.map((n) => n.ten).join(", "), fb: r.facebook ?? "",

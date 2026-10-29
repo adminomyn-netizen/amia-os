@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
@@ -62,7 +63,7 @@ export async function huyHoaDon(fd: FormData): Promise<KQ> {
 /** Ghi nhận đã xuất hoá đơn VAT (SalonHero: "Có hoá đơn VAT"). Bỏ trống số hoá đơn = gỡ ghi nhận (ghi sai). Mỗi lần đổi đều để dấu vết. */
 export async function ghiNhanVat(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("hd.vat");
-  if (!nd) return { loi: KHONG_DU_QUYEN };
+  if (!nd || !coQuyen(nd, "ban.sua_khoa")) return { loi: KHONG_DU_QUYEN };  // sửa hoá đơn đã khoá = quyền riêng của SalonHero (pos.editLockedOrder)
   const id = chuoi(fd, "hoa_don_id");
   const soHd = chuoi(fd, "vat_hd_so").trim().slice(0, 30);
   const kyHieu = chuoi(fd, "vat_hd_ky_hieu").trim().slice(0, 20);

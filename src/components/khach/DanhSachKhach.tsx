@@ -36,7 +36,7 @@ const theoManHinhRong = (bao: () => void) => {
 
 /** Cột trái màn Khách hàng. Lọc/tìm/sắp xếp giữ trong bộ nhớ của khung (không nằm trên địa chỉ) nên bấm đổi khách hay đổi tab bên phải không làm mất.
  *  Lấy dữ liệu qua /api/khach/tim (kiểm quyền ở máy chủ); `moc` đổi (sau khi Thêm/Sửa khách làm mới trang) thì tải lại đúng số dòng đang hiện. */
-export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, choGanNhom, danhMuc }: { nhanVien: LuaChon[]; nguon: LuaChon[]; hang: LuaChon[]; moc: number; choXuat: boolean; choGanNhom?: boolean; danhMuc: DanhMucLoc }) {
+export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = true, choGanNhom, danhMuc }: { nhanVien: LuaChon[]; nguon: LuaChon[]; hang: LuaChon[]; moc: number; choXuat: boolean; xemSdt?: boolean; choGanNhom?: boolean; danhMuc: DanhMucLoc }) {
   const sp = useSearchParams();
   const dangChon = useSelectedLayoutSegment();
   const manRong = useSyncExternalStore(theoManHinhRong, () => window.matchMedia("(min-width: 1024px)").matches, () => true);
@@ -174,7 +174,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, choGanNhom,
             <Link key={r.id} href={`/khach-hang/${r.id}`} aria-current={r.id === dangChon ? "true" : undefined} className="ds-khach-dong">
               <span className="ds-khach-ten">{r.ho_ten}</span>
               <span className="mt-0.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
-                <span className="tabular-nums">{r.dien_thoai} – {r.ma}</span>
+                <span className="tabular-nums">{xemSdt ? `${r.dien_thoai} – ${r.ma}` : r.ma}</span>
                 <span className="flex gap-1">{tt && <span className="nhan-nho">{tt.nhan}</span>}{r.hang && <span className="nhan-nho">{r.hang}</span>}</span>
               </span>
               {(r.nhom.length > 0 || r.diem !== 0) && (

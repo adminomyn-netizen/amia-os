@@ -34,7 +34,7 @@ export default async function ChamSocKhach({ searchParams }: { searchParams: Pro
   const [dem, ds] = await Promise.all([demChamSoc(cn, sauDt), docChamSoc(loai, cn, sauDt, trang)]);
   const tong = ds[0]?.tong ?? dem[loai] ?? 0;
   const soTrang = Math.max(1, Math.ceil(tong / DONG_MOI_TRANG));
-  const sua = coQuyen(nd, "khach.sua"), xemSdt = coQuyen(nd, "khach.xem"), datLich = coQuyen(nd, "lich.sua");
+  const sua = coQuyen(nd, "khach.sua"), xemSdt = coQuyen(nd, "khach.sdt"), datLich = coQuyen(nd, "lich.sua");
   const tenCn = new Map(dsCn.map((c) => [c.id, c.ten]));
   const mota = HANG.find((h) => h.ma === loai)!.mota;
   const lk = (o: { loai?: string; trang?: number }) => {

@@ -34,7 +34,7 @@ export async function GET(req: Request) {
   }
   if (dong.length !== tong) return new Response(`Đọc thiếu dòng (${dong.length}/${tong}), thử lại`, { status: 500 });
 
-  const xemSdt = coQuyen(nd, "khach.xem");
+  const xemSdt = coQuyen(nd, "khach.sdt");
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Hoá đơn");
   ws.columns = [

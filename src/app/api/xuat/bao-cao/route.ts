@@ -81,13 +81,13 @@ export async function GET(req: Request) {
       { nhan: "Doanh thu", khoa: "doanhThu", tien: true }, { nhan: "Tiền mặt · bán hàng", khoa: "tmBan", tien: true }, { nhan: "Tiền mặt · thu nợ", khoa: "tmNo", tien: true },
       { nhan: "Quẹt thẻ và chuyển khoản · bán hàng", khoa: "ckBan", tien: true }, { nhan: "Quẹt thẻ và chuyển khoản · thu nợ", khoa: "ckNo", tien: true }] });
   } else if (tab === "khach-hang") {
-    const xemSdt = coQuyen(nd, "khach.xem");
+    const xemSdt = coQuyen(nd, "khach.sdt");
     const { rows } = await layTheoKhachHang(db, { tu, den, cn, nhom: u.searchParams.get("nk") || undefined, hang: u.searchParams.get("hang") || undefined, q: u.searchParams.get("q") || undefined }, true);
     bangs.push({ ten: "Theo khách hàng", dong: rows.map((r) => ({ ...r, dienThoai: xemSdt ? r.dienThoai : "", loai: `Hạng ${r.hang} · ${r.laMoi ? "Khách mới" : "Khách quay lại"}` })), cot: [
       { nhan: "Khách hàng", khoa: "ten", rong: 30 }, { nhan: "Mã khách", khoa: "ma", rong: 16 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Loại khách", khoa: "loai", rong: 28 }, { nhan: "Số đơn hàng", khoa: "soDon", so: true },
       { nhan: "Doanh thu hóa đơn", khoa: "doanhThu", tien: true }, { nhan: "Tổng thực thu", khoa: "thucThu", tien: true }, { nhan: "Thu nợ cũ", khoa: "thuNo", tien: true }, { nhan: "Nợ mới", khoa: "noMoi", tien: true }] });
   } else if (tab === "lich-su-the") {
-    const xemSdt = coQuyen(nd, "khach.xem");
+    const xemSdt = coQuyen(nd, "khach.sdt");
     const { rows } = await layLichSuDungThe(db, { tu, den, cn, q: u.searchParams.get("q") || undefined, tenThe: u.searchParams.get("tt") || undefined, loai: u.searchParams.get("lt") || undefined }, true);
     bangs.push({ ten: "Lịch sử dùng thẻ", dong: rows.map((r) => ({ ...r, ngayGio: new Date(r.ngay).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false }), dienThoai: xemSdt ? r.dienThoai : "", loaiVn: r.loai === "tien" ? "Thẻ tiền" : "Thẻ lần" })), cot: [
       { nhan: "Ngày", khoa: "ngayGio", rong: 20 }, { nhan: "Mã hóa đơn", khoa: "maHd", rong: 14 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 },
@@ -106,14 +106,14 @@ export async function GET(req: Request) {
       { nhan: "Tên", khoa: "ten", rong: 48 }, { nhan: "Mã", khoa: "ma", rong: 16 }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Trước giảm giá", khoa: "truoc", tien: true },
       { nhan: "Sau giảm giá", khoa: "sau", tien: true }, { nhan: "Trừ thẻ tiền", khoa: "truThe", tien: true }, { nhan: "Thực nhận", khoa: "thucNhan", tien: true }] });
   } else if (tab === "dung-the-ma") {
-    const xemSdt = coQuyen(nd, "khach.xem");
+    const xemSdt = coQuyen(nd, "khach.sdt");
     const ds = await layThongKeDungDichVu(db, congNgay(tu, 93) < den ? congNgay(den, -93) : tu, den, cn, u.searchParams.get("q") || undefined);
     bangs.push({ ten: "Thống kê sử dụng dịch vụ", dong: ds.map((r) => ({ ...r, loai: r.phanLoai === "ban" ? "Bán thẻ / liệu trình" : "Sử dụng thẻ / liệu trình", soKhach: r.khach.length })), cot: [
       { nhan: "Mã sản phẩm", khoa: "ma", rong: 24 }, { nhan: "Phân loại", khoa: "loai", rong: 26 }, { nhan: "Tên sản phẩm", khoa: "ten", rong: 48 }, { nhan: "Số lượng", khoa: "soLuong", so: true }, { nhan: "Số dòng khách", khoa: "soKhach", so: true }] });
     bangs.push({ ten: "Danh sách khách", dong: ds.flatMap((r) => r.khach.map((k) => ({ ma: r.ma, ten: r.ten, khach: k.ten, dienThoai: xemSdt ? k.dienThoai : "", maHd: k.maHd, ngay: ngay(k.ngay), soLuong: k.soLuong }))), cot: [
       { nhan: "Mã sản phẩm", khoa: "ma", rong: 24 }, { nhan: "Tên sản phẩm", khoa: "ten", rong: 40 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Mã hóa đơn", khoa: "maHd", rong: 14 }, { nhan: "Ngày", khoa: "ngay", rong: 12 }, { nhan: "Số lượng", khoa: "soLuong", so: true }] });
   } else if (tab === "no" && u.searchParams.get("nt") === "tra") {
-    const xemSdt = coQuyen(nd, "khach.xem");
+    const xemSdt = coQuyen(nd, "khach.sdt");
     const { rows } = await layCacLanTraNo(db, { tu, den, cn, q: u.searchParams.get("q") || undefined }, true);
     bangs.push({ ten: "Các lần trả nợ", dong: rows.map((r) => ({ ...r, ngay: ngay(r.ngay), dienThoai: xemSdt ? r.dienThoai : "" })), cot: [
       { nhan: "Ngày trả nợ", khoa: "ngay", rong: 14 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Mã đơn hàng", khoa: "maHd", rong: 14 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 },
@@ -149,7 +149,7 @@ export async function GET(req: Request) {
     const dc = dongDoiChieu(d.doiChieu, gomThe);
     bangs.push({ ten: "Đối chiếu theo hoá đơn", dong: [...dc.rows.map((r) => ({ nhan: r.nhan, so: r.so, gc: r.ghiChu })), { nhan: "Hoa hồng theo thực thu (cả ba vai)", so: dc.ket, gc: "" }], cot: [{ nhan: "Khoản", khoa: "nhan", rong: 52 }, { nhan: "Số tiền", khoa: "so", tien: true }, { nhan: "Giải thích", khoa: "gc", rong: 52 }] });
   } else if (tab === "hh-gioi-thieu") {
-    const d = await layHoaHongGioiThieu(db, { tu, den, cn, xemSdt: coQuyen(nd, "khach.xem") });
+    const d = await layHoaHongGioiThieu(db, { tu, den, cn, xemSdt: coQuyen(nd, "khach.sdt") });
     bangs.push({ ten: "Khách giới thiệu", dong: d.khach, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 30 }, { nhan: "Mã khách", khoa: "ma", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng", khoa: "hoaHong", tien: true }] });
     bangs.push({ ten: "Số SalonHero đã tính", dong: d.sh, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 34 }, { nhan: "Mã nhân viên", khoa: "ma", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số dòng", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng SalonHero", khoa: "hoaHong", tien: true }] });
   } else if (tab === "nhap-xuat-kho") {

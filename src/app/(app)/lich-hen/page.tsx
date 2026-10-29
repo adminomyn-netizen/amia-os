@@ -220,8 +220,10 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         <span className="tabular-nums" aria-live="polite">{lich.filter(homLich).length} lịch đang hiệu lực{sp.nv || sp.cho || q || tt || nguon ? " theo bộ lọc" : ""} trong khoảng ngày</span>
         <span className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:ml-auto">
           <div className="mr-1 w-[190px]"><LocNguon giaTri={nguon} /></div>
+          {coQuyen(nd, "lich.xuat") && <>
           <a href={xuat(ngay, ngay)} download className="text-nhan-dam hover:underline" aria-label={`Xuất Excel lịch hẹn ngày ${ngayVN(ngay)}`}>Xuất Excel ngày</a>
           <a href={xuat(dauThang, cuoiThang)} download className="text-nhan-dam hover:underline" aria-label={`Xuất Excel lịch hẹn tháng ${ngay.slice(5, 7)}/${ngay.slice(0, 4)}`}>Xuất cả tháng</a>
+          </>}
         </span>
       </div>
 

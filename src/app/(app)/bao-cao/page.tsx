@@ -85,20 +85,20 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
     const loaiK = { tu, den, cn, nhom: sp.nk || undefined, hang: sp.hang || undefined, q: sp.q || undefined, trang: soTrang(sp.trang), so: soDongTrang(sp.so) };
     noiDung = <>
       <LocKhachThe kieu="khach" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} nhomKhach={(nhomKh ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }))} nhom={sp.nk} hang={sp.hang} cacHang={HANG_KHACH.map((h) => ({ gia_tri: h, nhan: `Hạng ${h}` }))} q={sp.q} so={loaiK.so} />
-      <BaoCaoTheoKhachHang loc={loaiK} xemSdt={coQuyen(nd, "khach.xem")} chiNhanhVinh={(dsCn ?? []).find((c) => c.ten === "AMIA Vinh")?.id} />
+      <BaoCaoTheoKhachHang loc={loaiK} xemSdt={coQuyen(nd, "khach.sdt")} chiNhanhVinh={(dsCn ?? []).find((c) => c.ten === "AMIA Vinh")?.id} />
     </>;
   } else if (tab === "lich-su-the") {
     const loaiT = { tu, den, cn, q: sp.q || undefined, tenThe: sp.tt || undefined, loai: sp.lt || undefined, trang: soTrang(sp.trang), so: soDongTrang(sp.so) };
     noiDung = <>
       <LocKhachThe kieu="the" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} loai={sp.lt} q={sp.q} tenThe={sp.tt} so={loaiT.so} />
-      <BaoCaoLichSuDungThe loc={loaiT} xemSdt={coQuyen(nd, "khach.xem")} />
+      <BaoCaoLichSuDungThe loc={loaiT} xemSdt={coQuyen(nd, "khach.sdt")} />
     </>;
   } else if (tab === "dung-the-ma") {
     const quaDai = congNgay(tu, 93) < den, tuDung = quaDai ? congNgay(den, -93) : tu;
     const tatCa = await layThongKeDungDichVu(db, tuDung, den, cn, sp.q || undefined);
     const so = 30, trang = Math.min(soTrang(sp.trang), Math.max(1, Math.ceil(tatCa.length / so)));
     const hien = tatCa.slice((trang - 1) * so, trang * so);
-    const xemSdt = coQuyen(nd, "khach.xem");
+    const xemSdt = coQuyen(nd, "khach.sdt");
     const goc = { tab: "dung-the-ma", tu, den, cn: sp.cn, q: sp.q };
     noiDung = (
       <>
@@ -138,7 +138,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   } else if (tab === "hh-thuc-thu") {
     noiDung = <><LocHoaHong goc="/bao-cao" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} vai={sp.vai} cacVai={LUA_CHON_VAI} the={sp.the} cacThe={LUA_CHON_THE} /><BaoCaoHoaHongThucThu loc={{ tu, den, cn }} vai={sp.vai} gomThe={sp.the === "1"} coChiNhanh={coChiNhanh} /></>;
   } else if (tab === "hh-gioi-thieu") {
-    noiDung = <><LocHoaHong goc="/bao-cao" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} /><BaoCaoHoaHongGioiThieu loc={{ tu, den, cn }} xemSdt={coQuyen(nd, "khach.xem")} /></>;
+    noiDung = <><LocHoaHong goc="/bao-cao" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} /><BaoCaoHoaHongGioiThieu loc={{ tu, den, cn }} xemSdt={coQuyen(nd, "khach.sdt")} /></>;
   } else if (tab === "thu-ngan") {
     noiDung = <>{lc}<BaoCaoThuNgan loc={loc} /></>;
   } else if (tab === "dat-lich") {
@@ -237,7 +237,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   } else if (tab === "no" && sp.nt === "tra") {
     const so = 20, trang = soTrang(sp.trang);
     const { rows, tong } = await layCacLanTraNo(db, { tu, den, cn, q: sp.q || undefined, trang, so });
-    const xemSdt = coQuyen(nd, "khach.xem");
+    const xemSdt = coQuyen(nd, "khach.sdt");
     const goc = { tab: "no", nt: "tra", tu, den, cn: sp.cn, q: sp.q };
     noiDung = (
       <>

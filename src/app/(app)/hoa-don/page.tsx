@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
 import { apLocHoaDon, docLocHoaDon, khachKhopTim, TRANG_THAI_HD } from "@/lib/loc-hoa-don";
@@ -17,8 +18,10 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
   const loc = docLocHoaDon(sp);
   const { tu, den } = loc;
   const db = sb();
-  const q = apLocHoaDon(db.from("hoa_don").select("id, ma, ngay_hd, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, chi_nhanh_id, vat_hd_luc, vat_hd_so", { count: "exact" }), loc, nd.chiNhanhId, await khachKhopTim(db, loc))
-    .order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).range((trang - 1) * MOI_TRANG, trang * MOI_TRANG - 1);
+  // SalonHero pos.readByLoc: không có quyền xem toàn cơ sở thì chỉ thấy hoá đơn do chính mình lập.
+  const toanCoSo = coQuyen(nd, "ban.toan_co_so");
+  const q0 = apLocHoaDon(db.from("hoa_don").select("id, ma, ngay_hd, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, chi_nhanh_id, vat_hd_luc, vat_hd_so", { count: "exact" }), loc, nd.chiNhanhId, await khachKhopTim(db, loc));
+  const q = (toanCoSo ? q0 : q0.eq("nguoi_lap_id", nd.nhanVienId ?? "")).order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).range((trang - 1) * MOI_TRANG, trang * MOI_TRANG - 1);
   const { data: ds, count } = await q;
   const idsK = [...new Set((ds ?? []).map((d) => d.khach_id).filter(Boolean))] as string[];
   const [{ data: k }, { data: nv }] = await Promise.all([

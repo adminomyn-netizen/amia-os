@@ -1,3 +1,4 @@
+import { coQuyen } from "@/lib/quyen";
 import { yeuCauQuyen } from "@/lib/auth";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
@@ -47,7 +48,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   return (
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
-      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} lichId={lichDung}
+      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung}
         tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} />
     </>
   );

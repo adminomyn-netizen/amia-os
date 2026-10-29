@@ -100,6 +100,7 @@ export function Pos(props: PropsPos) {
         <button type="button" onClick={them} disabled={ds.length >= TOI_DA_DON} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU} disabled:opacity-40`} aria-label="Mở thêm một đơn mới">
           <Plus strokeWidth={1.8} className="h-4 w-4" />Thêm đơn
         </button>
+        <Link href="/hoa-don" className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>Danh sách đơn hàng</Link>
       </div>
       {xong && (
         <p role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-nho bg-nhan-nhat px-3 py-2.5 text-[14px] text-nhan-dam">

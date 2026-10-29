@@ -29,11 +29,13 @@ export async function capNhatPhien(request: NextRequest) {
 
   // getClaims() kiểm chữ ký JWT ngay tại máy chủ (không gọi mạng) nên cổng chặn gần như tức thì.
   // Quyền thật (vai trò, còn hoạt động) do hàm bảo vệ trong từng trang/hành động quyết định, hỏi DB mỗi yêu cầu.
-  const { data: dataClaims } = await supabase.auth.getClaims();
+  const { data: dataClaims, error: loiClaims } = await supabase.auth.getClaims();
   const coPhien = !!dataClaims?.claims;
+  // Auth chậm/quá tải khi làm mới token (504, mất kết nối) không phải hết phiên: giữ nguyên, để trang tự báo "đang chậm" thay vì đá ra đăng nhập.
+  const authLoiTamThoi = !!loiClaims && (loiClaims.name === "AuthRetryableFetchError" || ((loiClaims as { status?: number }).status ?? 0) >= 500);
   const laTrangCongKhai = DUONG_DAN_CONG_KHAI.some((d) => request.nextUrl.pathname.startsWith(d));
 
-  if (!coPhien && !laTrangCongKhai) {
+  if (!coPhien && !laTrangCongKhai && !authLoiTamThoi) {
     const url = request.nextUrl.clone();
     url.pathname = "/dang-nhap";
     return NextResponse.redirect(url);

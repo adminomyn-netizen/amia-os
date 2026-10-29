@@ -10,6 +10,7 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { capTheTay, thucHienBuoi } from "./actions";
+import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 export const NHAN_TINH_TRANG: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
   hoat_dong: { nhan: "Đang dùng", kieu: "tot" }, sap_het: { nhan: "Sắp hết", kieu: "cho" }, het_han: { nhan: "Hết hạn", kieu: "loi" },
@@ -42,7 +43,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
   const tenGoi = new Map((goi ?? []).map((g) => [g.id, g.ten]));
   const ds = the ?? [];
-  const nvLC = (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const nvLC = luaChonNhanVien(nv ?? []);
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
 
   return (

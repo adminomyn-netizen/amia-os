@@ -11,6 +11,7 @@ import { DanhSachKhach } from "@/components/khach/DanhSachKhach";
 import { KhungHaiCot } from "@/components/khach/KhungHaiCot";
 import { NhapExcelKhach } from "@/components/khach/NhapExcelKhach";
 import { luuKhach, nhapKhachExcel } from "./actions";
+import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 /** Mốc thời gian của lần dựng layout này: đổi mỗi khi trang được làm mới (router.refresh) để danh sách bên trái tải lại. */
 const bayGio = () => Date.now();
@@ -27,7 +28,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
     soLieuKhach(),
     tuyChonLocKhach(),
   ]);
-  const nvLC = (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const nvLC = luaChonNhanVien(nv ?? []);
   const cnLC = (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: cnLC });
   const chiSo = [

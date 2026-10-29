@@ -13,6 +13,7 @@ import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
 import type { chotDonBanHang, dsVoucher, layDiemKhach, layTheTien, layVoucher, timKhach } from "@/app/(app)/ban-hang/actions";
+import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 type Nv = { id: string; ten: string; vaiTro: string };
 type TheTien = { id: string; ma: string; soDu: number };
@@ -340,7 +341,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
 function NguoiHuong({ d, ten, nhanVien, dong, luu }: { d: DongDon; ten: string; nhanVien: Nv[]; dong: () => void; luu: (nv: DongDon["nv"]) => void }) {
   const [nv, setNv] = useState(d.nv);
   const [loi, setLoi] = useState("");
-  const lc = [{ gia_tri: "", nhan: "Không có" }, ...nhanVien.map((n) => ({ gia_tri: n.id, nhan: n.ten }))];
+  const lc = [{ gia_tri: "", nhan: "Không có" }, ...luaChonNhanVien(nhanVien.map((n) => ({ id: n.id, ho_ten: n.ten, vai_tro: n.vaiTro })))];
   const doiNguoi = (v: Vai, i: number, id: string) => setNv((x) => ({ ...x, [v]: id ? x[v].map((y, j) => (j === i ? { ...y, id } : y)) : x[v].filter((_, j) => j !== i) }));
   const doiTi = (v: Vai, i: number, ti: number) => setNv((x) => ({ ...x, [v]: x[v].map((y, j) => (j === i ? { ...y, ti } : y)) }));
   const chiaDeu = (v: Vai) => setNv((x) => { const t = chiaDeuTi(x[v].length); return { ...x, [v]: x[v].map((y, j) => ({ ...y, ti: t[j] })) }; });

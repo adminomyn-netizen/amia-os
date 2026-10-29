@@ -17,6 +17,7 @@ import { doiTrangThaiLich, duyetYeuCauOnline, luuLichHen, tuChoiYeuCauOnline } f
 import { LocNguon } from "@/components/lich-hen/LocNguon";
 import { ChonKhoang, KhungNgay, LocCho, LocNhanVien, TimVaLoc, XemThemO } from "@/components/lich-hen/DieuKhienLich";
 import { BIEU_TUONG_HANG, cacNgayTrong, chuTatTen, moTaLap, NGUON_DAT, nhanCotNgay, nhanNgayDai, nhanNguon, tenNvHoa, thuCuaNgay } from "@/lib/lich-hen";
+import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
   chua_xac_nhan: { nhan: "Chưa xác nhận", kieu: "tram" }, da_xac_nhan: { nhan: "Đã xác nhận", kieu: "cho" }, cho_phuc_vu: { nhan: "Chờ phục vụ", kieu: "cho" },
@@ -112,7 +113,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   ]);
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten]));
-  const nvLC = (nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const nvLC = luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"));
   const bsLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
   const dichVu = (dv ?? []).map((d) => ({ id: d.id, ma: d.ma, ten: d.ten, thoiLuong: d.thoi_luong_phut }));
   const cnLC = (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));

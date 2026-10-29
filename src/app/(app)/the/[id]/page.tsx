@@ -13,6 +13,7 @@ import { NutHop } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { dieuChinhThe, doiTrangThaiThe, henBuoiKeTiep, huyBuoi, thucHienBuoi } from "../actions";
 import { NHAN_TINH_TRANG } from "../page";
+import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 const NHAN_LOAI: Record<string, string> = { cap: "Cấp thẻ", dung_buoi: "Dùng 1 buổi", hoan_buoi: "Hoàn buổi", dieu_chinh: "Điều chỉnh", nap: "Nạp tiền", tru_tien: "Trừ tiền", hoan_tien: "Hoàn tiền", thu_hoi: "Thu hồi" };
 
@@ -34,7 +35,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
   const tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten]));
   const tt = NHAN_TINH_TRANG[t.tinh_trang ?? "hoat_dong"];
   const dvLC = (lk?.length ? (dv ?? []).filter((d) => lk.some((l) => l.dich_vu_id === d.id)) : dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten }));
-  const nvLC = (nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const nvLC = luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"));
   const bsLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
   const dieuChinh = coQuyen(nd, "the.dieuchinh");
 

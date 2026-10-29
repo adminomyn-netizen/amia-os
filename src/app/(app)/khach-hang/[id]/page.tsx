@@ -27,6 +27,7 @@ import { luuDanhGiaSauDieuTri } from "../../hoa-don/sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
 import { nhanHang, nhanTrangThaiGoi } from "@/lib/cham-soc-hang-doi";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
+import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
@@ -53,7 +54,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const xemAnh = coQuyen(nd, "anh.xem");
   const sua0 = coQuyen(nd, "khach.sua");
   const [{ data: nv }, { data: cn }, { data: dv }, { data: qt }, { data: no }, { data: the }, { data: nguoiGt }, soAnhTab, { data: kx }, { data: nhomKh }, taiKham, theSapHet, { data: moiNhom }] = await Promise.all([
-    db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"),
+    db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
     dsChiNhanhRutGon(),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("khach_quan_tam").select("dich_vu_id").eq("khach_id", id),
@@ -73,7 +74,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   // Số ảnh trên nhãn tab: ảnh đã có trong kho + ảnh cũ còn ở kho lưu trữ (con số không đổi khi nhân viên bấm lấy ảnh cũ về xem).
   const tabHopLe = tabHopLe0.map((x) => (x.ma === "anh" ? { ...x, ten: `Ảnh khách hàng (${soAnhTab.toLocaleString("vi-VN")})` } : x));
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
-  const nvLC = (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const nvLC = luaChonNhanVien(nv ?? []);
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) });
   const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
   const tt = TRANG_THAI_KHACH[k.trang_thai ?? "lead"];

@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { Fragment, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNoi } from "./noi";
 import { Check, ChevronDown } from "lucide-react";
 
-export type LuaChon = { gia_tri: string; nhan: string };
+export type LuaChon = { gia_tri: string; nhan: string; nhom?: string };
+
+const boDau = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").toLowerCase();
+const chuDau = (t: string) => (t.trim().split(/\s+/).pop() ?? "?").charAt(0).toUpperCase();
+/** Danh sách dài (>7 mục) tự có ô gõ tìm; mục có `nhom` được gom theo nhóm, hiện chữ cái đầu và dòng thấp (kiểu chọn nhân viên của SalonHero). */
+const NGUONG_TIM = 7;
 
 const BONG = "shadow-[0_14px_32px_rgba(5,40,36,0.18)]";
 
@@ -50,6 +55,11 @@ export function Chon({
   const dsRef = useRef<HTMLUListElement>(null);
   const idDs = useId();
   const chon = luaChon.find((l) => l.gia_tri === gia);
+  const [q, setQ] = useState("");
+  const coTim = luaChon.length > NGUONG_TIM;
+  const coNhom = luaChon.some((l) => l.nhom);
+  const ds = q ? luaChon.filter((l) => l.gia_tri === "" || boDau(l.nhan).includes(boDau(q))) : luaChon;
+  const timRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!mo) return;
@@ -58,11 +68,13 @@ export function Chon({
       if (goc.current && !goc.current.contains(dich) && !dsRef.current?.contains(dich)) setMo(false);
     };
     document.addEventListener("mousedown", ngoai);
+    if (coTim) setTimeout(() => timRef.current?.focus(), 0);
     return () => document.removeEventListener("mousedown", ngoai);
-  }, [mo]);
+  }, [mo, coTim]);
 
   const moDs = () => {
     if (voHieu) return;
+    setQ("");
     setDangTro(Math.max(0, luaChon.findIndex((l) => l.gia_tri === gia)));
     setMo(true);
   };
@@ -74,7 +86,7 @@ export function Chon({
     setMo(false);
   };
 
-  useNoi(mo, nutRef, dsRef, { caoUoc: Math.min(256, luaChon.length * 42 + 14) });
+  useNoi(mo, nutRef, dsRef, { caoUoc: Math.min(coTim ? 340 : 256, ds.length * (coNhom ? 34 : 42) + 14 + (coTim ? 48 : 0) + (coNhom ? 80 : 0)) });
 
   const phim = (e: React.KeyboardEvent) => {
     if (e.key === "Escape" && mo) {
@@ -89,18 +101,20 @@ export function Chon({
       }
       return;
     }
+    const dangGo = (e.target as HTMLElement).tagName === "INPUT";
+    if (dangGo && (e.key === " " || (e.key.length === 1 && e.key !== "Enter"))) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setDangTro((i) => Math.min(luaChon.length - 1, i + 1));
+      setDangTro((i) => Math.min(ds.length - 1, i + 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setDangTro((i) => Math.max(0, i - 1));
     } else if (e.key === "Enter" || e.key === " ") {
       e.preventDefault();
-      if (luaChon[dangTro]) dat(luaChon[dangTro].gia_tri);
+      if (ds[dangTro]) dat(ds[dangTro].gia_tri);
     } else if (e.key.length === 1) {
-      const tim = luaChon.findIndex((l, i) => i > dangTro && l.nhan.toLowerCase().startsWith(e.key.toLowerCase()));
-      const dau = tim >= 0 ? tim : luaChon.findIndex((l) => l.nhan.toLowerCase().startsWith(e.key.toLowerCase()));
+      const tim = ds.findIndex((l, i) => i > dangTro && l.nhan.toLowerCase().startsWith(e.key.toLowerCase()));
+      const dau = tim >= 0 ? tim : ds.findIndex((l) => l.nhan.toLowerCase().startsWith(e.key.toLowerCase()));
       if (dau >= 0) setDangTro(dau);
     }
   };
@@ -147,22 +161,34 @@ export function Chon({
           style={{ position: "fixed", visibility: "hidden" }}
           className={`z-[70] overflow-y-auto rounded-the border border-vien bg-giay-sang p-1.5 ${BONG}`}
         >
-          {luaChon.map((l, i) => {
+          {coTim && (
+            <li role="presentation" className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 bg-giay-sang px-2 pb-1.5 pt-2">
+              <input ref={timRef} value={q} onChange={(e) => { setQ(e.target.value); setDangTro(0); }} placeholder="Gõ để tìm…" aria-label="Tìm trong danh sách" className="h-8 w-full rounded-nho border border-vien-dam bg-giay px-2.5 text-[13px] text-muc outline-none focus-visible:border-nhan focus-visible:ring-2 focus-visible:ring-nhan/25" />
+            </li>
+          )}
+          {ds.length === 0 && <li role="presentation" className="px-3 py-2 text-[13px] text-muc-3">Không thấy kết quả.</li>}
+          {ds.map((l, i) => {
             const dangChon = l.gia_tri === gia;
+            const dauNhom = coNhom && l.nhom && l.nhom !== ds[i - 1]?.nhom;
             return (
-              <li
-                key={l.gia_tri || `trong-${i}`}
-                role="option"
-                aria-selected={dangChon}
-                onMouseEnter={() => setDangTro(i)}
-                onClick={() => dat(l.gia_tri)}
-                className={`flex cursor-pointer items-center justify-between gap-3 rounded-nho px-3 py-2.5 text-[14px] ${
-                  i === dangTro ? "bg-giay-tram" : ""
-                } ${dangChon ? "font-semibold text-muc" : "text-muc-2"}`}
-              >
-                <span className="truncate">{l.nhan}</span>
-                {dangChon && <Check strokeWidth={2} className="h-4 w-4 shrink-0 text-nhan" />}
-              </li>
+              <Fragment key={l.gia_tri || `trong-${i}`}>
+                {dauNhom && <li role="presentation" className="px-2.5 pb-0.5 pt-2 text-[11px] font-semibold uppercase tracking-wide text-muc-3">{l.nhom}</li>}
+                <li
+                  role="option"
+                  aria-selected={dangChon}
+                  onMouseEnter={() => setDangTro(i)}
+                  onClick={() => dat(l.gia_tri)}
+                  className={`flex cursor-pointer items-center justify-between gap-2 rounded-nho ${coNhom ? "px-2.5 py-1.5 text-[13.5px]" : "px-3 py-2.5 text-[14px]"} ${
+                    i === dangTro ? "bg-giay-tram" : ""
+                  } ${dangChon ? "font-semibold text-muc" : "text-muc-2"}`}
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    {coNhom && l.nhom && <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-giay-tram text-[11px] font-semibold text-nhan-dam">{chuDau(l.nhan)}</span>}
+                    <span className="truncate">{l.nhan}</span>
+                  </span>
+                  {dangChon && <Check strokeWidth={2} className="h-4 w-4 shrink-0 text-nhan" />}
+                </li>
+              </Fragment>
             );
           })}
           </ul>,

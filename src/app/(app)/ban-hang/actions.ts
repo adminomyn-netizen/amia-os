@@ -19,7 +19,8 @@ export async function timKhach(q: string) {
     .or([`ho_ten_khong_dau.ilike.%${boDau(an)}%`, `ma.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("ho_ten").limit(8);
   if (nd.chiNhanhId) q2 = q2.eq("chi_nhanh_id", nd.chiNhanhId);  // luật 29/10: chỉ khách của chi nhánh được gán
   const { data } = await q2;
-  return data ?? [];
+  // Không có quyền xem SĐT thì ô gợi ý cũng không được lộ số (SalonHero: customer.phone).
+  return (data ?? []).map((k) => (coQuyen(nd, "khach.sdt") ? k : { ...k, dien_thoai: "" }));
 }
 
 export async function layTheTien(khachId: string) {

@@ -20,7 +20,7 @@ export function ChonKhach({ khach, onDoi, tim }: { khach: KhachChon | null; onDo
   if (khach) {
     return (
       <div className="flex items-center justify-between gap-3 rounded-the border border-vien bg-giay-sang px-4 py-3">
-        <div><div className="text-[15px] font-medium text-muc">{khach.ho_ten}</div><div className="text-[13px] text-muc-3">{khach.ma} · {khach.dien_thoai}</div></div>
+        <div><div className="text-[15px] font-medium text-muc">{khach.ho_ten}</div><div className="text-[13px] text-muc-3">{khach.ma}{khach.dien_thoai ? ` · ${khach.dien_thoai}` : ""}</div></div>
         <button type="button" className={NUT_CHU} onClick={() => onDoi(null)}>Đổi khách</button>
       </div>
     );

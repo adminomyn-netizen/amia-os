@@ -8,7 +8,7 @@
 //     hoá đơn có thanh toán/dòng tạo trong app; thẻ có dòng sổ cái tạo trong app) = XUNG ĐỘT: bỏ qua, liệt kê, không ghi đè.
 //   • Không xoá khách/hoá đơn/lịch nào; chỉ thêm, và sửa các dòng lịch sử (la_lich_su) khi SalonHero đã đổi.
 // Dùng:
-//   PW=$(security find-generic-password -s amia-os-db-password -w) node scripts/chuyen-salonhero/dong-bo-dem.mjs [--tu 2026-10-28] [--den 2026-11-15] [--thu-muc <thư mục xuất có sẵn>] [--tab <id>] [--that] [--tu-kiem]
+//   PW=$(security find-generic-password -s amia-os-db-password -w) node scripts/chuyen-salonhero/dong-bo-dem.mjs [--tu 2026-10-28] [--den 2026-11-15] [--thu-muc <thư mục xuất có sẵn>] [--tab <id>] [--that] [--bo-qua-xung-dot] [--tu-kiem]
 //   --tu       ngày VN bắt đầu (mặc định: mốc lần đồng bộ trước trong sao-luu/dong-bo-moc.json, nếu chưa có thì 2026-10-28)
 //   --thu-muc  dùng lại bản xuất đã có (bỏ qua bước xuất từ SalonHero)
 //   --tu-kiem  TỰ KIỂM: trong giao dịch, giả lập "mất" vài khách/HĐ/lịch/thẻ và đổi vài dòng rồi cho đồng bộ vá lại; luôn rollback.
@@ -653,7 +653,8 @@ try {
   them("Khách còn thiếu chi tiết (khách mới)", 0, baoK.thieu_chi_tiet_moi);
   them("Mục xuất lỗi từ SalonHero", 0, loiXuat.length);
   const soXungDot = Object.values(xungDot).reduce((s, a) => s + a.length, 0);
-  them("Xung đột với dữ liệu tạo trong app (bỏ qua, không ghi đè)", 0, soXungDot, Object.entries(xungDot).filter(([, a]) => a.length).map(([k, a]) => `${k}:${a.length}`).join(" "));
+  // --bo-qua-xung-dot (chạy tự động hằng đêm): xung đột chỉ bị BỎ QUA + liệt kê trong báo cáo/nhật ký, không chặn --that; người xử lý đọc danh sách sáng hôm sau.
+  them("Xung đột với dữ liệu tạo trong app (bỏ qua, không ghi đè)", co("--bo-qua-xung-dot") ? soXungDot : 0, soXungDot, Object.entries(xungDot).filter(([, a]) => a.length).map(([k, a]) => `${k}:${a.length}`).join(" "));
   console.log("\n── ĐỐI CHIẾU VỚI SALONHERO ──"); inBang(kq);
   console.log("── DOANH THU / HOÁ ĐƠN THEO NGÀY (SalonHero | AMIA) ──"); inBang(bangNgay.slice(-14));
   if (bangLich.length) { console.log("── LỊCH LỆCH ──"); inBang(bangLich.slice(0, 20)); }

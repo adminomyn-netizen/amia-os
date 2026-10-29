@@ -47,6 +47,9 @@ type Nd = NonNullable<Awaited<ReturnType<typeof layNguoiDungDangNhap>>>;
 type BcNgay = { ngay: string; doanh_thu: number; thuc_thu: number; no_moi: number; so_don: number; so_buoi: number; tien_mat: number; chuyen_khoan: number; quet_the: number };
 type Sp = { "khong-du-quyen"?: string; cn?: string };
 
+/** Hai chữ cái đầu của tên (chữ đầu của hai từ cuối) cho ô đại diện. */
+const chuCai = (ten: string) => ten.trim().split(/\s+/).slice(-2).map((t) => t[0] ?? "").join("").toUpperCase();
+
 /** Trang chủ cá nhân của MỌI nhân viên (kể cả người không có dashboard): việc đang chờ, hiệu suất của tôi tháng này,
  *  lịch hôm nay, lối tắt theo quyền và toàn bộ chức năng. Dashboard điều hành nằm ở mục Tổng quan. */
 export default async function TrangChu({ searchParams }: { searchParams: Promise<Sp> }) {
@@ -58,15 +61,24 @@ export default async function TrangChu({ searchParams }: { searchParams: Promise
   // Chỉ lời chào cần dữ liệu đăng nhập → hiện NGAY; phần thân (truy vấn nặng) nạp ở khối riêng, hiện khung xương trong lúc chờ.
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-stretch justify-between gap-x-6 gap-y-4">
-        <div className="min-w-0">
-          <p className="nhan-muc">{nd.vaiTro === "chu" ? "CHỦ · quản trị toàn hệ thống" : `${NHAN_VAI_TRO[nd.vaiTro]}${nd.chucDanh ? ` · ${nd.chucDanh}` : ""}`}</p>
-          <h1 className="chu-tieu-de mt-1 text-[28px] leading-[1.15] text-muc lg:text-[34px]">Xin chào, {nd.hoTen}</h1>
-          <p className="mt-1.5 text-[14px] text-muc-3">Hôm nay {ngayVN(homNay)}</p>
-          {VIEC_CHINH[nd.vaiTro] && <p className="mt-2 max-w-xl text-[14px] text-muc-2">Việc chính của tôi: {VIEC_CHINH[nd.vaiTro]}</p>}
+      <section className="the-noi the-noi-thap vao relative overflow-hidden px-5 py-6 sm:px-7 lg:py-7">
+        <div aria-hidden className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-[40%] bg-nhan-nhat opacity-60" />
+        <div aria-hidden className="pointer-events-none absolute -bottom-24 left-1/3 h-52 w-72 rounded-[40%] bg-dat-nen opacity-70" />
+        <div className="relative flex flex-wrap items-stretch justify-between gap-x-6 gap-y-5">
+          <div className="flex min-w-0 items-start gap-4">
+            <span aria-hidden className="mt-1 flex h-14 w-14 shrink-0 items-center justify-center rounded-hop bg-gradient-to-br from-nhan to-espresso text-[20px] font-semibold tracking-wide text-white shadow-md ring-2 ring-dat/60">{chuCai(nd.hoTen)}</span>
+            <div className="min-w-0">
+              <p className="inline-flex items-center gap-2 rounded-tag border border-dat/40 bg-dat-nen px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-dat-dam">
+                <span aria-hidden className="h-1.5 w-1.5 rounded-tag bg-dat" />{nd.vaiTro === "chu" ? "CHỦ · quản trị toàn hệ thống" : `${NHAN_VAI_TRO[nd.vaiTro]}${nd.chucDanh ? ` · ${nd.chucDanh}` : ""}`}
+              </p>
+              <h1 className="chu-tieu-de mt-2 text-[28px] leading-[1.15] text-muc lg:text-[34px]">Xin chào, {nd.hoTen}</h1>
+              <p className="mt-1.5 text-[14px] text-muc-3">Hôm nay {ngayVN(homNay)}</p>
+              {VIEC_CHINH[nd.vaiTro] && <p className="mt-3 max-w-xl rounded-nho border-l-[3px] border-nhan bg-giay-sang/70 px-3 py-2 text-[14px] text-muc-2"><span className="font-semibold text-nhan-dam">Việc chính của tôi:</span> {VIEC_CHINH[nd.vaiTro]}</p>}
+            </div>
+          </div>
+          <DongHo />
         </div>
-        <DongHo />
-      </div>
+      </section>
       <Suspense fallback={dieuHanh
         ? <div className="space-y-6"><Xuong cao="h-14" nhan="Đang tải cảnh báo" /><Xuong cao="h-64" nhan="Đang tải bảng điều hành" /></div>
         : <div className="space-y-6"><Xuong cao="h-24" nhan="Đang tải ô số" /><Xuong cao="h-64" nhan="Đang tải việc đang chờ" /></div>}>

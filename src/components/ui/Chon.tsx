@@ -183,7 +183,7 @@ export function Chon({
                   } ${dangChon ? "font-semibold text-muc" : "text-muc-2"}`}
                 >
                   <span className="flex min-w-0 items-center gap-2">
-                    {coNhom && l.nhom && <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-giay-tram text-[11px] font-semibold text-nhan-dam">{chuDau(l.nhan)}</span>}
+                    {coNhom && l.nhom && <span aria-hidden className="grid h-6 w-6 shrink-0 place-items-center rounded-nho bg-giay-tram text-[11px] font-semibold text-nhan-dam">{chuDau(l.nhan)}</span>}
                     <span className="truncate">{l.nhan}</span>
                   </span>
                   {dangChon && <Check strokeWidth={2} className="h-4 w-4 shrink-0 text-nhan" />}

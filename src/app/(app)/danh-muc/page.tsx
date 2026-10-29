@@ -3,6 +3,7 @@ import { coQuyen } from "@/lib/quyen";
 import Link from "next/link";
 import { sb } from "@/lib/db";
 import { tienVN, soVN, homNayHCM, boDau } from "@/lib/dinh-dang";
+import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
@@ -216,7 +217,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <TieuDeTrang tieuDe="Danh mục" phu="Dịch vụ, gói thẻ, sản phẩm và vật tư, chi nhánh">{nutThem}</TieuDeTrang>
+      <TieuDeTrang tieuDe="Danh mục" phu="Dịch vụ, gói thẻ, sản phẩm và vật tư, chi nhánh"><div className="flex flex-wrap items-center gap-2"><NutXuatExcel loai="danh-muc" ten="danh mục" />{nutThem}</div></TieuDeTrang>
       <Tab muc={TAB} dang={tab} goc="/danh-muc" />
       {noiDung}
     </>

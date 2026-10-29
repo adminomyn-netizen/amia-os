@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { Minus, Plus, Search, Ticket, Trash2, UserRound, X } from "lucide-react";
+import { CreditCard, Minus, Package, Plus, Search, ShoppingBag, Sparkles, Ticket, Trash2, UserRound, X } from "lucide-react";
 import { Chon } from "@/components/ui/Chon";
 import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
@@ -17,6 +17,16 @@ import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 type Nv = { id: string; ten: string; vaiTro: string };
 type TheTien = { id: string; ma: string; soDu: number };
+/** Màu theo nhóm hàng (ổn định theo tên nhóm) lấy từ bảng màu thương hiệu: nhìn là phân biệt được nhóm, không còn một màu trắng đơn điệu. Cả sáng lẫn tối. */
+const SAC = [
+  { vien: "border-l-sac-luc", chip: "bg-sac-luc-nen text-sac-luc", gia: "text-sac-luc", cham: "bg-sac-luc" },
+  { vien: "border-l-sac-xanh", chip: "bg-sac-xanh-nen text-sac-xanh", gia: "text-sac-xanh", cham: "bg-sac-xanh" },
+  { vien: "border-l-sac-tim", chip: "bg-sac-tim-nen text-sac-tim", gia: "text-sac-tim", cham: "bg-sac-tim" },
+  { vien: "border-l-sac-cam", chip: "bg-sac-cam-nen text-sac-cam", gia: "text-sac-cam", cham: "bg-sac-cam" },
+  { vien: "border-l-sac-hong", chip: "bg-sac-hong-nen text-sac-hong", gia: "text-sac-hong", cham: "bg-sac-hong" },
+] as const;
+const sacCua = (nhom: string) => SAC[[...nhom].reduce((t, c) => t + c.charCodeAt(0), 0) % SAC.length];
+const BIEU_TUONG = { dich_vu: Sparkles, goi_the: CreditCard, san_pham: Package } as const;
 const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ" }, { ma: "goi_the", ten: "Thẻ và liệu trình" }, { ma: "san_pham", ten: "Sản phẩm" }] as const;
 const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
@@ -204,7 +214,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
         <div className="mt-5 flex gap-1 overflow-x-auto border-b border-vien" role="tablist" aria-label="Danh mục bán">
           {LOAI_TAB.map((t) => (
             <button key={t.ma} type="button" role="tab" aria-selected={tab === t.ma} onClick={() => setTab(t.ma)}
-              className={`-mb-px border-b-2 px-4 py-2.5 text-[14px] ${tab === t.ma ? "border-nhan font-medium text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}>{t.ten}</button>
+              className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-[14px] ${tab === t.ma ? "border-nhan font-semibold text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}>{t.ten}<span className={`rounded-tag px-1.5 py-0.5 text-[11px] tabular-nums ${tab === t.ma ? "bg-nhan-dam text-giay" : "bg-giay-tram text-muc-3"}`}>{muc.filter((m) => m.loai === t.ma).length}</span></button>
           ))}
         </div>
         <div className="relative mt-4">
@@ -212,26 +222,46 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
           <input value={tu} onChange={(e) => setTu(e.target.value)} placeholder="Tìm trong danh mục" aria-label="Tìm trong danh mục" className={`${O_NHAP} pl-9`} />
         </div>
         <div className="mt-4 space-y-5">
-          {nhomMuc.map((n) => (
-            <div key={n}>
-              <div className="nhan-muc mb-2">{n}</div>
-              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                {dsMuc.filter((m) => m.nhom === n).map((m) => (
-                  <button key={m.id} type="button" onClick={() => them(m)} className="rounded-the border border-vien bg-giay-sang px-3.5 py-3 text-left transition-colors hover:border-nhan hover:bg-nhan-nhat/40">
-                    <div className="text-[14px] font-medium text-muc">{m.ten}</div>
-                    <div className="mt-0.5 text-[13px] text-muc-3 tabular-nums">{tienVN(m.gia)}</div>
-                  </button>
-                ))}
+          {nhomMuc.map((n) => {
+            const sac = sacCua(n), ds = dsMuc.filter((m) => m.nhom === n), Bt = BIEU_TUONG[tab];
+            return (
+              <div key={n}>
+                <div className="mb-2.5 flex items-center gap-2">
+                  <span aria-hidden className={`h-3 w-1.5 rounded-tag ${sac.cham}`} />
+                  <span className="nhan-muc">{n}</span>
+                  <span className={`rounded-tag px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${sac.chip}`}>{ds.length}</span>
+                </div>
+                <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                  {ds.map((m) => {
+                    const daChon = dong.filter((d) => khoaDong(d) === `${m.loai}:${m.id}`).reduce((t, d) => t + d.sl, 0);
+                    return (
+                      <button key={m.id} type="button" onClick={() => them(m)}
+                        className={`group relative flex items-start gap-3 rounded-the border border-l-4 bg-gradient-to-b from-giay-sang to-giay px-3 py-3 text-left shadow-sm transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-nhan hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nhan ${sac.vien} ${daChon ? "border-nhan ring-1 ring-nhan" : "border-vien"}`}>
+                        <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-nho ${sac.chip}`}><Bt aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" /></span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-[14px] font-medium leading-snug text-muc">{m.ten}</span>
+                          <span className={`mt-1 block text-[15px] font-semibold tabular-nums ${sac.gia}`}>{tienVN(m.gia)}</span>
+                        </span>
+                        {daChon > 0
+                          ? <span className="absolute right-2 top-2 rounded-tag bg-nhan-dam px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-giay">×{daChon}</span>
+                          : <Plus aria-hidden strokeWidth={2} className="absolute right-2.5 top-2.5 h-4 w-4 text-muc-3 opacity-0 transition-opacity group-hover:opacity-100" />}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           {dsMuc.length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Không có mục nào.</p>}
         </div>
       </section>
 
       <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
-        <div className="rounded-the border border-vien bg-giay-sang">
-          <h2 className="border-b border-vien px-4 py-3 text-[15px] font-semibold text-muc">Đơn hàng</h2>
+        <div className="overflow-hidden rounded-hop border border-vien bg-giay-sang shadow-md">
+          <h2 className="flex items-center justify-between gap-3 bg-gradient-to-r from-espresso to-[#0d4a42] px-4 py-3.5 text-[15px] font-semibold text-white">
+            <span className="flex items-center gap-2"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Đơn hàng</span>
+            <span className="rounded-tag bg-white/15 px-2 py-0.5 text-[12px] font-medium tabular-nums">{dong.reduce((t, d) => t + d.sl, 0)} mục</span>
+          </h2>
           {dong.length === 0 && <p className="px-4 py-8 text-center text-[14px] text-muc-3">Chọn dịch vụ, thẻ hoặc sản phẩm ở bên trái.</p>}
           <ul className="divide-y divide-vien">
             {dong.map((d, i) => {
@@ -293,7 +323,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                 {tienDiem > 0 && <div className="flex justify-between"><dt className="text-muc-3">Đổi {diem.toLocaleString("vi-VN")} điểm</dt><dd className="tabular-nums">− {tienVN(tienDiem)}</dd></div>}
                 {vat > 0 && <div className="flex justify-between"><dt className="text-muc-3">VAT</dt><dd className="tabular-nums">{tienVN(vat)}</dd></div>}
                 {(phuPhi > 0 || tip > 0) && <div className="flex justify-between"><dt className="text-muc-3">Phụ phí và tip</dt><dd className="tabular-nums">{tienVN(phuPhi + tip)}</dd></div>}
-                <div className="flex justify-between border-t border-vien pt-2 text-[17px] font-semibold text-muc"><dt>Phải thu</dt><dd className="tabular-nums">{tienVN(phai)}</dd></div>
+                <div className="-mx-4 mt-1 flex items-center justify-between border-t-2 border-nhan bg-nhan-nhat px-4 py-3 text-muc"><dt className="text-[15px] font-semibold text-nhan-dam">Phải thu</dt><dd className="text-[22px] font-bold tabular-nums text-nhan-dam">{tienVN(phai)}</dd></div>
               </dl>
 
               <div className="border-t border-vien pt-3">

@@ -18,6 +18,8 @@ export async function dangNhap(_: { loi?: string } | undefined, formData: FormDa
     await supabase.auth.signOut();
     return { loi: "Tài khoản này chưa được cấp quyền dùng phần mềm hoặc đã bị khoá. Nhờ chủ phòng khám kiểm tra." };
   }
+  // Mật khẩu mặc định 12345678 đã lộ: ai còn dùng nó thì bị bắt đổi ngay ở lần vào này (không đá phiên hiện tại).
+  if (matKhau === "12345678") await sb().from("nhan_vien").update({ phai_doi_mat_khau: true }).eq("user_id", data.user.id);
   redirect("/");
 }
 

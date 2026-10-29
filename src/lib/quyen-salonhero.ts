@@ -9,7 +9,7 @@ export const VAI_SH_CUA_AMIA: Partial<Record<VaiTro, ShVai>> = {
 };
 
 export const QUYEN_TU_SH: Partial<Record<Quyen, string[]>> = {
-  "khach.xem": ["customer.read"],
+  "khach.xem": ["customer.read", "customer.readByLoc"],  // SalonHero: Quản lý/CTV chỉ có readByLoc (xem khách theo cơ sở) nhưng route /customer vẫn mở
   "khach.sua": ["customer.create", "customer.update"],
   "khach.nhap": ["customer.create"],
   "khach.xuat": ["customer.export"],

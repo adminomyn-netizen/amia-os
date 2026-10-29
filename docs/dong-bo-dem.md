@@ -42,3 +42,9 @@ Tự kiểm (luôn rollback): `--thu-muc <thư mục xuất> --tu-kiem` — gi�
 - Khách đã bị xoá khỏi danh sách SalonHero (còn thẻ) không được dựng lại; lịch/nhắc của khách không có ở AMIA bị bỏ qua và trừ khỏi đối chiếu.
 - Hoá đơn nháp (DRAFT) không nạp.
 - Thẻ đã dùng hết/hết hạn từ trước mốc không được hỏi lại.
+
+## LUẬT CỦA CHỊ LÂM (29/10/2026, tới 15/11 — giữ gói Supabase Free)
+- Chỉ chạy `--that` trong cửa sổ **23:00–05:00**; chia lô nhỏ (khoảng ngày ngắn), nghỉ giữa các lô; giao dịch ngắn.
+- **Tối đa 1 bản sao lưu toàn DB mỗi đêm** (sao lưu trước `--that`, không sao lưu thêm).
+- Không đổ dữ liệu nặng; trước và sau mỗi lô đo nhanh bảng nhỏ (>2 giây là DB đang chậm → dừng); gần trần dung lượng (350MB) thì dừng và báo.
+- Không tạo lịch tự chạy ghi DB khi chưa có lệnh của chị.

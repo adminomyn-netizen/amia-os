@@ -23,6 +23,15 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   const gio = chuoi(fd, "gio");
   const dv = mang(fd, "dich_vu_ids");
   if (!khachId) return { loi: "Chọn khách hàng." };
+  // Tài khoản gắn chi nhánh chỉ đặt/sửa lịch của chi nhánh mình, khách và lịch cũ cũng phải thuộc chi nhánh đó (chỉ vai Chủ/không gắn chi nhánh mới xuyên chi nhánh).
+  if (nd.chiNhanhId) {
+    const { data: k } = await db.from("khach_hang").select("chi_nhanh_id").eq("id", khachId).maybeSingle();
+    if (!k || k.chi_nhanh_id !== nd.chiNhanhId) return { loi: KHONG_DU_QUYEN };
+    if (id) {
+      const { data: cu } = await db.from("lich_hen").select("chi_nhanh_id").eq("id", id).maybeSingle();
+      if (!cu || cu.chi_nhanh_id !== nd.chiNhanhId) return { loi: KHONG_DU_QUYEN };
+    }
+  }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || !/^\d{2}:\d{2}$/.test(gio)) return { loi: "Chọn ngày và giờ hẹn." };
   if (dv.length === 0) return { loi: "Chọn ít nhất một dịch vụ." };
   const phut = so(fd, "thoi_luong") || 60;
@@ -46,7 +55,7 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
     const vuong = buoi.findIndex((b) => (trung ?? []).some((t) => new Date(t.bat_dau) < b.kt && new Date(t.ket_thuc) > b.bd));
     if (vuong >= 0) return { loi: `Nhân viên này đã có lịch trùng giờ${buoi.length > 1 ? ` vào ngày ${ngayVN(cacNgay[vuong])}` : ""}. Chọn giờ khác hoặc người khác.` };
   }
-  const row = { khach_id: khachId, chi_nhanh_id: chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
+  const row = { khach_id: khachId, chi_nhanh_id: nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
   let ids: string[];
   if (id) {
@@ -81,12 +90,14 @@ const CHUYEN: Record<string, string[]> = {
   dang_phuc_vu: ["hoan_thanh", "cho_phuc_vu"], hoan_thanh: [], huy: [], khong_den: ["da_xac_nhan"],
 };
 export async function doiTrangThaiLich(fd: FormData): Promise<KQ> {
-  if (!(await kiemQuyen("lich.sua"))) return { loi: KHONG_DU_QUYEN };
+  const nd = await kiemQuyen("lich.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
   const db = sb();
   const id = chuoi(fd, "id");
   const moi = chuoi(fd, "trang_thai");
-  const { data: l } = await db.from("lich_hen").select("trang_thai").eq("id", id).maybeSingle();
+  const { data: l } = await db.from("lich_hen").select("trang_thai, chi_nhanh_id").eq("id", id).maybeSingle();
   if (!l) return { loi: "Không tìm thấy lịch hẹn." };
+  if (nd.chiNhanhId && nd.chiNhanhId !== l.chi_nhanh_id) return { loi: KHONG_DU_QUYEN };
   if (!(CHUYEN[l.trang_thai] ?? []).includes(moi)) return { loi: "Không chuyển được sang trạng thái này." };
   if (moi === "huy" && !chuoi(fd, "ly_do")) return { loi: "Huỷ lịch phải ghi lý do." };
   const { error } = await db.from("lich_hen").update({ trang_thai: moi, ly_do_huy: moi === "huy" ? chuoi(fd, "ly_do") : null }).eq("id", id);

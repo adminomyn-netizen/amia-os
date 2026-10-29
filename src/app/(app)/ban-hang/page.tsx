@@ -33,7 +33,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   let cnLich: string | null = null;
   if (lichId) {
     const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id").eq("id", lichId).maybeSingle();
-    if (l) {
+    if (l && (!nd.chiNhanhId || l.chi_nhanh_id === nd.chiNhanhId)) {
       lichDung = l.id; cnLich = l.chi_nhanh_id;
       if (!khach) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", l.khach_id).maybeSingle()).data;
       const { data: ld } = await db.from("lich_hen_dich_vu").select("dich_vu_id, so_luong").eq("lich_id", l.id);

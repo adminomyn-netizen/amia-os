@@ -173,7 +173,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         {l.trang_thai === "cho_phuc_vu" && <NutNhanh chinh nhan="Mở ca" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "dang_phuc_vu" }} />}
         {l.trang_thai === "dang_phuc_vu" && <NutNhanh chinh nhan="Hoàn thành" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "hoan_thanh" }} />}
         {coQuyen(nd, "phieu.xem") && ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan"].includes(l.trang_thai) && <Link href={`/phieu-cap?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Phiếu cấp vật tư</Link>}
-        {["dang_phuc_vu", "hoan_thanh", "cho_phuc_vu"].includes(l.trang_thai) && coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Thanh toán</Link>}
+        {["chua_xac_nhan", "da_xac_nhan", "dang_phuc_vu", "hoan_thanh", "cho_phuc_vu"].includes(l.trang_thai) && coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Thanh toán ngay</Link>}
         {sua && ["cho_phuc_vu", "dang_phuc_vu"].includes(l.trang_thai) && theKhach.length > 0 && coQuyen(nd, "the.thuchien") && (
           <NutHop kieu="chu" nhan="Dùng thẻ" tieuDe="Dùng thẻ liệu trình" moTa="Trừ 1 buổi của thẻ cho lịch hẹn này." rong nhanLuu="Đã làm xong" an={{ lich_id: l.id }}
             giaTri={{ nv_id: nvDefault, the_id: theKhach.length === 1 ? theKhach[0].id ?? "" : "", dich_vu_id: dvIds.length === 1 ? dvIds[0] : "", ngay }}

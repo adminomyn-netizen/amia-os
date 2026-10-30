@@ -6904,6 +6904,42 @@ export type Database = {
           },
         ]
       }
+      mkt_chat_ngay: {
+        Row: {
+          bo_lo: number | null
+          co_sdt: number
+          hoi_thoai: number
+          id: string
+          khoa: string
+          loai: string
+          ngay: string
+          phan_hoi_trung_vi_giay: number | null
+          tao_luc: string
+        }
+        Insert: {
+          bo_lo?: number | null
+          co_sdt?: number
+          hoi_thoai?: number
+          id?: string
+          khoa: string
+          loai: string
+          ngay: string
+          phan_hoi_trung_vi_giay?: number | null
+          tao_luc?: string
+        }
+        Update: {
+          bo_lo?: number | null
+          co_sdt?: number
+          hoi_thoai?: number
+          id?: string
+          khoa?: string
+          loai?: string
+          ngay?: string
+          phan_hoi_trung_vi_giay?: number | null
+          tao_luc?: string
+        }
+        Relationships: []
+      }
       muc_phat_cham_cong: {
         Row: {
           den_phut: number | null

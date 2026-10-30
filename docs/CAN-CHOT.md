@@ -13,7 +13,7 @@ Mỗi mục là điều em tự đặt để chạy được; chưa có chữ ch
 | 7 | Ma trận quyền 11 vai trò (ai thấy tiền, giá vốn, ảnh da, kho...) | `src/lib/quyen.ts` | sửa 1 file |
 | 8 | Khách mua lần đầu bắt buộc có ngày sinh trước khi chốt đơn | `chotDonBanHang` | bỏ nếu không muốn |
 | 9 | Bảng màu = Mallard Green #006F62 + vàng đồng #BA9551 theo logo guideline; font Playfair Display + Roboto | `src/app/globals.css` | anh Gia chốt màu khác thì đổi các biến |
-| 10 | Hoa hồng: tỉ lệ theo loại × vai, riêng được cho từng mục; chưa cài tỉ lệ nào (đang 0) | màn Hoa hồng | chị cho bảng tỉ lệ thật |
+| 10 | Hoa hồng: tỉ lệ theo loại × vai, riêng được cho từng mục; chưa cài tỉ lệ nào (đang 0) | màn Hoa hồng | chị cho bảng tỉ lệ thật. Đã có Hoa hồng › Tỉ lệ › Nhập từ Excel (tải mẫu, dán hoặc chọn tệp, xem trước rồi áp dụng); khi có bảng thật chỉ cần điền vào mẫu và nhập |
 | 11 | File định mức Flora gửi còn lỗi (Thermage gắn sai đầu tip 11tr thay vì 22,27tr, dòng trùng, đơn vị shot/line lệch, 98/140 vật tư chưa có trong danh mục): CHƯA nhập vào hệ thống | — | sửa file rồi dùng "Dán từ bảng tính" ở màn Định mức |
 | 12 | Quy ước MÃ sản phẩm: chữ in hoa + số, không dấu cách, 3–24 ký tự; mã mới tự sinh theo nhóm `MP-0001` (mỹ phẩm), `VT` (vật tư), `TH` (thuốc), `QT` (quà), `DC` (dụng cụ), `SP` (khác); mã vạch tách riêng 8–14 chữ số | `src/lib/san-pham.ts`, tab Danh mục > Rà soát sản phẩm | chị/Dung chốt tiền tố; mã cũ (456 sản phẩm) giữ nguyên, sửa dần |
 | 13 | Quy ước TÊN: loại hàng + thương hiệu + tên + quy cách, 6–120 ký tự, không viết hoa toàn bộ, không trùng tên khác (không phân biệt hoa thường/dấu) | `src/lib/san-pham.ts` | sửa quy ước trong file |

@@ -1,5 +1,6 @@
 import { yeuCauQuyen } from "@/lib/auth";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
+import { docHet } from "@/lib/xuat-excel";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
@@ -10,7 +11,8 @@ import { Bang } from "@/components/ui/Table";
 import { NutHop } from "@/components/ui/BieuMau";
 import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
 import { SaoChepHoaHong } from "@/components/hoa-hong/SaoChepHoaHong";
-import { apDungSaoChep, luuTiLe, xemTruocSaoChep, xoaTiLe } from "./actions";
+import { NhapTiLeHoaHong } from "@/components/hoa-hong/NhapTiLeHoaHong";
+import { apDungNhapTiLe, apDungSaoChep, luuTiLe, xemTruocNhapTiLe, xemTruocSaoChep, xoaTiLe } from "./actions";
 
 const TAB = [{ ma: "bang", ten: "Bảng hoa hồng" }, { ma: "ti-le", ten: "Tỉ lệ hoa hồng" }];
 const LOAI = [{ gia_tri: "dich_vu", nhan: "Dịch vụ" }, { gia_tri: "san_pham", nhan: "Sản phẩm" }, { gia_tri: "goi_the", nhan: "Bán thẻ / liệu trình" }];
@@ -41,7 +43,15 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
       </>
     );
   } else {
-    const [{ data: tl }, { data: dv }, { data: sp2 }, { data: g }, { data: nvs }] = await Promise.all([db.from("hoa_hong_ti_le").select("*").order("loai").order("vai"), db.from("dich_vu").select("id, ten"), db.from("san_pham").select("id, ten"), db.from("goi_the").select("id, ten"), db.from("nhan_vien").select("id, ho_ten, chuc_danh, hoat_dong").order("ho_ten")]);
+    const [tl, { data: dv }, { data: sp2 }, { data: g }, { data: nvs }] = await Promise.all([docHet((a, b) => db.from("hoa_hong_ti_le").select("*").order("id").range(a, b)), db.from("dich_vu").select("id, ten, hoat_dong"), db.from("san_pham").select("id, ten, hoat_dong"), db.from("goi_the").select("id, ten, hoat_dong"), db.from("nhan_vien").select("id, ho_ten, chuc_danh, hoat_dong").order("ho_ten")]);
+    // Mục đang bán chưa có tỉ lệ riêng: dùng tỉ lệ mặc định của loại, không có mặc định thì hoa hồng tính 0.
+    const chuaRieng = (loai: string, nhanLoai: string, ds: { id: string; hoat_dong: boolean }[] | null) => {
+      const co = new Set((tl ?? []).filter((r) => r.loai === loai && r.muc_id).map((r) => r.muc_id));
+      const n = (ds ?? []).filter((m) => m.hoat_dong && !co.has(m.id)).length;
+      if (!n) return null;
+      return `${n} ${nhanLoai} chưa có tỉ lệ riêng, ${(tl ?? []).some((r) => r.loai === loai && !r.muc_id) ? "đang dùng tỉ lệ mặc định của loại" : "chưa có tỉ lệ mặc định nên đang tính 0%"}.`;
+    };
+    const canhBao = (tl ?? []).length ? [chuaRieng("dich_vu", "dịch vụ", dv), chuaRieng("goi_the", "gói thẻ / liệu trình", g), chuaRieng("san_pham", "sản phẩm", sp2)].filter(Boolean) : [];
     const ten = new Map<string, string>([...(dv ?? []), ...(sp2 ?? []), ...(g ?? [])].map((x) => [x.id, x.ten]));
     const mucLC = [{ gia_tri: "", nhan: "Mặc định cả loại" }, ...[...(dv ?? []), ...(sp2 ?? []), ...(g ?? [])].map((x) => ({ gia_tri: x.id, nhan: x.ten }))];
     // Đối tượng áp dụng: chung, nhóm theo chức danh (chuẩn hoá chữ thường, bỏ khoảng thừa), hoặc một nhân viên (người đang làm + người đã có cài đặt riêng).
@@ -62,7 +72,9 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
       { ten: "so_tien", nhan: "Hoặc cộng số tiền cố định mỗi lượt (đồng)", loai: "tien" as const, ghiChu: "Nhân với số lượng trên hoá đơn; có thể dùng cùng tỉ lệ." }];
     noiDung = (
       <>
-        {sua && <div className="mb-4 flex flex-wrap gap-2.5"><NutHop nhan="Thêm tỉ lệ" tieuDe="Thêm tỉ lệ hoa hồng" moTa="Tỉ lệ riêng cho một dịch vụ, sản phẩm hoặc gói thắng tỉ lệ mặc định của loại đó; cài cho nhân viên hoặc nhóm thì thắng cài đặt chung." truong={truong} giaTri={{ doi_tuong: "", loai: "dich_vu", vai: "ban", muc_id: "" }} action={luuTiLe} />
+        {(tl ?? []).length === 0 && <div role="status" className="mb-4 border-l-2 border-nhan bg-giay-tram px-3 py-2.5 text-[14px] text-muc">Chưa cài tỉ lệ nào nên hoa hồng của mọi đơn đang tính 0. {sua && !nd.chiNhanhId ? "Bấm Nhập từ Excel để cài cả bảng một lần." : "Nhờ quản trị cài bảng tỉ lệ."}</div>}
+        {canhBao.length > 0 && <ul className="mb-4 space-y-1 text-[13px] text-muc-2">{canhBao.map((c) => <li key={c}>{c}</li>)}</ul>}
+        {sua && <div className="mb-4 flex flex-wrap gap-2.5">{!nd.chiNhanhId && <NhapTiLeHoaHong xemTruoc={xemTruocNhapTiLe} apDung={apDungNhapTiLe} />}<NutHop nhan="Thêm tỉ lệ" tieuDe="Thêm tỉ lệ hoa hồng" moTa="Tỉ lệ riêng cho một dịch vụ, sản phẩm hoặc gói thắng tỉ lệ mặc định của loại đó; cài cho nhân viên hoặc nhóm thì thắng cài đặt chung." truong={truong} giaTri={{ doi_tuong: "", loai: "dich_vu", vai: "ban", muc_id: "" }} action={luuTiLe} />
           <SaoChepHoaHong luaChon={doiTuongLC.map((l) => (l.gia_tri === "" ? { gia_tri: "chung", nhan: l.nhan } : l))} tenMuc={Object.fromEntries(ten)} xemTruoc={xemTruocSaoChep} apDung={apDungSaoChep} /></div>}
         <Bang duLieu={dsTl} khoa={(r) => r.id} trong="Chưa cài tỉ lệ nào: mọi hoa hồng đang tính 0."
           cot={[{ nhan: "Áp dụng cho", chinh: true, hienThi: (r) => <span className="text-muc">{tenDoiTuong(r)}</span> }, { nhan: "Loại", hienThi: (r) => nhan(LOAI, r.loai) }, { nhan: "Vai", hienThi: (r) => nhan(VAI, r.vai) }, { nhan: "Mục", hienThi: (r) => (r.muc_id ? ten.get(r.muc_id) ?? "" : "Mặc định cả loại") }, { nhan: "Tỉ lệ", hienThi: (r) => `${Number(r.ti_le)}%`, phai: true },

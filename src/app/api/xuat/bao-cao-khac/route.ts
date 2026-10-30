@@ -5,14 +5,13 @@ import { congNgay, homNayHCM } from "@/lib/dinh-dang";
 import { khoangNgay } from "@/lib/bao-cao";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat } from "@/lib/xuat-excel";
+import { chuDoiTuongXuat, NHAN_LOAI, NHAN_VAI, TIEU_DE_NHAP, TIEU_DE_TEN_MUC } from "@/lib/hoa-hong-nhap";
 
 /** Xuất Excel cho các màn báo cáo nằm ngoài trang Báo cáo: hoa hồng, quyết toán hoa hồng, công nợ khách, đối soát bán hàng, thống kê khách, báo cáo marketing, công nợ nhà cung cấp.
  *  Mỗi loại dùng ĐÚNG quyền của màn tương ứng (chặn ở máy chủ) và cùng nguồn số liệu với màn đó; người gắn chi nhánh chỉ xuất được chi nhánh của mình; mọi lần xuất ghi nhật ký. */
-const QUYEN: Record<string, Quyen> = { "danh-muc": "danhmuc.xem", "hoa-hong": "baocao.tien", "ti-le-hoa-hong": "baocao.tien", "quyet-toan-hoa-hong": "luong.xem", "cong-no-khach": "baocao.tien", "doi-soat": "baocao.tien", "thong-ke-khach": "khach.xem", "marketing": "mkt.xem", "cong-no-ncc": "mua.xem" };
+const QUYEN: Record<string, Quyen> = { "danh-muc": "danhmuc.xem", "hoa-hong": "baocao.tien", "ti-le-hoa-hong": "baocao.tien", "mau-ti-le-hoa-hong": "danhmuc.sua", "quyet-toan-hoa-hong": "luong.xem", "cong-no-khach": "baocao.tien", "doi-soat": "baocao.tien", "thong-ke-khach": "khach.xem", "marketing": "mkt.xem", "cong-no-ncc": "mua.xem" };
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 const THANG = /^\d{4}-(0[1-9]|1[0-2])$/;
-const VAI: Record<string, string> = { phuc_vu: "Phục vụ", tu_van: "Tư vấn", ban: "Bán hàng", gioi_thieu: "Giới thiệu" };
-const LOAI: Record<string, string> = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_the: "Bán thẻ / liệu trình" };
 const NHOM_NO = [{ ten: "Chưa đến hạn", den: 0 }, { ten: "1–7 ngày", den: 7 }, { ten: "8–15 ngày", den: 15 }, { ten: "16–30 ngày", den: 30 }, { ten: "31–60 ngày", den: 60 }, { ten: "Trên 60 ngày", den: 99999 }];
 const TT_NO: Record<string, string> = { dang_nhac: "Đang nhắc", da_cam_ket: "Đã cam kết", tranh_chap: "Đang tranh chấp" };
 
@@ -40,10 +39,31 @@ export async function GET(req: Request) {
     bangs.push({ ten: "Bảng hoa hồng", dong: [...theo.values()].sort((a, b) => Number(b.hh) - Number(a.hh)), cot: [{ nhan: "Nhân viên", khoa: "ten", rong: 34 }, { nhan: "Doanh số", khoa: "ds", tien: true }, { nhan: "Hoa hồng phục vụ", khoa: "phuc_vu", tien: true }, { nhan: "Hoa hồng tư vấn", khoa: "tu_van", tien: true }, { nhan: "Hoa hồng bán hàng", khoa: "ban", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
     tenTep = `hoa-hong-${tu}-${den}`; Object.assign(chiTiet, { tu, den, chi_nhanh_id: cn ?? null });
   } else if (loai === "ti-le-hoa-hong") {
-    const [{ data: tl }, { data: dv }, { data: sp }, { data: g }, { data: nv }] = await Promise.all([db.from("hoa_hong_ti_le").select("*").order("loai").order("vai"), db.from("dich_vu").select("id, ten"), db.from("san_pham").select("id, ten"), db.from("goi_the").select("id, ten"), db.from("nhan_vien").select("id, ho_ten")]);
-    const ten = new Map<string, string>([...(dv ?? []), ...(sp ?? []), ...(g ?? [])].map((x) => [x.id, x.ten])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
-    bangs.push({ ten: "Tỉ lệ hoa hồng", dong: (tl ?? []).map((r) => ({ dt: r.nhan_vien_id ? `Nhân viên: ${tenNv.get(r.nhan_vien_id) ?? ""}` : r.nhom_chuc_danh ? `Nhóm: ${r.nhom_chuc_danh}` : "Mọi người", loai: LOAI[r.loai] ?? r.loai, vai: VAI[r.vai] ?? r.vai, muc: r.muc_id ? ten.get(r.muc_id) ?? "" : "Mặc định cả loại", ti_le: Number(r.ti_le), so_tien: Number(r.so_tien ?? 0) })),
-      cot: [{ nhan: "Áp dụng cho", khoa: "dt", rong: 34 }, { nhan: "Loại", khoa: "loai", rong: 22 }, { nhan: "Vai", khoa: "vai", rong: 14 }, { nhan: "Mục", khoa: "muc", rong: 40 }, { nhan: "Tỉ lệ (%)", khoa: "ti_le", so: true }, { nhan: "Số tiền cố định / lượt", khoa: "so_tien", tien: true }] });
+    // Định dạng XUẤT = định dạng NHẬP (cột và chữ ghi như tệp mẫu): xuất ra, sửa trong Excel, nhập lại được. Mã mục ưu tiên mã, không có mã thì tên.
+    const [tl0, { data: dv }, { data: sp }, { data: g }, { data: nv }] = await Promise.all([docHet((a, b) => db.from("hoa_hong_ti_le").select("*").order("id").range(a, b)), db.from("dich_vu").select("id, ma, ten"), db.from("san_pham").select("id, ma, ten"), db.from("goi_the").select("id, ma, ten"), db.from("nhan_vien").select("id, ho_ten, ma_nv")]);
+    const tl = [...tl0].sort((x, y) => x.loai.localeCompare(y.loai) || x.vai.localeCompare(y.vai));
+    const muc = new Map<string, { ma: string | null; ten: string }>([...(dv ?? []), ...(sp ?? []), ...(g ?? [])].map((x) => [x.id, x])), tenNv = new Map((nv ?? []).map((n) => [n.id, n]));
+    bangs.push({ ten: "Tỉ lệ", dong: (tl ?? []).map((r) => ({ loai: NHAN_LOAI[r.loai] ?? r.loai, muc: r.muc_id ? muc.get(r.muc_id)?.ma || muc.get(r.muc_id)?.ten || "" : "", vai: NHAN_VAI[r.vai] ?? r.vai, ti_le: Number(r.ti_le), so_tien: Number(r.so_tien ?? 0), dt: chuDoiTuongXuat(r, tenNv), ten_muc: r.muc_id ? muc.get(r.muc_id)?.ten ?? "" : "Mặc định cả loại" })),
+      cot: [{ nhan: TIEU_DE_NHAP[0], khoa: "loai", rong: 22 }, { nhan: TIEU_DE_NHAP[1], khoa: "muc", rong: 24 }, { nhan: TIEU_DE_NHAP[2], khoa: "vai", rong: 14 }, { nhan: TIEU_DE_NHAP[3], khoa: "ti_le", tp: true, rong: 12 }, { nhan: TIEU_DE_NHAP[4], khoa: "so_tien", tien: true, rong: 18 }, { nhan: TIEU_DE_NHAP[5], khoa: "dt", rong: 34 }, { nhan: TIEU_DE_TEN_MUC, khoa: "ten_muc", rong: 44 }] });
+  } else if (loai === "mau-ti-le-hoa-hong") {
+    // Tệp mẫu: sheet "Tỉ lệ" chỉ có dòng tiêu đề (điền vào đây), sheet "Ví dụ" để xem cách ghi (KHÔNG bị nhập), các sheet còn lại là danh sách mã để tra.
+    const [{ data: dv }, { data: sp }, { data: g }, { data: nv }] = await Promise.all([db.from("dich_vu").select("ma, ten").eq("hoat_dong", true).order("ma"), db.from("san_pham").select("ma, ten").eq("hoat_dong", true).order("ma"), db.from("goi_the").select("ma, ten").eq("hoat_dong", true).order("ma"), db.from("nhan_vien").select("ma_nv, ho_ten, chuc_danh").eq("hoat_dong", true).order("ho_ten")]);
+    const cotNhap = [{ nhan: TIEU_DE_NHAP[0], khoa: "loai", rong: 22 }, { nhan: TIEU_DE_NHAP[1], khoa: "muc", rong: 28 }, { nhan: TIEU_DE_NHAP[2], khoa: "vai", rong: 14 }, { nhan: TIEU_DE_NHAP[3], khoa: "ti_le", tp: true, rong: 12 }, { nhan: TIEU_DE_NHAP[4], khoa: "so_tien", tien: true, rong: 18 }, { nhan: TIEU_DE_NHAP[5], khoa: "dt", rong: 34 }];
+    const ma = (ds: { ma: string | null; ten: string }[] | null) => (ds ?? []).map((x) => ({ ma: x.ma ?? "", ten: x.ten }));
+    const cotMa = [{ nhan: "Mã", khoa: "ma", rong: 18 }, { nhan: "Tên", khoa: "ten", rong: 60 }];
+    const vd = (d: { ma: string | null; ten: string } | undefined) => d?.ma || d?.ten || "";
+    const nhomMau = [...new Set((nv ?? []).map((n) => n.chuc_danh?.trim()).filter(Boolean))][0] ?? "Điều dưỡng";
+    bangs.push({ ten: "Tỉ lệ", dong: [], cot: cotNhap });
+    bangs.push({ ten: "Ví dụ", dong: [
+      { loai: "Dịch vụ", muc: "", vai: "Bán hàng", ti_le: 5, so_tien: 0, dt: "" },
+      { loai: "Dịch vụ", muc: vd(dv?.[0]), vai: "Phục vụ", ti_le: 10, so_tien: 0, dt: "Mọi người" },
+      { loai: "Dịch vụ", muc: vd(dv?.[0]), vai: "Tư vấn", ti_le: 3.5, so_tien: 0, dt: `Nhóm: ${nhomMau}` },
+      { loai: "Sản phẩm", muc: vd(sp?.[0]), vai: "Bán hàng", ti_le: 0, so_tien: 20000, dt: `Nhân viên: ${nv?.[0]?.ma_nv || nv?.[0]?.ho_ten || ""}` },
+      { loai: "Bán thẻ / liệu trình", muc: vd(g?.[0]), vai: "Giới thiệu", ti_le: 2, so_tien: 0, dt: "" },
+    ], cot: cotNhap });
+    bangs.push({ ten: "Mã dịch vụ", dong: ma(dv), cot: cotMa }, { ten: "Mã sản phẩm", dong: ma(sp), cot: cotMa }, { ten: "Mã gói thẻ", dong: ma(g), cot: cotMa });
+    bangs.push({ ten: "Nhân viên và nhóm", dong: (nv ?? []).map((n) => ({ ma: n.ma_nv ?? "", ten: n.ho_ten, nhom: n.chuc_danh ? `Nhóm: ${n.chuc_danh.trim()}` : "" })), cot: [{ nhan: "Mã nhân viên", khoa: "ma", rong: 16 }, { nhan: "Họ tên", khoa: "ten", rong: 34 }, { nhan: "Ghi ở cột Đối tượng để áp cho cả nhóm", khoa: "nhom", rong: 44 }] });
+    tenTep = "mau-nhap-ti-le-hoa-hong";
   } else if (loai === "quyet-toan-hoa-hong") {
     const macDinh = (() => { const [y, m] = hom.split("-").map(Number); return m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`; })();
     const t = u.searchParams.get("thang"), thang = t && THANG.test(t) ? t : macDinh;

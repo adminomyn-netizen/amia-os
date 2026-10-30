@@ -5,6 +5,9 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
 import { docDoiTuong } from "@/lib/hoa-hong";
+import { docBangTiLe, kiemTraNhapTiLe, tachBang, TOI_DA_DONG, type DanhMucNhap, type DongNhap, type TiLeHienCo, type TongNhap } from "@/lib/hoa-hong-nhap";
+import { docTepTiLe } from "@/lib/hoa-hong-nhap-tep";
+import { docHet } from "@/lib/xuat-excel";
 
 type KQ = { ok?: true; loi?: string };
 const VAI = ["phuc_vu", "tu_van", "ban", "gioi_thieu"];
@@ -70,4 +73,76 @@ export async function apDungSaoChep(fd: FormData): Promise<KQ & { them?: number;
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sao_chep_hoa_hong", doi_tuong: "hoa_hong_ti_le", chi_tiet: { tu: a, toi: b, cho_ghi_de: ghiDe, them: r.them, ghi_de: r.ghi_de, giu_nguyen: r.giu_nguyen } });
   revalidatePath("/hoa-hong");
   return { ok: true, them: r.them, ghiDe: r.ghi_de, giuNguyen: r.giu_nguyen };
+}
+
+// ---- NHẬP CẢ BẢNG TỈ LỆ TỪ EXCEL (dán bảng hoặc tệp .xlsx/.csv): xem trước từng dòng rồi mới áp dụng ----
+export type KetQuaNhapTiLe = { ok?: true; loi?: string; dong?: DongNhap[]; tong?: TongNhap; daGhi?: number };
+type Khoa = { nhanVienId: string; chiNhanhId: string | null };
+
+/** Quyền: sửa danh mục. Bảng tỉ lệ dùng chung cho cả công ty nên người gắn với một chi nhánh không được nhập cả bảng. */
+async function kiemNhap(): Promise<{ nd?: Khoa; loi?: string }> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  if (nd.chiNhanhId) return { loi: "Bảng tỉ lệ hoa hồng dùng chung cho cả công ty, tài khoản gắn với một chi nhánh không nhập cả bảng được. Nhờ quản trị chung nhập." };
+  return { nd };
+}
+
+/** Đọc dữ liệu gửi lên (ô dán hoặc tệp) rồi chấm từng dòng với danh mục và bảng tỉ lệ ĐANG CÓ trong CSDL ở thời điểm gọi (không tin kết quả xem trước từ trình duyệt). */
+async function chamBang(fd: FormData): Promise<{ loi?: string; dong?: DongNhap[]; tong?: TongNhap; nguon?: "dan" | "tep"; tenTep?: string }> {
+  const tep = fd.get("tep");
+  let bang: string[][], nguon: "dan" | "tep" = "dan", tenTep: string | undefined;
+  if (tep instanceof File && tep.size > 0) {
+    const kq = await docTepTiLe(tep);
+    if (kq.loi || !kq.bang) return { loi: kq.loi ?? "Không đọc được tệp." };
+    bang = kq.bang; nguon = "tep"; tenTep = tep.name;
+  } else {
+    const vb = chuoi(fd, "van_ban");
+    if (!vb.trim()) return { loi: "Hãy dán bảng từ Excel hoặc chọn tệp .xlsx / .csv." };
+    bang = tachBang(vb);
+  }
+  const { dong: tho, loiChung } = docBangTiLe(bang);
+  if (loiChung) return { loi: loiChung };
+  if (!tho.length) return { loi: "Bảng chỉ có dòng tiêu đề, chưa có dòng tỉ lệ nào." };
+  if (tho.length > TOI_DA_DONG) return { loi: `Bảng quá dài (${tho.length} dòng, tối đa ${TOI_DA_DONG}). Hãy chia nhỏ.` };
+  const db = sb();
+  const [dv, sp, g, nv, tl] = await Promise.all([
+    docHet((a, b) => db.from("dich_vu").select("id, ma, ten").order("id").range(a, b)), docHet((a, b) => db.from("san_pham").select("id, ma, ten").order("id").range(a, b)), docHet((a, b) => db.from("goi_the").select("id, ma, ten").order("id").range(a, b)),
+    docHet((a, b) => db.from("nhan_vien").select("id, ma_nv, ho_ten, chuc_danh, hoat_dong").order("id").range(a, b)), docHet((a, b) => db.from("hoa_hong_ti_le").select("*").order("id").range(a, b)),
+  ]);
+  const nhom = new Set<string>();
+  for (const n of nv) if (n.hoat_dong && n.chuc_danh?.trim()) nhom.add(n.chuc_danh.trim().toLowerCase());
+  for (const r of tl) if (r.nhom_chuc_danh) nhom.add(r.nhom_chuc_danh);
+  const dm: DanhMucNhap = { dich_vu: dv, san_pham: sp, goi_the: g, nhan_vien: nv.map((n) => ({ id: n.id, ma_nv: n.ma_nv, ho_ten: n.ho_ten })), nhom: [...nhom] };
+  const hienCo: TiLeHienCo[] = tl.map((r) => ({ loai: r.loai, vai: r.vai, muc_id: r.muc_id, nhan_vien_id: r.nhan_vien_id, nhom_chuc_danh: r.nhom_chuc_danh, ti_le: Number(r.ti_le), so_tien: r.so_tien == null ? null : Number(r.so_tien) }));
+  return { ...kiemTraNhapTiLe(tho, dm, hienCo), nguon, tenTep };
+}
+
+/** Bước 1: xem trước, KHÔNG ghi gì. Mỗi dòng: sẽ thêm / ghi đè (cũ → mới) / giữ nguyên / lỗi và lý do. */
+export async function xemTruocNhapTiLe(fd: FormData): Promise<KetQuaNhapTiLe> {
+  const { loi } = await kiemNhap();
+  if (loi) return { loi };
+  const kq = await chamBang(fd);
+  return kq.loi ? { loi: kq.loi } : { dong: kq.dong, tong: kq.tong };
+}
+
+/** Bước 2: áp dụng. Chấm lại từ đầu ở máy chủ; còn một dòng lỗi thì không ghi dòng nào. Mọi dòng thêm/ghi đè đi trong MỘT câu upsert (một giao dịch) theo khoá (loại, mục, vai, nhân viên, nhóm), nên chạy lại không tạo trùng. */
+export async function apDungNhapTiLe(fd: FormData): Promise<KetQuaNhapTiLe> {
+  const { nd, loi } = await kiemNhap();
+  if (loi || !nd) return { loi: loi ?? KHONG_DU_QUYEN };
+  const kq = await chamBang(fd);
+  if (kq.loi || !kq.dong || !kq.tong) return { loi: kq.loi ?? "Không đọc được bảng." };
+  if (kq.tong.loi > 0) return { loi: `Còn ${kq.tong.loi} dòng lỗi nên chưa ghi dòng nào. Sửa bảng rồi xem trước lại.`, dong: kq.dong, tong: kq.tong };
+  const ghi = kq.dong.filter((d) => d.hanh_dong === "them" || d.hanh_dong === "ghi_de");
+  const db = sb();
+  if (ghi.length) {
+    const { error } = await db.from("hoa_hong_ti_le").upsert(ghi.map((d) => ({ loai: d.loai, vai: d.vai, muc_id: d.muc_id, nhan_vien_id: d.nhan_vien_id, nhom_chuc_danh: d.nhom_chuc_danh, ti_le: d.ti_le ?? 0, so_tien: d.so_tien })), { onConflict: "loai,muc_id,vai,nhan_vien_id,nhom_chuc_danh" });
+    if (error) return { loi: `Chưa ghi gì: ${thongBaoLoi(error)}` };
+  }
+  await db.from("nhat_ky_truy_cap").insert({
+    nguoi_id: nd.nhanVienId, hanh_dong: "nhap_ti_le_hoa_hong", doi_tuong: "hoa_hong_ti_le",
+    chi_tiet: { nguon: kq.nguon, ten_tep: kq.tenTep ?? null, them: kq.tong.them, ghi_de: kq.tong.ghiDe, giu_nguyen: kq.tong.giuNguyen,
+      dong: ghi.slice(0, 300).map((d) => ({ dong: d.dong, loai: d.loai, vai: d.vai, muc_id: d.muc_id, nhan_vien_id: d.nhan_vien_id, nhom_chuc_danh: d.nhom_chuc_danh, truoc: d.hanh_dong === "ghi_de" ? { ti_le: d.ti_le_cu, so_tien: d.so_tien_cu } : null, sau: { ti_le: d.ti_le, so_tien: d.so_tien } })) },
+  });
+  revalidatePath("/hoa-hong");
+  return { ok: true, dong: kq.dong, tong: kq.tong, daGhi: ghi.length };
 }

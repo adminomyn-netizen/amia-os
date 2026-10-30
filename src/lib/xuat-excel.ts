@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import type { sb } from "@/lib/db";
 
 /** Bộ ghi tệp Excel dùng chung cho các nút "Xuất Excel" của báo cáo: dựng sổ làm việc từ các bảng, ghi nhật ký truy cập, trả phản hồi tải về. */
-export type Cot = { nhan: string; khoa: string; rong?: number; tien?: boolean; so?: boolean };
+export type Cot = { nhan: string; khoa: string; rong?: number; tien?: boolean; so?: boolean; /** số có phần thập phân (tỉ lệ %) */ tp?: boolean };
 export type BangXuat = { ten: string; cot: Cot[]; dong: Record<string, unknown>[] };
 
 export const ngayXuat = (s: string | null | undefined) => (s ? s.slice(0, 10).split("-").reverse().join("/") : "");
@@ -23,7 +23,7 @@ export async function phanHoiExcel(db: ReturnType<typeof sb>, nd: { nhanVienId: 
   for (const b of bangs) {
     const ws = wb.addWorksheet(b.ten.slice(0, 31));
     ws.columns = b.cot.map((c) => ({ header: c.nhan, key: c.khoa, width: c.rong ?? (c.tien ? 18 : 12) }));
-    for (const r of b.dong) ws.addRow(Object.fromEntries(b.cot.map((c) => [c.khoa, c.tien || c.so ? Number(r[c.khoa] ?? 0) : (r[c.khoa] ?? "")])));
+    for (const r of b.dong) ws.addRow(Object.fromEntries(b.cot.map((c) => [c.khoa, c.tien || c.so || c.tp ? Number(r[c.khoa] ?? 0) : (r[c.khoa] ?? "")])));
     ws.getRow(1).font = { bold: true };
     ws.views = [{ state: "frozen", ySplit: 1 }];
     b.cot.forEach((c, i) => { if (c.tien || c.so) ws.getColumn(i + 1).numFmt = "#,##0"; });

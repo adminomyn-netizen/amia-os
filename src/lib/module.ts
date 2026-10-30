@@ -222,8 +222,8 @@ export const MODULE: Module[] = [
         { ten: "Zalo OA / SMS", moTa: "Nhắn nhắc lịch, chăm sóc (cần tài khoản Zalo OA / nhà mạng).", trangThai: "sap_co" },
       ] },
       { nhan: "Các thiết lập khác", the: [
-        { ten: "Quy tắc kho & hạn dùng", moTa: "Chặn bán khi hết tồn, bắt buộc hạn dùng, mã vạch.", trangThai: "sap_co" },
-        { ten: "Chấm công & ca làm", moTa: "Ca văn phòng / chi nhánh, ngày lễ, trừ công trễ sớm.", trangThai: "sap_co" },
+        { ten: "Quy tắc kho & hạn dùng", moTa: "Chặn bán khi hết tồn, bắt buộc hạn dùng khi nhập kho.", duongDan: "/cai-dat/quy-tac-kho", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Chấm công & ca làm", moTa: "Ca văn phòng / chi nhánh, ngày lễ, trừ công trễ sớm.", duongDan: "/nhan-su/ca-kip", trangThai: "san_sang" },
       ] },
     ],
   },

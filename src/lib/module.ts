@@ -183,6 +183,7 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "Báo cáo", the: [
         { ten: "Báo cáo marketing", moTa: "Phễu lead → khách đến → thực thu và giá mỗi lead theo nguồn.", duongDan: "/marketing/bao-cao", trangThai: "san_sang", quyen: ["mkt.xem"] },
+        { ten: "Hội thoại theo ngày", moTa: "Số tin nhắn mới từ Pancake chia theo dịch vụ, nguồn, giai đoạn và nhân viên.", duongDan: "/marketing/hoi-thoai", trangThai: "san_sang", quyen: ["mkt.xem"] },
       ] },
     ],
   },

@@ -14,6 +14,174 @@ export type Database = {
   }
   public: {
     Tables: {
+      hop_thu_hoi_thoai: {
+        Row: {
+          chi_nhanh_id: string | null
+          chua_doc: number
+          id: string
+          kenh: string
+          khach_id: string | null
+          ma_ngoai: string
+          tao_luc: string
+          ten_khach: string | null
+          tin_cuoi: string | null
+          tin_cuoi_luc: string | null
+        }
+        Insert: {
+          chi_nhanh_id?: string | null
+          chua_doc?: number
+          id?: string
+          kenh: string
+          khach_id?: string | null
+          ma_ngoai: string
+          tao_luc?: string
+          ten_khach?: string | null
+          tin_cuoi?: string | null
+          tin_cuoi_luc?: string | null
+        }
+        Update: {
+          chi_nhanh_id?: string | null
+          chua_doc?: number
+          id?: string
+          kenh?: string
+          khach_id?: string | null
+          ma_ngoai?: string
+          tao_luc?: string
+          ten_khach?: string | null
+          tin_cuoi?: string | null
+          tin_cuoi_luc?: string | null
+        }
+        Relationships: []
+      }
+      hop_thu_tin: {
+        Row: {
+          hoi_thoai_id: string
+          huong: string
+          id: string
+          nguoi_id: string | null
+          noi_dung: string
+          tao_luc: string
+          trang_thai: string
+        }
+        Insert: {
+          hoi_thoai_id: string
+          huong: string
+          id?: string
+          nguoi_id?: string | null
+          noi_dung: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Update: {
+          hoi_thoai_id?: string
+          huong?: string
+          id?: string
+          nguoi_id?: string | null
+          noi_dung?: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Relationships: []
+      }
+      ket_noi_ben_thu_ba: {
+        Row: {
+          cau_hinh_ma_hoa: string
+          kenh: string
+          nguoi_id: string | null
+          sua_luc: string
+          ten_hien_thi: string | null
+          trang_thai: string
+        }
+        Insert: {
+          cau_hinh_ma_hoa: string
+          kenh: string
+          nguoi_id?: string | null
+          sua_luc?: string
+          ten_hien_thi?: string | null
+          trang_thai?: string
+        }
+        Update: {
+          cau_hinh_ma_hoa?: string
+          kenh?: string
+          nguoi_id?: string | null
+          sua_luc?: string
+          ten_hien_thi?: string | null
+          trang_thai?: string
+        }
+        Relationships: []
+      }
+      tin_nhan_hang_doi: {
+        Row: {
+          chi_nhanh_id: string | null
+          den_so_dien_thoai: string
+          gui_luc: string | null
+          id: string
+          kenh: string
+          khach_id: string | null
+          loi: string | null
+          mau_ma: string | null
+          nguoi_tao_id: string | null
+          noi_dung: string
+          tao_luc: string
+          trang_thai: string
+        }
+        Insert: {
+          chi_nhanh_id?: string | null
+          den_so_dien_thoai: string
+          gui_luc?: string | null
+          id?: string
+          kenh: string
+          khach_id?: string | null
+          loi?: string | null
+          mau_ma?: string | null
+          nguoi_tao_id?: string | null
+          noi_dung: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Update: {
+          chi_nhanh_id?: string | null
+          den_so_dien_thoai?: string
+          gui_luc?: string | null
+          id?: string
+          kenh?: string
+          khach_id?: string | null
+          loi?: string | null
+          mau_ma?: string | null
+          nguoi_tao_id?: string | null
+          noi_dung?: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Relationships: []
+      }
+      tin_nhan_mau: {
+        Row: {
+          bat: boolean
+          kenh: string
+          ma: string
+          noi_dung: string
+          sua_luc: string
+          ten: string
+        }
+        Insert: {
+          bat?: boolean
+          kenh?: string
+          ma: string
+          noi_dung: string
+          sua_luc?: string
+          ten: string
+        }
+        Update: {
+          bat?: boolean
+          kenh?: string
+          ma?: string
+          noi_dung?: string
+          sua_luc?: string
+          ten?: string
+        }
+        Relationships: []
+      }
       thu_ket_noi: {
         Row: {
           email: string

@@ -3412,8 +3412,11 @@ export type Database = {
           trang_thai: string
           vat_hd_ky_hieu: string | null
           vat_hd_luc: string | null
+          vat_hd_mau_so: string | null
+          vat_hd_ngay: string | null
           vat_hd_nguoi_id: string | null
           vat_hd_so: string | null
+          vat_hd_tra_cuu: string | null
           vat_pct: number
           vat_tien: number
         }
@@ -3452,8 +3455,11 @@ export type Database = {
           trang_thai?: string
           vat_hd_ky_hieu?: string | null
           vat_hd_luc?: string | null
+          vat_hd_mau_so?: string | null
+          vat_hd_ngay?: string | null
           vat_hd_nguoi_id?: string | null
           vat_hd_so?: string | null
+          vat_hd_tra_cuu?: string | null
           vat_pct?: number
           vat_tien?: number
         }
@@ -3492,8 +3498,11 @@ export type Database = {
           trang_thai?: string
           vat_hd_ky_hieu?: string | null
           vat_hd_luc?: string | null
+          vat_hd_mau_so?: string | null
+          vat_hd_ngay?: string | null
           vat_hd_nguoi_id?: string | null
           vat_hd_so?: string | null
+          vat_hd_tra_cuu?: string | null
           vat_pct?: number
           vat_tien?: number
         }
@@ -5294,6 +5303,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      ket_noi_hoa_don_dien_tu: {
+        Row: {
+          dia_chi_may_chu: string | null
+          id: boolean
+          khoa_cuoi4: string | null
+          khoa_ma_hoa: string | null
+          ky_hieu_mac_dinh: string | null
+          ma_so_thue: string
+          mau_so_mac_dinh: string | null
+          nguoi_id: string | null
+          nha_cung_cap: string
+          sua_luc: string
+          ten_dang_nhap: string | null
+        }
+        Insert: {
+          dia_chi_may_chu?: string | null
+          id?: boolean
+          khoa_cuoi4?: string | null
+          khoa_ma_hoa?: string | null
+          ky_hieu_mac_dinh?: string | null
+          ma_so_thue: string
+          mau_so_mac_dinh?: string | null
+          nguoi_id?: string | null
+          nha_cung_cap: string
+          sua_luc?: string
+          ten_dang_nhap?: string | null
+        }
+        Update: {
+          dia_chi_may_chu?: string | null
+          id?: boolean
+          khoa_cuoi4?: string | null
+          khoa_ma_hoa?: string | null
+          ky_hieu_mac_dinh?: string | null
+          ma_so_thue?: string
+          mau_so_mac_dinh?: string | null
+          nguoi_id?: string | null
+          nha_cung_cap?: string
+          sua_luc?: string
+          ten_dang_nhap?: string | null
+        }
+        Relationships: []
       }
       khach_hang: {
         Row: {

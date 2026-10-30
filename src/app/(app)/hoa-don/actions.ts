@@ -73,7 +73,7 @@ export async function ghiNhanVat(fd: FormData): Promise<KQ> {
   if (h.trang_thai !== "hoan_thanh") return { loi: "Chỉ ghi nhận hoá đơn VAT cho hoá đơn đã hoàn thành." };
   const { error } = await db.from("hoa_don").update(soHd
     ? { vat_hd_so: soHd, vat_hd_ky_hieu: kyHieu || null, vat_hd_luc: new Date().toISOString(), vat_hd_nguoi_id: nd.nhanVienId }
-    : { vat_hd_so: null, vat_hd_ky_hieu: null, vat_hd_luc: null, vat_hd_nguoi_id: null }).eq("id", id);
+    : { vat_hd_so: null, vat_hd_ky_hieu: null, vat_hd_luc: null, vat_hd_nguoi_id: null, vat_hd_ngay: null, vat_hd_mau_so: null, vat_hd_tra_cuu: null }).eq("id", id);
   if (!error) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: soHd ? "ghi_hd_vat" : "go_hd_vat", doi_tuong: "hoa_don", doi_tuong_id: id, chi_tiet: { truoc: h.vat_hd_so, sau: soHd || null, ky_hieu: kyHieu || null } });
   revalidatePath(`/hoa-don/${id}`);
   revalidatePath("/hoa-don");

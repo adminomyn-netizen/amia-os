@@ -9,17 +9,28 @@ import { khopNhomLoc, tomTatThu, type TomTatThu } from "@/lib/hoa-don-dien-tu-ng
 export const COT_HDDT = "id, ma, ngay_hd, trang_thai, tong_phai_thu, khach_id, chi_nhanh_id, nguoi_lap_id, vat_pct, vat_tien, vat_hd_luc, vat_hd_so, vat_hd_ngay, vat_hd_ky_hieu, vat_hd_mau_so, vat_hd_tra_cuu, vat_hd_nguoi_id, la_so_du_dau, tao_luc";
 export const TOI_DA_DONG = 200;
 /** Ngăn "Cần xuất" lọc theo ngân hàng nên phải xem nhiều hơn số dòng hiện: quét tối đa chừng này hoá đơn trong khoảng ngày rồi mới cắt TOI_DA_DONG. */
-export const TOI_DA_QUET = 2000;
+export const TOI_DA_QUET = 900; // dưới 1000 (mức tối đa một lượt của PostgREST) để biết chắc khi nào bị cắt
 /** Cột thêm cho Excel hoá đơn đã chọn. */
 export const COT_XUAT = "id, ma, ngay_hd, trang_thai, tong_phai_thu, khach_id, chi_nhanh_id, nguoi_lap_id, vat_pct, vat_tien, la_so_du_dau, giam_gia_don, phu_phi, tip, tong_hang";
+
+/** Lấy hết kết quả một truy vấn có thể vượt 1000 dòng (PostgREST cắt mỗi lượt ở 1000): đọc từng trang theo thứ tự ổn định. */
+export async function layHet<T>(trang: (tu: number, den: number) => PromiseLike<{ data: T[] | null; error: { message: string } | null }>): Promise<T[]> {
+  const ra: T[] = [];
+  for (let tu = 0; ; tu += 1000) {
+    const { data, error } = await trang(tu, tu + 999);
+    if (error) throw new Error(error.message);
+    ra.push(...(data ?? []));
+    if ((data?.length ?? 0) < 1000) return ra;
+  }
+}
 
 /** Thanh toán của các hoá đơn, gom theo hoá đơn → nơi nhận tiền (ngân hàng / tiền mặt / thẻ tiền). Lấy theo lô để đường dẫn không quá dài. */
 export async function layThuTheoDon(ids: string[]): Promise<Map<string, TomTatThu>> {
   const db = sb(), theo = new Map<string, { loai: string; phuong_thuc: string; so_tien: number; ngan_hang: string | null }[]>();
-  for (let i = 0; i < ids.length; i += 100) {
-    const { data, error } = await db.from("thanh_toan").select("hoa_don_id, loai, phuong_thuc, so_tien, ngan_hang").in("hoa_don_id", ids.slice(i, i + 100)).limit(20000);
-    if (error) throw new Error(error.message);
-    for (const t of data ?? []) (theo.get(t.hoa_don_id) ?? theo.set(t.hoa_don_id, []).get(t.hoa_don_id)!).push(t);
+  for (let i = 0; i < ids.length; i += 50) {
+    const lo = ids.slice(i, i + 50);
+    const dong = await layHet((tu, den) => db.from("thanh_toan").select("hoa_don_id, loai, phuong_thuc, so_tien, ngan_hang").in("hoa_don_id", lo).order("id").range(tu, den));
+    for (const t of dong) (theo.get(t.hoa_don_id) ?? theo.set(t.hoa_don_id, []).get(t.hoa_don_id)!).push(t);
   }
   return new Map(ids.map((id) => [id, tomTatThu(theo.get(id) ?? [])]));
 }

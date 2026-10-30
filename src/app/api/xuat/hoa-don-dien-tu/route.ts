@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayGioVN, ngayVN } from "@/lib/dinh-dang";
 import { docLocHddt } from "@/lib/hoa-don-dien-tu";
-import { layHoaDonHddt, layHoaDonTheoIds, layThuTheoDon } from "@/lib/hoa-don-dien-tu-truy-van";
+import { layHet, layHoaDonHddt, layHoaDonTheoIds, layThuTheoDon } from "@/lib/hoa-don-dien-tu-truy-van";
 import { docIdsChon, gomDonXuat, type DongHangXuat, type KhachXuat } from "@/lib/hoa-don-dien-tu-xuat";
 
 const TOI_DA_NGAY = 366, TOI_DA_DONG = 20000;
@@ -15,6 +15,14 @@ const XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 
 /** Xuất Excel các hoá đơn ĐÃ CHỌN ở ngăn "Cần xuất" (?ids=…): từng dòng hàng với tên xuất, người mua, MST, địa chỉ, nơi nhận tiền, VAT, tổng.
  *  Id từ trình duyệt chỉ là danh sách muốn xem: máy chủ lọc lại trong phạm vi người này được xem (chi nhánh, quyền xem toàn cơ sở). */
+async function layDongHang(ids: string[]) {
+  const db = sb(), ra: DongHangXuat[] = [];
+  for (let i = 0; i < ids.length; i += 50) {
+    const lo = ids.slice(i, i + 50);
+    ra.push(...(await layHet<DongHangXuat>((tu, den) => db.from("hoa_don_dong").select("id, hoa_don_id, ten, so_luong, don_gia, giam_gia, thanh_tien").in("hoa_don_id", lo).order("tao_luc").order("id").range(tu, den))));
+  }
+  return ra;
+}
 async function xuatTheoIds(nd: NonNullable<Awaited<ReturnType<typeof kiemQuyen>>>, raw: string | null) {
   const kt = docIdsChon(raw);
   if ("loi" in kt) return new Response(kt.loi, { status: 400 });
@@ -23,7 +31,7 @@ async function xuatTheoIds(nd: NonNullable<Awaited<ReturnType<typeof kiemQuyen>>
   const db = sb(), ids = hds.map((h) => h.id), idsK = [...new Set(hds.map((h) => h.khach_id).filter(Boolean))] as string[];
   const [k, dongHang, thu] = await Promise.all([
     theoLo<KhachXuat & { id: string }>(idsK, (lo) => db.from("khach_hang").select("id, ho_ten, cong_ty, ma_so_thue, dia_chi").in("id", lo)),
-    theoLo<DongHangXuat & { tao_luc: string }>(ids, (lo) => db.from("hoa_don_dong").select("id, hoa_don_id, ten, so_luong, don_gia, giam_gia, thanh_tien, tao_luc").in("hoa_don_id", lo).order("tao_luc").order("id")),
+    layDongHang(ids),
     layThuTheoDon(ids),
   ]);
   const khach = new Map(k.map((x) => [x.id, x])), dongTheoDon = new Map<string, DongHangXuat[]>();

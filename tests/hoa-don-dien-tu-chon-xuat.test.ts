@@ -25,7 +25,7 @@ vi.mock("@/lib/db", () => ({
     from: (ten: string) => {
       const dk: ((r: Dong) => boolean)[] = [];
       const b: Record<string, unknown> = {
-        select: () => b, order: () => b, limit: () => b,
+        select: () => b, order: () => b, limit: () => b, range: () => b,
         eq: (c: string, v: unknown) => { loc.push({ bang: ten, kieu: "eq", cot: c, v }); dk.push((r) => r[c] === v); return b; },
         in: (c: string, v: unknown[]) => { loc.push({ bang: ten, kieu: "in", cot: c, v }); dk.push((r) => v.includes(r[c])); return b; },
         insert: async (d: Dong) => { nhatKy.push(d); return { error: null }; },

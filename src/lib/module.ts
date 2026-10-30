@@ -99,28 +99,28 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "2 · Onboarding và thử việc", the: [
         { ten: "Onboarding thử việc", moTa: "Các mốc 0, 3, 7, 30, 60 ngày cho nhân viên mới.", duongDan: "/nhan-su/onboarding", trangThai: "san_sang", quyen: ["cong.xem"] },
-        { ten: "Mục tiêu thử việc", moTa: "Mục tiêu 30 và 60 ngày của từng người, thống nhất với quản lý.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Đánh giá thử việc", moTa: "Mentor, quản lý, nhân sự đánh giá ở mốc 30 và 60 ngày; quyết định lên chính thức.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Mục tiêu thử việc", moTa: "Mục tiêu 30 và 60 ngày của từng người, thống nhất với quản lý.", duongDan: "/nhan-su/thu-viec?tab=muc-tieu", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Đánh giá thử việc", moTa: "Mentor, quản lý, nhân sự đánh giá ở mốc 30 và 60 ngày; quyết định lên chính thức.", duongDan: "/nhan-su/thu-viec?tab=danh-gia", trangThai: "san_sang", quyen: ["hr.hoso"] },
         { ten: "Báo cáo onboarding", moTa: "Tiến độ lộ trình, tỉ lệ đạt thử việc, người sắp hết hạn thử việc.", duongDan: "/nhan-su/bao-cao?tab=onboarding", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "3 · Hồ sơ nhân sự", the: [
         { ten: "Hồ sơ nhân sự", moTa: "Hồ sơ từng người: thông tin cá nhân, giấy tờ, người thân, lộ trình, công phép; thống kê quân số.", duongDan: "/nhan-su/ho-so", trangThai: "san_sang", quyen: ["hr.hoso"] },
         { ten: "Hợp đồng lao động", moTa: "Thử việc → HĐLĐ lần 1 → lần 2 → không xác định thời hạn; nhắc trước 45 ngày.", duongDan: "/nhan-su/hop-dong", trangThai: "san_sang", quyen: ["cong.xem"] },
-        { ten: "Tài sản cấp phát", moTa: "Điện thoại, thẻ, đồng phục, thiết bị cấp cho từng người; bàn giao và thu hồi.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Tài sản cấp phát", moTa: "Điện thoại, thẻ, đồng phục, thiết bị cấp cho từng người; bàn giao và thu hồi.", duongDan: "/nhan-su/tai-san", trangThai: "san_sang", quyen: ["hr.hoso"] },
         { ten: "Phòng ban & chức danh", moTa: "Danh mục dùng cho hồ sơ và lộ trình thăng tiến.", duongDan: "/nhan-su/danh-muc", trangThai: "san_sang", quyen: ["hr.hoso"] },
         { ten: "Tài khoản & phân quyền", moTa: "Tài khoản đăng nhập, vai trò, quyền, đặt lại mật khẩu.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
       ] },
       { nhan: "4 · Đào tạo", the: [
-        { ten: "Lộ trình đào tạo theo vị trí", moTa: "Mỗi vị trí cần học gì trong 60 ngày đầu và theo từng cấp bậc.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Lịch học và kết quả", moTa: "Lịch từng buổi, người tham dự, điểm và chứng chỉ.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Lộ trình đào tạo theo vị trí", moTa: "Mỗi vị trí cần học gì trong 60 ngày đầu và theo từng cấp bậc.", duongDan: "/nhan-su/dao-tao?tab=lo-trinh", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Lịch học và kết quả", moTa: "Lịch từng buổi, người tham dự, điểm và chứng chỉ.", duongDan: "/nhan-su/dao-tao?tab=ket-qua", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "5 · Hiệu suất", the: [
-        { ten: "Đánh giá KPI tháng / quý", moTa: "KPI từng người, xếp hạng theo phòng và toàn công ty để thi đua.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Khen thưởng – kỷ luật", moTa: "Ghi nhận khen thưởng, nhắc nhở, kỷ luật kèm quyết định.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Đánh giá KPI tháng / quý", moTa: "KPI từng người, xếp hạng theo phòng và toàn công ty để thi đua.", duongDan: "/nhan-su/kpi", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Khen thưởng – kỷ luật", moTa: "Ghi nhận khen thưởng, nhắc nhở, kỷ luật kèm quyết định.", duongDan: "/nhan-su/khen-thuong-ky-luat", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "6 · Thăng tiến", the: [
-        { ten: "Khung cấp bậc", moTa: "Các cấp bậc, điều kiện thăng cấp và khung lương tương ứng.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Lịch sử thăng chức, điều chuyển", moTa: "Mỗi lần đổi chức danh, phòng ban, cấp bậc của từng người.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Khung cấp bậc", moTa: "Các cấp bậc, điều kiện thăng cấp và khung lương tương ứng.", duongDan: "/nhan-su/thang-tien?tab=cap-bac", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Lịch sử thăng chức, điều chuyển", moTa: "Mỗi lần đổi chức danh, phòng ban, cấp bậc của từng người.", duongDan: "/nhan-su/thang-tien?tab=lich-su", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "7 · Công lương", the: [
         { ten: "Chấm công / giờ làm", moTa: "Chấm công vào/ra, bảng công và tổng hợp tháng.", duongDan: "/nhan-su/cham-cong", trangThai: "san_sang" },
@@ -128,8 +128,8 @@ export const MODULE: Module[] = [
         { ten: "Quỹ phép & ngày nghỉ", moTa: "Phiếu nghỉ, tăng ca, điều chỉnh công và quỹ phép năm.", duongDan: "/nhan-su/ngay-nghi", trangThai: "san_sang" },
         { ten: "Bảng lương", moTa: "Lương, phụ cấp và khoản khấu trừ.", duongDan: "/nhan-su/luong", trangThai: "san_sang", quyen: ["luong.xem"] },
         { ten: "Thưởng – hoa hồng", moTa: "Hoa hồng bán hàng theo kỳ.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },
-        { ten: "BHXH và phụ cấp", moTa: "Mức đóng bảo hiểm, phụ cấp ăn ca, đi lại, điện thoại theo từng người.", trangThai: "sap_co", quyen: ["luong.xem"] },
-        { ten: "Quản lý chi phí", moTa: "Chi phí nhân sự theo tháng: lương, bảo hiểm, thưởng, tuyển dụng, đào tạo.", trangThai: "sap_co", quyen: ["baocao.tien"] },
+        { ten: "BHXH và phụ cấp", moTa: "Mức đóng bảo hiểm, phụ cấp ăn ca, đi lại, điện thoại theo từng người.", duongDan: "/nhan-su/bhxh-phu-cap", trangThai: "san_sang", quyen: ["luong.xem"] },
+        { ten: "Quản lý chi phí", moTa: "Chi phí nhân sự theo tháng: lương, bảo hiểm, thưởng, tuyển dụng, đào tạo.", duongDan: "/nhan-su/chi-phi", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "Báo cáo công lương", moTa: "Tổng hợp công, lương và phụ cấp theo tháng, theo phòng.", duongDan: "/nhan-su/bao-cao?tab=cong-luong", trangThai: "san_sang", quyen: ["luong.xem"] },
       ] },
       { nhan: "8 · Lịch", the: [
@@ -141,9 +141,9 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "9 · Offboarding", the: [
         { ten: "Đơn nghỉ việc và duyệt", moTa: "Đơn xin nghỉ, duyệt, bàn giao, biên bản, khoá tài khoản.", duongDan: "/nhan-su/nghi-viec", trangThai: "san_sang", quyen: ["hr.hoso"] },
-        { ten: "Checklist bàn giao", moTa: "Việc, tài sản, tài khoản phải bàn giao trước ngày nghỉ.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Chốt công, lương, BHXH", moTa: "Chốt công đến ngày cuối, quyết toán lương, trả sổ BHXH.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Phỏng vấn thôi việc", moTa: "Lý do nghỉ, yếu tố giữ chân, góp ý cho công ty.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Checklist bàn giao", moTa: "Việc, tài sản, tài khoản phải bàn giao trước ngày nghỉ.", duongDan: "/nhan-su/offboarding?tab=ban-giao", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Chốt công, lương, BHXH", moTa: "Chốt công đến ngày cuối, quyết toán lương, trả sổ BHXH.", duongDan: "/nhan-su/offboarding?tab=chot", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Phỏng vấn thôi việc", moTa: "Lý do nghỉ, yếu tố giữ chân, góp ý cho công ty.", duongDan: "/nhan-su/offboarding?tab=phong-van", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "10 · Báo cáo tổng", the: [
         { ten: "Báo cáo nhân sự", moTa: "Quân số, biến động, tuyển dụng, thử việc, nghỉ việc, chi phí trong một trang.", duongDan: "/nhan-su/bao-cao?tab=tong", trangThai: "san_sang", quyen: ["baocao.tien"] },

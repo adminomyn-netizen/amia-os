@@ -14,6 +14,405 @@ export type Database = {
   }
   public: {
     Tables: {
+      ban_giao_muc: {
+        Row: {
+          hoat_dong: boolean
+          id: string
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          hoat_dong?: boolean
+          id?: string
+          ten: string
+          thu_tu?: number
+        }
+        Update: {
+          hoat_dong?: boolean
+          id?: string
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      ban_giao_tien_do: {
+        Row: {
+          ghi_chu: string | null
+          muc_id: string
+          nghi_viec_id: string
+          nguoi_id: string | null
+          xong_luc: string
+        }
+        Insert: {
+          ghi_chu?: string | null
+          muc_id: string
+          nghi_viec_id: string
+          nguoi_id?: string | null
+          xong_luc?: string
+        }
+        Update: {
+          ghi_chu?: string | null
+          muc_id?: string
+          nghi_viec_id?: string
+          nguoi_id?: string | null
+          xong_luc?: string
+        }
+        Relationships: []
+      }
+      cap_bac: {
+        Row: {
+          bac: number
+          dieu_kien: string | null
+          hoat_dong: boolean
+          id: string
+          luong_den: number | null
+          luong_tu: number | null
+          ma: string
+          tao_luc: string
+          ten: string
+        }
+        Insert: {
+          bac: number
+          dieu_kien?: string | null
+          hoat_dong?: boolean
+          id?: string
+          luong_den?: number | null
+          luong_tu?: number | null
+          ma: string
+          tao_luc?: string
+          ten: string
+        }
+        Update: {
+          bac?: number
+          dieu_kien?: string | null
+          hoat_dong?: boolean
+          id?: string
+          luong_den?: number | null
+          luong_tu?: number | null
+          ma?: string
+          tao_luc?: string
+          ten?: string
+        }
+        Relationships: []
+      }
+      chot_nghi_viec: {
+        Row: {
+          bhxh_chot_den: string | null
+          chot_boi_id: string | null
+          chot_luc: string | null
+          cong_den_ngay: string | null
+          ghi_chu: string | null
+          luong_con_lai: number | null
+          nghi_viec_id: string
+          tien_phep_con: number | null
+        }
+        Insert: {
+          bhxh_chot_den?: string | null
+          chot_boi_id?: string | null
+          chot_luc?: string | null
+          cong_den_ngay?: string | null
+          ghi_chu?: string | null
+          luong_con_lai?: number | null
+          nghi_viec_id: string
+          tien_phep_con?: number | null
+        }
+        Update: {
+          bhxh_chot_den?: string | null
+          chot_boi_id?: string | null
+          chot_luc?: string | null
+          cong_den_ngay?: string | null
+          ghi_chu?: string | null
+          luong_con_lai?: number | null
+          nghi_viec_id?: string
+          tien_phep_con?: number | null
+        }
+        Relationships: []
+      }
+      dao_tao_ket_qua: {
+        Row: {
+          diem: number | null
+          ghi_chu: string | null
+          id: string
+          khoa_id: string
+          ngay_hoc: string | null
+          nhan_vien_id: string
+          tao_luc: string
+          trang_thai: string
+        }
+        Insert: {
+          diem?: number | null
+          ghi_chu?: string | null
+          id?: string
+          khoa_id: string
+          ngay_hoc?: string | null
+          nhan_vien_id: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Update: {
+          diem?: number | null
+          ghi_chu?: string | null
+          id?: string
+          khoa_id?: string
+          ngay_hoc?: string | null
+          nhan_vien_id?: string
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Relationships: []
+      }
+      dao_tao_khoa: {
+        Row: {
+          bat_buoc: boolean
+          chuc_danh: string | null
+          hoat_dong: boolean
+          id: string
+          mo_ta: string | null
+          so_gio: number
+          tao_luc: string
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          bat_buoc?: boolean
+          chuc_danh?: string | null
+          hoat_dong?: boolean
+          id?: string
+          mo_ta?: string | null
+          so_gio?: number
+          tao_luc?: string
+          ten: string
+          thu_tu?: number
+        }
+        Update: {
+          bat_buoc?: boolean
+          chuc_danh?: string | null
+          hoat_dong?: boolean
+          id?: string
+          mo_ta?: string | null
+          so_gio?: number
+          tao_luc?: string
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      kpi_diem: {
+        Row: {
+          diem: number
+          ghi_chu: string | null
+          id: string
+          nam: number
+          nguoi_nhap_id: string | null
+          nguon: string
+          nhan_vien_id: string
+          tao_luc: string
+          thang: number
+        }
+        Insert: {
+          diem: number
+          ghi_chu?: string | null
+          id?: string
+          nam: number
+          nguoi_nhap_id?: string | null
+          nguon?: string
+          nhan_vien_id: string
+          tao_luc?: string
+          thang: number
+        }
+        Update: {
+          diem?: number
+          ghi_chu?: string | null
+          id?: string
+          nam?: number
+          nguoi_nhap_id?: string | null
+          nguon?: string
+          nhan_vien_id?: string
+          tao_luc?: string
+          thang?: number
+        }
+        Relationships: []
+      }
+      kpi_thuong: {
+        Row: {
+          doi_tuong: string
+          hang: number
+          id: string
+          ky: string
+          so_tien: number
+        }
+        Insert: {
+          doi_tuong: string
+          hang: number
+          id?: string
+          ky: string
+          so_tien?: number
+        }
+        Update: {
+          doi_tuong?: string
+          hang?: number
+          id?: string
+          ky?: string
+          so_tien?: number
+        }
+        Relationships: []
+      }
+      phong_van_thoi_viec: {
+        Row: {
+          co_the_quay_lai: boolean | null
+          de_xuat: string | null
+          dieu_chua_hai_long: string | null
+          dieu_hai_long: string | null
+          id: string
+          ly_do_chinh: string | null
+          ngay_pv: string
+          nghi_viec_id: string
+          nguoi_pv_id: string | null
+          tao_luc: string
+        }
+        Insert: {
+          co_the_quay_lai?: boolean | null
+          de_xuat?: string | null
+          dieu_chua_hai_long?: string | null
+          dieu_hai_long?: string | null
+          id?: string
+          ly_do_chinh?: string | null
+          ngay_pv: string
+          nghi_viec_id: string
+          nguoi_pv_id?: string | null
+          tao_luc?: string
+        }
+        Update: {
+          co_the_quay_lai?: boolean | null
+          de_xuat?: string | null
+          dieu_chua_hai_long?: string | null
+          dieu_hai_long?: string | null
+          id?: string
+          ly_do_chinh?: string | null
+          ngay_pv?: string
+          nghi_viec_id?: string
+          nguoi_pv_id?: string | null
+          tao_luc?: string
+        }
+        Relationships: []
+      }
+      thang_chuc: {
+        Row: {
+          cap_bac_id: string | null
+          den_chuc_danh: string | null
+          den_phong_id: string | null
+          hieu_luc_tu: string
+          id: string
+          loai: string
+          ly_do: string | null
+          nguoi_tao_id: string | null
+          nhan_vien_id: string
+          so_quyet_dinh: string | null
+          tao_luc: string
+          tu_chuc_danh: string | null
+          tu_phong_id: string | null
+        }
+        Insert: {
+          cap_bac_id?: string | null
+          den_chuc_danh?: string | null
+          den_phong_id?: string | null
+          hieu_luc_tu: string
+          id?: string
+          loai: string
+          ly_do?: string | null
+          nguoi_tao_id?: string | null
+          nhan_vien_id: string
+          so_quyet_dinh?: string | null
+          tao_luc?: string
+          tu_chuc_danh?: string | null
+          tu_phong_id?: string | null
+        }
+        Update: {
+          cap_bac_id?: string | null
+          den_chuc_danh?: string | null
+          den_phong_id?: string | null
+          hieu_luc_tu?: string
+          id?: string
+          loai?: string
+          ly_do?: string | null
+          nguoi_tao_id?: string | null
+          nhan_vien_id?: string
+          so_quyet_dinh?: string | null
+          tao_luc?: string
+          tu_chuc_danh?: string | null
+          tu_phong_id?: string | null
+        }
+        Relationships: []
+      }
+      thu_viec_danh_gia: {
+        Row: {
+          diem: number
+          id: string
+          moc: number
+          nguoi_danh_gia_id: string | null
+          nhan_vien_id: string
+          nhan_xet: string | null
+          quyet_dinh: string | null
+          tao_luc: string
+          vai: string
+        }
+        Insert: {
+          diem: number
+          id?: string
+          moc: number
+          nguoi_danh_gia_id?: string | null
+          nhan_vien_id: string
+          nhan_xet?: string | null
+          quyet_dinh?: string | null
+          tao_luc?: string
+          vai: string
+        }
+        Update: {
+          diem?: number
+          id?: string
+          moc?: number
+          nguoi_danh_gia_id?: string | null
+          nhan_vien_id?: string
+          nhan_xet?: string | null
+          quyet_dinh?: string | null
+          tao_luc?: string
+          vai?: string
+        }
+        Relationships: []
+      }
+      thu_viec_muc_tieu: {
+        Row: {
+          id: string
+          ket_qua: string
+          moc: number
+          nguoi_tao_id: string | null
+          nhan_vien_id: string
+          noi_dung: string
+          tao_luc: string
+          tieu_chi: string | null
+        }
+        Insert: {
+          id?: string
+          ket_qua?: string
+          moc: number
+          nguoi_tao_id?: string | null
+          nhan_vien_id: string
+          noi_dung: string
+          tao_luc?: string
+          tieu_chi?: string | null
+        }
+        Update: {
+          id?: string
+          ket_qua?: string
+          moc?: number
+          nguoi_tao_id?: string | null
+          nhan_vien_id?: string
+          noi_dung?: string
+          tao_luc?: string
+          tieu_chi?: string | null
+        }
+        Relationships: []
+      }
       bang_cong_thang: {
         Row: {
           khoa: boolean

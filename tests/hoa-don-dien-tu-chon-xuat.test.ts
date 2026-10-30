@@ -16,6 +16,7 @@ const bang: Record<string, Dong[]> = {
   hoa_don_dong: [{ id: "d1", hoa_don_id: ID(1), ten: "Tiêm filler", so_luong: 1, don_gia: 1000000, giam_gia: 0, thanh_tien: 1000000, tao_luc: "2026-10-20" }],
   thanh_toan: [{ hoa_don_id: ID(1), loai: "thu", phuong_thuc: "chuyen_khoan", so_tien: 1080000, ngan_hang: "Techcombank" }],
   nhat_ky_truy_cap: [],
+  hoa_don_xuat_tuy_chinh: [] as Dong[], hoa_don_xuat_dong: [] as Dong[],
 };
 const nhatKy: Dong[] = [];
 const loc: { bang: string; kieu: string; cot: string; v: unknown }[] = [];
@@ -72,6 +73,17 @@ describe("xuất Excel hoá đơn đã chọn", () => {
     nguoiDung = { ...nguoiDung!, chiNhanhId: null };
     const wb = await docXlsx(await goi(`ids=${[1, 2].map(ID).join(",")}`));
     expect(wb.getWorksheet("Theo đơn")!.getColumn(1).values.slice(2)).toEqual(["HD000001", "HD000002"]);
+  });
+  it("Excel ra đúng tên đã sửa riêng (người mua, MST, địa chỉ, tên hàng); đơn bán và hồ sơ khách không đổi", async () => {
+    bang.hoa_don_xuat_tuy_chinh.push({ hoa_don_id: ID(1), ten_nguoi_mua: "Công ty Hoa Hồng", ma_so_thue: "0123456789-001", dia_chi: null });
+    bang.hoa_don_xuat_dong.push({ hoa_don_dong_id: "d1", ten_xuat: "Tiêm filler môi" });
+    try {
+      const wb = await docXlsx(await goi(`ids=${ID(1)}`));
+      const dong = wb.getWorksheet("Dòng hàng")!.getRow(2);
+      expect([String(dong.getCell("D").value), String(dong.getCell("E").value), String(dong.getCell("F").value), String(dong.getCell("H").value)]).toEqual(["Công ty Hoa Hồng", "0123456789-001", "39A Lê Hồng Phong, Vinh", "Tiêm filler môi"]);
+      expect(bang.hoa_don_dong[0].ten).toBe("Tiêm filler");
+      expect(bang.khach_hang[0].cong_ty).toBe("Công ty TNHH Hoa");
+    } finally { bang.hoa_don_xuat_tuy_chinh.length = 0; bang.hoa_don_xuat_dong.length = 0; }
   });
   it("cột Excel: người mua là công ty, MST, địa chỉ, ngân hàng nhận, tên hàng, VAT, tổng", async () => {
     const wb = await docXlsx(await goi(`ids=${ID(1)}`));

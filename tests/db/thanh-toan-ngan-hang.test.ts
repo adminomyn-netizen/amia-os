@@ -35,3 +35,26 @@ describe("thanh_toan.ngan_hang", () => {
     expect((await q(`select 1 from pg_indexes where tablename='thanh_toan' and indexname='thanh_toan_ngan_hang_idx'`)).length).toBe(1);
   });
 });
+
+describe("migration 0181: bảng tên xuất riêng", () => {
+  let dong: string;
+  beforeAll(async () => { dong = (await q<{ id: string }>(`insert into hoa_don_dong (hoa_don_id, loai, ten, so_luong, don_gia, giam_gia, la_lich_su) values ($1,'dich_vu','Filler',1,1000,0,true) returning id`, [hd]))[0].id; });
+  it("mỗi hoá đơn / dòng hàng chỉ một bản sửa; MST đúng dạng; độ dài", async () => {
+    await db.query(`insert into hoa_don_xuat_tuy_chinh (hoa_don_id, ten_nguoi_mua, ma_so_thue) values ($1,'Công ty Hoa','0123456789-001')`, [hd]);
+    await expect(db.query(`insert into hoa_don_xuat_tuy_chinh (hoa_don_id, ten_nguoi_mua) values ($1,'Trùng')`, [hd])).rejects.toThrow();
+    await db.query(`delete from hoa_don_xuat_tuy_chinh where hoa_don_id=$1`, [hd]);
+    for (const m of ["0123456789", "001234567890"]) await db.query(`insert into hoa_don_xuat_tuy_chinh (hoa_don_id, ma_so_thue) values ($1,$2)`, [hd, m]).then(() => db.query(`delete from hoa_don_xuat_tuy_chinh where hoa_don_id=$1`, [hd]));
+    for (const m of ["12345", "0123456789-1", "01234567890"]) await expect(db.query(`insert into hoa_don_xuat_tuy_chinh (hoa_don_id, ma_so_thue) values ($1,$2)`, [hd, m])).rejects.toThrow();
+    await expect(db.query(`insert into hoa_don_xuat_tuy_chinh (hoa_don_id, ten_nguoi_mua) values ($1,$2)`, [hd, "x".repeat(201)])).rejects.toThrow();
+    await db.query(`insert into hoa_don_xuat_dong (hoa_don_dong_id, ten_xuat) values ($1,'Tiêm filler môi')`, [dong]);
+    await expect(db.query(`insert into hoa_don_xuat_dong (hoa_don_dong_id, ten_xuat) values ($1,'Trùng')`, [dong])).rejects.toThrow();
+    await expect(db.query(`update hoa_don_xuat_dong set ten_xuat='' where hoa_don_dong_id=$1`, [dong])).rejects.toThrow();
+  });
+  it("sửa tên xuất không đổi tên trong đơn bán", async () => {
+    expect((await q<{ ten: string }>(`select ten from hoa_don_dong where id=$1`, [dong]))[0].ten).toBe("Filler");
+  });
+  it("xoá dòng hàng thì bản sửa đi theo", async () => {
+    await db.query(`delete from hoa_don_dong where id=$1`, [dong]);
+    expect((await q(`select 1 from hoa_don_xuat_dong where hoa_don_dong_id=$1`, [dong])).length).toBe(0);
+  });
+});

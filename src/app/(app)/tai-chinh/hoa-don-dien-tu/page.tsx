@@ -5,7 +5,7 @@ import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { docLocHddt, hienKhoa, NHA_CUNG_CAP, tenNhaCungCap } from "@/lib/hoa-don-dien-tu";
 import { docKetNoiHienThi } from "@/lib/hoa-don-dien-tu-ket-noi";
-import { layHoaDonHddt } from "@/lib/hoa-don-dien-tu-truy-van";
+import { layDaSuaTen, layHoaDonHddt } from "@/lib/hoa-don-dien-tu-truy-van";
 import { chuThu } from "@/lib/hoa-don-dien-tu-ngan-hang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
@@ -15,7 +15,7 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { LocHoaDonDienTu } from "@/components/hoa-don/LocHoaDonDienTu";
 import { LocNganHangHddt } from "@/components/hoa-don/LocNganHangHddt";
 import { BangCanXuat } from "@/components/hoa-don/BangCanXuat";
-import { ghiHoaDonDienTu, goHoaDonDienTu, luuKetNoiHoaDonDienTu, ngatKetNoiHoaDonDienTu } from "./actions";
+import { ghiHoaDonDienTu, goHoaDonDienTu, layTenXuat, luuTenXuat, luuKetNoiHoaDonDienTu, ngatKetNoiHoaDonDienTu } from "./actions";
 
 const HIEN_KET_NOI = false;
 const TAB = [{ ma: "can", ten: "Cần xuất" }, { ma: "da", ten: "Đã xuất" }, { ma: "ket-noi", ten: "Kết nối" }];
@@ -79,6 +79,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
     ]);
     const tenK = new Map((k ?? []).map((x) => [x.id, x])), tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
     const khach = (id: string | null) => (id ? tenK.get(id) : undefined);
+    const daSua = tab === "can" ? await layDaSuaTen(dong.map((r) => r.id)) : new Set<string>();
     const tham = new URLSearchParams({ tu: loc.tu, den: loc.den, ...(loc.q ? { q: loc.q } : {}) });
     const cotChung = [
       { nhan: "Hoá đơn bán", chinh: true, hienThi: (r: (typeof dong)[number]) => <Link href={`/hoa-don/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}<span className="block text-[12.5px] font-normal text-muc-3">{ngayVN(r.ngay_hd)}</span></Link> },
@@ -95,11 +96,11 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
         {tab === "can" ? (
           <>
             <LocNganHangHddt nh={loc.nh} tu={loc.tu} den={loc.den} q={loc.q} />
-            <BangCanXuat conNua={conNua} duocGhi={duocGhi} truongGhi={truongGhi} ngayHomNay={hom} ghiAction={ghiHoaDonDienTu}
+            <BangCanXuat conNua={conNua} duocGhi={duocGhi} truongGhi={truongGhi} ngayHomNay={hom} ghiAction={ghiHoaDonDienTu} layTen={layTenXuat} luuTen={luuTenXuat}
               dong={dong.map((r) => {
                 const x = khach(r.khach_id);
                 return { id: r.id, ma: r.ma, ngay: ngayVN(r.ngay_hd), khach: r.khach_id ? x?.ho_ten ?? "" : "Khách lẻ", mst: x?.ma_so_thue ?? "", phaiThu: tienVN(r.tong_phai_thu),
-                  lyDo: Number(r.vat_pct) > 0 || Number(r.vat_tien) > 0 ? `Có VAT ${Number(r.vat_pct) > 0 ? `${Number(r.vat_pct)}%` : tienVN(r.vat_tien)}` : "Khách có mã số thuế", thu: thu.has(r.id) ? chuThu(thu.get(r.id)!, tienVN) : [] };
+                  lyDo: Number(r.vat_pct) > 0 || Number(r.vat_tien) > 0 ? `Có VAT ${Number(r.vat_pct) > 0 ? `${Number(r.vat_pct)}%` : tienVN(r.vat_tien)}` : "Khách có mã số thuế", thu: thu.has(r.id) ? chuThu(thu.get(r.id)!, tienVN) : [], daSua: daSua.has(r.id) };
               })} />
           </>
         ) : (

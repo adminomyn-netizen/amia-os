@@ -5,7 +5,7 @@ import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayGioVN, ngayVN } from "@/lib/dinh-dang";
 import { docLocHddt } from "@/lib/hoa-don-dien-tu";
 import { layHet, layHoaDonHddt, layHoaDonTheoIds, layThuTheoDon } from "@/lib/hoa-don-dien-tu-truy-van";
-import { docIdsChon, gomDonXuat, type DongHangXuat, type KhachXuat } from "@/lib/hoa-don-dien-tu-xuat";
+import { docIdsChon, gomDonXuat, type DongHangXuat, type KhachXuat, type TuyChinhNguoiMua } from "@/lib/hoa-don-dien-tu-xuat";
 
 const TOI_DA_NGAY = 366, TOI_DA_DONG = 20000;
 
@@ -34,9 +34,15 @@ async function xuatTheoIds(nd: NonNullable<Awaited<ReturnType<typeof kiemQuyen>>
     layDongHang(ids),
     layThuTheoDon(ids),
   ]);
+  // Tên đã sửa riêng cho bảng xuất (chỉ của các đơn trong phạm vi); chưa sửa thì dùng tên trong đơn / hồ sơ khách.
+  const [tc, suaDong] = await Promise.all([
+    theoLo<TuyChinhNguoiMua & { hoa_don_id: string }>(ids, (lo) => db.from("hoa_don_xuat_tuy_chinh").select("hoa_don_id, ten_nguoi_mua, ma_so_thue, dia_chi").in("hoa_don_id", lo)),
+    theoLo<{ hoa_don_dong_id: string; ten_xuat: string }>(dongHang.map((d) => d.id), (lo) => db.from("hoa_don_xuat_dong").select("hoa_don_dong_id, ten_xuat").in("hoa_don_dong_id", lo)),
+  ]);
+  const tuyChinh = new Map(tc.map((x) => [x.hoa_don_id, x])), tenSua = new Map(suaDong.map((x) => [x.hoa_don_dong_id, x.ten_xuat]));
   const khach = new Map(k.map((x) => [x.id, x])), dongTheoDon = new Map<string, DongHangXuat[]>();
   for (const d of dongHang) (dongTheoDon.get(d.hoa_don_id) ?? dongTheoDon.set(d.hoa_don_id, []).get(d.hoa_don_id)!).push(d);
-  const don = hds.map((h) => gomDonXuat(h, h.khach_id ? khach.get(h.khach_id) : undefined, dongTheoDon.get(h.id) ?? [], thu.get(h.id), undefined, undefined, soVN));
+  const don = hds.map((h) => gomDonXuat(h, h.khach_id ? khach.get(h.khach_id) : undefined, dongTheoDon.get(h.id) ?? [], thu.get(h.id), tuyChinh.get(h.id), tenSua, soVN));
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet("Dòng hàng");
   ws.columns = [
@@ -62,7 +68,7 @@ async function xuatTheoIds(nd: NonNullable<Awaited<ReturnType<typeof kiemQuyen>>
   ws2.getColumn("mst").numFmt = "@";
   for (const c of ["th", "gd", "pp", "vt", "tong"]) ws2.getColumn(c).numFmt = "#,##0";
   ws2.getRow(1).font = { bold: true }; ws2.views = [{ state: "frozen", ySplit: 1 }]; ws2.autoFilter = { from: "A1", to: "M1" };
-  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xuat_excel", doi_tuong: "hoa_don_dien_tu", chi_tiet: { kieu: "da_chon", so_hoa_don: hds.length, bo_qua_ngoai_pham_vi: boQua, chi_nhanh_id: nd.chiNhanhId } });
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xuat_excel", doi_tuong: "hoa_don_dien_tu", chi_tiet: { kieu: "da_chon", so_hoa_don: hds.length, bo_qua_ngoai_pham_vi: boQua, so_don_co_ten_sua: don.filter((d) => d.daSuaNguoiMua || d.dong.some((x) => x.daSuaTen)).length, chi_nhanh_id: nd.chiNhanhId } });
   const buf = await wb.xlsx.writeBuffer();
   return new Response(buf as ArrayBuffer, { headers: { "Content-Type": XLSX, "Content-Disposition": `attachment; filename="hoa-don-can-xuat-${homNayHCM()}.xlsx"` } });
 }

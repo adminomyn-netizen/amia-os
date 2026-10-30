@@ -5,17 +5,22 @@ import { useMemo, useState } from "react";
 import { Bang } from "@/components/ui/Table";
 import { NutHop, type KetQuaHD, type Truong } from "@/components/ui/BieuMau";
 import { NUT_CHINH, NUT_PHU } from "@/components/ui/dinh-dang";
+import { SuaTenXuat } from "@/components/hoa-don/SuaTenXuat";
+import type { DuLieuSuaTen } from "@/app/(app)/tai-chinh/hoa-don-dien-tu/actions";
 
 export type DongCanXuat = {
   id: string; ma: string; ngay: string; khach: string; mst: string; lyDo: string; phaiThu: string;
   /** Mỗi mục một dòng, ví dụ "Techcombank 2.000.000". */
   thu: string[];
+  /** Đã có tên sửa riêng cho bảng xuất. */
+  daSua: boolean;
 };
 const O_TICK = "h-4 w-4 cursor-pointer accent-[var(--nhan)]";
 
 /** Ngăn "Cần xuất": tick từng đơn hoặc tất cả rồi "Xuất Excel" các đơn đã chọn. Vẫn thủ công: ghi số hoá đơn điện tử sau khi xuất ở phần mềm nhà cung cấp. */
-export function BangCanXuat({ dong, duocGhi, truongGhi, ngayHomNay, ghiAction, conNua }: {
+export function BangCanXuat({ dong, duocGhi, truongGhi, ngayHomNay, ghiAction, layTen, luuTen, conNua }: {
   dong: DongCanXuat[]; duocGhi: boolean; truongGhi: Truong[]; ngayHomNay: string; ghiAction: (fd: FormData) => Promise<KetQuaHD | void>; conNua: boolean;
+  layTen: (id: string) => Promise<{ loi: string } | { ok: DuLieuSuaTen }>; luuTen: (fd: FormData) => Promise<KetQuaHD | void>;
 }) {
   const [chon, setChon] = useState<Set<string>>(new Set());
   const hienCo = useMemo(() => new Set(dong.map((d) => d.id)), [dong]);
@@ -44,7 +49,8 @@ export function BangCanXuat({ dong, duocGhi, truongGhi, ngayHomNay, ghiAction, c
           { nhan: "Vì sao cần xuất", hienThi: (r) => r.lyDo },
           { nhan: "Phải thu", phai: true, hienThi: (r) => r.phaiThu },
           { nhan: "", hienThi: (r) => (duocGhi ? (
-            <div className="flex flex-wrap justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
+              <SuaTenXuat hoaDonId={r.id} ma={r.ma} daSua={r.daSua} lay={layTen} luu={luuTen} />
               <NutHop kieu="chu" nhan="Ghi số hoá đơn điện tử" tieuDe={`Ghi số hoá đơn điện tử cho ${r.ma}`} moTa="Nhập số hoá đơn đã xuất ở phần mềm của nhà cung cấp." truong={truongGhi} action={ghiAction} an={{ hoa_don_id: r.id, moi: "1" }} giaTri={{ vat_hd_ngay: ngayHomNay }} />
             </div>
           ) : null) },

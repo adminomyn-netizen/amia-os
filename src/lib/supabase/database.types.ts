@@ -14,6 +14,84 @@ export type Database = {
   }
   public: {
     Tables: {
+      hoa_don_xuat_dong: {
+        Row: {
+          hoa_don_dong_id: string
+          sua_boi: string | null
+          sua_luc: string
+          ten_xuat: string
+        }
+        Insert: {
+          hoa_don_dong_id: string
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_xuat: string
+        }
+        Update: {
+          hoa_don_dong_id?: string
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_xuat?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hoa_don_xuat_dong_hoa_don_dong_id_fkey"
+            columns: ["hoa_don_dong_id"]
+            isOneToOne: true
+            referencedRelation: "hoa_don_dong"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hoa_don_xuat_dong_sua_boi_fkey"
+            columns: ["sua_boi"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hoa_don_xuat_tuy_chinh: {
+        Row: {
+          dia_chi: string | null
+          hoa_don_id: string
+          ma_so_thue: string | null
+          sua_boi: string | null
+          sua_luc: string
+          ten_nguoi_mua: string | null
+        }
+        Insert: {
+          dia_chi?: string | null
+          hoa_don_id: string
+          ma_so_thue?: string | null
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_nguoi_mua?: string | null
+        }
+        Update: {
+          dia_chi?: string | null
+          hoa_don_id?: string
+          ma_so_thue?: string | null
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_nguoi_mua?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hoa_don_xuat_tuy_chinh_hoa_don_id_fkey"
+            columns: ["hoa_don_id"]
+            isOneToOne: true
+            referencedRelation: "hoa_don"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hoa_don_xuat_tuy_chinh_sua_boi_fkey"
+            columns: ["sua_boi"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       hop_thu_hoi_thoai: {
         Row: {
           chi_nhanh_id: string | null

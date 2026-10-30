@@ -33,3 +33,30 @@ describe("người mua và tên hàng xuất", () => {
     expect(gomDonXuat(hd, khach, dong, thu, undefined, undefined, String).dong[0]).toMatchObject({ ten: "Filler", daSuaTen: false });
   });
 });
+
+import { kiemTenXuat, quyetSuaTenXuat } from "../src/lib/hoa-don-dien-tu-xuat";
+describe("kiểm dữ liệu sửa tên xuất", () => {
+  const nhap = { tenNguoiMua: "  Công   ty\tHoa ", mst: " 0123 456 789-001 ", diaChi: " Vinh ", dong: [{ id: "d1", ten: "  Tiêm   filler " }] };
+  it("gọn khoảng trắng, bỏ khoảng trắng trong MST", () => {
+    expect(kiemTenXuat(nhap)).toEqual({ ok: { ten_nguoi_mua: "Công ty Hoa", ma_so_thue: "0123456789-001", dia_chi: "Vinh", dong: [{ id: "d1", ten: "Tiêm filler" }] } });
+  });
+  it("MST: chấp nhận 10 số, 13 số, 12 số căn cước; chặn dạng khác; để trống được", () => {
+    for (const m of ["0123456789", "0123456789-001", "001234567890", ""]) expect(kiemTenXuat({ ...nhap, mst: m })).toHaveProperty("ok");
+    for (const m of ["12345", "0123456789-1", "abc1234567", "01234567890"]) expect(kiemTenXuat({ ...nhap, mst: m })).toHaveProperty("loi");
+  });
+  it("chặn quá dài và dòng trùng", () => {
+    expect(kiemTenXuat({ ...nhap, tenNguoiMua: "a".repeat(201) })).toHaveProperty("loi");
+    expect(kiemTenXuat({ ...nhap, diaChi: "a".repeat(301) })).toHaveProperty("loi");
+    expect(kiemTenXuat({ ...nhap, dong: [{ id: "d1", ten: "x".repeat(301) }] })).toHaveProperty("loi");
+    expect(kiemTenXuat({ ...nhap, dong: [{ id: "d1", ten: "a" }, { id: "d1", ten: "b" }] })).toHaveProperty("loi");
+  });
+  it("chỉ lưu phần khác mặc định; trống hoặc giống tên gốc thì xoá bản sửa", () => {
+    const md = { ten: "Công ty Hoa", mst: "0123456789", diaChi: "Vinh" }, goc = new Map([["d1", "Filler"], ["d2", "Botox"], ["d3", "Peel"]]);
+    const ok = { ten_nguoi_mua: "Công ty Hoa", ma_so_thue: "0123456789-001", dia_chi: "", dong: [{ id: "d1", ten: "Tiêm filler môi" }, { id: "d2", ten: "Botox" }, { id: "d3", ten: "" }] };
+    const q = quyetSuaTenXuat(ok, md, goc);
+    expect(q.nguoiMua).toEqual({ ten_nguoi_mua: null, ma_so_thue: "0123456789-001", dia_chi: null });
+    expect(q.dongLuu).toEqual([{ id: "d1", ten: "Tiêm filler môi" }]);
+    expect(q.dongXoa).toEqual(["d2", "d3"]);
+    expect(quyetSuaTenXuat({ ...ok, ma_so_thue: "" }, md, goc).nguoiMua).toBeNull();
+  });
+});

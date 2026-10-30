@@ -50,3 +50,32 @@ export function gomDonXuat(
     dong: dong.map((d) => ({ ten: tenHangXuat(d, tenSua), sl: Number(d.so_luong), donGia: Number(d.don_gia), giamGia: Number(d.giam_gia), thanhTien: d.thanh_tien == null ? Number(d.don_gia) * Number(d.so_luong) - Number(d.giam_gia) : Number(d.thanh_tien), daSuaTen: !!s(tenSua?.get(d.id)) && s(tenSua?.get(d.id)) !== d.ten })),
   };
 }
+
+// ── Sửa tên trên hoá đơn xuất (bảng hoa_don_xuat_tuy_chinh / hoa_don_xuat_dong) ──
+export type NhapTenXuat = { tenNguoiMua: string; mst: string; diaChi: string; dong: { id: string; ten: string }[] };
+export type TenXuatDaKiem = { ten_nguoi_mua: string; ma_so_thue: string; dia_chi: string; dong: { id: string; ten: string }[] };
+const gon = (v: string) => v.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ").trim();
+export const MST_XUAT = /^([0-9]{10}(-[0-9]{3})?|[0-9]{12})$/;
+
+/** Kiểm dữ liệu người nhập: gọn khoảng trắng, đúng độ dài, MST đúng dạng (10 số, 10-3 số hoặc 12 số căn cước), không trùng dòng. Ô trống hợp lệ (nghĩa là dùng tên mặc định). */
+export function kiemTenXuat(n: NhapTenXuat): { loi: string } | { ok: TenXuatDaKiem } {
+  const ten = gon(n.tenNguoiMua), mst = gon(n.mst).replace(/\s+/g, ""), diaChi = gon(n.diaChi);
+  if (ten.length > 200) return { loi: "Tên người mua dài quá 200 ký tự." };
+  if (diaChi.length > 300) return { loi: "Địa chỉ dài quá 300 ký tự." };
+  if (mst && !MST_XUAT.test(mst)) return { loi: "Mã số thuế gồm 10 số, 13 số dạng 0123456789-001, hoặc 12 số." };
+  const dong = n.dong.map((d) => ({ id: d.id, ten: gon(d.ten) }));
+  if (new Set(dong.map((d) => d.id)).size !== dong.length) return { loi: "Có dòng hàng bị gửi hai lần." };
+  const qua = dong.find((d) => d.ten.length > 300);
+  if (qua) return { loi: "Tên hàng dài quá 300 ký tự." };
+  return { ok: { ten_nguoi_mua: ten, ma_so_thue: mst, dia_chi: diaChi, dong } };
+}
+
+/** Quyết định ghi gì: ô người mua chỉ lưu khi có chữ VÀ khác mặc định (hồ sơ khách đổi sau này thì vẫn theo); dòng hàng chỉ lưu khi có chữ VÀ khác tên gốc.
+ *  Còn lại là xoá bản sửa (quay về tên mặc định). Không bao giờ đụng tới đơn bán hay hồ sơ khách. */
+export function quyetSuaTenXuat(ok: TenXuatDaKiem, macDinh: { ten: string; mst: string; diaChi: string }, tenGoc: Map<string, string>) {
+  const nm = { ten_nguoi_mua: ok.ten_nguoi_mua && ok.ten_nguoi_mua !== macDinh.ten ? ok.ten_nguoi_mua : null, ma_so_thue: ok.ma_so_thue && ok.ma_so_thue !== macDinh.mst ? ok.ma_so_thue : null, dia_chi: ok.dia_chi && ok.dia_chi !== macDinh.diaChi ? ok.dia_chi : null };
+  const coNguoiMua = !!(nm.ten_nguoi_mua || nm.ma_so_thue || nm.dia_chi);
+  const luu = ok.dong.filter((d) => d.ten && d.ten !== tenGoc.get(d.id));
+  const xoa = ok.dong.filter((d) => !d.ten || d.ten === tenGoc.get(d.id)).map((d) => d.id);
+  return { nguoiMua: coNguoiMua ? nm : null, dongLuu: luu, dongXoa: xoa };
+}

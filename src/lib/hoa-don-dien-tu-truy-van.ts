@@ -87,3 +87,22 @@ async function layHoaDonXuatLo(db: ReturnType<typeof sb>, nd: Pick<NguoiDung, "c
   if (error) throw new Error(error.message);
   return data ?? [];
 }
+
+/** Các hoá đơn đã có tên sửa riêng cho bảng xuất (người mua hoặc ít nhất một dòng hàng): để hiện nhãn "đã sửa tên" ở danh sách. */
+export async function layDaSuaTen(ids: string[]): Promise<Set<string>> {
+  const db = sb(), co = new Set<string>();
+  for (let i = 0; i < ids.length; i += 50) {
+    const lo = ids.slice(i, i + 50);
+    const [tc, dong] = await Promise.all([
+      layHet((tu, den) => db.from("hoa_don_xuat_tuy_chinh").select("hoa_don_id").in("hoa_don_id", lo).order("hoa_don_id").range(tu, den)),
+      layHet((tu, den) => db.from("hoa_don_dong").select("id, hoa_don_id").in("hoa_don_id", lo).order("id").range(tu, den)),
+    ]);
+    for (const x of tc) co.add(x.hoa_don_id);
+    const chuHd = new Map(dong.map((x) => [x.id, x.hoa_don_id])), idsDong = dong.map((x) => x.id);
+    for (let j = 0; j < idsDong.length; j += 100) {
+      const sua = await layHet((tu, den) => db.from("hoa_don_xuat_dong").select("hoa_don_dong_id").in("hoa_don_dong_id", idsDong.slice(j, j + 100)).order("hoa_don_dong_id").range(tu, den));
+      for (const x of sua) { const h = chuHd.get(x.hoa_don_dong_id); if (h) co.add(h); }
+    }
+  }
+  return co;
+}

@@ -133,11 +133,11 @@ export const MODULE: Module[] = [
         { ten: "Báo cáo công lương", moTa: "Tổng hợp công, lương và phụ cấp theo tháng, theo phòng.", trangThai: "sap_co", quyen: ["luong.xem"] },
       ] },
       { nhan: "8 · Lịch", the: [
-        { ten: "Nhân viên đến hạn HĐLĐ", moTa: "Hợp đồng sắp hết hạn trong 45 ngày tới.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Sinh nhật nhân viên", moTa: "Sinh nhật trong tháng và 7 ngày tới.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Lịch nghỉ phép", moTa: "Ai nghỉ ngày nào, trong phòng nào.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Hết hạn thử việc", moTa: "Người sắp kết thúc thử việc cần quyết định.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Lịch đánh giá định kỳ", moTa: "Các kỳ đánh giá KPI và xét lương sắp tới.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Nhân viên đến hạn HĐLĐ", moTa: "Hợp đồng sắp hết hạn trong 45 ngày tới.", duongDan: "/nhan-su/lich?tab=hdld", trangThai: "san_sang", quyen: ["cong.xem"] },
+        { ten: "Sinh nhật nhân viên", moTa: "Sinh nhật trong 45 ngày tới.", duongDan: "/nhan-su/lich?tab=sinh-nhat", trangThai: "san_sang", quyen: ["cong.xem"] },
+        { ten: "Lịch nghỉ phép", moTa: "Ai nghỉ ngày nào, trong phòng nào.", duongDan: "/nhan-su/lich?tab=nghi-phep", trangThai: "san_sang", quyen: ["cong.xem"] },
+        { ten: "Hết hạn thử việc", moTa: "Người sắp kết thúc thử việc cần quyết định.", duongDan: "/nhan-su/lich?tab=thu-viec", trangThai: "san_sang", quyen: ["cong.xem"] },
+        { ten: "Lịch đánh giá định kỳ", moTa: "Các kỳ đánh giá KPI và xét lương sắp tới.", duongDan: "/nhan-su/lich?tab=danh-gia", trangThai: "san_sang", quyen: ["cong.xem"] },
       ] },
       { nhan: "9 · Offboarding", the: [
         { ten: "Đơn nghỉ việc và duyệt", moTa: "Đơn xin nghỉ, duyệt, bàn giao, biên bản, khoá tài khoản.", duongDan: "/nhan-su/nghi-viec", trangThai: "san_sang", quyen: ["hr.hoso"] },

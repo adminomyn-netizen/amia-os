@@ -54,7 +54,7 @@ export const MODULE: Module[] = [
       { nhan: "Hoá đơn", the: [
         { ten: "Danh sách hoá đơn", moTa: "Hoá đơn bán hàng, thu nợ, huỷ.", duongDan: "/hoa-don", trangThai: "san_sang", quyen: ["ban.xem"] },
         { ten: "Hoá đơn đầu vào", moTa: "Hoá đơn mua vào: theo dõi hoá đơn chưa về, đối chiếu với đơn mua.", duongDan: "/tai-chinh/hoa-don-dau-vao", trangThai: "san_sang", quyen: ["mua.xem"] },
-        { ten: "Hoá đơn điện tử", moTa: "Kết nối hoá đơn điện tử (cần tài khoản nhà cung cấp).", trangThai: "sap_co" },
+        { ten: "Hoá đơn điện tử", moTa: "Hoá đơn cần xuất, ghi số hoá đơn, kết nối nhà cung cấp (phát hành tự động khi nối tài khoản).", duongDan: "/tai-chinh/hoa-don-dien-tu", trangThai: "san_sang", quyen: ["ban.xem"] },
       ] },
       { nhan: "Quyết toán & kế toán", the: [
         { ten: "Quyết toán hoa hồng", moTa: "Hoa hồng theo tháng, so số hiện tại với số đã chốt trong bảng lương.", duongDan: "/tai-chinh/quyet-toan-hoa-hong", trangThai: "san_sang", quyen: ["luong.xem"] },
@@ -169,7 +169,7 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Khách tiềm năng", the: [
         { ten: "Lead & phễu khách", moTa: "Nhận lead, ghi liên hệ, chuyển thành khách; không xoá lead.", duongDan: "/marketing/lead", trangThai: "san_sang", quyen: ["lead.xu_ly"] },
-        { ten: "Hộp thư đa kênh", moTa: "Trả lời khách qua Zalo OA, Messenger (cần kết nối kênh).", trangThai: "sap_co" },
+        { ten: "Hộp thư đa kênh", moTa: "Trả lời khách qua Zalo OA, Messenger (gửi thật khi nối kênh).", duongDan: "/marketing/hop-thu", trangThai: "san_sang", quyen: ["mkt.xem"] },
       ] },
       { nhan: "Chiến dịch & nội dung", the: [
         { ten: "Chiến dịch", moTa: "Một mục tiêu cho mỗi chiến dịch, có duyệt trước khi chạy.", duongDan: "/marketing/chien-dich", trangThai: "san_sang", quyen: ["mkt.xem"] },
@@ -219,7 +219,7 @@ export const MODULE: Module[] = [
       { nhan: "Khách hàng & đặt lịch", the: [
         { ten: "Điểm khách hàng", moTa: "Quy đổi tiền thành điểm, điểm thành tiền, mức điểm từng hạng khách.", duongDan: "/cai-dat/diem-thuong", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Web đặt Lịch", moTa: "Trang đặt lịch online cho khách: đường dẫn, khoá trang, đặt trước tối thiểu, số ngày nhận, khung giờ, thông báo email.", duongDan: "/cai-dat/web-dat-lich", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
-        { ten: "Zalo OA / SMS", moTa: "Nhắn nhắc lịch, chăm sóc (cần tài khoản Zalo OA / nhà mạng).", trangThai: "sap_co" },
+        { ten: "Zalo OA / SMS", moTa: "Kết nối Zalo OA / SMS, mẫu tin nhắc lịch và chăm sóc, hàng đợi tin (gửi thật khi nối tài khoản).", duongDan: "/cai-dat/zalo-sms", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
       ] },
       { nhan: "Các thiết lập khác", the: [
         { ten: "Quy tắc kho & hạn dùng", moTa: "Chặn bán khi hết tồn, bắt buộc hạn dùng khi nhập kho.", duongDan: "/cai-dat/quy-tac-kho", trangThai: "san_sang", quyen: ["danhmuc.xem"] },

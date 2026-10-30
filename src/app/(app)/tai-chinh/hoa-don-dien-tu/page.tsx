@@ -5,7 +5,7 @@ import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { docLocHddt, hienKhoa, NHA_CUNG_CAP, tenNhaCungCap } from "@/lib/hoa-don-dien-tu";
 import { docKetNoiHienThi } from "@/lib/hoa-don-dien-tu-ket-noi";
-import { layDaSuaTen, layHoaDonHddt } from "@/lib/hoa-don-dien-tu-truy-van";
+import { layDaSuaTen, layHoaDonHddt, layTaiKhoanNhan } from "@/lib/hoa-don-dien-tu-truy-van";
 import { chuThu } from "@/lib/hoa-don-dien-tu-ngan-hang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
@@ -23,7 +23,8 @@ const NUT_XUAT = "h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-
 
 export default async function TrangHoaDonDienTu({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const nd = await yeuCauQuyen("ban.xem");
-  const loc = docLocHddt(await searchParams);
+  const sp = await searchParams;
+  const loc = docLocHddt(sp, undefined, sp.tab === "da" || sp.tab === "ket-noi" ? [] : await layTaiKhoanNhan(nd));
   const duocGhi = coQuyen(nd, "hd.vat") && coQuyen(nd, "ban.sua_khoa");
   const duocKetNoi = coQuyen(nd, "hd.vat") && coQuyen(nd, "ky.khoa");
   // Kế toán xuất hoá đơn có chọn lọc, làm thủ công (chị Dung 30/10): ẩn ngăn Kết nối, giữ mã để bật lại khi cần.
@@ -95,7 +96,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
         <LocHoaDonDienTu tu={loc.tu} den={loc.den} tab={tab} />
         {tab === "can" ? (
           <>
-            <LocNganHangHddt nh={loc.nh} tu={loc.tu} den={loc.den} q={loc.q} />
+            <LocNganHangHddt nh={loc.nh} taiKhoan={loc.taiKhoan} tu={loc.tu} den={loc.den} q={loc.q} />
             <BangCanXuat conNua={conNua} duocGhi={duocGhi} truongGhi={truongGhi} ngayHomNay={hom} ghiAction={ghiHoaDonDienTu} layTen={layTenXuat} luuTen={luuTenXuat}
               dong={dong.map((r) => {
                 const x = khach(r.khach_id);

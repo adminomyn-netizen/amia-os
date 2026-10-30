@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import type { NguoiDung } from "@/lib/auth";
 import { docLocHoaDon, khachKhopTim } from "@/lib/loc-hoa-don";
 import { canXuatHddt, type LocHddt } from "@/lib/hoa-don-dien-tu";
-import { khopNhomLoc, tomTatThu, type TomTatThu } from "@/lib/hoa-don-dien-tu-ngan-hang";
+import { khopNhomLoc, tenTaiKhoan, tomTatThu, type TomTatThu } from "@/lib/hoa-don-dien-tu-ngan-hang";
 
 export const COT_HDDT = "id, ma, ngay_hd, trang_thai, tong_phai_thu, khach_id, chi_nhanh_id, nguoi_lap_id, vat_pct, vat_tien, vat_hd_luc, vat_hd_so, vat_hd_ngay, vat_hd_ky_hieu, vat_hd_mau_so, vat_hd_tra_cuu, vat_hd_nguoi_id, la_so_du_dau, tao_luc";
 export const TOI_DA_DONG = 200;
@@ -25,14 +25,14 @@ export async function layHet<T>(trang: (tu: number, den: number) => PromiseLike<
 }
 
 /** Thanh toán của các hoá đơn, gom theo hoá đơn → nơi nhận tiền (ngân hàng / tiền mặt / thẻ tiền). Lấy theo lô để đường dẫn không quá dài. */
-export async function layThuTheoDon(ids: string[]): Promise<Map<string, TomTatThu>> {
+export async function layThuTheoDon(ids: string[], taiKhoan: string[] = []): Promise<Map<string, TomTatThu>> {
   const db = sb(), theo = new Map<string, { loai: string; phuong_thuc: string; so_tien: number; ngan_hang: string | null }[]>();
   for (let i = 0; i < ids.length; i += 50) {
     const lo = ids.slice(i, i + 50);
     const dong = await layHet((tu, den) => db.from("thanh_toan").select("hoa_don_id, loai, phuong_thuc, so_tien, ngan_hang").in("hoa_don_id", lo).order("id").range(tu, den));
     for (const t of dong) (theo.get(t.hoa_don_id) ?? theo.set(t.hoa_don_id, []).get(t.hoa_don_id)!).push(t);
   }
-  return new Map(ids.map((id) => [id, tomTatThu(theo.get(id) ?? [])]));
+  return new Map(ids.map((id) => [id, tomTatThu(theo.get(id) ?? [], taiKhoan)]));
 }
 
 /** Khách có mã số thuế (khách yêu cầu hoá đơn công ty). Số này nhỏ nên lấy hết một lần rồi đưa vào điều kiện lọc. */
@@ -64,7 +64,7 @@ export async function layHoaDonHddt(nd: Pick<NguoiDung, "chiNhanhId" | "nhanVien
   // Ngăn "Cần xuất": gắn nơi nhận tiền của từng hoá đơn và lọc theo ngân hàng (loc.nh; null = không lọc).
   let thu = new Map<string, TomTatThu>();
   if (kieu === "can") {
-    thu = await layThuTheoDon(loc2.map((h) => h.id));
+    thu = await layThuTheoDon(loc2.map((h) => h.id), loc.taiKhoan);
     loc2 = loc2.filter((h) => khopNhomLoc(thu.get(h.id)!, loc.nh));
   }
   return { dong: loc2.slice(0, toiDa), conNua: loc2.length > toiDa || dong.length > gioiHan, thu };
@@ -105,4 +105,13 @@ export async function layDaSuaTen(ids: string[]): Promise<Set<string>> {
     }
   }
   return co;
+}
+
+/** Danh sách tài khoản nhận tiền đang hoạt động (Cài đặt › Tài khoản Ngân Hàng): tên ngắn, tài khoản mặc định lên đầu. Người gắn chi nhánh chỉ thấy tài khoản chung và của chi nhánh mình. */
+export async function layTaiKhoanNhan(nd: Pick<NguoiDung, "chiNhanhId">): Promise<string[]> {
+  let q = sb().from("tai_khoan_ngan_hang").select("ngan_hang, chi_nhanh_id").eq("hoat_dong", true).order("mac_dinh", { ascending: false }).order("tao_luc");
+  if (nd.chiNhanhId) q = q.or(`chi_nhanh_id.is.null,chi_nhanh_id.eq.${nd.chiNhanhId}`);
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return tenTaiKhoan(data ?? []);
 }

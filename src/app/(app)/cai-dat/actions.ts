@@ -33,13 +33,13 @@ export async function luuNganHang(fd: FormData): Promise<KQ> {
   const id = chuoi(fd, "id");
   const row = {
     ngan_hang: chuoi(fd, "ngan_hang"), so_tai_khoan: chuoi(fd, "so_tai_khoan").replace(/\s/g, ""), chu_tai_khoan: chuoi(fd, "chu_tai_khoan"),
-    dung_quet_the: bat(fd, "dung_quet_the"), dung_chuyen_khoan: bat(fd, "dung_chuyen_khoan"),
+    dung_quet_the: bat(fd, "dung_quet_the"), dung_chuyen_khoan: bat(fd, "dung_chuyen_khoan"), ghi_chu: chuoiHoacNull(fd, "ghi_chu"),
   };
   const macDinh = bat(fd, "mac_dinh");
   if (!row.ngan_hang) return { loi: "Mời chọn tên ngân hàng." };
-  if (!row.so_tai_khoan) return { loi: "Số tài khoản là bắt buộc." };
-  if (!row.chu_tai_khoan) return { loi: "Không được để trống tên chủ tài khoản." };
-  if (!/^\d{6,20}$/.test(row.so_tai_khoan)) return { loi: "Số tài khoản chỉ gồm chữ số (6–20 số)." };
+  // Số tài khoản và chủ tài khoản được để trống (kế toán chỉ cần danh sách nơi nhận tiền để lọc); có nhập thì số phải đúng dạng.
+  if (row.so_tai_khoan && !/^\d{6,20}$/.test(row.so_tai_khoan)) return { loi: "Số tài khoản chỉ gồm chữ số (6–20 số)." };
+  if ((row.ghi_chu ?? "").length > 200) return { loi: "Ghi chú dài quá 200 ký tự." };
   const db = sb();
   if (macDinh) await db.from("tai_khoan_ngan_hang").update({ mac_dinh: false }).eq("mac_dinh", true);
   const luu = { ...row, ...(macDinh ? { mac_dinh: true } : id ? {} : { mac_dinh: false }) };
@@ -63,6 +63,21 @@ export async function datMacDinhNganHang(fd: FormData): Promise<KQ> {
   if (error) return { loi: thongBaoLoi(error) };
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "dat_mac_dinh_ngan_hang", doi_tuong: "tai_khoan_ngan_hang", doi_tuong_id: id, chi_tiet: { ngan_hang: tk.ngan_hang, so_cuoi: tk.so_tai_khoan.slice(-4) } });
   revalidatePath("/cai-dat/ngan-hang");
+  return { ok: true };
+}
+
+/** Nút "Ẩn" / "Hiện lại": tài khoản ẩn không còn trong ô chọn ở Thu ngân và bộ lọc Hoá đơn điện tử, nhưng không mất dữ liệu. */
+export async function anHienNganHang(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), hien = chuoi(fd, "hien") === "1";
+  const db = sb();
+  const { data: tk } = await db.from("tai_khoan_ngan_hang").select("id, ngan_hang").eq("id", id).maybeSingle();
+  if (!tk) return { loi: "Không có tài khoản này." };
+  const { error } = await db.from("tai_khoan_ngan_hang").update({ hoat_dong: hien }).eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: hien ? "hien_tai_khoan_ngan_hang" : "an_tai_khoan_ngan_hang", doi_tuong: "tai_khoan_ngan_hang", doi_tuong_id: id, chi_tiet: { ngan_hang: tk.ngan_hang } });
+  revalidatePath("/cai-dat/ngan-hang"); revalidatePath("/ban-hang"); revalidatePath("/tai-chinh/hoa-don-dien-tu");
   return { ok: true };
 }
 

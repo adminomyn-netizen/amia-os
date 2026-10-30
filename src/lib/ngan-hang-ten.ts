@@ -2,7 +2,7 @@
 // Bản sao cùng quy tắc cho script nằm ở scripts/chuyen-salonhero/lib.mjs (có test so khớp hai bên).
 
 /** Thứ tự ưu tiên khi hiện ô chọn ở Thu ngân. */
-export const NGAN_HANG_MAC_DINH = ["Techcombank", "Vietcombank", "Sacombank", "TPBank", "BIDV", "Khác"] as const;
+export const NGAN_HANG_MAC_DINH = ["OCB", "Techcombank", "Vietcombank", "Khác"] as const;
 
 /** [tên ngắn, mẫu khớp trên chữ đã bỏ dấu, viết thường]. Thứ tự quan trọng: mẫu cụ thể đứng trước. */
 const BANG: [string, RegExp][] = [

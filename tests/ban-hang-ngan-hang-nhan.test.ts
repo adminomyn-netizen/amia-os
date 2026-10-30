@@ -5,7 +5,7 @@ const tk = (ten: string, o: Partial<TaiKhoanNhan> = {}): TaiKhoanNhan => ({ ten,
 
 describe("ô Ngân hàng nhận ở Thu ngân", () => {
   it("bảng chưa có tài khoản nào thì dùng danh sách mặc định", () => {
-    expect(dsNganHangNhan([], "vinh", "chuyen_khoan")).toEqual(["Techcombank", "Vietcombank", "Sacombank", "TPBank", "BIDV", "Khác"]);
+    expect(dsNganHangNhan([], "vinh", "chuyen_khoan")).toEqual(["OCB", "Techcombank", "Vietcombank", "Khác"]);
   });
   it("lấy tài khoản đang dùng của chi nhánh (hoặc chung), tên ngắn, tài khoản mặc định lên đầu, có Khác ở cuối", () => {
     const ds = dsNganHangNhan([tk("Ngân hàng Vietcombank"), tk("Ngân hàng OCB", { macDinh: true }), tk("Ngân hàng BIDV", { chiNhanhId: "dalat" }), tk("Ngân hàng Vietcombank")], "vinh", "chuyen_khoan");

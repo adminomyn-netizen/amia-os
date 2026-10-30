@@ -171,6 +171,13 @@ export function XemAnhPhongTo({ ds, chiSo, dong, doiToi, xoaDuoc, xoa }: {
         </div>
         <button ref={nutDong} type="button" onClick={dong} aria-label="Đóng" className="pointer-events-auto flex h-11 w-11 shrink-0 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20"><X strokeWidth={1.8} className="h-5 w-5" aria-hidden /></button>
       </div>
+      {anh.vanBan && (
+        <details className="absolute inset-x-0 bottom-0 z-10 max-h-[45%] overflow-auto bg-black/75 px-4 pb-[calc(12px+env(safe-area-inset-bottom))] pt-2 text-[13px]">
+          <summary className="cursor-pointer select-none font-medium text-white">Chữ đọc được trong ảnh</summary>
+          <p className="mt-2 whitespace-pre-wrap text-white/85">{anh.vanBan}</p>
+          <p className="mt-2 text-[12px] text-white/60">Máy tự đọc nên có thể sai, nhất là chữ viết tay và số. Cần chính xác thì xem ảnh.</p>
+        </details>
+      )}
       {hoiXoa && xoa && (
         <div role="alertdialog" aria-modal="true" aria-labelledby="hoi-xoa-anh" className="absolute inset-x-4 top-1/2 z-20 mx-auto max-w-sm -translate-y-1/2 rounded-the bg-giay-sang p-4 text-muc">
           <p id="hoi-xoa-anh" className="text-[15px] font-medium">Xoá vĩnh viễn ảnh này?</p>

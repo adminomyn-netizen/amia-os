@@ -5028,6 +5028,8 @@ export type Database = {
           lark_so_lan: number
           lark_trang_thai: string
           lark_xong_luc: string | null
+          van_ban: string | null
+          van_ban_luc: string | null
           loai: string
           ngay_chup: string
           tao_boi: string | null
@@ -5045,6 +5047,8 @@ export type Database = {
           lark_so_lan?: number
           lark_trang_thai?: string
           lark_xong_luc?: string | null
+          van_ban?: string | null
+          van_ban_luc?: string | null
           loai?: string
           ngay_chup?: string
           tao_boi?: string | null
@@ -5062,6 +5066,8 @@ export type Database = {
           lark_so_lan?: number
           lark_trang_thai?: string
           lark_xong_luc?: string | null
+          van_ban?: string | null
+          van_ban_luc?: string | null
           loai?: string
           ngay_chup?: string
           tao_boi?: string | null

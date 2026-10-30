@@ -76,7 +76,7 @@ export function LuoiAnh({ khachId, banDau, tong, quyenXoa }: { khachId: string; 
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.url ?? undefined} alt={`Ảnh ${LOAI_ANH[a.loai] ?? ""} điều trị ngày ${ngayVN(a.ngay)}`} loading="lazy" decoding="async" onError={() => thuLai(a.id)} className="aspect-[3/4] w-full object-cover" />
                 </button>
-                <figcaption className="px-2 py-1.5 text-[12px] text-muc-2">{LOAI_ANH[a.loai]}{a.ghiChu ? ` · ${a.ghiChu}` : ""}{a.taoBoi && <span className="block truncate text-muc-3">Tạo bởi {a.taoBoi}</span>}</figcaption>
+                <figcaption className="px-2 py-1.5 text-[12px] text-muc-2">{LOAI_ANH[a.loai]}{a.ghiChu ? ` · ${a.ghiChu}` : ""}{a.vanBan && <span className="block text-muc-3">Có chữ trong ảnh, bấm ảnh để đọc</span>}{a.taoBoi && <span className="block truncate text-muc-3">Tạo bởi {a.taoBoi}</span>}</figcaption>
               </figure>
             ))}
           </div>

@@ -54,6 +54,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
         {p.trang_thai === "da_lam" && coQuyen(nd, "phieu.doichieu") && <NutNhanh chinh nhan="Đã đối chiếu" action={doiChieuPhieu} du={{ id }} />}
         {["cho_cap", "da_cap", "da_nhan"].includes(p.trang_thai) && coQuyen(nd, "phieu.cap") && <NutHop kieu="phu" nhan="Huỷ phiếu" tieuDe="Huỷ phiếu cấp" moTa="Vật tư đã cấp sẽ được hoàn lại kho." an={{ id }} nhanLuu="Huỷ phiếu" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={huyPhieu} />}
       </TieuDeTrang>
+      {p.trang_thai === "cho_cap" && coQuyen(nd, "phieu.cap") && <p className="mb-4 text-[13px] text-muc-3">Kho báo &quot;Kho không đủ&quot; khi tồn của vật tư bằng 0: vào <Link href="/kho/chuan-hoa?tab=ton-dau" className="font-medium text-nhan-dam hover:underline">Chuẩn hoá vật tư, tồn đầu</Link> để chốt tồn đầu hoặc nhập kho trước.</p>}
       <HangChiSo muc={[{ nhan: "Bác sĩ chỉ định", so: tenNv.get(p.bac_si_id) ?? "" }, { nhan: "Chuyên viên trị liệu nhận", so: tenNv.get(p.ktv_id ?? "") ?? "Chưa" }, { nhan: "Giá trị đã cấp", so: tienVN(Math.round(tongCap)) }, { nhan: "Giá trị dùng thật", so: lamXong ? tienVN(Math.round(tongDung)) : "Chưa làm xong" }]} />
       <div className="mt-8 space-y-8">
         <MucTrang tieuDe="Vật tư trên phiếu">

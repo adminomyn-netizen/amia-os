@@ -8,6 +8,7 @@ import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { FormPhieu, type DichVuPhieu } from "@/components/phieu-cap/FormPhieu";
+import { tinhCaCanPhieu } from "@/lib/phieu-cap";
 import { taoPhieu } from "./actions";
 
 export const TT_PHIEU: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
@@ -70,6 +71,24 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
       (ds ?? []).length ? db.from("phieu_cap_dong").select("phieu_id, so_cap, don_gia").in("phieu_id", (ds ?? []).map((p) => p.id)) : Promise.resolve({ data: [] }),
     ]);
     const tenK = new Map((ks ?? []).map((k) => [k.id, k.ho_ten])), tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
+    // Ca trong ngày có dịch vụ cần vật tư nhóm A mà chưa ra phiếu: để kho / bác sĩ ra phiếu trước ca, không phải chờ tới lúc mở ca bị chặn.
+    let qLich = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).in("trang_thai", ["da_xac_nhan", "cho_phuc_vu", "dang_phuc_vu"]).order("bat_dau");
+    if (nd.chiNhanhId) qLich = qLich.eq("chi_nhanh_id", nd.chiNhanhId);
+    const { data: lichNgay } = await qLich;
+    const idsLich = (lichNgay ?? []).map((l) => l.id);
+    const [{ data: ldv }, { data: phCo }] = await Promise.all([
+      idsLich.length ? db.from("lich_hen_dich_vu").select("lich_id, dich_vu_id").in("lich_id", idsLich) : Promise.resolve({ data: [] as { lich_id: string; dich_vu_id: string }[] }),
+      idsLich.length ? db.from("phieu_cap").select("lich_hen_id, dich_vu_id").in("lich_hen_id", idsLich).neq("trang_thai", "huy") : Promise.resolve({ data: [] as { lich_hen_id: string | null; dich_vu_id: string }[] }),
+    ]);
+    const idsDv = [...new Set((ldv ?? []).map((x) => x.dich_vu_id))];
+    const { data: dmNgay } = idsDv.length ? await db.from("dinh_muc").select("dich_vu_id, san_pham_id").in("dich_vu_id", idsDv) : { data: [] as { dich_vu_id: string; san_pham_id: string }[] };
+    const { data: spNgay } = (dmNgay ?? []).length ? await db.from("san_pham").select("id, nhom_cap").in("id", [...new Set((dmNgay ?? []).map((x) => x.san_pham_id))]) : { data: [] as { id: string; nhom_cap: string | null }[] };
+    const caCan = tinhCaCanPhieu(ldv ?? [], dmNgay ?? [], new Map((spNgay ?? []).map((s) => [s.id, s.nhom_cap])), phCo ?? []);
+    const lichMap = new Map((lichNgay ?? []).map((l) => [l.id, l]));
+    const tenKCan = new Map<string, string>();
+    const idsKCan = [...new Set(caCan.map((c) => lichMap.get(c.lichId)?.khach_id).filter((x): x is string => !!x))];
+    if (idsKCan.length) for (const k of (await db.from("khach_hang").select("id, ho_ten").in("id", idsKCan)).data ?? []) tenKCan.set(k.id, k.ho_ten);
+    const tenDvCan = new Map(((idsDv.length ? (await db.from("dich_vu").select("id, ten").in("id", idsDv)).data : []) ?? []).map((d) => [d.id, d.ten]));
     noiDung = (
       <>
         <div className="mb-4 flex flex-wrap gap-2 text-[13px]">
@@ -77,6 +96,23 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
             <Link key={ma} href={`/phieu-cap?ngay=${ngay}${ma ? `&tt=${ma}` : ""}`} className={`rounded-nho px-3 py-1.5 ${(sp.tt ?? "") === ma ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{ten}</Link>
           ))}
         </div>
+        {caCan.length > 0 && coQuyen(nd, "phieu.chidinh") && (
+          <section className="mb-6">
+            <h2 className="mb-2 text-[15px] font-semibold text-muc">Ca cần ra phiếu cấp ({caCan.length})</h2>
+            <p className="mb-2 text-[13px] text-muc-3">Dịch vụ có vật tư nhóm A phải có phiếu cấp, kho cấp và chuyên viên nhận rồi mới mở ca được. Bấm &quot;Ra phiếu&quot; để chọn vật tư theo định mức.</p>
+            <ul>
+              {caCan.map((c) => {
+                const l = lichMap.get(c.lichId)!;
+                return (
+                  <li key={`${c.lichId}-${c.dichVuId}`} className="flex flex-wrap items-center justify-between gap-2 border-b border-vien py-2.5 text-[14px]">
+                    <span className="text-muc"><span className="tabular-nums text-muc-3">{gioVN(l.bat_dau)}</span> · {tenKCan.get(l.khach_id) ?? "Khách"} · {tenDvCan.get(c.dichVuId) ?? "Dịch vụ"}</span>
+                    <Link href={`/phieu-cap?ngay=${ngay}&lich=${c.lichId}`} className="font-medium text-nhan-dam hover:underline">Ra phiếu</Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </section>
+        )}
         <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu cấp nào trong ngày."
           cot={[
             { nhan: "Mã phiếu", hienThi: (r) => <Link href={`/phieu-cap/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> }, { nhan: "Giờ", hienThi: (r) => gioVN(r.tao_luc) },

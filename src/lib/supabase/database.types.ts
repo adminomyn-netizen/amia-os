@@ -9735,18 +9735,23 @@ export type Database = {
           bi_khoa: boolean
           chi_nhanh_ids: string[] | null
           den_ngay: string
+          dich_vu_ids: string[] | null
           don_toi_thieu: number
           gia_tri: number
           giam_toi_da: number | null
+          gio_den: string | null
+          gio_tu: string | null
           gioi_han: string
           hang_khach: string[] | null
           hien_thi_tim_kiem: string
           id: string
           khach_moi_cu: string | null
           loai_giam: string
+          loai_lich_hen: string[] | null
           loai_ma: string
           mo_ta: string | null
           ngay_trong_tuan: number[] | null
+          nhom_khach_ids: string[] | null
           so_lan_toi_da_khach: number | null
           so_luong: number
           sua_luc: string | null
@@ -9759,18 +9764,23 @@ export type Database = {
           bi_khoa?: boolean
           chi_nhanh_ids?: string[] | null
           den_ngay: string
+          dich_vu_ids?: string[] | null
           don_toi_thieu?: number
           gia_tri: number
           giam_toi_da?: number | null
+          gio_den?: string | null
+          gio_tu?: string | null
           gioi_han?: string
           hang_khach?: string[] | null
           hien_thi_tim_kiem?: string
           id?: string
           khach_moi_cu?: string | null
           loai_giam: string
+          loai_lich_hen?: string[] | null
           loai_ma: string
           mo_ta?: string | null
           ngay_trong_tuan?: number[] | null
+          nhom_khach_ids?: string[] | null
           so_lan_toi_da_khach?: number | null
           so_luong: number
           sua_luc?: string | null
@@ -9783,18 +9793,23 @@ export type Database = {
           bi_khoa?: boolean
           chi_nhanh_ids?: string[] | null
           den_ngay?: string
+          dich_vu_ids?: string[] | null
           don_toi_thieu?: number
           gia_tri?: number
           giam_toi_da?: number | null
+          gio_den?: string | null
+          gio_tu?: string | null
           gioi_han?: string
           hang_khach?: string[] | null
           hien_thi_tim_kiem?: string
           id?: string
           khach_moi_cu?: string | null
           loai_giam?: string
+          loai_lich_hen?: string[] | null
           loai_ma?: string
           mo_ta?: string | null
           ngay_trong_tuan?: number[] | null
+          nhom_khach_ids?: string[] | null
           so_lan_toi_da_khach?: number | null
           so_luong?: number
           sua_luc?: string | null

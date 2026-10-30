@@ -69,16 +69,16 @@ export async function layDiemKhach(khachId: string) {
 }
 
 /** Hộp "Áp dụng voucher" ở màn Bán hàng. "Kiểm tra mã": kiểm mã (có, không khoá, trong hạn, đúng chi nhánh/ngày/hạng khách, còn lượt) rồi trả định nghĩa để màn hình tự tính theo dòng hàng. Máy chủ tính lại và DB kiểm lại khi chốt. */
-export async function layVoucher(ma: string, chiNhanhId: string, khachId: string | null): Promise<{ ok: true; v: VoucherTim } | { ok: false; loi: string }> {
+export async function layVoucher(ma: string, chiNhanhId: string, khachId: string | null, lichId: string | null = null): Promise<{ ok: true; v: VoucherTim } | { ok: false; loi: string }> {
   const nd = await kiemQuyen("ban.tao");
   if (!nd) return { ok: false, loi: KHONG_DU_QUYEN };
-  return timVoucher(sb(), ma, { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId });
+  return timVoucher(sb(), ma, { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId, lichId });
 }
 /** Danh sách voucher hiện sẵn trong hộp "Áp dụng voucher" (SalonHero: "Hiển thị trên tìm kiếm thu ngân"). */
-export async function dsVoucher(chiNhanhId: string, khachId: string | null): Promise<VoucherTim[]> {
+export async function dsVoucher(chiNhanhId: string, khachId: string | null, lichId: string | null = null): Promise<VoucherTim[]> {
   const nd = await kiemQuyen("ban.tao");
   if (!nd || !(nd.chiNhanhId ?? chiNhanhId)) return [];
-  return dsVoucherThuNgan(sb(), { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId });
+  return dsVoucherThuNgan(sb(), { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId, lichId });
 }
 
 type KQ = { ok: true; id: string; ma: string } | { ok?: false; loi: string };
@@ -146,9 +146,9 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   const maVoucher = chuanMaVoucher(don.voucher);
   let tienVoucher = 0;
   if (maVoucher) {
-    const t = await timVoucher(db, maVoucher, { chiNhanhId: don.chiNhanhId, khachId: don.khachId });
+    const t = await timVoucher(db, maVoucher, { chiNhanhId: don.chiNhanhId, khachId: don.khachId, lichId: don.lichId });
     if (!t.ok) return { loi: t.loi };
-    const g = giamTheoDong(t.v, don.dong.map((d) => ({ loai: d.loai, thanh: gia.get(`${d.loai}:${d.ref}`)!.gia * d.sl - d.giam })));
+    const g = giamTheoDong(t.v, don.dong.map((d) => ({ loai: d.loai, ref: d.ref, thanh: gia.get(`${d.loai}:${d.ref}`)!.gia * d.sl - d.giam })));
     if (!g.ok) return { loi: g.loi };
     tienVoucher = g.tien;
   }

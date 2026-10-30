@@ -28,6 +28,11 @@ export async function luuVoucher(fd: FormData): Promise<KQ> {
     // Người gắn chi nhánh chỉ tạo/sửa voucher cho chi nhánh mình.
     chi_nhanh_ids: nd.chiNhanhId ? [nd.chiNhanhId] : cn.length ? cn : null,
     ngay_trong_tuan: mang(fd, "ngay_trong_tuan").length ? mang(fd, "ngay_trong_tuan").map(Number) : null,
+    // 4 điều kiện thêm (migration 0175): dịch vụ "Tùy chọn", nhóm khách, loại lịch hẹn, khung giờ sử dụng.
+    dich_vu_ids: chuoi(fd, "gioi_han") === "tuy_chon" && mang(fd, "dich_vu_ids").length ? mang(fd, "dich_vu_ids") : null,
+    nhom_khach_ids: mang(fd, "nhom_khach_ids").length ? mang(fd, "nhom_khach_ids") : null,
+    loai_lich_hen: mang(fd, "loai_lich_hen").length ? mang(fd, "loai_lich_hen") : null,
+    gio_tu: chuoiHoacNull(fd, "gio_tu"), gio_den: chuoiHoacNull(fd, "gio_den"),
     hien_thi_tim_kiem: chuoi(fd, "hien_thi_tim_kiem") || "co", mo_ta: chuoiHoacNull(fd, "mo_ta"), bi_khoa: bat(fd, "bi_khoa"),
   };
   if (!row.ten) return { loi: "Nhập tên voucher." };
@@ -42,6 +47,12 @@ export async function luuVoucher(fd: FormData): Promise<KQ> {
   if (!["mot_ma", "nhieu_ma"].includes(loaiMa)) return { loi: "Chọn loại mã khuyến mại." };
   if (loaiMa === "nhieu_ma" && row.so_luong > 500) return { loi: "Loại nhiều mã tạo tối đa 500 mã mỗi voucher. Cần nhiều hơn thì tạo thêm voucher." };
   if (!GIOI_HAN_VOUCHER.some((g) => g.gia_tri === row.gioi_han)) return { loi: "Chọn giới hạn dịch vụ áp dụng." };
+  const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (row.gioi_han === "tuy_chon" && !row.dich_vu_ids) return { loi: "Giới hạn Tùy chọn: chọn ít nhất một dịch vụ." };
+  if ([...(row.dich_vu_ids ?? []), ...(row.nhom_khach_ids ?? [])].some((x) => !UUID.test(x))) return { loi: "Lựa chọn dịch vụ hoặc nhóm khách không hợp lệ." };
+  if (row.loai_lich_hen && row.loai_lich_hen.some((x) => !/^[A-Z0-9_]{2,20}$/.test(x))) return { loi: "Loại lịch hẹn không hợp lệ." };
+  if (!!row.gio_tu !== !!row.gio_den) return { loi: "Khung giờ sử dụng cần nhập cả giờ bắt đầu và giờ kết thúc (hoặc bỏ trống cả hai)." };
+  if (row.gio_tu && row.gio_den && (!/^\d{2}:\d{2}(:\d{2})?$/.test(row.gio_tu) || !/^\d{2}:\d{2}(:\d{2})?$/.test(row.gio_den) || row.gio_tu >= row.gio_den)) return { loi: "Giờ bắt đầu phải trước giờ kết thúc trong cùng một ngày." };
   if (row.don_toi_thieu < 0) return { loi: "Giá trị đơn hàng tối thiểu không được âm." };
   if (row.so_lan_toi_da_khach !== null && !(Number.isInteger(row.so_lan_toi_da_khach) && row.so_lan_toi_da_khach > 0)) return { loi: "Số lần dùng tối đa cho 1 khách phải là số nguyên lớn hơn 0 (bỏ trống nếu không giới hạn)." };
   if (row.khach_moi_cu && !["moi", "cu"].includes(row.khach_moi_cu)) return { loi: "Chọn khách cũ hoặc mới." };

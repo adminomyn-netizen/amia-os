@@ -25,8 +25,8 @@ export const tinhDon = (hang: number, giamDon: number, vatPct: number, phuPhi: n
 };
 
 /** Voucher (thẻ giảm giá) như trang Bán hàng cần: đủ để tính tiền giảm khi người bán đổi dòng hàng, không cần hỏi lại máy chủ. */
-export type GioiHanVoucher = "tong_don" | "dich_vu_the" | "san_pham" | "the" | "dich_vu" | "dich_vu_san_pham";
-export type VoucherDon = { loai_giam: "tien" | "phan_tram"; gia_tri: number; giam_toi_da: number | null; gioi_han: GioiHanVoucher };
+export type GioiHanVoucher = "tong_don" | "dich_vu_the" | "san_pham" | "the" | "dich_vu" | "dich_vu_san_pham" | "tuy_chon";
+export type VoucherDon = { loai_giam: "tien" | "phan_tram"; gia_tri: number; giam_toi_da: number | null; gioi_han: GioiHanVoucher; /** Chỉ khi gioi_han = "tuy_chon": các dịch vụ được giảm. */ dich_vu_ids?: string[] | null };
 /** Cột "Giới hạn dịch vụ áp dụng" của SalonHero → loại dòng hàng được tính giảm. Cùng bảng với hàm voucher_loai_dong của DB (migration 0080). */
 export const GIOI_HAN_VOUCHER: { gia_tri: GioiHanVoucher; nhan: string; loai: MucBan["loai"][] }[] = [
   { gia_tri: "tong_don", nhan: "Tổng giá trị đơn hàng", loai: ["dich_vu", "goi_the", "san_pham"] },
@@ -35,12 +35,13 @@ export const GIOI_HAN_VOUCHER: { gia_tri: GioiHanVoucher; nhan: string; loai: Mu
   { gia_tri: "the", nhan: "Thẻ dịch vụ", loai: ["goi_the"] },
   { gia_tri: "dich_vu", nhan: "Tất cả dịch vụ", loai: ["dich_vu"] },
   { gia_tri: "dich_vu_san_pham", nhan: "Cả d.vụ & s.phẩm (không thẻ)", loai: ["dich_vu", "san_pham"] },
+  { gia_tri: "tuy_chon", nhan: "Tùy chọn (chọn từng dịch vụ)", loai: ["dich_vu"] },
 ];
 /** Tiền giảm của voucher cho các dòng (thành tiền sau giảm giá dòng). Cùng công thức với hàm tinh_giam_voucher của DB (migration 0080):
  *  phần trăm làm tròn đồng, chặn bởi mức giảm tối đa; tiền không quá phần tiền hàng áp dụng. Dùng số nguyên (phần trăm × 100) để không lệch so với DB. */
-export const tinhGiamVoucher = (v: VoucherDon, dong: { loai: string; thanh: number }[]) => {
+export const tinhGiamVoucher = (v: VoucherDon, dong: { loai: string; thanh: number; ref?: string }[]) => {
   const loai = GIOI_HAN_VOUCHER.find((g) => g.gia_tri === v.gioi_han)?.loai ?? [];
-  const coSo = dong.filter((d) => (loai as string[]).includes(d.loai)).reduce((s, d) => s + d.thanh, 0);
+  const coSo = dong.filter((d) => (loai as string[]).includes(d.loai) && (v.gioi_han !== "tuy_chon" || (!!d.ref && !!v.dich_vu_ids?.includes(d.ref)))).reduce((s, d) => s + d.thanh, 0);
   let giam = v.loai_giam === "phan_tram" ? Math.round((coSo * Math.round(v.gia_tri * 100)) / 10000) : Math.floor(v.gia_tri);
   if (v.loai_giam === "phan_tram" && v.giam_toi_da != null) giam = Math.min(giam, v.giam_toi_da);
   return Math.max(Math.min(giam, coSo), 0);

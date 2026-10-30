@@ -4,6 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { GIOI_HAN_VOUCHER } from "@/lib/ban-hang";
+import { LUA_CHON_NGUON } from "@/lib/lich-hen";
 import { chuGiamGia, NHAN_THU, nhanGioiHan } from "@/lib/voucher";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
@@ -25,11 +26,13 @@ export default async function TrangVoucher({ searchParams }: { searchParams: Pro
   const sp = await searchParams;
   const sua = coQuyen(nd, "danhmuc.sua");
   const db = sb();
-  const [{ data: tatCa }, { data: cn }, { data: maDs }, { data: luot }] = await Promise.all([
+  const [{ data: tatCa }, { data: cn }, { data: maDs }, { data: luot }, { data: dvAll }, { data: nhomAll }] = await Promise.all([
     db.from("voucher").select("*").order("tao_luc", { ascending: false }),
     dsChiNhanhRutGon(),
     db.from("voucher_ma").select("voucher_id, ma").order("ma").limit(5000),
     db.from("voucher_luot_dung").select("voucher_id, loai").limit(20000),
+    db.from("dich_vu").select("id, ten").eq("hoat_dong", true).order("ten").limit(1000),
+    db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten"),
   ]);
   const nay = homNayHCM();
   const dung = new Map<string, number>();
@@ -56,10 +59,14 @@ export default async function TrangVoucher({ searchParams }: { searchParams: Pro
     { ten: "loai_ma", nhan: "Loại mã khuyến mại", loai: "chon", batBuoc: true, luaChon: [{ gia_tri: "mot_ma", nhan: "1 mã dùng nhiều lần" }, { gia_tri: "nhieu_ma", nhan: "Nhiều mã (mỗi mã 1 lần)" }] },
     { ten: "ma", nhan: "Mã voucher", loai: "chu", goiY: "Chỉ chữ cái không dấu và chữ số", ghiChu: "Loại nhiều mã: nhập tiền tố (tối đa 10 ký tự, có thể bỏ trống), hệ thống tự tạo các mã." },
     { ten: "gioi_han", nhan: "Giới hạn dịch vụ áp dụng", loai: "chon", batBuoc: true, luaChon: GIOI_HAN_VOUCHER.map((g) => ({ gia_tri: g.gia_tri, nhan: g.nhan })), rong: true },
+    { ten: "dich_vu_ids", nhan: "Chọn các dịch vụ được giảm", loai: "nhieu", luaChon: (dvAll ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten })), hienKhi: { ten: "gioi_han", la: ["tuy_chon"] }, rong: true },
     { ten: "don_toi_thieu", nhan: "Giá trị đơn hàng tối thiểu áp dụng (₫)", loai: "tien" },
     { ten: "so_lan_toi_da_khach", nhan: "Số lần dùng tối đa cho 1 khách", loai: "so", ghiChu: "Bỏ trống = không giới hạn." },
     { ten: "hang_khach", nhan: "Hạng khách hàng áp dụng", loai: "nhieu", luaChon: HANG.map((h) => ({ gia_tri: h, nhan: `Hạng ${h}` })), ghiChu: "Không chọn = mọi hạng." },
     { ten: "khach_moi_cu", nhan: "Áp dụng cho khách cũ/mới", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Chọn tất cả" }, { gia_tri: "cu", nhan: "Khách quay lại" }, { gia_tri: "moi", nhan: "Khách mới" }] },
+    { ten: "nhom_khach_ids", nhan: "Nhóm khách hàng áp dụng", loai: "nhieu", luaChon: (nhomAll ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten })), ghiChu: "Không chọn = mọi khách." },
+    { ten: "loai_lich_hen", nhan: "Loại lịch hẹn áp dụng", loai: "nhieu", luaChon: LUA_CHON_NGUON, ghiChu: "Theo nguồn đặt lịch của lịch hẹn gắn với đơn. Không chọn = mọi loại." },
+    { ten: "gio_tu", nhan: "Khung giờ sử dụng: từ", loai: "gio", ghiChu: "Bỏ trống cả hai ô = cả ngày." }, { ten: "gio_den", nhan: "Đến", loai: "gio" },
     { ten: "chi_nhanh_ids", nhan: "Áp dụng cho chi nhánh nào?", loai: "nhieu", luaChon: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })), ghiChu: "Không chọn = mọi chi nhánh." },
     { ten: "ngay_trong_tuan", nhan: "Áp dụng cho các ngày nào trong tuần?", loai: "nhieu", luaChon: [1, 2, 3, 4, 5, 6, 7].map((n) => ({ gia_tri: String(n), nhan: NHAN_THU[n] })), ghiChu: "Không chọn = mọi ngày." },
     { ten: "hien_thi_tim_kiem", nhan: "Hiển thị trên tìm kiếm thu ngân", loai: "chon", luaChon: [{ gia_tri: "co", nhan: "Có" }, { gia_tri: "khong", nhan: "Không" }, { gia_tri: "tu_dong", nhan: "Tự động chọn" }] },
@@ -98,12 +105,12 @@ export default async function TrangVoucher({ searchParams }: { searchParams: Pro
           { nhan: "Giới hạn áp dụng", hienThi: (r) => `${nhanGioiHan(r.gioi_han)}${Number(r.don_toi_thieu) > 0 ? ` · đơn từ ${Number(r.don_toi_thieu).toLocaleString("vi-VN")} ₫` : ""}` },
           { nhan: "", hienThi: (r) => (sua ? <NutHop kieu="chu" nhan="Sửa" tieuDe="Thông tin voucher" nhanLuu="Lưu thông tin" truong={truong} action={luuVoucher}
             giaTri={{ id: r.id, ten: r.ten, tu_ngay: r.tu_ngay, den_ngay: r.den_ngay, loai_giam: r.loai_giam, gia_tri: Number(r.gia_tri), giam_toi_da: r.giam_toi_da == null ? "" : Number(r.giam_toi_da), so_luong: r.so_luong, loai_ma: r.loai_ma,
-              ma: r.loai_ma === "mot_ma" ? (ma.get(r.id) ?? [])[0] ?? "" : "", gioi_han: r.gioi_han, don_toi_thieu: Number(r.don_toi_thieu), so_lan_toi_da_khach: r.so_lan_toi_da_khach ?? "", hang_khach: r.hang_khach ?? [], khach_moi_cu: r.khach_moi_cu ?? "",
+              ma: r.loai_ma === "mot_ma" ? (ma.get(r.id) ?? [])[0] ?? "" : "", gioi_han: r.gioi_han, don_toi_thieu: Number(r.don_toi_thieu), so_lan_toi_da_khach: r.so_lan_toi_da_khach ?? "", hang_khach: r.hang_khach ?? [], khach_moi_cu: r.khach_moi_cu ?? "", dich_vu_ids: r.dich_vu_ids ?? [], nhom_khach_ids: r.nhom_khach_ids ?? [], loai_lich_hen: r.loai_lich_hen ?? [], gio_tu: r.gio_tu ? r.gio_tu.slice(0, 5) : "", gio_den: r.gio_den ? r.gio_den.slice(0, 5) : "",
               chi_nhanh_ids: r.chi_nhanh_ids ?? [], ngay_trong_tuan: (r.ngay_trong_tuan ?? []).map(String), hien_thi_tim_kiem: r.hien_thi_tim_kiem, mo_ta: r.mo_ta ?? "", bi_khoa: r.bi_khoa }} /> : null) },
         ]} />
       <p className="mt-3 text-[12px] leading-relaxed text-muc-3">
         Tiền giảm của voucher được cộng vào &quot;Giảm giá cả đơn&quot; của hoá đơn (hiện riêng ở dòng Thẻ giảm giá/voucher), nên khi tính giá trị buổi thẻ và doanh số nhân viên nó được chia theo tỉ lệ cho mọi dòng của đơn, giống giảm giá cả đơn nhập tay.
-        Mỗi hoá đơn dùng một voucher. Voucher đã có lượt dùng thì không đổi giá trị, loại giảm, giới hạn áp dụng; muốn khác thì khoá và tạo voucher mới. Chưa có: giới hạn &quot;Tùy chọn&quot; từng dịch vụ, nhóm khách hàng, loại lịch hẹn, khung giờ sử dụng.
+        Mỗi hoá đơn dùng một voucher. Voucher đã có lượt dùng thì không đổi giá trị, loại giảm, giới hạn áp dụng; muốn khác thì khoá và tạo voucher mới. Đã hỗ trợ thêm: giới hạn Tùy chọn từng dịch vụ, nhóm khách hàng, loại lịch hẹn, khung giờ sử dụng.
       </p>
     </div>
   );

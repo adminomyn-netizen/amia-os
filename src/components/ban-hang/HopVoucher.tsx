@@ -9,8 +9,8 @@ import type { dsVoucher, layVoucher } from "@/app/(app)/ban-hang/actions";
 
 /** Hộp "Áp dụng voucher (n)" của màn Thu ngân theo SalonHero: ô "Kiểm tra mã", danh sách Mã voucher · Tên voucher · Giảm giá · Ngày hiệu lực · Ngày hết hạn · Áp dụng cho · Chọn, nút Đóng / Áp dụng.
  *  Danh sách gồm voucher đang dùng được (cài "Hiển thị trên tìm kiếm thu ngân" là Có hoặc Tự động chọn) cộng với mã vừa kiểm. Mỗi đơn chọn một voucher. */
-export function HopVoucher({ dong, chiNhanhId, khachId, dangDung, lay, ds, apDung }: {
-  dong: () => void; chiNhanhId: string; khachId: string | null; dangDung: VoucherTim | null;
+export function HopVoucher({ dong, chiNhanhId, khachId, lichId = null, dangDung, lay, ds, apDung }: {
+  dong: () => void; chiNhanhId: string; khachId: string | null; lichId?: string | null; dangDung: VoucherTim | null;
   lay: typeof layVoucher; ds: typeof dsVoucher; apDung: (v: VoucherTim) => void;
 }) {
   const [dang, bat] = useTransition();
@@ -22,7 +22,7 @@ export function HopVoucher({ dong, chiNhanhId, khachId, dangDung, lay, ds, apDun
   useEffect(() => {
     let con = true;
     if (!chiNhanhId) return;
-    ds(chiNhanhId, khachId).then((r) => {
+    ds(chiNhanhId, khachId, lichId).then((r) => {
       if (!con) return;
       setDsHien((cu) => [...cu, ...r.filter((x) => !cu.some((y) => y.maId === x.maId))]);
       const tuDong = r.find((x) => x.tuDong);
@@ -30,11 +30,11 @@ export function HopVoucher({ dong, chiNhanhId, khachId, dangDung, lay, ds, apDun
       setTaiXong(true);
     });
     return () => { con = false; };
-  }, [ds, chiNhanhId, khachId]);
+  }, [ds, chiNhanhId, khachId, lichId]);
   const kiemTra = () => {
     setLoi("");
     bat(async () => {
-      const kq = await lay(ma, chiNhanhId, khachId);
+      const kq = await lay(ma, chiNhanhId, khachId, lichId);
       if (!kq.ok) return setLoi(kq.loi);
       setDsHien((cu) => (cu.some((x) => x.maId === kq.v.maId) ? cu : [kq.v, ...cu]));
       setChon(kq.v.maId); setMa("");

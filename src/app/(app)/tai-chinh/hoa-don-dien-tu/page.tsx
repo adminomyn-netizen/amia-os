@@ -14,6 +14,7 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { LocHoaDonDienTu } from "@/components/hoa-don/LocHoaDonDienTu";
 import { ghiHoaDonDienTu, goHoaDonDienTu, luuKetNoiHoaDonDienTu, ngatKetNoiHoaDonDienTu } from "./actions";
 
+const HIEN_KET_NOI = false;
 const TAB = [{ ma: "can", ten: "Cần xuất" }, { ma: "da", ten: "Đã xuất" }, { ma: "ket-noi", ten: "Kết nối" }];
 const NUT_XUAT = "h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram";
 
@@ -22,8 +23,9 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
   const loc = docLocHddt(await searchParams);
   const duocGhi = coQuyen(nd, "hd.vat") && coQuyen(nd, "ban.sua_khoa");
   const duocKetNoi = coQuyen(nd, "hd.vat") && coQuyen(nd, "ky.khoa");
-  const tab = loc.tab === "ket-noi" && !coQuyen(nd, "hd.vat") ? "can" : loc.tab;
-  const tabCoThe = TAB.filter((t) => t.ma !== "ket-noi" || coQuyen(nd, "hd.vat"));
+  // Kế toán xuất hoá đơn có chọn lọc, làm thủ công (chị Dung 30/10): ẩn ngăn Kết nối, giữ mã để bật lại khi cần.
+  const tab = loc.tab === "ket-noi" && !(HIEN_KET_NOI && coQuyen(nd, "hd.vat")) ? "can" : loc.tab;
+  const tabCoThe = TAB.filter((t) => t.ma !== "ket-noi" || (HIEN_KET_NOI && coQuyen(nd, "hd.vat")));
   const hom = homNayHCM();
   let noiDung: React.ReactNode;
   let nutXuat: React.ReactNode = null;
@@ -96,7 +98,6 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
               { nhan: "", hienThi: (r) => (
                 <div className="flex flex-wrap justify-end gap-2">
                   {duocGhi && <NutHop kieu="chu" nhan="Ghi số hoá đơn điện tử" tieuDe={`Ghi số hoá đơn điện tử cho ${r.ma}`} moTa="Nhập số hoá đơn đã xuất ở phần mềm của nhà cung cấp." truong={truongGhi} action={ghiHoaDonDienTu} an={{ hoa_don_id: r.id, moi: "1" }} giaTri={{ vat_hd_ngay: hom }} />}
-                  <button type="button" disabled title="Cần kết nối nhà cung cấp" className="h-9 cursor-not-allowed rounded-nho border border-vien px-3 text-[13px] text-muc-3">Phát hành tự động<span className="ml-1.5 text-[12px]">Cần kết nối nhà cung cấp</span></button>
                 </div>
               ) },
             ]} />

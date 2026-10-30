@@ -30,6 +30,7 @@ export async function GET(req: Request) {
     if (!k) return [];
     return [{ "Khoá": `${r.ngay}|${k.ma}`, "Ngày": `${r.ngay} 00:00`, "Nguồn": k.ma === "pancake-hoi-thoai" ? "Pancake" : "Meta", "Mã chiến dịch": k.ma, "Chiến dịch": k.ten, "Chi phí": r.chi_phi, "Hiển thị": r.hien_thi, "Tiếp cận": r.tiep_can, "Click": r.click, "Tin nhắn": r.tin_nhan_moi, "Lead": r.lead_so }];
   });
-  if (q.get("mang") === "1") return NextResponse.json(dong); // luồng AnyCross lặp thẳng trên mảng, khỏi truy cập trường con
+  // luồng AnyCross lặp thẳng trên mảng; Open API của Lark Base cần cột Ngày là mili-giây của 00:00 giờ VN (UTC+7), không nhận chuỗi
+  if (q.get("mang") === "1") return NextResponse.json(dong.map((d) => ({ ...d, "Ngày": Date.parse(`${d["Khoá"].slice(0, 10)}T00:00:00+07:00`) })));
   return NextResponse.json({ since, so_dong: dong.length, meta, dong });
 }

@@ -9,14 +9,14 @@ export const maxDuration = 120;
  * Kéo số liệu quảng cáo Meta về "Quảng cáo theo ngày" mỗi sáng 05:30 giờ VN. Cần 2 biến môi trường: META_ACCESS_TOKEN (token dài hạn/System User, quyền ads_read) và
  * META_AD_ACCOUNT_IDS (các tài khoản quảng cáo, cách nhau dấu phẩy). Chưa có thì trả 503 và KHÔNG ghi gì.
  * Chiến dịch Meta được nối bằng mã `meta-<campaign_id>`; chiến dịch chưa có tự tạo (nháp, đánh dấu cần người phụ trách chọn mục tiêu). Chiến dịch nhập tay không bị đụng.
- * Mỗi lần kéo 3 ngày gần nhất và ghi đè, vì Meta còn điều chỉnh số vài ngày sau.
+ * Mỗi lần kéo 3 ngày gần nhất và ghi đè, vì Meta còn điều chỉnh số vài ngày sau. Muốn kéo bù lịch sử: gọi tay kèm ?ngay=<số ngày> (tối đa 365).
  */
 export async function GET(req: Request) {
   const bi = process.env.CRON_SECRET;
   if (!bi || req.headers.get("authorization") !== `Bearer ${bi}`) return NextResponse.json({ loi: "Không được phép" }, { status: 401 });
   const token = process.env.META_ACCESS_TOKEN, ds = (process.env.META_AD_ACCOUNT_IDS ?? "").split(",").map((s) => s.trim()).filter(Boolean);
   if (!token || ds.length === 0) return NextResponse.json({ loi: "Chưa cấu hình META_ACCESS_TOKEN / META_AD_ACCOUNT_IDS" }, { status: 503 });
-  const phienBan = process.env.META_GRAPH_VERSION, { since, until } = cuaSoNgay(homNayHCM(), Number(process.env.META_SO_NGAY_KEO) || 3);
+  const phienBan = process.env.META_GRAPH_VERSION, { since, until } = cuaSoNgay(homNayHCM(), Math.min(Number(new URL(req.url).searchParams.get("ngay")) || Number(process.env.META_SO_NGAY_KEO) || 3, 365));
   const db = sb(), loi: string[] = [], so: SoLieuQc[] = [];
   for (const tk of ds) {
     try {

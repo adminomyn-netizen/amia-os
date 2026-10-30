@@ -1,9 +1,9 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-// /api/cron/* tự kiểm CRON_SECRET trong từng route (Vercel Cron không có phiên đăng nhập); /api/chat-agent/cong-cu tự kiểm mã thông hành của từng tin chat.
+// /api/cron/* và /api/mkt/so-lieu-ngay (luồng AnyCross đọc số liệu MKT) tự kiểm CRON_SECRET trong từng route (Vercel Cron không có phiên đăng nhập); /api/chat-agent/cong-cu tự kiểm mã thông hành của từng tin chat.
 // /dat-lich: khách tự gửi yêu cầu đặt lịch (không đăng nhập) — trang chỉ đọc danh mục công khai và ghi vào bảng yêu cầu riêng qua hàm có giới hạn.
-const DUONG_DAN_CONG_KHAI = ["/dang-nhap", "/dang-ky", "/quen-mat-khau", "/dat-lai-mat-khau", "/api/cron", "/api/chat-agent/cong-cu", "/l/", "/dat-lich"];
+const DUONG_DAN_CONG_KHAI = ["/dang-nhap", "/dang-ky", "/quen-mat-khau", "/dat-lai-mat-khau", "/api/cron", "/api/mkt/so-lieu-ngay", "/api/chat-agent/cong-cu", "/l/", "/dat-lich"];
 
 export async function capNhatPhien(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

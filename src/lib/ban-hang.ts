@@ -8,7 +8,7 @@ export const PHUONG_THUC = [
 ];
 export const NHAN_PHUONG_THUC = Object.fromEntries(PHUONG_THUC.map((p) => [p.gia_tri, p.nhan])) as Record<string, string>;
 
-export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number };
+export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number; tao?: string };
 export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: number; nv: Record<Vai, { id: string; ti: number }[]> };
 export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string };
 

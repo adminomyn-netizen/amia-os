@@ -206,7 +206,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const nhMacDinh = (pt: string) => nganHangChonSan(dsNh(pt), doc(pt));
   const [tab, setTab] = useState<MucBan["loai"]>("dich_vu");
   const [tu, setTu] = useState("");
-  const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam">("ten");
+  const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam" | "moi_nhat">("ten");
   const [dong, setDong] = useState<DongDon[]>(dauTien ? dongBanDau : []);
   const [giamDon, setGiamDon] = useState(0);
   const [giamPct, setGiamPct] = useState("");
@@ -272,7 +272,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
 
   // Sắp xếp như SalonHero (Tên A-Z, giá thấp-cao, giá cao-thấp); xếp trong từng nhóm vì danh mục hiện theo nhóm.
   const dsMuc = muc.filter((m) => m.loai === tab && (!tu.trim() || m.ten.toLowerCase().includes(tu.trim().toLowerCase())))
-    .sort((a, b) => (sapXep === "gia_tang" ? a.gia - b.gia : sapXep === "gia_giam" ? b.gia - a.gia : 0) || a.ten.localeCompare(b.ten, "vi"));
+    .sort((a, b) => (sapXep === "gia_tang" ? a.gia - b.gia : sapXep === "gia_giam" ? b.gia - a.gia : sapXep === "moi_nhat" ? (b.tao ?? "").localeCompare(a.tao ?? "") : 0) || a.ten.localeCompare(b.ten, "vi"));
   const nhomMuc = [...new Set(dsMuc.map((m) => m.nhom))];
 
   const gui = () => {
@@ -314,7 +314,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
             <Search aria-hidden strokeWidth={1.6} className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muc-3" />
             <input value={tu} onChange={(e) => setTu(e.target.value)} placeholder="Tìm trong danh mục" aria-label="Tìm trong danh mục" className={`${O_NHAP} pl-9`} />
           </div>
-          <div className="w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
+          <div className="w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }, { gia_tri: "moi_nhat", nhan: "Mới nhất" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
         </div>
         <div className="mt-4 space-y-5">
           {nhomMuc.map((n) => {

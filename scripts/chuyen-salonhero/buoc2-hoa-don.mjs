@@ -4,7 +4,7 @@
 // 150 hoá đơn công nợ đầu kỳ (la_so_du_dau) mà đơn gốc nằm trong tệp → nâng cấp thành hoá đơn lịch sử đầy đủ (không đếm đôi nợ).
 // Mặc định CHẠY THỬ (giao dịch rồi rollback) + in bảng đối chiếu; --that mới commit; đối chiếu lệch thì tự huỷ.
 // Dùng: PW=$(security find-generic-password -s amia-os-db-password -w) node scripts/chuyen-salonhero/buoc2-hoa-don.mjs <thư-mục-xuất> --tep hoa_don_2026_10.ndjson --thang 2026-10 --dot SH-2810-02 [--that]
-import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, cnTheoLoc, vnNgay, sach, so, inBang } from "./lib.mjs";
+import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, cnTheoLoc, vnNgay, sach, so, inBang, chuanBiNganHangSh, nganHangKhoan } from "./lib.mjs";
 import { readFileSync, writeFileSync, existsSync } from "node:fs";
 
 const arg = (t, mac) => { const i = process.argv.indexOf(t); return i > 0 ? process.argv[i + 1] : mac; };
@@ -96,12 +96,13 @@ try {
     }
     if (!huy) {
       const ev = (d.paymentHistory ?? []).filter((x) => !x.is_deleted && so(x.amount_paid) > 0);
+      const chNh = chuanBiNganHangSh({ l, d }), nh = (pt, tien) => nganHangKhoan(chNh, pt, tien).ten; // ngân hàng nhận (migration 0179)
       let tong = 0;
-      for (const x of ev) { tt.push({ don_sh: shId, pt: ptDich(x.payment_type), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
+      for (const x of ev) { tt.push({ don_sh: shId, pt: ptDich(x.payment_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
       // Khách đóng dư (SalonHero ghi đã thu > phải thu): KHÔNG bù khoản dư vào sổ thanh toán để công nợ không âm; ghi vào danh sách ngoại lệ đã biết.
       const thieu = Math.max(0, phai - so(d.total_amount_card) - tong);
       if (daThuNguon > phai) bao.khach_dong_du.push([shId, daThuNguon - phai]);
-      if (tong !== so(d.amount_paid)) { bao.chenh_thanh_toan.push([shId, so(d.amount_paid), tong]); const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) tt.push({ don_sh: shId, pt: ptDich(d.payment_type), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
+      if (tong !== so(d.amount_paid)) { bao.chenh_thanh_toan.push([shId, so(d.amount_paid), tong]); const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) tt.push({ don_sh: shId, pt: ptDich(d.payment_type), nh: nh(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
       if (so(d.total_amount_card) > 0) tt.push({ don_sh: shId, pt: "the_tien", so_tien: so(d.total_amount_card), ngay, ghi: "Trừ thẻ (lịch sử SalonHero, không ghi sổ thẻ)" });
     }
   }
@@ -149,8 +150,8 @@ try {
   const ttC = tt.filter((x) => dsHd.has(x.don_sh));
   let nTt = 0;
   await theoLo(ttC, 2000, async (lo) => {
-    const r = await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot)
-       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, $3 from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, so_tien bigint, ngay date, ghi text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(lo), he, dot]);
+    const r = await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang)
+       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, $3, x.nh from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, so_tien bigint, ngay date, ghi text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(lo), he, dot]);
     nTt += r.length;
   });
   // đảm bảo tổng hoá đơn khớp sau khi thêm dòng/thanh toán (hàm tinh_lai giữ số lịch sử, tính lại da_thu/con_no theo thanh toán)

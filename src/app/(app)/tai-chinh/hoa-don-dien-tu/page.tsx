@@ -6,12 +6,15 @@ import { homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { docLocHddt, hienKhoa, NHA_CUNG_CAP, tenNhaCungCap } from "@/lib/hoa-don-dien-tu";
 import { docKetNoiHienThi } from "@/lib/hoa-don-dien-tu-ket-noi";
 import { layHoaDonHddt } from "@/lib/hoa-don-dien-tu-truy-van";
+import { chuThu } from "@/lib/hoa-don-dien-tu-ngan-hang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { LocHoaDonDienTu } from "@/components/hoa-don/LocHoaDonDienTu";
+import { LocNganHangHddt } from "@/components/hoa-don/LocNganHangHddt";
+import { BangCanXuat } from "@/components/hoa-don/BangCanXuat";
 import { ghiHoaDonDienTu, goHoaDonDienTu, luuKetNoiHoaDonDienTu, ngatKetNoiHoaDonDienTu } from "./actions";
 
 const HIEN_KET_NOI = false;
@@ -66,7 +69,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
       </section>
     );
   } else {
-    const { dong, conNua } = await layHoaDonHddt(nd, loc, tab === "da" ? "da" : "can");
+    const { dong, conNua, thu } = await layHoaDonHddt(nd, loc, tab === "da" ? "da" : "can");
     const db = sb();
     const idsK = [...new Set(dong.map((d) => d.khach_id).filter(Boolean))] as string[];
     const idsNv = [...new Set(dong.map((d) => d.vat_hd_nguoi_id).filter(Boolean))] as string[];
@@ -90,17 +93,15 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
       <>
         <LocHoaDonDienTu tu={loc.tu} den={loc.den} tab={tab} />
         {tab === "can" ? (
-          <Bang duLieu={dong} khoa={(r) => r.id} trong="Không có hoá đơn nào cần xuất trong khoảng này."
-            cot={[
-              ...cotChung,
-              { nhan: "Vì sao cần xuất", hienThi: (r) => (Number(r.vat_pct) > 0 || Number(r.vat_tien) > 0 ? `Có VAT ${Number(r.vat_pct) > 0 ? `${Number(r.vat_pct)}%` : tienVN(r.vat_tien)}` : "Khách có mã số thuế") },
-              { nhan: "Phải thu", phai: true, hienThi: (r) => tienVN(r.tong_phai_thu) },
-              { nhan: "", hienThi: (r) => (
-                <div className="flex flex-wrap justify-end gap-2">
-                  {duocGhi && <NutHop kieu="chu" nhan="Ghi số hoá đơn điện tử" tieuDe={`Ghi số hoá đơn điện tử cho ${r.ma}`} moTa="Nhập số hoá đơn đã xuất ở phần mềm của nhà cung cấp." truong={truongGhi} action={ghiHoaDonDienTu} an={{ hoa_don_id: r.id, moi: "1" }} giaTri={{ vat_hd_ngay: hom }} />}
-                </div>
-              ) },
-            ]} />
+          <>
+            <LocNganHangHddt nh={loc.nh} tu={loc.tu} den={loc.den} q={loc.q} />
+            <BangCanXuat conNua={conNua} duocGhi={duocGhi} truongGhi={truongGhi} ngayHomNay={hom} ghiAction={ghiHoaDonDienTu}
+              dong={dong.map((r) => {
+                const x = khach(r.khach_id);
+                return { id: r.id, ma: r.ma, ngay: ngayVN(r.ngay_hd), khach: r.khach_id ? x?.ho_ten ?? "" : "Khách lẻ", mst: x?.ma_so_thue ?? "", phaiThu: tienVN(r.tong_phai_thu),
+                  lyDo: Number(r.vat_pct) > 0 || Number(r.vat_tien) > 0 ? `Có VAT ${Number(r.vat_pct) > 0 ? `${Number(r.vat_pct)}%` : tienVN(r.vat_tien)}` : "Khách có mã số thuế", thu: thu.has(r.id) ? chuThu(thu.get(r.id)!, tienVN) : [] };
+              })} />
+          </>
         ) : (
           <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa có hoá đơn điện tử nào được ghi số trong khoảng này."
             cot={[
@@ -121,7 +122,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
               ) : null) },
             ]} />
         )}
-        {conNua && <p className="mt-3 text-[13px] text-muc-3">Chỉ hiện 200 hoá đơn mới nhất. Thu hẹp khoảng ngày để xem phần còn lại{tab === "da" ? ", hoặc xuất Excel để lấy đủ" : ""}.</p>}
+        {conNua && tab === "da" && <p className="mt-3 text-[13px] text-muc-3">Chỉ hiện 200 hoá đơn mới nhất. Thu hẹp khoảng ngày để xem phần còn lại{tab === "da" ? ", hoặc xuất Excel để lấy đủ" : ""}.</p>}
       </>
     );
     nutXuat = tab === "da" && dong.length > 0 ? <a href={`/api/xuat/hoa-don-dien-tu?${tham}`} download aria-label="Xuất Excel hoá đơn điện tử đã ghi" className={NUT_XUAT}>Xuất Excel</a> : null;
@@ -129,7 +130,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
   return (
     <div>
       <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe="Hoá đơn điện tử" phu="Hoá đơn bán cần xuất hoá đơn điện tử, và số hoá đơn đã ghi. Hiện ghi tay số hoá đơn đã xuất ở phần mềm nhà cung cấp; phát hành tự động sẽ có khi kết nối xong.">
+      <TieuDeTrang tieuDe="Hoá đơn điện tử" phu="Chọn các đơn cần xuất rồi bấm Xuất Excel. Xuất hoá đơn điện tử vẫn làm tay ở phần mềm nhà cung cấp, xong ghi số hoá đơn vào đây.">
         {nutXuat}
       </TieuDeTrang>
       <Tab muc={tabCoThe} dang={tab} goc="/tai-chinh/hoa-don-dien-tu" />

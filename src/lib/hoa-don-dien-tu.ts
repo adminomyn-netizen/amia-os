@@ -1,5 +1,6 @@
 // Hoá đơn điện tử (khung): hàm thuần dùng chung cho trang, hành động và tệp Excel. KHÔNG chạm DB, KHÔNG gọi nhà cung cấp.
 import { homNayHCM } from "@/lib/dinh-dang";
+import { docNhomLoc, type NhomLoc } from "@/lib/hoa-don-dien-tu-ngan-hang";
 
 export const NHA_CUNG_CAP = [
   { gia_tri: "viettel", nhan: "Viettel S-Invoice" },
@@ -50,13 +51,14 @@ export function kiemKetNoi(n: NhapKetNoi): { loi: string } | { ok: { nha_cung_ca
 }
 
 /** Bộ lọc của hai tab danh sách: khoảng ngày bán + ô tìm. Ngày sai thì lấy mặc định (từ đầu tháng đến hôm nay). */
-export type LocHddt = { tab: "can" | "da" | "ket-noi"; tu: string; den: string; q: string };
+export type LocHddt = { tab: "can" | "da" | "ket-noi"; tu: string; den: string; q: string; /** Nơi nhận tiền (chỉ ngăn "Cần xuất"): null = tất cả; mặc định Techcombank + Vietcombank. */ nh: NhomLoc[] | null };
 export function docLocHddt(sp: Record<string, string | undefined>, homNay = homNayHCM()): LocHddt {
   return {
     tab: sp.tab === "da" || sp.tab === "ket-noi" ? sp.tab : "can",
     tu: ngayHopLe(sp.tu ?? "") ? sp.tu! : homNay.slice(0, 8) + "01",
     den: ngayHopLe(sp.den ?? "") ? sp.den! : homNay,
     q: (sp.q ?? "").trim().slice(0, 80),
+    nh: docNhomLoc(sp.nh),
   };
 }
 

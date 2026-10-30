@@ -4,9 +4,25 @@ import { coQuyen } from "@/lib/quyen";
 import type { NguoiDung } from "@/lib/auth";
 import { docLocHoaDon, khachKhopTim } from "@/lib/loc-hoa-don";
 import { canXuatHddt, type LocHddt } from "@/lib/hoa-don-dien-tu";
+import { khopNhomLoc, tomTatThu, type TomTatThu } from "@/lib/hoa-don-dien-tu-ngan-hang";
 
 export const COT_HDDT = "id, ma, ngay_hd, trang_thai, tong_phai_thu, khach_id, chi_nhanh_id, nguoi_lap_id, vat_pct, vat_tien, vat_hd_luc, vat_hd_so, vat_hd_ngay, vat_hd_ky_hieu, vat_hd_mau_so, vat_hd_tra_cuu, vat_hd_nguoi_id, la_so_du_dau, tao_luc";
 export const TOI_DA_DONG = 200;
+/** Ngăn "Cần xuất" lọc theo ngân hàng nên phải xem nhiều hơn số dòng hiện: quét tối đa chừng này hoá đơn trong khoảng ngày rồi mới cắt TOI_DA_DONG. */
+export const TOI_DA_QUET = 2000;
+/** Cột thêm cho Excel hoá đơn đã chọn. */
+export const COT_XUAT = "id, ma, ngay_hd, trang_thai, tong_phai_thu, khach_id, chi_nhanh_id, nguoi_lap_id, vat_pct, vat_tien, la_so_du_dau, giam_gia_don, phu_phi, tip, tong_hang";
+
+/** Thanh toán của các hoá đơn, gom theo hoá đơn → nơi nhận tiền (ngân hàng / tiền mặt / thẻ tiền). Lấy theo lô để đường dẫn không quá dài. */
+export async function layThuTheoDon(ids: string[]): Promise<Map<string, TomTatThu>> {
+  const db = sb(), theo = new Map<string, { loai: string; phuong_thuc: string; so_tien: number; ngan_hang: string | null }[]>();
+  for (let i = 0; i < ids.length; i += 100) {
+    const { data, error } = await db.from("thanh_toan").select("hoa_don_id, loai, phuong_thuc, so_tien, ngan_hang").in("hoa_don_id", ids.slice(i, i + 100)).limit(20000);
+    if (error) throw new Error(error.message);
+    for (const t of data ?? []) (theo.get(t.hoa_don_id) ?? theo.set(t.hoa_don_id, []).get(t.hoa_don_id)!).push(t);
+  }
+  return new Map(ids.map((id) => [id, tomTatThu(theo.get(id) ?? [])]));
+}
 
 /** Khách có mã số thuế (khách yêu cầu hoá đơn công ty). Số này nhỏ nên lấy hết một lần rồi đưa vào điều kiện lọc. */
 async function khachCoMst(): Promise<string[]> {
@@ -28,10 +44,35 @@ export async function layHoaDonHddt(nd: Pick<NguoiDung, "chiNhanhId" | "nhanVien
     const an = loc.q.replace(/[%,()]/g, " ");
     q = q.or([`ma.ilike.%${an}%`, kieu === "da" ? `vat_hd_so.ilike.%${an}%` : "", khachIds.length ? `khach_id.in.(${khachIds.join(",")})` : ""].filter(Boolean).join(","));
   }
-  const { data, error } = await q.order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).order("id").limit(toiDa + 1);
+  const gioiHan = kieu === "can" ? Math.max(toiDa, TOI_DA_QUET) : toiDa;
+  const { data, error } = await q.order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).order("id").limit(gioiHan + 1);
   if (error) throw new Error(error.message);
   const dong = data ?? [];
   const khachMst = new Set(mst);
-  const loc2 = kieu === "can" ? dong.filter((h) => canXuatHddt(h, !!h.khach_id && khachMst.has(h.khach_id))) : dong;
-  return { dong: loc2.slice(0, toiDa), conNua: dong.length > toiDa };
+  let loc2 = kieu === "can" ? dong.filter((h) => canXuatHddt(h, !!h.khach_id && khachMst.has(h.khach_id))) : dong;
+  // Ngăn "Cần xuất": gắn nơi nhận tiền của từng hoá đơn và lọc theo ngân hàng (loc.nh; null = không lọc).
+  let thu = new Map<string, TomTatThu>();
+  if (kieu === "can") {
+    thu = await layThuTheoDon(loc2.map((h) => h.id));
+    loc2 = loc2.filter((h) => khopNhomLoc(thu.get(h.id)!, loc.nh));
+  }
+  return { dong: loc2.slice(0, toiDa), conNua: loc2.length > toiDa || dong.length > gioiHan, thu };
+}
+
+/** Các hoá đơn người dùng đã chọn để xuất Excel. Id từ trình duyệt KHÔNG được tin: chỉ lấy hoá đơn hoàn thành nằm trong phạm vi người này được xem
+ *  (khoá chi nhánh, không có quyền xem toàn cơ sở thì chỉ đơn mình lập, bỏ số dư đầu kỳ); id ngoài phạm vi bị bỏ im lặng và được đếm trong `boQua`. */
+export async function layHoaDonTheoIds(nd: Pick<NguoiDung, "chiNhanhId" | "nhanVienId" | "quyen" | "vaiTro">, ids: string[]) {
+  const db = sb(), ra: (Awaited<ReturnType<typeof layHoaDonXuatLo>>)[number][] = [];
+  for (let i = 0; i < ids.length; i += 100) ra.push(...(await layHoaDonXuatLo(db, nd, ids.slice(i, i + 100))));
+  const thuTu = new Map(ids.map((id, i) => [id, i]));
+  ra.sort((a, b) => a.ngay_hd.localeCompare(b.ngay_hd) || a.ma.localeCompare(b.ma) || (thuTu.get(a.id) ?? 0) - (thuTu.get(b.id) ?? 0));
+  return { dong: ra, boQua: ids.length - ra.length };
+}
+async function layHoaDonXuatLo(db: ReturnType<typeof sb>, nd: Pick<NguoiDung, "chiNhanhId" | "nhanVienId" | "quyen" | "vaiTro">, ids: string[]) {
+  let q = db.from("hoa_don").select(COT_XUAT).in("id", ids).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false);
+  if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  if (!coQuyen(nd, "ban.toan_co_so")) q = q.eq("nguoi_lap_id", nd.nhanVienId ?? "");
+  const { data, error } = await q;
+  if (error) throw new Error(error.message);
+  return data ?? [];
 }

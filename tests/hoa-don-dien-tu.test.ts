@@ -62,7 +62,7 @@ describe("bộ lọc và hiển thị", () => {
   it("ngày hợp lệ, mặc định từ đầu tháng", () => {
     expect(ngayHopLe("2026-02-29")).toBe(false);
     expect(ngayHopLe("2024-02-29")).toBe(true);
-    expect(docLocHddt({ tab: "da", tu: "x" }, "2026-10-30")).toEqual({ tab: "da", tu: "2026-10-01", den: "2026-10-30", q: "" });
+    expect(docLocHddt({ tab: "da", tu: "x" }, "2026-10-30")).toEqual({ tab: "da", tu: "2026-10-01", den: "2026-10-30", q: "", nh: ["tech", "vcb"] });
     expect(docLocHddt({ tab: "lạ" }, "2026-10-30").tab).toBe("can");
   });
   it("chỉ hiện 4 ký tự cuối của khoá", () => {

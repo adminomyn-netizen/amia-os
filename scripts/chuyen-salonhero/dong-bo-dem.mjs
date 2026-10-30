@@ -12,7 +12,7 @@
 //   --tu       ngày VN bắt đầu (mặc định: mốc lần đồng bộ trước trong sao-luu/dong-bo-moc.json, nếu chưa có thì 2026-10-28)
 //   --thu-muc  dùng lại bản xuất đã có (bỏ qua bước xuất từ SalonHero)
 //   --tu-kiem  TỰ KIỂM: trong giao dịch, giả lập "mất" vài khách/HĐ/lịch/thẻ và đổi vài dòng rồi cho đồng bộ vá lại; luôn rollback.
-import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang } from "./lib.mjs";
+import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, nganHangKhoan } from "./lib.mjs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync, statSync } from "node:fs";
 import { spawnSync, execSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -429,11 +429,12 @@ try {
     }
     if (!huy) {
       const ev = (d.paymentHistory ?? []).filter((x) => !x.is_deleted && so(x.amount_paid) > 0);
+      const chNh = chuanBiNganHangSh({ l, d }), nh = (pt, tien) => nganHangKhoan(chNh, pt, tien).ten; // ngân hàng nhận (migration 0179)
       let tong = 0;
-      for (const x of ev) { ttC.push({ don_sh: shId, pt: ptDich(x.payment_type), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
+      for (const x of ev) { ttC.push({ don_sh: shId, pt: ptDich(x.payment_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
       const thieu = Math.max(0, phai - so(d.total_amount_card) - tong);
       if (daThuNguon > phai) baoH.khach_dong_du.push([shId, daThuNguon - phai]);
-      if (tong !== so(d.amount_paid)) { const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) ttC.push({ don_sh: shId, pt: ptDich(d.payment_type), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
+      if (tong !== so(d.amount_paid)) { const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) ttC.push({ don_sh: shId, pt: ptDich(d.payment_type), nh: nh(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
       if (so(d.total_amount_card) > 0) ttC.push({ don_sh: shId, pt: "the_tien", so_tien: so(d.total_amount_card), ngay, ghi: "Trừ thẻ (lịch sử SalonHero, không ghi sổ thẻ)" });
     }
     const dau = {
@@ -509,8 +510,8 @@ try {
   const ttCan = tt.filter((x) => dsHd.has(x.don_sh)).map((x) => ({ ...x, dot: dotHd.get(x.don_sh) }));
   let nTt = 0;
   await theoLo(ttCan, 2000, async (l) => {
-    nTt += (await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot)
-       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, x.dot from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, so_tien bigint, ngay date, ghi text, dot text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(l), he])).length;
+    nTt += (await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang)
+       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, x.dot, x.nh from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, so_tien bigint, ngay date, ghi text, dot text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(l), he])).length;
   });
   await q(`select public.tinh_lai_hoa_don(h.id) from public.hoa_don h where h.sh_id = any($1::bigint[])`, [[...dsHd]]);
   tom.hoa_don = { moi: nHd, doi: doi.length, huy_moi_trong_doi: baoH.huy_moi, nang_cap_no_dau: baoH.nang_cap_no_dau, khong_doi: baoH.khong_doi, dong: nDong, thanh_toan: nTt, nhap_bo_qua: baoH.nhap_bo_qua, khong_co_khach_o_amia: baoH.khong_co_khach_o_amia,

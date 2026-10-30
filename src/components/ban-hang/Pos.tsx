@@ -8,7 +8,7 @@ import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
-import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHACH, lamTron, PHUONG_THUC, tinhDon, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type Vai } from "@/lib/ban-hang";
+import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHACH, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -32,7 +32,7 @@ const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ" }, { ma: "goi_the", ten: "
 const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 type PropsPos = {
-  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string;
+  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string; taiKhoanNhan?: TaiKhoanNhan[];
   tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher;
 };
 type Tab = { k: number; ten: string; soDong: number };
@@ -191,13 +191,19 @@ function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: stri
   );
 }
 
-function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, k, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, k, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void; onHuy: () => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
   const [dang, bat] = useTransition();
   const [khach, setKhach] = useState<KhachChon | null>(dauTien ? khachBanDau : null);
   const [cnId, setCnId] = useState(chiNhanhId);
+  // Ngân hàng nhận tiền của khoản chuyển khoản / quẹt thẻ: chọn sẵn ngân hàng lần trước (nhớ trong trình duyệt), đổi một chạm.
+  const KHOA_NH = "amia-pos-ngan-hang-";
+  const doc = (pt: string) => { try { return localStorage.getItem(KHOA_NH + pt); } catch { return null; } };
+  const ghiNho = (pt: string, v: string) => { try { localStorage.setItem(KHOA_NH + pt, v); } catch { /* trình duyệt chặn lưu: bỏ qua */ } };
+  const dsNh = (pt: string) => dsNganHangNhan(taiKhoanNhan, cnId, pt);
+  const nhMacDinh = (pt: string) => nganHangChonSan(dsNh(pt), doc(pt));
   const [tab, setTab] = useState<MucBan["loai"]>("dich_vu");
   const [tu, setTu] = useState("");
   const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam">("ten");
@@ -421,9 +427,16 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                 <ul className="space-y-2">
                   {thu.map((t, i) => (
                     <li key={`${i}-${t.phuong_thuc}`} className="grid grid-cols-[1fr_1fr_auto] items-start gap-2">
-                      <Chon nho ariaLabel="Phương thức" giaTri={t.phuong_thuc} luaChon={PHUONG_THUC} onDoi={(v) => setThu((x) => x.map((y, j) => (j === i ? { ...y, phuong_thuc: v, the_id: undefined } : y)))} />
+                      <Chon nho ariaLabel="Phương thức" giaTri={t.phuong_thuc} luaChon={PHUONG_THUC} onDoi={(v) => setThu((x) => x.map((y, j) => (j === i ? { ...y, phuong_thuc: v, the_id: undefined, ngan_hang: v === "chuyen_khoan" || v === "quet_the" ? nhMacDinh(v) : undefined } : y)))} />
                       <OTien giaTri={t.so_tien} onDoi={(n) => setThu((x) => x.map((y, j) => (j === i ? { ...y, so_tien: n } : y)))} ariaLabel="Số tiền thu" />
                       <button type="button" aria-label="Bỏ khoản thu" onClick={() => setThu((x) => x.filter((_, j) => j !== i))} className="p-2 text-muc-3 hover:text-loi"><X strokeWidth={1.6} className="h-4 w-4" /></button>
+                      {(t.phuong_thuc === "chuyen_khoan" || t.phuong_thuc === "quet_the") && (
+                        <div className="col-span-3 flex items-center gap-2 text-[12px] text-muc-3">
+                          <span className="shrink-0">Ngân hàng nhận</span>
+                          <div className="min-w-0 flex-1"><Chon nho ariaLabel="Ngân hàng nhận tiền" giaTri={t.ngan_hang ?? ""} luaChon={[...new Set([...dsNh(t.phuong_thuc), ...(t.ngan_hang ? [t.ngan_hang] : [])])].map((x) => ({ gia_tri: x, nhan: x }))}
+                            onDoi={(v) => { ghiNho(t.phuong_thuc, v); setThu((a) => a.map((y, j) => (j === i ? { ...y, ngan_hang: v } : y))); }} /></div>
+                        </div>
+                      )}
                       {t.phuong_thuc === "the_tien" && (
                         <div className="col-span-3">
                           {theTien.length === 0 ? <p className="text-[12px] text-canh-bao">Khách chưa có thẻ tiền còn số dư.</p> :

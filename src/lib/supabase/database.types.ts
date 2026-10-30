@@ -9193,6 +9193,7 @@ export type Database = {
           id: string
           la_lich_su: boolean
           loai: string
+          ngan_hang: string | null
           ngay: string
           nguoi_id: string
           nhap_dot: string | null
@@ -9207,6 +9208,7 @@ export type Database = {
           id?: string
           la_lich_su?: boolean
           loai?: string
+          ngan_hang?: string | null
           ngay?: string
           nguoi_id: string
           nhap_dot?: string | null
@@ -9221,6 +9223,7 @@ export type Database = {
           id?: string
           la_lich_su?: boolean
           loai?: string
+          ngan_hang?: string | null
           ngay?: string
           nguoi_id?: string
           nhap_dot?: string | null

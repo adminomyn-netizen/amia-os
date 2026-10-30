@@ -1,3 +1,4 @@
+import { chuanTenNganHang, coNganHang, NGAN_HANG_MAC_DINH } from "@/lib/ngan-hang-ten";
 export type Vai = "phuc_vu" | "tu_van" | "ban";
 export const VAI: { ma: Vai; ten: string }[] = [{ ma: "phuc_vu", ten: "Phục vụ" }, { ma: "tu_van", ten: "Tư vấn" }, { ma: "ban", ten: "Bán hàng" }];
 /** SalonHero: mỗi dòng hàng có tối đa 5 người hưởng cho mỗi vai. DB cũng chặn (migration 0081). */
@@ -9,7 +10,20 @@ export const NHAN_PHUONG_THUC = Object.fromEntries(PHUONG_THUC.map((p) => [p.gia
 
 export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number };
 export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: number; nv: Record<Vai, { id: string; ti: number }[]> };
-export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string };
+export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string };
+
+/** Tài khoản ngân hàng đang hoạt động (cài đặt › Ngân hàng) rút gọn cho ô "Ngân hàng nhận" ở Thu ngân. */
+export type TaiKhoanNhan = { ten: string; chiNhanhId: string | null; cx: boolean; qt: boolean; macDinh: boolean };
+/** Danh sách ngân hàng nhận cho khoản thu chuyển khoản / quẹt thẻ: tài khoản đang dùng của chi nhánh (tài khoản mặc định lên đầu) rồi "Khác"; bảng chưa có tài khoản nào dùng được thì danh sách mặc định. */
+export function dsNganHangNhan(tk: TaiKhoanNhan[], chiNhanhId: string, phuongThuc: string): string[] {
+  const ap = tk.filter((x) => (x.chiNhanhId === null || x.chiNhanhId === chiNhanhId) && (phuongThuc === "quet_the" ? x.qt : x.cx));
+  const ten = [...new Set(ap.sort((a, b) => Number(b.macDinh) - Number(a.macDinh)).map((x) => chuanTenNganHang(x.ten)).filter((t): t is string => !!t && t !== "Khác"))];
+  return ten.length ? [...ten, "Khác"] : [...NGAN_HANG_MAC_DINH];
+}
+/** Chọn sẵn: ngân hàng lần trước nếu còn trong danh sách, không thì ngân hàng đầu danh sách. */
+export const nganHangChonSan = (ds: string[], lanTruoc: string | null | undefined) => (lanTruoc && ds.includes(lanTruoc) ? lanTruoc : ds[0]);
+/** Máy chủ: ngân hàng ghi vào thanh_toan. Chỉ chuyển khoản / quẹt thẻ mới có; tiền mặt và trừ thẻ tiền luôn null; trống thì null. */
+export const nganHangKhoanThu = (phuongThuc: string, ten: string | undefined | null) => (coNganHang(phuongThuc) ? chuanTenNganHang(ten) : null);
 export type DonBan = {
   khachId: string | null; lichId: string | null; chiNhanhId: string;
   dong: DongDon[]; giamDon: number; vatPct: number; phuPhi: number; tip: number; nguoiGioiThieu: string; ghiChu: string; thu: KhoanThu[];

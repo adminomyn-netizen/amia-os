@@ -81,6 +81,13 @@ export function Pos(props: PropsPos) {
     setDangXem(t.k);
     nutTab.current.get(t.k)?.focus();
   };
+  // Nút "Hủy đơn" như SalonHero: bỏ cả đơn đang mở (đơn duy nhất thì dựng lại đơn trống), có hỏi lại khi đã có dòng; bỏ ?lich=&khach= khỏi địa chỉ.
+  const huyDon = (k: number) => {
+    const t = ds.find((x) => x.k === k);
+    if (t && t.soDong > 0 && !window.confirm(`Hủy ${t.ten || "đơn này"}? Toàn bộ dòng đã chọn sẽ mất.`)) return;
+    bo(k);
+    if (window.location.search) window.history.replaceState(null, "", "/ban-hang");
+  };
   const nhanTab = (t: Tab, i: number) => t.ten || `Đơn ${i + 1}`;
   return (
     <div>
@@ -110,7 +117,7 @@ export function Pos(props: PropsPos) {
       )}
       {ds.map((t, i) => (
         <div key={t.k} role="tabpanel" id={`don-${t.k}`} aria-labelledby={`don-tab-${t.k}`} hidden={t.k !== dangXem}>
-          <DonPos {...props} k={t.k} dauTien={i === 0 && t.k === 1} onDoi={capNhat}
+          <DonPos {...props} k={t.k} dauTien={i === 0 && t.k === 1} onDoi={capNhat} onHuy={() => huyDon(t.k)}
             onXong={(kq) => {
               setXong(kq); bo(t.k);
               // Bỏ ?lich=&khach= khỏi địa chỉ: tải lại trang không dựng lại đơn vừa chốt (không dùng router.push để giữ các đơn khác).
@@ -139,8 +146,8 @@ function ThongTinDon({ thuNgan, nguonLich, khach, coThe }: { thuNgan: string; ng
   );
 }
 
-function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", tim, layThe, layDiem, chot, voucher, dsVoucher: dsVc, k, dauTien, onDoi, onXong }: PropsPos & {
-  k: number; dauTien: boolean; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void;
+function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", tim, layThe, layDiem, chot, voucher, dsVoucher: dsVc, k, dauTien, onDoi, onXong, onHuy }: PropsPos & {
+  k: number; dauTien: boolean; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void; onHuy: () => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
   const [dang, bat] = useTransition();
@@ -371,6 +378,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
               <div><label className={NHAN_O}>Ghi chú đơn</label><textarea className={O_NHIEU_DONG} style={{ minHeight: 64 }} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} /></div>
               {loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
               <button type="button" disabled={dang} onClick={gui} className={`${NUT_CHINH} h-12 w-full text-[15px]`}>{dang ? "Đang chốt đơn" : conNo > 0 ? `Chốt đơn, ghi nợ ${tienVN(conNo)}` : "Chốt đơn"}</button>
+              <button type="button" disabled={dang} onClick={onHuy} className={`${NUT_PHU} h-11 w-full text-[14px]`}>Hủy đơn</button>
             </div>
           )}
         </div>

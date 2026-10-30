@@ -25,7 +25,7 @@ export default async function TrangQuangCao() {
   return (
     <div>
       <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Quảng cáo theo ngày" phu="Nhập số liệu từng ngày theo chiến dịch. Nhập lại cùng ngày và chiến dịch sẽ ghi đè số cũ.">
+      <TieuDeTrang tieuDe="Quảng cáo theo ngày" phu="Nhập số liệu từng ngày theo chiến dịch. Nhập lại cùng ngày và chiến dịch sẽ ghi đè số cũ. Chiến dịch có mã meta-… được hệ thống tự kéo từ Meta lúc 5:30 mỗi sáng (3 ngày gần nhất), không nhập tay.">
         {sua && <NutHop nhan="Nhập số liệu" tieuDe="Nhập số liệu quảng cáo" truong={truong} action={luuQuangCao} giaTri={{ ngay: homNayHCM(), chien_dich_id: "" }} rong />}
       </TieuDeTrang>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có số liệu."

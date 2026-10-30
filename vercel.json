@@ -1,4 +1,15 @@
 {
-  "regions": ["sin1"],
-  "crons": [{ "path": "/api/cron/tom-tat", "schedule": "0 1 * * *" }]
+  "regions": [
+    "sin1"
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/tom-tat",
+      "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/meta-ads",
+      "schedule": "30 22 * * *"
+    }
+  ]
 }

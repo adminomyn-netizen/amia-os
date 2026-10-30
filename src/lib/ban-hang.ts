@@ -49,3 +49,25 @@ export const tinhGiamVoucher = (v: VoucherDon, dong: { loai: string; thanh: numb
 export const lamTron = (n: number) => Math.round(n * 100) / 100;
 /** Chia đều 100% cho n người (hai chữ số lẻ): phần dư dồn vào người cuối để cộng đủ đúng 100. */
 export const chiaDeuTi = (n: number) => Array.from({ length: n }, (_, i) => (i < n - 1 ? lamTron(100 / n) : lamTron(100 - lamTron(100 / n) * (n - 1))));
+
+/** Doanh thu chia cho từng người hưởng (nút "Hoa hồng & doanh thu" ở Thu ngân): thành tiền dòng × phần chia của người đó, theo từng vai. Mỗi vai cộng đủ 100% nên tổng mỗi vai bằng tiền hàng dòng có gán vai đó. */
+export const chiaDoanhThuNguoiHuong = (dong: { nv: DongDon["nv"]; thanh: number }[]) => {
+  const kq = new Map<string, { id: string; vai: Record<Vai, number>; tong: number }>();
+  for (const d of dong) {
+    for (const v of VAI) {
+      for (const x of d.nv[v.ma]) {
+        const tien = Math.round((Math.max(d.thanh, 0) * x.ti) / 100);
+        const cu = kq.get(x.id) ?? { id: x.id, vai: { phuc_vu: 0, tu_van: 0, ban: 0 }, tong: 0 };
+        cu.vai[v.ma] += tien; cu.tong += tien; kq.set(x.id, cu);
+      }
+    }
+  }
+  return [...kq.values()].sort((a, b) => b.tong - a.tong);
+};
+
+/** "Màn hình khách" của Thu ngân: cửa sổ phụ cho khách xem đơn. Hai cửa sổ cùng trình duyệt nói chuyện qua BroadcastChannel, không gửi gì lên máy chủ; chỉ gửi tên khách, dòng hàng và số tiền (không SĐT, không ghi chú). */
+export const KENH_MAN_HINH_KHACH = "amia-man-hinh-khach";
+export type DonChoKhach = {
+  khach: string; dong: { ten: string; sl: number; thanh: number }[];
+  hang: number; giam: number; vat: number; phuPhiTip: number; phai: number; daThu: number; conNo: number;
+};

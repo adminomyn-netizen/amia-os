@@ -5,14 +5,20 @@ import { sb } from "@/lib/db";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Pos } from "@/components/ban-hang/Pos";
 import type { DongDon, MucBan } from "@/lib/ban-hang";
-import { chotDonBanHang, dsVoucher, layDiemKhach, layTheTien, layVoucher, timKhach } from "./actions";
+import { chotDonBanHang, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, timKhach } from "./actions";
 
 import { nhanNguon } from "@/lib/lich-hen";
+import { homNayHCM } from "@/lib/dinh-dang";
 
 export default async function TrangBanHang({ searchParams }: { searchParams: Promise<{ khach?: string; lich?: string }> }) {
   const nd = await yeuCauQuyen("ban.tao");
   const { khach: khachId, lich: lichId } = await searchParams;
   const db = sb();
+  // Đếm "Chờ thanh toán" như SalonHero: hoá đơn đã chốt còn nợ. Cùng luật xem với trang Hoá đơn (khoá chi nhánh; không có quyền toàn cơ sở thì chỉ đơn mình lập).
+  let qNo = db.from("hoa_don").select("id", { count: "exact", head: true }).eq("trang_thai", "hoan_thanh").gt("con_no", 0);
+  if (nd.chiNhanhId) qNo = qNo.eq("chi_nhanh_id", nd.chiNhanhId);
+  if (!coQuyen(nd, "ban.toan_co_so")) qNo = qNo.eq("nguoi_lap_id", nd.nhanVienId ?? "");
+  const choThanhToan = coQuyen(nd, "ban.xem") ? (await qNo).count ?? 0 : null;
   const [{ data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }] = await Promise.all([
     db.from("dich_vu").select("id, ten, gia, nhom_id, vat_pct").eq("hoat_dong", true).order("ten"),
     db.from("dich_vu_nhom").select("id, ten"),
@@ -51,8 +57,8 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   return (
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
-      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} thuNgan={nd.hoTen} nguonLich={nguonLich}
-        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} />
+      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} thuNgan={nd.hoTen} nguonLich={nguonLich}
+        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} />
     </>
   );
 }

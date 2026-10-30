@@ -29,6 +29,28 @@ export async function layTheTien(khachId: string) {
   return (data ?? []).filter((t) => Number(t.so_du_tien) > 0).map((t) => ({ id: t.id as string, ma: t.ma as string, soDu: Number(t.so_du_tien) }));
 }
 
+/** Cột "Thẻ khách đang có" + hạng khách của màn Thu ngân (như SalonHero): thẻ liệu trình và thẻ tiền còn dùng được, kèm buổi/số dư/hạn. Người bị khoá chi nhánh chỉ xem khách cùng chi nhánh. */
+export async function layTheKhach(khachId: string) {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return null;
+  const db = sb();
+  const [{ data: k }, { data: the }] = await Promise.all([
+    db.from("v_khach_hang").select("hang, chi_nhanh_id").eq("id", khachId).maybeSingle(),
+    db.from("v_the_khach").select("id, ma, loai, goi_id, so_buoi_con, so_buoi_tong, so_du_tien, han_dung, tinh_trang").eq("khach_id", khachId).in("tinh_trang", ["hoat_dong", "sap_het"]).order("ngay_cap", { ascending: false }).limit(30),
+  ]);
+  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return null;
+  const ids = [...new Set((the ?? []).map((t) => t.goi_id as string))];
+  const { data: goi } = ids.length ? await db.from("goi_the").select("id, ten").in("id", ids) : { data: [] };
+  const ten = new Map((goi ?? []).map((g) => [g.id as string, g.ten as string]));
+  return {
+    hang: (k.hang as string | null) ?? "",
+    the: (the ?? []).map((t) => ({
+      id: t.id as string, ma: t.ma as string, loai: t.loai as "lan" | "tien", ten: ten.get(t.goi_id as string) ?? "Thẻ",
+      buoiCon: Number(t.so_buoi_con ?? 0), buoiTong: t.so_buoi_tong == null ? null : Number(t.so_buoi_tong), soDu: Number(t.so_du_tien ?? 0), han: (t.han_dung as string | null) ?? null,
+    })),
+  };
+}
+
 /** Số dư điểm thưởng của khách + cấu hình đổi điểm (cho màn Thu ngân). */
 export async function layDiemKhach(khachId: string) {
   if (!(await kiemQuyen("ban.tao"))) return null;

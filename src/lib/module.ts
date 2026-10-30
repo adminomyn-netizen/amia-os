@@ -83,6 +83,7 @@ export const MODULE: Module[] = [
       { nhan: "Điều chỉnh & kiểm soát", the: [
         { ten: "Chuyển kho", moTa: "Chuyển hàng giữa các chi nhánh; kho nhận xác nhận trong 24 giờ.", duongDan: "/kho/chuyen-kho", trangThai: "san_sang", quyen: ["kho.xem"] },
         { ten: "Kiểm kê kho", moTa: "Chụp tồn, hai người đếm, duyệt rồi mới ghi chênh lệch.", duongDan: "/kho/kiem-ke", trangThai: "san_sang", quyen: ["kho.xem"] },
+        { ten: "Chuẩn hoá vật tư", moTa: "Đơn vị, đơn vị mua, giá nhập, nhóm cấp, tồn đầu và đối chiếu SalonHero.", duongDan: "/kho/chuan-hoa", trangThai: "san_sang", quyen: ["kho.xem"] },
         { ten: "Xử lý vật tư & xuất khẩn cấp", moTa: "Huỷ, hao hụt, trả nhà cung cấp, điều chỉnh tồn có duyệt; xuất cấp cứu hậu kiểm 24 giờ.", duongDan: "/kho/xu-ly", trangThai: "san_sang", quyen: ["kho.xem"] },
         { ten: "Lô & hạn dùng", moTa: "Lô sắp hết hạn trong 30, 60, 90 ngày và hàng quá hạn.", duongDan: "/kho?tab=han", trangThai: "san_sang", quyen: ["kho.xem"] },
       ] },

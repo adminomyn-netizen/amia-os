@@ -5989,6 +5989,51 @@ export type Database = {
           },
         ]
       }
+      kho_ton_sh_tham_chieu: {
+        Row: {
+          chi_nhanh_id: string
+          nap_luc: string
+          nguon: string
+          san_pham_id: string | null
+          sh_id: number
+          ten_sh: string
+          ton_cuoi: number
+        }
+        Insert: {
+          chi_nhanh_id: string
+          nap_luc?: string
+          nguon?: string
+          san_pham_id?: string | null
+          sh_id: number
+          ten_sh: string
+          ton_cuoi: number
+        }
+        Update: {
+          chi_nhanh_id?: string
+          nap_luc?: string
+          nguon?: string
+          san_pham_id?: string | null
+          sh_id?: number
+          ten_sh?: string
+          ton_cuoi?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "kho_ton_sh_tham_chieu_chi_nhanh_id_fkey"
+            columns: ["chi_nhanh_id"]
+            isOneToOne: false
+            referencedRelation: "chi_nhanh"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "kho_ton_sh_tham_chieu_san_pham_id_fkey"
+            columns: ["san_pham_id"]
+            isOneToOne: false
+            referencedRelation: "san_pham"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       kho_so_cai: {
         Row: {
           chi_nhanh_id: string
@@ -8464,25 +8509,31 @@ export type Database = {
       phieu_kiem_ke_dong: {
         Row: {
           ghi_chu: string | null
+          han_dung: string | null
           id: string
           phieu_id: string
           san_pham_id: string
+          so_lo: string | null
           ton_so: number
           ton_thuc: number | null
         }
         Insert: {
           ghi_chu?: string | null
+          han_dung?: string | null
           id?: string
           phieu_id: string
           san_pham_id: string
+          so_lo?: string | null
           ton_so: number
           ton_thuc?: number | null
         }
         Update: {
           ghi_chu?: string | null
+          han_dung?: string | null
           id?: string
           phieu_id?: string
           san_pham_id?: string
+          so_lo?: string | null
           ton_so?: number
           ton_thuc?: number | null
         }
@@ -10885,6 +10936,7 @@ export type Database = {
       }
     }
     Functions: {
+      chuan_don_vi: { Args: { p: string }; Returns: string }
       bao_cao_sang_tinh: {
         Args: { p_cn?: string; p_ngay?: string }
         Returns: Json

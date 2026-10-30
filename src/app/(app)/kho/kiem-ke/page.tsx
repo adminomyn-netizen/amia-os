@@ -34,7 +34,7 @@ export default async function TrangKiemKe() {
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu kiểm kê."
         cot={[
           { nhan: "Phiếu", chinh: true, hienThi: (r) => <Link href={`/kho/kiem-ke/${r.id}`} className="text-nhan-dam hover:underline">{r.ma}</Link> },
-          { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id) ?? "" }, { nhan: "Ngày", hienThi: (r) => <div>{ngayVN(r.ngay)}<div className="text-[12.5px] text-muc-3">{r.loai === "thang" ? "Hằng tháng" : "Đột xuất"}</div></div> },
+          { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id) ?? "" }, { nhan: "Ngày", hienThi: (r) => <div>{ngayVN(r.ngay)}<div className="text-[12.5px] text-muc-3">{r.loai === "thang" ? "Hằng tháng" : r.loai === "ton_dau" ? "Tồn đầu" : "Đột xuất"}</div></div> },
           { nhan: "Người đếm", hienThi: (r) => [tenNv.get(r.nguoi_lap_id), r.nguoi_dem_2_id ? tenNv.get(r.nguoi_dem_2_id) : null].filter(Boolean).join(", ") },
           { nhan: "Người duyệt", hienThi: (r) => (r.nguoi_duyet_id ? tenNv.get(r.nguoi_duyet_id) : "") },
           { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_KIEM_KE[r.trang_thai].kieu}>{TT_KIEM_KE[r.trang_thai].ten}</NhanTrangThai> },

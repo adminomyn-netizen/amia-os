@@ -107,7 +107,15 @@ export async function luuSoDem(fd: FormData): Promise<KQ> {
     const t = String(v).trim().replace(",", ".");
     const gt = t === "" ? null : Number(t);
     if (gt !== null && (!Number.isFinite(gt) || gt < 0)) return { loi: "Số đếm phải là số không âm." };
-    const { error } = await db.from("phieu_kiem_ke_dong").update({ ton_thuc: gt }).eq("phieu_id", p.id).eq("san_pham_id", k.slice(5));
+    const sp = k.slice(5);
+    const cot: { ton_thuc: number | null; so_lo?: string | null; han_dung?: string | null } = { ton_thuc: gt };
+    if (p.loai === "ton_dau") {
+      const han = String(fd.get(`han_${sp}`) ?? "").trim();
+      if (han && !NGAY.test(han)) return { loi: "Hạn dùng ghi theo dạng năm-tháng-ngày, ví dụ 2028-12-31." };
+      cot.so_lo = String(fd.get(`lo_${sp}`) ?? "").trim() || null;
+      cot.han_dung = han || null;
+    }
+    const { error } = await db.from("phieu_kiem_ke_dong").update(cot).eq("phieu_id", p.id).eq("san_pham_id", sp);
     if (error) return { loi: thongBaoLoi(error) };
   }
   lamMoi();

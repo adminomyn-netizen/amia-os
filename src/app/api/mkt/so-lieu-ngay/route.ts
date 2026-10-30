@@ -9,7 +9,7 @@ export const maxDuration = 60;
 /**
  * Số liệu MKT theo ngày × chiến dịch (Meta + Pancake) dạng phẳng, tên cột đúng như bảng 3.4 trong Lark Base MAR-CAMP-01,
  * để luồng AnyCross đọc rồi ghi vào Lark. Chỉ đọc. Cùng khoá bí mật với cron (Authorization: Bearer ${CRON_SECRET}).
- * ?ngay=<số ngày gần nhất, mặc định 3, tối đa 400>. Mặc định LÀM MỚI số Meta trước (gọi cùng logic cron meta-ads cho cùng số ngày) rồi mới đọc; ?lam_moi=0 để chỉ đọc.
+ * ?ngay=<số ngày gần nhất, mặc định 3, tối đa 400>. Mặc định LÀM MỚI số Meta trước (gọi cùng logic cron meta-ads cho cùng số ngày) rồi mới đọc;  ?lam_moi=0 để chỉ đọc. ?mang=1 trả riêng mảng dòng.
  */
 export async function GET(req: Request) {
   const bi = process.env.CRON_SECRET;
@@ -30,5 +30,6 @@ export async function GET(req: Request) {
     if (!k) return [];
     return [{ "Khoá": `${r.ngay}|${k.ma}`, "Ngày": `${r.ngay} 00:00`, "Nguồn": k.ma === "pancake-hoi-thoai" ? "Pancake" : "Meta", "Mã chiến dịch": k.ma, "Chiến dịch": k.ten, "Chi phí": r.chi_phi, "Hiển thị": r.hien_thi, "Tiếp cận": r.tiep_can, "Click": r.click, "Tin nhắn": r.tin_nhan_moi, "Lead": r.lead_so }];
   });
+  if (q.get("mang") === "1") return NextResponse.json(dong); // luồng AnyCross lặp thẳng trên mảng, khỏi truy cập trường con
   return NextResponse.json({ since, so_dong: dong.length, meta, dong });
 }

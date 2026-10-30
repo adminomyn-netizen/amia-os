@@ -6,6 +6,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, so } from "@/lib/form";
 import { guiChoNhanVien, nguoiCoQuyen } from "@/lib/push";
 import type { TablesUpdate } from "@/lib/supabase/database.types";
+import { xepThuTheoBuoc } from "@/lib/email-tuyen-dung-gui";
 import { BUOC_UNG_VIEN, KENH_DANG, LOAI_TUYEN, TRANG_THAI_TIN, buocTiepTheoYeuCau } from "@/lib/tuyen-dung";
 
 type KQ = { ok?: true; loi?: string };
@@ -92,8 +93,11 @@ export async function luuUngVien(fd: FormData): Promise<KQ> {
   if (buoc === "Nhận việc" && !nv) return { loi: "Ứng viên nhận việc phải có ngày nhận việc." };
   if (buoc === "Không đạt" && !ly) return { loi: "Ứng viên không đạt phải ghi lý do." };
   const row = { tin_id: chuoi(fd, "tin_id"), ho_ten: ten, dien_thoai: chuoiHoacNull(fd, "dien_thoai"), email: chuoiHoacNull(fd, "email"), nguon: chuoiHoacNull(fd, "nguon"), trang_thai: buoc, ngay_phong_van: pv || null, ngay_nhan_viec: nv || null, ly_do_khong_dat: ly || null, ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
-  const { error } = id ? await db.from("ung_vien").update(row).eq("id", id) : await db.from("ung_vien").insert(row);
+  const truoc = id ? (await db.from("ung_vien").select("trang_thai").eq("id", id).maybeSingle()).data?.trang_thai : null;
+  const { data: luu, error } = id ? await db.from("ung_vien").update(row).eq("id", id).select("id").maybeSingle() : await db.from("ung_vien").insert(row).select("id").maybeSingle();
   if (error) return { loi: thongBaoLoi(error) };
+  // Sang bước mới (hoặc ứng viên mới) có mẫu thư thì xếp thư vào hàng đợi; mẫu bật "tự gửi" thì gửi luôn.
+  if (luu && truoc !== buoc) await xepThuTheoBuoc(luu.id, nd.nhanVienId ?? null);
   lamMoi();
   return { ok: true };
 }

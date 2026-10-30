@@ -14,6 +14,105 @@ export type Database = {
   }
   public: {
     Tables: {
+      thu_ket_noi: {
+        Row: {
+          email: string
+          id: boolean
+          mat_khau_ma_hoa: string
+          nguoi_id: string | null
+          sua_luc: string
+        }
+        Insert: {
+          email: string
+          id?: boolean
+          mat_khau_ma_hoa: string
+          nguoi_id?: string | null
+          sua_luc?: string
+        }
+        Update: {
+          email?: string
+          id?: boolean
+          mat_khau_ma_hoa?: string
+          nguoi_id?: string | null
+          sua_luc?: string
+        }
+        Relationships: []
+      }
+      tuyen_dung_hang_doi_thu: {
+        Row: {
+          den_email: string
+          gui_luc: string | null
+          id: string
+          loi: string | null
+          mau_ma: string
+          nguoi_tao_id: string | null
+          noi_dung: string
+          tao_luc: string
+          tieu_de: string
+          trang_thai: string
+          ung_vien_id: string | null
+        }
+        Insert: {
+          den_email: string
+          gui_luc?: string | null
+          id?: string
+          loi?: string | null
+          mau_ma: string
+          nguoi_tao_id?: string | null
+          noi_dung: string
+          tao_luc?: string
+          tieu_de: string
+          trang_thai?: string
+          ung_vien_id?: string | null
+        }
+        Update: {
+          den_email?: string
+          gui_luc?: string | null
+          id?: string
+          loi?: string | null
+          mau_ma?: string
+          nguoi_tao_id?: string | null
+          noi_dung?: string
+          tao_luc?: string
+          tieu_de?: string
+          trang_thai?: string
+          ung_vien_id?: string | null
+        }
+        Relationships: []
+      }
+      tuyen_dung_mau_thu: {
+        Row: {
+          buoc: string
+          hoat_dong: boolean
+          ma: string
+          noi_dung: string
+          sua_luc: string
+          ten: string
+          tieu_de: string
+          tu_gui: boolean
+        }
+        Insert: {
+          buoc: string
+          hoat_dong?: boolean
+          ma: string
+          noi_dung: string
+          sua_luc?: string
+          ten: string
+          tieu_de: string
+          tu_gui?: boolean
+        }
+        Update: {
+          buoc?: string
+          hoat_dong?: boolean
+          ma?: string
+          noi_dung?: string
+          sua_luc?: string
+          ten?: string
+          tieu_de?: string
+          tu_gui?: boolean
+        }
+        Relationships: []
+      }
       ban_giao_muc: {
         Row: {
           hoat_dong: boolean

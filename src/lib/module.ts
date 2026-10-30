@@ -94,8 +94,9 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "1 · Tuyển dụng", the: [
         { ten: "Quản lý ứng viên", moTa: "Yêu cầu tuyển, tin tuyển dụng, ứng viên theo từng bước, kênh đăng và chi phí.", duongDan: "/nhan-su/tuyen-dung", trangThai: "san_sang", quyen: ["cong.xem"] },
-        { ten: "Quản lý công việc tuyển dụng", moTa: "Việc cần làm của từng đợt tuyển: ai gọi, ai phỏng vấn, hạn nào.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Quản lý công việc tuyển dụng", moTa: "Việc cần làm của từng đợt tuyển: ai gọi, ai phỏng vấn, hạn nào.", duongDan: "/nhan-su/tuyen-dung/viec", trangThai: "san_sang", quyen: ["hr.hoso"] },
         { ten: "Báo cáo tuyển dụng", moTa: "Số CV, phỏng vấn, nhận việc theo kênh và theo tháng; chi phí mỗi người tuyển.", duongDan: "/nhan-su/tuyen-dung?tab=bao-cao", trangThai: "san_sang", quyen: ["hr.hoso"] },
+        { ten: "Email tuyển dụng tự động", moTa: "Mẫu thư theo từng bước ứng viên, hàng đợi gửi, kết nối Gmail để gửi tự động.", duongDan: "/nhan-su/tuyen-dung/email", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "2 · Onboarding và thử việc", the: [
         { ten: "Onboarding thử việc", moTa: "Các mốc 0, 3, 7, 30, 60 ngày cho nhân viên mới.", duongDan: "/nhan-su/onboarding", trangThai: "san_sang", quyen: ["cong.xem"] },

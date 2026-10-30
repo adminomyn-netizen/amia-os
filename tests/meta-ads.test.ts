@@ -42,3 +42,22 @@ describe("Meta Ads → quảng cáo theo ngày", () => {
     expect(await layTienTe({ token: "x", taiKhoan: "9", fetchFn: vnd })).toBe("VND");
   });
 });
+
+import { gopTheoNhom, nhomChienDich } from "../src/lib/meta-ads";
+describe("gộp bản sao chiến dịch Meta", () => {
+  it("bỏ đuôi Bản sao N, không phân biệt khoảng trắng/hoa thường", () => {
+    const a = nhomChienDich("G99-AMIA - Vinh - 15/08 -Live - Bản sao 12"), b = nhomChienDich("G99-AMIA - Vinh - 15/08 -Live");
+    expect(a.ma).toBe(b.ma);
+    expect(a.ten).toBe("G99-AMIA - Vinh - 15/08 -Live");
+    expect(nhomChienDich("X - ULTHERAPY - Bản sao").ma).toBe(nhomChienDich("x - ultherapy").ma);
+  });
+  it("chiến dịch khác tên thì không gộp", () => {
+    expect(nhomChienDich("A - Exion - KHTM").ma).not.toBe(nhomChienDich("A - Exion").ma);
+  });
+  it("cộng cùng nhóm cùng ngày, khác ngày để riêng", () => {
+    const d = (metaId: string, ten: string, ngay: string, chi: number) => ({ metaId, ten, ngay, chi_phi: chi, hien_thi: 10, tiep_can: 5, click: 1, tin_nhan_moi: 1, lead_so: 0 });
+    const r = gopTheoNhom([d("1", "Live", "2026-10-28", 100), d("2", "Live - Bản sao 2", "2026-10-28", 50), d("2", "Live - Bản sao 2", "2026-10-29", 7)]);
+    expect(r).toHaveLength(2);
+    expect(r.find((x) => x.ngay === "2026-10-28")).toMatchObject({ chi_phi: 150, hien_thi: 20, click: 2, tin_nhan_moi: 2 });
+  });
+});

@@ -33,6 +33,29 @@ export function chuyenDong(d: DongInsight): SoLieuQc | null {
 
 export const maChienDich = (metaId: string) => `meta-${metaId}`;
 
+/**
+ * Meta nhân bản chiến dịch thành "… - Bản sao N": cùng một chiến dịch mà hiện thành hàng chục dòng. Gộp theo TÊN đã bỏ đuôi "Bản sao N"
+ * (không phân biệt hoa/thường, khoảng trắng quanh dấu gạch) về một chiến dịch trong app; mã nhóm `meta-n-<tên rút gọn không dấu>`.
+ */
+export function nhomChienDich(ten: string): { ma: string; ten: string } {
+  const goc = ten.replace(/\s*-?\s*B[ảa]n sao(\s+\d+)?/gi, "").replace(/\s+/g, " ").trim() || ten.trim();
+  const khoa = goc.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return { ma: `meta-n-${khoa}`, ten: goc };
+}
+
+export type SoLieuNhom = Omit<SoLieuQc, "metaId"> & { ma: string };
+
+/** Cộng các dòng cùng nhóm cùng ngày. Tiếp cận (reach) cộng dồn nên có thể cao hơn số người thật khi nhiều bản sao trùng đối tượng. */
+export function gopTheoNhom(so: SoLieuQc[]): SoLieuNhom[] {
+  const m = new Map<string, SoLieuNhom>();
+  for (const x of so) {
+    const n = nhomChienDich(x.ten), k = `${n.ma}|${x.ngay}`, c = m.get(k);
+    if (!c) { m.set(k, { ma: n.ma, ten: n.ten, ngay: x.ngay, chi_phi: x.chi_phi, hien_thi: x.hien_thi, tiep_can: x.tiep_can, click: x.click, tin_nhan_moi: x.tin_nhan_moi, lead_so: x.lead_so }); continue; }
+    c.chi_phi += x.chi_phi; c.hien_thi += x.hien_thi; c.tiep_can += x.tiep_can; c.click += x.click; c.tin_nhan_moi += x.tin_nhan_moi; c.lead_so += x.lead_so;
+  }
+  return [...m.values()];
+}
+
 /** Cửa sổ kéo: hôm nay lùi `soNgay` ngày. Meta còn điều chỉnh số 1–3 ngày sau (quy cho lượt xem/chat muộn) nên mỗi lần kéo lại cả cửa sổ và ghi đè. */
 export function cuaSoNgay(homNay: string, soNgay: number): { since: string; until: string } {
   const [y, m, d] = homNay.split("-").map(Number);

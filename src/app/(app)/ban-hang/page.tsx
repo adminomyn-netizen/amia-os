@@ -52,6 +52,9 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
       }));
     }
   }
+  // Khoá ở máy chủ: người gắn chi nhánh không mở được khách chi nhánh khác qua ?khach=; không có quyền xem SĐT thì không đưa số xuống trình duyệt.
+  if (khach && nd.chiNhanhId && khach.chi_nhanh_id !== nd.chiNhanhId) khach = null;
+  if (khach && !coQuyen(nd, "khach.sdt")) khach = { ...khach, dien_thoai: "" };
   // Chi nhánh của đơn: người có chi nhánh cố định thì khoá theo đó; người xem mọi chi nhánh thì lấy theo lịch hẹn, rồi theo khách; không đoán, để trống bắt chọn.
   const chiNhanhId = nd.chiNhanhId ?? cnLich ?? khach?.chi_nhanh_id ?? "";
   return (

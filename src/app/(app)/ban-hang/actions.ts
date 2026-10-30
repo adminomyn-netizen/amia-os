@@ -24,9 +24,17 @@ export async function timKhach(q: string) {
 }
 
 export async function layTheTien(khachId: string) {
-  if (!(await kiemQuyen("ban.tao"))) return [];
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd || !(await khachTrongPhamVi(nd.chiNhanhId, khachId))) return [];
   const { data } = await sb().from("v_the_khach").select("id, ma, so_du_tien, han_dung, tinh_trang").eq("khach_id", khachId).eq("loai", "tien").in("tinh_trang", ["hoat_dong", "sap_het"]);
   return (data ?? []).filter((t) => Number(t.so_du_tien) > 0).map((t) => ({ id: t.id as string, ma: t.ma as string, soDu: Number(t.so_du_tien) }));
+}
+
+/** Người gắn chi nhánh chỉ lấy được thẻ/điểm của khách cùng chi nhánh (khoá ở máy chủ, không tin id từ trình duyệt). */
+async function khachTrongPhamVi(chiNhanhId: string | null, khachId: string) {
+  if (!chiNhanhId) return true;
+  const { data } = await sb().from("khach_hang").select("chi_nhanh_id").eq("id", khachId).maybeSingle();
+  return !!data && data.chi_nhanh_id === chiNhanhId;
 }
 
 /** Cột "Thẻ khách đang có" + hạng khách của màn Thu ngân (như SalonHero): thẻ liệu trình và thẻ tiền còn dùng được, kèm buổi/số dư/hạn. Người bị khoá chi nhánh chỉ xem khách cùng chi nhánh. */
@@ -53,7 +61,8 @@ export async function layTheKhach(khachId: string) {
 
 /** Số dư điểm thưởng của khách + cấu hình đổi điểm (cho màn Thu ngân). */
 export async function layDiemKhach(khachId: string) {
-  if (!(await kiemQuyen("ban.tao"))) return null;
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd || !(await khachTrongPhamVi(nd.chiNhanhId, khachId))) return null;
   const db = sb();
   const [{ data: k }, ch] = await Promise.all([db.from("khach_hang").select("diem_so_du").eq("id", khachId).maybeSingle(), cauHinhDiem(db)]);
   return k ? { soDu: Number(k.diem_so_du ?? 0), ...ch } : null;

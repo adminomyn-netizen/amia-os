@@ -1,4 +1,4 @@
--- 0182 — Danh sách tài khoản nhận tiền sửa được (chị Dung, kế toán, 30/10/2026, việc 61477): tiền khách chuyển về 3 tài khoản OCB, Techcombank, VCB.
+-- 0183 — Danh sách tài khoản nhận tiền sửa được (chị Dung, kế toán, 30/10/2026, việc 61477): tiền khách chuyển về 3 tài khoản OCB, Techcombank, VCB.
 -- Dùng bảng tai_khoan_ngan_hang có sẵn (Cài đặt › Tài khoản Ngân Hàng): thêm / sửa / ẩn (hoat_dong) / xoá ở đó; Thu ngân và bộ lọc Hoá đơn điện tử đọc từ đây, không cố định trong mã.
 -- Seed 3 tài khoản chỉ khi bảng đang TRỐNG (chưa biết số tài khoản và chủ tài khoản: để trống, kế toán điền sau). Chạy lại không tạo thêm.
 alter table public.tai_khoan_ngan_hang alter column so_tai_khoan set default '', alter column chu_tai_khoan set default '';

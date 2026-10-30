@@ -3,7 +3,7 @@ import type { PGlite } from "@electric-sql/pglite";
 import { taoDbVoiMigration } from "./khung";
 import { tenTaiKhoan } from "../../src/lib/hoa-don-dien-tu-ngan-hang";
 
-// Migration 0182: seed 3 tài khoản nhận tiền (OCB, Techcombank, VCB) khi bảng trống; sửa được như tài khoản khác (ẩn, đổi tên, xoá).
+// Migration 0183: seed 3 tài khoản nhận tiền (OCB, Techcombank, VCB) khi bảng trống; sửa được như tài khoản khác (ẩn, đổi tên, xoá).
 let db: PGlite;
 const q = async <T = Record<string, unknown>>(sql: string, p: unknown[] = []) => (await db.query<T>(sql, p)).rows;
 beforeAll(async () => { db = await taoDbVoiMigration(); }, 60000);

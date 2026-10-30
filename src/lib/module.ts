@@ -95,13 +95,13 @@ export const MODULE: Module[] = [
       { nhan: "1 · Tuyển dụng", the: [
         { ten: "Quản lý ứng viên", moTa: "Yêu cầu tuyển, tin tuyển dụng, ứng viên theo từng bước, kênh đăng và chi phí.", duongDan: "/nhan-su/tuyen-dung", trangThai: "san_sang", quyen: ["cong.xem"] },
         { ten: "Quản lý công việc tuyển dụng", moTa: "Việc cần làm của từng đợt tuyển: ai gọi, ai phỏng vấn, hạn nào.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Báo cáo tuyển dụng", moTa: "Số CV, phỏng vấn, nhận việc theo kênh và theo tháng; chi phí mỗi người tuyển.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Báo cáo tuyển dụng", moTa: "Số CV, phỏng vấn, nhận việc theo kênh và theo tháng; chi phí mỗi người tuyển.", duongDan: "/nhan-su/tuyen-dung?tab=bao-cao", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "2 · Onboarding và thử việc", the: [
         { ten: "Onboarding thử việc", moTa: "Các mốc 0, 3, 7, 30, 60 ngày cho nhân viên mới.", duongDan: "/nhan-su/onboarding", trangThai: "san_sang", quyen: ["cong.xem"] },
         { ten: "Mục tiêu thử việc", moTa: "Mục tiêu 30 và 60 ngày của từng người, thống nhất với quản lý.", trangThai: "sap_co", quyen: ["hr.hoso"] },
         { ten: "Đánh giá thử việc", moTa: "Mentor, quản lý, nhân sự đánh giá ở mốc 30 và 60 ngày; quyết định lên chính thức.", trangThai: "sap_co", quyen: ["hr.hoso"] },
-        { ten: "Báo cáo onboarding", moTa: "Tiến độ lộ trình, tỉ lệ đạt thử việc, người sắp hết hạn thử việc.", trangThai: "sap_co", quyen: ["hr.hoso"] },
+        { ten: "Báo cáo onboarding", moTa: "Tiến độ lộ trình, tỉ lệ đạt thử việc, người sắp hết hạn thử việc.", duongDan: "/nhan-su/bao-cao?tab=onboarding", trangThai: "san_sang", quyen: ["hr.hoso"] },
       ] },
       { nhan: "3 · Hồ sơ nhân sự", the: [
         { ten: "Hồ sơ nhân sự", moTa: "Hồ sơ từng người: thông tin cá nhân, giấy tờ, người thân, lộ trình, công phép; thống kê quân số.", duongDan: "/nhan-su/ho-so", trangThai: "san_sang", quyen: ["hr.hoso"] },
@@ -130,7 +130,7 @@ export const MODULE: Module[] = [
         { ten: "Thưởng – hoa hồng", moTa: "Hoa hồng bán hàng theo kỳ.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "BHXH và phụ cấp", moTa: "Mức đóng bảo hiểm, phụ cấp ăn ca, đi lại, điện thoại theo từng người.", trangThai: "sap_co", quyen: ["luong.xem"] },
         { ten: "Quản lý chi phí", moTa: "Chi phí nhân sự theo tháng: lương, bảo hiểm, thưởng, tuyển dụng, đào tạo.", trangThai: "sap_co", quyen: ["baocao.tien"] },
-        { ten: "Báo cáo công lương", moTa: "Tổng hợp công, lương và phụ cấp theo tháng, theo phòng.", trangThai: "sap_co", quyen: ["luong.xem"] },
+        { ten: "Báo cáo công lương", moTa: "Tổng hợp công, lương và phụ cấp theo tháng, theo phòng.", duongDan: "/nhan-su/bao-cao?tab=cong-luong", trangThai: "san_sang", quyen: ["luong.xem"] },
       ] },
       { nhan: "8 · Lịch", the: [
         { ten: "Nhân viên đến hạn HĐLĐ", moTa: "Hợp đồng sắp hết hạn trong 45 ngày tới.", duongDan: "/nhan-su/lich?tab=hdld", trangThai: "san_sang", quyen: ["cong.xem"] },
@@ -146,7 +146,7 @@ export const MODULE: Module[] = [
         { ten: "Phỏng vấn thôi việc", moTa: "Lý do nghỉ, yếu tố giữ chân, góp ý cho công ty.", trangThai: "sap_co", quyen: ["hr.hoso"] },
       ] },
       { nhan: "10 · Báo cáo tổng", the: [
-        { ten: "Báo cáo nhân sự", moTa: "Quân số, biến động, tuyển dụng, thử việc, nghỉ việc, chi phí trong một trang.", trangThai: "sap_co", quyen: ["baocao.tien"] },
+        { ten: "Báo cáo nhân sự", moTa: "Quân số, biến động, tuyển dụng, thử việc, nghỉ việc, chi phí trong một trang.", duongDan: "/nhan-su/bao-cao?tab=tong", trangThai: "san_sang", quyen: ["baocao.tien"] },
       ] },
     ],
   },

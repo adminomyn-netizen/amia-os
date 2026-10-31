@@ -56,6 +56,8 @@ export type DonBan = {
   doiDiem?: number;
   /** Mã voucher khách đưa (rỗng = không dùng). Máy chủ tự tính lại tiền giảm từ danh mục. */
   voucher?: string;
+  /** Giờ vào / giờ ra của khách trong ngày (HH:MM giờ Việt Nam) và số khách đi cùng; để trống = không ghi. */
+  gioVao?: string; gioRa?: string; soKhach?: number;
 };
 export const tinhDon = (hang: number, giamDon: number, vatPct: number, phuPhi: number, tip: number) => {
   const sauGiam = Math.max(hang - giamDon, 0);

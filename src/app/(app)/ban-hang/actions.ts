@@ -3,7 +3,7 @@
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
-import { boDau, chuanSdt } from "@/lib/dinh-dang";
+import { boDau, chuanSdt, homNayHCM } from "@/lib/dinh-dang";
 import { lamSachDongNhap, nganHangKhoanThu, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
@@ -168,10 +168,18 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     if (!k.ngay_sinh && (count ?? 0) === 0) return { loi: "Khách mua lần đầu: cần nhập ngày sinh trong hồ sơ khách trước khi chốt đơn." };
   }
 
+  // Giờ vào / ra (HH:MM giờ Việt Nam, trong ngày hôm nay) và số khách; sai định dạng hoặc ra trước vào thì báo lỗi, không đoán.
+  const gioDon = (g: string | undefined) => (g ? new Date(`${homNayHCM()}T${g}:00+07:00`) : null);
+  if ((don.gioVao && !/^([01]\d|2[0-3]):[0-5]\d$/.test(don.gioVao)) || (don.gioRa && !/^([01]\d|2[0-3]):[0-5]\d$/.test(don.gioRa))) return { loi: "Giờ vào hoặc giờ ra chưa đúng." };
+  const gioVao = gioDon(don.gioVao), gioRa = gioDon(don.gioRa);
+  if (gioVao && gioRa && gioRa < gioVao) return { loi: "Giờ ra phải sau giờ vào." };
+  const soKhach = Math.min(99, Math.max(1, Math.floor(Number(don.soKhach) || 1)));
+
   const ma = "HD" + String(Number((await db.rpc("so_tiep_theo", { p_khoa: "hoa_don" })).data ?? 0)).padStart(6, "0");
   const { data: h, error: eh } = await db.from("hoa_don").insert({
     ma, chi_nhanh_id: don.chiNhanhId, khach_id: don.khachId, lich_hen_id: don.lichId, nguoi_lap_id: nd.nhanVienId, giam_gia_don: don.giamDon + tienDiem + tienVoucher, vat_pct: don.vatPct,
     phu_phi: don.phuPhi, tip: don.tip, nguoi_gioi_thieu_id: don.nguoiGioiThieu || null, ghi_chu: don.ghiChu?.trim() || null,
+    gio_vao: gioVao?.toISOString() ?? null, gio_ra: gioRa?.toISOString() ?? null, so_khach: soKhach,
   }).select("id").single();
   if (eh || !h) return { loi: thongBaoLoi(eh) };
   const huyNhap = async () => { await db.from("hoa_don").delete().eq("id", h.id); };

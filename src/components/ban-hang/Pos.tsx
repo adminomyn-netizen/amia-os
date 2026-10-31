@@ -8,6 +8,7 @@ import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
+import { GioChon } from "@/components/ui/GioChon";
 import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHACH, khopMuc, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
@@ -252,6 +253,9 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const [phuPhi, setPhuPhi] = useState(0);
   const [tip, setTip] = useState(0);
   const [ghiChu, setGhiChu] = useState("");
+  const [gioVao, setGioVao] = useState("");
+  const [gioRa, setGioRa] = useState("");
+  const [soKhach, setSoKhach] = useState("1");
   const [thu, setThu] = useState<KhoanThu[]>([]);
   const [theTienTai, setTheTien] = useState<TheTien[]>([]);
   const [loi, setLoi] = useState("");
@@ -322,7 +326,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
     if (conNo > 0 && !khach) return setLoi("Còn nợ thì phải chọn khách hàng.");
     for (const t of thu) if (t.phuong_thuc === "the_tien" && !t.the_id) return setLoi("Chọn thẻ tiền cho khoản trừ thẻ.");
     bat(async () => {
-      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "" }));
+      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "", gioVao, gioRa, soKhach: Number(soKhach) || 1 }));
       if ("loi" in kq && kq.loi) setLoi(kq.loi);
       else if ("id" in kq) {
         if (nhapId) { await xoaNhap(nhapId); onNhap(); }
@@ -502,6 +506,11 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                 </dl>
               </div>
 
+              <div className="grid grid-cols-3 gap-2">
+                <div><label className={NHAN_O}>Giờ vào</label><GioChon ariaLabel="Giờ vào" giaTriMacDinh={gioVao} onDoi={setGioVao} /></div>
+                <div><label className={NHAN_O}>Giờ ra</label><GioChon ariaLabel="Giờ ra" giaTriMacDinh={gioRa} onDoi={setGioRa} /></div>
+                <div><label className={NHAN_O} htmlFor={`so-khach-${k}`}>Số khách</label><input id={`so-khach-${k}`} inputMode="numeric" value={soKhach} onChange={(e) => setSoKhach(e.target.value.replace(/\D/g, "").slice(0, 2))} className={`${O_NHAP} tabular-nums`} /></div>
+              </div>
               <div><label className={NHAN_O}>Ghi chú đơn</label><textarea className={O_NHIEU_DONG} style={{ minHeight: 64 }} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} /></div>
               {loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
               <button type="button" disabled={dang} onClick={gui} className={`${NUT_CHINH} h-12 w-full text-[15px]`}>{dang ? "Đang chốt đơn" : conNo > 0 ? `Chốt đơn, ghi nợ ${tienVN(conNo)}` : "Chốt đơn"}</button>

@@ -3572,6 +3572,9 @@ export type Database = {
           vat_hd_tra_cuu: string | null
           vat_pct: number
           vat_tien: number
+          gio_ra: string | null
+          gio_vao: string | null
+          so_khach: number
         }
         Insert: {
           chi_nhanh_id: string
@@ -3615,6 +3618,9 @@ export type Database = {
           vat_hd_tra_cuu?: string | null
           vat_pct?: number
           vat_tien?: number
+          gio_ra?: string | null
+          gio_vao?: string | null
+          so_khach?: number
         }
         Update: {
           chi_nhanh_id?: string
@@ -3658,6 +3664,9 @@ export type Database = {
           vat_hd_tra_cuu?: string | null
           vat_pct?: number
           vat_tien?: number
+          gio_ra?: string | null
+          gio_vao?: string | null
+          so_khach?: number
         }
         Relationships: [
           {

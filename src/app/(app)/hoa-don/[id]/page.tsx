@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { homNayHCM, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
+import { gioVN, homNayHCM, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { NHAN_PHUONG_THUC, PHUONG_THUC, VAI } from "@/lib/ban-hang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -119,6 +119,11 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
                   giaTri={{ vat_hd_so: h.vat_hd_so ?? "", vat_hd_ky_hieu: h.vat_hd_ky_hieu ?? "" }} truong={[{ ten: "vat_hd_so", nhan: "Số hoá đơn VAT", loai: "chu" }, { ten: "vat_hd_ky_hieu", nhan: "Ký hiệu hoá đơn", loai: "chu", goiY: "Ví dụ 1C26TAA" }]} action={ghiNhanVat} />
               )}
             </div>
+          </MucTrang>
+        )}
+        {(h.gio_vao || h.gio_ra || h.so_khach > 1) && (
+          <MucTrang tieuDe="Giờ khách và số khách">
+            <p className="text-[14px] text-muc-2">{h.gio_vao ? `Vào ${gioVN(h.gio_vao)}` : ""}{h.gio_vao && h.gio_ra ? " · " : ""}{h.gio_ra ? `Ra ${gioVN(h.gio_ra)}` : ""}{(h.gio_vao || h.gio_ra) && h.so_khach > 1 ? " · " : ""}{h.so_khach > 1 ? `${h.so_khach} khách` : ""}</p>
           </MucTrang>
         )}
         {h.ghi_chu && <MucTrang tieuDe="Ghi chú"><p className="whitespace-pre-line text-[14px] text-muc-2">{h.ghi_chu}</p></MucTrang>}

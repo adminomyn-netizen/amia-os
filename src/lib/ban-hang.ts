@@ -16,6 +16,25 @@ export const khopMuc = (m: Pick<MucBan, "ten" | "ma" | "maVach">, tu: string) =>
   return !k || boDau(`${m.ten} ${m.ma ?? ""} ${m.maVach ?? ""}`).includes(k);
 };
 export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: number; nv: Record<Vai, { id: string; ti: number }[]> };
+
+const UUID_NHAP = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Giữ lại đúng các trường hợp lệ của dòng hàng; dữ liệu lạ bị bỏ (đơn nháp chỉ là bản nhớ tạm, giá vẫn lấy lại từ danh mục khi chốt). */
+export function lamSachDongNhap(v: unknown): DongDon[] {
+  if (!Array.isArray(v)) return [];
+  const ra: DongDon[] = [];
+  for (const d of v.slice(0, 60)) {
+    const o = d as Partial<DongDon> | null;
+    if (!o || !["dich_vu", "goi_the", "san_pham"].includes(String(o.loai)) || !UUID_NHAP.test(String(o.ref))) continue;
+    const nv = { phuc_vu: [], tu_van: [], ban: [] } as DongDon["nv"];
+    for (const vai of ["phuc_vu", "tu_van", "ban"] as const) {
+      const ds = (o.nv as Record<string, unknown> | undefined)?.[vai];
+      if (Array.isArray(ds)) nv[vai] = ds.slice(0, TOI_DA_NGUOI_HUONG).filter((x) => x && UUID_NHAP.test(String((x as { id?: unknown }).id)) && Number.isFinite(Number((x as { ti?: unknown }).ti))).map((x) => ({ id: String((x as { id: string }).id), ti: Math.min(100, Math.max(0, Number((x as { ti: number }).ti))) }));
+    }
+    ra.push({ loai: o.loai as DongDon["loai"], ref: String(o.ref), sl: Math.min(999, Math.max(1, Math.floor(Number(o.sl) || 1))), giam: Math.max(0, Math.floor(Number(o.giam) || 0)), nv });
+  }
+  return ra;
+}
+
 export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string };
 
 /** Tài khoản ngân hàng đang hoạt động (cài đặt › Ngân hàng) rút gọn cho ô "Ngân hàng nhận" ở Thu ngân. */

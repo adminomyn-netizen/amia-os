@@ -4,7 +4,7 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { boDau, chuanSdt } from "@/lib/dinh-dang";
-import { nganHangKhoanThu, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan } from "@/lib/ban-hang";
+import { lamSachDongNhap, nganHangKhoanThu, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
@@ -209,4 +209,60 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   }
   if (don.lichId) await db.from("lich_hen").update({ trang_thai: "hoan_thanh" }).eq("id", don.lichId).eq("chi_nhanh_id", don.chiNhanhId).in("trang_thai", ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan", "chua_xac_nhan"]);
   return { ok: true, id: h.id, ma };
+}
+
+// ─── Đơn nháp (như SalonHero DRAFT) ─────────────────────────────────────────
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const TOI_DA_NHAP = 30;
+export type DonNhapRut = { id: string; tieuDe: string; khach: { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string } | null; dong: DongDon[]; capNhat: string };
+
+/** Lưu (hoặc cập nhật) đơn nháp của chính mình: khách + các dòng hàng. Không đụng doanh thu, kho hay công nợ. */
+export async function luuDonNhap(p: { id?: string | null; khachId: string | null; chiNhanhId: string; tieuDe: string; dong: DongDon[] }): Promise<{ ok: true; id: string } | { ok?: false; loi: string }> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const dong = lamSachDongNhap(p.dong);
+  if (!dong.length) return { loi: "Đơn chưa có dòng hàng nào để lưu nháp." };
+  const db = sb();
+  const cn = nd.chiNhanhId ?? p.chiNhanhId;
+  if (!cn || !UUID_RE.test(cn)) return { loi: "Chọn chi nhánh trước khi lưu nháp." };
+  if (p.khachId) {
+    if (!UUID_RE.test(p.khachId) || !(await khachTrongPhamVi(nd.chiNhanhId, p.khachId))) return { loi: "Khách này thuộc chi nhánh khác." };
+  }
+  const tieuDe = (p.tieuDe ?? "").trim().slice(0, 80) || null;
+  if (p.id) {
+    if (!UUID_RE.test(p.id)) return { loi: "Đơn nháp không hợp lệ." };
+    const { data, error } = await db.from("don_nhap").update({ khach_id: p.khachId, tieu_de: tieuDe, dong: dong as unknown as TablesInsert<"don_nhap">["dong"], chi_nhanh_id: cn, cap_nhat_luc: new Date().toISOString() })
+      .eq("id", p.id).eq("nguoi_lap_id", nd.nhanVienId).select("id").maybeSingle();
+    if (error) return { loi: thongBaoLoi(error) };
+    if (data) return { ok: true, id: data.id };
+  }
+  const { count } = await db.from("don_nhap").select("id", { count: "exact", head: true }).eq("nguoi_lap_id", nd.nhanVienId);
+  if ((count ?? 0) >= TOI_DA_NHAP) return { loi: `Đã có ${TOI_DA_NHAP} đơn nháp. Xoá bớt đơn nháp cũ rồi lưu lại.` };
+  const { data, error } = await db.from("don_nhap").insert({ chi_nhanh_id: cn, nguoi_lap_id: nd.nhanVienId, khach_id: p.khachId, tieu_de: tieuDe, dong: dong as unknown as TablesInsert<"don_nhap">["dong"] }).select("id").single();
+  if (error) return { loi: thongBaoLoi(error) };
+  return { ok: true, id: data.id };
+}
+
+/** Các đơn nháp của chính mình (mới sửa trước). */
+export async function dsDonNhap(): Promise<DonNhapRut[]> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return [];
+  const { data } = await sb().from("don_nhap").select("id, tieu_de, dong, cap_nhat_luc, khach_hang(id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id)").eq("nguoi_lap_id", nd.nhanVienId).order("cap_nhat_luc", { ascending: false }).limit(TOI_DA_NHAP);
+  const xemSdt = coQuyen(nd, "khach.sdt");
+  return (data ?? []).map((r) => {
+    const k = r.khach_hang as unknown as { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string | null } | null;
+    // Khoá chi nhánh như màn Bán hàng: khách chi nhánh khác không hiện; không có quyền xem SĐT thì bỏ số.
+    const khach = k && !(nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId) ? { id: k.id, ma: k.ma, ho_ten: k.ho_ten, dien_thoai: xemSdt ? k.dien_thoai : "", nguoi_phu_trach_id: k.nguoi_phu_trach_id } : null;
+    return { id: r.id, tieuDe: r.tieu_de ?? "", khach, dong: lamSachDongNhap(r.dong), capNhat: r.cap_nhat_luc };
+  });
+}
+
+/** Xoá đơn nháp của chính mình (sau khi chốt đơn hoặc bỏ nháp). */
+export async function xoaDonNhap(id: string): Promise<{ ok: true } | { ok?: false; loi: string }> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  if (!UUID_RE.test(id)) return { loi: "Đơn nháp không hợp lệ." };
+  const { error } = await sb().from("don_nhap").delete().eq("id", id).eq("nguoi_lap_id", nd.nhanVienId);
+  if (error) return { loi: thongBaoLoi(error) };
+  return { ok: true };
 }

@@ -12,7 +12,7 @@ import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHAC
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
-import type { chotDonBanHang, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, timKhach } from "@/app/(app)/ban-hang/actions";
+import type { chotDonBanHang, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, DonNhapRut } from "@/app/(app)/ban-hang/actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 type Nv = { id: string; ten: string; vaiTro: string };
@@ -33,9 +33,9 @@ const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 type PropsPos = {
   muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string; taiKhoanNhan?: TaiKhoanNhan[];
-  tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher;
+  tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher; luuNhap: typeof luuDonNhap; dsNhap: typeof dsDonNhap; xoaNhap: typeof xoaDonNhap; nhapBanDau?: DonNhapRut[];
 };
-type Tab = { k: number; ten: string; soDong: number };
+type Tab = { k: number; ten: string; soDong: number; nhap?: DonNhapRut };
 const TOI_DA_DON = 8;
 
 /** Màn Thu ngân: mở nhiều đơn song song (như SalonHero), mỗi đơn một tab giữ nguyên trạng thái khi chuyển qua lại.
@@ -45,6 +45,10 @@ export function Pos(props: PropsPos) {
   const [dangXem, setDangXem] = useState(1);
   const dem = useRef(1);
   const [xong, setXong] = useState<{ id: string; ma: string } | null>(null);
+  // Đơn nháp lưu trên máy chủ (như SalonHero): mở lại ở tab mới, tải lại trang hay đổi máy không mất.
+  const [nhap, setNhap] = useState<DonNhapRut[]>(props.nhapBanDau ?? []);
+  const [moNhap, setMoNhap] = useState(false);
+  const lamMoiNhap = useCallback(() => { void props.dsNhap().then(setNhap).catch(() => undefined); }, [props]);
   const nutTab = useRef(new Map<number, HTMLButtonElement | null>());
   // Màn hình khách: đơn đang xem được phát qua BroadcastChannel cho cửa sổ phụ; cửa sổ mới mở thì hỏi lại ("hoi") và nhận bản mới nhất.
   const kenh = useRef<BroadcastChannel | null>(null);
@@ -65,6 +69,20 @@ export function Pos(props: PropsPos) {
     const k = dem.current;
     setDs((x) => [...x, { k, ten: "", soDong: 0 }]);
     setDangXem(k);
+  };
+  const moLaiNhap = (n: DonNhapRut) => {
+    const dangMo = ds.find((t) => t.nhap?.id === n.id);
+    if (dangMo) { setDangXem(dangMo.k); setMoNhap(false); return; }
+    if (ds.length >= TOI_DA_DON) { window.alert(`Đang mở ${TOI_DA_DON} đơn. Đóng bớt một đơn rồi mở đơn nháp.`); return; }
+    dem.current += 1;
+    const k = dem.current;
+    setDs((x) => [...x, { k, ten: n.khach?.ho_ten ?? "", soDong: n.dong.length, nhap: n }]);
+    setDangXem(k);
+    setMoNhap(false);
+  };
+  const xoaMotNhap = (n: DonNhapRut) => {
+    if (!window.confirm(`Xoá đơn nháp${n.khach ? ` của ${n.khach.ho_ten}` : ""}?`)) return;
+    void props.xoaNhap(n.id).then((r) => { if ("loi" in r && r.loi) window.alert(r.loi); else lamMoiNhap(); });
   };
   const dong = (k: number) => {
     const t = ds.find((x) => x.k === k);
@@ -120,11 +138,29 @@ export function Pos(props: PropsPos) {
           <Plus strokeWidth={1.8} className="h-4 w-4" />Thêm đơn
         </button>
         <Link href="/hoa-don" className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>Danh sách đơn hàng</Link>
+        <button type="button" onClick={() => { setMoNhap((v) => !v); lamMoiNhap(); }} aria-expanded={moNhap} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>
+          Đơn nháp<span className="rounded-tag bg-giay-tram px-1.5 text-[12px] font-medium tabular-nums text-muc-2">{nhap.length}</span>
+        </button>
         <button type="button" onClick={() => window.open("/man-hinh-khach", "amia-man-hinh-khach", "popup,width=960,height=720")} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>Màn hình khách</button>
         {props.choThanhToan != null && (
           <Link href={`/hoa-don?no=1&tu=2018-01-01&den=${props.denNgay ?? ""}`} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>Chờ thanh toán<span className={`rounded-tag px-1.5 text-[12px] font-medium tabular-nums ${props.choThanhToan > 0 ? "bg-canh-bao-nen text-canh-bao" : "bg-giay-tram text-muc-3"}`}>{props.choThanhToan}</span></Link>
         )}
       </div>
+      {moNhap && (
+        <div className="mb-4 rounded-nho border border-vien bg-giay-sang p-3">
+          <p className="mb-2 text-[13px] text-muc-3">Đơn nháp của bạn (lưu trên máy chủ). Chốt đơn xong thì nháp tự mất.</p>
+          {nhap.length === 0 ? <p className="text-[14px] text-muc-3">Chưa có đơn nháp nào.</p> : (
+            <ul className="divide-y divide-vien">
+              {nhap.map((n) => (
+                <li key={n.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[14px]">
+                  <span><span className="text-muc">{n.khach?.ho_ten ?? "Khách lẻ"}</span> <span className="text-muc-3">· {n.dong.length} dòng · {new Date(n.capNhat).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span></span>
+                  <span className="flex gap-4"><button type="button" onClick={() => moLaiNhap(n)} className={NUT_CHU}>Mở</button><button type="button" onClick={() => xoaMotNhap(n)} className="text-loi hover:underline">Xoá</button></span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       {xong && (
         <p role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-nho bg-nhan-nhat px-3 py-2.5 text-[14px] text-nhan-dam">
           <span>Đã chốt đơn {xong.ma}.</span>
@@ -133,7 +169,7 @@ export function Pos(props: PropsPos) {
       )}
       {ds.map((t, i) => (
         <div key={t.k} role="tabpanel" id={`don-${t.k}`} aria-labelledby={`don-tab-${t.k}`} hidden={t.k !== dangXem}>
-          <DonPos {...props} k={t.k} dauTien={i === 0 && t.k === 1} dangXem={t.k === dangXem} onDonChoKhach={guiManHinhKhach} onDoi={capNhat} onHuy={() => huyDon(t.k)}
+          <DonPos {...props} k={t.k} nhapDau={t.nhap} onNhap={lamMoiNhap} dauTien={i === 0 && t.k === 1 && !t.nhap} dangXem={t.k === dangXem} onDonChoKhach={guiManHinhKhach} onDoi={capNhat} onHuy={() => huyDon(t.k)}
             onXong={(kq) => {
               setXong(kq); bo(t.k); guiManHinhKhach(null);
               // Bỏ ?lich=&khach= khỏi địa chỉ: tải lại trang không dựng lại đơn vừa chốt (không dùng router.push để giữ các đơn khác).
@@ -191,12 +227,14 @@ function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: stri
   );
 }
 
-function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, k, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
-  k: number; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void; onHuy: () => void;
+function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+  k: number; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void; onHuy: () => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
   const [dang, bat] = useTransition();
-  const [khach, setKhach] = useState<KhachChon | null>(dauTien ? khachBanDau : null);
+  const [khach, setKhach] = useState<KhachChon | null>(nhapDau ? nhapDau.khach : dauTien ? khachBanDau : null);
+  const [nhapId, setNhapId] = useState<string | null>(nhapDau?.id ?? null);
+  const [tinNhap, setTinNhap] = useState("");
   const [cnId, setCnId] = useState(chiNhanhId);
   // Ngân hàng nhận tiền của khoản chuyển khoản / quẹt thẻ: chọn sẵn ngân hàng lần trước (nhớ trong trình duyệt), đổi một chạm.
   const KHOA_NH = "amia-pos-ngan-hang-";
@@ -207,7 +245,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const [tab, setTab] = useState<MucBan["loai"]>("dich_vu");
   const [tu, setTu] = useState("");
   const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam" | "moi_nhat">("ten");
-  const [dong, setDong] = useState<DongDon[]>(dauTien ? dongBanDau : []);
+  const [dong, setDong] = useState<DongDon[]>(nhapDau ? nhapDau.dong : dauTien ? dongBanDau : []);
   const [giamDon, setGiamDon] = useState(0);
   const [giamPct, setGiamPct] = useState("");
   const [vatPct, setVatPct] = useState("0");
@@ -286,7 +324,19 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
     bat(async () => {
       const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "" }));
       if ("loi" in kq && kq.loi) setLoi(kq.loi);
-      else if ("id" in kq) onXong({ id: kq.id, ma: kq.ma });
+      else if ("id" in kq) {
+        if (nhapId) { await xoaNhap(nhapId); onNhap(); }
+        onXong({ id: kq.id, ma: kq.ma });
+      }
+    });
+  };
+  const luuNhapDon = () => {
+    setLoi(""); setTinNhap("");
+    if (!dong.length) return setLoi("Đơn chưa có dòng hàng nào để lưu nháp.");
+    bat(async () => {
+      const kq = await luuNhap({ id: nhapId, khachId: khach?.id ?? null, chiNhanhId: cnId, tieuDe: khach?.ho_ten ?? "", dong });
+      if ("loi" in kq && kq.loi) setLoi(kq.loi);
+      else if ("id" in kq) { setNhapId(kq.id); setTinNhap("Đã lưu nháp."); onNhap(); }
     });
   };
 
@@ -455,7 +505,9 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
               <div><label className={NHAN_O}>Ghi chú đơn</label><textarea className={O_NHIEU_DONG} style={{ minHeight: 64 }} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} /></div>
               {loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
               <button type="button" disabled={dang} onClick={gui} className={`${NUT_CHINH} h-12 w-full text-[15px]`}>{dang ? "Đang chốt đơn" : conNo > 0 ? `Chốt đơn, ghi nợ ${tienVN(conNo)}` : "Chốt đơn"}</button>
+              {tinNhap && <p role="status" className="text-[13px] text-nhan-dam">{tinNhap}</p>}
               <div className="grid grid-cols-2 gap-2">
+                <button type="button" disabled={dang || !dong.length} onClick={luuNhapDon} className={`${NUT_PHU} h-11 text-[14px]`}>Lưu nháp</button>
                 <button type="button" onClick={() => setMoHh(true)} disabled={!dong.length} className={`${NUT_PHU} h-11 text-[14px]`}>Hoa hồng &amp; doanh thu</button>
                 <button type="button" disabled={dang} onClick={onHuy} className={`${NUT_PHU} h-11 text-[14px]`}>Hủy đơn</button>
               </div>

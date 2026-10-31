@@ -11,3 +11,22 @@ describe("khopMuc (ô tìm của thu ngân)", () => {
   it("không khớp thì false", () => { expect(khopMuc(dv, "tiêm")).toBe(false); expect(khopMuc(dv, "9999")).toBe(false); });
   it("chữ đ", () => expect(khopMuc({ ten: "Điều trị nám", ma: "DV1" }, "dieu tri")).toBe(true));
 });
+
+import { lamSachDongNhap } from "@/lib/ban-hang";
+const U1 = "11111111-1111-4111-8111-111111111111", U2 = "22222222-2222-4222-8222-222222222222";
+describe("lamSachDongNhap (đơn nháp)", () => {
+  it("giữ dòng hợp lệ và chuẩn hoá số lượng, giảm giá, tỉ lệ", () => {
+    const r = lamSachDongNhap([{ loai: "dich_vu", ref: U1, sl: 2.7, giam: -5, nv: { phuc_vu: [{ id: U2, ti: 150 }], tu_van: [], ban: [] } }]);
+    expect(r).toEqual([{ loai: "dich_vu", ref: U1, sl: 2, giam: 0, nv: { phuc_vu: [{ id: U2, ti: 100 }], tu_van: [], ban: [] } }]);
+  });
+  it("bỏ dòng sai loại hoặc sai mã, bỏ người hưởng sai mã", () => {
+    const r = lamSachDongNhap([{ loai: "xxx", ref: U1 }, { loai: "san_pham", ref: "abc" }, { loai: "goi_the", ref: U1, sl: 0, nv: { ban: [{ id: "khong-phai-uuid", ti: 50 }] } }]);
+    expect(r).toHaveLength(1);
+    expect(r[0].sl).toBe(1);
+    expect(r[0].nv.ban).toEqual([]);
+  });
+  it("không phải mảng thì rỗng; cắt tối đa 60 dòng", () => {
+    expect(lamSachDongNhap("x")).toEqual([]);
+    expect(lamSachDongNhap(Array.from({ length: 80 }, () => ({ loai: "dich_vu", ref: U1 })))).toHaveLength(60);
+  });
+});

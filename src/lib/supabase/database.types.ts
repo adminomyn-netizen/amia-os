@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      don_nhap: {
+        Row: {
+          cap_nhat_luc: string
+          chi_nhanh_id: string
+          dong: Json
+          id: string
+          khach_id: string | null
+          nguoi_lap_id: string
+          tao_luc: string
+          tieu_de: string | null
+        }
+        Insert: {
+          cap_nhat_luc?: string
+          chi_nhanh_id: string
+          dong?: Json
+          id?: string
+          khach_id?: string | null
+          nguoi_lap_id: string
+          tao_luc?: string
+          tieu_de?: string | null
+        }
+        Update: {
+          cap_nhat_luc?: string
+          chi_nhanh_id?: string
+          dong?: Json
+          id?: string
+          khach_id?: string | null
+          nguoi_lap_id?: string
+          tao_luc?: string
+          tieu_de?: string | null
+        }
+        Relationships: []
+      }
       hoa_don_xuat_dong: {
         Row: {
           hoa_don_dong_id: string

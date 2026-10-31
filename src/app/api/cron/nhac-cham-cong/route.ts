@@ -8,6 +8,8 @@ import { laVaiTro, quyenHieuLuc, type Quyen } from "@/lib/quyen";
 import { kyCanBaoHomNay, tinhTongHop } from "@/lib/tong-hop-hieu-suat";
 
 export const maxDuration = 60;
+/** Chấm công đã chuyển sang MSC Group OS (31/10/2026): tạm không gửi nhắc từ AMIA. Đặt false để bật lại. */
+const DA_CHUYEN_MSC = true;
 const hhmm = (g: string) => g.slice(0, 5);
 
 /** Nhắc chấm công bằng thông báo đẩy, chạy mỗi 5 phút (lịch pg_cron ở Supabase gọi vào đây; Vercel Cron chỉ cần khi gói cho phép chạy theo phút).
@@ -20,6 +22,7 @@ export async function GET(req: Request) {
   const bi = process.env.CRON_SECRET;
   const duoc = (bi && mang === bi) || (mang.length > 0 && (await db.rpc("kiem_token_cron", { p: mang })).data === true);
   if (!duoc) return NextResponse.json({ loi: "Không được phép" }, { status: 401 });
+  if (DA_CHUYEN_MSC) return NextResponse.json({ ok: true, bo_qua: "Nhắc chấm công đã chuyển sang MSC Group OS" });
 
   const hom = homNayHCM(), phut = phutTrongNgayVN(new Date().toISOString());
   const gui = async (nv: string, loai: string, tieuDe: string, noiDung: string, url: string) => {

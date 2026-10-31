@@ -53,7 +53,7 @@ export default async function TrangQuyetToanHoaHong({ searchParams }: { searchPa
           { nhan: "Hoa hồng hiện tại", phai: true, hienThi: (r) => tienVN(r.hh) }, { nhan: "Đã chốt trong lương", phai: true, hienThi: (r) => (r.chot == null ? "" : tienVN(r.chot)) },
           { nhan: "", hienThi: (r) => (ky && (r.chot ?? 0) !== r.hh ? <NhanTrangThai kieu="cho">Lệch {tienVN(r.hh - (r.chot ?? 0))}</NhanTrangThai> : null) },
         ]} />
-      {ky && <p className="mt-3 text-[13px] text-muc-3">Kỳ lương tháng này: <Link href={`/nhan-su/luong/${ky.id}`} className="text-nhan-dam hover:underline">{TT_KY[ky.trang_thai]}</Link>.</p>}
+      {ky && <p className="mt-3 text-[13px] text-muc-3">Kỳ lương tháng này: <span>{TT_KY[ky.trang_thai]}</span>.</p>}
     </div>
   );
 }

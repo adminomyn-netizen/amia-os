@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AlertTriangle, CalendarDays, CircleDollarSign, ClipboardCheck, Clock, Package, Plus, Star, TrendingUp, Users, ShoppingBag, BarChart3, Warehouse, UsersRound, type LucideIcon } from "lucide-react";
+import { AlertTriangle, CalendarDays, CircleDollarSign, ClipboardCheck, Clock, Package, Plus, Star, TrendingUp, Users, ShoppingBag, BarChart3, Warehouse, type LucideIcon } from "lucide-react";
 import type { CanhBao } from "@/lib/canh-bao";
 import { tienGon, tienVN } from "@/lib/dinh-dang";
 import { NoiChiTiet } from "@/components/ui/NoiChiTiet";
@@ -16,7 +16,7 @@ type Tile = { nhan: string; so: string; phu: string; mau: string; Icon: LucideIc
 const TRUY_CAP = [
   { href: "/khach-hang", nhan: "Khách hàng", Icon: Users, mau: "tim" }, { href: "/lich-hen", nhan: "Lịch hẹn", Icon: CalendarDays, mau: "tim" },
   { href: "/ban-hang", nhan: "Bán hàng", Icon: ShoppingBag, mau: "tim" }, { href: "/bao-cao", nhan: "Báo cáo", Icon: BarChart3, mau: "tim" },
-  { href: "/nhan-su", nhan: "Nhân sự", Icon: UsersRound, mau: "luc" }, { href: "/kho-mua-sam", nhan: "Kho & Mua sắm", Icon: Warehouse, mau: "luc" },
+  { href: "/kho-mua-sam", nhan: "Kho & Mua sắm", Icon: Warehouse, mau: "luc" },
 ];
 
 /** Nhóm cảnh báo để gom thành các nhãn nhỏ trên dải "việc cần xử lý gấp". */

@@ -17,7 +17,6 @@ import { BangSoLieu, type SoLieu } from "@/components/trang-chu/BangSoLieu";
 import type { CanhBao } from "@/lib/canh-bao";
 
 const LOI_TAT = [
-  { href: "/nhan-su/cham-cong", nhan: "Chấm công", q: "noibo.dung" as const },
   { href: "/lich-hen", nhan: "Đặt lịch hẹn", q: "lich.sua" as const }, { href: "/ban-hang", nhan: "Bán hàng", q: "ban.tao" as const },
   { href: "/khach-hang", nhan: "Tìm khách", q: "khach.xem" as const }, { href: "/hoa-don", nhan: "Thu nợ", q: "no.thu" as const },
   { href: "/the", nhan: "Thẻ liệu trình", q: "the.thuchien" as const }, { href: "/phieu-cap", nhan: "Phiếu cấp vật tư", q: "phieu.xem" as const },

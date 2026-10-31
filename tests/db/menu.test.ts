@@ -15,8 +15,10 @@ describe("menu theo vai trò", () => {
   it("Tổng quan (dashboard) và Cài đặt theo quyền: bác sĩ không có Tổng quan, Quản lý có Tổng quan, Kỹ thuật có cả hai", () => {
     expect(ten("bac_si")).not.toContain("Tổng quan");
     expect(ten("quan_ly")).toContain("Tổng quan");
-    expect(ten("ky_thuat")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt", "Nhân sự"]));
-    expect(ten("chu")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt", "Nhân sự"]));
+    expect(ten("ky_thuat")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt"]));
+    expect(ten("chu")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt"]));
+    // Nhân sự đã chuyển sang MSC Group OS (31/10/2026): không còn trong menu.
+    expect(ten("chu")).not.toContain("Nhân sự");
     expect(ten("bac_si")).not.toContain("Tài chính - Kế toán");
     expect(ten("ktv", ["tongquan.xem"])).toContain("Tổng quan");
   });

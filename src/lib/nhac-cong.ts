@@ -15,7 +15,11 @@ const cuoiThangCua = (t: { nam: number; thang: number }) => `${t.nam}-${String(t
 /** Nhắc chấm công và công lương hiện trên chuông (theo giờ hiện tại, tính lại mỗi lần chuông hỏi). Bám các nhắc MSC đang chạy trên Lark:
  *  báo cáo chấm công 09:00 cho Ban giám đốc, nhắc đăng ký lịch nghỉ tuần ngày 25, gửi phiếu lương cho từng người, hạn trả lương trước ngày 10.
  *  Người đi làm: nhắc chấm công vào/ra của chính mình, nhắc ngày hôm qua thiếu chấm công (quy chế: báo trong 30 phút, tối đa 3 lần/tháng), phiếu lương mới. */
+/** Nhắc việc nhân sự (chấm công, lương, tuyển dụng) đã chuyển sang MSC Group OS: bỏ mọi mục trỏ vào /nhan-su. */
 export async function layNhacCong(nd: Nd, homNay: string): Promise<CanhBao[]> {
+  return (await layNhacCongGoc(nd, homNay)).filter((x) => !x.href?.startsWith("/nhan-su"));
+}
+async function layNhacCongGoc(nd: Nd, homNay: string): Promise<CanhBao[]> {
   const phutNay = phutTrongNgayVN(new Date().toISOString());
   const [canhan, quanly] = await Promise.all([nd.nhanVienId ? nhacCaNhan(nd.nhanVienId, homNay, phutNay) : [], nhacQuanLy(nd, homNay, phutNay)]);
   return [...canhan, ...quanly];

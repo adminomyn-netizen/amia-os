@@ -23,7 +23,6 @@ export type SoLieu = {
 
 const MAU = ["xanh", "luc", "tim", "cam", "hong"] as const;
 const mau = (i: number) => `var(--sac-${MAU[i % MAU.length]}-mau)`;
-const phanTram = (a: number, b: number) => (b > 0 ? Math.round((a / b) * 100) : 0);
 
 function Khung({ tieuDe, phai, children, cls = "" }: { tieuDe: string; phai?: React.ReactNode; children: React.ReactNode; cls?: string }) {
   return (
@@ -98,10 +97,6 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
               <ul className="mt-3 space-y-1.5 text-[13px]">{d.lich.filter((x) => x.so > 0).map((x, i) => <li key={x.nhan} className="flex items-center gap-2"><span aria-hidden className="h-3 w-3 rounded-sm" style={{ background: mau(i) }} /><span className="text-muc-2">{x.nhan}</span><span className="ml-auto tabular-nums text-muc">{x.so}</span></li>)}</ul>
             </>
           )}
-        </Khung>
-        <Khung tieuDe="Chấm công hôm nay" phai={<Link href="/nhan-su/cham-cong" className="font-medium text-nhan-dam hover:underline">Bảng công</Link>}>
-          <BieuDoTron kieu="mong" ten="Chấm công hôm nay" nhanTam="đã chấm công" tamChinh={`${phanTram(d.chamCong.da, d.chamCong.tong)}%`} duLieu={[{ nhan: "Đã chấm", gia_tri: d.chamCong.da, mau: "var(--sac-luc-mau)" }, { nhan: "Chưa chấm", gia_tri: Math.max(0, d.chamCong.tong - d.chamCong.da), mau: "var(--sac-hong-mau)" }]} dinhDang={(n) => `${n} người`} trong="Chưa có nhân viên nào cần chấm công." />
-          <p className="mt-3 text-[13px] text-muc-3">Tổng {d.chamCong.tong} người đang làm</p>
         </Khung>
       </div>
       <BangXepHang d={d} xemTien={xemTien} />

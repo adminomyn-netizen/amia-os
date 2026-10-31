@@ -1,4 +1,5 @@
 import { docTrangAnh } from "@/lib/anh-khach-doc";
+import { SO_ANH_TRANG_DAU } from "@/lib/anh-khach";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -342,7 +343,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   } else {
     // Chỉ lấy + ký link cho trang đầu; phần còn lại LuoiAnh xin thêm khi cuộn tới (khách có thể có hàng nghìn ảnh).
     const [trangDau, { count: tongAnh }, { count: soTam }] = await Promise.all([
-      docTrangAnh(id, 0),
+      docTrangAnh(id, 0, SO_ANH_TRANG_DAU),
       db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id),
       db.from("khach_anh").select("id", { count: "exact", head: true }).eq("khach_id", id).not("het_han", "is", null),
     ]);

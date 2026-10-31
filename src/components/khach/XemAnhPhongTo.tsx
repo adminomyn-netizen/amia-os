@@ -130,6 +130,10 @@ export function XemAnhPhongTo({ ds, chiSo, dong, doiToi, xoaDuoc, xoa }: {
   xoa?: (a: AnhKhach) => Promise<string | undefined>;
 }) {
   const nutDong = useRef<HTMLButtonElement>(null);
+  // Tải sẵn ảnh kế bên để bấm sang ảnh trước/sau là hiện ngay.
+  useEffect(() => {
+    for (const i of [chiSo + 1, chiSo - 1, chiSo + 2]) { const u = ds[i]?.url; if (u) new Image().src = u; }
+  }, [ds, chiSo]);
   // Hộp hỏi xoá gắn với đúng một ảnh: đổi sang ảnh khác thì tự đóng, không cần đặt lại trạng thái.
   const [hoiXoaId, setHoiXoaId] = useState<string | null>(null);
   const [dangXoa, setDangXoa] = useState(false);

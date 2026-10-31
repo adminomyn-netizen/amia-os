@@ -61,7 +61,8 @@ export function LuoiAnh({ khachId, banDau, tong, quyenXoa }: { khachId: string; 
     return [...m.entries()];
   }, [ds]);
 
-  const dsPhang = useMemo(() => theoNgay.flatMap(([, a]) => a), [theoNgay]); // đúng thứ tự trên lưới, để chuyển ảnh trước/sau
+  const dsPhang = useMemo(() => theoNgay.flatMap(([, a]) => a), [theoNgay]);
+  const thuTu = useMemo(() => new Map(dsPhang.map((a, i) => [a.id, i])), [dsPhang]); // 5 ảnh đầu nằm ngay màn hình: tải trước, phần dưới tải lười // đúng thứ tự trên lưới, để chuyển ảnh trước/sau
   const chiSoMo = moId ? dsPhang.findIndex((a) => a.id === moId) : -1;
 
   return (
@@ -74,7 +75,7 @@ export function LuoiAnh({ khachId, banDau, tong, quyenXoa }: { khachId: string; 
               <figure key={a.id} className="overflow-hidden rounded-nho border border-vien bg-giay-tram">
                 <button type="button" onClick={() => setMoId(a.id)} aria-label={`Phóng to ảnh ${LOAI_ANH[a.loai] ?? ""} ngày ${ngayVN(a.ngay)}`} className="block w-full cursor-zoom-in">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={a.url ?? undefined} alt={`Ảnh ${LOAI_ANH[a.loai] ?? ""} điều trị ngày ${ngayVN(a.ngay)}`} loading="lazy" decoding="async" onError={() => thuLai(a.id)} className="aspect-[3/4] w-full object-cover" />
+                  <img src={a.url ?? undefined} alt={`Ảnh ${LOAI_ANH[a.loai] ?? ""} điều trị ngày ${ngayVN(a.ngay)}`} loading={(thuTu.get(a.id) ?? 99) < 5 ? "eager" : "lazy"} fetchPriority={(thuTu.get(a.id) ?? 99) < 5 ? "high" : "auto"} decoding="async" onError={() => thuLai(a.id)} className="aspect-[3/4] w-full object-cover" />
                 </button>
                 <figcaption className="px-2 py-1.5 text-[12px] text-muc-2">{LOAI_ANH[a.loai]}{a.ghiChu ? ` · ${a.ghiChu}` : ""}{a.vanBan && <span className="block text-muc-3">Có chữ trong ảnh, bấm ảnh để đọc</span>}{a.taoBoi && <span className="block truncate text-muc-3">Tạo bởi {a.taoBoi}</span>}</figcaption>
               </figure>

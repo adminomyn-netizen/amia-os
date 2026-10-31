@@ -5,6 +5,7 @@ import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat as Bang, type Cot
 import { khoangNgay } from "@/lib/bao-cao";
 import { congNgay, ngayGioVN } from "@/lib/dinh-dang";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
+import { layBaoCaoVoucher } from "@/lib/bao-cao-voucher";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
 import { gomTheoKy, kieuGom, layLichSuDungThe, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
@@ -49,6 +50,11 @@ export async function GET(req: Request) {
     bangs.push({ ten: "Đánh giá theo đơn hàng", dong: ds.map((r) => ({ ngay: ngay(r.ngay), ma: r.ma, ten: r.ten, diem: r.diem, y_kien: r.yKien, dich_vu: r.dichVu })), cot: [
       { nhan: "Ngày", khoa: "ngay", rong: 12 }, { nhan: "Mã hóa đơn", khoa: "ma", rong: 16 }, { nhan: "Tên Nhân Viên", khoa: "ten", rong: 28 }, { nhan: "Đánh giá (sao)", khoa: "diem", so: true },
       { nhan: "Ý kiến đánh giá", khoa: "y_kien", rong: 48 }, { nhan: "Dịch vụ đã thực hiện", khoa: "dich_vu", rong: 48 }] });
+  } else if (tab === "voucher") {
+    const ds = await layBaoCaoVoucher(db, tu, den, cn);
+    bangs.push({ ten: "Hiệu quả voucher", dong: ds.map((r) => ({ ten: r.ten, tu: r.tuNgay, den: r.denNgay, luot: r.soLuot, khach: r.soKhach, giam: r.tienGiam, thu: r.doanhThu, tl: r.tongHang > 0 ? `${(Math.round(r.tiLeGiam * 10) / 10)}%` : "", dung: `${r.daDungTatCa}/${r.soLuong}`, huy: r.soHoan })), cot: [
+      { nhan: "Voucher", khoa: "ten", rong: 30 }, { nhan: "Từ ngày", khoa: "tu", rong: 12 }, { nhan: "Đến ngày", khoa: "den", rong: 12 }, { nhan: "Lượt dùng", khoa: "luot", so: true }, { nhan: "Số khách", khoa: "khach", so: true },
+      { nhan: "Tiền giảm", khoa: "giam", tien: true }, { nhan: "Doanh thu đơn", khoa: "thu", tien: true }, { nhan: "Giảm / tiền hàng", khoa: "tl", rong: 16 }, { nhan: "Đã dùng / phát hành", khoa: "dung", rong: 18 }, { nhan: "Đơn huỷ", khoa: "huy", so: true }] });
   } else if (tab === "ti-le-chot") {
     const ds = await layTiLeChot(db, tu, den, cn), xemTien = coQuyen(nd, "baocao.tien");
     bangs.push({ ten: "Tỉ lệ chốt tư vấn", dong: ds.map((r) => ({ ten: r.ten, so: r.soPhieu, cho: r.choChot, chot: r.chot, khong: r.khongChot, tl: phanTram(r.tiLe), gt: r.tongBaoGiaChot, bg: r.tongBaoGia })), cot: [

@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { sb } from "@/lib/db";
 import { chiNhanhHoatDong, tatCaChiNhanh } from "@/lib/chi-nhanh";
 import { layCanhBao } from "@/lib/canh-bao";
+import { bcDoanhThuNgayNho, bcNhanVienNho } from "@/lib/bao-cao-nho-dem";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
 import { DongHo } from "@/components/layout/DongHo";
@@ -116,8 +117,8 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
   const pTopKh = khoiDong(db.rpc("top_khach_chi_12_thang", { p_so: 10, ...(cn ? { p_cn: cn } : {}) }));
   const [canhBao, { data: ban }, { data: dtNgay }, { data: tatCaLich }, { data: dsNo }] = await Promise.all([
     layCanhBao(nd),
-    db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: (cn ?? undefined) as string }),
-    coQuyen(nd, "baocao.xem") ? db.rpc("bc_doanh_thu_ngay", { p_tu: `${congThang(dauThang, -1)}`, p_den: homNay, p_cn: (cn ?? undefined) as string }) : Promise.resolve({ data: null }),
+    bcNhanVienNho(dauThang, homNay, cn ?? null).then((data) => ({ data })),
+    coQuyen(nd, "baocao.xem") ? bcDoanhThuNgayNho(congThang(dauThang, -1), homNay, cn ?? null).then((data) => ({ data })) : Promise.resolve({ data: null }),
     lq.then((r) => ({ data: r.data ?? [] })),
     no.then((r) => ({ data: r.data ?? [] })),
   ]);
@@ -200,7 +201,7 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
   const thayDoanhSo = coHieuSuat && (coQuyen(nd, "baocao.tien") || ["thu_ngan", "tu_van", "ktv", "bac_si"].includes(nd.vaiTro));
   const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: ccThang }, { count: phieuCho }] = await Promise.all([
     layCanhBao(nd),
-    thayDoanhSo ? db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: (cn ?? undefined) as string }) : Promise.resolve({ data: null }),
+    thayDoanhSo ? bcNhanVienNho(dauThang, homNay, cn ?? null).then((data) => ({ data })) : Promise.resolve({ data: null }),
     db.from("buoi_thuc_hien").select("khach_id, doanh_thu_buoi").eq("nv_thuc_hien_id", nd.nhanVienId).eq("trang_thai", "da_lam").gte("ngay_lam", dauThang).lte("ngay_lam", homNay).limit(1000),
     db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8),
     db.from("cham_cong").select("ngay, vao, ra, cong, tre_phut").eq("nhan_vien_id", nd.nhanVienId).gte("ngay", dauThang).lte("ngay", homNay).limit(40),

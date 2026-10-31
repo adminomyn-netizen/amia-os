@@ -18,15 +18,21 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   let qNo = db.from("hoa_don").select("id", { count: "exact", head: true }).eq("trang_thai", "hoan_thanh").gt("con_no", 0);
   if (nd.chiNhanhId) qNo = qNo.eq("chi_nhanh_id", nd.chiNhanhId);
   if (!coQuyen(nd, "ban.toan_co_so")) qNo = qNo.eq("nguoi_lap_id", nd.nhanVienId ?? "");
-  const choThanhToan = coQuyen(nd, "ban.xem") ? (await qNo).count ?? 0 : null;
-  const [{ data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }] = await Promise.all([
+  // Mọi truy vấn không phụ thuộc nhau chạy CÙNG LÚC (trước đây xếp hàng nối đuôi): đếm chờ thanh toán, danh mục, ngân hàng nhận, đơn nháp.
+  let qTk = db.from("tai_khoan_ngan_hang").select("ngan_hang, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true);
+  if (nd.chiNhanhId) qTk = qTk.or(`chi_nhanh_id.is.null,chi_nhanh_id.eq.${nd.chiNhanhId}`);
+  const [{ count: demNo }, { data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }, { data: dsTk }, nhapBanDau] = await Promise.all([
+    coQuyen(nd, "ban.xem") ? qNo : Promise.resolve({ count: null as number | null }),
     db.from("dich_vu").select("id, ma, ten, gia, nhom_id, vat_pct, tao_luc").eq("hoat_dong", true).order("ten"),
     db.from("dich_vu_nhom").select("id, ten"),
     db.from("goi_the").select("id, ma, ten, gia, loai, so_buoi, tao_luc").eq("hoat_dong", true).order("ten"),
     db.from("san_pham").select("id, ma, ma_vach, ten, gia_ban, nhom, tao_luc").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id").eq("hoat_dong", true).order("ho_ten"),
     dsChiNhanhRutGon(),
+    qTk,
+    dsDonNhap(),
   ]);
+  const choThanhToan = coQuyen(nd, "ban.xem") ? demNo ?? 0 : null;
   const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
   const muc: MucBan[] = [
     ...(dv ?? []).map((d) => ({ loai: "dich_vu" as const, id: d.id, ten: d.ten, gia: d.gia, nhom: tenNhom.get(d.nhom_id) ?? "Khác", tao: d.tao_luc, ma: d.ma })),
@@ -56,16 +62,14 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   if (khach && nd.chiNhanhId && khach.chi_nhanh_id !== nd.chiNhanhId) khach = null;
   if (khach && !coQuyen(nd, "khach.sdt")) khach = { ...khach, dien_thoai: "" };
   // Ngân hàng nhận tiền cho khoản chuyển khoản / quẹt thẻ: tài khoản đang hoạt động (Cài đặt › Ngân hàng); người gắn chi nhánh chỉ nhận tài khoản chung và của chi nhánh mình.
-  let qTk = db.from("tai_khoan_ngan_hang").select("ngan_hang, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true);
-  if (nd.chiNhanhId) qTk = qTk.or(`chi_nhanh_id.is.null,chi_nhanh_id.eq.${nd.chiNhanhId}`);
-  const taiKhoanNhan: TaiKhoanNhan[] = ((await qTk).data ?? []).map((x) => ({ ten: x.ngan_hang, chiNhanhId: x.chi_nhanh_id, cx: x.dung_chuyen_khoan, qt: x.dung_quet_the, macDinh: x.mac_dinh }));
+  const taiKhoanNhan: TaiKhoanNhan[] = (dsTk ?? []).map((x) => ({ ten: x.ngan_hang, chiNhanhId: x.chi_nhanh_id, cx: x.dung_chuyen_khoan, qt: x.dung_quet_the, macDinh: x.mac_dinh }));
   // Chi nhánh của đơn: người có chi nhánh cố định thì khoá theo đó; người xem mọi chi nhánh thì lấy theo lịch hẹn, rồi theo khách; không đoán, để trống bắt chọn.
   const chiNhanhId = nd.chiNhanhId ?? cnLich ?? khach?.chi_nhanh_id ?? "";
   return (
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
       <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} thuNgan={nd.hoTen} nguonLich={nguonLich} taiKhoanNhan={taiKhoanNhan}
-        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} xoaNhap={xoaDonNhap} nhapBanDau={await dsDonNhap()} />
+        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} />
     </>
   );
 }

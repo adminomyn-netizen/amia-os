@@ -102,13 +102,26 @@ export async function dieuChinhThe(fd: FormData): Promise<KQ> {
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }
 
+/** Khoá / mở khoá thẻ: BẮT BUỘC có lý do; ghi một dòng sổ cái (0 buổi, 0 tiền) để biết ai làm, lúc nào, vì sao (migration 0188). */
 export async function doiTrangThaiThe(fd: FormData): Promise<KQ> {
-  if (!(await kiemQuyen("the.dieuchinh"))) return { loi: KHONG_DU_QUYEN };
+  const nd = await kiemQuyen("the.dieuchinh");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
   const tt = chuoi(fd, "trang_thai");
   if (!["hoat_dong", "khoa"].includes(tt)) return { loi: "Trạng thái không hợp lệ." };
-  const { error } = await sb().from("the_khach").update({ trang_thai: tt }).eq("id", chuoi(fd, "the_id")).neq("trang_thai", "thu_hoi");
-  lamMoi(chuoi(fd, "the_id"));
-  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+  const lyDo = chuoi(fd, "ly_do");
+  if (lyDo.length < 3) return { loi: tt === "khoa" ? "Nhập lý do khoá thẻ (ít nhất 3 ký tự)." : "Nhập lý do mở khoá thẻ (ít nhất 3 ký tự)." };
+  if (lyDo.length > 500) return { loi: "Lý do dài quá (tối đa 500 ký tự)." };
+  const theId = chuoi(fd, "the_id");
+  const db = sb();
+  const { data: the } = await db.from("the_khach").select("trang_thai").eq("id", theId).maybeSingle();
+  if (!the) return { loi: "Không tìm thấy thẻ." };
+  if (the.trang_thai === "thu_hoi") return { loi: "Thẻ đã thu hồi, không khoá hay mở khoá được." };
+  if (the.trang_thai === tt) return { loi: tt === "khoa" ? "Thẻ đang khoá rồi." : "Thẻ đang dùng được, không cần mở khoá." };
+  const { error } = await db.from("the_khach").update({ trang_thai: tt }).eq("id", theId).neq("trang_thai", "thu_hoi");
+  if (error) return { loi: thongBaoLoi(error) };
+  const { error: eSc } = await db.from("the_so_cai").insert({ the_id: theId, loai: tt === "khoa" ? "khoa" : "mo_khoa", so_buoi: 0, so_tien: 0, ghi_chu: lyDo, nguoi_id: nd.nhanVienId });
+  lamMoi(theId);
+  return eSc ? { loi: thongBaoLoi(eSc) } : { ok: true };
 }
 
 /** Cấp thẻ tay (tặng, chuyển đổi từ phần mềm cũ): không có hoá đơn nên KHÔNG tính doanh thu. */

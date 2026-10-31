@@ -18,6 +18,7 @@ export const MODULE: Module[] = [
       { nhan: "Công việc & chấm công", the: [
         { ten: "Việc của tôi hôm nay", moTa: "Lịch, thẻ, phiếu vật tư và việc được giao cho tôi.", duongDan: "/trang-chu", trangThai: "san_sang" },
         { ten: "Việc cần hoàn thành", moTa: "Việc được giao cho tôi, việc tôi giao và việc quá hạn.", duongDan: "/noi-lam-viec/viec", trangThai: "san_sang" },
+        { ten: "Bảng chốt 12h và 17h", moTa: "Việc đến hạn, đã nộp, đạt, trễ (cờ đỏ từ 30 phút) và kẹt ở ai.", duongDan: "/noi-lam-viec/chot-ngay", trangThai: "san_sang" },
         { ten: "Bảng chấm công", moTa: "Chấm công và giờ làm thực tế.", duongDan: "/nhan-su/cham-cong", trangThai: "san_sang" },
         { ten: "Đơn nghỉ & phiếu nhân sự", moTa: "Xin nghỉ, tăng ca, đi trễ, điều chỉnh công; xem phép năm.", duongDan: "/nhan-su/ngay-nghi", trangThai: "san_sang" },
         { ten: "Hồ sơ của tôi", moTa: "Tự điền thông tin cá nhân, người thân, tải giấy tờ; xin nghỉ việc.", duongDan: "/nhan-su/ho-so-cua-toi", trangThai: "san_sang" },

@@ -20,18 +20,18 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   if (!coQuyen(nd, "ban.toan_co_so")) qNo = qNo.eq("nguoi_lap_id", nd.nhanVienId ?? "");
   const choThanhToan = coQuyen(nd, "ban.xem") ? (await qNo).count ?? 0 : null;
   const [{ data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }] = await Promise.all([
-    db.from("dich_vu").select("id, ten, gia, nhom_id, vat_pct, tao_luc").eq("hoat_dong", true).order("ten"),
+    db.from("dich_vu").select("id, ma, ten, gia, nhom_id, vat_pct, tao_luc").eq("hoat_dong", true).order("ten"),
     db.from("dich_vu_nhom").select("id, ten"),
-    db.from("goi_the").select("id, ten, gia, loai, so_buoi, tao_luc").eq("hoat_dong", true).order("ten"),
-    db.from("san_pham").select("id, ten, gia_ban, nhom, tao_luc").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
+    db.from("goi_the").select("id, ma, ten, gia, loai, so_buoi, tao_luc").eq("hoat_dong", true).order("ten"),
+    db.from("san_pham").select("id, ma, ma_vach, ten, gia_ban, nhom, tao_luc").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id").eq("hoat_dong", true).order("ho_ten"),
     dsChiNhanhRutGon(),
   ]);
   const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
   const muc: MucBan[] = [
-    ...(dv ?? []).map((d) => ({ loai: "dich_vu" as const, id: d.id, ten: d.ten, gia: d.gia, nhom: tenNhom.get(d.nhom_id) ?? "Khác", tao: d.tao_luc })),
-    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc })),
-    ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm", tao: s.tao_luc })),
+    ...(dv ?? []).map((d) => ({ loai: "dich_vu" as const, id: d.id, ten: d.ten, gia: d.gia, nhom: tenNhom.get(d.nhom_id) ?? "Khác", tao: d.tao_luc, ma: d.ma })),
+    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma })),
+    ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm", tao: s.tao_luc, ma: s.ma, maVach: s.ma_vach ?? undefined })),
   ];
   type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string };
   let khach: K | null = null;

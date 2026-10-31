@@ -8,7 +8,7 @@ import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
-import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHACH, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
+import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHACH, khopMuc, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -271,7 +271,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const capNhat = (i: number, p: Partial<DongDon>) => setDong((ds) => ds.map((d, j) => (j === i ? { ...d, ...p } : d)));
 
   // Sắp xếp như SalonHero (Tên A-Z, giá thấp-cao, giá cao-thấp); xếp trong từng nhóm vì danh mục hiện theo nhóm.
-  const dsMuc = muc.filter((m) => m.loai === tab && (!tu.trim() || m.ten.toLowerCase().includes(tu.trim().toLowerCase())))
+  const dsMuc = muc.filter((m) => m.loai === tab && khopMuc(m, tu))
     .sort((a, b) => (sapXep === "gia_tang" ? a.gia - b.gia : sapXep === "gia_giam" ? b.gia - a.gia : sapXep === "moi_nhat" ? (b.tao ?? "").localeCompare(a.tao ?? "") : 0) || a.ten.localeCompare(b.ten, "vi"));
   const nhomMuc = [...new Set(dsMuc.map((m) => m.nhom))];
 
@@ -312,7 +312,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
         <div className="mt-4 grid grid-cols-[1fr_auto] items-center gap-2">
           <div className="relative">
             <Search aria-hidden strokeWidth={1.6} className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muc-3" />
-            <input value={tu} onChange={(e) => setTu(e.target.value)} placeholder="Tìm trong danh mục" aria-label="Tìm trong danh mục" className={`${O_NHAP} pl-9`} />
+            <input value={tu} onChange={(e) => setTu(e.target.value)} placeholder="Tìm tên, mã hoặc mã vạch" aria-label="Tìm trong danh mục" className={`${O_NHAP} pl-9`} />
           </div>
           <div className="w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }, { gia_tri: "moi_nhat", nhan: "Mới nhất" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
         </div>

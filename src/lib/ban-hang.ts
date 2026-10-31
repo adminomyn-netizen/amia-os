@@ -1,3 +1,4 @@
+import { boDau } from "@/lib/dinh-dang";
 import { chuanTenNganHang, coNganHang, NGAN_HANG_MAC_DINH } from "@/lib/ngan-hang-ten";
 export type Vai = "phuc_vu" | "tu_van" | "ban";
 export const VAI: { ma: Vai; ten: string }[] = [{ ma: "phuc_vu", ten: "Phục vụ" }, { ma: "tu_van", ten: "Tư vấn" }, { ma: "ban", ten: "Bán hàng" }];
@@ -8,7 +9,12 @@ export const PHUONG_THUC = [
 ];
 export const NHAN_PHUONG_THUC = Object.fromEntries(PHUONG_THUC.map((p) => [p.gia_tri, p.nhan])) as Record<string, string>;
 
-export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number; tao?: string };
+export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number; tao?: string; /** Mã và mã vạch để thu ngân tìm nhanh (gõ không dấu cũng ra). */ ma?: string; maVach?: string };
+/** Ô tìm của thu ngân: khớp tên, mã hoặc mã vạch, không phân biệt hoa thường và dấu ("tre hoa" ra "Trẻ hóa"). */
+export const khopMuc = (m: Pick<MucBan, "ten" | "ma" | "maVach">, tu: string) => {
+  const k = boDau(tu.trim());
+  return !k || boDau(`${m.ten} ${m.ma ?? ""} ${m.maVach ?? ""}`).includes(k);
+};
 export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: number; nv: Record<Vai, { id: string; ti: number }[]> };
 export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string };
 

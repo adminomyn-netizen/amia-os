@@ -2090,40 +2090,82 @@ export type Database = {
       }
       cong_viec: {
         Row: {
+          danh_gia: string
+          danh_gia_boi: string | null
+          danh_gia_ghi_chu: string | null
+          danh_gia_luc: string | null
           han: string | null
+          han_gio: string | null
           hoan_thanh_luc: string | null
           id: string
+          ket_luc: string | null
+          ket_ly_do: string | null
+          ket_nguoi_id: string | null
           ket_qua: string | null
           mo_ta: string | null
           nguoi_giao_id: string
           nguoi_nhan_id: string
+          san_pham: string | null
           tao_luc: string
+          tc_do_duoc: boolean
+          tc_dung_duoc: boolean
+          tc_lam_duoc: boolean
+          tc_thay_duoc: boolean
+          tieu_chi_xong: string | null
           tieu_de: string
           trang_thai: string
           uu_tien: string
         }
         Insert: {
+          danh_gia?: string
+          danh_gia_boi?: string | null
+          danh_gia_ghi_chu?: string | null
+          danh_gia_luc?: string | null
           han?: string | null
+          han_gio?: string | null
           hoan_thanh_luc?: string | null
           id?: string
+          ket_luc?: string | null
+          ket_ly_do?: string | null
+          ket_nguoi_id?: string | null
           ket_qua?: string | null
           mo_ta?: string | null
           nguoi_giao_id: string
           nguoi_nhan_id: string
+          san_pham?: string | null
           tao_luc?: string
+          tc_do_duoc?: boolean
+          tc_dung_duoc?: boolean
+          tc_lam_duoc?: boolean
+          tc_thay_duoc?: boolean
+          tieu_chi_xong?: string | null
           tieu_de: string
           trang_thai?: string
           uu_tien?: string
         }
         Update: {
+          danh_gia?: string
+          danh_gia_boi?: string | null
+          danh_gia_ghi_chu?: string | null
+          danh_gia_luc?: string | null
           han?: string | null
+          han_gio?: string | null
           hoan_thanh_luc?: string | null
           id?: string
+          ket_luc?: string | null
+          ket_ly_do?: string | null
+          ket_nguoi_id?: string | null
           ket_qua?: string | null
           mo_ta?: string | null
           nguoi_giao_id?: string
           nguoi_nhan_id?: string
+          san_pham?: string | null
           tao_luc?: string
+          tc_do_duoc?: boolean
+          tc_dung_duoc?: boolean
+          tc_lam_duoc?: boolean
+          tc_thay_duoc?: boolean
+          tieu_chi_xong?: string | null
           tieu_de?: string
           trang_thai?: string
           uu_tien?: string

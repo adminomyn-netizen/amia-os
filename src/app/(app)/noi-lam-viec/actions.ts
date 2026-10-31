@@ -8,6 +8,8 @@ import { chuoi, chuoiHoacNull, bat, so } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { hanMucHieuLuc } from "@/lib/de-xuat";
 import { vuotNganSach } from "@/lib/ngan-sach";
+import { GIO_HAN_MAC_DINH, hanGioTuNhap } from "@/lib/cong-viec-han";
+import type { Database } from "@/lib/supabase/database.types";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => { revalidatePath("/noi-lam-viec", "layout"); };
@@ -15,6 +17,7 @@ const dem = async (k: string, tien: string) => `${tien}${String(Number((await sb
 const TOI_DA = 100_000_000_000;
 
 // ─── Việc cần hoàn thành ────────────────────────────────────────────────────
+/** Giao việc: bắt buộc có người làm, hạn nộp (ngày + giờ, giờ Việt Nam) và tiêu chí xong để chị kiểm soát việc phải XONG. */
 export async function giaoViec(fd: FormData): Promise<KQ> {
   const nd = await kiemNoiBo();
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -23,15 +26,21 @@ export async function giaoViec(fd: FormData): Promise<KQ> {
   const nhan = chuoi(fd, "nguoi_nhan_id") || nd.nhanVienId;
   const { data: nv } = await sb().from("nhan_vien").select("id").eq("id", nhan).eq("hoat_dong", true).maybeSingle();
   if (!nv) return { loi: "Người nhận việc không hợp lệ." };
-  const han = chuoiHoacNull(fd, "han");
+  const han = chuoi(fd, "han");
+  if (!han) return { loi: "Nhập hạn nộp (ngày)." };
+  const hanGio = hanGioTuNhap(han, chuoi(fd, "han_gio") || GIO_HAN_MAC_DINH);
+  if (!hanGio) return { loi: "Hạn nộp chưa đúng, nhập lại ngày và giờ." };
+  if (han < homNayHCM()) return { loi: "Hạn nộp không được ở quá khứ." };
+  const tieuChi = chuoi(fd, "tieu_chi_xong");
+  if (!tieuChi) return { loi: "Ghi tiêu chí xong: làm được gì, xem ở đâu, đo bằng gì, dùng thế nào." };
   const uuTien = ["thap", "thuong", "cao"].includes(chuoi(fd, "uu_tien")) ? chuoi(fd, "uu_tien") : "thuong";
-  const { error } = await sb().from("cong_viec").insert({ tieu_de: tieuDe, mo_ta: chuoiHoacNull(fd, "mo_ta"), nguoi_giao_id: nd.nhanVienId, nguoi_nhan_id: nhan, han, uu_tien: uuTien });
+  const { error } = await sb().from("cong_viec").insert({ tieu_de: tieuDe, mo_ta: chuoiHoacNull(fd, "mo_ta"), nguoi_giao_id: nd.nhanVienId, nguoi_nhan_id: nhan, han, han_gio: hanGio, tieu_chi_xong: tieuChi, uu_tien: uuTien });
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();
   return { ok: true };
 }
 
-/** Đổi trạng thái: người nhận bắt đầu / hoàn thành; người giao (hoặc người xem tất cả) huỷ hoặc mở lại. */
+/** Đổi trạng thái: người nhận bắt đầu / NỘP KẾT QUẢ (ghi nơi thấy sản phẩm và 4 tiêu chí); người giao (hoặc người xem tất cả) huỷ hoặc mở lại. */
 export async function doiTrangThaiViec(fd: FormData): Promise<KQ> {
   const nd = await kiemNoiBo();
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -43,8 +52,59 @@ export async function doiTrangThaiViec(fd: FormData): Promise<KQ> {
   const duocPhep = (dich === "dang_lam" || dich === "xong") ? (laNhan || laGiao || quanLy) : (dich === "huy" || dich === "moi") ? (laGiao || quanLy) : false;
   if (!duocPhep) return { loi: KHONG_DU_QUYEN };
   if (v.trang_thai === "huy" && dich !== "moi") return { loi: "Việc đã huỷ, chỉ mở lại được." };
-  const cap: { trang_thai: string; ket_qua?: string | null; hoan_thanh_luc: string | null } = { trang_thai: dich, hoan_thanh_luc: dich === "xong" ? new Date().toISOString() : null };
-  if (dich === "xong") cap.ket_qua = chuoiHoacNull(fd, "ket_qua");
+  type Cap = Database["public"]["Tables"]["cong_viec"]["Update"];
+  const cap: Cap = { trang_thai: dich, hoan_thanh_luc: dich === "xong" ? new Date().toISOString() : null, danh_gia: "cho", danh_gia_ghi_chu: null, danh_gia_boi: null, danh_gia_luc: null };
+  if (dich === "xong") {
+    const sanPham = chuoi(fd, "san_pham");
+    if (!sanPham) return { loi: "Ghi sản phẩm ở đâu (đường dẫn, tên tệp hoặc nơi xem) để nộp." };
+    Object.assign(cap, { san_pham: sanPham, ket_qua: chuoiHoacNull(fd, "ket_qua"), tc_lam_duoc: bat(fd, "tc_lam_duoc"), tc_thay_duoc: bat(fd, "tc_thay_duoc"), tc_do_duoc: bat(fd, "tc_do_duoc"), tc_dung_duoc: bat(fd, "tc_dung_duoc"), ket_nguoi_id: null, ket_ly_do: null, ket_luc: null });
+  }
+  const { error } = await sb().from("cong_viec").update(cap).eq("id", v.id);
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+/** Báo kẹt ở ai (người nhận, người giao hoặc quản lý); gỡ kẹt khi `go` = 1. Chỉ cho việc chưa nộp. */
+export async function baoKetViec(fd: FormData): Promise<KQ> {
+  const nd = await kiemNoiBo();
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const { data: v } = await sb().from("cong_viec").select("id, trang_thai, nguoi_nhan_id, nguoi_giao_id").eq("id", chuoi(fd, "id")).maybeSingle();
+  if (!v) return { loi: "Không tìm thấy công việc." };
+  if (!(v.nguoi_nhan_id === nd.nhanVienId || v.nguoi_giao_id === nd.nhanVienId || coQuyen(nd, "viec.tatca"))) return { loi: KHONG_DU_QUYEN };
+  if (!["moi", "dang_lam"].includes(v.trang_thai)) return { loi: "Việc đã nộp hoặc đã huỷ, không báo kẹt được." };
+  if (bat(fd, "go")) {
+    const { error } = await sb().from("cong_viec").update({ ket_nguoi_id: null, ket_ly_do: null, ket_luc: null }).eq("id", v.id);
+    if (error) return { loi: thongBaoLoi(error) };
+    lamMoi();
+    return { ok: true };
+  }
+  const lyDo = chuoi(fd, "ket_ly_do");
+  if (!lyDo) return { loi: "Ghi lý do kẹt." };
+  const ai = chuoi(fd, "ket_nguoi_id");
+  const { data: nv } = await sb().from("nhan_vien").select("id").eq("id", ai).eq("hoat_dong", true).maybeSingle();
+  if (!nv) return { loi: "Chọn người đang làm việc bị kẹt chờ." };
+  const { error } = await sb().from("cong_viec").update({ ket_nguoi_id: nv.id, ket_ly_do: lyDo, ket_luc: new Date().toISOString() }).eq("id", v.id);
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+/** Người giao (hoặc quản lý) chấm việc đã nộp: Đạt, hoặc Chưa đạt kèm lý do (việc quay về Đang làm để nộp lại). */
+export async function chamViec(fd: FormData): Promise<KQ> {
+  const nd = await kiemNoiBo();
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const { data: v } = await sb().from("cong_viec").select("id, trang_thai, nguoi_giao_id").eq("id", chuoi(fd, "id")).maybeSingle();
+  if (!v) return { loi: "Không tìm thấy công việc." };
+  if (!(v.nguoi_giao_id === nd.nhanVienId || coQuyen(nd, "viec.tatca"))) return { loi: KHONG_DU_QUYEN };
+  if (v.trang_thai !== "xong") return { loi: "Chỉ chấm được việc đã nộp." };
+  const kq = chuoi(fd, "ket");
+  if (kq !== "dat" && kq !== "chua_dat") return { loi: "Chọn Đạt hoặc Chưa đạt." };
+  const ghiChu = chuoiHoacNull(fd, "ghi_chu");
+  if (kq === "chua_dat" && !ghiChu) return { loi: "Ghi lý do chưa đạt." };
+  const cap = kq === "dat"
+    ? { danh_gia: "dat", danh_gia_ghi_chu: ghiChu, danh_gia_boi: nd.nhanVienId, danh_gia_luc: new Date().toISOString() }
+    : { danh_gia: "chua_dat", danh_gia_ghi_chu: ghiChu, danh_gia_boi: nd.nhanVienId, danh_gia_luc: new Date().toISOString(), trang_thai: "dang_lam", hoan_thanh_luc: null };
   const { error } = await sb().from("cong_viec").update(cap).eq("id", v.id);
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();

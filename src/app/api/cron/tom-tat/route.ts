@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     if (!laVaiTro(n.vai_tro)) continue;
     const nd = { nhanVienId: n.id, vaiTro: n.vai_tro, quyen: quyenHieuLuc(n.vai_tro, n.quyen_rieng), chiNhanhId: n.chi_nhanh_id };
     const [cb, { count: lich }] = await Promise.all([layCanhBao(nd), db.from("lich_hen").select("id", { count: "exact", head: true }).eq("nhan_vien_id", n.id).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)")]);
-    const phan = [lich ? `${lich} lịch của bạn` : "", cb.length ? `${cb.length} việc đang chờ` : ""].filter(Boolean);
+    const phan = [lich ? `${lich} lịch của bạn` : "", cb.length ? `${cb.length} việc đang chờ (${cb.slice(0, 3).map((c) => c.nhan).join("; ")}${cb.length > 3 ? `; và ${cb.length - 3} việc khác` : ""})` : ""].filter(Boolean);
     if (phan.length === 0) continue;
     const kq = await guiChoNhanVien([n.id], { tieuDe: "Chào buổi sáng, " + n.ho_ten.split(" ").slice(-1)[0], noiDung: `Hôm nay: ${phan.join(" · ")}.`, url: "/trang-chu", tag: "tom-tat" });
     daGui += kq.thanhCong;

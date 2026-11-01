@@ -68,8 +68,8 @@ export async function GET(req: Request) {
       const tt = await tinhTongHop(k);
       const { data: moi } = await db.from("tong_hop_hieu_suat").upsert({ loai: k.loai, ky: k.ky, tieu_de: tt.tieuDe, noi_dung: tt.noiDung, chi_tiet: tt.chiTiet }, { onConflict: "loai,ky", ignoreDuplicates: true }).select("id");
       if (moi?.length) {
-        // Người xem được số liệu tiền mới nhận; thông báo đẩy chung chung, số liệu nằm trong chuông.
-        for (const u of await nguoiCoQuyen("baocao.tien", null)) daGui += await gui(u, `tong_hop_${k.loai}`, tt.tieuDe, "Đã có tổng hợp mới. Mở chuông thông báo để xem số liệu.", "/bao-cao");
+        // Người xem được số liệu tiền mới nhận; thông báo đẩy ghi đủ số liệu thật của kỳ ngay trong nội dung (không bắt mở app xem).
+        for (const u of await nguoiCoQuyen("baocao.tien", null)) daGui += await gui(u, `tong_hop_${k.loai}`, tt.tieuDe, tt.noiDung, "/bao-cao");
       }
     }
   }

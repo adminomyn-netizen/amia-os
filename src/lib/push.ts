@@ -24,7 +24,7 @@ export async function guiChoNhanVien(nhanVienIds: string[], tin: Tin): Promise<K
     const db = sb();
     const { data: ds } = await db.from("dang_ky_thong_bao").select("id, endpoint, p256dh, auth").in("nhan_vien_id", ids);
     ra.thietBi = ds?.length ?? 0;
-    const goi = JSON.stringify({ tieuDe: tin.tieuDe.slice(0, 80), noiDung: tin.noiDung.slice(0, 160), url: tin.url, tag: tin.tag });
+    const goi = JSON.stringify({ tieuDe: tin.tieuDe.slice(0, 80), noiDung: tin.noiDung.slice(0, 420), url: tin.url, tag: tin.tag });
     const hong: string[] = [], tot: string[] = [];
     await Promise.all((ds ?? []).map(async (d) => {
       try {

@@ -963,6 +963,93 @@ export type Database = {
           },
         ]
       }
+      blog_bai_viet: {
+        Row: {
+          anh: string | null
+          cap_nhat_luc: string
+          chuyen_muc_id: string
+          hoat_dong: boolean
+          id: string
+          mo_ta_ngan: string | null
+          noi_dung: string
+          tao_boi: string | null
+          tao_luc: string
+          tieu_bieu: boolean
+          tieu_de: string
+        }
+        Insert: {
+          anh?: string | null
+          cap_nhat_luc?: string
+          chuyen_muc_id: string
+          hoat_dong?: boolean
+          id?: string
+          mo_ta_ngan?: string | null
+          noi_dung: string
+          tao_boi?: string | null
+          tao_luc?: string
+          tieu_bieu?: boolean
+          tieu_de: string
+        }
+        Update: {
+          anh?: string | null
+          cap_nhat_luc?: string
+          chuyen_muc_id?: string
+          hoat_dong?: boolean
+          id?: string
+          mo_ta_ngan?: string | null
+          noi_dung?: string
+          tao_boi?: string | null
+          tao_luc?: string
+          tieu_bieu?: boolean
+          tieu_de?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blog_bai_viet_chuyen_muc_id_fkey"
+            columns: ["chuyen_muc_id"]
+            isOneToOne: false
+            referencedRelation: "blog_chuyen_muc"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "blog_bai_viet_tao_boi_fkey"
+            columns: ["tao_boi"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blog_chuyen_muc: {
+        Row: {
+          cap_nhat_luc: string
+          hoat_dong: boolean
+          id: string
+          mo_ta: string | null
+          tao_luc: string
+          thu_tu: number
+          tieu_de: string
+        }
+        Insert: {
+          cap_nhat_luc?: string
+          hoat_dong?: boolean
+          id?: string
+          mo_ta?: string | null
+          tao_luc?: string
+          thu_tu?: number
+          tieu_de: string
+        }
+        Update: {
+          cap_nhat_luc?: string
+          hoat_dong?: boolean
+          id?: string
+          mo_ta?: string | null
+          tao_luc?: string
+          thu_tu?: number
+          tieu_de?: string
+        }
+        Relationships: []
+      }
       bao_cao_ngay: {
         Row: {
           cap_nhat_luc: string

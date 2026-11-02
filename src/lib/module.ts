@@ -133,6 +133,7 @@ export const MODULE: Module[] = [
         { ten: "Thiết lập in", moTa: "Khổ giấy, dòng hiện trên tờ in hoá đơn / lịch hẹn, nội dung cuối tờ, mã QR thanh toán.", duongDan: "/cai-dat/thiet-lap-in", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Tài khoản ngân hàng", moTa: "Tài khoản dùng khi thu tiền chuyển khoản và sổ quỹ.", duongDan: "/cai-dat/ngan-hang", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
         { ten: "Bảng tin công ty", moTa: "Thông báo hiển thị cho toàn công ty.", duongDan: "/cai-dat/bang-tin", trangThai: "san_sang", quyen: ["danhmuc.xem"] },
+        { ten: "Blog", moTa: "Chuyên mục và bài viết hiện trên website AMIA (Chủ và Kỹ thuật quản lý).", duongDan: "/cai-dat/blog", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
       ] },
       { nhan: "Sản phẩm & dịch vụ", the: [
         { ten: "Danh mục dịch vụ", moTa: "Dịch vụ, giá và nhóm dịch vụ.", duongDan: "/danh-muc?tab=dich-vu", trangThai: "san_sang", quyen: ["danhmuc.xem"] },

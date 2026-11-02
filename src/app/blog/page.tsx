@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { sb } from "@/lib/db";
 import { anhBlogUrl } from "@/lib/blog";
@@ -21,7 +22,8 @@ export default async function TrangBlogCongKhai({ searchParams }: { searchParams
   const chip = (dang: boolean) => `rounded-nho border px-3 py-1.5 text-[14px] ${dang ? "border-nhan bg-giay-tram font-medium text-nhan-dam" : "border-vien text-muc-2 hover:text-muc"}`;
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
-      <h1 className="chu-tieu-de text-[34px] leading-tight text-muc">Blog AMIA</h1>
+      <Link href="/blog" aria-label="Blog AMIA"><Image src="/logo-amia.png" alt="AMIA" width={150} height={65} priority className="mb-5 h-auto w-[110px] sm:w-[130px]" /></Link>
+      <h1 className="chu-tieu-de text-[30px] leading-tight text-muc sm:text-[34px]">Blog AMIA</h1>
       <p className="mt-2 text-[15px] text-muc-3">Kiến thức chăm sóc da và thông tin dịch vụ từ AMIA Phòng khám da liễu · 39A Lê Hồng Phong, TP. Vinh.</p>
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Chuyên mục">
         <Link href="/blog" className={chip(!cm)}>Tất cả</Link>

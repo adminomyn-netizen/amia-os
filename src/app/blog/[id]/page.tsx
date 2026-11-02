@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { sb } from "@/lib/db";
@@ -29,9 +30,10 @@ export default async function TrangBaiBlog({ params }: { params: Promise<{ id: s
   const anh = anhBlogUrl(b.anh);
   return (
     <main className="mx-auto max-w-3xl px-4 py-10">
-      <Link href="/blog" className="text-[13px] text-muc-3 hover:text-muc">← Blog AMIA</Link>
+      <Link href="/blog" aria-label="Blog AMIA"><Image src="/logo-amia.png" alt="AMIA" width={150} height={65} priority className="mb-4 h-auto w-[100px] sm:w-[120px]" /></Link>
+      <Link href="/blog" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc">← Tất cả bài viết</Link>
       <p className="mt-4 text-[13px] text-muc-3">{cm} · {ngayVN(b.cap_nhat_luc.slice(0, 10))}</p>
-      <h1 className="chu-tieu-de mt-1 text-[32px] leading-tight text-muc">{b.tieu_de}</h1>
+      <h1 className="chu-tieu-de mt-1 text-[26px] leading-tight text-muc sm:text-[32px]">{b.tieu_de}</h1>
       {b.mo_ta_ngan && <p className="mt-3 text-[17px] text-muc-2">{b.mo_ta_ngan}</p>}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       {anh && <img src={anh} alt={b.tieu_de} className="mt-6 w-full rounded-nho border border-vien object-cover" />}

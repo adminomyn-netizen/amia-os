@@ -13,12 +13,16 @@ export default async function TrangBlogCongKhai({ searchParams }: { searchParams
   const { cm } = await searchParams;
   const db = sb();
   const { data: cms } = await db.from("blog_chuyen_muc").select("id, tieu_de, mo_ta").eq("hoat_dong", true).order("thu_tu", { ascending: false }).order("tieu_de");
-  const hien = new Set((cms ?? []).map((c) => c.id));
+  // Chip chuyên mục chỉ hiện khi chuyên mục có ít nhất một bài đã kích hoạt.
+  const { data: coBai } = await db.from("blog_bai_viet").select("chuyen_muc_id").eq("hoat_dong", true);
+  const coBaiSet = new Set((coBai ?? []).map((b) => b.chuyen_muc_id));
+  const dsCm = (cms ?? []).filter((c) => coBaiSet.has(c.id));
+  const hien = new Set(dsCm.map((c) => c.id));
   let q = db.from("blog_bai_viet").select("id, chuyen_muc_id, tieu_de, mo_ta_ngan, anh, tieu_bieu, cap_nhat_luc").eq("hoat_dong", true).order("tieu_bieu", { ascending: false }).order("cap_nhat_luc", { ascending: false }).limit(60);
   if (cm && hien.has(cm)) q = q.eq("chuyen_muc_id", cm);
   const { data: tat } = await q;
   const bai = (tat ?? []).filter((b) => hien.has(b.chuyen_muc_id));
-  const ten = new Map((cms ?? []).map((c) => [c.id, c.tieu_de]));
+  const ten = new Map(dsCm.map((c) => [c.id, c.tieu_de]));
   const chip = (dang: boolean) => `rounded-nho border px-3 py-1.5 text-[14px] ${dang ? "border-nhan bg-giay-tram font-medium text-nhan-dam" : "border-vien text-muc-2 hover:text-muc"}`;
   return (
     <main className="mx-auto max-w-5xl px-4 py-10">
@@ -27,7 +31,7 @@ export default async function TrangBlogCongKhai({ searchParams }: { searchParams
       <p className="mt-2 text-[15px] text-muc-3">Kiến thức chăm sóc da và thông tin dịch vụ từ AMIA Phòng khám da liễu · 39A Lê Hồng Phong, TP. Vinh.</p>
       <nav className="mt-6 flex flex-wrap gap-2" aria-label="Chuyên mục">
         <Link href="/blog" className={chip(!cm)}>Tất cả</Link>
-        {(cms ?? []).map((c) => <Link key={c.id} href={`/blog?cm=${c.id}`} className={chip(cm === c.id)}>{c.tieu_de}</Link>)}
+        {dsCm.map((c) => <Link key={c.id} href={`/blog?cm=${c.id}`} className={chip(cm === c.id)}>{c.tieu_de}</Link>)}
       </nav>
       {bai.length === 0 ? <p className="mt-10 text-muc-3">Chưa có bài viết nào.</p> : (
         <ul className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">

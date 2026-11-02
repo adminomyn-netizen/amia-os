@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
-import { boDau, congNgay, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { docHet } from "@/lib/xuat-excel";
+import { dieuKienTim, ganLoc, LOAI_DUNG_THE as LOAI, TINH_TRANG_DUNG_THE as TINH_TRANG } from "@/lib/khach-dung-the";
+import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { chiNhanhXem } from "@/lib/cham-soc-khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -11,8 +14,6 @@ import { Chon } from "@/components/ui/Chon";
 import { NHAN_TINH_TRANG } from "../../the/page";
 
 const MOI_TRANG = 50;
-const TINH_TRANG = [{ ma: "", nhan: "Tất cả" }, { ma: "sap_het", nhan: "Sắp hết tiền/lần" }, { ma: "tuan", nhan: "Hết hạn sau 1 tuần" }, { ma: "thang", nhan: "Hết hạn sau 1 tháng" }];
-const LOAI = [{ ma: "", nhan: "Tất cả loại thẻ" }, { ma: "lan", nhan: "Thẻ liệu trình" }, { ma: "tien", nhan: "Thẻ tiền" }];
 
 /** /khach-hang/dung-the — Danh sách khách dùng thẻ (như SalonHero): mọi thẻ đang dùng của khách, lọc Tình trạng (sắp hết tiền/lần, hết hạn sau 1 tuần/1 tháng), loại thẻ, chi nhánh, tìm theo khách hoặc mã thẻ. */
 export default async function KhachDungThe({ searchParams }: { searchParams: Promise<{ cn?: string; tt?: string; loai?: string; q?: string; trang?: string }> }) {
@@ -25,17 +26,19 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
   const hom = homNayHCM(), db = sb();
   const tuKhoa = (sp.q ?? "").trim().replace(/[%,()*\\]/g, " ").trim();
 
-  let q = db.from("v_the_khach").select("*", { count: "exact" }).in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]).order("ngay_cap", { ascending: false }).order("id");
-  if (cn) q = q.eq("chi_nhanh_id", cn);
-  if (loai) q = q.eq("loai", loai);
-  if (tt === "sap_het") q = q.eq("tinh_trang", "sap_het");
-  if (tt === "tuan" || tt === "thang") q = q.gte("han_dung", hom).lte("han_dung", congNgay(hom, tt === "tuan" ? 7 : 30));
-  if (tuKhoa) {
-    const { data: kt } = await db.from("khach_hang").select("id").or(`ho_ten_khong_dau.ilike.%${boDau(tuKhoa)}%,dien_thoai.ilike.%${tuKhoa.replace(/^0/, "")}%,ma.ilike.%${tuKhoa}%`).limit(300);
-    const ids = (kt ?? []).map((k) => k.id);
-    q = q.or(ids.length ? `ma.ilike.%${tuKhoa}%,khach_id.in.(${ids.join(",")})` : `ma.ilike.%${tuKhoa}%`);
-  }
-  const { data: the, count } = await q.range((trang - 1) * MOI_TRANG, trang * MOI_TRANG - 1);
+  const loc = { cn, tt, loai, tuKhoa, hom };
+  const nen = () => db.from("v_the_khach").select("*", { count: "exact" }).in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]);
+  const tim = await dieuKienTim(tuKhoa);
+  const q = ganLoc(nen().order("ngay_cap", { ascending: false }).order("id"), loc, tim);
+  // Ba ô tổng của SalonHero: số khách đang dùng thẻ, tổng số dư thẻ tiền, giá trị các buổi còn lại của thẻ liệu trình (số buổi còn × giá trị buổi). Cùng điều kiện lọc với bảng.
+  const qTong = ganLoc(db.from("v_the_khach").select("khach_id, loai, so_du_tien, so_buoi_con, gia_tri_buoi").in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]).order("id"), loc, tim);
+  const [{ data: the, count }, tatCa] = await Promise.all([
+    q.range((trang - 1) * MOI_TRANG, trang * MOI_TRANG - 1),
+    docHet((tu, den) => qTong.range(tu, den)).catch(() => null),
+  ]);
+  const soKhach = tatCa ? new Set(tatCa.map((t) => t.khach_id)).size : null;
+  const tongTien = tatCa ? tatCa.filter((t) => t.loai === "tien").reduce((a, t) => a + Number(t.so_du_tien ?? 0), 0) : null;
+  const tongLan = tatCa ? tatCa.filter((t) => t.loai !== "tien").reduce((a, t) => a + Number(t.so_buoi_con ?? 0) * Number(t.gia_tri_buoi ?? 0), 0) : null;
   const ds = the ?? [];
   const idsK = [...new Set(ds.map((t) => t.khach_id))].filter((x): x is string => !!x), idsG = [...new Set(ds.map((t) => t.goi_id))].filter((x): x is string => !!x);
   const [{ data: ks }, { data: gs }] = await Promise.all([
@@ -66,7 +69,17 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
           <input name="q" defaultValue={tuKhoa} placeholder="Tên, SĐT, mã khách, mã thẻ" className={`${O_NHAP} !h-10 !w-64`} /></label>
         <button type="submit" className={NUT_PHU}>Lọc</button>
       </form>
-      <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ đang dùng{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ đang dùng{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
+        <NutXuatExcel loai="khach-dung-the" ten="khách dùng thẻ" tham={{ cn: cn ?? undefined, tt: tt || undefined, loai: loai || undefined, q: tuKhoa || undefined }} />
+      </div>
+      {tatCa && (
+        <dl className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Số khách đang dùng thẻ</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{soVN(soKhach ?? 0)}</dd></div>
+          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng số dư thẻ tiền</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{tienVN(tongTien ?? 0)}</dd></div>
+          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Giá trị buổi còn lại (thẻ liệu trình)</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{tienVN(tongLan ?? 0)}</dd></div>
+        </dl>
+      )}
       <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Không có thẻ nào với điều kiện này."
         cot={[
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => { const k = khach.get(r.khach_id ?? ""); return k ? <div><Link href={`/khach-hang/${k.id}`} className="font-medium text-muc hover:underline">{k.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{k.dien_thoai} · {k.ma}</div></div> : ""; } },

@@ -7,6 +7,7 @@ export const NGUON_DAT: Record<string, string> = {
   WEB: "Từ website", WALKIN: "Đến trực tiếp", REPEAT: "Định kỳ", HOTLINE: "Hotline", EVENT: "Sự kiện", GOOGLE: "Google", TIKTOK: "Tiktok",
   INSTAGRAM: "Instagram", WHATSAPP: "WhatsApp", SHOPEE: "Shopee", JAMJA: "Jamja", HANA: "Chatbot", IOS: "iOS app", ANDROID: "Android app",
   ONLINE: "Đặt online",
+  LOOKME: "LookMe", CAROUSELL: "Carousell", WEFIT: "WeFit", ADAYROI: "Adayroi", HOTDEAL: "HotDeal", SENDO: "Sendo", MUACHUNG: "Muachung",
   AD1: "AD1", AD2: "AD2", AD3: "AD3", AD4: "AD4", AD5: "AD5",
 };
 export const LUA_CHON_NGUON = Object.entries(NGUON_DAT).map(([gia_tri, nhan]) => ({ gia_tri, nhan }));

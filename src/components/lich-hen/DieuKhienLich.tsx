@@ -18,6 +18,14 @@ function useDoiUrl() {
   };
 }
 
+/** Mốc chọn nhanh như SalonHero: (từ, đến) tính theo số ngày so với hôm nay. */
+const MOC_NHANH = [
+  { ma: "hom_nay", nhan: "Hôm nay", tu: 0, den: 0 }, { ma: "ngay_mai", nhan: "Ngày mai", tu: 1, den: 1 }, { ma: "hom_qua", nhan: "Hôm qua", tu: -1, den: -1 },
+  { ma: "3_toi", nhan: "3 ngày tới", tu: 0, den: 2 }, { ma: "7_truoc", nhan: "7 ngày trước", tu: -6, den: 0 }, { ma: "7_toi", nhan: "7 ngày tới", tu: 0, den: 6 },
+  { ma: "30_truoc", nhan: "30 ngày trước", tu: -29, den: 0 }, { ma: "30_toi", nhan: "30 ngày tới", tu: 0, den: 29 },
+];
+const congNgayLich = (ngay: string, n: number) => new Date(Date.parse(`${ngay}T00:00:00Z`) + n * 86400e3).toISOString().slice(0, 10);
+
 /** Khoảng ngày của lưới (mặc định hôm nay → +7 ngày): hai ô chọn ngày, chọn xong tải lại. Nếu ngày đầu vượt ngày cuối thì kéo ngày cuối theo. */
 export function ChonKhoang({ tu, den }: { tu: string; den: string }) {
   const doi = useDoiUrl();
@@ -26,6 +34,8 @@ export function ChonKhoang({ tu, den }: { tu: string; den: string }) {
       <NgayChon giaTri={tu} ariaLabel="Từ ngày" tuNam={2018} denNam={2030} className="w-[150px]" onDoi={(v) => v && doi({ tu: v, den: v > den ? v : den })} />
       <span className="text-muc-3" aria-hidden>-</span>
       <NgayChon giaTri={den} ariaLabel="Đến ngày" tuNam={2018} denNam={2030} className="w-[150px]" onDoi={(v) => v && doi({ den: v, tu: v < tu ? v : tu })} />
+      <Chon ariaLabel="Chọn nhanh khoảng ngày" giaTri="" trong="Chọn nhanh" luaChon={MOC_NHANH.map((m) => ({ gia_tri: m.ma, nhan: m.nhan }))} nho
+        onDoi={(v) => { const m = MOC_NHANH.find((x) => x.ma === v); if (!m) return; const hom = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }); doi({ tu: congNgayLich(hom, m.tu), den: congNgayLich(hom, m.den) }); }} />
     </div>
   );
 }

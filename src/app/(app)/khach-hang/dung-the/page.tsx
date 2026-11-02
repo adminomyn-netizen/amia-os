@@ -2,7 +2,6 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { docHet } from "@/lib/xuat-excel";
 import { dieuKienTim, ganLoc, LOAI_DUNG_THE as LOAI, TINH_TRANG_DUNG_THE as TINH_TRANG } from "@/lib/khach-dung-the";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { chiNhanhXem } from "@/lib/cham-soc-khach";
@@ -30,15 +29,12 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
   const nen = () => db.from("v_the_khach").select("*", { count: "exact" }).in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]);
   const tim = await dieuKienTim(tuKhoa);
   const q = ganLoc(nen().order("ngay_cap", { ascending: false }).order("id"), loc, tim);
-  // Ba ô tổng của SalonHero: số khách đang dùng thẻ, tổng số dư thẻ tiền, giá trị các buổi còn lại của thẻ liệu trình (số buổi còn × giá trị buổi). Cùng điều kiện lọc với bảng.
-  const qTong = ganLoc(db.from("v_the_khach").select("khach_id, loai, so_du_tien, so_buoi_con, gia_tri_buoi").in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]).order("id"), loc, tim);
-  const [{ data: the, count }, tatCa] = await Promise.all([
+  // Ba ô tổng của SalonHero (tính trong DB, cùng điều kiện lọc; không áp ô tìm theo tên nên ẩn khi đang tìm).
+  const [{ data: the, count }, tongRaw] = await Promise.all([
     q.range((trang - 1) * MOI_TRANG, trang * MOI_TRANG - 1),
-    docHet((tu, den) => qTong.range(tu, den)).catch(() => null),
+    tuKhoa ? Promise.resolve(null) : db.rpc("tong_khach_dung_the", { p_cn: cn ?? undefined, p_loai: loai, p_tt: tt, p_hom: hom }).then((r) => r.data as { so_khach: number; tong_tien: number; tong_lan: number } | null),
   ]);
-  const soKhach = tatCa ? new Set(tatCa.map((t) => t.khach_id)).size : null;
-  const tongTien = tatCa ? tatCa.filter((t) => t.loai === "tien").reduce((a, t) => a + Number(t.so_du_tien ?? 0), 0) : null;
-  const tongLan = tatCa ? tatCa.filter((t) => t.loai !== "tien").reduce((a, t) => a + Number(t.so_buoi_con ?? 0) * Number(t.gia_tri_buoi ?? 0), 0) : null;
+  const tatCa = tongRaw, soKhach = tongRaw?.so_khach ?? null, tongTien = tongRaw ? Number(tongRaw.tong_tien) : null, tongLan = tongRaw ? Number(tongRaw.tong_lan) : null;
   const ds = the ?? [];
   const idsK = [...new Set(ds.map((t) => t.khach_id))].filter((x): x is string => !!x), idsG = [...new Set(ds.map((t) => t.goi_id))].filter((x): x is string => !!x);
   const [{ data: ks }, { data: gs }] = await Promise.all([
@@ -77,7 +73,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
         <dl className="grid gap-3 sm:grid-cols-3">
           <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Số khách đang dùng thẻ</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{soVN(soKhach ?? 0)}</dd></div>
           <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng số dư thẻ tiền</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{tienVN(tongTien ?? 0)}</dd></div>
-          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Giá trị buổi còn lại (thẻ liệu trình)</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{tienVN(tongLan ?? 0)}</dd></div>
+          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Giá trị buổi còn lại (thẻ liệu trình, không tính thẻ không giới hạn)</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{tienVN(tongLan ?? 0)}</dd></div>
         </dl>
       )}
       <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Không có thẻ nào với điều kiện này."

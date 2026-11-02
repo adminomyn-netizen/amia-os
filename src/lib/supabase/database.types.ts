@@ -12207,6 +12207,7 @@ export type Database = {
         Returns: undefined
       }
       thong_ke_khach: { Args: never; Returns: Json }
+      tong_khach_dung_the: { Args: { p_cn?: string; p_hom: string; p_loai: string; p_tt: string }; Returns: Json }
       thuc_hien_buoi: {
         Args: {
           p_bac_si: string

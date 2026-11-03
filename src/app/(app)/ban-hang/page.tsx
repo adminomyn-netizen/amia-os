@@ -8,6 +8,7 @@ import { hienThuNgan, type DongDon, type MucBan, type SuaHoaDon, type TaiKhoanNh
 import { chotDonBanHang, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap } from "./actions";
 
 import { nhanNguon } from "@/lib/lich-hen";
+import { docNhomLich } from "@/lib/lich-hen-nhom-may-chu";
 import { homNayHCM } from "@/lib/dinh-dang";
 
 export default async function TrangBanHang({ searchParams }: { searchParams: Promise<{ khach?: string; lich?: string; sua?: string }> }) {
@@ -49,6 +50,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   let cnLich: string | null = null;
   let nguonLich = "";
   let viTriLich = "";
+  let soKhachLich = 1;
   if (lichId) {
     const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id, nguon, phong").eq("id", lichId).maybeSingle();
     if (l && (!nd.chiNhanhId || l.chi_nhanh_id === nd.chiNhanhId)) {
@@ -59,6 +61,15 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
         loai: "dich_vu", ref: x.dich_vu_id, sl: x.so_luong, giam: 0,
         nv: { phuc_vu: l.nhan_vien_id ? [{ id: l.nhan_vien_id, ti: 100 }] : [], tu_van: [], ban: khach?.nguoi_phu_trach_id ? [{ id: khach.nguoi_phu_trach_id, ti: 100 }] : [] },
       }));
+      // Lịch nhiều khách (Khách 2, 3… ở lich_hen_khach): gom dịch vụ của CẢ NHÓM vào MỘT hoá đơn của khách chính như SalonHero createOrderBooking;
+      // mỗi dòng giữ người thực hiện của khách đó; số khách của hoá đơn = số người trong nhóm.
+      const nhom = await docNhomLich(l.id);
+      soKhachLich = Math.max(1, nhom.length);
+      for (const tv of nhom.filter((x) => !x.laKhachChinh)) {
+        const dem = new Map<string, number>();
+        for (const d of tv.dichVuIds) if (muc.some((m) => m.loai === "dich_vu" && m.id === d)) dem.set(d, (dem.get(d) ?? 0) + 1);
+        for (const [d, sl] of dem) dongBanDau.push({ loai: "dich_vu", ref: d, sl, giam: 0, nv: { phuc_vu: tv.nhanVienId ? [{ id: tv.nhanVienId, ti: 100 }] : [], tu_van: [], ban: khach?.nguoi_phu_trach_id ? [{ id: khach.nguoi_phu_trach_id, ti: 100 }] : [] } });
+      }
     }
   }
   // Sửa hoá đơn đã chốt (?sua=): chỉ hoá đơn đã được mở lại về nháp (mo_lai_hoa_don); dòng hàng + người hưởng + phần đầu đơn điền sẵn từ hoá đơn cũ.
@@ -94,7 +105,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   return (
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
-      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
+      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} soKhachLich={suaHd ? undefined : soKhachLich} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
         tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} suaHd={suaHd} />
     </>
   );

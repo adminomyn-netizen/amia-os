@@ -3745,6 +3745,7 @@ export type Database = {
           huy_luc: string | null
           id: string
           khach_id: string | null
+          khach_moi: boolean | null
           la_lich_su: boolean
           la_so_du_dau: boolean
           lich_hen_id: string | null
@@ -3793,6 +3794,7 @@ export type Database = {
           huy_luc?: string | null
           id?: string
           khach_id?: string | null
+          khach_moi?: boolean | null
           la_lich_su?: boolean
           la_so_du_dau?: boolean
           lich_hen_id?: string | null
@@ -3840,6 +3842,7 @@ export type Database = {
           huy_luc?: string | null
           id?: string
           khach_id?: string | null
+          khach_moi?: boolean | null
           la_lich_su?: boolean
           la_so_du_dau?: boolean
           lich_hen_id?: string | null

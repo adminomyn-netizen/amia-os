@@ -451,6 +451,7 @@ try {
       thu_ngan_sh_id: d.completed_by ?? d.created_by ?? null, thu_ngan_ten: sach(d.completed_by_name ?? d.created_by_name) || null,
       ghi_chu: [sach(d.note), d.created_by_name ? `Người lập (SalonHero): ${sach(d.created_by_name)}` : "", d.customer_id && !khId ? `Khách gốc không còn trong AMIA: ${sach(d.customer_fullname)} ${sach(d.customer_phone)}` : ""].filter(Boolean).join(" · ") || null,
       ly_do_huy: huy ? sach(d.reason_to_void) || "Huỷ ở SalonHero" : null, tao_luc: l.created_at ?? d.createdAt, chot_luc: d.completed_at ?? null, huy_luc: d.void_at ?? null, dot: c && !c.la_so_du_dau ? c.nhap_dot ?? dot : dot,
+      khach_moi: d.is_new_customer == null || d.is_new_customer === "" ? null : Number(d.is_new_customer) === 1, // cờ gốc SalonHero (0212), chỉ ghi khi chèn đơn mới
     };
     const tienTt = ttC.reduce((s, x) => s + x.so_tien, 0), thanhTien = dongC.reduce((s, x) => s + x.so_luong * x.don_gia - x.giam_gia, 0);
     if (c?.la_lich_su) { // đã có: so sánh để biết có đổi không
@@ -490,11 +491,11 @@ try {
   let nHd = 0;
   await theoLo(moi, 500, async (l) => {
     nHd += (await q(`insert into public.hoa_don (sh_id, ma, chi_nhanh_id, khach_id, trang_thai, ngay_hd, giam_gia_don, vat_pct, phu_phi, tip, tong_hang, vat_tien, tong_phai_thu, da_thu, con_no, nguoi_lap_id, ghi_chu, ly_do_huy,
-          tao_luc, chot_luc, huy_luc, la_lich_su, sh_ma, sh_trang_thai, tien_tru_the, giam_voucher, giam_diem, thu_ngan_sh_id, thu_ngan_ten, nhap_dot)
+          tao_luc, chot_luc, huy_luc, la_lich_su, sh_ma, sh_trang_thai, tien_tru_the, giam_voucher, giam_diem, thu_ngan_sh_id, thu_ngan_ten, nhap_dot, khach_moi)
        select x.sh_id, x.ma, (select id from public.chi_nhanh where ma = x.chi_nhanh), x.khach_id, x.trang_thai, x.ngay, x.giam_gia_don, x.vat_pct, x.phu_phi, x.tip, x.tong_hang, x.vat_tien, x.tong_phai_thu, x.da_thu, x.con_no, $2::uuid, x.ghi_chu, x.ly_do_huy,
-          coalesce(x.tao_luc, now()), x.chot_luc, x.huy_luc, true, x.sh_ma, x.sh_trang_thai, x.tien_tru_the, x.giam_voucher, x.giam_diem, x.thu_ngan_sh_id, x.thu_ngan_ten, $3
+          coalesce(x.tao_luc, now()), x.chot_luc, x.huy_luc, true, x.sh_ma, x.sh_trang_thai, x.tien_tru_the, x.giam_voucher, x.giam_diem, x.thu_ngan_sh_id, x.thu_ngan_ten, $3, x.khach_moi
        from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, ma text, chi_nhanh text, khach_id uuid, trang_thai text, ngay date, giam_gia_don bigint, vat_pct numeric, phu_phi bigint, tip bigint, tong_hang bigint, vat_tien bigint, tong_phai_thu bigint, da_thu bigint,
-          con_no bigint, ghi_chu text, ly_do_huy text, tao_luc timestamptz, chot_luc timestamptz, huy_luc timestamptz, sh_ma text, sh_trang_thai text, tien_tru_the bigint, giam_voucher bigint, giam_diem bigint, thu_ngan_sh_id bigint, thu_ngan_ten text)
+          con_no bigint, ghi_chu text, ly_do_huy text, tao_luc timestamptz, chot_luc timestamptz, huy_luc timestamptz, sh_ma text, sh_trang_thai text, tien_tru_the bigint, giam_voucher bigint, giam_diem bigint, thu_ngan_sh_id bigint, thu_ngan_ten text, khach_moi boolean)
        on conflict (sh_id) do nothing returning 1`, [JSON.stringify(l), he, dot])).length;
   });
   const dsHd = new Set(hd.map((h) => h.sh_id));

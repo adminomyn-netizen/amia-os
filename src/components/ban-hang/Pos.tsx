@@ -33,7 +33,7 @@ const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ" }, { ma: "goi_the", ten: "
 const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 type PropsPos = {
-  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string; /** Phòng / chỗ ghi ở lịch hẹn của đơn (chỉ hiển thị). */ viTriLich?: string; taiKhoanNhan?: TaiKhoanNhan[];
+  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; /** Số khách của lịch nhóm (Thanh toán ngay từ lịch nhiều khách). */ soKhachLich?: number; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string; /** Phòng / chỗ ghi ở lịch hẹn của đơn (chỉ hiển thị). */ viTriLich?: string; taiKhoanNhan?: TaiKhoanNhan[];
   tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher; luuNhap: typeof luuDonNhap; dsNhap: typeof dsDonNhap; xoaNhap: typeof xoaDonNhap; nhapBanDau?: DonNhapRut[];
   /** Đang sửa một hoá đơn đã chốt (đã mở lại về nháp): chỉ áp vào đơn đầu tiên. */ suaHd?: SuaHoaDon | null;
 };
@@ -250,7 +250,7 @@ function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: stri
   );
 }
 
-function DonPos({ suaHd, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+function DonPos({ suaHd, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void; onHuy: () => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
@@ -278,7 +278,7 @@ function DonPos({ suaHd, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chi
   const [ghiChu, setGhiChu] = useState(sua?.ghiChu ?? "");
   const [gioVao, setGioVao] = useState(sua?.gioVao ?? "");
   const [gioRa, setGioRa] = useState(sua?.gioRa ?? "");
-  const [soKhach, setSoKhach] = useState(String(sua?.soKhach ?? 1));
+  const [soKhach, setSoKhach] = useState(String(sua?.soKhach ?? (dauTien && !nhapDau && soKhachLich ? soKhachLich : 1)));
   /** Lùi ngày hoá đơn ("YYYY-MM-DDTHH:MM" giờ VN), trống = lúc chốt. */
   const [ngayHd, setNgayHd] = useState("");
   const [thu, setThu] = useState<KhoanThu[]>([]);

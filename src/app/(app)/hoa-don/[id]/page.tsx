@@ -60,6 +60,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   type Muc = [string, React.ReactNode];
   const thongTin = ([
     ["Chi nhánh", cn?.ten],
+    h.khach_moi ? ["Khách", <span key="km" className="rounded-tag bg-loi-nen px-2 py-0.5 text-[12px] font-medium text-loi">Khách mới</span>] : null, // như SalonHero: cờ khách mới của hoá đơn (0212)
     ["Tạo lúc", ngayGioVN(h.tao_luc)],
     h.chot_luc ? ["Hoàn thành lúc", ngayGioVN(h.chot_luc)] : null,
     h.chot_luc && nguoiLap ? ["Hoàn thành bởi", nguoiLap] : null,

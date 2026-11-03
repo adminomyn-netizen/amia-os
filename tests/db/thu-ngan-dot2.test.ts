@@ -214,3 +214,24 @@ describe("0210 sửa hoá đơn đã xuất hoá đơn điện tử", () => {
     expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h, NV])).toBe("");
   });
 });
+
+describe("0212 cờ khách mới trên hoá đơn", () => {
+  it("đơn hoàn thành đầu tiên của khách = khách mới; đơn sau = quay lại; sửa rồi chốt lại giữ cờ; đơn SalonHero giữ cờ gốc", async () => {
+    const kh = (await q<{ id: string }>(`insert into khach_hang (ma, ho_ten, dien_thoai, chi_nhanh_id, nguon, nguoi_phu_trach_id) values ('KHM1','Khách mới','0900000077',$1,'mkt',$2) returning id`, [CN, NV]))[0].id;
+    const tao = async () => { const h = (await q<{ id: string }>(`insert into hoa_don (ma, chi_nhanh_id, khach_id, nguoi_lap_id) values ('HD'||lpad(so_tiep_theo('hd')::text,6,'0'),$1,$2,$3) returning id`, [CN, kh, NV]))[0].id;
+      await q(`insert into hoa_don_dong (hoa_don_id, loai, dich_vu_id, ten, so_luong, don_gia) values ($1,'dich_vu',$2,'Peel',1,100000)`, [h, DV]);
+      await q(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, nguoi_id) values ($1,'tien_mat',100000,$2)`, [h, NV]); await q(`select chot_hoa_don($1,$2)`, [h, NV]); return h; };
+    const co = async (h: string) => (await q<{ khach_moi: boolean | null }>(`select khach_moi from hoa_don where id = $1`, [h]))[0].khach_moi;
+    const nhap = (await q<{ id: string }>(`insert into hoa_don (ma, chi_nhanh_id, khach_id, nguoi_lap_id) values ('HDNHAP77',$1,$2,$3) returning id`, [CN, kh, NV]))[0].id;
+    expect(await co(nhap)).toBeNull();
+    const h1 = await tao();
+    expect(await co(h1)).toBe(true);
+    const h2 = await tao();
+    expect(await co(h2)).toBe(false);
+    await q(`select mo_lai_hoa_don($1,'sửa thử',$2)`, [h1, NV]);
+    await q(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, nguoi_id) values ($1,'tien_mat',100000,$2)`, [h1, NV]); await q(`select chot_hoa_don($1,$2)`, [h1, NV]);
+    expect(await co(h1)).toBe(true);
+    const sh = (await q<{ id: string }>(`insert into hoa_don (ma, chi_nhanh_id, khach_id, nguoi_lap_id, trang_thai, la_lich_su, sh_id, khach_moi) values ('SH-77',$1,$2,$3,'hoan_thanh',true,77,true) returning id`, [CN, kh, NV]))[0].id;
+    expect(await co(sh)).toBe(true);
+  });
+});

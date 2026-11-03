@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
-import { docDoiTuong } from "@/lib/hoa-hong";
+import { docCaiDatNangCao, docDoiTuong } from "@/lib/hoa-hong";
 import { docBangTiLe, kiemTraNhapTiLe, tachBang, TOI_DA_DONG, type DanhMucNhap, type DongNhap, type TiLeHienCo, type TongNhap } from "@/lib/hoa-hong-nhap";
 import { docTepTiLe } from "@/lib/hoa-hong-nhap-tep";
 import { docHet } from "@/lib/xuat-excel";
@@ -145,4 +145,40 @@ export async function apDungNhapTiLe(fd: FormData): Promise<KetQuaNhapTiLe> {
   });
   revalidatePath("/hoa-hong");
   return { ok: true, dong: kq.dong, tong: kq.tong, daGhi: ghi.length };
+}
+
+/** Lưu "Cài đặt nâng cao" hoa hồng của một chi nhánh (câu 18). Người gắn với một chi nhánh chỉ sửa được chi nhánh của mình. Ghi nhật ký trước → sau. */
+export async function luuCaiDatNangCao(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const cn = chuoi(fd, "chi_nhanh_id");
+  if (!cn) return { loi: "Thiếu chi nhánh." };
+  if (nd.chiNhanhId && nd.chiNhanhId !== cn) return { loi: "Chỉ sửa được cài đặt của chi nhánh mình." };
+  const r = docCaiDatNangCao((k) => chuoi(fd, k));
+  if ("loi" in r) return { loi: r.loi };
+  const db = sb();
+  const { data: cu } = await db.from("hoa_hong_cai_dat").select("*").eq("chi_nhanh_id", cn).maybeSingle();
+  const { error } = await db.from("hoa_hong_cai_dat").upsert({ chi_nhanh_id: cn, ...r.gt, sua_luc: new Date().toISOString(), sua_boi: nd.nhanVienId }, { onConflict: "chi_nhanh_id" });
+  if (!error) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_cai_dat_hoa_hong", doi_tuong: "hoa_hong_cai_dat", doi_tuong_id: cn, chi_tiet: { truoc: cu ?? null, sau: r.gt } });
+  revalidatePath("/hoa-hong");
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** Sửa "mức hoa hồng mặc định" của một nguồn giới thiệu (câu 20): theo phần trăm / theo tiền / theo điểm, như SalonHero. Ghi nhật ký trước → sau. */
+export async function luuMucGioiThieu(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), kieu = chuoi(fd, "hh_kieu"), gt = so(fd, "hh_gia_tri") || 0;
+  if (!id) return { loi: "Thiếu nguồn giới thiệu." };
+  if (!["phan_tram", "tien", "diem"].includes(kieu)) return { loi: "Chọn kiểu mức hoa hồng." };
+  if (!(gt >= 0) || (kieu === "phan_tram" && gt > 100)) return { loi: kieu === "phan_tram" ? "Phần trăm phải từ 0 đến 100." : "Mức hoa hồng không được âm." };
+  if (kieu !== "phan_tram" && gt > 1_000_000_000) return { loi: "Mức hoa hồng quá lớn." };
+  const giaTri = kieu === "phan_tram" ? gt : Math.round(gt);
+  const db = sb();
+  const { data: cu } = await db.from("doi_tac_gt").select("id, ten, hh_kieu, hh_gia_tri").eq("id", id).maybeSingle();
+  if (!cu) return { loi: "Không tìm thấy nguồn giới thiệu." };
+  const { error } = await db.from("doi_tac_gt").update({ hh_kieu: kieu, hh_gia_tri: giaTri }).eq("id", id);
+  if (!error) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_muc_hoa_hong_gioi_thieu", doi_tuong: "doi_tac_gt", doi_tuong_id: id, chi_tiet: { ten: cu.ten, truoc: { hh_kieu: cu.hh_kieu, hh_gia_tri: Number(cu.hh_gia_tri) }, sau: { hh_kieu: kieu, hh_gia_tri: giaTri } } });
+  revalidatePath("/hoa-hong");
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }

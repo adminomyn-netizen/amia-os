@@ -3164,6 +3164,11 @@ export type Database = {
       doi_tac_gt: {
         Row: {
           dien_thoai: string | null
+          hh_gia_tri: number
+          hh_kieu: string
+          khach_id: string | null
+          loai_sh: string | null
+          sh_id: number | null
           ghi_chu: string | null
           hoat_dong: boolean
           id: string
@@ -3175,6 +3180,11 @@ export type Database = {
         }
         Insert: {
           dien_thoai?: string | null
+          hh_gia_tri?: number
+          hh_kieu?: string
+          khach_id?: string | null
+          loai_sh?: string | null
+          sh_id?: number | null
           ghi_chu?: string | null
           hoat_dong?: boolean
           id?: string
@@ -3186,6 +3196,11 @@ export type Database = {
         }
         Update: {
           dien_thoai?: string | null
+          hh_gia_tri?: number
+          hh_kieu?: string
+          khach_id?: string | null
+          loai_sh?: string | null
+          sh_id?: number | null
           ghi_chu?: string | null
           hoat_dong?: boolean
           id?: string
@@ -3195,7 +3210,15 @@ export type Database = {
           tao_luc?: string
           ten?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "doi_tac_gt_khach_id_fkey"
+            columns: ["khach_id"]
+            isOneToOne: false
+            referencedRelation: "khach_hang"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       don_mua: {
         Row: {

@@ -102,9 +102,23 @@ describe("hoa hồng giới thiệu", () => {
     expect(r).toEqual([
       { nguon: "khach", nguoi_ten: "Chị Giới Thiệu", nguoi_ma: "KH2", so_hd: 1, doanh_so: 1000000, hoa_hong: 50000 },
       { nguon: "salonhero", nguoi_ten: "KTV Bình", nguoi_ma: "NV0002", so_hd: 1, doanh_so: 1000000, hoa_hong: 200000 },
-      { nguon: "salonhero", nguoi_ten: "SalonHero #4940 (chưa ghép)", nguoi_ma: null, so_hd: 1, doanh_so: 6000000, hoa_hong: 600000 },
+      // 0206: 4940 là một trong 78 nguồn giới thiệu SalonHero đã nạp → hiện tên nguồn thay vì "SalonHero #4940 (chưa ghép)"
+      { nguon: "salonhero", nguoi_ten: "Nguyễn Thị Hồng Thắm", nguoi_ma: "GT4940", so_hd: 1, doanh_so: 6000000, hoa_hong: 600000 },
     ]);
     expect(await q(`select * from bc_hoa_hong_gioi_thieu('2026-11-01','2026-11-30',null)`)).toEqual([]);
+  });
+
+  it("0206: khách giới thiệu là một nguồn → tính theo mức mặc định của nguồn (%, tiền, điểm = 0 đồng)", async () => {
+    await tao({ ma: "G2", ngay: "2026-12-07", hang: 1000000, giam: 200000, gt: KHGT, nv: [[NV.a, 100]], tt: [{ pt: "chuyen_khoan", tien: 800000, ngay: "2026-12-07" }] });
+    const r = async () => (await q<{ hh: number }>(`select hoa_hong::int hh from bc_hoa_hong_gioi_thieu('2026-12-01','2026-12-31',null) where nguon = 'khach'`))[0].hh;
+    expect(await r()).toBe(40000); // chưa là nguồn: tỉ lệ vai Giới thiệu 5% × 800.000 (sau giảm giá)
+    await q(`insert into doi_tac_gt (ma, ten, loai, ma_gioi_thieu, khach_id, hh_kieu, hh_gia_tri) values ('NG1','Chị Giới Thiệu','khach_cu','NG1',$1,'phan_tram',10)`, [KHGT]);
+    expect(await r()).toBe(80000);
+    await q(`update doi_tac_gt set hh_kieu = 'tien', hh_gia_tri = 39000 where ma = 'NG1'`);
+    expect(await r()).toBe(39000);
+    await q(`update doi_tac_gt set hh_kieu = 'diem', hh_gia_tri = 50 where ma = 'NG1'`);
+    expect(await r()).toBe(0);
+    await expect(q(`update doi_tac_gt set hh_kieu = 'phan_tram', hh_gia_tri = 150 where ma = 'NG1'`)).rejects.toThrow();
   });
 
   it("tỉ lệ cho vai gioi_thieu lưu được, vai lạ bị chặn", async () => {

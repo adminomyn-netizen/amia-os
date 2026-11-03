@@ -16,9 +16,12 @@ import { NutHop } from "@/components/ui/BieuMau";
 import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
 import { SaoChepHoaHong } from "@/components/hoa-hong/SaoChepHoaHong";
 import { NhapTiLeHoaHong } from "@/components/hoa-hong/NhapTiLeHoaHong";
-import { apDungNhapTiLe, apDungSaoChep, luuTiLe, xemTruocNhapTiLe, xemTruocSaoChep, xoaTiLe } from "./actions";
+import { GIO_HE_SO, SAO_HE_SO } from "@/lib/hoa-hong";
+import { apDungNhapTiLe, apDungSaoChep, luuCaiDatNangCao, luuMucGioiThieu, luuTiLe, xemTruocNhapTiLe, xemTruocSaoChep, xoaTiLe } from "./actions";
 
-const TAB = [{ ma: "bang", ten: "Bảng hoa hồng" }, { ma: "ti-le", ten: "Tỉ lệ hoa hồng" }];
+const TAB = [{ ma: "bang", ten: "Bảng hoa hồng" }, { ma: "ti-le", ten: "Tỉ lệ hoa hồng" }, { ma: "nang-cao", ten: "Cài đặt nâng cao" }, { ma: "nguon", ten: "Nguồn giới thiệu" }];
+const KIEU_GT = [{ gia_tri: "phan_tram", nhan: "Theo phần trăm" }, { gia_tri: "tien", nhan: "Theo tiền" }, { gia_tri: "diem", nhan: "Theo điểm" }];
+const CHIA = [{ gia_tri: "giu_nguyen", nhan: "Giữ nguyên" }, { gia_tri: "chia_deu", nhan: "Chia đều" }];
 const LOAI = [{ gia_tri: "dich_vu", nhan: "Dịch vụ" }, { gia_tri: "san_pham", nhan: "Sản phẩm" }, { gia_tri: "goi_the", nhan: "Bán thẻ / liệu trình" }];
 const VAI = [{ gia_tri: "phuc_vu", nhan: "Phục vụ" }, { gia_tri: "tu_van", nhan: "Tư vấn" }, { gia_tri: "ban", nhan: "Bán hàng" }, { gia_tri: "gioi_thieu", nhan: "Giới thiệu" }];
 const nhan = (lc: { gia_tri: string; nhan: string }[], v: string) => lc.find((x) => x.gia_tri === v)?.nhan ?? v;
@@ -26,7 +29,7 @@ const nhan = (lc: { gia_tri: string; nhan: string }[], v: string) => lc.find((x)
 export default async function TrangHoaHong({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; q?: string }> }) {
   const nd = await yeuCauQuyen("baocao.tien");
   const sp = await searchParams;
-  const tab = sp.tab === "ti-le" ? "ti-le" : "bang";
+  const tab = sp.tab === "ti-le" || sp.tab === "nang-cao" || sp.tab === "nguon" ? sp.tab : "bang";
   const { tu, den } = khoangNgay(sp.tu, sp.den);
   const db = sb();
   const sua = coQuyen(nd, "danhmuc.sua");
@@ -76,7 +79,79 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
             ...cotNhom,
             ...(coKhac ? [{ nhan: "Doanh số khác", phai: true, hienThi: (g: (typeof ds)[number]) => hienDs(g, "khac") }, { nhan: "Hoa hồng khác", phai: true, hienThi: (g: (typeof ds)[number]) => tienVN(o(g, "khac").hh) }] : []),
             { nhan: "Tổng hoa hồng", phai: true, hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.tong)}</span> }, { nhan: "", hienThi: nutChiTiet }]} />
-        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Hoa hồng tạm tính theo tỉ lệ đang cài (mục chưa cài tỉ lệ tính 0). Doanh số dịch vụ làm bằng thẻ tính theo giá một buổi của thẻ (như SalonHero), còn hoa hồng vẫn tính trên doanh số hoá đơn, nơi dòng dịch vụ làm bằng thẻ bằng 0 nên chưa sinh hoa hồng — cách tính hoa hồng cho buổi làm bằng thẻ cần chị Lâm quyết. Doanh số tư vấn = các dòng đứng vai Tư vấn; dịch vụ = vai Phục vụ ở dòng dịch vụ; sản phẩm / bán thẻ = vai Bán hàng ở dòng sản phẩm / thẻ. “Tính lại hoa hồng” chỉ tải lại số: AMIA tính trực tiếp từ hoá đơn mỗi lần mở trang nên không có số cũ lưu sẵn. Phí thực hiện theo buổi cho chuyên viên trị liệu, hoa hồng giới thiệu và chấm điểm dịch vụ chưa có ở bản này.</p>
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Hoa hồng tạm tính theo tỉ lệ đang cài (mục chưa cài tỉ lệ tính 0). Doanh số dịch vụ làm bằng thẻ tính theo giá một buổi của thẻ (như SalonHero); hoa hồng buổi làm bằng thẻ tính trên “giá trị 1 lần làm dịch vụ” của thẻ (thẻ khách có số riêng thì dùng, không thì theo loại thẻ: tự tính = giá bán ÷ số lần), như SalonHero. Cách chia nhiều người, giảm giá, giờ, sao: tab Cài đặt nâng cao. Doanh số tư vấn = các dòng đứng vai Tư vấn; dịch vụ = vai Phục vụ ở dòng dịch vụ; sản phẩm / bán thẻ = vai Bán hàng ở dòng sản phẩm / thẻ. “Tính lại hoa hồng” chỉ tải lại số: AMIA tính trực tiếp từ hoá đơn mỗi lần mở trang nên không có số cũ lưu sẵn. Phí bác sĩ: SalonHero không có mục riêng, bác sĩ hưởng hoa hồng làm dịch vụ như nhân viên phục vụ — muốn trả theo buổi thì cài tỉ lệ hoặc số tiền cố định riêng cho bác sĩ đó ở tab Tỉ lệ hoa hồng.</p>
+      </>
+    );
+  } else if (tab === "nguon") {
+    const { data: dsNg, error: loiNg } = await db.from("doi_tac_gt").select("id, ma, ma_gioi_thieu, ten, loai, loai_sh, dien_thoai, hoat_dong, hh_kieu, hh_gia_tri, khach_id, sh_id, khach_hang(ho_ten, ma)").order("ten");
+    if (loiNg) console.error("[hoa-hong/nguon]", loiNg.message);
+    const tuKhoa = boDau((sp.q ?? "").trim());
+    const ds = (dsNg ?? []).filter((r) => !tuKhoa || boDau(`${r.ten} ${r.ma_gioi_thieu} ${r.dien_thoai ?? ""}`).includes(tuKhoa));
+    const muc = (r: (typeof ds)[number]) => (r.hh_kieu === "tien" ? tienVN(Number(r.hh_gia_tri)) : r.hh_kieu === "diem" ? `${Number(r.hh_gia_tri)} điểm` : `${Number(r.hh_gia_tri)}%`);
+    const truong = [{ ten: "hh_kieu", nhan: "Mức hoa hồng mặc định", loai: "chon" as const, luaChon: KIEU_GT, batBuoc: true }, { ten: "hh_gia_tri", nhan: "Giá trị", loai: "so" as const, ghiChu: "Phần trăm: % trên doanh số dòng sau giảm giá (số lẻ dùng dấu phẩy, vd 12,5). Theo tiền: số đồng mỗi lượt. Theo điểm: ghi điểm, không tính tiền." }];
+    const nhanLoai = (r: (typeof ds)[number]) => (r.loai_sh === "CUSTOMER" || r.loai === "khach_cu" ? "Khách hàng" : r.loai_sh === "OPERATOR" ? "Nhân viên" : r.loai_sh === "PARTNER" || r.loai === "ctv" ? "Đối tác" : r.loai === "kol" ? "KOL" : "Khác");
+    noiDung = loiNg ? <div role="alert" className="rounded-nho bg-loi-nen px-3.5 py-3 text-[14px] text-loi">Chưa tải được danh sách nguồn giới thiệu. Chờ vài giây rồi tải lại trang.</div> : (
+      <>
+        <form method="get" action="/hoa-hong" className="mb-4 flex flex-wrap gap-2">
+          <input type="hidden" name="tab" value="nguon" />
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm tên, mã, số điện thoại" aria-label="Tìm nguồn giới thiệu" className={`${O_NHAP} w-64 max-w-full`} />
+          <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
+        </form>
+        <HangChiSo muc={[{ nhan: "Nguồn giới thiệu", so: String((dsNg ?? []).length) }, { nhan: "Có mức hoa hồng khác 0", so: String((dsNg ?? []).filter((r) => Number(r.hh_gia_tri) > 0).length) }]} />
+        <div className="mt-6" />
+        <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có nguồn giới thiệu nào."
+          cot={[{ nhan: "Nguồn", chinh: true, hienThi: (r) => <span className="block"><span className="text-muc">{r.ten}</span><span className="block text-[12px] text-muc-3">{[r.ma_gioi_thieu, r.dien_thoai].filter(Boolean).join(" · ")}{r.hoat_dong ? "" : " · ngừng"}</span></span> },
+            { nhan: "Loại", hienThi: nhanLoai },
+            { nhan: "Khách trên AMIA", hienThi: (r) => { const k = r.khach_hang as { ho_ten: string; ma: string } | null; return k && r.khach_id ? <Link href={`/khach-hang/${r.khach_id}`} className="text-nhan-dam underline-offset-4 hover:underline">{k.ma}</Link> : <span className="text-muc-3">chưa ghép</span>; } },
+            { nhan: "Mức hoa hồng mặc định", phai: true, hienThi: (r) => <span className="tabular-nums">{muc(r)}</span> },
+            ...(sua ? [{ nhan: "", hienThi: (r: (typeof ds)[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Mức hoa hồng — ${r.ten}`} truong={truong} giaTri={{ id: r.id, hh_kieu: r.hh_kieu, hh_gia_tri: Number(r.hh_gia_tri) }} an={{ id: r.id }} action={luuMucGioiThieu} /> }] : [])]} />
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Như SalonHero: mỗi nguồn giới thiệu có mức hoa hồng mặc định theo phần trăm, theo tiền hoặc theo điểm. 78 nguồn đã chuyển từ SalonHero ngày 03/11/2026 (70 nguồn 0%, 3 nguồn 10%, 3 nguồn theo tiền). Hoá đơn có người giới thiệu là khách đã ghép với một nguồn thì hoa hồng giới thiệu tính theo mức của nguồn đó (xem báo cáo Hoa hồng giới thiệu); khách chưa là nguồn thì theo tỉ lệ vai Giới thiệu ở tab Tỉ lệ. Thêm nguồn hoặc sửa tên, số điện thoại ở <Link href="/marketing/doi-tac" className="text-nhan-dam underline-offset-4 hover:underline">Marketing · Đối tác giới thiệu</Link>.</p>
+      </>
+    );
+  } else if (tab === "nang-cao") {
+    const [{ data: dsCd }, { data: dsCn }] = await Promise.all([db.from("hoa_hong_cai_dat").select("*"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
+    const cdMap = new Map((dsCd ?? []).map((c) => [c.chi_nhanh_id, c]));
+    const cns = (dsCn ?? []).filter((c) => !nd.chiNhanhId || c.id === nd.chiNhanhId);
+    const heSo = (o: unknown) => Object.entries((o ?? {}) as Record<string, number>);
+    const truong = [
+      { ten: "chia_dv", nhan: "Hoa hồng dịch vụ (khi số người làm nhiều hơn tiêu chuẩn)", loai: "chon" as const, luaChon: [{ gia_tri: "giu_nguyen", nhan: "Giữ nguyên hoa hồng dịch vụ" }, { gia_tri: "chia_deu", nhan: "Chia đều hoa hồng dịch vụ theo nhóm" }], batBuoc: true, rong: true },
+      { ten: "chia_ban", nhan: "Hoa hồng bán sản phẩm / thẻ", loai: "chon" as const, luaChon: [{ gia_tri: "giu_nguyen", nhan: "Giữ nguyên hoa hồng bán hàng" }, { gia_tri: "chia_deu", nhan: "Chia đều hoa hồng" }], batBuoc: true },
+      { ten: "chia_tu_van", nhan: "Hoa hồng tư vấn", loai: "chon" as const, luaChon: [{ gia_tri: "giu_nguyen", nhan: "Giữ nguyên hoa hồng tư vấn" }, { gia_tri: "chia_deu", nhan: "Chia đều hoa hồng tư vấn" }], batBuoc: true },
+      { ten: "so_nv_tieu_chuan", nhan: "Số người tiêu chuẩn mỗi dòng", loai: "so" as const, ghiChu: "SalonHero để trống = 1 người." },
+      { ten: "thoi_diem", nhan: "Thời điểm tính hoa hồng", loai: "chon" as const, luaChon: [{ gia_tri: "sau", nhan: "Tính sau khi áp dụng giảm giá" }, { gia_tri: "truoc", nhan: "Tính trước khi áp dụng giảm giá" }], batBuoc: true },
+      { ten: "loai_giam", nhan: "Các loại giảm giá áp dụng khi tính hoa hồng", loai: "chon" as const, luaChon: [{ gia_tri: "ca_hai", nhan: "Cả giảm giá từng dòng và giảm giá tổng hoá đơn" }, { gia_tri: "chi_dong", nhan: "Chỉ giảm giá trên từng sản phẩm, dịch vụ" }], hienKhi: { ten: "thoi_diem", la: ["sau"] } },
+      ...GIO_HE_SO.map((g) => ({ ten: `gio_${g}`, nhan: `Hoa hồng làm dịch vụ lúc ${g} giờ (%)`, loai: "so" as const, goiY: "100" })),
+      ...SAO_HE_SO.map((k) => ({ ten: `sao_${k}`, nhan: `Khách chấm ${k} sao (%)`, loai: "so" as const, goiY: "100" })),
+    ];
+    noiDung = (
+      <>
+        <div className="space-y-4">
+          {cns.map((c) => {
+            const x = cdMap.get(c.id);
+            const g = {
+              chi_nhanh_id: c.id, chia_dv: x?.chia_deu_dich_vu ? "chia_deu" : "giu_nguyen", chia_ban: x && !x.chia_deu_ban ? "giu_nguyen" : "chia_deu", chia_tu_van: x && !x.chia_deu_tu_van ? "giu_nguyen" : "chia_deu",
+              so_nv_tieu_chuan: x?.so_nv_tieu_chuan ?? 1, thoi_diem: x && !x.tinh_sau_giam_gia ? "truoc" : "sau", loai_giam: x && !x.ap_giam_gia_tong_don ? "chi_dong" : "ca_hai",
+              ...Object.fromEntries(heSo(x?.he_so_gio).map(([k, v]) => [`gio_${k}`, v])), ...Object.fromEntries(heSo(x?.he_so_sao).map(([k, v]) => [`sao_${k}`, v])),
+            };
+            const gio = heSo(x?.he_so_gio), sao = heSo(x?.he_so_sao);
+            return (
+              <section key={c.id} className="rounded-nho border border-vien bg-giay p-4">
+                <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-[15px] font-medium text-muc">{c.ten}</h2>
+                  {sua && <NutHop kieu="phu" nhan="Sửa" tieuDe={`Cài đặt nâng cao — ${c.ten}`} moTa="Áp cho mọi báo cáo hoa hồng và bảng lương tính từ nay. Hệ số để trống = 100%." truong={truong} giaTri={g} an={{ chi_nhanh_id: c.id }} action={luuCaiDatNangCao} />}
+                </div>
+                <dl className="grid gap-x-6 gap-y-2 text-[14px] sm:grid-cols-2">
+                  <div><dt className="text-[12px] text-muc-3">Số người nhiều hơn tiêu chuẩn ({g.so_nv_tieu_chuan} người)</dt><dd className="text-muc">Dịch vụ: {nhan(CHIA, g.chia_dv)} · Bán sản phẩm / thẻ: {nhan(CHIA, g.chia_ban)} · Tư vấn: {nhan(CHIA, g.chia_tu_van)}</dd></div>
+                  <div><dt className="text-[12px] text-muc-3">Thời điểm tính</dt><dd className="text-muc">{g.thoi_diem === "sau" ? `Sau giảm giá (${g.loai_giam === "ca_hai" ? "cả giảm giá dòng và tổng hoá đơn" : "chỉ giảm giá từng dòng"})` : "Trước giảm giá"}</dd></div>
+                  <div><dt className="text-[12px] text-muc-3">Theo giờ phục vụ</dt><dd className="text-muc">{gio.length ? gio.map(([k, v]) => `${k}h: ${v}%`).join(" · ") + " · giờ khác 100%" : "100% mọi giờ"}</dd></div>
+                  <div><dt className="text-[12px] text-muc-3">Theo số sao khách chấm</dt><dd className="text-muc">{sao.length ? sao.map(([k, v]) => `${k} sao: ${v}%`).join(" · ") + " · còn lại 100%" : "100% mọi mức sao"}</dd></div>
+                </dl>
+                {x?.sua_boi && <p className="mt-2 text-[12px] text-muc-3">Sửa lần cuối {new Date(x.sua_luc).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })}</p>}
+              </section>
+            );
+          })}
+        </div>
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Mặc định đặt đúng lựa chọn SalonHero đang dùng ở cả Vinh và Đà Lạt (đọc ngày 03/11/2026): dịch vụ Giữ nguyên, bán hàng và tư vấn Chia đều, tính sau giảm giá gồm cả giảm giá tổng hoá đơn, theo giờ / theo sao 100%. Giữ nguyên: mỗi người làm nhận đủ hoa hồng của dòng. Chia đều: khi số người vượt tiêu chuẩn thì chia theo tỉ lệ chia người trên hoá đơn (tiêu chuẩn 1, hai người 50/50 → mỗi người một nửa). Hệ số giờ (giờ vào của hoá đơn) và hệ số sao (khách chấm nhân viên đó) chỉ áp cho hoa hồng làm dịch vụ. Doanh số không đổi theo các lựa chọn này.</p>
       </>
     );
   } else {
@@ -117,14 +192,14 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
           cot={[{ nhan: "Áp dụng cho", chinh: true, hienThi: (r) => <span className="text-muc">{tenDoiTuong(r)}</span> }, { nhan: "Loại", hienThi: (r) => nhan(LOAI, r.loai) }, { nhan: "Vai", hienThi: (r) => nhan(VAI, r.vai) }, { nhan: "Mục", hienThi: (r) => (r.muc_id ? ten.get(r.muc_id) ?? "" : "Mặc định cả loại") }, { nhan: "Tỉ lệ", hienThi: (r) => `${Number(r.ti_le)}%`, phai: true },
             { nhan: "Số tiền cố định / lượt", hienThi: (r) => (r.so_tien ? tienVN(r.so_tien) : ""), phai: true },
             ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof tl>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa tỉ lệ" truong={truong} giaTri={{ doi_tuong: maDoiTuong(r), loai: r.loai, vai: r.vai, muc_id: r.muc_id ?? "", ti_le: Number(r.ti_le), so_tien: r.so_tien ?? 0 }} action={luuTiLe} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe="Xoá tỉ lệ" xacNhan="Xoá tỉ lệ này?" an={{ id: r.id }} nhanLuu="Xoá" action={xoaTiLe} /></span> }] : [])]} />
-        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Thứ tự áp dụng khi tính (người đầu thắng): nhân viên + mục cụ thể, nhân viên + cả loại, nhóm + mục cụ thể, nhóm + cả loại, chung + mục cụ thể, chung + cả loại; không có dòng nào thì 0. Hoa hồng một dòng hàng = (doanh số × tỉ lệ + số tiền cố định × số lượng) × tỉ lệ chia người. Nhóm = chức danh trong hồ sơ nhân viên. Đổi cài đặt chỉ ảnh hưởng số tính lại từ nay, hoá đơn đã chốt vào bảng lương không đổi. Vai Giới thiệu dùng cho báo cáo hoa hồng giới thiệu. Tự thiết kế, chưa đối chiếu SalonHero.</p>
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Thứ tự áp dụng khi tính (người đầu thắng): nhân viên + mục cụ thể, nhân viên + cả loại, nhóm + mục cụ thể, nhóm + cả loại, chung + mục cụ thể, chung + cả loại; không có dòng nào thì 0. Hoa hồng một dòng hàng = (doanh số × tỉ lệ + số tiền cố định × số lượng) × tỉ lệ chia người. Nhóm = chức danh trong hồ sơ nhân viên. Đổi cài đặt chỉ ảnh hưởng số tính lại từ nay, hoá đơn đã chốt vào bảng lương không đổi. Vai Giới thiệu dùng cho báo cáo hoa hồng giới thiệu. Bác sĩ hưởng hoa hồng làm dịch vụ như nhân viên phục vụ (SalonHero không có phí bác sĩ riêng): cài riêng theo nhân viên. Đối chiếu SalonHero 03/11/2026: SalonHero cài theo dịch vụ × nhân viên, hiện mọi mức đang 0%.</p>
       </>
     );
   }
   return (
     <>
-      <TieuDeTrang tieuDe="Hoa hồng" phu="Tính từ hoá đơn đã chốt: doanh số chia theo vai Phục vụ, Tư vấn, Bán hàng, nhân tỉ lệ hoa hồng.">
-        {tab === "bang" ? <NutXuatExcel loai="hoa-hong" ten="bảng hoa hồng theo bộ lọc đang chọn" tham={{ tu, den, cn: sp.cn }} /> : <NutXuatExcel loai="ti-le-hoa-hong" ten="tỉ lệ hoa hồng" />}
+      <TieuDeTrang tieuDe="Hoa hồng" phu="Tính từ hoá đơn đã chốt: doanh số chia theo vai Phục vụ, Tư vấn, Bán hàng, nhân tỉ lệ hoa hồng, theo Cài đặt nâng cao.">
+        {tab === "bang" ? <NutXuatExcel loai="hoa-hong" ten="bảng hoa hồng theo bộ lọc đang chọn" tham={{ tu, den, cn: sp.cn }} /> : tab === "ti-le" ? <NutXuatExcel loai="ti-le-hoa-hong" ten="tỉ lệ hoa hồng" /> : null}
       </TieuDeTrang>
       <Tab muc={TAB} dang={tab} goc="/hoa-hong" them={`${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}`} />
       {noiDung}

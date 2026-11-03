@@ -43,9 +43,13 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
   }, []);
   useEffect(() => {
     const dau = setTimeout(lamMoi, 0);
-    // Gộp nhiều tín hiệu dồn dập (vd một đơn bán ghi nhiều bảng) thành một lần hỏi lại.
-    let tre: ReturnType<typeof setTimeout> | undefined;
-    const lamMoiTre = () => { clearTimeout(tre); tre = setTimeout(lamMoi, 300); };
+    // Gộp nhiều tín hiệu dồn dập (vd một đơn bán ghi nhiều bảng, hay đồng bộ đêm ghi hàng trăm lô) thành một lần hỏi lại:
+    // chờ yên 300 ms, và tối đa 1 lần mỗi 5 giây — trước đây mỗi lô ghi làm MỌI máy đang mở hỏi lại cả chục truy vấn đếm.
+    let tre: ReturnType<typeof setTimeout> | undefined, lanCuoi = 0;
+    const lamMoiTre = () => {
+      clearTimeout(tre);
+      tre = setTimeout(() => { lanCuoi = Date.now(); lamMoi(); }, Math.max(300, lanCuoi + 5000 - Date.now()));
+    };
     const sb = createClient();
     const kenh = sb.channel("canh-bao").on("broadcast", { event: "doi" }, lamMoiTre).subscribe((tt) => {
       const noi = tt === "SUBSCRIBED";

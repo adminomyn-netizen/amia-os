@@ -32,12 +32,14 @@ export function truongCapThe(chiNhanh: { id: string; ten: string }[]): Truong[] 
 }
 const TAB = [{ ma: "lan", ten: "Thẻ liệu trình" }, { ma: "tien", ten: "Thẻ tiền" }];
 
-export default async function TrangThe({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; het?: string }> }) {
+export default async function TrangThe({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; het?: string; so?: string }> }) {
   const nd = await yeuCauQuyen("the.xem");
   const sp = await searchParams;
   const tab = sp.tab === "tien" ? "tien" : "lan";
   const db = sb();
-  let q = db.from("v_the_khach").select("*").eq("loai", tab).order("ngay_cap", { ascending: false }).limit(200);
+  // Hiện TỪNG PHẦN: 50 thẻ mới nhất trước, bấm "Xem thêm" lấy thêm 50 (tối đa 1.000) — trang nhẹ, mở ngay.
+  const so = Math.min(1000, Math.max(50, Math.floor(Number(sp.so) / 50) * 50 || 50));
+  let q = db.from("v_the_khach").select("*").eq("loai", tab).order("ngay_cap", { ascending: false }).order("id").limit(so + 1);
   if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
   // Tìm ở máy chủ trên TOÀN BỘ thẻ (mã thẻ, mã/tên/SĐT khách), không lọc trên 200 thẻ mới nhất.
   const tuKhoa = (sp.q ?? "").trim().replace(/[%,()*\\]/g, " ").trim();
@@ -57,9 +59,15 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const { data: ks } = idsK.length ? await db.from("khach_hang").select("id, ho_ten, ma, dien_thoai").in("id", idsK) : { data: [] };
   const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
   const tenGoi = new Map((goi ?? []).map((g) => [g.id, g.ten]));
-  const ds = the ?? [];
+  const conNua = (the ?? []).length > so, ds = (the ?? []).slice(0, so);
+  const lienKetThem = `/the?${new URLSearchParams({ tab, ...(sp.q ? { q: sp.q } : {}), ...(sp.het === "1" ? { het: "1" } : {}), so: String(so + 50) })}`;
   const nvLC = luaChonNhanVien(nv ?? []);
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
+  // Danh sách dịch vụ cho nút "Thực hiện buổi": dựng MỘT lần cho mỗi gói (gói không gắn dịch vụ thì dùng chung một danh sách đủ) và dùng lại
+  // đúng mảng đó cho mọi dòng — trước đây mỗi dòng dựng mảng mới ~230 dịch vụ × 200 thẻ, làm trang nặng ~5 MB.
+  const dvDu = (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten })), dvTheoGoi = new Map<string, typeof dvDu>();
+  for (const l of lk ?? []) { const d = (dv ?? []).find((x) => x.id === l.dich_vu_id); if (d) dvTheoGoi.set(l.goi_id, [...(dvTheoGoi.get(l.goi_id) ?? []), { gia_tri: d.id, nhan: d.ten }]); }
+  const dvCuaGoi = (goiId: string | null) => (goiId && dvTheoGoi.get(goiId)) || dvDu;
 
   return (
     <>
@@ -85,8 +93,9 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
           { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
           { nhan: "Tình trạng", hienThi: (r) => { const t = NHAN_TINH_TRANG[r.tinh_trang ?? "hoat_dong"]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
           ...(tab === "lan" && coQuyen(nd, "the.thuchien") ? [{ nhan: "", hienThi: (r: NonNullable<typeof the>[number]) => (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? (
-            <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={(lk ?? []).some((l) => l.goi_id === r.goi_id) ? (dv ?? []).filter((d) => (lk ?? []).some((l) => l.goi_id === r.goi_id && l.dich_vu_id === d.id)).map((d) => ({ gia_tri: d.id, nhan: d.ten })) : (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten }))} action={thucHienBuoi} />) : null }] : []),
+            <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} />) : null }] : []),
         ]} />
+      {conNua && <p className="mt-4 text-center text-[14px]"><Link href={lienKetThem} scroll={false} className="font-medium text-nhan-dam hover:underline">Xem thêm 50 thẻ</Link></p>}
     </>
   );
 }

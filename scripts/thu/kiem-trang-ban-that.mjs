@@ -1,6 +1,6 @@
 // Kiểm nhanh trên bản thật: đăng nhập tài khoản tạm vai Chủ, tải từng trang, báo mã HTTP, thời gian, và có chữ lỗi không.
 // Dùng: node scripts/thu/kiem-trang-ban-that.mjs [BASE] [--lap N] -- /duong/dan1 /duong/dan2 ...   Không xuất Excel (để xoá được tài khoản tạm).
-// In: mã HTTP, TTFB (byte đầu) và thời gian tải trọn HTML (gồm phần stream sau); --lap N đo N lần mỗi trang, in số tốt nhất.
+// In: mã HTTP, TTFB (byte đầu), thời gian tải trọn HTML (gồm phần stream sau) và cỡ HTML; --lap N đo N lần mỗi trang, in số tốt nhất.
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 
@@ -31,7 +31,7 @@ try {
       if (!tot || xong < tot.xong) tot = { ttfb, xong };
     }
     const loi = /Đã có lỗi|Application error|statement timeout|Không tải được/i.exec(html)?.[0] ?? "";
-    console.log(`${r.status} ttfb ${String(tot.ttfb).padStart(5)}ms  trọn ${String(tot.xong).padStart(5)}ms ${p}${r.headers.get("location") ? " → " + r.headers.get("location") : ""}${loi ? "  LỖI: " + loi : ""}`);
+    console.log(`${r.status} ttfb ${String(tot.ttfb).padStart(5)}ms  trọn ${String(tot.xong).padStart(5)}ms ${String(Math.round(html.length / 1024)).padStart(5)} KB ${p}${r.headers.get("location") ? " → " + r.headers.get("location") : ""}${loi ? "  LỖI: " + loi : ""}`);
   }
 } finally {
   if (nvId) await db.from("nhan_vien").delete().eq("id", nvId);

@@ -27,3 +27,17 @@ export const bcDoanhThuNgayViNho = unstable_cache(async (tu: string, den: string
   if (error) throw new Error(error.message);
   return data ?? [];
 }, ["bc-doanh-thu-ngay-vi-nho-v1"], { revalidate: GIAY });
+
+/** Top dịch vụ/sản phẩm bán chạy tháng này (ô "Top" ở trang chủ) — tính trên hàng chục nghìn dòng hoá đơn, 0,3–4 s lúc nguội. */
+export const topBanThangNho = unstable_cache(async (tu: string, cn: string | null): Promise<Ham["top_ban_thang"]["Returns"]> => {
+  const { data, error } = await sb().rpc("top_ban_thang", { p_tu: tu, ...(cn ? { p_cn: cn } : {}) });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}, ["top-ban-thang-nho-v1"], { revalidate: GIAY });
+
+/** Top khách chi tiêu 12 tháng (ô "Top khách" ở trang chủ). */
+export const topKhachNho = unstable_cache(async (so: number, cn: string | null): Promise<Ham["top_khach_chi_12_thang"]["Returns"]> => {
+  const { data, error } = await sb().rpc("top_khach_chi_12_thang", { p_so: so, ...(cn ? { p_cn: cn } : {}) });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}, ["top-khach-nho-v1"], { revalidate: GIAY });

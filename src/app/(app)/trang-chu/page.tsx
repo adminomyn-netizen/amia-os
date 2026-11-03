@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { sb } from "@/lib/db";
 import { chiNhanhHoatDong, tatCaChiNhanh } from "@/lib/chi-nhanh";
 import { layCanhBao } from "@/lib/canh-bao";
-import { bcDoanhThuNgayNho, bcDoanhThuNgayViNho, bcNhanVienNho } from "@/lib/bao-cao-nho-dem";
+import { bcDoanhThuNgayNho, bcDoanhThuNgayViNho, bcNhanVienNho, topBanThangNho, topKhachNho } from "@/lib/bao-cao-nho-dem";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
 import { DongHo } from "@/components/layout/DongHo";
@@ -113,8 +113,9 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
   let nvq = db.from("nhan_vien").select("id", { count: "exact", head: true }).eq("hoat_dong", true).eq("trang_thai_lam", "dang_lam");
   if (cn) { lq = lq.eq("chi_nhanh_id", cn); kq = kq.eq("chi_nhanh_id", cn); tk = tk.eq("chi_nhanh_id", cn); no = no.eq("chi_nhanh_id", cn); nvq = nvq.eq("chi_nhanh_id", cn); }
   const pKhMoi = khoiDong(kq), pTk = khoiDong(tk), pTc = khoiDong(tc), pNv = khoiDong(nvq);
-  const pTopBan = khoiDong(db.rpc("top_ban_thang", { p_tu: dauThang, ...(cn ? { p_cn: cn } : {}) }));
-  const pTopKh = khoiDong(db.rpc("top_khach_chi_12_thang", { p_so: 10, ...(cn ? { p_cn: cn } : {}) }));
+  // Top bán chạy / top khách: giữ 45 giây dùng chung (như các số liệu nặng khác); lỗi thì coi như rỗng, không làm hỏng trang.
+  const pTopBan = topBanThangNho(dauThang, cn ?? null).then((data) => ({ data }), () => ({ data: null }));
+  const pTopKh = topKhachNho(10, cn ?? null).then((data) => ({ data }), () => ({ data: null }));
   // Ví điện tử / Ship COD tháng này (cơ cấu thu chia theo hình thức như SalonHero, 0199). Không quyền báo cáo thì không chạy.
   const pVi = khoiDong(coQuyen(nd, "baocao.xem") ? bcDoanhThuNgayViNho(dauThang, homNay, cn ?? null).then((data): { data: typeof data | null } => ({ data })) : Promise.resolve({ data: null }));
   const [canhBao, { data: ban }, { data: dtNgay }, { data: tatCaLich }, { data: dsNo }] = await Promise.all([

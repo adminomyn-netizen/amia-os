@@ -7,7 +7,7 @@ export type DuLieuIn = {
   tieuDe: string; ma: string; ngay: string; trangThai?: string;
   khach?: { ten: string; sdt?: string | null; gioiTinh?: string | null; namSinh?: string | null; diem?: number | null } | null;
   thuNgan?: string | null; ghiChu?: string | null;
-  dong: { ten: string; soLuong: number; donGia: number; giamGia: number; thanhTien: number }[];
+  dong: { ten: string; soLuong: number; donGia: number; giamGia: number; thanhTien: number; /** "HH:MM–HH:MM" khi dịch vụ bật "In giờ phục vụ trên hoá đơn". */ gioPhucVu?: string }[];
   tongHang: number; giamDon: number; vatPct: number; vatTien: number; phuPhi: number; tip: number; phaiThu: number;
   thanhToan: { nhan: string; soTien: number }[]; conNo: number;
   /** Ảnh mã QR đã dựng sẵn (data URL); bản xem mẫu không có thì hiện khung giữ chỗ. */
@@ -43,7 +43,7 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
         <>
           <table className="mt-4 w-full text-left">
             <thead><tr className="border-b border-muc"><th className="py-1.5 font-medium">Mục</th><th className="py-1.5 text-right font-medium">SL</th>{!cuon && <th className="py-1.5 text-right font-medium">Đơn giá</th>}<th className="py-1.5 text-right font-medium">Thành tiền</th></tr></thead>
-            <tbody>{d.dong.map((x, i) => (<tr key={i} className="border-b border-vien align-top"><td className="py-1.5 pr-2">{x.ten}{x.giamGia ? <span className={`block text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>Giảm {tienVN(x.giamGia)}</span> : null}</td><td className="py-1.5 text-right tabular-nums">{x.soLuong}</td>{!cuon && <td className="py-1.5 text-right tabular-nums">{tienVN(x.donGia)}</td>}<td className="py-1.5 text-right tabular-nums">{tienVN(x.thanhTien)}</td></tr>))}</tbody>
+            <tbody>{d.dong.map((x, i) => (<tr key={i} className="border-b border-vien align-top"><td className="py-1.5 pr-2">{x.ten}{x.gioPhucVu ? <span className={`block text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>Giờ phục vụ {x.gioPhucVu}</span> : null}{x.giamGia ? <span className={`block text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>Giảm {tienVN(x.giamGia)}</span> : null}</td><td className="py-1.5 text-right tabular-nums">{x.soLuong}</td>{!cuon && <td className="py-1.5 text-right tabular-nums">{tienVN(x.donGia)}</td>}<td className="py-1.5 text-right tabular-nums">{tienVN(x.thanhTien)}</td></tr>))}</tbody>
           </table>
           <dl className="ml-auto mt-3 w-full space-y-1" style={{ maxWidth: cuon ? "100%" : 260 }}>
             <div className="flex justify-between"><dt>Tiền hàng</dt><dd className="tabular-nums">{tienVN(d.tongHang)}</dd></div>

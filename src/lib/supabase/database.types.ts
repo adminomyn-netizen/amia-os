@@ -11033,6 +11033,70 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+      v_hoa_don_loc: {
+        Row: {
+          chi_nhanh_id: string | null
+          chot_luc: string | null
+          con_no: number | null
+          da_thu: number | null
+          dung_the_lan: boolean | null
+          ghi_chu: string | null
+          giam_diem: number | null
+          giam_gia_don: number | null
+          giam_voucher: number | null
+          hinh_thuc: string[] | null
+          id: string | null
+          khach_id: string | null
+          la_lich_su: boolean | null
+          la_so_du_dau: boolean | null
+          ly_do_huy: string | null
+          ma: string | null
+          mua_the_lan: boolean | null
+          mua_the_tien: boolean | null
+          ngay_hd: string | null
+          nguoi_lap_id: string | null
+          nv_ban: string[] | null
+          nv_phuc_vu: string[] | null
+          nv_tu_van: string[] | null
+          phu_phi: number | null
+          sh_ma: string | null
+          tao_luc: string | null
+          thu_ngan_ten: string | null
+          tien_tru_the: number | null
+          tip: number | null
+          tong_hang: number | null
+          tong_phai_thu: number | null
+          trang_thai: string | null
+          vat_hd_ky_hieu: string | null
+          vat_hd_luc: string | null
+          vat_hd_so: string | null
+          vat_pct: number | null
+          vat_tien: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "hoa_don_chi_nhanh_id_fkey"
+            columns: ["chi_nhanh_id"]
+            isOneToOne: false
+            referencedRelation: "chi_nhanh"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hoa_don_khach_id_fkey"
+            columns: ["khach_id"]
+            isOneToOne: false
+            referencedRelation: "khach_hang"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "hoa_don_nguoi_lap_id_fkey"
+            columns: ["nguoi_lap_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
             foreignKeyName: "phieu_cap_chi_nhanh_id_fkey"
             columns: ["chi_nhanh_id"]
             isOneToOne: false

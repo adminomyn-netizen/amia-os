@@ -3,12 +3,12 @@ import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, ngayGioVN, ngayVN } from "@/lib/dinh-dang";
-import { apLocHoaDon, docLocHoaDon, khachKhopTim } from "@/lib/loc-hoa-don";
+import { apLocHoaDon, docLocHoaDon, traCuuLoc } from "@/lib/loc-hoa-don";
 
 const TT: Record<string, string> = { nhap: "Nháp", hoan_thanh: "Hoàn thành", huy: "Đã huỷ" };
 const TOI_DA_NGAY = 366, TRANG = 1000;
 const COT = `id, ma, sh_ma, ngay_hd, trang_thai, tong_hang, giam_gia_don, giam_diem, giam_voucher, vat_pct, vat_tien, phu_phi, tip, tong_phai_thu, da_thu, con_no, tien_tru_the,
-  vat_hd_luc, vat_hd_so, vat_hd_ky_hieu, ghi_chu, ly_do_huy, la_lich_su, tao_luc,
+  vat_hd_luc, vat_hd_so, vat_hd_ky_hieu, ghi_chu, ly_do_huy, la_lich_su, tao_luc, thu_ngan_ten,
   khach:khach_hang!hoa_don_khach_id_fkey(ma, ho_ten, dien_thoai), lap:nhan_vien!hoa_don_nguoi_lap_id_fkey(ho_ten), cn:chi_nhanh!hoa_don_chi_nhanh_id_fkey(ten)`;
 
 /** Xuất Excel hoá đơn theo ĐÚNG bộ lọc của màn /hoa-don (dùng chung lib/loc-hoa-don). Chặn quyền + chi nhánh ở máy chủ, ghi nhật ký. */
@@ -20,8 +20,8 @@ export async function GET(req: Request) {
   if (loc.den < loc.tu) return new Response("Ngày cuối trước ngày đầu", { status: 400 });
   if (congNgay(loc.tu, TOI_DA_NGAY) < loc.den) return new Response(`Mỗi lần xuất tối đa ${TOI_DA_NGAY} ngày`, { status: 400 });
   const db = sb();
-  const khachIds = await khachKhopTim(db, loc);
-  const truyVan = () => apLocHoaDon(db.from("hoa_don").select(COT, { count: "exact" }), loc, nd.chiNhanhId, khachIds).order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).order("id");
+  const tra = await traCuuLoc(db, loc);
+  const truyVan = () => apLocHoaDon(db.from("v_hoa_don_loc").select(COT, { count: "exact" }), loc, nd.chiNhanhId, tra).order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).order("id");
   // PostgREST trả tối đa 1000 dòng một lần → đọc theo trang tới khi đủ tổng đếm.
   const dong: NonNullable<Awaited<ReturnType<typeof truyVan>>["data"]> = [];
   let tong = 0;
@@ -51,8 +51,8 @@ export async function GET(req: Request) {
     const xong = h.trang_thai === "hoan_thanh";
     ws.addRow({
       ma: h.ma, sh: h.sh_ma ?? "", ngay: ngayVN(h.ngay_hd), cn: h.cn?.ten ?? "", kh: h.khach?.ho_ten ?? (h.khach ? "" : "Khách lẻ"), mk: h.khach?.ma ?? "", sdt: xemSdt ? h.khach?.dien_thoai ?? "" : "",
-      nl: h.lap?.ho_ten ?? "", hang: n(h.tong_hang), giam: n(h.giam_gia_don), diem: n(h.giam_diem) || null, vc: n(h.giam_voucher) || null, vp: n(h.vat_pct) || null, vt: n(h.vat_tien) || null,
-      pp: n(h.phu_phi) || null, tip: n(h.tip) || null, phai: n(h.tong_phai_thu), thu: n(h.da_thu), the: n(h.tien_tru_the) || null, no: xong ? n(h.con_no) : 0, tt: TT[h.trang_thai] ?? h.trang_thai,
+      nl: (h.la_lich_su ? h.thu_ngan_ten : h.lap?.ho_ten) ?? "", hang: n(h.tong_hang), giam: n(h.giam_gia_don), diem: n(h.giam_diem) || null, vc: n(h.giam_voucher) || null, vp: n(h.vat_pct) || null, vt: n(h.vat_tien) || null,
+      pp: n(h.phu_phi) || null, tip: n(h.tip) || null, phai: n(h.tong_phai_thu), thu: n(h.da_thu), the: n(h.tien_tru_the) || null, no: xong ? n(h.con_no) : 0, tt: TT[h.trang_thai ?? ""] ?? h.trang_thai,
       hdvat: xong ? (h.vat_hd_luc ? "Đã có hoá đơn" : "Chưa có hoá đơn") : "", vso: h.vat_hd_so ?? "", vkh: h.vat_hd_ky_hieu ?? "", gc: h.ghi_chu ?? "", ldh: h.ly_do_huy ?? "", tl: ngayGioVN(h.tao_luc),
     });
   }

@@ -2,14 +2,12 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { ngayVN, tienVN } from "@/lib/dinh-dang";
-import { apLocHoaDon, docLocHoaDon, khachKhopTim, TRANG_THAI_HD } from "@/lib/loc-hoa-don";
+import { gioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
+import { apLocHoaDon, docLocHoaDon, GIOI_HAN_TONG, TRANG_THAI_HD, tongToanKy, traCuuLoc } from "@/lib/loc-hoa-don";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
-import { LocHoaDon } from "@/components/hoa-don/LocHoaDon";
-
-const MOI_TRANG = 40;
+import { ChonCoTrang, LocHoaDon } from "@/components/hoa-don/LocHoaDon";
 
 export default async function TrangHoaDon({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const nd = await yeuCauQuyen("ban.xem");
@@ -20,33 +18,47 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
   const db = sb();
   // SalonHero pos.readByLoc: không có quyền xem toàn cơ sở thì chỉ thấy hoá đơn do chính mình lập.
   const toanCoSo = coQuyen(nd, "ban.toan_co_so");
-  const q0 = apLocHoaDon(db.from("hoa_don").select("id, ma, ngay_hd, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, chi_nhanh_id, vat_hd_luc, vat_hd_so", { count: "exact" }), loc, nd.chiNhanhId, await khachKhopTim(db, loc));
-  const q = (toanCoSo ? q0 : q0.eq("nguoi_lap_id", nd.nhanVienId ?? "")).order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).range((trang - 1) * MOI_TRANG, trang * MOI_TRANG - 1);
+  const tra = await traCuuLoc(db, loc);
+  const moiTrang = loc.n;
+  const COT = "id, ma, sh_ma, ngay_hd, tao_luc, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, thu_ngan_ten, la_lich_su, chi_nhanh_id, vat_hd_luc, vat_hd_so";
+  const goiHan = <Q extends { eq(c: string, v: string): Q }>(x: Q) => (toanCoSo ? x : x.eq("nguoi_lap_id", nd.nhanVienId ?? ""));
+  const q = goiHan(apLocHoaDon(db.from("v_hoa_don_loc").select(COT, { count: "exact" }), loc, nd.chiNhanhId, tra)).order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).order("id").range((trang - 1) * moiTrang, trang * moiTrang - 1);
   const { data: ds, count } = await q;
   const idsK = [...new Set((ds ?? []).map((d) => d.khach_id).filter(Boolean))] as string[];
-  const [{ data: k }, { data: nv }] = await Promise.all([
+  const [{ data: k }, { data: nv }, { data: cn }, tongKy] = await Promise.all([
     idsK.length ? db.from("khach_hang").select("id, ho_ten, ma").in("id", idsK) : Promise.resolve({ data: [] }),
     db.from("nhan_vien").select("id, ho_ten"),
+    nd.chiNhanhId ? Promise.resolve({ data: null }) : db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("ten"),
+    // Tổng toàn kỳ: cộng trên MỌI hoá đơn đang lọc (không chỉ trang này).
+    tongToanKy((tu0, den0) => goiHan(apLocHoaDon(db.from("v_hoa_don_loc").select("trang_thai, tong_phai_thu, con_no"), loc, nd.chiNhanhId, tra)).order("ngay_hd").order("id").range(tu0, den0), count ?? 0),
   ]);
   const tenK = new Map((k ?? []).map((x) => [x.id, x]));
   const tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
-  const soTrang = Math.max(1, Math.ceil((count ?? 0) / MOI_TRANG));
+  // Danh sách chọn nhân viên cho bộ lọc (bỏ tài khoản hệ thống chứa dữ liệu nhập từ SalonHero).
+  const dsNv = (nv ?? []).filter((x) => !x.ho_ten.startsWith("Dữ liệu SalonHero")).sort((a, b) => a.ho_ten.localeCompare(b.ho_ten, "vi")).map((x) => ({ gia_tri: x.id, nhan: x.ho_ten }));
+  const dsCn = cn ? cn.map((x) => ({ gia_tri: x.id, nhan: x.ten })) : null;
+  const soTrang = Math.max(1, Math.ceil((count ?? 0) / moiTrang));
   const lienKet = (t: number) => { const u = new URLSearchParams(Object.entries(sp).filter(([kk, v]) => v && kk !== "trang") as [string, string][]); u.set("trang", String(t)); return `/hoa-don?${u}`; };
   const thamSo = new URLSearchParams(Object.entries(sp).filter(([kk, v]) => v && kk !== "trang") as [string, string][]);
   thamSo.set("tu", tu); thamSo.set("den", den);
-  const tong = (ds ?? []).filter((d) => d.trang_thai === "hoan_thanh").reduce((s, d) => s + Number(d.tong_phai_thu), 0);
 
   return (
     <>
-      <TieuDeTrang tieuDe="Hoá đơn" phu={`${(count ?? 0).toLocaleString("vi-VN")} hoá đơn từ ${ngayVN(tu)} đến ${ngayVN(den)}${trang === 1 ? ` · trang này phải thu ${tienVN(tong)}` : ""}`}>
+      <TieuDeTrang tieuDe="Hoá đơn" phu={`${(count ?? 0).toLocaleString("vi-VN")} hoá đơn từ ${ngayVN(tu)} đến ${ngayVN(den)}`}>
         {(count ?? 0) > 0 && <a href={`/api/xuat/hoa-don?${thamSo}`} download className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram" aria-label={`Xuất Excel ${(count ?? 0).toLocaleString("vi-VN")} hoá đơn đang lọc`}>Xuất Excel</a>}
       </TieuDeTrang>
-      <LocHoaDon tu={tu} den={den} />
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Không có hoá đơn trong khoảng này."
+      <LocHoaDon tu={tu} den={den} chiNhanh={dsCn} nhanVien={dsNv} />
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-[13px] text-muc-2">
+        {tongKy ? (
+          <p role="status">Hoàn thành <b className="tabular-nums">{tongKy.hoanThanh.don.toLocaleString("vi-VN")}</b> đơn · phải thu <b className="tabular-nums">{tienVN(tongKy.hoanThanh.phaiThu)}</b> · còn nợ <b className={`tabular-nums ${tongKy.hoanThanh.conNo > 0 ? "text-canh-bao" : ""}`}>{tienVN(tongKy.hoanThanh.conNo)}</b>{tongKy.huy.don > 0 ? ` · đã huỷ ${tongKy.huy.don.toLocaleString("vi-VN")} đơn` : ""}{tongKy.nhap.don > 0 ? ` · nháp ${tongKy.nhap.don.toLocaleString("vi-VN")} đơn` : ""}</p>
+        ) : (count ?? 0) > GIOI_HAN_TONG ? <p className="text-muc-3">Quá {GIOI_HAN_TONG.toLocaleString("vi-VN")} hoá đơn, chọn khoảng ngày ngắn hơn để xem tổng.</p> : <span />}
+        <ChonCoTrang n={moiTrang} />
+      </div>
+      <Bang duLieu={ds ?? []} khoa={(r) => r.id ?? ""} trong="Không có hoá đơn trong khoảng này."
         cot={[
           { nhan: "Mã", hienThi: (r) => <Link href={`/hoa-don/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
-          { chinh: true, nhan: "Khách hàng", hienThi: (r) => (r.khach_id ? tenK.get(r.khach_id)?.ho_ten ?? "" : "Khách lẻ") }, { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_hd) },
-          { nhan: "Người lập", hienThi: (r) => tenNv.get(r.nguoi_lap_id) ?? "" },
+          { chinh: true, nhan: "Khách hàng", hienThi: (r) => (r.khach_id ? tenK.get(r.khach_id)?.ho_ten ?? "" : "Khách lẻ") }, { nhan: "Ngày", hienThi: (r) => <span className="whitespace-nowrap">{ngayVN(r.ngay_hd)}{r.tao_luc ? <span className="text-muc-3"> {gioVN(r.tao_luc)}</span> : null}</span> },
+          { nhan: "Người lập", hienThi: (r) => (r.la_lich_su ? r.thu_ngan_ten ?? "" : tenNv.get(r.nguoi_lap_id ?? "") ?? "") },
           { nhan: "Phải thu", hienThi: (r) => tienVN(r.tong_phai_thu), phai: true }, { nhan: "Đã thu", hienThi: (r) => tienVN(r.da_thu), phai: true },
           { nhan: "Còn nợ", hienThi: (r) => (r.trang_thai === "hoan_thanh" && Number(r.con_no) > 0 ? <span className="font-medium text-canh-bao">{tienVN(r.con_no)}</span> : ""), phai: true },
           { nhan: "HĐ VAT", hienThi: (r) => (r.trang_thai !== "hoan_thanh" ? "" : r.vat_hd_luc ? <span className="text-nhan-dam" title={r.vat_hd_so ? `Số ${r.vat_hd_so}` : undefined}>Đã có hoá đơn</span> : <span className="text-muc-3">Chưa có hoá đơn</span>) },

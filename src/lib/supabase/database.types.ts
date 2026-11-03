@@ -12207,7 +12207,12 @@ export type Database = {
         Returns: undefined
       }
       thong_ke_khach: { Args: never; Returns: Json }
-      tong_khach_dung_the: { Args: { p_cn?: string; p_hom: string; p_loai: string; p_tt: string }; Returns: Json }
+      tong_khach_dung_the: { Args: { p_cap_den?: string; p_cap_tu?: string; p_cn?: string; p_han_den?: string; p_han_tu?: string; p_hom?: string; p_loai?: string; p_nhom?: string; p_sdt?: string; p_tim?: string; p_tim_kd?: string; p_tt?: string }; Returns: Json }
+      the_dung_loc: { Args: { p_cap_den?: string; p_cap_tu?: string; p_cn?: string; p_han_den?: string; p_han_tu?: string; p_hom?: string; p_loai?: string; p_nhom?: string; p_sdt?: string; p_tim?: string; p_tim_kd?: string; p_tt?: string }; Returns: Database["public"]["Views"]["v_the_khach"]["Row"][] }
+      the_gan_nhat: { Args: { p_ids: string[] }; Returns: { ngay: string; the_id: string }[] }
+      dem_the_sap_het_han: { Args: { p_cn?: string; p_hom?: string }; Returns: Json }
+      khach_gan_den: { Args: { p_cn?: string; p_lim?: number; p_off?: number }; Returns: { hd_id: string; hd_ma: string; khach_id: string; ngay: string; tien: number; tong: number }[] }
+      thong_ke_khach_ngay: { Args: { p_so_ngay?: number }; Returns: Json }
       thuc_hien_buoi: {
         Args: {
           p_bac_si: string

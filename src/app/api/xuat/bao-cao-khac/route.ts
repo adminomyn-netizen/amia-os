@@ -5,7 +5,7 @@ import { congNgay, homNayHCM } from "@/lib/dinh-dang";
 import { khoangNgay } from "@/lib/bao-cao";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat } from "@/lib/xuat-excel";
-import { dieuKienTim, ganLoc, LOAI_DUNG_THE, TINH_TRANG_DUNG_THE } from "@/lib/khach-dung-the";
+import { docLocDungThe, thamSoDiaChi, thamSoRpc } from "@/lib/khach-dung-the";
 import { chuDoiTuongXuat, NHAN_LOAI, NHAN_VAI, TIEU_DE_NHAP, TIEU_DE_TEN_MUC } from "@/lib/hoa-hong-nhap";
 
 /** Xuất Excel cho các màn báo cáo nằm ngoài trang Báo cáo: hoa hồng, quyết toán hoa hồng, công nợ khách, đối soát bán hàng, thống kê khách, báo cáo marketing, công nợ nhà cung cấp.
@@ -118,19 +118,22 @@ export async function GET(req: Request) {
     tenTep = `thong-ke-khach-${hom}`;
   } else if (loai === "khach-dung-the") {
     const cnLoc = nd.chiNhanhId ?? (/^[0-9a-f-]{36}$/i.test(u.searchParams.get("cn") ?? "") ? u.searchParams.get("cn") : null);
-    const tt = TINH_TRANG_DUNG_THE.find((x) => x.ma === u.searchParams.get("tt"))?.ma ?? "", lo = LOAI_DUNG_THE.find((x) => x.ma === u.searchParams.get("loai"))?.ma ?? "";
-    const tuKhoa = (u.searchParams.get("q") ?? "").trim().replace(/[%,()*\\]/g, " ").trim().slice(0, 60);
-    const loc = { cn: cnLoc, tt, loai: lo, tuKhoa, hom };
-    const tim = await dieuKienTim(tuKhoa);
-    const the = await docHet((tu, den) => ganLoc(db.from("v_the_khach").select("*").in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]).order("ngay_cap", { ascending: false }).order("id"), loc, tim).range(tu, den));
-    const idsK = [...new Set(the.map((t) => t.khach_id))].filter((x): x is string => !!x), idsG = [...new Set(the.map((t) => t.goi_id))].filter((x): x is string => !!x);
-    const khach = new Map<string, { ho_ten: string; ma: string; dien_thoai: string | null }>(), goi = new Map<string, string>();
+    const f = docLocDungThe(Object.fromEntries(u.searchParams.entries()), cnLoc, hom);
+    const the = await docHet((tu, den) => db.rpc("the_dung_loc", thamSoRpc(f)).order("ngay_cap", { ascending: false }).order("id").range(tu, den));
+    const idsK = [...new Set(the.map((t) => t.khach_id))].filter((x): x is string => !!x), idsG = [...new Set(the.map((t) => t.goi_id))].filter((x): x is string => !!x), idsThe = the.map((t) => t.id).filter((x): x is string => !!x);
+    const khach = new Map<string, { ho_ten: string; ma: string; dien_thoai: string | null }>(), goi = new Map<string, string>(), ganNhat = new Map<string, string>();
     for (let i = 0; i < idsK.length; i += 300) for (const k of (await db.from("khach_hang").select("id, ho_ten, ma, dien_thoai").in("id", idsK.slice(i, i + 300))).data ?? []) khach.set(k.id, k);
     for (let i = 0; i < idsG.length; i += 300) for (const g of (await db.from("goi_the").select("id, ten").in("id", idsG.slice(i, i + 300))).data ?? []) goi.set(g.id, g.ten);
-    const TT: Record<string, string> = { hoat_dong: "Đang dùng", sap_het: "Sắp hết", khoa: "Đã khoá" };
-    bangs.push({ ten: "Khách dùng thẻ", dong: the.map((t) => { const k = khach.get(t.khach_id ?? ""); return { khach: k?.ho_ten ?? "", ma_khach: k?.ma ?? "", dt: k?.dien_thoai ?? "", the: t.ma ?? "", goi: goi.get(t.goi_id ?? "") ?? "", loai: t.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình", cap: t.ngay_cap ?? "", han: t.han_dung && t.han_dung >= "2000-01-01" ? t.han_dung : "Không hạn", con: t.loai === "tien" ? Number(t.so_du_tien ?? 0) : `${t.so_buoi_con ?? 0}/${t.so_buoi_tong ?? 0} buổi`, tt: TT[t.tinh_trang ?? "hoat_dong"] ?? "" }; }),
-      cot: [{ nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Mã khách", khoa: "ma_khach", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Mã thẻ", khoa: "the", rong: 14 }, { nhan: "Tên thẻ", khoa: "goi", rong: 34 }, { nhan: "Loại", khoa: "loai", rong: 14 }, { nhan: "Ngày cấp", khoa: "cap", rong: 12 }, { nhan: "Hết hạn", khoa: "han", rong: 12 }, { nhan: "Còn lại", khoa: "con", rong: 16 }, { nhan: "Tình trạng", khoa: "tt", rong: 12 }] });
-    tenTep = `khach-dung-the-${hom}`; Object.assign(chiTiet, { tt, loai: lo, cn: cnLoc, q: tuKhoa || undefined });
+    for (let i = 0; i < idsThe.length; i += 500) for (const g of (await db.rpc("the_gan_nhat", { p_ids: idsThe.slice(i, i + 500) })).data ?? []) ganNhat.set(g.the_id, g.ngay);
+    const TT: Record<string, string> = { hoat_dong: "Đang dùng", sap_het: "Sắp hết", het_han: "Hết hạn", hoan_thanh: "Hoàn thành", thu_hoi: "Thu hồi", khoa: "Đã khoá" };
+    bangs.push({ ten: "Khách dùng thẻ", dong: the.map((t) => {
+      const k = khach.get(t.khach_id ?? ""), tongBuoi = t.so_buoi_tong ?? 0, con = t.so_buoi_con ?? 0, khongGh = tongBuoi >= 999999;
+      return { khach: k?.ho_ten ?? "", ma_khach: k?.ma ?? "", dt: k?.dien_thoai ?? "", the: t.ma ?? "", goi: goi.get(t.goi_id ?? "") ?? "", loai: t.loai === "tien" ? "Thẻ tiền" : "Thẻ lần", cap: ngay(t.ngay_cap), han: t.han_dung && t.han_dung >= "2000-01-01" ? ngay(t.han_dung) : "Không hạn",
+        gan: ngay(ganNhat.get(t.id ?? "")), lan: t.loai === "tien" ? "" : `${Math.max(0, tongBuoi - con)} / ${khongGh ? "Không giới hạn" : tongBuoi}`,
+        con: t.loai === "tien" ? Number(t.so_du_tien ?? 0) : khongGh ? 0 : Math.max(0, con) * Number(t.gia_tri_buoi ?? 0), tt: TT[t.tinh_trang ?? "hoat_dong"] ?? "" };
+    }),
+      cot: [{ nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Mã khách", khoa: "ma_khach", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Mã thẻ", khoa: "the", rong: 14 }, { nhan: "Tên thẻ", khoa: "goi", rong: 34 }, { nhan: "Loại", khoa: "loai", rong: 12 }, { nhan: "Ngày cấp", khoa: "cap", rong: 12 }, { nhan: "Hết hạn", khoa: "han", rong: 12 }, { nhan: "Gần nhất", khoa: "gan", rong: 12 }, { nhan: "Lần sử dụng", khoa: "lan", rong: 18 }, { nhan: "Số tiền còn trong thẻ", khoa: "con", tien: true, rong: 20 }, { nhan: "Tình trạng", khoa: "tt", rong: 12 }] });
+    tenTep = `khach-dung-the-${hom}`; Object.assign(chiTiet, { ...thamSoDiaChi(f), cn: cnLoc });
   } else if (loai === "marketing") {
     const den = ngayTham("den") ?? hom, tu = ngayTham("tu") ?? congNgay(den, -29);
     const [{ data: kq }, { data: nguon }, { data: cp }, { data: cd }] = await Promise.all([db.rpc("bc_phieu_marketing", { p_tu: tu, p_den: den, p_cn: nd.chiNhanhId ?? undefined }), db.from("nguon_lead").select("id, ten").order("thu_tu"),

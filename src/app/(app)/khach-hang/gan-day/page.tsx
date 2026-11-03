@@ -8,35 +8,39 @@ import { chiNhanhXem } from "@/lib/cham-soc-khach";
 import { Chon } from "@/components/ui/Chon";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
-import { NUT_PHU } from "@/components/ui/dinh-dang";
+import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
+import { NgayChon } from "@/components/ui/NgayChon";
 
 const MOI_TRANG = 30;
 /** Nhớ 1 phút (khách gần đây không cần tới từng giây; giảm tải CSDL khi nhiều người mở cùng lúc). Khoá theo chi nhánh + trang. */
 /** Lỗi CSDL (quá giờ…) thì ném ra để KHÔNG bị nhớ lại như một kết quả rỗng. */
-const docDen = unstable_cache(async (cn: string, trang: number) => {
-  const { data, error } = await sb().rpc("khach_gan_den", { p_cn: cn || undefined, p_lim: MOI_TRANG + 1, p_off: (trang - 1) * MOI_TRANG });
+const docDen = unstable_cache(async (cn: string, trang: number, tu = "", den = "", q = "") => {
+  const { data, error } = await sb().rpc("khach_gan_den", { p_cn: cn || undefined, p_lim: MOI_TRANG + 1, p_off: (trang - 1) * MOI_TRANG, ...(tu ? { p_tu: tu } : {}), ...(den ? { p_den: den } : {}), ...(q ? { p_q: q } : {}) });
   if (error) throw new Error(`${error.code} ${error.message}`);
   return data ?? [];
-}, ["khach-gan-den"], { revalidate: 60 });
-const docTong = unstable_cache(async (cn: string) => {
-  const { data, error } = await sb().rpc("khach_gan_den_tong", { p_cn: cn || undefined });
+}, ["khach-gan-den-2"], { revalidate: 60 });
+const docTong = unstable_cache(async (cn: string, tu = "", den = "", q = "") => {
+  const { data, error } = await sb().rpc("khach_gan_den_tong", { p_cn: cn || undefined, ...(tu ? { p_tu: tu } : {}), ...(den ? { p_den: den } : {}), ...(q ? { p_q: q } : {}) });
   if (error) throw new Error(`${error.code} ${error.message}`);
   return Number(data ?? 0);
-}, ["khach-gan-den-tong"], { revalidate: 300 });
+}, ["khach-gan-den-tong-2"], { revalidate: 300 });
+const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 type KhachNho = { id: string; ma: string; ho_ten: string; dien_thoai: string };
 
 /** /khach-hang/gan-day — Khách gần đây (như SalonHero): khách vừa đến (hoá đơn hoàn thành mới nhất của mỗi khách, có phân trang) và khách vừa tạo hồ sơ; lọc chi nhánh; Xuất Excel. Chỉ đọc. */
-export default async function KhachGanDay({ searchParams }: { searchParams: Promise<{ cn?: string; trang?: string }> }) {
+export default async function KhachGanDay({ searchParams }: { searchParams: Promise<{ cn?: string; trang?: string; tu?: string; den?: string; q?: string }> }) {
   const nd = await yeuCauQuyen("khach.xem");
   const sp = await searchParams;
   const { cn, ds: dsCn, khoa } = await chiNhanhXem(nd, sp.cn);
   const trang = Math.max(1, Math.min(Number(sp.trang) || 1, 300));
   const xemSdt = coQuyen(nd, "khach.sdt");
+  // Khoảng ngày hoá đơn + ô tìm khách (tên, SĐT, mã) như "Khách hàng gần đây" của SalonHero.
+  const tu = NGAY.test(sp.tu ?? "") ? sp.tu! : "", den = NGAY.test(sp.den ?? "") ? sp.den! : "", q = (sp.q ?? "").trim().slice(0, 60);
   const db = sb();
   const [kqDen, { data: moi }, tong] = await Promise.all([
-    docDen(cn ?? "", trang).then((data) => ({ data, loi: null as string | null }), (e: Error) => ({ data: [] as Awaited<ReturnType<typeof docDen>>, loi: e.message })),
+    docDen(cn ?? "", trang, tu, den, q).then((data) => ({ data, loi: null as string | null }), (e: Error) => ({ data: [] as Awaited<ReturnType<typeof docDen>>, loi: e.message })),
     db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, tao_luc").match(cn ? { chi_nhanh_id: cn } : {}).order("tao_luc", { ascending: false }).limit(MOI_TRANG),
-    docTong(cn ?? "").catch(() => null as number | null),
+    docTong(cn ?? "", tu, den, q).catch(() => null as number | null),
   ]);
   const loiHd = kqDen.loi;
   if (loiHd) console.error("[khach-gan-day]", loiHd);
@@ -45,7 +49,10 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
   const { data: ks } = ids.length ? await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai").in("id", ids) : { data: [] as KhachNho[] };
   const khach = new Map((ks ?? []).map((k) => [k.id, k as KhachNho]));
   const sdt = (s: string | null) => (xemSdt ? s : "") ?? "";
-  const gan = (t: number | undefined) => `/khach-hang/gan-day${cn && !khoa ? `?cn=${cn}${t && t > 1 ? `&trang=${t}` : ""}` : t && t > 1 ? `?trang=${t}` : ""}`;
+  const gan = (t: number | undefined) => {
+    const u = new URLSearchParams({ ...(cn && !khoa ? { cn } : {}), ...(tu ? { tu } : {}), ...(den ? { den } : {}), ...(q ? { q } : {}), ...(t && t > 1 ? { trang: String(t) } : {}) });
+    return `/khach-hang/gan-day${u.size ? `?${u}` : ""}`;
+  };
   return (
     <div className="space-y-4">
       <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
@@ -58,7 +65,11 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>
             <div className="w-56"><Chon ten="cn" ariaLabel="Chi nhánh" giaTriMacDinh={cn ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả các chi nhánh" }, ...dsCn.map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div></label>
         )}
-        {!khoa && <button type="submit" className={NUT_PHU}>Lọc</button>}
+        <div className="block"><span className="mb-1 block font-medium text-muc-2">Ngày đến</span>
+          <div className="flex items-center gap-1.5"><NgayChon ten="tu" giaTriMacDinh={tu} tuNam={2015} ariaLabel="Từ ngày" className="w-36" /><span aria-hidden className="text-muc-3">–</span><NgayChon ten="den" giaTriMacDinh={den} tuNam={2015} ariaLabel="Đến ngày" className="w-36" /></div></div>
+        <label className="block"><span className="mb-1 block font-medium text-muc-2">Tìm khách</span>
+          <input name="q" defaultValue={q} placeholder="Tên, SĐT hoặc mã khách" aria-label="Tìm khách" className={`${O_NHAP} !h-10 w-56 !text-[13px]`} /></label>
+        <button type="submit" className={NUT_PHU}>Lọc</button>
       </form>
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="rounded-the border border-vien bg-giay-sang">

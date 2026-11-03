@@ -2,13 +2,15 @@ import Link from "next/link";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { NHAN_TRANG_THAI_LICH } from "@/lib/khach";
+import { PHUONG_THUC_VN } from "@/lib/bao-cao-gap";
+import { maPhieuThu } from "@/lib/phieu-thu";
 import { Bang } from "@/components/ui/Table";
 import { NgayChon } from "@/components/ui/NgayChon";
 
 const MOI_TRANG = 20;
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 const VAI: Record<string, string> = { phuc_vu: "phục vụ", tu_van: "tư vấn", ban: "bán" };
-export type ThamSoLichSu = { tu?: string; den?: string; hd?: string; the?: string; lh?: string; bt?: string };
+export type ThamSoLichSu = { tu?: string; den?: string; hd?: string; the?: string; lh?: string; bt?: string; tt?: string };
 
 /** Trang hiện tại (1…) của một mục, lấy từ địa chỉ. */
 const soTrang = (v?: string) => Math.max(1, Math.min(10_000, Number(v) || 1));
@@ -20,7 +22,7 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
   const db = sb();
   const tu = t.tu && NGAY.test(t.tu) ? t.tu : "";
   const den = t.den && NGAY.test(t.den) ? t.den : "";
-  const [pHd, pThe, pLh, pBt] = [soTrang(t.hd), soTrang(t.the), soTrang(t.lh), soTrang(t.bt)];
+  const [pHd, pThe, pLh, pBt, pTt] = [soTrang(t.hd), soTrang(t.the), soTrang(t.lh), soTrang(t.bt), soTrang(t.tt)];
   const r = (p: number) => [(p - 1) * MOI_TRANG, p * MOI_TRANG - 1] as const;
 
   let qHd = db.from("hoa_don").select("id, ma, sh_ma, ngay_hd, trang_thai, tong_phai_thu, da_thu, con_no", { count: "exact" }).eq("khach_id", khachId);
@@ -36,21 +38,27 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
   const dsIdHd = (idHd ?? []).map((x) => x.id);
   const qThe = db.from("hoa_don_dong").select("id, ten, the_khach_sh_id, hoa_don(id, ma, sh_ma, ngay_hd), dong_nhan_vien(vai, nhan_vien_id)", { count: "exact" })
     .in("hoa_don_id", dsIdHd.length ? dsIdHd : ["00000000-0000-0000-0000-000000000000"]).neq("loai", "san_pham").or("the_khach_sh_id.not.is.null,loai_goc.eq.SERVICE:USING");
-  const [hd, the, bt, lh, { data: dvAll }] = await Promise.all([
+  // Các lần trả tiền (như mục "Thanh toán" trong hồ sơ SalonHero): từng phiếu thu của các hoá đơn của khách, kể cả dòng đảo khi huỷ/sửa.
+  const qTt = db.from("thanh_toan").select("id, ngay, tao_luc, la_lich_su, so_tien, phuong_thuc, ngan_hang, so_phieu, dao_cua_id, ghi_chu, nguoi_id, hoa_don(id, ma, sh_ma)", { count: "exact" })
+    .in("hoa_don_id", dsIdHd.length ? dsIdHd : ["00000000-0000-0000-0000-000000000000"]);
+  const [hd, the, bt, lh, { data: dvAll }, tt] = await Promise.all([
     qHd.order("ngay_hd", { ascending: false }).order("id").range(...r(pHd)),
     // Sắp theo ngày hoá đơn (bảng cha, quan hệ nhiều-một) — PostgREST cho phép order=hoa_don(ngay_hd).
     qThe.order("hoa_don(ngay_hd)", { ascending: false }).order("id").range(...r(pThe)),
     qBt.order("ngay_lam", { ascending: false }).order("id").range(...r(pBt)),
     qLh.order("bat_dau", { ascending: false }).order("id").range(...r(pLh)),
     db.from("dich_vu").select("id, ten"),
+    qTt.order("ngay", { ascending: false }).order("tao_luc", { ascending: false }).order("id").range(...r(pTt)),
   ]);
-  for (const [ten, kq] of [["hoa_don", hd], ["dung_the", the], ["buoi", bt], ["lich_hen", lh]] as const) if (kq.error) console.error("[lich-su-khach]", ten, kq.error.code, kq.error.message);
-  const loiDoc = [hd, the, bt, lh].some((x) => x.error);
+  for (const [ten, kq] of [["hoa_don", hd], ["dung_the", the], ["buoi", bt], ["lich_hen", lh], ["thanh_toan", tt]] as const) if (kq.error) console.error("[lich-su-khach]", ten, kq.error.code, kq.error.message);
+  const loiDoc = [hd, the, bt, lh, tt].some((x) => x.error);
+  type DongTt = { id: string; ngay: string; tao_luc: string; la_lich_su: boolean; so_tien: number; phuong_thuc: string; ngan_hang: string | null; so_phieu: number; dao_cua_id: string | null; ghi_chu: string | null; nguoi_id: string; hoa_don: { id: string; ma: string; sh_ma: string | null } };
+  const dongTt = (tt.data ?? []) as unknown as DongTt[];
   type DongThe = { id: string; ten: string; the_khach_sh_id: number | null; hoa_don: { id: string; ma: string; sh_ma: string | null; ngay_hd: string }; dong_nhan_vien: { vai: string; nhan_vien_id: string }[] };
   const dongThe = (the.data ?? []) as unknown as DongThe[];
 
   // Tên nhân viên (kể cả người đã nghỉ) và mã thẻ của đúng các dòng đang hiện.
-  const idNv = [...new Set([...dongThe.flatMap((d) => d.dong_nhan_vien.map((n) => n.nhan_vien_id)), ...(bt.data ?? []).map((b) => b.nv_thuc_hien_id)])];
+  const idNv = [...new Set([...dongThe.flatMap((d) => d.dong_nhan_vien.map((n) => n.nhan_vien_id)), ...(bt.data ?? []).map((b) => b.nv_thuc_hien_id), ...dongTt.map((x) => x.nguoi_id)])];
   const shThe = [...new Set(dongThe.map((d) => d.the_khach_sh_id).filter((x): x is number => x != null))];
   const [{ data: nv }, { data: theKh }] = await Promise.all([
     idNv.length ? db.from("nhan_vien").select("id, ho_ten").in("id", idNv) : Promise.resolve({ data: [] as { id: string; ho_ten: string }[] }),
@@ -63,7 +71,7 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
   /** Địa chỉ giữ nguyên khoảng ngày + trang các mục khác, chỉ đổi trang của mục `muc`. */
   const lk = (muc: keyof ThamSoLichSu, p: number) => {
     const u = new URLSearchParams({ tab: "lich-su" });
-    for (const [k, v] of Object.entries({ tu, den, hd: String(pHd), the: String(pThe), lh: String(pLh), bt: String(pBt), [muc]: String(p) })) if (v && v !== "1") u.set(k, v);
+    for (const [k, v] of Object.entries({ tu, den, hd: String(pHd), the: String(pThe), lh: String(pLh), bt: String(pBt), tt: String(pTt), [muc]: String(p) })) if (v && v !== "1") u.set(k, v);
     return `/khach-hang/${khachId}?${u}`;
   };
   const phanTrang = (muc: keyof ThamSoLichSu, p: number, tong: number | null, nhan: string) => {
@@ -96,6 +104,19 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
           { nhan: "Phải thu", hienThi: (x) => tienVN(x.tong_phai_thu), phai: true }, { nhan: "Đã thu", hienThi: (x) => tienVN(x.da_thu), phai: true }, { nhan: "Còn nợ", hienThi: (x) => (x.trang_thai === "hoan_thanh" ? tienVN(x.con_no) : ""), phai: true },
         ]} />
         {phanTrang("hd", pHd, hd.count, "hoá đơn")}</section>
+
+      <section><h3 className="mb-1 text-[15px] font-semibold text-muc">Các lần trả tiền</h3>
+        <p className="mb-2 text-[13px] text-muc-3">Mỗi dòng là một phiếu thu của hoá đơn (trả lần đầu, trả nợ, trả bằng thẻ tiền); dòng số âm là phiếu đảo khi huỷ hoặc sửa hoá đơn.</p>
+        <Bang duLieu={dongTt} khoa={(x) => x.id} trong="Không có lần trả tiền nào trong khoảng này." cot={[
+          // Phiếu chuyển từ SalonHero: giờ tạo là lúc chuyển dữ liệu, nên chỉ hiện ngày thu gốc.
+          { nhan: "Thời gian", chinh: true, hienThi: (x) => <span className="tabular-nums">{x.la_lich_su ? ngayVN(x.ngay) : ngayGioVN(x.tao_luc)}</span> },
+          { nhan: "Phiếu", hienThi: (x) => <span className="tabular-nums">{maPhieuThu(x.so_phieu)}</span> },
+          { nhan: "Hoá đơn", hienThi: (x) => <Link className="text-nhan-dam hover:underline" href={`/hoa-don/${x.hoa_don.id}`}>{x.hoa_don.sh_ma ?? x.hoa_don.ma}</Link> },
+          { nhan: "Hình thức", hienThi: (x) => [PHUONG_THUC_VN[x.phuong_thuc] ?? x.phuong_thuc, x.ngan_hang].filter(Boolean).join(" · ") + (x.dao_cua_id ? " (đảo)" : "") },
+          { nhan: "Người thu", hienThi: (x) => tenNv.get(x.nguoi_id) ?? "" },
+          { nhan: "Số tiền", hienThi: (x) => tienVN(x.so_tien), phai: true },
+        ]} />
+        {phanTrang("tt", pTt, tt.count, "lần trả tiền")}</section>
 
       <section><h3 className="mb-1 text-[15px] font-semibold text-muc">Lịch sử dùng thẻ</h3>
         <p className="mb-2 text-[13px] text-muc-3">Mỗi dòng là một lần trừ buổi trên thẻ, lấy từ hoá đơn sử dụng dịch vụ.</p>

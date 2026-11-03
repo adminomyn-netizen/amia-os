@@ -94,13 +94,16 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     nghe_nghiep: kx?.nghe_nghiep ?? "", cong_ty: kx?.cong_ty ?? "", ma_so_thue: kx?.ma_so_thue ?? "", ma_the_giay: kx?.ma_the_giay ?? "", id: k.id, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo ?? "", email: k.email ?? "", gioi_tinh: k.gioi_tinh ?? "", ngay_sinh: k.ngay_sinh ?? "", dia_chi: k.dia_chi ?? "", chi_nhanh_id: k.chi_nhanh_id, nguon: k.nguon, nguon_chi_tiet: k.nguon_chi_tiet ?? "", nguoi_gioi_thieu: nguoiGt?.ma ?? "", nguoi_phu_trach_id: k.nguoi_phu_trach_id, ghi_chu: k.ghi_chu ?? "", dong_y_dung_hinh: k.dong_y_dung_hinh, quan_tam: (qt ?? []).map((x) => x.dich_vu_id) };
 
   // Đầu hồ sơ như SalonHero: tổng đơn, tần suất đến trung bình, lịch hẹn sắp tới; tab Thông tin thêm dịch vụ & sản phẩm hay dùng.
-  const [{ data: hdKh }, { data: lichSap }, { data: dongYt }] = await Promise.all([
-    db.from("hoa_don").select("ngay_hd").eq("khach_id", id).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).limit(5000),
+  const [{ data: hdKh }, { data: lichSap }] = await Promise.all([
+    db.from("hoa_don").select("id, ngay_hd").eq("khach_id", id).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).limit(5000),
     db.from("lich_hen").select("id, bat_dau, trang_thai, nhan_vien_id, chi_nhanh_id, dich_vu_ten").eq("khach_id", id).gte("bat_dau", new Date().toISOString()).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]).order("bat_dau").limit(5),
-    tab === "thong-tin"
-      ? db.from("hoa_don_dong").select("loai, ten, so_luong, hoa_don!inner(khach_id, trang_thai)").eq("hoa_don.khach_id", id).eq("hoa_don.trang_thai", "hoan_thanh").in("loai", ["dich_vu", "san_pham"]).limit(3000)
-      : Promise.resolve({ data: [] as { loai: string; ten: string; so_luong: number }[] }),
   ]);
+  // Dịch vụ / sản phẩm yêu thích: lấy dòng theo mã các hoá đơn của khách (lọc qua bảng cha bằng !inner làm CSDL quét cả bảng dòng và hết giờ → trước đây luôn "Chưa có dữ liệu").
+  const idHdKh = (hdKh ?? []).map((h) => h.id).slice(0, 1000);
+  const { data: dongYt, error: loiYt } = tab === "thong-tin" && idHdKh.length
+    ? await db.from("hoa_don_dong").select("loai, ten, so_luong").in("hoa_don_id", idHdKh).in("loai", ["dich_vu", "san_pham"]).limit(5000)
+    : { data: [] as { loai: string; ten: string; so_luong: number }[], error: null };
+  if (loiYt) console.error("[ho-so-khach] yeu thich", loiYt.code, loiYt.message);
   const { data: lichDv } = (lichSap ?? []).length ? await db.from("lich_hen_dich_vu").select("lich_id, dich_vu_id").in("lich_id", (lichSap ?? []).map((l) => l.id)) : { data: [] as { lich_id: string; dich_vu_id: string }[] };
   const tenDvLich = new Map((dv ?? []).map((d) => [d.id, d.ten]));
   const tongDon = (hdKh ?? []).length;

@@ -41,7 +41,7 @@ export default async function KhungUngDung({ children }: { children: React.React
     .filter((g) => g.the.length > 0);
   const chiNhanh = nd.chiNhanhId ? (dsChiNhanh.find((c) => c.id === nd.chiNhanhId)?.ten ?? null) : null;
   // Vai trò theo từng chi nhánh: người được vào ≥ 2 chi nhánh thì bảng tài khoản có nút "Chọn" đổi chi nhánh làm việc.
-  const coSo = nd.dsCoSo.length > 1 ? nd.dsCoSo.map((c) => ({ id: c.chiNhanhId, ten: dsChiNhanh.find((x) => x.id === c.chiNhanhId)?.ten ?? "Chi nhánh", vai: NHAN_VAI_TRO[c.vaiTro], dang: c.chiNhanhId === nd.chiNhanhId })) : undefined;
+  const coSo = nd.dsCoSo.length > 1 ? nd.dsCoSo.filter((c) => c.chinh || c.chiNhanhId === nd.chiNhanhId || dsChiNhanh.some((x) => x.id === c.chiNhanhId && x.hoat_dong)).map((c) => ({ id: c.chiNhanhId, ten: dsChiNhanh.find((x) => x.id === c.chiNhanhId)?.ten ?? "Chi nhánh", vai: NHAN_VAI_TRO[c.vaiTro], dang: c.chiNhanhId === nd.chiNhanhId })) : undefined;
   return (
     <div className="khung-di-dong flex min-h-screen w-full flex-col">
       <DauTrangMay hoTen={nd.hoTen} vaiTro={NHAN_VAI_TRO[nd.vaiTro]} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} coSo={coSo} />

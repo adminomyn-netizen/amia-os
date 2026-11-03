@@ -12780,6 +12780,7 @@ export type Database = {
         Args: { p_khung: string; p_nam: number; p_thang: number }
         Returns: number
       }
+      dem_canh_bao_nhanh: { Args: { p_cn?: string }; Returns: Json }
       dem_cham_soc: {
         Args: { p_cn?: string; p_sau_dt?: number }
         Returns: {

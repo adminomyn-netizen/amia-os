@@ -19,13 +19,17 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
   const loc = <T extends { eq: (c: string, v: string) => T }>(q: T) => (cn ? q.eq("chi_nhanh_id", cn) : q);
   // Năm nhóm đếm, nhóm cảnh báo nâng cao, khiếu nại và nhắc chấm công/lương đều độc lập nhau: hỏi CÙNG LÚC (trước đây chạy nối đuôi 4 chặng), rồi ghép lại đúng thứ tự cũ.
   const rieng = async (f: (a: CanhBao[]) => Promise<void>) => { const a: CanhBao[] = []; await f(a); return a; };
-  const [[lich, phieu, the, no, kho], nangCao, khieuNai, nhacCong] = await Promise.all([Promise.all([
+  // Thẻ sắp hết + hàng dưới mức tối thiểu + tồn âm: MỘT lần gọi hàm dem_canh_bao_nhanh (0303) thay 3 câu đếm qua view (mỗi câu PostgREST tính view 2 lần).
+  type Dem = { the_sap_het?: number; kho_duoi_muc?: number; kho_ton_am?: number };
+  const pDem: Promise<Dem | null> = coQuyen(nd, "the.xem") || coQuyen(nd, "kho.xem")
+    ? Promise.resolve(db.rpc("dem_canh_bao_nhanh", cn ? { p_cn: cn } : {})).then((r) => (r.data ?? {}) as Dem) : Promise.resolve(null);
+  const [[lich, phieu, dem, no], nangCao, khieuNai, nhacCong] = await Promise.all([Promise.all([
     coQuyen(nd, "lich.xem") ? loc(db.from("lich_hen").select("id", { count: "exact", head: true }).gte("bat_dau", tu).lt("bat_dau", den).eq("trang_thai", "chua_xac_nhan")) : null,
     coQuyen(nd, "phieu.xem") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"])) : null,
-    coQuyen(nd, "the.xem") ? loc(db.from("v_the_khach").select("id", { count: "exact", head: true }).eq("tinh_trang", "sap_het").eq("loai", "lan")) : null,
+    pDem,
     coQuyen(nd, "baocao.tien") ? loc(db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0)) : null,
-    coQuyen(nd, "kho.xem") ? loc(db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true }).eq("duoi_muc_toi_thieu", true)) : null,
-  ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay)), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay)]);
+  ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay)]);
+  const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
   if ((lich?.count ?? 0) > 0) ra.push({ ma: "lich", nhan: `${lich!.count} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
   if ((phieu?.count ?? 0) > 0) ra.push({ ma: "phieu", nhan: `${phieu!.count} phiếu cấp vật tư đang chờ kho cấp hoặc Chuyên viên trị liệu nhận`, href: "/phieu-cap" });
   if ((the?.count ?? 0) > 0) ra.push({ ma: "the", nhan: `${the!.count} thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)`, href: "/the" });
@@ -38,7 +42,7 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
 }
 
 /** Cảnh báo kho nâng cao, hoá đơn đầu vào, văn bản và hợp đồng lao động (mỗi loại chỉ hỏi khi người này có quyền). */
-async function themCanhBaoNangCao(nd: CoQuyen & { chiNhanhId: string | null }, ra: CanhBao[], homNay: string) {
+async function themCanhBaoNangCao(nd: CoQuyen & { chiNhanhId: string | null }, ra: CanhBao[], homNay: string, pTonAm: Promise<number>) {
   const db = sb(), cn = nd.chiNhanhId;
   const [han, chuyen, xk, hdv, vbHet, vbCho, hd, tonAm] = await Promise.all([
     coQuyen(nd, "kho.xem") ? (cn ? db.from("v_ton_lo").select("san_pham_id", { count: "exact", head: true }).eq("chi_nhanh_id", cn) : db.from("v_ton_lo").select("san_pham_id", { count: "exact", head: true })).gt("con_lai", 0).lte("han_dung", congNgay(homNay, 30)) : null,
@@ -48,7 +52,7 @@ async function themCanhBaoNangCao(nd: CoQuyen & { chiNhanhId: string | null }, r
     coQuyen(nd, "vb.xem") ? db.from("van_ban").select("id", { count: "exact", head: true }).eq("trang_thai", "da_ky").lte("hieu_luc_den", congNgay(homNay, 30)) : null,
     coQuyen(nd, "vb.duyet") ? db.from("van_ban").select("id", { count: "exact", head: true }).eq("trang_thai", "cho_duyet") : null,
     coQuyen(nd, "cong.xem") ? db.from("hd_lao_dong").select("nhan_vien_id, giai_doan, den_ngay") : null,
-    coQuyen(nd, "kho.xem") ? (cn ? db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true }).eq("chi_nhanh_id", cn) : db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true })).lt("ton", 0) : null,
+    coQuyen(nd, "kho.xem") ? pTonAm.then((count) => ({ count })) : null, // tồn âm: đếm chung trong dem_canh_bao_nhanh
   ]);
   if ((tonAm?.count ?? 0) > 0) ra.push({ ma: "tonam", nhan: `${tonAm!.count} mặt hàng tồn kho đang ÂM (sổ kho sai): kiểm kê hoặc điều chỉnh`, href: "/danh-muc?tab=ra-soat&loai=ton_am" });
   if ((han?.count ?? 0) > 0) ra.push({ ma: "han", nhan: `${han!.count} lô vật tư hết hạn trong 30 ngày hoặc đã quá hạn`, href: "/kho?tab=han" });

@@ -2,6 +2,7 @@ import { sb } from "@/lib/db";
 import { soVN, tienVN } from "@/lib/dinh-dang";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
+import { CotNgang } from "@/components/bieu-do/CotNgang";
 import { layDatLich, layDungDichVu, layThuNgan, SH_MAU, tenKy, tenNguon, tiLe, TRANG_THAI_LICH, type NhomKy } from "@/lib/bao-cao-du-lieu";
 
 /** Ba báo cáo kiểu SalonHero: theo thu ngân, thống kê đặt lịch, thống kê dùng dịch vụ (máy chủ tính, trang chỉ hiển thị). */
@@ -26,10 +27,14 @@ function DoiChieu({ dong, ghiChu }: { dong: { nhan: string; sh: string; app: str
   );
 }
 
-export async function BaoCaoThuNgan({ loc }: { loc: Loc }) {
+export async function BaoCaoThuNgan({ loc, linkDoiChieu }: { loc: Loc; linkDoiChieu?: string }) {
   const db = sb();
-  const [ds, mau] = await Promise.all([layThuNgan(db, loc.tu, loc.den, loc.cn, loc.nhom), layThuNgan(db, SH_MAU.ky.tu, SH_MAU.ky.den, undefined, "tong")]);
+  // Bảng đối chiếu với SalonHero tháng 10/2025 tính cả tháng nên chậm (~7 giây): chỉ tính khi người dùng mở (linkDoiChieu = undefined nghĩa là đang mở).
+  const [ds, mau] = await Promise.all([layThuNgan(db, loc.tu, loc.den, loc.cn, loc.nhom), linkDoiChieu ? Promise.resolve([]) : layThuNgan(db, SH_MAU.ky.tu, SH_MAU.ky.den, undefined, "tong")]);
   const cong = (k: "so_don" | "doanh_so" | "tru_the_tien" | "doanh_thu" | "con_no" | "da_thu") => ds.reduce((s, r) => s + r[k], 0);
+  const tongTheoNguoi = new Map<string, number>();
+  for (const r of ds) tongTheoNguoi.set(r.thu_ngan, (tongTheoNguoi.get(r.thu_ngan) ?? 0) + r.doanh_thu);
+  const theoThuNgan = [...tongTheoNguoi].map(([nhan, gia_tri]) => ({ nhan, gia_tri })).filter((d) => d.gia_tri > 0).sort((a, b) => b.gia_tri - a.gia_tri);
   const dongDc = SH_MAU.thuNgan.map((s) => {
     const a = mau.find((m) => m.thu_ngan === s.ten || m.cac_ten.split(", ").includes(s.ten));
     const app = a ? `${soVN(a.so_don)} đơn · ${tienVN(a.doanh_thu)}` : "—";
@@ -40,6 +45,8 @@ export async function BaoCaoThuNgan({ loc }: { loc: Loc }) {
       <BaoDoiNhom loc={loc} />
       <HangChiSo muc={[{ nhan: "Doanh số", so: tienVN(cong("doanh_so")), ghiChu: `${soVN(cong("so_don"))} đơn` }, { nhan: "Trừ thẻ tiền", so: tienVN(cong("tru_the_tien")) },
         { nhan: "Doanh thu sau trừ thẻ", so: tienVN(cong("doanh_thu")), ghiChu: "như cột “Doanh thu” SalonHero" }, { nhan: "Còn nợ", so: tienVN(cong("con_no")), ghiChu: `đã thu ${tienVN(cong("da_thu"))}` }]} />
+      <TieuDeMuc id="bd-thu-ngan">Doanh thu sau trừ thẻ theo thu ngân</TieuDeMuc>
+      <CotNgang duLieu={theoThuNgan.slice(0, 15)} dinhDang={(n) => tienVN(n)} trong="Không có hoá đơn trong khoảng này." />
       <div className="mt-6">
         <Bang duLieu={ds} khoa={(r) => `${r.ky}-${r.khoa}`} trong="Không có hoá đơn trong khoảng này."
           cot={[
@@ -50,7 +57,7 @@ export async function BaoCaoThuNgan({ loc }: { loc: Loc }) {
           ]} />
       </div>
       <GhiChu>Thu ngân = người hoàn tất hoá đơn (hoá đơn chuyển từ SalonHero) hoặc người lập (hoá đơn làm trong app). Doanh số = tổng đơn hoàn thành như SalonHero (tiền hàng − giảm giá + VAT + phụ phí + tip); Doanh thu sau trừ thẻ = doanh số − phần trả bằng thẻ tiền; Đã thu = doanh thu sau trừ thẻ − còn nợ. Không tính hoá đơn huỷ và công nợ đầu kỳ.</GhiChu>
-      <DoiChieu dong={dongDc} ghiChu="SalonHero tính theo người hoàn tất đơn, cột “Doanh thu” = doanh thu sau trừ thẻ. Từ 29/10/2026 app tính doanh thu y như SalonHero, gồm cả VAT (ví dụ đơn 25100220 có VAT 1.299.000 nằm trong số của Nguyễn Thị Vân Anh)." />
+      {linkDoiChieu ? <p className="mt-8 text-[13px]"><a href={linkDoiChieu} className="font-medium text-nhan-dam hover:underline">Xem đối chiếu với SalonHero ({SH_MAU.ky.nhan})</a><span className="text-muc-3"> · tính cả tháng nên mất vài giây</span></p> : <DoiChieu dong={dongDc} ghiChu="SalonHero tính theo người hoàn tất đơn, cột “Doanh thu” = doanh thu sau trừ thẻ. Từ 29/10/2026 app tính doanh thu y như SalonHero, gồm cả VAT (ví dụ đơn 25100220 có VAT 1.299.000 nằm trong số của Nguyễn Thị Vân Anh)." />}
     </>
   );
 }

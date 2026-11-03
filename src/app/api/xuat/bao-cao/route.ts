@@ -1,3 +1,4 @@
+import { layDanhSachNo } from "@/lib/bao-cao-no";
 import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -125,18 +126,13 @@ export async function GET(req: Request) {
       { nhan: "Ngày trả nợ", khoa: "ngay", rong: 14 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Mã đơn hàng", khoa: "maHd", rong: 14 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 },
       { nhan: "Tổng số tiền hóa đơn", khoa: "tongHd", tien: true }, { nhan: "Số tiền trả", khoa: "soTien", tien: true }, { nhan: "Loại thanh toán", khoa: "phuongThuc", rong: 16 }, { nhan: "Người thu", khoa: "nguoiThu", rong: 24 }] });
   } else if (tab === "no") {
-    const ds = await docHet((a, b) => {
-      let q = db.from("hoa_don").select("id, ma, ngay_hd, tong_phai_thu, da_thu, con_no, khach_id").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd").order("id");
-      if (cn) q = q.eq("chi_nhanh_id", cn);
-      return q.range(a, b);
-    });
-    const ids = [...new Set(ds.map((d) => d.khach_id).filter(Boolean))] as string[];
-    const ks: { id: string; ho_ten: string; dien_thoai: string | null }[] = [];
-    for (let i = 0; i < ids.length; i += 300) ks.push(...((await db.from("khach_hang").select("id, ho_ten, dien_thoai").in("id", ids.slice(i, i + 300))).data ?? []));
-    const k = new Map(ks.map((x) => [x.id, x]));
-    bangs.push({ ten: "Khách còn nợ", dong: ds.map((r) => ({ ...r, khach: k.get(r.khach_id ?? "")?.ho_ten ?? "", dt: k.get(r.khach_id ?? "")?.dien_thoai ?? "", ngay_hd: ngay(r.ngay_hd) })), cot: [
-      { nhan: "Khách", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Hoá đơn", khoa: "ma", rong: 16 }, { nhan: "Ngày", khoa: "ngay_hd", rong: 12 },
-      { nhan: "Tổng", khoa: "tong_phai_thu", tien: true }, { nhan: "Đã thu", khoa: "da_thu", tien: true }, { nhan: "Còn nợ", khoa: "con_no", tien: true }] });
+    // Cùng bộ lọc với màn hình: chỉ lọc ngày lập hoá đơn khi người dùng chọn (ntu / nden), tìm theo tên khách / SĐT / mã hoá đơn (q).
+    const xemSdt = coQuyen(nd, "khach.sdt");
+    const ds = await layDanhSachNo(db, { cn, tu: u.searchParams.get("ntu") || undefined, den: u.searchParams.get("nden") || undefined, q: u.searchParams.get("q") || undefined });
+    bangs.push({ ten: "Khách còn nợ", dong: ds.map((r) => ({ ...r, ma: r.maSh ? `#${r.maSh}` : r.ma, dt: xemSdt ? r.dienThoai : "", ngay: ngay(r.ngay), ngayCuoi: ngay(r.ngayCuoi) })), cot: [
+      { nhan: "Khách", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Mã đơn hàng", khoa: "ma", rong: 16 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 }, { nhan: "Ngày lập hoá đơn", khoa: "ngay", rong: 14 },
+      { nhan: "Số lần thanh toán", khoa: "soLan", rong: 12 }, { nhan: "Ngày trả nợ cuối", khoa: "ngayCuoi", rong: 14 },
+      { nhan: "Tổng", khoa: "tong", tien: true }, { nhan: "Đã thu", khoa: "daThu", tien: true }, { nhan: "Còn nợ", khoa: "conNo", tien: true }] });
   } else if (tab === "the") {
     const { data } = await db.rpc("bc_the_con_du", { p_cn: (cn ?? undefined) as string });
     const t = data?.[0];

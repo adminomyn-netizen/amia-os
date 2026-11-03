@@ -118,7 +118,7 @@ export const LOC_LOAI: { ma: string; ten: string; gom: LoaiMuc[] }[] = [
 export async function laySanPhamDichVu(db: Db, tu: string, den: string, cn?: string) {
   const { data, error } = await db.rpc("bc_san_pham_dich_vu", { p_tu: tu, p_den: den, p_cn: tuyChon(cn) });
   if (error) throw new Error(error.message);
-  return (data ?? []).map((r) => ({ loai: r.loai as LoaiMuc, ma: r.ma, ten: r.loai === "ban_the" ? `Bán ${r.ten}` : r.loai === "dung_the" ? `Sử dụng ${r.ten}` : r.ten, soLuong: Number(r.so_luong), truoc: Number(r.truoc), sau: Number(r.sau), truThe: Number(r.tru_the), thucNhan: Number(r.thuc_nhan) }));
+  return (data ?? []).map((r) => ({ loai: r.loai as LoaiMuc, ma: r.ma, tenGoc: r.ten, ten: r.loai === "ban_the" ? `Bán ${r.ten}` : r.loai === "dung_the" ? `Sử dụng ${r.ten}` : r.ten, soLuong: Number(r.so_luong), truoc: Number(r.truoc), sau: Number(r.sau), truThe: Number(r.tru_the), thucNhan: Number(r.thuc_nhan) }));
 }
 
 export const PHUONG_THUC_VN: Record<string, string> = { tien_mat: "Tiền mặt", chuyen_khoan: "Chuyển khoản", quet_the: "Quẹt thẻ", the_tien: "Thẻ tiền" };

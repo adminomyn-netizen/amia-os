@@ -27,12 +27,15 @@ export function docLocDungThe(sp: Record<string, string | undefined>, cn: string
   };
 }
 
+/** Phần số để tìm theo SĐT: chỉ dùng khi gõ từ 3 chữ số (gõ "THU-D2" không được khớp mọi số có chữ 2). */
+const sdtTim = (t: string) => { const d = t.replace(/\D/g, "").replace(/^0/, ""); return d.length >= 3 ? d : ""; };
+
 /** Tham số gọi hàm CSDL `the_dung_loc` / `tong_khach_dung_the` (cùng một bộ điều kiện nên màn hình, ô tổng và Excel luôn khớp). */
 export function thamSoRpc(f: LocDungThe) {
   return {
     p_cn: f.cn ?? undefined, p_loai: f.loai, p_tt: f.tt, p_hom: f.hom, p_nhom: f.nhom || undefined,
     p_cap_tu: f.capTu || undefined, p_cap_den: f.capDen || undefined, p_han_tu: f.hanTu || undefined, p_han_den: f.hanDen || undefined,
-    p_tim: f.tuKhoa, p_tim_kd: boDau(f.tuKhoa), p_sdt: f.tuKhoa.replace(/\D/g, "").replace(/^0/, ""),
+    p_tim: f.tuKhoa, p_tim_kd: boDau(f.tuKhoa), p_sdt: sdtTim(f.tuKhoa),
   };
 }
 

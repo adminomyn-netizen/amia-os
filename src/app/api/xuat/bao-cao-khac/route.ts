@@ -1,5 +1,5 @@
 import { kiemQuyen } from "@/lib/auth";
-import type { Quyen } from "@/lib/quyen";
+import { coQuyen, type Quyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM } from "@/lib/dinh-dang";
 import { khoangNgay } from "@/lib/bao-cao";
@@ -10,7 +10,7 @@ import { chuDoiTuongXuat, NHAN_LOAI, NHAN_VAI, TIEU_DE_NHAP, TIEU_DE_TEN_MUC } f
 
 /** Xuất Excel cho các màn báo cáo nằm ngoài trang Báo cáo: hoa hồng, quyết toán hoa hồng, công nợ khách, đối soát bán hàng, thống kê khách, báo cáo marketing, công nợ nhà cung cấp.
  *  Mỗi loại dùng ĐÚNG quyền của màn tương ứng (chặn ở máy chủ) và cùng nguồn số liệu với màn đó; người gắn chi nhánh chỉ xuất được chi nhánh của mình; mọi lần xuất ghi nhật ký. */
-const QUYEN: Record<string, Quyen> = { "danh-muc": "danhmuc.xem", "hoa-hong": "baocao.tien", "ti-le-hoa-hong": "baocao.tien", "mau-ti-le-hoa-hong": "danhmuc.sua", "quyet-toan-hoa-hong": "luong.xem", "cong-no-khach": "baocao.tien", "doi-soat": "baocao.tien", "thong-ke-khach": "khach.xem", "marketing": "mkt.xem", "cong-no-ncc": "mua.xem", "khach-dung-the": "the.xem" };
+const QUYEN: Record<string, Quyen> = { "danh-muc": "danhmuc.xem", "hoa-hong": "baocao.tien", "ti-le-hoa-hong": "baocao.tien", "mau-ti-le-hoa-hong": "danhmuc.sua", "quyet-toan-hoa-hong": "luong.xem", "cong-no-khach": "baocao.tien", "doi-soat": "baocao.tien", "thong-ke-khach": "khach.xem", "marketing": "mkt.xem", "cong-no-ncc": "mua.xem", "khach-dung-the": "the.xem", "khach-gan-day": "khach.xuat" };
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 const THANG = /^\d{4}-(0[1-9]|1[0-2])$/;
 const NHOM_NO = [{ ten: "Chưa đến hạn", den: 0 }, { ten: "1–7 ngày", den: 7 }, { ten: "8–15 ngày", den: 15 }, { ten: "16–30 ngày", den: 30 }, { ten: "31–60 ngày", den: 60 }, { ten: "Trên 60 ngày", den: 99999 }];
@@ -134,6 +134,15 @@ export async function GET(req: Request) {
     }),
       cot: [{ nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Mã khách", khoa: "ma_khach", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Mã thẻ", khoa: "the", rong: 14 }, { nhan: "Tên thẻ", khoa: "goi", rong: 34 }, { nhan: "Loại", khoa: "loai", rong: 12 }, { nhan: "Ngày cấp", khoa: "cap", rong: 12 }, { nhan: "Hết hạn", khoa: "han", rong: 12 }, { nhan: "Gần nhất", khoa: "gan", rong: 12 }, { nhan: "Lần sử dụng", khoa: "lan", rong: 18 }, { nhan: "Số tiền còn trong thẻ", khoa: "con", tien: true, rong: 20 }, { nhan: "Tình trạng", khoa: "tt", rong: 12 }] });
     tenTep = `khach-dung-the-${hom}`; Object.assign(chiTiet, { ...thamSoDiaChi(f), cn: cnLoc });
+  } else if (loai === "khach-gan-day") {
+    const cnLoc = nd.chiNhanhId ?? (/^[0-9a-f-]{36}$/i.test(u.searchParams.get("cn") ?? "") ? u.searchParams.get("cn") : null);
+    const ds = await docHet((tu, den) => db.rpc("khach_gan_den", { p_cn: cnLoc ?? undefined, p_lim: den - tu + 1, p_off: tu }));
+    const ks = new Map<string, { ho_ten: string; ma: string; dien_thoai: string | null }>();
+    for (let i = 0; i < ds.length; i += 300) for (const k of (await db.from("khach_hang").select("id, ho_ten, ma, dien_thoai").in("id", ds.slice(i, i + 300).map((d) => d.khach_id))).data ?? []) ks.set(k.id, k);
+    const xemSdt = coQuyen(nd, "khach.sdt");
+    bangs.push({ ten: "Khách gần đây", dong: ds.map((d) => { const k = ks.get(d.khach_id); return { khach: k?.ho_ten ?? "", ma: k?.ma ?? "", dt: xemSdt ? (k?.dien_thoai ?? "") : "", ngay: ngay(d.ngay), hd: d.hd_ma, tien: Number(d.tien) }; }),
+      cot: [{ nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Mã khách", khoa: "ma", rong: 16 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Lần đến gần nhất", khoa: "ngay", rong: 16 }, { nhan: "Hoá đơn", khoa: "hd", rong: 16 }, { nhan: "Số tiền hoá đơn", khoa: "tien", tien: true, rong: 18 }] });
+    tenTep = `khach-gan-day-${hom}`; Object.assign(chiTiet, { cn: cnLoc });
   } else if (loai === "marketing") {
     const den = ngayTham("den") ?? hom, tu = ngayTham("tu") ?? congNgay(den, -29);
     const [{ data: kq }, { data: nguon }, { data: cp }, { data: cd }] = await Promise.all([db.rpc("bc_phieu_marketing", { p_tu: tu, p_den: den, p_cn: nd.chiNhanhId ?? undefined }), db.from("nguon_lead").select("id, ten").order("thu_tu"),

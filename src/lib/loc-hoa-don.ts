@@ -19,7 +19,7 @@ export const LOC_THE = [
 ] as const;
 export const LOC_VAI = [{ gia_tri: "phuc_vu", nhan: "Phục vụ" }, { gia_tri: "tu_van", nhan: "Tư vấn" }, { gia_tri: "ban", nhan: "Bán hàng" }] as const;
 /** Mới chỉ có 4 hình thức thu trong sổ cái (xem báo cáo ketqua-thu-ngan-hoa-don-20261103.md). */
-export const LOC_HINH_THUC = [{ gia_tri: "tien_mat", nhan: "Tiền mặt" }, { gia_tri: "chuyen_khoan", nhan: "Chuyển khoản" }, { gia_tri: "quet_the", nhan: "Quẹt thẻ" }, { gia_tri: "the_tien", nhan: "Trừ thẻ tiền" }] as const;
+export const LOC_HINH_THUC = [{ gia_tri: "tien_mat", nhan: "Tiền mặt" }, { gia_tri: "chuyen_khoan", nhan: "Chuyển khoản" }, { gia_tri: "quet_the", nhan: "Quẹt thẻ" }, { gia_tri: "vi_dien_tu", nhan: "Ví điện tử" }, { gia_tri: "ship_cod", nhan: "Ship COD" }, { gia_tri: "the_tien", nhan: "Trừ thẻ tiền" }] as const;
 
 export type LocHoaDon = {
   tu: string; den: string; tt: string; no: boolean; q: string; vat: "" | "co" | "chua";

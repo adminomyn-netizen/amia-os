@@ -11,8 +11,12 @@ const arg = (t, mac) => { const i = process.argv.indexOf(t); return i > 0 ? proc
 const thuMuc = process.argv[2]; if (!thuMuc || thuMuc.startsWith("--")) throw new Error("Thiếu thư mục xuất");
 const tep = arg("--tep", "hoa_don.ndjson"), thang = arg("--thang", null), dot = arg("--dot", "SH-2810-02"), that = process.argv.includes("--that");
 const db = await ketNoi(); const q = async (sql, p) => (await db.query(sql, p)).rows;
-const PT = { CASH: "tien_mat", TRANSFER: "chuyen_khoan", CARD: "quet_the", COD: "tien_mat", WALLET: "chuyen_khoan" };
+// SalonHero: COD và Ví điện tử vào QUỸ NGÂN HÀNG — mã riêng từ migration 0199 (03/11/2026).
+const PT = { CASH: "tien_mat", TRANSFER: "chuyen_khoan", CARD: "quet_the", COD: "ship_cod", WALLET: "vi_dien_tu" };
 const ptDich = (t) => PT[String(t ?? "").toUpperCase()] ?? "chuyen_khoan";
+const VI_SH = new Set(["ZALO", "MOMO", "GRAB", "VNPAY", "SAMSUNG", "SHOPEE", "VINID", "GOTIT", "NETSPAY", "PAYNOW", "AIRTEL", "MTN"]);
+/** Loại ví (migration 0199): chỉ khi phương thức là ví điện tử; mã lạ/trống = KHAC. */
+const viDich = (pt, wallet) => (pt === "vi_dien_tu" ? (VI_SH.has(String(wallet ?? "").toUpperCase()) ? String(wallet).toUpperCase() : "KHAC") : null);
 
 // ── Nguồn (lọc theo tháng nếu có) ──
 const don = [], daThay = new Set(); // lọc theo --thang (1 tháng) hoặc --tu/--den (khoảng tháng, gồm cả hai đầu); bỏ trùng mã đơn (tệp kéo lại có thể lặp)
@@ -98,11 +102,11 @@ try {
       const ev = (d.paymentHistory ?? []).filter((x) => !x.is_deleted && so(x.amount_paid) > 0);
       const chNh = chuanBiNganHangSh({ l, d }), nh = (pt, tien) => nganHangKhoan(chNh, pt, tien).ten; // ngân hàng nhận (migration 0179)
       let tong = 0;
-      for (const x of ev) { tt.push({ don_sh: shId, pt: ptDich(x.payment_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
+      for (const x of ev) { tt.push({ don_sh: shId, pt: ptDich(x.payment_type), vi: viDich(ptDich(x.payment_type), x.wallet_type ?? d.wallet_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
       // Khách đóng dư (SalonHero ghi đã thu > phải thu): KHÔNG bù khoản dư vào sổ thanh toán để công nợ không âm; ghi vào danh sách ngoại lệ đã biết.
       const thieu = Math.max(0, phai - so(d.total_amount_card) - tong);
       if (daThuNguon > phai) bao.khach_dong_du.push([shId, daThuNguon - phai]);
-      if (tong !== so(d.amount_paid)) { bao.chenh_thanh_toan.push([shId, so(d.amount_paid), tong]); const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) tt.push({ don_sh: shId, pt: ptDich(d.payment_type), nh: nh(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
+      if (tong !== so(d.amount_paid)) { bao.chenh_thanh_toan.push([shId, so(d.amount_paid), tong]); const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) tt.push({ don_sh: shId, pt: ptDich(d.payment_type), vi: viDich(ptDich(d.payment_type), d.wallet_type), nh: nh(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
       if (so(d.total_amount_card) > 0) tt.push({ don_sh: shId, pt: "the_tien", so_tien: so(d.total_amount_card), ngay, ghi: "Trừ thẻ (lịch sử SalonHero, không ghi sổ thẻ)" });
     }
   }
@@ -150,8 +154,8 @@ try {
   const ttC = tt.filter((x) => dsHd.has(x.don_sh));
   let nTt = 0;
   await theoLo(ttC, 2000, async (lo) => {
-    const r = await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang)
-       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, $3, x.nh from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, so_tien bigint, ngay date, ghi text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(lo), he, dot]);
+    const r = await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang, loai_vi)
+       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, $3, x.nh, x.vi from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, vi text, so_tien bigint, ngay date, ghi text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(lo), he, dot]);
     nTt += r.length;
   });
   // đảm bảo tổng hoá đơn khớp sau khi thêm dòng/thanh toán (hàm tinh_lai giữ số lịch sử, tính lại da_thu/con_no theo thanh toán)

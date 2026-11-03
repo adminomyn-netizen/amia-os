@@ -4,10 +4,30 @@ export type Vai = "phuc_vu" | "tu_van" | "ban";
 export const VAI: { ma: Vai; ten: string }[] = [{ ma: "phuc_vu", ten: "Phục vụ" }, { ma: "tu_van", ten: "Tư vấn" }, { ma: "ban", ten: "Bán hàng" }];
 /** SalonHero: mỗi dòng hàng có tối đa 5 người hưởng cho mỗi vai. DB cũng chặn (migration 0081). */
 export const TOI_DA_NGUOI_HUONG = 5;
+/** Hình thức trả tiền như SalonHero (Config.payment_type): Tiền mặt, Quẹt thẻ, Chuyển khoản, Ví điện tử (+ loại ví), Ship COD. "Nhiều hình thức" = thêm nhiều khoản thu.
+ *  "Trừ thẻ tiền" là phần riêng của AMIA (SalonHero ghi ô "Trừ thẻ tiền"), không vào quỹ. DB: ràng buộc thanh_toan_phuong_thuc_check (migration 0199). */
 export const PHUONG_THUC = [
-  { gia_tri: "tien_mat", nhan: "Tiền mặt" }, { gia_tri: "chuyen_khoan", nhan: "Chuyển khoản" }, { gia_tri: "quet_the", nhan: "Quẹt thẻ" }, { gia_tri: "the_tien", nhan: "Trừ thẻ tiền" },
+  { gia_tri: "tien_mat", nhan: "Tiền mặt" }, { gia_tri: "chuyen_khoan", nhan: "Chuyển khoản" }, { gia_tri: "quet_the", nhan: "Quẹt thẻ" },
+  { gia_tri: "vi_dien_tu", nhan: "Ví điện tử" }, { gia_tri: "ship_cod", nhan: "Ship COD" }, { gia_tri: "the_tien", nhan: "Trừ thẻ tiền" },
 ];
 export const NHAN_PHUONG_THUC = Object.fromEntries(PHUONG_THUC.map((p) => [p.gia_tri, p.nhan])) as Record<string, string>;
+/** Hình thức thu nợ / thu tiền thật (không gồm trừ thẻ tiền). */
+export const PHUONG_THUC_TIEN = PHUONG_THUC.filter((p) => p.gia_tri !== "the_tien");
+/** Ví điện tử hiện ở Việt Nam (SalonHero Config.wallet_types_by_country.VN), đúng thứ tự SalonHero. DB nhận thêm NETSPAY, PAYNOW, AIRTEL, MTN, KHAC cho dữ liệu đồng bộ. */
+export const LOAI_VI = [
+  { gia_tri: "ZALO", nhan: "Zalo Pay" }, { gia_tri: "MOMO", nhan: "Momo" }, { gia_tri: "GRAB", nhan: "Grab Pay" }, { gia_tri: "VNPAY", nhan: "VN Pay" },
+  { gia_tri: "SAMSUNG", nhan: "Samsung Pay" }, { gia_tri: "SHOPEE", nhan: "Shopee Pay" }, { gia_tri: "VINID", nhan: "VinID" }, { gia_tri: "GOTIT", nhan: "GotIt" },
+];
+export const NHAN_LOAI_VI: Record<string, string> = { ...Object.fromEntries(LOAI_VI.map((v) => [v.gia_tri, v.nhan])), NETSPAY: "NETSPay", PAYNOW: "PayNow", AIRTEL: "Airtel MM", MTN: "MTN MoMo", KHAC: "Ví khác" };
+/** Tên hiển thị một khoản thu: "Ví điện tử · Momo". */
+export const nhanKhoanThu = (phuongThuc: string, loaiVi?: string | null) => (phuongThuc === "vi_dien_tu" && loaiVi ? `${NHAN_PHUONG_THUC.vi_dien_tu} · ${NHAN_LOAI_VI[loaiVi] ?? loaiVi}` : NHAN_PHUONG_THUC[phuongThuc] ?? phuongThuc);
+/** Máy chủ: loại ví ghi vào thanh_toan. Chỉ ví điện tử mới có; ví điện tử mà không chọn / chọn sai loại thì trả undefined để báo lỗi. */
+export function loaiViKhoanThu(phuongThuc: string, loaiVi: string | null | undefined): string | null | undefined {
+  if (phuongThuc !== "vi_dien_tu") return null;
+  return LOAI_VI.some((v) => v.gia_tri === loaiVi) ? loaiVi! : undefined;
+}
+/** Quỹ nhận tiền như SalonHero: tiền mặt → quỹ tiền mặt; quẹt thẻ, chuyển khoản, ví → quỹ ngân hàng; trừ thẻ tiền và Ship COD không vào quỹ (tiền COD còn ở bên giao hàng). Cùng luật với v_so_quy (0208). */
+export const quyCuaPhuongThuc = (phuongThuc: string): "tien_mat" | "ngan_hang" | null => (phuongThuc === "the_tien" || phuongThuc === "ship_cod" ? null : phuongThuc === "tien_mat" ? "tien_mat" : "ngan_hang");
 
 export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number; tao?: string; /** Mã và mã vạch để thu ngân tìm nhanh (gõ không dấu cũng ra). */ ma?: string; maVach?: string;
   /** "Nơi hiển thị" = chỉ đặt lịch / ẩn: không hiện ở ô chọn mục của Thu ngân (dòng cũ vẫn dùng được). */ anThuNgan?: boolean;
@@ -63,7 +83,7 @@ export function lamSachDongNhap(v: unknown): DongDon[] {
   return ra;
 }
 
-export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string };
+export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string; /** Chỉ cho ví điện tử: mã ví (LOAI_VI). */ loai_vi?: string };
 
 /** Tài khoản ngân hàng đang hoạt động (cài đặt › Ngân hàng) rút gọn cho ô "Ngân hàng nhận" ở Thu ngân. */
 export type TaiKhoanNhan = { ten: string; chiNhanhId: string | null; cx: boolean; qt: boolean; macDinh: boolean };

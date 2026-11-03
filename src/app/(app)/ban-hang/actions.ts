@@ -4,7 +4,7 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { boDau, chuanSdt, homNayHCM } from "@/lib/dinh-dang";
-import { kiemGiaDong, lamSachDongNhap, nganHangKhoanThu, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
+import { kiemGiaDong, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
@@ -161,7 +161,8 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   if (!(don.vatPct >= 0 && don.vatPct <= 100)) return { loi: "VAT chưa hợp lệ." };
   const { phai } = tinhDon(hang, don.giamDon + tienDiem + tienVoucher, don.vatPct, don.phuPhi, don.tip);
   const tongThu = (don.thu ?? []).reduce((s, t) => s + t.so_tien, 0);
-  if ((don.thu ?? []).some((t) => !Number.isInteger(t.so_tien) || t.so_tien <= 0)) return { loi: "Có khoản thu chưa hợp lệ." };
+  if ((don.thu ?? []).some((t) => !Number.isInteger(t.so_tien) || t.so_tien <= 0 || !PHUONG_THUC.some((p) => p.gia_tri === t.phuong_thuc))) return { loi: "Có khoản thu chưa hợp lệ." };
+  if ((don.thu ?? []).some((t) => loaiViKhoanThu(t.phuong_thuc, t.loai_vi) === undefined)) return { loi: "Khoản thu bằng ví điện tử phải chọn loại ví." };
   if (tongThu > phai) return { loi: "Tổng các khoản thu lớn hơn số phải thu." };
   if (tongThu < phai && !don.khachId) return { loi: "Còn nợ thì phải chọn khách hàng." };
   if (don.dong.some((d) => d.loai === "goi_the") && !don.khachId) return { loi: "Bán thẻ phải chọn khách hàng." };
@@ -203,7 +204,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   }
 
   for (const t of don.thu ?? []) {
-    const { error: et } = await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "thu", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.phuong_thuc === "the_tien" ? t.the_id ?? null : null, ngan_hang: nganHangKhoanThu(t.phuong_thuc, t.ngan_hang), nguoi_id: nd.nhanVienId });
+    const { error: et } = await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "thu", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.phuong_thuc === "the_tien" ? t.the_id ?? null : null, ngan_hang: nganHangKhoanThu(t.phuong_thuc, t.ngan_hang), loai_vi: loaiViKhoanThu(t.phuong_thuc, t.loai_vi), nguoi_id: nd.nhanVienId });
     if (et) {
       const daCo = await db.from("thanh_toan").select("id", { count: "exact", head: true }).eq("hoa_don_id", h.id);
       if ((daCo.count ?? 0) === 0) await huyNhap(); else await db.rpc("huy_hoa_don", { p_id: h.id, p_ly_do: "Tự huỷ do lỗi khi tạo đơn", p_nguoi: nd.nhanVienId });

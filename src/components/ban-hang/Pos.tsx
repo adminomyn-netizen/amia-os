@@ -9,7 +9,7 @@ import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
 import { GioChon } from "@/components/ui/GioChon";
-import { chiaDeuTi, chiaDoanhThuNguoiHuong, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
+import { chiaDeuTi, chiaDoanhThuNguoiHuong, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -332,6 +332,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
     if (conNo < 0) return setLoi("Tổng các khoản thu lớn hơn số phải thu.");
     if (conNo > 0 && !khach) return setLoi("Còn nợ thì phải chọn khách hàng.");
     for (const t of thu) if (t.phuong_thuc === "the_tien" && !t.the_id) return setLoi("Chọn thẻ tiền cho khoản trừ thẻ.");
+    for (const t of thu) if (t.phuong_thuc === "vi_dien_tu" && !t.loai_vi) return setLoi("Chọn loại ví cho khoản thu bằng ví điện tử.");
     bat(async () => {
       const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "", gioVao, gioRa, soKhach: Number(soKhach) || 1 }));
       if ("loi" in kq && kq.loi) setLoi(kq.loi);
@@ -489,7 +490,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                 <ul className="space-y-2">
                   {thu.map((t, i) => (
                     <li key={`${i}-${t.phuong_thuc}`} className="grid grid-cols-[1fr_1fr_auto] items-start gap-2">
-                      <Chon nho ariaLabel="Phương thức" giaTri={t.phuong_thuc} luaChon={PHUONG_THUC} onDoi={(v) => setThu((x) => x.map((y, j) => (j === i ? { ...y, phuong_thuc: v, the_id: undefined, ngan_hang: v === "chuyen_khoan" || v === "quet_the" ? nhMacDinh(v) : undefined } : y)))} />
+                      <Chon nho ariaLabel="Phương thức" giaTri={t.phuong_thuc} luaChon={PHUONG_THUC} onDoi={(v) => setThu((x) => x.map((y, j) => (j === i ? { ...y, phuong_thuc: v, the_id: undefined, loai_vi: undefined, ngan_hang: v === "chuyen_khoan" || v === "quet_the" ? nhMacDinh(v) : undefined } : y)))} />
                       <OTien giaTri={t.so_tien} onDoi={(n) => setThu((x) => x.map((y, j) => (j === i ? { ...y, so_tien: n } : y)))} ariaLabel="Số tiền thu" />
                       <button type="button" aria-label="Bỏ khoản thu" onClick={() => setThu((x) => x.filter((_, j) => j !== i))} className="p-2 text-muc-3 hover:text-loi"><X strokeWidth={1.6} className="h-4 w-4" /></button>
                       {(t.phuong_thuc === "chuyen_khoan" || t.phuong_thuc === "quet_the") && (
@@ -497,6 +498,12 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                           <span className="shrink-0">Ngân hàng nhận</span>
                           <div className="min-w-0 flex-1"><Chon nho ariaLabel="Ngân hàng nhận tiền" giaTri={t.ngan_hang ?? ""} luaChon={[...new Set([...dsNh(t.phuong_thuc), ...(t.ngan_hang ? [t.ngan_hang] : [])])].map((x) => ({ gia_tri: x, nhan: x }))}
                             onDoi={(v) => { ghiNho(t.phuong_thuc, v); setThu((a) => a.map((y, j) => (j === i ? { ...y, ngan_hang: v } : y))); }} /></div>
+                        </div>
+                      )}
+                      {t.phuong_thuc === "vi_dien_tu" && (
+                        <div className="col-span-3 flex items-center gap-2 text-[12px] text-muc-3">
+                          <span className="shrink-0">Loại ví</span>
+                          <div className="min-w-0 flex-1"><Chon nho trong="Chọn ví" ariaLabel="Loại ví điện tử" giaTri={t.loai_vi ?? ""} luaChon={LOAI_VI} onDoi={(v) => setThu((a) => a.map((y, j) => (j === i ? { ...y, loai_vi: v } : y)))} /></div>
                         </div>
                       )}
                       {t.phuong_thuc === "the_tien" && (

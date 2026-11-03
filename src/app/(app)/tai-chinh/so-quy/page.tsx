@@ -8,6 +8,7 @@ import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
+import { TachQuyNganHang } from "@/components/ban-hang/TachQuyNganHang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { LocSoQuy } from "@/components/tai-chinh/LocSoQuy";
@@ -101,6 +102,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
       <>
         <LocBaoCao goc={goc} tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />
         <ChiSoQuy dau={dau} thu={Number(t?.thu ?? 0)} chi={Number(t?.chi ?? 0)} nap={Number(t?.nap ?? 0)} rut={Number(t?.rut ?? 0)} hienTai={Number(t?.hien_tai ?? 0)} />
+        {tab === "ngan-hang" && <TachQuyNganHang chiNhanhIds={[...new Set(quyHienTai.map((q) => q.chi_nhanh_id))]} tu={tu} den={den} />}
         {chuaNhap.length > 0 && (
           <div className="mt-4 flex flex-wrap items-center gap-3 rounded-nho bg-canh-bao-nen px-3.5 py-2.5 text-[13.5px] text-canh-bao" role="status">
             <span>{chuaNhap.length}/{quyHienTai.length} quỹ chưa nhập số dư ban đầu, nên tồn quỹ đang là tổng tiền khách đã trả được ghi vào quỹ từ trước tới nay (chưa có khoản chi cũ) — chưa phải số tiền thật trong két hay tài khoản. Cần nhập số dư đầu cho từng quỹ.</span>
@@ -125,7 +127,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
               { nhan: "", hienThi: (r) => (ghi && r.sua_duoc && !r.da_dao && r.nguon !== "dao_phieu" ? <NutHop kieu="chu" nguy nhan="Đảo phiếu" tieuDe="Đảo phiếu" xacNhan={`Ghi dòng ngược chiều để huỷ ${r.ma}. Phiếu gốc vẫn còn trong sổ.`} truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={daoPhieu} an={{ id: r.id ?? "" }} nhanLuu="Đảo phiếu" /> : null) },
             ]} />
         </div>
-        {ds.length === 0 ? null : <p className="mt-3 text-[12px] text-muc-3">Số dư chạy tính từ tồn đầu kỳ {tienVN(dau)}. Tiền khách trả (tiền mặt vào quỹ tiền mặt; chuyển khoản và quẹt thẻ vào quỹ ngân hàng; trừ thẻ tiền không tính) tự vào sổ quỹ.</p>}
+        {ds.length === 0 ? null : <p className="mt-3 text-[12px] text-muc-3">Số dư chạy tính từ tồn đầu kỳ {tienVN(dau)}. Tiền khách trả (tiền mặt vào quỹ tiền mặt; chuyển khoản, quẹt thẻ, ví điện tử vào quỹ ngân hàng; trừ thẻ tiền và Ship COD không tính) tự vào sổ quỹ.</p>}
       </>
     );
   }

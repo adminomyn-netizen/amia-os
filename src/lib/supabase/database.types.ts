@@ -9664,6 +9664,7 @@ export type Database = {
           id: string
           la_lich_su: boolean
           loai: string
+          loai_vi: string | null
           ngan_hang: string | null
           ngay: string
           nguoi_id: string
@@ -9679,6 +9680,7 @@ export type Database = {
           id?: string
           la_lich_su?: boolean
           loai?: string
+          loai_vi?: string | null
           ngan_hang?: string | null
           ngay?: string
           nguoi_id: string
@@ -9694,6 +9696,7 @@ export type Database = {
           id?: string
           la_lich_su?: boolean
           loai?: string
+          loai_vi?: string | null
           ngan_hang?: string | null
           ngay?: string
           nguoi_id?: string
@@ -11615,6 +11618,28 @@ export type Database = {
           tru_the_tien: number
           tru_voucher: number
           vat: number
+        }[]
+      }
+      quy_ngan_hang_tach: {
+        Args: { p_cn: string[]; p_den: string; p_tu: string }
+        Returns: {
+          hoan: number
+          loai_vi: string
+          ngan_hang: string
+          phuong_thuc: string
+          thu: number
+        }[]
+      }
+      bc_doanh_thu_ngay_vi: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          grab: number
+          momo: number
+          ngay: string
+          shopee: number
+          ship_cod: number
+          vi_khac: number
+          vnpay: number
         }[]
       }
       bc_doanh_thu_ngay: {

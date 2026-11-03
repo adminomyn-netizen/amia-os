@@ -8,7 +8,7 @@ import { Chon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { NHAN_O, NUT_CHINH, NUT_PHU } from "@/components/ui/dinh-dang";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
-import { PHUONG_THUC } from "@/lib/ban-hang";
+import { LOAI_VI, PHUONG_THUC_TIEN } from "@/lib/ban-hang";
 import { TOI_DA_DON_THU_NO } from "@/lib/thu-no";
 import { thuNoNhieuDon } from "@/app/(app)/hoa-don/actions";
 
@@ -22,6 +22,7 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
   const [chon, setChon] = useState<Set<string>>(new Set());
   const [mo, setMo] = useState(false);
   const [pt, setPt] = useState("tien_mat");
+  const [vi, setVi] = useState("");
   const [ngay, setNgay] = useState(homNay);
   const [loi, setLoi] = useState("");
   const [thanhCong, setThanhCong] = useState("");
@@ -50,7 +51,7 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
     setLoi("");
     const fd = new FormData();
     for (const d of dsChon) fd.append("hoa_don_id", d.id);
-    fd.set("phuong_thuc", pt); fd.set("ngay", ngay);
+    fd.set("phuong_thuc", pt); fd.set("ngay", ngay); if (pt === "vi_dien_tu") fd.set("loai_vi", vi);
     bat(async () => {
       const kq = await thuNoNhieuDon(fd);
       if (kq.loi) { setLoi(kq.loi); return; }
@@ -126,7 +127,8 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
       <Hop mo={mo} dong={() => setMo(false)} tieuDe="Cảnh báo" moTa={`Bạn đã chọn ${dsChon.length} hoá đơn còn nợ. Bạn có chắc chắn muốn thanh toán toàn bộ số nợ còn lại của các hoá đơn đã được chọn không?`}>
         <p className="mb-4 text-[14px] text-muc-2">Tổng sẽ thu: <span className="font-medium text-muc tabular-nums">{tienVN(tongChon)}</span>. Mỗi hoá đơn được ghi một khoản thu vào sổ thu tiền, không sửa lại được.</p>
         <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
-          <div><label htmlFor="no-pt" className={NHAN_O}>Phương thức</label><Chon id="no-pt" luaChon={PHUONG_THUC.filter((p) => p.gia_tri !== "the_tien")} giaTri={pt} onDoi={setPt} /></div>
+          <div><label htmlFor="no-pt" className={NHAN_O}>Phương thức</label><Chon id="no-pt" luaChon={PHUONG_THUC_TIEN} giaTri={pt} onDoi={setPt} /></div>
+          {pt === "vi_dien_tu" && <div><label htmlFor="no-vi" className={NHAN_O}>Loại ví</label><Chon id="no-vi" trong="Chọn ví" luaChon={LOAI_VI} giaTri={vi} onDoi={setVi} /></div>}
           <div><label htmlFor="no-ngay" className={NHAN_O}>Ngày thu</label><NgayChon id="no-ngay" giaTri={ngay} onDoi={setNgay} /></div>
         </div>
         {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}

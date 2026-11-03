@@ -4,7 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { gioVN, homNayHCM, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
-import { NHAN_PHUONG_THUC, PHUONG_THUC, VAI } from "@/lib/ban-hang";
+import { LOAI_VI, nhanKhoanThu, PHUONG_THUC_TIEN, VAI } from "@/lib/ban-hang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
@@ -75,7 +75,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         <Link href={`/in/hoa-don/${id}`} target="_blank" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In hoá đơn</Link>
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
-            truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC.filter((p) => p.gia_tri !== "the_tien"), batBuoc: true }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
+            truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC_TIEN, batBuoc: true }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
         )}
         {h.trang_thai !== "huy" && coQuyen(nd, "ban.huy") && (
           <NutHop kieu="phu" nhan="Huỷ hoá đơn" tieuDe="Huỷ hoá đơn" moTa="Huỷ sẽ hoàn lại các khoản đã thu (kể cả thẻ tiền), thu hồi thẻ đã bán và trả kho. Không huỷ được nếu thẻ đã được dùng." an={{ hoa_don_id: id }} nhanLuu="Huỷ hoá đơn"
@@ -107,7 +107,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         </MucTrang>
         <MucTrang tieuDe="Sổ thu tiền">
           <Bang duLieu={tt ?? []} khoa={(r) => r.id} trong="Chưa thu khoản nào." cot={[
-            { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => NHAN_PHUONG_THUC[r.phuong_thuc] },
+            { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => nhanKhoanThu(r.phuong_thuc, r.loai_vi) },
             { nhan: "Ngân hàng nhận", hienThi: (r) => r.ngan_hang ?? "" }, { nhan: "Người thu", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
             { nhan: "Số tiền", hienThi: (r) => <span className={r.loai === "hoan" ? "text-loi" : ""}>{r.loai === "hoan" ? "− " : ""}{tienVN(r.so_tien)}</span>, phai: true },
           ]} />

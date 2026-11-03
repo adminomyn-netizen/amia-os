@@ -155,9 +155,12 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
     noiDung = <>{lc}<BaoCaoDungDichVu loc={loc} coChiNhanh={coChiNhanh} /></>;
   } else if (tab === "doanh-thu") {
     const gom = kieuGom(sp.gom);
-    const [{ data }, cs] = await Promise.all([db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string }), layDoanhThuChiSo(db, tu, den, cn)]);
-    const ngayRows = (data ?? []).map((r) => ({ ngay: r.ngay, so_don: Number(r.so_don), doanh_thu: Number(r.doanh_thu), thu_don_moi: Number(r.thu_don_moi), thu_no_cu: Number(r.thu_no_cu), thuc_thu: Number(r.thuc_thu), tien_mat: Number(r.tien_mat), chuyen_khoan: Number(r.chuyen_khoan), quet_the: Number(r.quet_the), tru_the_tien: Number(r.tru_the_tien), no_moi: Number(r.no_moi), so_buoi: Number(r.so_buoi), doanh_thu_buoi: Number(r.doanh_thu_buoi) }));
-    const ds = gomTheoKy(ngayRows.filter((r) => r.so_don > 0 || r.thuc_thu !== 0 || r.so_buoi > 0 || r.tru_the_tien !== 0), gom, ["so_don", "doanh_thu", "thu_don_moi", "thu_no_cu", "thuc_thu", "tien_mat", "chuyen_khoan", "quet_the", "tru_the_tien", "no_moi", "so_buoi", "doanh_thu_buoi"]);
+    const [{ data }, cs, { data: dataVi }] = await Promise.all([db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string }), layDoanhThuChiSo(db, tu, den, cn), db.rpc("bc_doanh_thu_ngay_vi", { p_tu: tu, p_den: den, p_cn: cn as string })]);
+    // Cột ví như báo cáo theo ngày của SalonHero: Momo, VNPay, Shopee Pay, GrabPay, Ví điện tử khác (migration 0199). Ship COD không có cột ở SalonHero, chỉ hiện khi có số.
+    const viNgay = new Map((dataVi ?? []).map((r) => [r.ngay, r]));
+    const ngayRows = (data ?? []).map((r) => ({ ngay: r.ngay, so_don: Number(r.so_don), doanh_thu: Number(r.doanh_thu), thu_don_moi: Number(r.thu_don_moi), thu_no_cu: Number(r.thu_no_cu), thuc_thu: Number(r.thuc_thu), tien_mat: Number(r.tien_mat), chuyen_khoan: Number(r.chuyen_khoan), quet_the: Number(r.quet_the), tru_the_tien: Number(r.tru_the_tien), momo: Number(viNgay.get(r.ngay)?.momo ?? 0), vnpay: Number(viNgay.get(r.ngay)?.vnpay ?? 0), shopee: Number(viNgay.get(r.ngay)?.shopee ?? 0), grab: Number(viNgay.get(r.ngay)?.grab ?? 0), vi_khac: Number(viNgay.get(r.ngay)?.vi_khac ?? 0), ship_cod: Number(viNgay.get(r.ngay)?.ship_cod ?? 0), no_moi: Number(r.no_moi), so_buoi: Number(r.so_buoi), doanh_thu_buoi: Number(r.doanh_thu_buoi) }));
+    const ds = gomTheoKy(ngayRows.filter((r) => r.so_don > 0 || r.thuc_thu !== 0 || r.so_buoi > 0 || r.tru_the_tien !== 0), gom, ["so_don", "doanh_thu", "thu_don_moi", "thu_no_cu", "thuc_thu", "tien_mat", "chuyen_khoan", "quet_the", "momo", "vnpay", "shopee", "grab", "vi_khac", "ship_cod", "tru_the_tien", "no_moi", "so_buoi", "doanh_thu_buoi"]);
+    const coCod = ngayRows.some((r) => r.ship_cod !== 0);
     const tongBuoi = ngayRows.reduce((t, r) => t + r.so_buoi, 0), tongDtBuoi = ngayRows.reduce((t, r) => t + r.doanh_thu_buoi, 0);
     const linkGom = (g: string) => `/bao-cao?tab=doanh-thu&gom=${g}${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}${sp.so ? `&so=${sp.so}` : ""}`;
     const soDong = soDongTrang(sp.so), cuoiTrang = Math.max(1, Math.ceil(ds.length / soDong)), trangNay = Math.min(soTrang(sp.trang), cuoiTrang);
@@ -195,10 +198,13 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
             { nhan: "Thời gian", hienThi: (r) => r.nhan }, { nhan: "Đơn mới", hienThi: (r) => r.so_don, phai: true }, { nhan: "Doanh thu", hienThi: (r) => tienVN(r.doanh_thu), phai: true },
             { nhan: "Thu đơn mới", hienThi: (r) => tienVN(r.thu_don_moi), phai: true }, { nhan: "Thu nợ cũ", hienThi: (r) => tienVN(r.thu_no_cu), phai: true }, { nhan: "Thực thu", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.thuc_thu)}</span>, phai: true },
             { nhan: "Tiền mặt", hienThi: (r) => tienVN(r.tien_mat), phai: true }, { nhan: "Chuyển khoản", hienThi: (r) => tienVN(r.chuyen_khoan), phai: true }, { nhan: "Quẹt thẻ", hienThi: (r) => tienVN(r.quet_the), phai: true },
+            { nhan: "Momo", hienThi: (r) => tienVN(r.momo), phai: true }, { nhan: "VNPay", hienThi: (r) => tienVN(r.vnpay), phai: true }, { nhan: "Shopee Pay", hienThi: (r) => tienVN(r.shopee), phai: true },
+            { nhan: "GrabPay", hienThi: (r) => tienVN(r.grab), phai: true }, { nhan: "Ví điện tử khác", hienThi: (r) => tienVN(r.vi_khac), phai: true },
+            ...(coCod ? [{ nhan: "Ship COD", hienThi: (r: (typeof ds)[number]) => tienVN(r.ship_cod), phai: true }] : []),
             { nhan: "Trừ thẻ tiền", hienThi: (r) => tienVN(r.tru_the_tien), phai: true }, { nhan: "Nợ mới", hienThi: (r) => tienVN(r.no_moi), phai: true }, { nhan: "Buổi làm", hienThi: (r) => r.so_buoi, phai: true },
           ]} />
         <ThanhTrang trang={trangNay} tong={ds.length} moi={soDong} gan={(t) => `/bao-cao?${new URLSearchParams(Object.entries({ ...gocPhanTrang, trang: t ? String(t) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`} />
-        <p className="mt-3 text-[12px] text-muc-3">Biểu đồ vẽ cột Thực thu của từng kỳ (cả khoảng ngày đã chọn, không phụ thuộc trang bảng). Doanh thu = tổng đơn hoàn thành như SalonHero (tiền hàng − giảm giá + VAT + phụ phí + tip) trừ phần thanh toán bằng thẻ tiền. Thực thu = tiền mặt + chuyển khoản + quẹt thẻ; trừ thẻ tiền không phải tiền vào quỹ vì tiền đã vào lúc bán thẻ. “Bán mới” = thu cùng ngày với đơn, “thu nợ” = thu sau ngày đơn. Nợ mới chưa thu = nợ còn lại của các đơn trong kỳ. Gom Tuần tính từ thứ Hai.</p>
+        <p className="mt-3 text-[12px] text-muc-3">Biểu đồ vẽ cột Thực thu của từng kỳ (cả khoảng ngày đã chọn, không phụ thuộc trang bảng). Doanh thu = tổng đơn hoàn thành như SalonHero (tiền hàng − giảm giá + VAT + phụ phí + tip) trừ phần thanh toán bằng thẻ tiền. Thực thu = tiền mặt + chuyển khoản + quẹt thẻ + ví điện tử + ship COD; trừ thẻ tiền không phải tiền vào quỹ vì tiền đã vào lúc bán thẻ. “Bán mới” = thu cùng ngày với đơn, “thu nợ” = thu sau ngày đơn. Nợ mới chưa thu = nợ còn lại của các đơn trong kỳ. Gom Tuần tính từ thứ Hai.</p>
       </>
     );
   } else if (tab === "nhan-vien") {

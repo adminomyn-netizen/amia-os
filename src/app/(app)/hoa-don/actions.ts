@@ -7,9 +7,10 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { lapPhieuThuNo } from "@/lib/thu-no";
+import { loaiViKhoanThu, PHUONG_THUC_TIEN } from "@/lib/ban-hang";
 
 type KQ = { ok?: true; loi?: string };
-const PT_THU_NO = ["tien_mat", "chuyen_khoan", "quet_the"];
+const PT_THU_NO = PHUONG_THUC_TIEN.map((p) => p.gia_tri);
 
 export async function thuNo(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("no.thu");
@@ -17,12 +18,14 @@ export async function thuNo(fd: FormData): Promise<KQ> {
   const pt = chuoi(fd, "phuong_thuc");
   const soTien = so(fd, "so_tien");
   if (!PT_THU_NO.includes(pt)) return { loi: "Chọn phương thức thu." };
+  const loaiVi = loaiViKhoanThu(pt, chuoi(fd, "loai_vi"));
+  if (loaiVi === undefined) return { loi: "Thu bằng ví điện tử phải chọn loại ví." };
   if (soTien <= 0) return { loi: "Nhập số tiền thu." };
   const id = chuoi(fd, "hoa_don_id");
   const { data: h } = await sb().from("hoa_don").select("trang_thai, con_no").eq("id", id).maybeSingle();
   if (!h || h.trang_thai !== "hoan_thanh") return { loi: "Chỉ thu nợ được trên hoá đơn đã hoàn thành." };
   if (soTien > Number(h.con_no)) return { loi: "Số thu lớn hơn số còn nợ." };
-  const { error } = await sb().from("thanh_toan").insert({ hoa_don_id: id, loai: "thu", phuong_thuc: pt, so_tien: soTien, nguoi_id: nd.nhanVienId, ghi_chu: chuoi(fd, "ghi_chu") || "Thu nợ", ngay: chuoi(fd, "ngay") || undefined });
+  const { error } = await sb().from("thanh_toan").insert({ hoa_don_id: id, loai: "thu", phuong_thuc: pt, loai_vi: loaiVi, so_tien: soTien, nguoi_id: nd.nhanVienId, ghi_chu: chuoi(fd, "ghi_chu") || "Thu nợ", ngay: chuoi(fd, "ngay") || undefined });
   revalidatePath(`/hoa-don/${id}`);
   revalidatePath("/hoa-don");
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
@@ -35,6 +38,8 @@ export async function thuNoNhieuDon(fd: FormData): Promise<KQ & { soDon?: number
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const pt = chuoi(fd, "phuong_thuc"), ngay = chuoi(fd, "ngay") || homNayHCM();
   if (!PT_THU_NO.includes(pt)) return { loi: "Chọn phương thức thu." };
+  const loaiVi = loaiViKhoanThu(pt, chuoi(fd, "loai_vi"));
+  if (loaiVi === undefined) return { loi: "Thu bằng ví điện tử phải chọn loại ví." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || ngay > homNayHCM()) return { loi: "Ngày thu không hợp lệ (không được ở tương lai)." };
   const ids = fd.getAll("hoa_don_id").map(String);
   const db = sb();
@@ -42,7 +47,7 @@ export async function thuNoNhieuDon(fd: FormData): Promise<KQ & { soDon?: number
   if (loiDoc) return { loi: thongBaoLoi(loiDoc) };
   const phieu = lapPhieuThuNo(ids, hds ?? [], nd.chiNhanhId);
   if (phieu.loi !== undefined) return { loi: phieu.loi };
-  const { error } = await db.from("thanh_toan").insert(phieu.dong.map((d) => ({ hoa_don_id: d.hoa_don_id, loai: "thu", phuong_thuc: pt, so_tien: d.so_tien, nguoi_id: nd.nhanVienId, ghi_chu: chuoi(fd, "ghi_chu") || "Thu nợ", ngay })));
+  const { error } = await db.from("thanh_toan").insert(phieu.dong.map((d) => ({ hoa_don_id: d.hoa_don_id, loai: "thu", phuong_thuc: pt, loai_vi: loaiVi, so_tien: d.so_tien, nguoi_id: nd.nhanVienId, ghi_chu: chuoi(fd, "ghi_chu") || "Thu nợ", ngay })));
   if (error) return { loi: thongBaoLoi(error) };
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "thu_no_nhieu_don", doi_tuong: "hoa_don", chi_tiet: { so_don: phieu.dong.length, tong: phieu.tong, phuong_thuc: pt, ngay, ma: phieu.dong.map((d) => d.ma) } });
   revalidatePath("/bao-cao");

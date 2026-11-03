@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
-import { NHAN_PHUONG_THUC } from "@/lib/ban-hang";
+import { nhanKhoanThu } from "@/lib/ban-hang";
 import { NutIn } from "@/components/hoa-don/NutIn";
 import { BanInHoaDon, KHO_CUON, type DuLieuIn } from "@/components/cai-dat/BanInHoaDon";
 import { docIn } from "@/lib/thiet-lap-in";
@@ -17,7 +17,7 @@ export default async function InHoaDon({ params }: { params: Promise<{ id: strin
   if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) notFound();
   const [{ data: dong }, { data: tt }, { data: cn }, { data: k }, { data: nl }, { data: ch }] = await Promise.all([
     db.from("hoa_don_dong").select("ten, loai, dich_vu_id, so_luong, don_gia, giam_gia, thanh_tien").eq("hoa_don_id", id).order("tao_luc"),
-    db.from("thanh_toan").select("loai, phuong_thuc, so_tien, ngay").eq("hoa_don_id", id).order("tao_luc"),
+    db.from("thanh_toan").select("loai, phuong_thuc, loai_vi, so_tien, ngay").eq("hoa_don_id", id).order("tao_luc"),
     db.from("chi_nhanh").select("ten, dia_chi, dien_thoai").eq("id", h.chi_nhanh_id).maybeSingle(),
     h.khach_id ? db.from("khach_hang").select("ho_ten, dien_thoai, ma, gioi_tinh, ngay_sinh, diem_so_du").eq("id", h.khach_id).maybeSingle() : Promise.resolve({ data: null }),
     db.from("nhan_vien").select("ho_ten").eq("id", h.nguoi_lap_id).maybeSingle(),
@@ -44,7 +44,7 @@ export default async function InHoaDon({ params }: { params: Promise<{ id: strin
     khach: k ? { ten: k.ho_ten, sdt: k.dien_thoai, gioiTinh: k.gioi_tinh, namSinh: k.ngay_sinh?.slice(0, 4) ?? null, diem: Number(k.diem_so_du) } : null,
     dong: (dong ?? []).map((x) => ({ ten: x.ten, soLuong: Number(x.so_luong), donGia: Number(x.don_gia), giamGia: Number(x.giam_gia), thanhTien: Number(x.thanh_tien ?? 0), gioPhucVu: x.loai === "dich_vu" && x.dich_vu_id && dvCoGio.has(x.dich_vu_id) && gioPhucVu ? gioPhucVu : undefined })),
     tongHang: Number(h.tong_hang), giamDon: Number(h.giam_gia_don), vatPct: Number(h.vat_pct), vatTien: Number(h.vat_tien), phuPhi: Number(h.phu_phi), tip: Number(h.tip), phaiThu: Number(h.tong_phai_thu),
-    thanhToan: (tt ?? []).map((t) => ({ nhan: `${t.loai === "thu" ? "Đã thu" : "Hoàn"} · ${NHAN_PHUONG_THUC[t.phuong_thuc]}`, soTien: Number(t.so_tien) })),
+    thanhToan: (tt ?? []).map((t) => ({ nhan: `${t.loai === "thu" ? "Đã thu" : "Hoàn"} · ${nhanKhoanThu(t.phuong_thuc, t.loai_vi)}`, soTien: Number(t.so_tien) })),
     conNo: h.trang_thai === "hoan_thanh" ? Number(h.con_no) : 0, qrAnh,
   };
   const chuaIn = cfg.chiInHoanThanh && h.trang_thai !== "hoan_thanh";

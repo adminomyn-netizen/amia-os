@@ -360,7 +360,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         <nav aria-label="Lọc điểm theo loại" className="mb-4 flex flex-wrap gap-1.5 text-[12px]">
           {[["", "Tất cả loại"], ...Object.entries(LOAI_DIEM)].map(([ma, nhan]) => (
             <Link key={ma} scroll={false} href={`/khach-hang/${id}?tab=diem-thuong${ma ? `&loai_diem=${ma}` : ""}`} aria-current={loaiDiemLoc === ma ? "true" : undefined}
-              className={`rounded-full border px-3 py-1 font-medium ${loaiDiemLoc === ma ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{nhan}</Link>
+              className={`rounded-md border px-3 py-1 font-medium ${loaiDiemLoc === ma ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{nhan}</Link>
           ))}
         </nav>
         <Bang duLieu={ds ?? []} khoa={(r) => String(r.id)} trong={loaiDiemLoc ? "Không có dòng điểm nào thuộc loại này." : "Khách chưa có lịch sử điểm thưởng."} cot={[

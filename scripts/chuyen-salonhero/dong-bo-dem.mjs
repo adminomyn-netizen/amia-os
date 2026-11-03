@@ -680,7 +680,7 @@ try {
   const sd = new Map((await q(`select t.sh_id, coalesce(sum(c.so_buoi),0)::int b, coalesce(sum(c.so_tien),0)::bigint tien from public.the_khach t left join public.the_so_cai c on c.the_id = t.id where t.sh_id = any($1::bigint[]) group by t.sh_id`, [theCan.map((c) => Number(c.id))])).map((r) => [Number(r.sh_id), r]));
   const theLech = [];
   for (const c of theCan) { if (c.is_deleted || biXung.has(Number(c.id))) continue; const a = sd.get(Number(c.id)); if (!a) continue; const t = tinhDich(c); const co2 = t.lan ? a.b : Number(a.tien); if ((t.lan ? t.buoi : t.tien) !== co2) theLech.push(Number(c.id)); }
-  const THE_LECH_DA_BIET = new Set([1659933, 1657443, 2714250, 2713923, 2714416, 2714248]); // 6 thẻ lệch đã biết từ 28/10 (ghi trong memory chuyển SalonHero)
+  const THE_LECH_DA_BIET = new Set(); // 03/11 tối: 6 thẻ lệch từ 28/10 (1659933, 1657443, 2714250, 2713923, 2714416, 2714248) đã khớp SalonHero (cùng còn 0 buổi) → bỏ khỏi danh sách loại trừ
   const theLechMoi = theLech.filter((id) => !THE_LECH_DA_BIET.has(id));
   them("Thẻ lệch số dư (trừ 6 thẻ lệch đã biết 28/10)", 0, theLechMoi.length, JSON.stringify(theLechMoi.slice(0, 12)) + (theLech.length !== theLechMoi.length ? ` (+${theLech.length - theLechMoi.length} thẻ đã biết)` : ""));
   them("Thẻ MỚI (tạo sau mốc) thiếu gói/khách ở AMIA — cần bổ sung danh mục", 0, baoT.khong_nap_moi, JSON.stringify(baoT.mau_khong_nap_moi.slice(0, 5)));

@@ -1,11 +1,17 @@
 import Image from "next/image";
+import { redirect } from "next/navigation";
 import { sb } from "@/lib/db";
 import { FormDangKy } from "./FormDangKy";
 
 export const dynamic = "force-dynamic";
 
+/** Chị Lâm 03/11/2026: không cho đăng ký tự do nữa, Kỹ thuật tạo tài khoản ở trang Nhân viên. Công tắc dang_ky.mo đang tắt thì trang này đưa về đăng nhập. */
 export default async function TrangDangKy() {
-  const { data: cn } = await sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
+  const [{ data: mo }, { data: cn }] = await Promise.all([
+    sb().from("cau_hinh").select("gia_tri").eq("khoa", "dang_ky.mo").maybeSingle(),
+    sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
+  ]);
+  if ((mo?.gia_tri ?? "1") === "0") redirect("/dang-nhap");
   return (
     <main className="grid min-h-screen lg:grid-cols-[1.05fr_1fr]">
       <section className="nen-toi hidden flex-col justify-between p-14 text-menu-chu lg:flex">

@@ -28,7 +28,7 @@ export default function TrangDangNhap() {
         <div className="the-noi vao w-full max-w-[420px] p-8 pt-9">
           <Image src="/logo-amia.png" alt="AMIA" width={150} height={65} priority className="mb-8 h-auto w-[130px] lg:hidden" />
           <h2 className="chu-tieu-de text-[30px] text-muc">Đăng nhập</h2>
-          <p className="mb-7 mt-1 text-[14px] text-muc-3">Đăng nhập bằng email và mật khẩu của bạn. Chưa có tài khoản thì đăng ký ngay bên dưới.</p>
+          <p className="mb-7 mt-1 text-[14px] text-muc-3">Đăng nhập bằng email và mật khẩu của bạn. Chưa có tài khoản thì nhờ bộ phận Kỹ thuật tạo giúp.</p>
           <Suspense fallback={null}><ThongBaoDangKy /></Suspense>
           <form action={action} className="space-y-5">
             <div>
@@ -41,7 +41,6 @@ export default function TrangDangNhap() {
             </div>
             {state?.loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{state.loi}</div>}
             <button type="submit" disabled={dangXuLy} className="nut-vang h-[50px] w-full rounded-nho text-[15px] disabled:opacity-60">{dangXuLy ? "Đang đăng nhập" : "Đăng nhập"}</button>
-            <Link href="/dang-ky" className="flex h-[50px] w-full items-center justify-center rounded-nho border border-vien-dam text-[15px] text-muc-2 hover:bg-giay-tram">Chưa có tài khoản? Đăng ký</Link>
             <Link href="/quen-mat-khau" className="block text-center text-[14px] text-nhan-dam underline underline-offset-4">Quên mật khẩu?</Link>
           </form>
         </div>

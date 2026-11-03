@@ -4,7 +4,7 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { boDau, chuanSdt, homNayHCM } from "@/lib/dinh-dang";
-import { lamSachDongNhap, nganHangKhoanThu, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
+import { kiemGiaDong, lamSachDongNhap, nganHangKhoanThu, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
@@ -106,28 +106,33 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   const idsGoi = don.dong.filter((d) => d.loai === "goi_the").map((d) => d.ref);
   const idsSp = don.dong.filter((d) => d.loai === "san_pham").map((d) => d.ref);
   const [dv, goi, sp] = await Promise.all([
-    idsDv.length ? db.from("dich_vu").select("id, ten, gia, hoat_dong").in("id", idsDv) : Promise.resolve({ data: [] }),
+    idsDv.length ? db.from("dich_vu").select("id, ten, gia, hoat_dong, cho_sua_gia").in("id", idsDv) : Promise.resolve({ data: [] }),
     idsGoi.length ? db.from("goi_the").select("id, ten, gia, hoat_dong").in("id", idsGoi) : Promise.resolve({ data: [] }),
-    idsSp.length ? db.from("san_pham").select("id, ten, gia_ban, hoat_dong, ban_le").in("id", idsSp) : Promise.resolve({ data: [] }),
+    idsSp.length ? db.from("san_pham").select("id, ten, gia_ban, hoat_dong, ban_le, cho_sua_gia").in("id", idsSp) : Promise.resolve({ data: [] }),
   ]);
-  const gia = new Map<string, { ten: string; gia: number; ok: boolean }>();
-  for (const x of dv.data ?? []) gia.set(`dich_vu:${x.id}`, { ten: x.ten, gia: x.gia, ok: x.hoat_dong });
-  for (const x of goi.data ?? []) gia.set(`goi_the:${x.id}`, { ten: x.ten, gia: x.gia, ok: x.hoat_dong });
-  for (const x of sp.data ?? []) gia.set(`san_pham:${x.id}`, { ten: x.ten, gia: x.gia_ban, ok: x.hoat_dong && x.ban_le });
+  const gia = new Map<string, { ten: string; gia: number; ok: boolean; choSuaGia: boolean }>();
+  for (const x of dv.data ?? []) gia.set(`dich_vu:${x.id}`, { ten: x.ten, gia: x.gia, ok: x.hoat_dong, choSuaGia: x.cho_sua_gia });
+  for (const x of goi.data ?? []) gia.set(`goi_the:${x.id}`, { ten: x.ten, gia: x.gia, ok: x.hoat_dong, choSuaGia: false });
+  for (const x of sp.data ?? []) gia.set(`san_pham:${x.id}`, { ten: x.ten, gia: x.gia_ban, ok: x.hoat_dong && x.ban_le, choSuaGia: x.cho_sua_gia });
+  // Đơn giá từng dòng: giá danh mục, hoặc giá thu ngân sửa khi mục bật "Sửa giá khi thanh toán" (kiểm lại cờ ở đây, không tin trình duyệt).
+  const donGia: number[] = [];
 
   let hang = 0;
   for (const d of don.dong) {
     const m = gia.get(`${d.loai}:${d.ref}`);
     if (!m || !m.ok) return { loi: "Có mục trong đơn đã ngừng bán hoặc không tồn tại. Tải lại trang rồi chọn lại." };
+    const kg = kiemGiaDong(d, m);
+    if (!kg.ok) return { loi: kg.loi };
+    donGia.push(kg.gia);
     if (!Number.isInteger(d.sl) || d.sl < 1 || d.sl > 999) return { loi: `Số lượng của "${m.ten}" chưa hợp lệ.` };
-    if (!Number.isInteger(d.giam) || d.giam < 0 || d.giam > m.gia * d.sl) return { loi: `Giảm giá của "${m.ten}" chưa hợp lệ.` };
+    if (!Number.isInteger(d.giam) || d.giam < 0 || d.giam > kg.gia * d.sl) return { loi: `Giảm giá của "${m.ten}" chưa hợp lệ.` };
     for (const vai of ["phuc_vu", "tu_van", "ban"] as const) {
       const ds = d.nv?.[vai] ?? [];
       if (ds.length > TOI_DA_NGUOI_HUONG) return { loi: `"${m.ten}": mỗi vai chỉ có tối đa ${TOI_DA_NGUOI_HUONG} người hưởng.` };
       if (ds.length && Math.abs(ds.reduce((s, x) => s + Number(x.ti), 0) - 100) > 0.01) return { loi: `"${m.ten}": phần chia cho vai ${vai === "phuc_vu" ? "Phục vụ" : vai === "tu_van" ? "Tư vấn" : "Bán hàng"} phải cộng đủ 100%.` };
       if (new Set(ds.map((x) => x.id)).size !== ds.length) return { loi: `"${m.ten}": một người không được xuất hiện hai lần trong cùng một vai.` };
     }
-    hang += m.gia * d.sl - d.giam;
+    hang += kg.gia * d.sl - d.giam;
   }
   for (const v of [don.giamDon, don.phuPhi, don.tip]) if (!Number.isInteger(v) || v < 0) return { loi: "Giảm giá, phụ phí hoặc tip chưa hợp lệ." };
   // Đổi điểm: máy chủ tự tính tiền theo cấu hình, cộng vào giảm giá cả đơn; trừ điểm cùng giao dịch với chốt đơn (chot_hoa_don_doi_diem).
@@ -148,7 +153,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   if (maVoucher) {
     const t = await timVoucher(db, maVoucher, { chiNhanhId: don.chiNhanhId, khachId: don.khachId, lichId: don.lichId });
     if (!t.ok) return { loi: t.loi };
-    const g = giamTheoDong(t.v, don.dong.map((d) => ({ loai: d.loai, ref: d.ref, thanh: gia.get(`${d.loai}:${d.ref}`)!.gia * d.sl - d.giam })));
+    const g = giamTheoDong(t.v, don.dong.map((d, i) => ({ loai: d.loai, ref: d.ref, thanh: donGia[i] * d.sl - d.giam })));
     if (!g.ok) return { loi: g.loi };
     tienVoucher = g.tien;
   }
@@ -184,9 +189,9 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   if (eh || !h) return { loi: thongBaoLoi(eh) };
   const huyNhap = async () => { await db.from("hoa_don").delete().eq("id", h.id); };
 
-  for (const d of don.dong) {
+  for (const [i, d] of don.dong.entries()) {
     const m = gia.get(`${d.loai}:${d.ref}`)!;
-    const row: TablesInsert<"hoa_don_dong"> = { hoa_don_id: h.id, loai: d.loai, ten: m.ten, so_luong: d.sl, don_gia: m.gia, giam_gia: d.giam,
+    const row: TablesInsert<"hoa_don_dong"> = { hoa_don_id: h.id, loai: d.loai, ten: m.ten, so_luong: d.sl, don_gia: donGia[i], giam_gia: d.giam,
       dich_vu_id: d.loai === "dich_vu" ? d.ref : null, goi_id: d.loai === "goi_the" ? d.ref : null, san_pham_id: d.loai === "san_pham" ? d.ref : null };
     const { data: dg, error: ed } = await db.from("hoa_don_dong").insert(row).select("id").single();
     if (ed || !dg) { await huyNhap(); return { loi: thongBaoLoi(ed) }; }

@@ -9,7 +9,7 @@ import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
 import { GioChon } from "@/components/ui/GioChon";
-import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, hienOThuNgan, KENH_MAN_HINH_KHACH, khopMuc, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
+import { chiaDeuTi, chiaDoanhThuNguoiHuong, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -284,9 +284,9 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const theTien = khach ? theTienTai : [];
   const theKhach = khach && theKh?.khachId === khach.id ? theKh : null;
   const theBan = dong.filter((d) => d.loai === "goi_the").map((d) => ({ ten: tuMuc.get(khoaDong(d))?.ten ?? "Thẻ", sl: d.sl }));
-  const hang = dong.reduce((s, d) => s + (tuMuc.get(khoaDong(d))?.gia ?? 0) * d.sl - d.giam, 0);
+  const hang = dong.reduce((s, d) => s + giaDong(d, tuMuc.get(khoaDong(d))) * d.sl - d.giam, 0);
   // Voucher: tính lại theo dòng hàng hiện tại (đổi dòng thì tiền giảm đổi theo). Đơn chưa đủ điều kiện thì tiền giảm = 0 và báo lý do.
-  const thanhDong = dong.map((d) => ({ loai: d.loai, ref: d.ref, thanh: (tuMuc.get(khoaDong(d))?.gia ?? 0) * d.sl - d.giam }));
+  const thanhDong = dong.map((d) => ({ loai: d.loai, ref: d.ref, thanh: giaDong(d, tuMuc.get(khoaDong(d))) * d.sl - d.giam }));
   const tienVoucher = vc && hang >= vc.donToiThieu ? tinhGiamVoucher(vc.def, thanhDong) : 0;
   const lyDoVoucher = !vc || tienVoucher > 0 ? "" : hang < vc.donToiThieu ? `Voucher ${vc.ma} chỉ áp dụng cho đơn từ ${tienVN(vc.donToiThieu)}.` : `Voucher ${vc.ma} chưa áp dụng được: đơn chưa có mục thuộc "${GIOI_HAN_VOUCHER.find((g) => g.gia_tri === vc.def.gioi_han)?.nhan}".`;
   // Đổi điểm: chỉ khi cấu hình bật; không vượt số dư và không vượt phần tiền hàng còn lại sau giảm giá.
@@ -302,7 +302,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   useEffect(() => {
     if (!dangXem) return;
     onDonChoKhach({
-      khach: khach?.ho_ten ?? "", dong: dong.map((d) => ({ ten: tuMuc.get(khoaDong(d))?.ten ?? "", sl: d.sl, thanh: (tuMuc.get(khoaDong(d))?.gia ?? 0) * d.sl - d.giam })),
+      khach: khach?.ho_ten ?? "", dong: dong.map((d) => ({ ten: tuMuc.get(khoaDong(d))?.ten ?? "", sl: d.sl, thanh: giaDong(d, tuMuc.get(khoaDong(d))) * d.sl - d.giam })),
       hang, giam: giamDon + tienDiem + tienVoucher, vat, phuPhiTip: phuPhi + tip, phai, daThu, conNo,
     });
   }, [dangXem, onDonChoKhach, khach, dong, tuMuc, hang, giamDon, tienDiem, tienVoucher, vat, phuPhi, tip, phai, daThu, conNo]);
@@ -426,7 +426,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
               return (
                 <li key={khoaDong(d)} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0"><div className="text-[14px] font-medium text-muc">{m.ten}</div><div className="text-[12px] text-muc-3 tabular-nums">{tienVN(m.gia)} / đơn vị</div></div>
+                    <div className="min-w-0"><div className="text-[14px] font-medium text-muc">{m.ten}</div><div className="text-[12px] text-muc-3 tabular-nums">{tienVN(giaDong(d, m))} / đơn vị{d.gia != null && d.gia !== m.gia ? <span className="ml-1 text-canh-bao">(giá gốc {tienVN(m.gia)})</span> : null}</div></div>
                     <button type="button" aria-label={`Bỏ ${m.ten}`} onClick={() => setDong((ds) => ds.filter((_, j) => j !== i))} className="p-1 text-muc-3 hover:text-loi"><Trash2 strokeWidth={1.6} className="h-4 w-4" /></button>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
@@ -435,8 +435,9 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                       <span className="min-w-[28px] text-center text-[14px] tabular-nums">{d.sl}</span>
                       <button type="button" aria-label="Tăng số lượng" onClick={() => capNhat(i, { sl: d.sl + 1 })} className="p-2 text-muc-2"><Plus strokeWidth={1.8} className="h-3.5 w-3.5" /></button>
                     </span>
-                    {choGiam && <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Giảm <OTien className="w-[120px]" giaTri={d.giam} onDoi={(n) => capNhat(i, { giam: Math.min(n, m.gia * d.sl) })} ariaLabel="Giảm giá dòng" /></span>}
-                    <span className="ml-auto text-[15px] font-medium tabular-nums text-muc">{tienVN(m.gia * d.sl - d.giam)}</span>
+                    {m.choSuaGia && LOAI_SUA_GIA.includes(d.loai) && <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Đơn giá <OTien className="w-[120px]" giaTri={giaDong(d, m)} onDoi={(n) => { const g = Math.min(n, GIA_SUA_TOI_DA); capNhat(i, { gia: g === m.gia ? undefined : g, giam: Math.min(d.giam, g * d.sl) }); }} ariaLabel="Sửa đơn giá dòng" /></span>}
+                    {choGiam && <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Giảm <OTien className="w-[120px]" giaTri={d.giam} onDoi={(n) => capNhat(i, { giam: Math.min(n, giaDong(d, m) * d.sl) })} ariaLabel="Giảm giá dòng" /></span>}
+                    <span className="ml-auto text-[15px] font-medium tabular-nums text-muc">{tienVN(giaDong(d, m) * d.sl - d.giam)}</span>
                   </div>
                   <button type="button" onClick={() => setSuaNv(i)} className={`mt-2 flex items-center gap-1.5 text-[13px] ${NUT_CHU}`}><UserRound strokeWidth={1.6} className="h-3.5 w-3.5" />{VAI.some((v) => d.nv[v.ma].length) ? "Sửa nhân viên" : "Chọn người phục vụ, tư vấn, bán"}</button>
                   <ul className="mt-1 space-y-0.5 text-[12px] text-muc-3">
@@ -544,7 +545,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
       )}
       {moHh && (
         <HoaHongDon dong={() => setMoHh(false)} nhanVien={nhanVien} hang={hang}
-          dongDon={dong.map((d) => ({ nv: d.nv, thanh: (tuMuc.get(khoaDong(d))?.gia ?? 0) * d.sl - d.giam }))} />
+          dongDon={dong.map((d) => ({ nv: d.nv, thanh: giaDong(d, tuMuc.get(khoaDong(d))) * d.sl - d.giam }))} />
       )}
       {suaNv !== null && dong[suaNv] && (
         <NguoiHuong d={dong[suaNv]} ten={tuMuc.get(khoaDong(dong[suaNv]))?.ten ?? ""} nhanVien={nhanVien} dong={() => setSuaNv(null)} luu={(nv) => { capNhat(suaNv, { nv }); setSuaNv(null); }} />

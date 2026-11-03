@@ -27,7 +27,21 @@ export const khopMuc = (m: Pick<MucBan, "ten" | "ma" | "maVach">, tu: string) =>
   const k = boDau(tu.trim());
   return !k || boDau(`${m.ten} ${m.ma ?? ""} ${m.maVach ?? ""}`).includes(k);
 };
-export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: number; nv: Record<Vai, { id: string; ti: number }[]> };
+export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: number; nv: Record<Vai, { id: string; ti: number }[]>;
+  /** Đơn giá thu ngân sửa (chỉ khi mục bật "Sửa giá khi thanh toán"); không có = giá danh mục. */ gia?: number };
+/** Đơn giá tối đa thu ngân được gõ khi sửa giá (chặn gõ nhầm thừa số 0). */
+export const GIA_SUA_TOI_DA = 10_000_000_000;
+/** Loại dòng được sửa đơn giá theo cờ cho_sua_gia. Thẻ KHÔNG (giá thẻ đổi thì giá trị mỗi buổi đổi theo — chờ chị Lâm quyết). */
+export const LOAI_SUA_GIA: MucBan["loai"][] = ["dich_vu", "san_pham"];
+/** Đơn giá dùng để tính dòng: giá sửa nếu có, không thì giá danh mục. Dùng chung cho màn Thu ngân và máy chủ. */
+export const giaDong = (d: Pick<DongDon, "gia">, m: { gia: number } | undefined) => d.gia ?? m?.gia ?? 0;
+/** Máy chủ kiểm giá sửa: chỉ mục bật cờ, đúng loại, số nguyên 0..GIA_SUA_TOI_DA. Trả đơn giá dùng để ghi hoá đơn. */
+export function kiemGiaDong(d: Pick<DongDon, "gia" | "loai">, m: { ten: string; gia: number; choSuaGia?: boolean }): { ok: true; gia: number } | { ok: false; loi: string } {
+  if (d.gia == null) return { ok: true, gia: m.gia };
+  if (!m.choSuaGia || !LOAI_SUA_GIA.includes(d.loai)) return { ok: false, loi: `"${m.ten}" không được sửa giá khi thanh toán (bật ở Danh mục).` };
+  if (!Number.isInteger(d.gia) || d.gia < 0 || d.gia > GIA_SUA_TOI_DA) return { ok: false, loi: `Đơn giá sửa của "${m.ten}" chưa hợp lệ.` };
+  return { ok: true, gia: d.gia };
+}
 
 const UUID_NHAP = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 /** Giữ lại đúng các trường hợp lệ của dòng hàng; dữ liệu lạ bị bỏ (đơn nháp chỉ là bản nhớ tạm, giá vẫn lấy lại từ danh mục khi chốt). */
@@ -42,7 +56,9 @@ export function lamSachDongNhap(v: unknown): DongDon[] {
       const ds = (o.nv as Record<string, unknown> | undefined)?.[vai];
       if (Array.isArray(ds)) nv[vai] = ds.slice(0, TOI_DA_NGUOI_HUONG).filter((x) => x && UUID_NHAP.test(String((x as { id?: unknown }).id)) && Number.isFinite(Number((x as { ti?: unknown }).ti))).map((x) => ({ id: String((x as { id: string }).id), ti: Math.min(100, Math.max(0, Number((x as { ti: number }).ti))) }));
     }
-    ra.push({ loai: o.loai as DongDon["loai"], ref: String(o.ref), sl: Math.min(999, Math.max(1, Math.floor(Number(o.sl) || 1))), giam: Math.max(0, Math.floor(Number(o.giam) || 0)), nv });
+    const gia = o.gia == null ? NaN : Number(o.gia);
+    ra.push({ loai: o.loai as DongDon["loai"], ref: String(o.ref), sl: Math.min(999, Math.max(1, Math.floor(Number(o.sl) || 1))), giam: Math.max(0, Math.floor(Number(o.giam) || 0)), nv,
+      ...(Number.isInteger(gia) && gia >= 0 && gia <= GIA_SUA_TOI_DA ? { gia } : {}) });
   }
   return ra;
 }

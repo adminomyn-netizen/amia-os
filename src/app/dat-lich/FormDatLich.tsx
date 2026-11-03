@@ -4,10 +4,11 @@ import { useActionState, useEffect, useState, useTransition } from "react";
 import { Chon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { NHAN_O, O_NHAP, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
+import { coOChiNhanh } from "@/lib/ban-hang";
 import { guiYeuCauDatLich, layGioTrong } from "./actions";
 
 type Cn = { id: string; ten: string; dia_chi: string | null };
-type Dv = { id: string; ten: string; phut: number; nhom: string };
+type Dv = { id: string; ten: string; phut: number; nhom: string; /** "Địa điểm cung cấp": null = mọi chi nhánh. */ cn?: string[] | null };
 
 /** Biểu mẫu khách tự chọn chi nhánh, dịch vụ, ngày giờ còn trống rồi để lại họ tên + số điện thoại. Chỉ là YÊU CẦU: lễ tân gọi xác nhận. */
 export function FormDatLich({ chiNhanh, dichVu, homNay }: { chiNhanh: Cn[]; dichVu: Dv[]; homNay: string }) {
@@ -34,7 +35,9 @@ export function FormDatLich({ chiNhanh, dichVu, homNay }: { chiNhanh: Cn[]; dich
     return () => { huy = true; };
   }, [cn, ngay, dv]);
 
-  const nhom = [...new Set(dichVu.map((d) => d.nhom))];
+  // Chỉ hiện dịch vụ có cung cấp ở chi nhánh đã chọn (chưa chọn chi nhánh thì hiện hết).
+  const dsDv = dichVu.filter((d) => coOChiNhanh(d.cn, cn));
+  const nhom = [...new Set(dsDv.map((d) => d.nhom))];
   if (kq?.ok) return <div role="status" className="rounded-the border border-nhan bg-nhan-nhat p-5 text-[15px] text-nhan-dam"><p className="font-semibold">Cảm ơn bạn!</p><p className="mt-1">{kq.tomTat}</p></div>;
   const san = cn && dv.length > 0 && ngay && gioTrong !== null;
   return (
@@ -50,7 +53,7 @@ export function FormDatLich({ chiNhanh, dichVu, homNay }: { chiNhanh: Cn[]; dich
       <fieldset className="space-y-3">
         <legend className="mb-1 text-[16px] font-semibold text-muc">1. Chọn chi nhánh</legend>
         {chiNhanh.length === 1 ? <p className="text-[15px] text-muc-2">{chiNhanh[0].ten}{chiNhanh[0].dia_chi ? ` · ${chiNhanh[0].dia_chi}` : ""}</p>
-          : <Chon id="chi_nhanh_id" ariaLabel="Chi nhánh" trong="Chọn chi nhánh" giaTri={cn} luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} onDoi={(v) => { setCn(v); setGio(""); }} />}
+          : <Chon id="chi_nhanh_id" ariaLabel="Chi nhánh" trong="Chọn chi nhánh" giaTri={cn} luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} onDoi={(v) => { setCn(v); setGio(""); setDv((ds) => ds.filter((id) => coOChiNhanh(dichVu.find((d) => d.id === id)?.cn, v))); }} />}
         <input type="hidden" name="chi_nhanh_id" value={cn} />
       </fieldset>
 
@@ -61,7 +64,7 @@ export function FormDatLich({ chiNhanh, dichVu, homNay }: { chiNhanh: Cn[]; dich
             <div key={n}>
               <p className="mb-1.5 text-[13px] font-medium text-muc-3">{n}</p>
               <div className="space-y-1.5">
-                {dichVu.filter((d) => d.nhom === n).map((d) => (
+                {dsDv.filter((d) => d.nhom === n).map((d) => (
                   <label key={d.id} className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-nho border px-3 py-2 text-[15px] ${dv.includes(d.id) ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam bg-giay-sang text-muc"}`}>
                     <input type="checkbox" checked={dv.includes(d.id)} disabled={!dv.includes(d.id) && dv.length >= 5} onChange={() => { setDv(dv.includes(d.id) ? dv.filter((x) => x !== d.id) : [...dv, d.id]); setGio(""); }} className="h-4 w-4 accent-[var(--nhan)]" />
                     <span className="min-w-0 flex-1">{d.ten}</span><span className="shrink-0 text-[13px] text-muc-3">{d.phut} phút</span>

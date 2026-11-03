@@ -10,6 +10,7 @@ import { NutHop } from "@/components/ui/BieuMau";
 import { baoBienChung } from "../khieu-nai/actions";
 import { truongBaoBatThuong } from "@/lib/khieu-nai-form";
 import { FormLichHen } from "@/components/lich-hen/FormLichHen";
+import { hienDatLich } from "@/lib/ban-hang";
 import { NutInLich } from "@/components/lich-hen/NutInLich";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
@@ -82,7 +83,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const [{ data: lichTho }, { data: nv }, { data: dv }, { count: demHomNay }, { data: choLam }, { data: yeuCau }] = await Promise.all([
     qLich,
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chuc_danh, ma_nv, chi_nhanh_id").eq("hoat_dong", true).order("ma_nv"),
-    db.from("dich_vu").select("id, ma, ten, thoi_luong_phut").eq("hoat_dong", true).order("ma"),
+    db.from("dich_vu").select("id, ma, ten, thoi_luong_phut, noi_hien_thi, chi_nhanh_ids").eq("hoat_dong", true).order("ma"),
     db.from("lich_hen").select("id", { count: "exact", head: true }).eq("chi_nhanh_id", cnId).gte("bat_dau", homNayDau).lt("bat_dau", homNayCuoi).not("trang_thai", "in", "(huy,khong_den)"),
     db.from("cho_lam").select("chi_nhanh_id, ten, thu_tu, hoat_dong").order("thu_tu").order("ten"),
     db.from("yeu_cau_dat_lich").select("id, dich_vu_ids, bat_dau, thoi_luong_phut, ho_ten, dien_thoai, ghi_chu, tao_luc").eq("chi_nhanh_id", cnId).eq("trang_thai", "cho").gte("bat_dau", new Date().toISOString()).order("bat_dau").limit(100),
@@ -119,7 +120,8 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten]));
   const nvLC = luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"));
   const bsLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
-  const dichVu = (dv ?? []).map((d) => ({ id: d.id, ma: d.ma, ten: d.ten, thoiLuong: d.thoi_luong_phut }));
+  // "Nơi hiển thị" / "Địa điểm cung cấp": hộp đặt lịch chỉ ẩn khỏi danh sách chọn; lịch cũ đã có dịch vụ đó vẫn giữ và hiện tên.
+  const dichVu = (dv ?? []).map((d) => ({ id: d.id, ma: d.ma, ten: d.ten, thoiLuong: d.thoi_luong_phut, an: !hienDatLich(d.noi_hien_thi), chiNhanhIds: d.chi_nhanh_ids }));
   const cnLC = (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
   const choDm = (choLam ?? []).filter((c) => c.hoat_dong).map((c) => ({ chiNhanhId: c.chi_nhanh_id, ten: c.ten }));
   const choCn = choDm.filter((c) => c.chiNhanhId === cnId);

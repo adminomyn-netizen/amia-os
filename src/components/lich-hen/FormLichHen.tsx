@@ -13,8 +13,9 @@ import type { khungGioTrong } from "@/app/(app)/lich-hen/actions";
 import { TaoKhachNhanh } from "@/components/lich-hen/TaoKhachNhanh";
 import { KIEU_LAP, laKieuLap, LUA_CHON_NGUON, nhanNguon, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
 import { ngayVN } from "@/lib/dinh-dang";
+import { coOChiNhanh } from "@/lib/ban-hang";
 
-type DV = { id: string; ma: string; ten: string; thoiLuong: number };
+type DV = { id: string; ma: string; ten: string; thoiLuong: number; /** "Nơi hiển thị" = chỉ thu ngân / ẩn. */ an?: boolean; /** "Địa điểm cung cấp": null = mọi chi nhánh. */ chiNhanhIds?: string[] | null };
 export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string; thoiLuong: number; nhanVienId: string; phong: string; nguon: string; ghiChu: string; dichVuIds: string[]; chiNhanhId: string };
 const LUA_CHON_LAP = [{ gia_tri: "", nhan: "Không lặp" }, ...Object.entries(KIEU_LAP).map(([gia_tri, k]) => ({ gia_tri, nhan: k.nhan }))];
 
@@ -96,7 +97,8 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     dvs.forEach((d) => fd.append("dich_vu_ids", d));
     bat(async () => { const kq = await action(fd); if (kq.loi) setLoi(kq.loi); else { setMo(false); router.refresh(); } });
   };
-  const dsDv = dichVu.filter((d) => !tim_ || `${d.ma} ${d.ten}`.toLowerCase().includes(tim_.toLowerCase()));
+  // Dịch vụ ẩn ở đặt lịch hoặc không cung cấp ở chi nhánh đang chọn thì không hiện để chọn mới; dịch vụ đã có trong lịch vẫn hiện để bỏ chọn được.
+  const dsDv = dichVu.filter((d) => (dvs.includes(d.id) || (!d.an && coOChiNhanh(d.chiNhanhIds, cn))) && (!tim_ || `${d.ma} ${d.ten}`.toLowerCase().includes(tim_.toLowerCase())));
   return (
     <>
       <button type="button" className={kieu === "chinh" ? NUT_CHINH : NUT_CHU} onClick={() => setMo(true)}>{nhan}</button>

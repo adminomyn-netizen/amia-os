@@ -4,7 +4,7 @@ import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Pos } from "@/components/ban-hang/Pos";
-import type { DongDon, MucBan, TaiKhoanNhan } from "@/lib/ban-hang";
+import { hienThuNgan, type DongDon, type MucBan, type TaiKhoanNhan } from "@/lib/ban-hang";
 import { chotDonBanHang, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap } from "./actions";
 
 import { nhanNguon } from "@/lib/lich-hen";
@@ -23,10 +23,10 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   if (nd.chiNhanhId) qTk = qTk.or(`chi_nhanh_id.is.null,chi_nhanh_id.eq.${nd.chiNhanhId}`);
   const [{ count: demNo }, { data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }, { data: dsTk }, nhapBanDau] = await Promise.all([
     coQuyen(nd, "ban.xem") ? qNo : Promise.resolve({ count: null as number | null }),
-    db.from("dich_vu").select("id, ma, ten, gia, nhom_id, vat_pct, tao_luc").eq("hoat_dong", true).order("ten"),
+    db.from("dich_vu").select("id, ma, ten, gia, nhom_id, vat_pct, tao_luc, noi_hien_thi, chi_nhanh_ids, cho_sua_gia").eq("hoat_dong", true).order("ten"),
     db.from("dich_vu_nhom").select("id, ten"),
-    db.from("goi_the").select("id, ma, ten, gia, loai, so_buoi, tao_luc").eq("hoat_dong", true).order("ten"),
-    db.from("san_pham").select("id, ma, ma_vach, ten, gia_ban, nhom, tao_luc").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
+    db.from("goi_the").select("id, ma, ten, gia, loai, so_buoi, tao_luc, noi_hien_thi").eq("hoat_dong", true).order("ten"),
+    db.from("san_pham").select("id, ma, ma_vach, ten, gia_ban, nhom, tao_luc, noi_hien_thi, cho_sua_gia").eq("hoat_dong", true).eq("ban_le", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id").eq("hoat_dong", true).order("ho_ten"),
     dsChiNhanhRutGon(),
     qTk,
@@ -34,10 +34,12 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   ]);
   const choThanhToan = coQuyen(nd, "ban.xem") ? demNo ?? 0 : null;
   const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
+  // "Nơi hiển thị" + "Địa điểm cung cấp" (Danh mục): chỉ ẨN khỏi ô chọn mục; vẫn giữ trong danh sách để dòng cũ (lịch hẹn, đơn nháp) còn tên và giá.
+  const anTN = (noi: string) => !hienThuNgan(noi);
   const muc: MucBan[] = [
-    ...(dv ?? []).map((d) => ({ loai: "dich_vu" as const, id: d.id, ten: d.ten, gia: d.gia, nhom: tenNhom.get(d.nhom_id) ?? "Khác", tao: d.tao_luc, ma: d.ma })),
-    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma })),
-    ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm", tao: s.tao_luc, ma: s.ma, maVach: s.ma_vach ?? undefined })),
+    ...(dv ?? []).map((d) => ({ loai: "dich_vu" as const, id: d.id, ten: d.ten, gia: d.gia, nhom: tenNhom.get(d.nhom_id) ?? "Khác", tao: d.tao_luc, ma: d.ma, anThuNgan: anTN(d.noi_hien_thi), chiNhanhIds: d.chi_nhanh_ids, choSuaGia: d.cho_sua_gia })),
+    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma, anThuNgan: anTN(g.noi_hien_thi) })),
+    ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm", tao: s.tao_luc, ma: s.ma, maVach: s.ma_vach ?? undefined, anThuNgan: anTN(s.noi_hien_thi), choSuaGia: s.cho_sua_gia })),
   ];
   type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string };
   let khach: K | null = null;

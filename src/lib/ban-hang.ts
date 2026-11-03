@@ -9,7 +9,19 @@ export const PHUONG_THUC = [
 ];
 export const NHAN_PHUONG_THUC = Object.fromEntries(PHUONG_THUC.map((p) => [p.gia_tri, p.nhan])) as Record<string, string>;
 
-export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number; tao?: string; /** Mã và mã vạch để thu ngân tìm nhanh (gõ không dấu cũng ra). */ ma?: string; maVach?: string };
+export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number; tao?: string; /** Mã và mã vạch để thu ngân tìm nhanh (gõ không dấu cũng ra). */ ma?: string; maVach?: string;
+  /** "Nơi hiển thị" = chỉ đặt lịch / ẩn: không hiện ở ô chọn mục của Thu ngân (dòng cũ vẫn dùng được). */ anThuNgan?: boolean;
+  /** "Địa điểm cung cấp" của dịch vụ: null/không có = mọi chi nhánh. */ chiNhanhIds?: string[] | null;
+  /** "Sửa giá khi thanh toán": thu ngân được sửa đơn giá dòng (chỉ dịch vụ, sản phẩm). */ choSuaGia?: boolean };
+/** Cột noi_hien_thi (migration 0194): 'tat_ca' | 'thu_ngan' | 'dat_lich' | 'an'. Giá trị lạ coi như 'tat_ca' (giữ hành vi cũ). */
+export const hienThuNgan = (noi: string | null | undefined) => noi !== "dat_lich" && noi !== "an";
+export const hienDatLich = (noi: string | null | undefined) => noi !== "thu_ngan" && noi !== "an";
+/** Giá trị noi_hien_thi được nhận đặt lịch (lọc truy vấn trang /dat-lich công khai). */
+export const NOI_DAT_LICH = ["tat_ca", "dat_lich"];
+/** Dịch vụ có cung cấp ở chi nhánh này không. Chưa chọn chi nhánh hoặc dịch vụ không giới hạn (null/rỗng) thì coi là có. */
+export const coOChiNhanh = (ids: string[] | null | undefined, chiNhanhId: string | null | undefined) => !chiNhanhId || !ids || ids.length === 0 || ids.includes(chiNhanhId);
+/** Mục hiện ở ô chọn của Thu ngân theo chi nhánh đang bán. */
+export const hienOThuNgan = (m: Pick<MucBan, "anThuNgan" | "chiNhanhIds">, chiNhanhId: string | null | undefined) => !m.anThuNgan && coOChiNhanh(m.chiNhanhIds, chiNhanhId);
 /** Ô tìm của thu ngân: khớp tên, mã hoặc mã vạch, không phân biệt hoa thường và dấu ("tre hoa" ra "Trẻ hóa"). */
 export const khopMuc = (m: Pick<MucBan, "ten" | "ma" | "maVach">, tu: string) => {
   const k = boDau(tu.trim());

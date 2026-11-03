@@ -31,7 +31,9 @@ export function chuanHoaSoQuySh(rows) {
 /**
  * Ghi phiếu tay SalonHero vào so_quy trong giao dịch đang mở của `db`.
  * - Phiếu mới / phiên bản mới (updatedAt đổi) → nhập; phiên bản cũ của phiếu bị sửa → đảo (dòng ngược chiều cùng ngày).
- * - `cuaSo` = {tu, den} (ngày VN, gồm 2 đầu): phiếu AMIA có sh_id trong cửa sổ mà SalonHero không còn → đảo (SalonHero đã xoá). Không truyền = không dò xoá.
+ * - `cuaSo` = {tu, den} (ngày VN, gồm 2 đầu): phiếu AMIA có sh_id trong cửa sổ mà SalonHero không còn → đảo (SalonHero đã xoá). Không truyền = không dò xoá. * @param {{ query: Function }} db
+ * @param {ReturnType<typeof chuanHoaSoQuySh>} phieu
+ * @param {{ nguoiId?: string, cuaSo?: { tu: string, den: string } | null }} [tuyChon]
  */
 export async function napSoQuySh(db, phieu, { nguoiId, cuaSo = null } = {}) {
   const q = async (s, p) => (await db.query(s, p)).rows;
@@ -62,10 +64,12 @@ export async function napSoQuySh(db, phieu, { nguoiId, cuaSo = null } = {}) {
 }
 
 /** Tồn quỹ hiện tại 4 quỹ của AMIA (cộng dồn từ ngày đầu, như SalonHero) + phần do dòng tạo trong app (không có sh_id, không từ bán hàng). */
+/** @param {{ query: Function }} db @returns {Promise<Record<string, Record<string, { ton: number, tu_app: number }>>>} */
 export async function tonQuyAmia(db) {
   const r = (await db.query(`select c.ma cn, q.loai, coalesce(sum(v.bien_dong), 0)::bigint ton,
       coalesce(sum(v.bien_dong) filter (where v.nguon <> 'ban_hang' and v.sh_id is null and not exists (select 1 from public.so_quy g where g.id::text = v.id and g.phieu_goc_id is not null and exists (select 1 from public.so_quy o where o.id = g.phieu_goc_id and o.sh_id is not null))), 0)::bigint tu_app
       from public.quy q join public.chi_nhanh c on c.id = q.chi_nhanh_id left join public.v_so_quy v on v.quy_id = q.id group by 1, 2 order by 1, 2`)).rows;
+  /** @type {Record<string, Record<string, { ton: number, tu_app: number }>>} */
   const o = {}; for (const x of r) (o[x.cn] ??= {})[x.loai] = { ton: Number(x.ton), tu_app: Number(x.tu_app) };
   return o;
 }

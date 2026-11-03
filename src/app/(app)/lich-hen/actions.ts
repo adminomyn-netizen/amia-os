@@ -9,6 +9,7 @@ import { chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
 import { ngayVN } from "@/lib/dinh-dang";
 import { gioBaThu } from "@/lib/gio-lam-viec";
 import { laKieuLap, ngayLap, thuCuaNgay, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
+import { docKhachDiCung, dongKhachDiCung } from "@/lib/lich-hen-nhom";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => revalidatePath("/lich-hen");
@@ -47,16 +48,36 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   const cacNgay = laKieuLap(kieuLap) ? ngayLap(ngay, kieuLap, khoang, tong) : [ngay];
   const buoi = cacNgay.map((n) => { const bd = new Date(`${n}T${gio}:00${MUI}`); return { bd, kt: new Date(bd.getTime() + phut * 60000) }; });
   const nv = chuoiHoacNull(fd, "nhan_vien_id");
-  if (nv) {
-    // Một truy vấn cho cả chuỗi: lấy lịch của người này trong khoảng từ buổi đầu đến buổi cuối rồi so từng buổi.
-    let q = db.from("lich_hen").select("id, bat_dau, ket_thuc").eq("nhan_vien_id", nv).not("trang_thai", "in", "(huy,khong_den)")
-      .lt("bat_dau", buoi[buoi.length - 1].kt.toISOString()).gt("ket_thuc", buoi[0].bd.toISOString());
-    if (id) q = q.neq("id", id);
-    const { data: trung } = await q.limit(1000);
-    const vuong = buoi.findIndex((b) => (trung ?? []).some((t) => new Date(t.bat_dau) < b.kt && new Date(t.ket_thuc) > b.bd));
-    if (vuong >= 0) return { loi: `Nhân viên này đã có lịch trùng giờ${buoi.length > 1 ? ` vào ngày ${ngayVN(cacNgay[vuong])}` : ""}. Chọn giờ khác hoặc người khác.` };
+  // Một lịch nhiều khách (như SalonHero): Khách 2, 3… đi cùng khách chính, cùng giờ bắt đầu; mỗi khách có dịch vụ, người thực hiện, chỗ riêng.
+  const diCung = docKhachDiCung(chuoi(fd, "khach_di_cung"));
+  if (typeof diCung === "string") return { loi: diCung };
+  const dvNhom = [...new Set(diCung.flatMap((k) => k.dichVuIds))];
+  if (dvNhom.length) {
+    const { data: co } = await db.from("dich_vu").select("id").in("id", dvNhom);
+    if ((co ?? []).length !== dvNhom.length) return { loi: "Có dịch vụ của khách đi cùng không còn trong danh mục." };
   }
-  const row = { khach_id: khachId, chi_nhanh_id: nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
+  // Trùng giờ: người thực hiện của khách chính và của từng khách đi cùng (xét cả lịch chính lẫn khách đi cùng của lịch khác). Một truy vấn cho cả chuỗi lặp.
+  const canKiem = new Map<string, number>(); // nhân viên → thời lượng phút phải rảnh
+  if (nv) canKiem.set(nv, phut);
+  for (const k of diCung) if (k.nhanVienId) canKiem.set(k.nhanVienId, Math.max(canKiem.get(k.nhanVienId) ?? 0, k.thoiLuong ?? phut));
+  if (canKiem.size) {
+    const ids = [...canKiem.keys()], tuIso = buoi[0].bd.toISOString(), denIso = new Date(buoi[buoi.length - 1].bd.getTime() + 600 * 60000).toISOString();
+    let q1 = db.from("lich_hen").select("id, bat_dau, ket_thuc, nhan_vien_id").in("nhan_vien_id", ids).not("trang_thai", "in", "(huy,khong_den)").lt("bat_dau", denIso).gt("ket_thuc", tuIso);
+    if (id) q1 = q1.neq("id", id);
+    let q2 = db.from("lich_hen_khach").select("nhan_vien_id, thoi_luong_phut, lich_hen!inner(id, bat_dau, ket_thuc, trang_thai)").in("nhan_vien_id", ids)
+      .not("lich_hen.trang_thai", "in", "(huy,khong_den)").lt("lich_hen.bat_dau", denIso).gt("lich_hen.ket_thuc", tuIso);
+    if (id) q2 = q2.neq("lich_id", id);
+    const [{ data: t1 }, { data: t2 }] = await Promise.all([q1.limit(2000), q2.limit(2000)]);
+    const ban = [
+      ...(t1 ?? []).map((t) => ({ nv: t.nhan_vien_id, bd: Date.parse(t.bat_dau), kt: Date.parse(t.ket_thuc) })),
+      ...(t2 ?? []).map((t) => { const l = t.lich_hen as unknown as { bat_dau: string; ket_thuc: string }; const bd = Date.parse(l.bat_dau); return { nv: t.nhan_vien_id, bd, kt: t.thoi_luong_phut ? bd + t.thoi_luong_phut * 60000 : Date.parse(l.ket_thuc) }; }),
+    ];
+    for (const [nvK, ph] of canKiem) {
+      const vuong = buoi.findIndex((b) => ban.some((t) => t.nv === nvK && t.bd < b.bd.getTime() + ph * 60000 && t.kt > b.bd.getTime()));
+      if (vuong >= 0) return { loi: `${nvK === nv ? "Nhân viên này" : "Người thực hiện của khách đi cùng"} đã có lịch trùng giờ${buoi.length > 1 ? ` vào ngày ${ngayVN(cacNgay[vuong])}` : ""}. Chọn giờ khác hoặc người khác.` };
+    }
+  }
+  const row = { so_khach: 1 + diCung.length, khach_id: khachId, chi_nhanh_id: nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
   let ids: string[];
   if (id) {
@@ -74,12 +95,18 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   }
   if (id) await db.from("lich_hen_dich_vu").delete().eq("lich_id", id);
   await db.from("lich_hen_dich_vu").insert(ids.flatMap((l) => dv.map((d) => ({ lich_id: l, dich_vu_id: d }))));
+  if (id) await db.from("lich_hen_khach").delete().eq("lich_id", id);
+  if (diCung.length) {
+    const { error: eNhom } = await db.from("lich_hen_khach").insert(ids.flatMap((l) => dongKhachDiCung(l, diCung)));
+    if (eNhom) return { loi: `Đã lưu lịch nhưng chưa lưu được khách đi cùng (${thongBaoLoi(eNhom)}). Mở Đổi lịch để thêm lại.` };
+  }
   // Báo cho người được giao lịch (trừ khi chính họ vừa tạo), một lần cho cả chuỗi. Gửi sau khi trả lời để không làm chậm màn hình.
-  if (nv && nv !== nd.nhanVienId) {
+  const nvBao = [...new Set([nv, ...diCung.map((k) => k.nhanVienId)].filter((x): x is string => !!x && x !== nd.nhanVienId))];
+  if (nvBao.length) {
     after(async () => {
       const { data: k } = await db.from("khach_hang").select("ho_ten").eq("id", khachId).maybeSingle();
       const them = ids.length > 1 ? ` · lặp ${ids.length} buổi` : "";
-      await guiChoNhanVien([nv], { tieuDe: id ? "Lịch hẹn đã đổi giờ" : "Có lịch hẹn mới được giao", noiDung: `${gio} ngày ${ngay.split("-").reverse().join("/")} · ${k?.ho_ten ?? "khách"}${them}`, url: "/lich-hen", tag: `lich-${ids[0]}` });
+      await guiChoNhanVien(nvBao, { tieuDe: id ? "Lịch hẹn đã đổi giờ" : "Có lịch hẹn mới được giao", noiDung: `${gio} ngày ${ngay.split("-").reverse().join("/")} · ${k?.ho_ten ?? "khách"}${diCung.length ? ` +${diCung.length} khách` : ""}${them}`, url: "/lich-hen", tag: `lich-${ids[0]}` });
     });
   }
   lamMoi();

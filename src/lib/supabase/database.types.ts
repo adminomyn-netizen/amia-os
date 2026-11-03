@@ -7097,6 +7097,67 @@ export type Database = {
           },
         ]
       }
+      lich_hen_khach: {
+        Row: {
+          dich_vu_ids: string[]
+          id: string
+          khach_id: string | null
+          lich_id: string
+          nhan_vien_id: string | null
+          phong: string | null
+          tao_luc: string
+          ten: string
+          thoi_luong_phut: number | null
+          thu_tu: number
+        }
+        Insert: {
+          dich_vu_ids?: string[]
+          id?: string
+          khach_id?: string | null
+          lich_id: string
+          nhan_vien_id?: string | null
+          phong?: string | null
+          tao_luc?: string
+          ten: string
+          thoi_luong_phut?: number | null
+          thu_tu: number
+        }
+        Update: {
+          dich_vu_ids?: string[]
+          id?: string
+          khach_id?: string | null
+          lich_id?: string
+          nhan_vien_id?: string | null
+          phong?: string | null
+          tao_luc?: string
+          ten?: string
+          thoi_luong_phut?: number | null
+          thu_tu?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lich_hen_khach_lich_id_fkey"
+            columns: ["lich_id"]
+            isOneToOne: false
+            referencedRelation: "lich_hen"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lich_hen_khach_khach_id_fkey"
+            columns: ["khach_id"]
+            isOneToOne: false
+            referencedRelation: "khach_hang"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lich_hen_khach_nhan_vien_id_fkey"
+            columns: ["nhan_vien_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lich_hen_dich_vu: {
         Row: {
           dich_vu_id: string

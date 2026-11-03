@@ -11,12 +11,14 @@ import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { timKhach } from "@/app/(app)/ban-hang/actions";
 import type { khungGioTrong } from "@/app/(app)/lich-hen/actions";
 import { TaoKhachNhanh } from "@/components/lich-hen/TaoKhachNhanh";
+import { KhachDiCungO } from "@/components/lich-hen/KhachDiCung";
+import type { KhachDiCung } from "@/lib/lich-hen-nhom";
 import { KIEU_LAP, laKieuLap, LUA_CHON_NGUON, nhanNguon, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
 import { ngayVN } from "@/lib/dinh-dang";
 import { coOChiNhanh } from "@/lib/ban-hang";
 
 type DV = { id: string; ma: string; ten: string; thoiLuong: number; /** "Nơi hiển thị" = chỉ thu ngân / ẩn. */ an?: boolean; /** "Địa điểm cung cấp": null = mọi chi nhánh. */ chiNhanhIds?: string[] | null };
-export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string; thoiLuong: number; nhanVienId: string; phong: string; nguon: string; ghiChu: string; dichVuIds: string[]; chiNhanhId: string };
+export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string; thoiLuong: number; nhanVienId: string; phong: string; nguon: string; ghiChu: string; dichVuIds: string[]; chiNhanhId: string; /** Khách 2, 3… của lịch nhiều khách. */ khachDiCung?: KhachDiCung[] };
 const LUA_CHON_LAP = [{ gia_tri: "", nhan: "Không lặp" }, ...Object.entries(KIEU_LAP).map(([gia_tri, k]) => ({ gia_tri, nhan: k.nhan }))];
 
 /** Ngày giờ hiện tại theo giờ Việt Nam, làm tròn lên 5 phút. */
@@ -50,6 +52,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   const [phong, setPhong] = useState(sua?.phong ?? "");
   const [nguon, setNguon] = useState(sua?.nguon ?? "");
   const [ghiChu, setGhiChu] = useState(sua?.ghiChu ?? "");
+  const [diCung, setDiCung] = useState<KhachDiCung[]>(sua?.khachDiCung ?? []);
   const [kieuLap, setKieuLap] = useState("");
   const [khoang, setKhoang] = useState("1");
   const [tongBuoi, setTongBuoi] = useState("4");
@@ -95,6 +98,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     fd.set("phong", phong); fd.set("nguon", nguon); fd.set("ghi_chu", ghiChu);
     if (!sua && kieuLap) { fd.set("kieu_lap", kieuLap); fd.set("lap_khoang", khoang || "1"); fd.set("lap_tong", tongBuoi); }
     dvs.forEach((d) => fd.append("dich_vu_ids", d));
+    fd.set("khach_di_cung", JSON.stringify(diCung));
     bat(async () => { const kq = await action(fd); if (kq.loi) setLoi(kq.loi); else { setMo(false); router.refresh(); } });
   };
   // Dịch vụ ẩn ở đặt lịch hoặc không cung cấp ở chi nhánh đang chọn thì không hiện để chọn mới; dịch vụ đã có trong lịch vẫn hiện để bỏ chọn được.
@@ -155,6 +159,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
               : <div><label htmlFor="lh-phong" className={NHAN_O}>Phòng / giường</label><input id="lh-phong" value={phong} onChange={(e) => setPhong(e.target.value)} className={O_NHAP} /></div>}
             <div><label className={NHAN_O}>Nguồn đặt lịch</label><Chon trong="Chọn nguồn" ariaLabel="Nguồn đặt lịch" giaTri={nguon} onDoi={setNguon} luaChon={[{ gia_tri: "", nhan: "Không ghi" }, ...dsNguon]} /></div>
           </div>
+          <KhachDiCungO ds={diCung} onDoi={setDiCung} dichVu={dichVu.filter((d) => !d.an && coOChiNhanh(d.chiNhanhIds, cn) || diCung.some((k) => k.dichVuIds.includes(d.id)))} nhanVien={nhanVien} />
           {!sua && (
             <fieldset className="rounded-nho border border-vien px-3 pb-3 pt-1">
               <legend className="px-1 text-[13px] font-medium text-muc-2">Lặp định kì</legend>

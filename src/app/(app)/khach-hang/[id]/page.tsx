@@ -20,6 +20,7 @@ import { thamSoBaoHanh, thangTron, tinhBaoHanh, LOAI_KN, TT_BC, TT_KN } from "@/
 import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
 import { ganNhomChoKhach } from "../nhom/actions";
+import { doiTrangThaiLich } from "../../lich-hen/actions";
 import { docTaiKham, docTheSapHet } from "@/lib/cham-soc-khach";
 import { DanhSachPhieuTuVan, gomNhuCau } from "@/components/khach/PhieuTuVan";
 import { truongPhieuTuVan } from "@/lib/tu-van";
@@ -30,6 +31,9 @@ import { nhanHang, nhanTrangThaiGoi } from "@/lib/cham-soc-hang-doi";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
+/** Nhãn trạng thái của lịch hẹn sắp tới (chỉ 3 trạng thái chưa diễn ra). */
+const NHAN_TT_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ" };
+
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
 const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
@@ -38,11 +42,12 @@ const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi 
 const DIEM_MOI_TRANG = 50;
 const LOAI_DIEM: Record<string, string> = { cong_hoa_don: "Cộng theo hoá đơn", hoan_hoa_don: "Trừ do huỷ/hoàn hoá đơn", sua_tay: "Sửa tay", dieu_chinh_dau: "Điều chỉnh đầu kỳ", dieu_chinh: "Điều chỉnh", doi_diem: "Đổi điểm" };
 
-export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; trang?: string } & ThamSoLichSu> }) {
+export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; trang?: string; loai_diem?: string } & ThamSoLichSu> }) {
   const nd = await yeuCauQuyen("khach.xem");
   const { id } = await params;
   const sp = await searchParams;
   const { tab: t, trang: trangDiem } = sp;
+  const loaiDiemLoc = sp.loai_diem && sp.loai_diem in LOAI_DIEM ? sp.loai_diem : "";
   const xemSucKhoe = coQuyen(nd, "hoso.xem");
   const kn4 = (["kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly"] as const).some((q) => coQuyen(nd, q));
   const tabHopLe0 = TAB.filter((x) => (x.ma !== "ghi-chu" || xemSucKhoe) && (x.ma !== "anh" || coQuyen(nd, "anh.xem")) && (x.ma !== "lich-su" || coQuyen(nd, "ban.xem")) && (x.ma !== "khieu-nai" || kn4));
@@ -83,6 +88,26 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const giaTriSua = { tinh_thanh: kx?.tinh_thanh ?? "", quan_huyen: kx?.quan_huyen ?? "", quoc_gia: kx?.quoc_gia ?? "", sdt_phu: kx?.sdt_phu ?? "", facebook: kx?.facebook ?? "", website: kx?.website ?? "",
     nghe_nghiep: kx?.nghe_nghiep ?? "", cong_ty: kx?.cong_ty ?? "", ma_so_thue: kx?.ma_so_thue ?? "", ma_the_giay: kx?.ma_the_giay ?? "", id: k.id, ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo ?? "", email: k.email ?? "", gioi_tinh: k.gioi_tinh ?? "", ngay_sinh: k.ngay_sinh ?? "", dia_chi: k.dia_chi ?? "", chi_nhanh_id: k.chi_nhanh_id, nguon: k.nguon, nguon_chi_tiet: k.nguon_chi_tiet ?? "", nguoi_gioi_thieu: nguoiGt?.ma ?? "", nguoi_phu_trach_id: k.nguoi_phu_trach_id, ghi_chu: k.ghi_chu ?? "", dong_y_dung_hinh: k.dong_y_dung_hinh, quan_tam: (qt ?? []).map((x) => x.dich_vu_id) };
 
+  // Đầu hồ sơ như SalonHero: tổng đơn, tần suất đến trung bình, lịch hẹn sắp tới; tab Thông tin thêm dịch vụ & sản phẩm hay dùng.
+  const [{ data: hdKh }, { data: lichSap }, { data: dongYt }] = await Promise.all([
+    db.from("hoa_don").select("ngay_hd").eq("khach_id", id).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).limit(5000),
+    db.from("lich_hen").select("id, bat_dau, trang_thai, nhan_vien_id, chi_nhanh_id, dich_vu_ten").eq("khach_id", id).gte("bat_dau", new Date().toISOString()).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]).order("bat_dau").limit(5),
+    tab === "thong-tin"
+      ? db.from("hoa_don_dong").select("loai, ten, so_luong, hoa_don!inner(khach_id, trang_thai)").eq("hoa_don.khach_id", id).eq("hoa_don.trang_thai", "hoan_thanh").in("loai", ["dich_vu", "san_pham"]).limit(3000)
+      : Promise.resolve({ data: [] as { loai: string; ten: string; so_luong: number }[] }),
+  ]);
+  const { data: lichDv } = (lichSap ?? []).length ? await db.from("lich_hen_dich_vu").select("lich_id, dich_vu_id").in("lich_id", (lichSap ?? []).map((l) => l.id)) : { data: [] as { lich_id: string; dich_vu_id: string }[] };
+  const tenDvLich = new Map((dv ?? []).map((d) => [d.id, d.ten]));
+  const tongDon = (hdKh ?? []).length;
+  const ngayDen = [...new Set((hdKh ?? []).map((h) => h.ngay_hd))].sort();
+  // Tần suất đến trung bình = số ngày giữa lần đến đầu và lần đến cuối chia cho số khoảng giữa các ngày có hoá đơn; cần ít nhất 2 ngày khác nhau.
+  const tanSuat = ngayDen.length >= 2 ? Math.round((Date.parse(ngayDen[ngayDen.length - 1]) - Date.parse(ngayDen[0])) / 86_400_000 / (ngayDen.length - 1)) : null;
+  const hayDung = (loai: string) => {
+    const m = new Map<string, number>();
+    for (const r of (dongYt ?? []) as { loai: string; ten: string; so_luong: number }[]) if (r.loai === loai && r.ten) m.set(r.ten, (m.get(r.ten) ?? 0) + Math.max(1, r.so_luong ?? 1));
+    return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "vi")).slice(0, 5);
+  };
+
   // Dữ liệu sức khoẻ: ghi vết mỗi lần mở tab ghi chú hoặc ảnh.
   if (tab === "ghi-chu" || tab === "anh") await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: `xem_${tab}`, doi_tuong: "khach_hang", doi_tuong_id: id });
 
@@ -104,6 +129,16 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
           {hang.map(([a, b]) => (<div key={a} className="border-b border-vien pb-3"><dt className="nhan-muc">{a}</dt><dd className="mt-1 text-[13px] text-muc">{b || "—"}</dd></div>))}
         </dl>
+        <div className="mt-8 grid gap-x-8 gap-y-5 sm:grid-cols-2" aria-label="Dịch vụ và sản phẩm khách hay dùng">
+          {([["Dịch vụ yêu thích", hayDung("dich_vu")], ["Sản phẩm yêu thích", hayDung("san_pham")]] as const).map(([tieuDe, dsYt]) => (
+            <div key={tieuDe}>
+              <h3 className="mb-2 text-[14px] font-medium text-muc">{tieuDe} <span className="text-[12px] font-normal text-muc-3">· theo số lần mua / làm</span></h3>
+              {dsYt.length === 0 ? <p className="text-[13px] text-muc-3">Chưa có dữ liệu.</p> : (
+                <ol className="space-y-1.5 text-[13px]">{dsYt.map(([ten, sl], i) => <li key={ten} className="flex items-baseline justify-between gap-3 border-b border-vien pb-1.5"><span className="min-w-0 [overflow-wrap:anywhere]"><span className="mr-2 tabular-nums text-muc-3">{i + 1}.</span>{ten}</span><span className="shrink-0 tabular-nums text-muc-2">{soVN(sl)} lần</span></li>)}</ol>
+              )}
+            </div>
+          ))}
+        </div>
         <h3 className="mb-3 mt-8 text-[14px] font-medium text-muc">Thẻ của khách</h3>
         <Bang duLieu={the ?? []} khoa={(r) => r.id ?? ""} trong="Khách chưa có thẻ nào."
           cot={[
@@ -307,21 +342,28 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     );
   } else if (tab === "diem-thuong") {
     const trang = Math.max(1, Math.min(10_000, Number(trangDiem) || 1));
-    const { data: ds, count } = await db.from("khach_diem_so").select("id, tao_luc, loai, so_diem, so_du_sau_sh, ly_do, ma_hoa_don_sh, hoa_don_sh_id, nguoi_tao_ten, chi_nhanh_id", { count: "exact" })
-      .eq("khach_id", id).order("tao_luc", { ascending: false }).order("id", { ascending: false }).range((trang - 1) * DIEM_MOI_TRANG, trang * DIEM_MOI_TRANG - 1);
+    let qDiem = db.from("khach_diem_so").select("id, tao_luc, loai, so_diem, so_du_sau_sh, ly_do, ma_hoa_don_sh, hoa_don_sh_id, nguoi_tao_ten, chi_nhanh_id", { count: "exact" }).eq("khach_id", id);
+    if (loaiDiemLoc) qDiem = qDiem.eq("loai", loaiDiemLoc);
+    const { data: ds, count } = await qDiem.order("tao_luc", { ascending: false }).order("id", { ascending: false }).range((trang - 1) * DIEM_MOI_TRANG, trang * DIEM_MOI_TRANG - 1);
     const shIds = [...new Set((ds ?? []).map((r) => r.hoa_don_sh_id).filter((x): x is number => x != null))];
     const { data: hdLk } = shIds.length ? await db.from("hoa_don").select("id, sh_id").in("sh_id", shIds) : { data: [] };
     const hdTheoSh = new Map((hdLk ?? []).map((h) => [h.sh_id, h.id]));
     const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
     const soTrang = Math.max(1, Math.ceil((count ?? 0) / DIEM_MOI_TRANG));
-    const lk = (n: number) => `/khach-hang/${id}?tab=diem-thuong&trang=${n}`;
+    const lk = (n: number) => `/khach-hang/${id}?tab=diem-thuong${loaiDiemLoc ? `&loai_diem=${loaiDiemLoc}` : ""}&trang=${n}`;
     noiDung = (
       <>
         <div className="mb-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
           <p><span className="text-[13px] text-muc-3">Số dư điểm hiện tại </span><span className="text-[20px] font-medium tabular-nums text-muc">{soVN(kx?.diem_so_du ?? 0)}</span></p>
-          <p className="text-[13px] text-muc-3">{soVN(count ?? 0)} lần cộng/trừ điểm</p>
+          <p className="text-[13px] text-muc-3">{soVN(count ?? 0)} lần cộng/trừ điểm{loaiDiemLoc ? ` thuộc loại “${LOAI_DIEM[loaiDiemLoc]}”` : ""}</p>
         </div>
-        <Bang duLieu={ds ?? []} khoa={(r) => String(r.id)} trong="Khách chưa có lịch sử điểm thưởng." cot={[
+        <nav aria-label="Lọc điểm theo loại" className="mb-4 flex flex-wrap gap-1.5 text-[12px]">
+          {[["", "Tất cả loại"], ...Object.entries(LOAI_DIEM)].map(([ma, nhan]) => (
+            <Link key={ma} scroll={false} href={`/khach-hang/${id}?tab=diem-thuong${ma ? `&loai_diem=${ma}` : ""}`} aria-current={loaiDiemLoc === ma ? "true" : undefined}
+              className={`rounded-full border px-3 py-1 font-medium ${loaiDiemLoc === ma ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{nhan}</Link>
+          ))}
+        </nav>
+        <Bang duLieu={ds ?? []} khoa={(r) => String(r.id)} trong={loaiDiemLoc ? "Không có dòng điểm nào thuộc loại này." : "Khách chưa có lịch sử điểm thưởng."} cot={[
           { nhan: "Thời gian", chinh: true, hienThi: (r) => ngayGioVN(r.tao_luc) },
           { nhan: "Loại", hienThi: (r) => LOAI_DIEM[r.loai] ?? r.loai },
           { nhan: "Điểm", phai: true, hienThi: (r) => <span className={`tabular-nums font-medium ${r.so_diem < 0 ? "text-loi" : "text-muc"}`}>{r.so_diem > 0 ? "+" : ""}{soVN(r.so_diem)}</span> },
@@ -373,6 +415,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   ];
   // Như đầu hồ sơ SalonHero: ghé thăm lần cuối + 3 số đếm đặt / đến / huỷ (chỉ khách có số từ SalonHero; "đặt từ app" SalonHero không xuất nên không có).
   const soDem: [string, string][] = [
+    ["Tổng đơn", soVN(tongDon)], ["Tần suất đến trung bình", tanSuat != null ? `${soVN(tanSuat)} ngày / lần` : "Chưa đủ dữ liệu"],
     ...(kx?.lan_den_cuoi ? [["Ghé thăm lần cuối", ngayVN(kx.lan_den_cuoi)] as [string, string]] : []),
     ...(kx?.tong_dat_lich_goc != null ? [["Tổng số lần đặt trước", `${soVN(kx.tong_dat_lich_goc)} lần`], ["Tổng số lần đến trực tiếp", `${soVN(kx.tong_checkin_goc ?? 0)} lần`], ["Tổng số lần hủy đặt / không đến", `${soVN(kx.tong_huy_lich_goc ?? 0)} lần`]] as [string, string][] : []),
   ];
@@ -413,6 +456,28 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
           </dl>
         )}
       </div>
+      <section aria-label="Lịch hẹn sắp tới" className="mt-4 rounded-the border border-vien bg-giay-sang px-4 py-3">
+        <h2 className="text-[14px] font-medium text-muc">Lịch hẹn sắp tới</h2>
+        {(lichSap ?? []).length === 0 ? <p className="mt-1 text-[13px] text-muc-3">Khách chưa có lịch hẹn sắp tới.</p> : (
+          <ul className="mt-2 divide-y divide-vien">
+            {(lichSap ?? []).map((l) => {
+              const dichVu = l.dich_vu_ten || (lichDv ?? []).filter((x) => x.lich_id === l.id).map((x) => tenDvLich.get(x.dich_vu_id)).filter(Boolean).join(", ");
+              return (
+                <li key={l.id} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-2 text-[13px]">
+                  <div className="min-w-0">
+                    <div className="font-medium tabular-nums text-muc">{ngayGioVN(l.bat_dau)} <NhanTrangThai kieu={l.trang_thai === "chua_xac_nhan" ? "cho" : "tot"}>{NHAN_TT_LICH[l.trang_thai] ?? l.trang_thai}</NhanTrangThai></div>
+                    <div className="text-muc-3 [overflow-wrap:anywhere]">{[dichVu, tenNv.get(l.nhan_vien_id ?? "") ? `NV: ${tenNv.get(l.nhan_vien_id ?? "")}` : ""].filter(Boolean).join(" · ") || "Chưa ghi dịch vụ"}</div>
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {coQuyen(nd, "khach.sdt") && k.dien_thoai && <a href={`tel:${k.dien_thoai}`} className="flex h-9 items-center rounded-nho border border-vien-dam px-3 font-medium text-muc-2 hover:bg-giay-tram">Gọi {k.dien_thoai}</a>}
+                    {coQuyen(nd, "lich.sua") && <NutHop kieu="phu" nguy nhan="Huỷ lịch" tieuDe="Huỷ lịch hẹn" moTa={`Lịch ${ngayGioVN(l.bat_dau)}. Huỷ lịch phải ghi lý do; lịch đã huỷ không đặt lại được từ đây.`} nhanLuu="Huỷ lịch" an={{ id: l.id, trang_thai: "huy" }} truong={[{ ten: "ly_do", nhan: "Lý do huỷ", loai: "nhieu_dong", batBuoc: true, rong: true }]} action={doiTrangThaiLich} />}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
       <div role="tablist" className="tab-khach mt-4 mb-4">
         {tabHopLe.map((m) => (
           <Link key={m.ma} href={`/khach-hang/${id}?tab=${m.ma}`} role="tab" aria-selected={tab === m.ma} scroll={false}>{m.ten}</Link>

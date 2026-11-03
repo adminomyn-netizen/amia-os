@@ -136,7 +136,7 @@ export async function GET(req: Request) {
     tenTep = `khach-dung-the-${hom}`; Object.assign(chiTiet, { ...thamSoDiaChi(f), cn: cnLoc });
   } else if (loai === "khach-gan-day") {
     const cnLoc = nd.chiNhanhId ?? (/^[0-9a-f-]{36}$/i.test(u.searchParams.get("cn") ?? "") ? u.searchParams.get("cn") : null);
-    const ds = await docHet((tu, den) => db.rpc("khach_gan_den", { p_cn: cnLoc ?? undefined, p_lim: den - tu + 1, p_off: tu }));
+    const ds = await docHet((tu, den) => db.rpc("khach_gan_den_het", { p_cn: cnLoc ?? undefined }).range(tu, den));
     const ks = new Map<string, { ho_ten: string; ma: string; dien_thoai: string | null }>();
     for (let i = 0; i < ds.length; i += 300) for (const k of (await db.from("khach_hang").select("id, ho_ten, ma, dien_thoai").in("id", ds.slice(i, i + 300).map((d) => d.khach_id))).data ?? []) ks.set(k.id, k);
     const xemSdt = coQuyen(nd, "khach.sdt");

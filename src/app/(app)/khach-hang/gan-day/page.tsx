@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { unstable_cache } from "next/cache";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -10,6 +11,18 @@ import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NUT_PHU } from "@/components/ui/dinh-dang";
 
 const MOI_TRANG = 30;
+/** Nhớ 1 phút (khách gần đây không cần tới từng giây; giảm tải CSDL khi nhiều người mở cùng lúc). Khoá theo chi nhánh + trang. */
+/** Lỗi CSDL (quá giờ…) thì ném ra để KHÔNG bị nhớ lại như một kết quả rỗng. */
+const docDen = unstable_cache(async (cn: string, trang: number) => {
+  const { data, error } = await sb().rpc("khach_gan_den", { p_cn: cn || undefined, p_lim: MOI_TRANG + 1, p_off: (trang - 1) * MOI_TRANG });
+  if (error) throw new Error(`${error.code} ${error.message}`);
+  return data ?? [];
+}, ["khach-gan-den"], { revalidate: 60 });
+const docTong = unstable_cache(async (cn: string) => {
+  const { data, error } = await sb().rpc("khach_gan_den_tong", { p_cn: cn || undefined });
+  if (error) throw new Error(`${error.code} ${error.message}`);
+  return Number(data ?? 0);
+}, ["khach-gan-den-tong"], { revalidate: 300 });
 type KhachNho = { id: string; ma: string; ho_ten: string; dien_thoai: string };
 
 /** /khach-hang/gan-day — Khách gần đây (như SalonHero): khách vừa đến (hoá đơn hoàn thành mới nhất của mỗi khách, có phân trang) và khách vừa tạo hồ sơ; lọc chi nhánh; Xuất Excel. Chỉ đọc. */
@@ -17,15 +30,17 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
   const nd = await yeuCauQuyen("khach.xem");
   const sp = await searchParams;
   const { cn, ds: dsCn, khoa } = await chiNhanhXem(nd, sp.cn);
-  const trang = Math.max(1, Math.min(Number(sp.trang) || 1, 5000));
+  const trang = Math.max(1, Math.min(Number(sp.trang) || 1, 300));
   const xemSdt = coQuyen(nd, "khach.sdt");
   const db = sb();
-  const [{ data: den, error: loiHd }, { data: moi }] = await Promise.all([
-    db.rpc("khach_gan_den", { p_cn: cn ?? undefined, p_lim: MOI_TRANG, p_off: (trang - 1) * MOI_TRANG }),
+  const [kqDen, { data: moi }, tong] = await Promise.all([
+    docDen(cn ?? "", trang).then((data) => ({ data, loi: null as string | null }), (e: Error) => ({ data: [] as Awaited<ReturnType<typeof docDen>>, loi: e.message })),
     db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, tao_luc").match(cn ? { chi_nhanh_id: cn } : {}).order("tao_luc", { ascending: false }).limit(MOI_TRANG),
+    docTong(cn ?? "").catch(() => null as number | null),
   ]);
-  if (loiHd) console.error("[khach-gan-day]", loiHd.code, loiHd.message);
-  const ds = den ?? [], tong = Number(ds[0]?.tong ?? 0);
+  const loiHd = kqDen.loi;
+  if (loiHd) console.error("[khach-gan-day]", loiHd);
+  const coTrangSau = kqDen.data.length > MOI_TRANG, ds = kqDen.data.slice(0, MOI_TRANG);
   const ids = ds.map((d) => d.khach_id);
   const { data: ks } = ids.length ? await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai").in("id", ids) : { data: [] as KhachNho[] };
   const khach = new Map((ks ?? []).map((k) => [k.id, k as KhachNho]));
@@ -47,7 +62,7 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
       </form>
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="rounded-the border border-vien bg-giay-sang">
-          <h2 className="border-b border-vien px-4 py-3 text-[15px] font-semibold text-muc">Vừa đến (theo hoá đơn) <span className="font-normal text-muc-3">· {soVN(tong)} khách</span></h2>
+          <h2 className="border-b border-vien px-4 py-3 text-[15px] font-semibold text-muc">Vừa đến (theo hoá đơn) {tong != null && <span className="font-normal text-muc-3">· {soVN(tong)} khách</span>}</h2>
           <ul>
             {ds.map((d) => {
               const k = khach.get(d.khach_id);
@@ -61,7 +76,15 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
             })}
             {ds.length === 0 && <li role={loiHd ? "alert" : undefined} className="px-4 py-6 text-center text-muc-3">{loiHd ? "Chưa tải được (hệ thống đang chậm). Tải lại trang để thử lại." : "Chưa có hoá đơn nào."}</li>}
           </ul>
-          <div className="px-4 pb-3"><ThanhTrang trang={trang} tong={tong} moi={MOI_TRANG} gan={gan} don="khách" /></div>
+          <div className="px-4 pb-3">
+            {tong != null ? <ThanhTrang trang={trang} tong={tong} moi={MOI_TRANG} gan={gan} don="khách" /> : (
+              <nav aria-label="Phân trang" className="mt-4 flex items-center justify-between gap-3 text-[13px] text-muc-3">
+                {trang > 1 ? <Link href={gan(trang - 1)} className="font-medium text-nhan-dam hover:underline">← Trang trước</Link> : <span />}
+                <span className="tabular-nums">Trang {trang}</span>
+                {coTrangSau ? <Link href={gan(trang + 1)} className="font-medium text-nhan-dam hover:underline">Trang sau →</Link> : <span />}
+              </nav>
+            )}
+          </div>
         </section>
         <section className="rounded-the border border-vien bg-giay-sang">
           <h2 className="border-b border-vien px-4 py-3 text-[15px] font-semibold text-muc">Vừa tạo hồ sơ <span className="font-normal text-muc-3">· {MOI_TRANG} khách mới nhất</span></h2>

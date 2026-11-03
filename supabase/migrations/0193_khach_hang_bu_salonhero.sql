@@ -4,7 +4,7 @@
 -- (2) tong_khach_dung_the: ba ô tổng theo cùng bộ lọc (thay bản 0190, thêm tham số, có giá trị mặc định cho tham số bỏ được).
 -- (3) dem_the_sap_het_han: số thẻ hết hạn trong 7 / 30 ngày tới (dòng báo bấm để lọc).
 -- (4) the_gan_nhat: ngày dùng thẻ gần nhất của một nhóm thẻ (cột "Gần nhất").
--- (5) khach_gan_den: khách vừa đến (hoá đơn hoàn thành mới nhất của mỗi khách), có lọc chi nhánh + phân trang + tổng.
+-- (5) khach_gan_den (+ _tong, _het): khách vừa đến (hoá đơn hoàn thành mới nhất của mỗi khách), lọc chi nhánh, phân trang, tổng, bản lấy hết cho Excel.
 -- (6) thong_ke_khach_ngay: số khách theo ngày (khách lẻ / đến lần đầu / khách cũ) và khách mới trong tuần cho màn Thống kê khách.
 
 -- ===== (1) =====
@@ -97,48 +97,74 @@ revoke all on function public.the_gan_nhat(uuid[]) from public, anon, authentica
 grant execute on function public.the_gan_nhat(uuid[]) to service_role;
 
 -- ===== (5) =====
+-- Khách vừa đến: đi từ hoá đơn mới nhất trở về trước (chỉ mục hoa_don_ngay_tao_idx) và giữ hoá đơn là LẦN CUỐI của khách (không còn hoá đơn nào mới hơn,
+-- tra bằng chỉ mục hoa_don_khach_idx) nên dừng sớm sau (trang × 30) khách thay vì sắp xếp cả 80 nghìn hoá đơn (bản đầu quá giờ).
 drop function if exists public.khach_gan_den(uuid, int, int);
 create function public.khach_gan_den(p_cn uuid default null, p_lim int default 30, p_off int default 0)
-returns table (khach_id uuid, ngay date, hd_id uuid, hd_ma text, tien bigint, tong bigint) language sql stable as $$
-  with d as (
-    select distinct on (h.khach_id) h.khach_id, h.ngay_hd, h.tao_luc, h.id, coalesce(h.sh_ma, h.ma) as ma, h.tong_phai_thu
-    from public.hoa_don h
-    where h.trang_thai = 'hoan_thanh' and not h.la_so_du_dau and h.khach_id is not null and h.ngay_hd <= public.hom_nay()
-      and (p_cn is null or h.chi_nhanh_id = p_cn)
-    order by h.khach_id, h.ngay_hd desc, h.tao_luc desc
-  )
-  select d.khach_id, d.ngay_hd, d.id, d.ma, d.tong_phai_thu, count(*) over ()
-  from d order by d.ngay_hd desc, d.tao_luc desc, d.id limit greatest(p_lim, 1) offset greatest(p_off, 0);
+returns table (khach_id uuid, ngay date, hd_id uuid, hd_ma text, tien bigint) language sql stable as $$
+  select h.khach_id, h.ngay_hd, h.id, coalesce(h.sh_ma, h.ma), h.tong_phai_thu
+  from public.hoa_don h
+  where h.trang_thai = 'hoan_thanh' and not h.la_so_du_dau and h.khach_id is not null and h.ngay_hd <= public.hom_nay()
+    and (p_cn is null or h.chi_nhanh_id = p_cn)
+    and not exists (select 1 from public.hoa_don h2
+                    where h2.khach_id = h.khach_id and h2.trang_thai = 'hoan_thanh' and not h2.la_so_du_dau and h2.ngay_hd <= public.hom_nay()
+                      and (p_cn is null or h2.chi_nhanh_id = p_cn)
+                      and h2.ngay_hd >= h.ngay_hd and (h2.ngay_hd > h.ngay_hd or (h2.ngay_hd = h.ngay_hd and (h2.tao_luc > h.tao_luc or (h2.tao_luc = h.tao_luc and h2.id > h.id)))))
+  order by h.ngay_hd desc, h.tao_luc desc, h.id desc
+  limit greatest(p_lim, 1) offset greatest(p_off, 0);
 $$;
 revoke all on function public.khach_gan_den(uuid, int, int) from public, anon, authenticated;
 grant execute on function public.khach_gan_den(uuid, int, int) to service_role;
 
+-- Tổng số khách đã từng có hoá đơn (cho thanh phân trang) và bản lấy hết một lượt (cho Xuất Excel).
+drop function if exists public.khach_gan_den_tong(uuid);
+create function public.khach_gan_den_tong(p_cn uuid default null) returns bigint language sql stable as $$
+  select count(distinct h.khach_id) from public.hoa_don h
+  where h.trang_thai = 'hoan_thanh' and not h.la_so_du_dau and h.khach_id is not null and h.ngay_hd <= public.hom_nay() and (p_cn is null or h.chi_nhanh_id = p_cn);
+$$;
+revoke all on function public.khach_gan_den_tong(uuid) from public, anon, authenticated;
+grant execute on function public.khach_gan_den_tong(uuid) to service_role;
+
+drop function if exists public.khach_gan_den_het(uuid);
+create function public.khach_gan_den_het(p_cn uuid default null)
+returns table (khach_id uuid, ngay date, hd_ma text, tien bigint) language sql stable as $$
+  select distinct on (h.khach_id) h.khach_id, h.ngay_hd, coalesce(h.sh_ma, h.ma), h.tong_phai_thu
+  from public.hoa_don h
+  where h.trang_thai = 'hoan_thanh' and not h.la_so_du_dau and h.khach_id is not null and h.ngay_hd <= public.hom_nay() and (p_cn is null or h.chi_nhanh_id = p_cn)
+  order by h.khach_id, h.ngay_hd desc, h.tao_luc desc, h.id desc;
+$$;
+revoke all on function public.khach_gan_den_het(uuid) from public, anon, authenticated;
+grant execute on function public.khach_gan_den_het(uuid) to service_role;
+
 -- ===== (6) =====
+-- Chỉ nhìn hoá đơn của p_so_ngay ngày gần nhất; "đến lần đầu" = khách chưa có hoá đơn hoàn thành nào ở ngày trước đó (tra bằng chỉ mục hoa_don_khach_idx).
 drop function if exists public.thong_ke_khach_ngay(int);
 create function public.thong_ke_khach_ngay(p_so_ngay int default 30) returns jsonb language sql stable as $$
-  with moc as (select public.hom_nay() as hom),
-  ngay as (select (m.hom - g)::date as d from moc m, generate_series(0, greatest(least(p_so_ngay, 90), 1) - 1) g),
-  lan_dau as (
-    select h.khach_id, min(h.ngay_hd) as d from public.hoa_don h
-    where h.trang_thai = 'hoan_thanh' and not h.la_so_du_dau and h.khach_id is not null group by h.khach_id
+  with p as (select public.hom_nay() as hom, greatest(least(p_so_ngay, 90), 1) as n),
+  ngay as (select (p.hom - g)::date as d from p, generate_series(0, (select n from p) - 1) g),
+  v as (
+    select h.ngay_hd, h.khach_id from public.hoa_don h, p
+    where h.trang_thai = 'hoan_thanh' and not h.la_so_du_dau and h.ngay_hd > p.hom - p.n and h.ngay_hd <= p.hom
   ),
-  den as (
-    select h.ngay_hd as d, count(*) filter (where h.khach_id is null) as le, count(distinct h.khach_id) as co_ho_so
-    from public.hoa_don h, moc m
-    where h.trang_thai = 'hoan_thanh' and not h.la_so_du_dau and h.ngay_hd > m.hom - greatest(least(p_so_ngay, 90), 1) and h.ngay_hd <= m.hom
-    group by h.ngay_hd
-  ),
-  moi as (select l.d, count(*) as so from lan_dau l, moc m where l.d > m.hom - greatest(least(p_so_ngay, 90), 1) and l.d <= m.hom group by l.d)
+  le as (select ngay_hd as d, count(*) as so from v where khach_id is null group by ngay_hd),
+  co as (select ngay_hd as d, khach_id from v where khach_id is not null group by ngay_hd, khach_id),
+  den as (select d, count(*) as so from co group by d),
+  moi as (
+    select c.d, count(*) as so from co c
+    where not exists (select 1 from public.hoa_don h2 where h2.khach_id = c.khach_id and h2.trang_thai = 'hoan_thanh' and not h2.la_so_du_dau and h2.ngay_hd < c.d)
+    group by c.d
+  )
   select jsonb_build_object(
     'ngay', coalesce((select jsonb_agg(jsonb_build_object(
-        'ngay', n.d, 'le', coalesce(e.le, 0), 'moi', coalesce(m2.so, 0), 'cu', greatest(coalesce(e.co_ho_so, 0) - coalesce(m2.so, 0), 0),
-        'tong', coalesce(e.le, 0) + coalesce(e.co_ho_so, 0)) order by n.d)
-      from ngay n left join den e on e.d = n.d left join moi m2 on m2.d = n.d), '[]'::jsonb),
+        'ngay', n.d, 'le', coalesce(l.so, 0), 'moi', coalesce(m.so, 0), 'cu', greatest(coalesce(e.so, 0) - coalesce(m.so, 0), 0), 'tong', coalesce(l.so, 0) + coalesce(e.so, 0)) order by n.d)
+      from ngay n left join le l on l.d = n.d left join den e on e.d = n.d left join moi m on m.d = n.d), '[]'::jsonb),
     -- Khách mới trong tuần: hồ sơ khách tạo trong 7 ngày gần nhất (hôm nay trừ 6 ngày), cùng cách tính với ô "Khách hàng mới hôm nay".
-    'moi_tuan', (select count(*) from public.khach_hang k, moc m where (k.tao_luc at time zone 'Asia/Ho_Chi_Minh')::date > m.hom - 7));
+    'moi_tuan', (select count(*) from public.khach_hang k, p where k.tao_luc >= ((p.hom - 6)::timestamp at time zone 'Asia/Ho_Chi_Minh')));
 $$;
 revoke all on function public.thong_ke_khach_ngay(int) from public, anon, authenticated;
 grant execute on function public.thong_ke_khach_ngay(int) to service_role;
+
+create index if not exists khach_hang_tao_luc_idx on public.khach_hang (tao_luc);
 
 select public.khoa_tat_ca_bang();
 notify pgrst, 'reload schema';

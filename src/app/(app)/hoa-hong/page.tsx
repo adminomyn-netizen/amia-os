@@ -16,6 +16,8 @@ import { NutHop } from "@/components/ui/BieuMau";
 import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
 import { SaoChepHoaHong } from "@/components/hoa-hong/SaoChepHoaHong";
 import { NhapTiLeHoaHong } from "@/components/hoa-hong/NhapTiLeHoaHong";
+import { LocTiLe } from "@/components/hoa-hong/LocTiLe";
+import { LuoiTheoNhanVien, LuoiTheoSanPham, type DoiTuong, type DongTl, type Muc } from "@/components/hoa-hong/LuoiTiLe";
 import { GIO_HE_SO, SAO_HE_SO } from "@/lib/hoa-hong";
 import { apDungNhapTiLe, apDungSaoChep, luuCaiDatNangCao, luuMucGioiThieu, luuTiLe, themNguonGioiThieu, xemTruocNhapTiLe, xemTruocSaoChep, xoaTiLe } from "./actions";
 
@@ -26,7 +28,7 @@ const LOAI = [{ gia_tri: "dich_vu", nhan: "Dịch vụ" }, { gia_tri: "san_pham"
 const VAI = [{ gia_tri: "phuc_vu", nhan: "Phục vụ" }, { gia_tri: "tu_van", nhan: "Tư vấn" }, { gia_tri: "ban", nhan: "Bán hàng" }, { gia_tri: "gioi_thieu", nhan: "Giới thiệu" }];
 const nhan = (lc: { gia_tri: string; nhan: string }[], v: string) => lc.find((x) => x.gia_tri === v)?.nhan ?? v;
 
-export default async function TrangHoaHong({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; q?: string }> }) {
+export default async function TrangHoaHong({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; q?: string; xem?: string; dt?: string; muc?: string; loai?: string; trang?: string }> }) {
   const nd = await yeuCauQuyen("baocao.tien");
   const sp = await searchParams;
   const tab = sp.tab === "ti-le" || sp.tab === "nang-cao" || sp.tab === "nguon" ? sp.tab : "bang";
@@ -164,7 +166,8 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
       </>
     );
   } else {
-    const [tl, { data: dv }, { data: sp2 }, { data: g }, { data: nvs }] = await Promise.all([docHet((a, b) => db.from("hoa_hong_ti_le").select("*").order("id").range(a, b)), db.from("dich_vu").select("id, ten, hoat_dong"), db.from("san_pham").select("id, ten, hoat_dong"), db.from("goi_the").select("id, ten, hoat_dong"), db.from("nhan_vien").select("id, ho_ten, chuc_danh, hoat_dong").order("ho_ten")]);
+    const [tl, { data: dv }, { data: sp2 }, { data: g }, { data: nvs }] = await Promise.all([docHet((a, b) => db.from("hoa_hong_ti_le").select("*").order("id").range(a, b)), db.from("dich_vu").select("id, ten, ma, hoat_dong").order("ten"), db.from("san_pham").select("id, ten, ma, hoat_dong").order("ten"), db.from("goi_the").select("id, ten, ma, hoat_dong").order("ten"), db.from("nhan_vien").select("id, ho_ten, chuc_danh, hoat_dong, chi_nhanh_id").order("ho_ten")]);
+    const { data: dsCnTl } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
     // Mục đang bán chưa có tỉ lệ riêng: dùng tỉ lệ mặc định của loại, không có mặc định thì hoa hồng tính 0.
     const chuaRieng = (loai: string, nhanLoai: string, ds: { id: string; hoat_dong: boolean }[] | null) => {
       const co = new Set((tl ?? []).filter((r) => r.loai === loai && r.muc_id).map((r) => r.muc_id));
@@ -187,6 +190,26 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
     const tenDoiTuong = (r: NonNullable<typeof tl>[number]) => (r.nhan_vien_id ? `Nhân viên: ${tenNvMap.get(r.nhan_vien_id) ?? ""}` : r.nhom_chuc_danh ? `Nhóm: ${nhom.get(r.nhom_chuc_danh) ?? r.nhom_chuc_danh}` : "Mọi người");
     const maDoiTuong = (r: NonNullable<typeof tl>[number]) => (r.nhan_vien_id ? `nv:${r.nhan_vien_id}` : r.nhom_chuc_danh ? `nhom:${r.nhom_chuc_danh}` : "");
     const dsTl = [...(tl ?? [])].sort((a, b) => (a.nhan_vien_id ? 2 : a.nhom_chuc_danh ? 1 : 0) - (b.nhan_vien_id ? 2 : b.nhom_chuc_danh ? 1 : 0) || tenDoiTuong(a).localeCompare(tenDoiTuong(b), "vi") || a.loai.localeCompare(b.loai) || a.vai.localeCompare(b.vai));
+    // Lọc như SalonHero (mục 88): chi nhánh (dòng riêng của nhân viên thuộc chi nhánh khác bị ẩn; dòng chung / nhóm luôn hiện), loại, ô tìm tên–mã mục hoặc người.
+    const cnTl = nd.chiNhanhId ?? (sp.cn || "");
+    const nvCn = new Map((nvs ?? []).map((n) => [n.id, n.chi_nhanh_id]));
+    const loaiTl = ["dich_vu", "san_pham", "goi_the"].includes(sp.loai ?? "") ? sp.loai! : "";
+    const tuKhoaTl = boDau((sp.q ?? "").trim());
+    const maMuc = new Map<string, string>([...(dv ?? []), ...(sp2 ?? []), ...(g ?? [])].map((x) => [x.id, x.ma ?? ""]));
+    const dsLoc = dsTl.filter((r) => (!cnTl || !r.nhan_vien_id || nvCn.get(r.nhan_vien_id) === cnTl) && (!loaiTl || r.loai === loaiTl)
+      && (!tuKhoaTl || boDau(`${r.muc_id ? `${ten.get(r.muc_id) ?? ""} ${maMuc.get(r.muc_id) ?? ""}` : "mặc định cả loại"} ${tenDoiTuong(r)}`).includes(tuKhoaTl)));
+    const xem = sp.xem === "nv" || sp.xem === "sp" ? sp.xem : "";
+    const tatCaMuc: Muc[] = [...(dv ?? []).map((x) => ({ ...x, loai: "dich_vu" as const })), ...(sp2 ?? []).map((x) => ({ ...x, loai: "san_pham" as const })), ...(g ?? []).map((x) => ({ ...x, loai: "goi_the" as const }))]
+      .filter((x) => x.hoat_dong).map((x) => ({ id: x.id, ten: x.ten, ma: x.ma ?? "", loai: x.loai }));
+    const dtLC = doiTuongLC.filter((l) => !l.gia_tri.startsWith("nv:") || !cnTl || nvCn.get(l.gia_tri.slice(3)) === cnTl);
+    const dtChon = dtLC.some((l) => l.gia_tri === sp.dt) ? sp.dt! : "";
+    const nhomCua = (ma: string) => (ma.startsWith("nv:") ? chuan((nvs ?? []).find((n) => n.id === ma.slice(3))?.chuc_danh ?? null) || null : null);
+    const mucLoc = tatCaMuc.filter((m) => (!loaiTl || m.loai === loaiTl) && (!tuKhoaTl || boDau(`${m.ten} ${m.ma}`).includes(tuKhoaTl)));
+    const SO_DONG = 50, trangTl = Math.max(1, Number(sp.trang) || 1), soTrangTl = Math.max(1, Math.ceil(mucLoc.length / SO_DONG));
+    const mucChon = tatCaMuc.find((m) => m.id === sp.muc) ?? tatCaMuc[0];
+    const dtTheoSp: DoiTuong[] = dtLC.map((l) => ({ ma: l.gia_tri, ten: l.nhan, nhom: nhomCua(l.gia_tri) })).filter((d) => !tuKhoaTl || boDau(d.ten).includes(tuKhoaTl));
+    const ganTrang = (t: number) => `/hoa-hong?${new URLSearchParams(Object.entries({ tab: "ti-le", xem, dt: dtChon, loai: loaiTl, q: sp.q, cn: sp.cn, trang: t > 1 ? String(t) : "" }).filter((e): e is [string, string] => !!e[1])).toString()}`;
+    const locTl = <LocTiLe xem={xem} cn={sp.cn ?? ""} loai={loaiTl} q={sp.q ?? ""} dt={dtChon} muc={mucChon?.id ?? ""} chiNhanh={nd.chiNhanhId ? undefined : (dsCnTl ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} doiTuong={dtLC} mucLC={tatCaMuc.map((m) => ({ gia_tri: m.id, nhan: `${m.ten}${m.ma ? ` · ${m.ma}` : ""}`, nhom: m.loai === "dich_vu" ? "Dịch vụ" : m.loai === "san_pham" ? "Sản phẩm" : "Thẻ / liệu trình" }))} />;
     const truong = [{ ten: "doi_tuong", nhan: "Áp dụng cho (nhân viên hoặc nhóm chức danh)", loai: "chon" as const, luaChon: doiTuongLC, rong: true, ghiChu: "Để “Mọi người” cho cài đặt chung. Cài riêng cho nhân viên thắng cài đặt nhóm, nhóm thắng cài đặt chung. Đặt 0% là loại riêng người/nhóm/mục đó khỏi hoa hồng; bấm Xoá thì quay về cài đặt chung." },
       { ten: "loai", nhan: "Loại", loai: "chon" as const, luaChon: LOAI, batBuoc: true }, { ten: "vai", nhan: "Vai", loai: "chon" as const, luaChon: VAI, batBuoc: true },
       { ten: "muc_id", nhan: "Áp dụng cho (chọn mục cụ thể để đặt riêng)", loai: "chon" as const, luaChon: mucLC, rong: true }, { ten: "ti_le", nhan: "Tỉ lệ hoa hồng (%)", loai: "so" as const },
@@ -197,10 +220,20 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
         {canhBao.length > 0 && <ul className="mb-4 space-y-1 text-[13px] text-muc-2">{canhBao.map((c) => <li key={c}>{c}</li>)}</ul>}
         {sua && <div className="mb-4 flex flex-wrap gap-2.5">{!nd.chiNhanhId && <NhapTiLeHoaHong xemTruoc={xemTruocNhapTiLe} apDung={apDungNhapTiLe} />}<NutHop nhan="Thêm tỉ lệ" tieuDe="Thêm tỉ lệ hoa hồng" moTa="Tỉ lệ riêng cho một dịch vụ, sản phẩm hoặc gói thắng tỉ lệ mặc định của loại đó; cài cho nhân viên hoặc nhóm thì thắng cài đặt chung." truong={truong} giaTri={{ doi_tuong: "", loai: "dich_vu", vai: "ban", muc_id: "" }} action={luuTiLe} />
           <SaoChepHoaHong luaChon={doiTuongLC.map((l) => (l.gia_tri === "" ? { gia_tri: "chung", nhan: l.nhan } : l))} tenMuc={Object.fromEntries(ten)} xemTruoc={xemTruocSaoChep} apDung={apDungSaoChep} /></div>}
-        <Bang duLieu={dsTl} khoa={(r) => r.id} trong="Chưa cài tỉ lệ nào: mọi hoa hồng đang tính 0."
+        {locTl}
+        {xem === "nv" ? (
+          <>
+            <LuoiTheoNhanVien tl={(tl ?? []) as DongTl[]} dt={dtChon} nhomNv={nhomCua(dtChon)} muc={mucLoc.slice((trangTl - 1) * SO_DONG, trangTl * SO_DONG)} sua={sua} luu={luuTiLe} />
+            {soTrangTl > 1 && <p className="mt-3 flex flex-wrap items-center gap-3 text-[13px] text-muc-2">Trang {trangTl}/{soTrangTl} · {mucLoc.length} mục{trangTl > 1 && <Link href={ganTrang(trangTl - 1)} className="text-nhan-dam hover:underline">← Trang trước</Link>}{trangTl < soTrangTl && <Link href={ganTrang(trangTl + 1)} className="text-nhan-dam hover:underline">Trang sau →</Link>}</p>}
+          </>
+        ) : xem === "sp" ? (
+          mucChon ? <LuoiTheoSanPham tl={(tl ?? []) as DongTl[]} muc={mucChon} doiTuong={dtTheoSp} sua={sua} luu={luuTiLe} /> : null
+        ) : (
+        <Bang duLieu={dsLoc} khoa={(r) => r.id} trong={(tl ?? []).length ? "Không có dòng tỉ lệ nào khớp bộ lọc." : "Chưa cài tỉ lệ nào: mọi hoa hồng đang tính 0."}
           cot={[{ nhan: "Áp dụng cho", chinh: true, hienThi: (r) => <span className="text-muc">{tenDoiTuong(r)}</span> }, { nhan: "Loại", hienThi: (r) => nhan(LOAI, r.loai) }, { nhan: "Vai", hienThi: (r) => nhan(VAI, r.vai) }, { nhan: "Mục", hienThi: (r) => (r.muc_id ? ten.get(r.muc_id) ?? "" : "Mặc định cả loại") }, { nhan: "Tỉ lệ", hienThi: (r) => `${Number(r.ti_le)}%`, phai: true },
             { nhan: "Số tiền cố định / lượt", hienThi: (r) => (r.so_tien ? tienVN(r.so_tien) : ""), phai: true },
             ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof tl>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa tỉ lệ" truong={truong} giaTri={{ doi_tuong: maDoiTuong(r), loai: r.loai, vai: r.vai, muc_id: r.muc_id ?? "", ti_le: Number(r.ti_le), so_tien: r.so_tien ?? 0 }} action={luuTiLe} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe="Xoá tỉ lệ" xacNhan="Xoá tỉ lệ này?" an={{ id: r.id }} nhanLuu="Xoá" action={xoaTiLe} /></span> }] : [])]} />
+        )}
         <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Thứ tự áp dụng khi tính (người đầu thắng): nhân viên + mục cụ thể, nhân viên + cả loại, nhóm + mục cụ thể, nhóm + cả loại, chung + mục cụ thể, chung + cả loại; không có dòng nào thì 0. Hoa hồng một dòng hàng = (doanh số × tỉ lệ + số tiền cố định × số lượng) × tỉ lệ chia người. Nhóm = chức danh trong hồ sơ nhân viên. Đổi cài đặt chỉ ảnh hưởng số tính lại từ nay, hoá đơn đã chốt vào bảng lương không đổi. Vai Giới thiệu dùng cho báo cáo hoa hồng giới thiệu. Bác sĩ hưởng hoa hồng làm dịch vụ như nhân viên phục vụ (SalonHero không có phí bác sĩ riêng): cài riêng theo nhân viên. Đối chiếu SalonHero 03/11/2026: SalonHero cài theo dịch vụ × nhân viên, hiện mọi mức đang 0%.</p>
       </>
     );

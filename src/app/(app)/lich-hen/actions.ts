@@ -10,6 +10,7 @@ import { ngayVN } from "@/lib/dinh-dang";
 import { gioBaThu } from "@/lib/gio-lam-viec";
 import { laKieuLap, ngayLap, thuCuaNgay, TOI_DA_BUOI_LAP, TRANG_THAI_DAT } from "@/lib/lich-hen";
 import { docKhachDiCung, dongKhachDiCung } from "@/lib/lich-hen-nhom";
+import { layWebDatLich } from "@/lib/web-dat-lich";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => revalidatePath("/lich-hen");
@@ -159,8 +160,11 @@ export async function duyetYeuCauOnline(fd: FormData): Promise<KQ> {
   const { data: y } = await db.from("yeu_cau_dat_lich").select("chi_nhanh_id").eq("id", id).maybeSingle();
   if (!y) return { loi: "Không tìm thấy yêu cầu." };
   if (nd.chiNhanhId && nd.chiNhanhId !== y.chi_nhanh_id) return { loi: KHONG_DU_QUYEN };
-  const { error } = await db.rpc("duyet_yeu_cau_dat_lich", { p_id: id, p_nguoi: nd.nhanVienId });
+  const { data: lichId, error } = await db.rpc("duyet_yeu_cau_dat_lich", { p_id: id, p_nguoi: nd.nhanVienId });
   if (error) return { loi: thongBaoLoi(error) };
+  // Cài đặt Web đặt lịch "Trạng thái lịch hẹn khi đặt online" (SalonHero): chọn "Đã xác nhận" thì lịch vừa duyệt vào thẳng Đã xác nhận.
+  if (lichId && (await layWebDatLich(db)).trangThai === "da_xac_nhan")
+    await db.from("lich_hen").update({ trang_thai: "da_xac_nhan", xac_nhan_luc: new Date().toISOString() }).eq("id", lichId as unknown as string).eq("trang_thai", "chua_xac_nhan");
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "duyet_yeu_cau_dat_lich", doi_tuong: "yeu_cau_dat_lich", doi_tuong_id: id });
   lamMoi();
   return { ok: true };

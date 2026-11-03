@@ -7,6 +7,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { nguoiCoQuyen, guiChoNhanVien } from "@/lib/push";
 import { congNgay, homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { NOI_DAT_LICH } from "@/lib/ban-hang";
+import { layWebDatLich } from "@/lib/web-dat-lich";
 
 /** TRANG CÔNG KHAI (không đăng nhập): mọi hàm ở đây là cửa mở ra Internet — chỉ gọi hàm Postgres đã kiểm đầu vào/giới hạn, KHÔNG ghi thẳng khách hay lịch. */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -60,7 +61,9 @@ export async function guiYeuCauDatLich(_: KQGui | undefined, fd: FormData): Prom
   if (error || !data) return { loi: thongBaoLoi(error) || "Chưa gửi được. Vui lòng thử lại." };
   const id = data as unknown as string;
   // Báo cho lễ tân (thông báo đẩy nội bộ), gửi sau khi đã trả lời khách; hỏng thì thôi, không ảnh hưởng yêu cầu.
+  // Cài đặt "Tắt thông báo khi có lịch đặt online" (SalonHero) thì không đẩy thông báo cho lễ tân; yêu cầu vẫn nằm ở cột Yêu cầu đặt lịch.
   after(async () => {
+    if ((await layWebDatLich(db)).tatThongBao) return;
     const ids = await nguoiCoQuyen("lich.sua", cn);
     await guiChoNhanVien(ids, { tieuDe: "Có yêu cầu đặt lịch online", noiDung: `${gio} ${ngayVN(ngay)} · ${chuoi("ho_ten").slice(0, 40)}`, url: "/lich-hen", tag: `yc-${id}` });
   });

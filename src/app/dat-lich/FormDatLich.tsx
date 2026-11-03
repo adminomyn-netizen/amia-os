@@ -8,7 +8,7 @@ import { coOChiNhanh } from "@/lib/ban-hang";
 import { guiYeuCauDatLich, layGioTrong } from "./actions";
 
 type Cn = { id: string; ten: string; dia_chi: string | null };
-type Dv = { id: string; ten: string; phut: number; nhom: string; /** "Địa điểm cung cấp": null = mọi chi nhánh. */ cn?: string[] | null };
+type Dv = { id: string; ten: string; phut: number; nhom: string; /** "Địa điểm cung cấp": null = mọi chi nhánh. */ cn?: string[] | null; /** Chỉ có khi cài đặt bật "Hiện giá dịch vụ". */ gia?: number };
 
 /** Biểu mẫu khách tự chọn chi nhánh, dịch vụ, ngày giờ còn trống rồi để lại họ tên + số điện thoại. Chỉ là YÊU CẦU: lễ tân gọi xác nhận. */
 export function FormDatLich({ chiNhanh, dichVu, homNay }: { chiNhanh: Cn[]; dichVu: Dv[]; homNay: string }) {
@@ -67,7 +67,7 @@ export function FormDatLich({ chiNhanh, dichVu, homNay }: { chiNhanh: Cn[]; dich
                 {dsDv.filter((d) => d.nhom === n).map((d) => (
                   <label key={d.id} className={`flex min-h-11 cursor-pointer items-center gap-3 rounded-nho border px-3 py-2 text-[15px] ${dv.includes(d.id) ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam bg-giay-sang text-muc"}`}>
                     <input type="checkbox" checked={dv.includes(d.id)} disabled={!dv.includes(d.id) && dv.length >= 5} onChange={() => { setDv(dv.includes(d.id) ? dv.filter((x) => x !== d.id) : [...dv, d.id]); setGio(""); }} className="h-4 w-4 accent-[var(--nhan)]" />
-                    <span className="min-w-0 flex-1">{d.ten}</span><span className="shrink-0 text-[13px] text-muc-3">{d.phut} phút</span>
+                    <span className="min-w-0 flex-1">{d.ten}</span>{d.gia != null && <span className="shrink-0 text-[13px] font-medium tabular-nums text-muc-2">{d.gia.toLocaleString("vi-VN")}đ</span>}<span className="shrink-0 text-[13px] text-muc-3">{d.phut} phút</span>
                   </label>
                 ))}
               </div>

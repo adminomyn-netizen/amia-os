@@ -3,6 +3,8 @@
 //   • Cho phép đặt lịch trước giờ bắt đầu  = dat_online.bao_truoc_phut (phút; "Không hạn chế" = 0)
 //   • Giới hạn số ngày đặt lịch trước      = dat_online.toi_da_ngay (ngày; "Không giới hạn" = 60, mức tối đa của hàm đặt lịch)
 //   • Khoá trang web đặt lịch              = ngược của dat_online.mo
+// Từ 03/11/2026 (đợt 3) có hiệu lực thêm: hienGia (giá ở /dat-lich), mau + macDinhMau (màu nhấn trang /dat-lich), trangThai (lịch tạo khi lễ tân duyệt yêu cầu online),
+//   tatThongBao (không đẩy thông báo cho lễ tân khi có yêu cầu mới).
 // Các tuỳ chọn còn lại ĐÃ LƯU (JSON ở khoá dat_online.tuy_chon) nhưng trang /dat-lich CHƯA dùng; giá trị mặc định = SalonHero của AMIA.
 import type { sb } from "@/lib/db";
 
@@ -70,7 +72,7 @@ export function dongWebDatLich(t: WebDatLich) {
     { khoa: "dat_online.bao_truoc_phut", gia_tri: String(baoTruocPhut), ghi_chu: "Khách phải đặt trước giờ hẹn ít nhất bao nhiêu phút (0 = không hạn chế)" },
     { khoa: "dat_online.toi_da_ngay", gia_tri: String(toiDaNgay), ghi_chu: "Khách chỉ đặt được trong bấy nhiêu ngày tới (60 = không giới hạn)" },
     { khoa: "dat_online.mo", gia_tri: khoaTrang ? "0" : "1", ghi_chu: "1 = mở trang đặt lịch cho khách; 0 = khoá" },
-    { khoa: "dat_online.tuy_chon", gia_tri: JSON.stringify(rest), ghi_chu: "Tuỳ chọn Web đặt Lịch như SalonHero, đã lưu nhưng trang /dat-lich chưa dùng" },
+    { khoa: "dat_online.tuy_chon", gia_tri: JSON.stringify(rest), ghi_chu: "Tuỳ chọn Web đặt Lịch như SalonHero (hienGia, mau, trangThai, tatThongBao đã có hiệu lực; còn lại đã lưu, chưa dùng)" },
   ];
 }
 

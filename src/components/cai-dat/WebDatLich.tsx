@@ -44,7 +44,7 @@ export function WebDatLichForm({ dau, sua, duongDan, luu }: { dau: WebDatLich; s
       {sua && <div className="mb-5 flex justify-end"><button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : "Lưu thông tin"}</button></div>}
       {loi && <div role="alert" className="mb-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
       {ok && <p role="status" className="mb-4 text-[14px] text-nhan-dam">Đã lưu thông tin.</p>}
-      <p role="note" className="mb-5 rounded-nho border border-vien px-4 py-3 text-[13px] leading-relaxed text-muc-2">Đang có hiệu lực trên trang /dat-lich: Cho phép đặt lịch trước giờ bắt đầu, Giới hạn số ngày đặt lịch trước (Không giới hạn = tối đa 60 ngày) và Khoá trang web đặt lịch. Các tuỳ chọn còn lại đã được lưu nhưng trang /dat-lich chưa áp dụng.</p>
+      <p role="note" className="mb-5 rounded-nho border border-vien px-4 py-3 text-[13px] leading-relaxed text-muc-2">Đang có hiệu lực trên trang /dat-lich: Cho phép đặt lịch trước giờ bắt đầu, Giới hạn số ngày đặt lịch trước (Không giới hạn = tối đa 60 ngày) Khoá trang web đặt lịch, Hiện giá dịch vụ, Màu sắc trang, Trạng thái lịch hẹn khi duyệt yêu cầu online và Tắt thông báo. Các tuỳ chọn còn lại đã được lưu nhưng trang /dat-lich chưa áp dụng.</p>
       <section className="the-noi the-noi-thap mb-5 p-4 sm:p-5" aria-label="Đường dẫn đặt lịch">
         <div className="grid gap-2 sm:grid-cols-[150px_1fr_auto] sm:items-center sm:gap-4">
           <span className={`${NHAN_O} !mb-0`}>Đường dẫn đặt lịch</span>

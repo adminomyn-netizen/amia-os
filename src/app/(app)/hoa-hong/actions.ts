@@ -3,7 +3,9 @@
 import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
-import { chuoi, so } from "@/lib/form";
+import { chuoi, chuoiHoacNull, so } from "@/lib/form";
+import { chuanSdt, coSdtHopLe } from "@/lib/dinh-dang";
+import { docMucHoaHong } from "@/lib/marketing";
 import { docCaiDatNangCao, docDoiTuong } from "@/lib/hoa-hong";
 import { docBangTiLe, kiemTraNhapTiLe, tachBang, TOI_DA_DONG, type DanhMucNhap, type DongNhap, type TiLeHienCo, type TongNhap } from "@/lib/hoa-hong-nhap";
 import { docTepTiLe } from "@/lib/hoa-hong-nhap-tep";
@@ -180,5 +182,32 @@ export async function luuMucGioiThieu(fd: FormData): Promise<KQ> {
   const { error } = await db.from("doi_tac_gt").update({ hh_kieu: kieu, hh_gia_tri: giaTri }).eq("id", id);
   if (!error) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_muc_hoa_hong_gioi_thieu", doi_tuong: "doi_tac_gt", doi_tuong_id: id, chi_tiet: { ten: cu.ten, truoc: { hh_kieu: cu.hh_kieu, hh_gia_tri: Number(cu.hh_gia_tri) }, sau: { hh_kieu: kieu, hh_gia_tri: giaTri } } });
   revalidatePath("/hoa-hong");
+  revalidatePath("/bao-cao");
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** Thêm nguồn giới thiệu mới (SalonHero: nút "Thêm nguồn" ở báo cáo Hoa hồng giới thiệu): tên, mã, SĐT, loại, mức hoa hồng mặc định %/tiền/điểm. */
+export async function themNguonGioiThieu(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const ten = chuoi(fd, "ten");
+  if (!ten) return { loi: "Nhập tên nguồn giới thiệu." };
+  const sdt = chuoi(fd, "dien_thoai") ? chuanSdt(chuoi(fd, "dien_thoai")) : null;
+  if (sdt && !coSdtHopLe(sdt)) return { loi: "Số điện thoại chưa hợp lệ." };
+  const loai = ["khach_cu", "ctv", "kol", "khac"].includes(chuoi(fd, "loai")) ? chuoi(fd, "loai") : "khach_cu";
+  const muc = docMucHoaHong(chuoi(fd, "hh_kieu") || "phan_tram", so(fd, "hh_gia_tri") || 0);
+  if ("loi" in muc) return { loi: muc.loi };
+  const db = sb();
+  const maGt = (chuoi(fd, "ma_gioi_thieu") || "").toUpperCase().replace(/\s+/g, "");
+  if (maGt && !/^[A-Z0-9._-]{2,30}$/.test(maGt)) return { loi: "Mã giới thiệu chỉ gồm chữ không dấu, số, dấu chấm, gạch (2–30 ký tự)." };
+  const ma = `DT${String(Number((await db.rpc("so_tiep_theo", { p_khoa: "doi_tac" })).data ?? 0)).padStart(4, "0")}`;
+  // Có SĐT trùng đúng 1 khách AMIA thì ghép luôn (để hoá đơn có người giới thiệu là khách đó tính theo mức của nguồn).
+  const { data: kh } = sdt ? await db.from("khach_hang").select("id").eq("dien_thoai", sdt).limit(2) : { data: [] as { id: string }[] };
+  const { data: moi, error } = await db.from("doi_tac_gt").insert({ ma, ma_gioi_thieu: maGt || `GT${Math.random().toString(36).slice(2, 7).toUpperCase()}`, ten, loai, dien_thoai: sdt, ghi_chu: chuoiHoacNull(fd, "ghi_chu"),
+    khach_id: kh?.length === 1 ? kh[0].id : null, hh_kieu: muc.kieu, hh_gia_tri: muc.giaTri }).select("id").single();
+  if (error) return { loi: error.code === "23505" ? "Mã giới thiệu này đã có, chọn mã khác." : thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "them_nguon_gioi_thieu", doi_tuong: "doi_tac_gt", doi_tuong_id: moi.id, chi_tiet: { ten, loai, hh_kieu: muc.kieu, hh_gia_tri: muc.giaTri } });
+  revalidatePath("/hoa-hong");
+  revalidatePath("/bao-cao");
+  return { ok: true };
 }

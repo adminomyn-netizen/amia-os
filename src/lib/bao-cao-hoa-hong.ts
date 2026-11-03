@@ -1,4 +1,5 @@
 import type { sb } from "@/lib/db";
+import { boDau } from "@/lib/dinh-dang";
 
 /** Dữ liệu dùng chung cho tab Báo cáo "Hoa hồng thực thu" / "Hoa hồng giới thiệu" và nút Xuất Excel (một nguồn → số trên màn hình và trong tệp luôn khớp). */
 type Db = ReturnType<typeof sb>;
@@ -11,31 +12,39 @@ export const LUA_CHON_THE = [{ gia_tri: "", nhan: "Chỉ tiền thật (mặt, c
 
 const n = (v: unknown) => Number(v ?? 0);
 
-export type DongNv = { id: string; ten: string; theoVai: Partial<Record<VaiHh, { doanhSo: number; hoaHong: number }>>; doanhSo: number; hoaHong: number; doanhSoNoCu: number; soHd: number };
+/** 4 nhóm như SalonHero (cùng cách chia với Bảng hoa hồng / bc_hoa_hong_nv_nhom) + "khác" (vai không khớp loại dòng). */
+export const NHOM_HH = [["tu_van", "tư vấn"], ["dich_vu", "d.vụ"], ["san_pham", "s.phẩm"], ["ban_the", "bán thẻ"], ["khac", "khác"]] as const;
+export type NhomHh = (typeof NHOM_HH)[number][0];
+export type DongNv = { id: string; ten: string; theoVai: Partial<Record<VaiHh, { doanhSo: number; hoaHong: number }>>; theoNhom: Partial<Record<NhomHh, { doanhSo: number; hoaHong: number }>>; doanhSo: number; hoaHong: number; doanhSoNoCu: number; soHd: number; chamDiem: { soLuot: number; diemTb: number } | null };
 export type DongCn = { id: string; ten: string; doanhSo: number; hoaHong: number };
 
-export async function layHoaHongThucThu(db: Db, o: { tu: string; den: string; cn?: string; vai?: string; gomThe: boolean }) {
-  const [{ data, error }, { data: dc, error: e2 }, { data: nv }, { data: cns }, { count: soTiLe }] = await Promise.all([
-    db.rpc("bc_hoa_hong_thuc_thu", { p_tu: o.tu, p_den: o.den, p_cn: o.cn as string }),
+export async function layHoaHongThucThu(db: Db, o: { tu: string; den: string; cn?: string; vai?: string; gomThe: boolean; q?: string }) {
+  const [{ data, error }, { data: dc, error: e2 }, { data: nv }, { data: cns }, { count: soTiLe }, { data: cd }] = await Promise.all([
+    db.rpc("bc_hoa_hong_thuc_thu_nhom", { p_tu: o.tu, p_den: o.den, p_cn: o.cn as string }),
     db.rpc("bc_hoa_hong_doi_chieu", { p_tu: o.tu, p_den: o.den, p_cn: o.cn as string }),
     db.from("nhan_vien").select("id, ho_ten"),
     db.from("chi_nhanh").select("id, ten"),
     db.from("hoa_hong_ti_le").select("id", { count: "exact", head: true }),
+    db.rpc("bc_cham_diem_nv", { p_tu: o.tu, p_den: o.den, p_cn: o.cn as string }),
   ]);
   if (error) throw new Error(error.message);
   if (e2) throw new Error(e2.message);
+  const chamDiem = new Map((cd ?? []).map((x) => [x.nhan_vien_id, { soLuot: n(x.so_luot), diemTb: n(x.diem_tb) }]));
   const tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
   const tenCn = new Map((cns ?? []).map((x) => [x.id, x.ten]));
   const vaiLoc = VAI_HH.find((v) => v === o.vai);
-  const dong = (data ?? []).filter((r) => !vaiLoc || r.vai === vaiLoc).map((r) => ({
-    nv: r.nhan_vien_id, vai: r.vai as VaiHh, cn: r.chi_nhanh_id, nguon: r.nguon, soHd: n(r.so_hd),
+  const tuKhoa = boDau((o.q ?? "").trim());
+  const dong = (data ?? []).filter((r) => (!vaiLoc || r.vai === vaiLoc) && (!tuKhoa || boDau(tenNv.get(r.nhan_vien_id) ?? "").includes(tuKhoa))).map((r) => ({
+    nv: r.nhan_vien_id, vai: r.vai as VaiHh, nhom: r.nhom as NhomHh, cn: r.chi_nhanh_id, nguon: r.nguon, soHd: n(r.so_hd),
     doanhSo: n(r.doanh_so_tien) + (o.gomThe ? n(r.doanh_so_the) : 0), hoaHong: n(r.hoa_hong_tien) + (o.gomThe ? n(r.hoa_hong_the) : 0),
   }));
   const theoNv = new Map<string, DongNv>();
   for (const r of dong) {
-    const g = theoNv.get(r.nv) ?? { id: r.nv, ten: tenNv.get(r.nv) ?? "(nhân viên đã xoá)", theoVai: {}, doanhSo: 0, hoaHong: 0, doanhSoNoCu: 0, soHd: 0 };
+    const g = theoNv.get(r.nv) ?? { id: r.nv, ten: tenNv.get(r.nv) ?? "(nhân viên đã xoá)", theoVai: {}, theoNhom: {}, doanhSo: 0, hoaHong: 0, doanhSoNoCu: 0, soHd: 0, chamDiem: chamDiem.get(r.nv) ?? null };
     const v = g.theoVai[r.vai] ?? { doanhSo: 0, hoaHong: 0 };
     v.doanhSo += r.doanhSo; v.hoaHong += r.hoaHong; g.theoVai[r.vai] = v;
+    const m = g.theoNhom[r.nhom] ?? { doanhSo: 0, hoaHong: 0 };
+    m.doanhSo += r.doanhSo; m.hoaHong += r.hoaHong; g.theoNhom[r.nhom] = m;
     g.doanhSo += r.doanhSo; g.hoaHong += r.hoaHong; g.soHd += r.soHd;
     if (r.nguon === "cu") g.doanhSoNoCu += r.doanhSo;
     theoNv.set(r.nv, g);
@@ -66,15 +75,25 @@ export function dongDoiChieu(d: Awaited<ReturnType<typeof layHoaHongThucThu>>["d
   return { rows, ket };
 }
 
-export async function layHoaHongGioiThieu(db: Db, o: { tu: string; den: string; cn?: string; xemSdt: boolean }) {
+export async function layHoaHongGioiThieu(db: Db, o: { tu: string; den: string; cn?: string; xemSdt: boolean; q?: string }) {
   const [{ data, error }, { count: soTiLe }] = await Promise.all([
     db.rpc("bc_hoa_hong_gioi_thieu", { p_tu: o.tu, p_den: o.den, p_cn: o.cn as string }),
     db.from("hoa_hong_ti_le").select("id", { count: "exact", head: true }).eq("vai", "gioi_thieu"),
   ]);
   if (error) throw new Error(error.message);
-  const dong = (data ?? []).map((r) => ({ nguon: r.nguon, khoa: r.nguoi_khoa, ten: r.nguoi_ten, ma: r.nguoi_ma ?? "", dt: o.xemSdt ? r.nguoi_dt ?? "" : r.nguoi_dt ? "•••" : "", soHd: n(r.so_hd), doanhSo: n(r.doanh_so), hoaHong: n(r.hoa_hong) }))
+  const tuKhoa = boDau((o.q ?? "").trim()), soTim = (o.q ?? "").replace(/\D/g, "");
+  const dong = (data ?? [])
+    .filter((r) => !tuKhoa || boDau(`${r.nguoi_ten ?? ""} ${r.nguoi_ma ?? ""}`).includes(tuKhoa) || (soTim.length >= 3 && (r.nguoi_dt ?? "").replace(/\D/g, "").includes(soTim)))
+    .map((r) => ({ nguon: r.nguon, khoa: r.nguoi_khoa, ten: r.nguoi_ten, ma: r.nguoi_ma ?? "", dt: o.xemSdt ? r.nguoi_dt ?? "" : r.nguoi_dt ? "•••" : "", soHd: n(r.so_hd), doanhSo: n(r.doanh_so), hoaHong: n(r.hoa_hong), nguonId: r.nguon_id, loai: r.loai_nguon, soDv: n(r.so_dv) }))
     .sort((a, b) => b.hoaHong - a.hoaHong || b.doanhSo - a.doanhSo);
   const khach = dong.filter((r) => r.nguon === "khach"), sh = dong.filter((r) => r.nguon === "salonhero");
   const tong = (ds: typeof dong, k: "doanhSo" | "hoaHong" | "soHd") => ds.reduce((s, r) => s + r[k], 0);
   return { khach, sh, tongKhach: { doanhSo: tong(khach, "doanhSo"), hoaHong: tong(khach, "hoaHong"), soHd: tong(khach, "soHd") }, tongSh: { doanhSo: tong(sh, "doanhSo"), hoaHong: tong(sh, "hoaHong"), soHd: tong(sh, "soHd") }, chuaCaiTiLeGt: (soTiLe ?? 0) === 0 };
+}
+
+/** Chi tiết một nguồn giới thiệu: từng hoá đơn trong kỳ (SalonHero: nút Chi tiết ở báo cáo Hoa hồng giới thiệu). */
+export async function layChiTietNguonGt(db: Db, o: { tu: string; den: string; cn?: string; nguon: string; khoa: string }) {
+  const { data, error } = await db.rpc("bc_hoa_hong_gioi_thieu_ct", { p_tu: o.tu, p_den: o.den, p_cn: o.cn as string, p_nguon: o.nguon, p_khoa: o.khoa });
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((r) => ({ id: r.hoa_don_id, ma: r.ma_hd, ngay: r.ngay, khachId: r.khach_id, khach: r.khach ?? "Khách lẻ", soDv: n(r.so_dv), doanhSo: n(r.doanh_so), hoaHong: n(r.hoa_hong) }));
 }

@@ -17,7 +17,7 @@ import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
 import { SaoChepHoaHong } from "@/components/hoa-hong/SaoChepHoaHong";
 import { NhapTiLeHoaHong } from "@/components/hoa-hong/NhapTiLeHoaHong";
 import { GIO_HE_SO, SAO_HE_SO } from "@/lib/hoa-hong";
-import { apDungNhapTiLe, apDungSaoChep, luuCaiDatNangCao, luuMucGioiThieu, luuTiLe, xemTruocNhapTiLe, xemTruocSaoChep, xoaTiLe } from "./actions";
+import { apDungNhapTiLe, apDungSaoChep, luuCaiDatNangCao, luuMucGioiThieu, luuTiLe, themNguonGioiThieu, xemTruocNhapTiLe, xemTruocSaoChep, xoaTiLe } from "./actions";
 
 const TAB = [{ ma: "bang", ten: "Bảng hoa hồng" }, { ma: "ti-le", ten: "Tỉ lệ hoa hồng" }, { ma: "nang-cao", ten: "Cài đặt nâng cao" }, { ma: "nguon", ten: "Nguồn giới thiệu" }];
 const KIEU_GT = [{ gia_tri: "phan_tram", nhan: "Theo phần trăm" }, { gia_tri: "tien", nhan: "Theo tiền" }, { gia_tri: "diem", nhan: "Theo điểm" }];
@@ -36,7 +36,8 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
   const cn = nd.chiNhanhId ?? (sp.cn || undefined);
   let noiDung: React.ReactNode;
   if (tab === "bang") {
-    const [{ data, error: loiHh }, { data: nv }, { data: dsCn }] = await Promise.all([db.rpc("bc_hoa_hong_nv_nhom", { p_tu: tu, p_den: den, p_cn: cn as string }), db.from("nhan_vien").select("id, ho_ten, chuc_danh"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
+    const [{ data, error: loiHh }, { data: nv }, { data: dsCn }, { data: cd }] = await Promise.all([db.rpc("bc_hoa_hong_nv_nhom", { p_tu: tu, p_den: den, p_cn: cn as string }), db.from("nhan_vien").select("id, ho_ten, chuc_danh"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.rpc("bc_cham_diem_nv", { p_tu: tu, p_den: den, p_cn: cn as string })]);
+    const chamDiem = new Map((cd ?? []).map((x) => [x.nhan_vien_id, x]));
     const nvMap = new Map((nv ?? []).map((n) => [n.id, n]));
     type Nhom = { so: number; ds: number; hh: number };
     const theo = new Map<string, { id: string; nhom: Record<string, Nhom>; tong: number }>();
@@ -78,7 +79,9 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
           cot={[{ nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="block"><span className="text-muc">{nvMap.get(r.id)?.ho_ten}</span><span className="block text-[12px] text-muc-3">{nvMap.get(r.id)?.chuc_danh ?? ""}</span></span> },
             ...cotNhom,
             ...(coKhac ? [{ nhan: "Doanh số khác", phai: true, hienThi: (g: (typeof ds)[number]) => hienDs(g, "khac") }, { nhan: "Hoa hồng khác", phai: true, hienThi: (g: (typeof ds)[number]) => tienVN(o(g, "khac").hh) }] : []),
-            { nhan: "Tổng hoa hồng", phai: true, hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.tong)}</span> }, { nhan: "", hienThi: nutChiTiet }]} />
+            { nhan: "Tổng hoa hồng", phai: true, hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.tong)}</span> },
+            { nhan: "Chấm điểm d.vụ", phai: true, hienThi: (r) => { const c = chamDiem.get(r.id); return c ? <span className="block tabular-nums">{Number(c.diem_tb).toLocaleString("vi-VN")} sao<span className="block text-[12px] text-muc-3">{c.so_luot} lượt</span></span> : <span className="text-muc-3">—</span>; } },
+            { nhan: "", hienThi: nutChiTiet }]} />
         <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Hoa hồng tạm tính theo tỉ lệ đang cài (mục chưa cài tỉ lệ tính 0). Doanh số dịch vụ làm bằng thẻ tính theo giá một buổi của thẻ (như SalonHero); hoa hồng buổi làm bằng thẻ tính trên “giá trị 1 lần làm dịch vụ” của thẻ (thẻ khách có số riêng thì dùng, không thì theo loại thẻ: tự tính = giá bán ÷ số lần), như SalonHero. Cách chia nhiều người, giảm giá, giờ, sao: tab Cài đặt nâng cao. Doanh số tư vấn = các dòng đứng vai Tư vấn; dịch vụ = vai Phục vụ ở dòng dịch vụ; sản phẩm / bán thẻ = vai Bán hàng ở dòng sản phẩm / thẻ. “Tính lại hoa hồng” chỉ tải lại số: AMIA tính trực tiếp từ hoá đơn mỗi lần mở trang nên không có số cũ lưu sẵn. Phí bác sĩ: SalonHero không có mục riêng, bác sĩ hưởng hoa hồng làm dịch vụ như nhân viên phục vụ — muốn trả theo buổi thì cài tỉ lệ hoặc số tiền cố định riêng cho bác sĩ đó ở tab Tỉ lệ hoa hồng.</p>
       </>
     );
@@ -92,11 +95,17 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
     const nhanLoai = (r: (typeof ds)[number]) => (r.loai_sh === "CUSTOMER" || r.loai === "khach_cu" ? "Khách hàng" : r.loai_sh === "OPERATOR" ? "Nhân viên" : r.loai_sh === "PARTNER" || r.loai === "ctv" ? "Đối tác" : r.loai === "kol" ? "KOL" : "Khác");
     noiDung = loiNg ? <div role="alert" className="rounded-nho bg-loi-nen px-3.5 py-3 text-[14px] text-loi">Chưa tải được danh sách nguồn giới thiệu. Chờ vài giây rồi tải lại trang.</div> : (
       <>
-        <form method="get" action="/hoa-hong" className="mb-4 flex flex-wrap gap-2">
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+        <form method="get" action="/hoa-hong" className="flex flex-wrap gap-2">
           <input type="hidden" name="tab" value="nguon" />
           <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm tên, mã, số điện thoại" aria-label="Tìm nguồn giới thiệu" className={`${O_NHAP} w-64 max-w-full`} />
           <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
         </form>
+          {sua && <NutHop kieu="phu" nhan="Thêm nguồn" tieuDe="Thêm nguồn giới thiệu" action={themNguonGioiThieu} giaTri={{ loai: "khach_cu", hh_kieu: "phan_tram", hh_gia_tri: 0 }}
+            truong={[{ ten: "ten", nhan: "Tên nguồn giới thiệu", loai: "chu", batBuoc: true, rong: true }, { ten: "ma_gioi_thieu", nhan: "Mã giới thiệu", loai: "chu", ghiChu: "Để trống thì tự sinh." },
+              { ten: "dien_thoai", nhan: "Số điện thoại", loai: "chu", ghiChu: "Trùng đúng một khách thì tự ghép với khách đó." },
+              { ten: "loai", nhan: "Loại", loai: "chon", luaChon: [{ gia_tri: "khach_cu", nhan: "Khách hàng" }, { gia_tri: "ctv", nhan: "Đối tác" }, { gia_tri: "kol", nhan: "KOL" }, { gia_tri: "khac", nhan: "Khác" }], batBuoc: true }, ...truong, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} />}
+        </div>
         <HangChiSo muc={[{ nhan: "Nguồn giới thiệu", so: String((dsNg ?? []).length) }, { nhan: "Có mức hoa hồng khác 0", so: String((dsNg ?? []).filter((r) => Number(r.hh_gia_tri) > 0).length) }]} />
         <div className="mt-6" />
         <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có nguồn giới thiệu nào."

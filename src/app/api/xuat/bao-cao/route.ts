@@ -8,7 +8,7 @@ import { congNgay, ngayGioVN } from "@/lib/dinh-dang";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { layBaoCaoVoucher } from "@/lib/bao-cao-voucher";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
-import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH } from "@/lib/bao-cao-hoa-hong";
+import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH, NHOM_HH } from "@/lib/bao-cao-hoa-hong";
 import { gomTheoKy, kieuGom, layLichSuDungThe, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
 import { layBanSanPham, layChiPhiDichVu, layNhapKho, layNhapXuatKho, layTonTheoLo, layXuatKho } from "@/lib/bao-cao-kho";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
@@ -148,18 +148,18 @@ export async function GET(req: Request) {
       { nhan: "Số thẻ tiền còn dư", gia_tri: Number(t.so_the_tien) }, { nhan: "Số dư thẻ tiền (đồng)", gia_tri: Number(t.du_tien) }] : [] });
   } else if (tab === "hh-thuc-thu") {
     const gomThe = u.searchParams.get("the") === "1", vai = u.searchParams.get("vai") ?? undefined;
-    const d = await layHoaHongThucThu(db, { tu, den, cn, vai, gomThe });
-    bangs.push({ ten: "Theo nhân viên", dong: d.nhanVien.map((r) => ({ ten: r.ten, pv: r.theoVai.phuc_vu?.hoaHong ?? 0, tv: r.theoVai.tu_van?.hoaHong ?? 0, ban: r.theoVai.ban?.hoaHong ?? 0, ds: r.doanhSo, nocu: r.doanhSoNoCu, hh: r.hoaHong })), cot: [
-      { nhan: "Nhân viên", khoa: "ten", rong: 34 }, { nhan: "Hoa hồng phục vụ", khoa: "pv", tien: true }, { nhan: "Hoa hồng tư vấn", khoa: "tv", tien: true }, { nhan: "Hoa hồng bán hàng", khoa: "ban", tien: true },
-      { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Trong đó thu nợ cũ", khoa: "nocu", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
+    const d = await layHoaHongThucThu(db, { tu, den, cn, vai, gomThe, q: u.searchParams.get("q") || undefined });
+    bangs.push({ ten: "Theo nhân viên", dong: d.nhanVien.map((r) => ({ ten: r.ten, ...Object.fromEntries(NHOM_HH.flatMap(([k]) => [[`ds_${k}`, r.theoNhom[k]?.doanhSo ?? 0], [`hh_${k}`, r.theoNhom[k]?.hoaHong ?? 0]])), ds: r.doanhSo, nocu: r.doanhSoNoCu, hh: r.hoaHong, cd: r.chamDiem ? `${r.chamDiem.diemTb} sao (${r.chamDiem.soLuot} lượt)` : "" })), cot: [
+      { nhan: "Nhân viên", khoa: "ten", rong: 34 }, ...NHOM_HH.flatMap(([k, t]) => [{ nhan: `Thực thu ${t}`, khoa: `ds_${k}`, tien: true }, { nhan: `Hoa hồng ${t}`, khoa: `hh_${k}`, tien: true }]),
+      { nhan: "Tổng thực thu", khoa: "ds", tien: true }, { nhan: "Trong đó thu nợ cũ", khoa: "nocu", tien: true }, { nhan: "Tổng hoa hồng", khoa: "hh", tien: true }, { nhan: "Chấm điểm d.vụ", khoa: "cd", rong: 18 }] });
     bangs.push({ ten: "Theo vai", dong: d.theoVai.map((r) => ({ vai: NHAN_VAI_HH[r.vai], ds: r.doanhSo, hh: r.hoaHong })), cot: [{ nhan: "Vai", khoa: "vai", rong: 16 }, { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
     bangs.push({ ten: "Theo chi nhánh", dong: d.chiNhanh.map((r) => ({ cn: r.ten, ds: r.doanhSo, hh: r.hoaHong })), cot: [{ nhan: "Chi nhánh", khoa: "cn", rong: 24 }, { nhan: "Doanh số thực thu", khoa: "ds", tien: true }, { nhan: "Hoa hồng", khoa: "hh", tien: true }] });
     const dc = dongDoiChieu(d.doiChieu, gomThe);
     bangs.push({ ten: "Đối chiếu theo hoá đơn", dong: [...dc.rows.map((r) => ({ nhan: r.nhan, so: r.so, gc: r.ghiChu })), { nhan: "Hoa hồng theo thực thu (cả ba vai)", so: dc.ket, gc: "" }], cot: [{ nhan: "Khoản", khoa: "nhan", rong: 52 }, { nhan: "Số tiền", khoa: "so", tien: true }, { nhan: "Giải thích", khoa: "gc", rong: 52 }] });
   } else if (tab === "hh-gioi-thieu") {
-    const d = await layHoaHongGioiThieu(db, { tu, den, cn, xemSdt: coQuyen(nd, "khach.sdt") });
-    bangs.push({ ten: "Khách giới thiệu", dong: d.khach, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 30 }, { nhan: "Mã khách", khoa: "ma", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng", khoa: "hoaHong", tien: true }] });
-    bangs.push({ ten: "Số SalonHero đã tính", dong: d.sh, cot: [{ nhan: "Người giới thiệu", khoa: "ten", rong: 34 }, { nhan: "Mã nhân viên", khoa: "ma", rong: 14 }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số dòng", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng SalonHero", khoa: "hoaHong", tien: true }] });
+    const d = await layHoaHongGioiThieu(db, { tu, den, cn, xemSdt: coQuyen(nd, "khach.sdt"), q: u.searchParams.get("q") || undefined });
+    bangs.push({ ten: "Khách giới thiệu", dong: d.khach, cot: [{ nhan: "Nguồn giới thiệu", khoa: "ten", rong: 30 }, { nhan: "Mã", khoa: "ma", rong: 14 }, { nhan: "Điện thoại", khoa: "dt", rong: 14 }, { nhan: "Loại nguồn", khoa: "loai", rong: 14 }, { nhan: "Tổng DV khách dùng", khoa: "soDv", so: true }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng", khoa: "hoaHong", tien: true }] });
+    bangs.push({ ten: "Số SalonHero đã tính", dong: d.sh, cot: [{ nhan: "Nguồn giới thiệu", khoa: "ten", rong: 34 }, { nhan: "Mã", khoa: "ma", rong: 14 }, { nhan: "Loại nguồn", khoa: "loai", rong: 14 }, { nhan: "Tổng DV khách dùng", khoa: "soDv", so: true }, { nhan: "Hoá đơn", khoa: "soHd", so: true }, { nhan: "Doanh số dòng", khoa: "doanhSo", tien: true }, { nhan: "Hoa hồng SalonHero", khoa: "hoaHong", tien: true }] });
   } else if (tab === "nhap-xuat-kho") {
     const d = await layNhapXuatKho(db, { tu, den, cn, nhom: u.searchParams.get("nhom_sp") || undefined, q: u.searchParams.get("q") || undefined }, true);
     bangs.push({ ten: "Nhập xuất kho hàng", dong: d.rows, cot: [

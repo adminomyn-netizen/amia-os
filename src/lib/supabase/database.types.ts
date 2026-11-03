@@ -11807,6 +11807,10 @@ export type Database = {
           nhan: string
           so_lich: number
         }[]
+      bc_cham_diem_nv: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: { diem_tb: number; nhan_vien_id: string; so_luot: number }[]
+      }
       }
       bc_doanh_thu_chi_so: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
@@ -12033,6 +12037,28 @@ export type Database = {
         }[]
       }
       bc_kho_xuat: {
+          nguon_id: string | null
+          loai_nguon: string
+          so_dv: number
+        }[]
+      }
+      bc_hoa_hong_gioi_thieu_ct: {
+        Args: { p_cn?: string; p_den: string; p_khoa: string; p_nguon: string; p_tu: string }
+        Returns: { doanh_so: number; hoa_don_id: string; hoa_hong: number; khach: string | null; khach_id: string | null; ma_hd: string; ngay: string; so_dv: number }[]
+      }
+      bc_hoa_hong_thuc_thu_nhom: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          chi_nhanh_id: string
+          doanh_so_the: number
+          doanh_so_tien: number
+          hoa_hong_the: number
+          hoa_hong_tien: number
+          nguon: string
+          nhan_vien_id: string
+          nhom: string
+          so_hd: number
+          vai: string
         Args: {
           p_cn?: string
           p_den: string

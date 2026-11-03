@@ -82,33 +82,37 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const homNayDau = new Date(`${homNay}T00:00:00+07:00`).toISOString(), homNayCuoi = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
   let qLich = db.from("lich_hen").select("*").eq("chi_nhanh_id", cnId).gte("bat_dau", tuIso).lt("bat_dau", denIso).order("bat_dau").limit(3000);
   if (nguon) qLich = qLich.eq("nguon", nguon);
-  const [{ data: lichTho }, { data: nv }, { data: dv }, { count: demHomNay }, { data: choLam }, { data: yeuCau }] = await Promise.all([
+  // Mọi truy vấn không phụ thuộc nhau chạy cùng một lượt (trước đây xếp hàng 4 lượt → chuyển trang chậm).
+  const sua = coQuyen(nd, "lich.sua");
+  const taoKhachDuoc = sua && coQuyen(nd, "khach.sua");
+  const [{ data: lichTho }, { data: nv }, { data: dv }, { count: demHomNay }, { data: choLam }, { data: yeuCau }, { data: lk }, { data: khachMoi }, { data: nhomKh }] = await Promise.all([
     qLich,
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chuc_danh, ma_nv, chi_nhanh_id").eq("hoat_dong", true).order("ma_nv"),
     db.from("dich_vu").select("id, ma, ten, thoi_luong_phut, noi_hien_thi, chi_nhanh_ids").eq("hoat_dong", true).order("ma"),
     db.from("lich_hen").select("id", { count: "exact", head: true }).eq("chi_nhanh_id", cnId).gte("bat_dau", homNayDau).lt("bat_dau", homNayCuoi).not("trang_thai", "in", "(huy,khong_den)"),
     db.from("cho_lam").select("chi_nhanh_id, ten, thu_tu, hoat_dong").order("thu_tu").order("ten"),
     db.from("yeu_cau_dat_lich").select("id, dich_vu_ids, bat_dau, thoi_luong_phut, ho_ten, dien_thoai, ghi_chu, tao_luc").eq("chi_nhanh_id", cnId).eq("trang_thai", "cho").gte("bat_dau", new Date().toISOString()).order("bat_dau").limit(100),
+    db.from("goi_the_dich_vu").select("goi_id, dich_vu_id"),
+    sp.khach ? db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id").eq("id", sp.khach).maybeSingle() : Promise.resolve({ data: null }),
+    // Nhóm khách hàng cho ô "Nhóm khách hàng" khi tạo khách trong hộp đặt lịch (như SalonHero).
+    taoKhachDuoc ? db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] as { id: string; ten: string }[] }),
   ]);
   const idsK = [...new Set((lichTho ?? []).map((l) => l.khach_id))];
-  const ks = await theoLo(idsK, (lo) => db.rpc("khach_cho_lich", { p_ids: lo })); // hàm riêng thay cho view v_khach_hang (nặng): cùng 6 cột, cùng luật hạng
-  const tenK = new Map(ks.map((k) => [k.id as string, k]));
   const qThuong = q.toLowerCase();
-  const lich = (lichTho ?? []).filter((l) => {
+  // Lọc mọi điều kiện trừ ô tìm (ô tìm cần tên khách) → lấy chi tiết cho cột phải song song với tên khách; có ô tìm thì tập này rộng hơn, lọc lại sau.
+  const lichKhongTim = (lichTho ?? []).filter((l) => {
     if (tt && l.trang_thai !== tt) return false;
     if (nvLoc.length && !nvLoc.includes(l.nhan_vien_id ?? NV_CHUA_PHAN)) return false;
     if (sp.cho && (l.phong ?? "").trim().toLowerCase() !== sp.cho.toLowerCase()) return false;
-    if (!qThuong) return true;
-    const k = tenK.get(l.khach_id);
-    return [k?.ho_ten, k?.dien_thoai, k?.ma, l.ma_dat_lich].some((x) => (x ?? "").toLowerCase().includes(qThuong));
+    return true;
   });
-  const homLich = (l: { trang_thai: string }) => !["huy", "khong_den"].includes(l.trang_thai);
-  const lichNgay = lich.filter((l) => ngayCuaIso(l.bat_dau) === ngay);
+  const lichNgayRong = lichKhongTim.filter((l) => ngayCuaIso(l.bat_dau) === ngay);
 
   // Chi tiết chỉ cần cho cột phải (lịch của ngày đang chọn).
-  const idsN = lichNgay.map((l) => l.id), idsKN = [...new Set(lichNgay.map((l) => l.khach_id))];
-  const shIds = lichNgay.map((l) => l.hoa_don_sh_id).filter((x): x is number => x != null);
-  const [ld, ph, the, hd, { data: lk }, nhom] = await Promise.all([
+  const idsN = lichNgayRong.map((l) => l.id), idsKN = [...new Set(lichNgayRong.map((l) => l.khach_id))];
+  const shIds = lichNgayRong.map((l) => l.hoa_don_sh_id).filter((x): x is number => x != null);
+  const [ks, ld, ph, the, hd, nhom] = await Promise.all([
+    theoLo(idsK, (lo) => db.rpc("khach_cho_lich", { p_ids: lo })), // hàm riêng thay cho view v_khach_hang (nặng): cùng 6 cột, cùng luật hạng
     theoLo(idsN, (lo) => db.from("lich_hen_dich_vu").select("lich_id, dich_vu_id").in("lich_id", lo)),
     theoLo(idsN, (lo) => db.from("phieu_cap").select("lich_hen_id, trang_thai, ma").in("lich_hen_id", lo).neq("trang_thai", "huy")),
     theoLo(idsKN, (lo) => db.from("v_the_khach").select("id, ma, khach_id, goi_id, so_buoi_con").eq("loai", "lan").in("khach_id", lo).in("tinh_trang", ["hoat_dong", "sap_het"])),
@@ -116,10 +120,16 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       theoLo(shIds.map(String), (lo) => db.from("hoa_don").select("id, ma, sh_id, sh_ma, lich_hen_id").in("sh_id", lo.map(Number))),
       theoLo(idsN, (lo) => db.from("hoa_don").select("id, ma, sh_id, sh_ma, lich_hen_id").in("lich_hen_id", lo)),
     ]).then((r) => r.flat()),
-    db.from("goi_the_dich_vu").select("goi_id, dich_vu_id"),
     // Lịch nhiều khách: Khách 2, 3… (câu 14).
     theoLo(idsN, (lo) => db.from("lich_hen_khach").select("lich_id, thu_tu, ten, dich_vu_ids, nhan_vien_id, phong, thoi_luong_phut").in("lich_id", lo).order("thu_tu")),
   ]);
+  const tenK = new Map(ks.map((k) => [k.id as string, k]));
+  const lich = !qThuong ? lichKhongTim : lichKhongTim.filter((l) => {
+    const k = tenK.get(l.khach_id);
+    return [k?.ho_ten, k?.dien_thoai, k?.ma, l.ma_dat_lich].some((x) => (x ?? "").toLowerCase().includes(qThuong));
+  });
+  const homLich = (l: { trang_thai: string }) => !["huy", "khong_den"].includes(l.trang_thai);
+  const lichNgay = !qThuong ? lichNgayRong : lich.filter((l) => ngayCuaIso(l.bat_dau) === ngay);
   const nhomCua = (id: string) => nhom.filter((x) => x.lich_id === id);
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten]));
@@ -133,13 +143,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const choDm = (choLam ?? []).filter((c) => c.hoat_dong).map((c) => ({ chiNhanhId: c.chi_nhanh_id, ten: c.ten }));
   const choCn = choDm.filter((c) => c.chiNhanhId === cnId);
   const nvLocLC = (nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }));
-  const sua = coQuyen(nd, "lich.sua");
   const moFormMoi = !!sp.khach;
-  let khachMoi = null;
-  if (sp.khach) khachMoi = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id").eq("id", sp.khach).maybeSingle()).data;
-  // Nhóm khách hàng cho ô "Nhóm khách hàng" khi tạo khách trong hộp đặt lịch (như SalonHero).
-  const taoKhachDuoc = sua && coQuyen(nd, "khach.sua");
-  const { data: nhomKh } = taoKhachDuoc ? await db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten") : { data: [] as { id: string; ten: string }[] };
 
   // ───────── Lưới: hàng theo kiểu xem × cột theo ngày ─────────
   const cacNgay = cacNgayTrong(tu, den);

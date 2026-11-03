@@ -12,7 +12,7 @@ NGAY=$(date +%Y%m%d); BC="$G/sao-luu/dong-bo-bao-cao-$NGAY.md"; THU="$G/sao-luu/
 { echo "# Đồng bộ SalonHero → AMIA đêm $NGAY (bắt đầu $(date +%H:%M))"; } > "$BC"
 # đo nhanh DB: chậm (đăng nhập > 3 s) thì chờ 2 phút, tối đa 6 lần, rồi vẫn chạy (script tự có giao dịch ngắn)
 for i in 1 2 3 4 5 6; do
-  r=$(node /private/tmp/claude-501/-Users-phamtunglam-project---1140/962d4706-11d1-48bf-b1f9-52cc608d2895/scratchpad/canh.mjs 2>/dev/null | tail -1)
+  r=$(node scripts/chuyen-salonhero/canh-db.mjs 2>/dev/null | tail -1)
   ms=$(echo "$r" | sed -n 's/.*"dn_ms":\([0-9]*\).*/\1/p'); ok=$(echo "$r" | grep -c '"dn":"ok"')
   [ "$ok" = "1" ] && [ "${ms:-99999}" -le 3000 ] && break; echo "- $(date +%H:%M) đăng nhập chậm (${ms:-?} ms), chờ 2 phút" >> "$BC"; sleep 120
 done

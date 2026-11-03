@@ -51,7 +51,7 @@ export default async function TrangHoaDonDauVao({ searchParams }: { searchParams
     { ten: "ky_hieu", nhan: "Ký hiệu hoá đơn", loai: "chu" }, { ten: "so_hd", nhan: "Số hoá đơn", loai: "chu", batBuoc: true },
     ...(an ? [] : [
       { ten: "ncc_id", nhan: "Nhà cung cấp đã có", loai: "chon" as const, rong: true, luaChon: luaNcc },
-      { ten: "ma_so_thue", nhan: "Mã số thuế", loai: "chu" as const, ghiChu: "Chưa tra cứu MST tự động; nhập theo hoá đơn.", hienKhi: { ten: "ncc_id", la: [""] } },
+      { ten: "ma_so_thue", nhan: "Mã số thuế", loai: "chu" as const, hienKhi: { ten: "ncc_id", la: [""] }, traCuuMst: { ten: "ten_ncc", diaChi: "dia_chi" } },
       { ten: "ten_ncc", nhan: "Nhà cung cấp", loai: "chu" as const, hienKhi: { ten: "ncc_id", la: [""] } },
       { ten: "dia_chi", nhan: "Địa chỉ", loai: "chu" as const, rong: true, hienKhi: { ten: "ncc_id", la: [""] } },
       { ten: "dien_thoai", nhan: "Số điện thoại", loai: "chu" as const, hienKhi: { ten: "ncc_id", la: [""] } }, { ten: "email", nhan: "Email", loai: "email" as const, hienKhi: { ten: "ncc_id", la: [""] } },

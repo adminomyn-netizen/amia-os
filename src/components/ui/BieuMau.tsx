@@ -8,6 +8,7 @@ import { NgayChon } from "./NgayChon";
 import { OTien } from "./OTien";
 import { Gat } from "./Gat";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_CHU_NGUY, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "./dinh-dang";
+import { NutTraCuuMst } from "@/components/ui/NutTraCuuMst";
 
 export type Truong = {
   ten: string;
@@ -26,6 +27,8 @@ export type Truong = {
   tuGio?: string; denGio?: string; buocPhut?: number;
   /** Ô chọn (loai "chon") lấy danh mục địa bàn như SalonHero (public/dia-ban.json): "tinh" = tỉnh/thành; { theoTinh } = phường/xã của tỉnh đang chọn ở ô đó. */
   diaBan?: "tinh" | { theoTinh: string };
+  /** Ô mã số thuế có nút "Tra cứu MST" như SalonHero: tra được thì điền tên vào ô `ten`, địa chỉ vào ô `diaChi` (nếu có). */
+  traCuuMst?: { ten: string; diaChi?: string };
 };
 /** Danh mục tỉnh/thành → phường/xã (danh sách SalonHero đang dùng: 34 tỉnh sau sáp nhập 2025 + 29 tỉnh cũ). Tải một lần khi biểu mẫu có ô địa bàn. */
 let diaBanCache: Promise<Map<string, string[]>> | null = null;
@@ -172,6 +175,7 @@ export function NutHop({
                 {t.loai === "nhieu_dong" && <textarea id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHIEU_DONG} />}
                 {t.loai === "gat" && <Gat nhan={t.nhan} giaTriMacDinh={!!gt} onDoi={(x) => dat(t.ten, x)} />}
                 {t.loai === "nhieu" && <ONhieu luaChon={t.luaChon ?? []} giaTri={Array.isArray(gt) ? gt : []} onDoi={(x) => dat(t.ten, x)} />}
+                {t.traCuuMst && <NutTraCuuMst mst={String(gt ?? "")} onKetQua={(kq) => { const m = t.traCuuMst!; setV((cu) => ({ ...cu, [m.ten]: kq.ten, ...(m.diaChi && kq.diaChi ? { [m.diaChi]: kq.diaChi } : {}) })); }} />}
                 {ghiChuO && <p className="mt-1.5 text-[12px] leading-snug text-muc-3">{ghiChuO}</p>}
               </div>
             );

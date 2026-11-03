@@ -240,7 +240,7 @@ export async function taiAnh(fd: FormData): Promise<KQ> {
   return { ok: true };
 }
 
-export type KetQuaNhap = { ok?: boolean; loi?: string; hopLe?: number; tongDong?: number; daCo?: number; daNhap?: number; dongLoi?: { dong: number; viec: string }[] };
+export type KetQuaNhap = { ok?: boolean; loi?: string; hopLe?: number; tongDong?: number; daCo?: number; daNhap?: number; nhom?: string; dongLoi?: { dong: number; viec: string }[] };
 
 /** Nhập khách từ Excel. che_do=xem chỉ kiểm tra (không ghi). Khách có SĐT đã tồn tại thì bỏ qua (không ghi đè). Nguồn/người phụ trách/chi nhánh áp chung cho cả file. */
 export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
@@ -251,6 +251,14 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
   if (tep.size > 8 * 1024 * 1024) return { loi: "File quá 8 MB. Tách nhỏ rồi nhập từng phần." };
   const nguon = chuoi(fd, "nguon"), phuTrach = chuoi(fd, "nguoi_phu_trach_id"), cn = chuoi(fd, "chi_nhanh_id");
   if (!NGUON_HOP_LE.includes(nguon) || !phuTrach || !cn) return { loi: "Chọn nguồn, người phụ trách và chi nhánh áp cho cả file." };
+  // Nhóm khách (tuỳ chọn): khách MỚI nhập từ file được gắn luôn vào nhóm này; khách đã có trong hệ thống vẫn bị bỏ qua, không đổi nhóm.
+  const nhomId = chuoi(fd, "nhom_id");
+  let nhomTen = "";
+  if (nhomId) {
+    const { data: nh } = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(nhomId) ? await sb().from("nhom_khach").select("ten").eq("id", nhomId).eq("hoat_dong", true).maybeSingle() : { data: null };
+    if (!nh) return { loi: "Nhóm khách không hợp lệ hoặc đã bị ẩn." };
+    nhomTen = nh.ten;
+  }
   let doc;
   try { doc = await docKhachTuExcel(await tep.arrayBuffer()); } catch { return { loi: "Không đọc được file. Dùng file .xlsx (không phải .xls hoặc .csv)." }; }
   if (doc.cotThieu.length) return { loi: `File thiếu cột bắt buộc: ${doc.cotThieu.join(", ")}.` };
@@ -268,10 +276,15 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
     // Cấp đủ dải mã cho lô: so_tiep_theo tăng 1/lần gọi nên gọi thêm lo.length-1 lần để giữ mã duy nhất.
     for (let j = 1; j < lo.length; j++) await db.rpc("so_tiep_theo", { p_khoa: "khach" });
     const rows = lo.map((k, j) => ({ ma: "KH" + String(base + j).padStart(6, "0"), ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo, email: k.email, ngay_sinh: k.ngay_sinh, gioi_tinh: k.gioi_tinh, dia_chi: k.dia_chi, ghi_chu: k.ghi_chu, chi_nhanh_id: cn, nguon, nguoi_phu_trach_id: phuTrach, tao_boi: nd.nhanVienId }));
-    const { error } = await db.from("khach_hang").insert(rows);
+    const { data: moiIds, error } = await db.from("khach_hang").insert(rows).select("id");
     if (error) return { ...kq, ok: false, loi: `Dừng ở lô thứ ${i / 200 + 1} (đã nhập ${nhap} khách): ${thongBaoLoi(error)}`, daNhap: nhap };
     nhap += rows.length;
+    if (nhomId && moiIds?.length) {
+      const { error: loiNhom } = await db.from("khach_nhom").insert(moiIds.map((x) => ({ khach_id: x.id, nhom_id: nhomId })));
+      if (loiNhom) return { ...kq, ok: false, loi: `Đã nhập ${nhap} khách nhưng gắn nhóm lỗi ở lô thứ ${i / 200 + 1}: ${thongBaoLoi(loiNhom)}. Vào Quản lý nhóm để gắn lại.`, daNhap: nhap };
+    }
   }
+  if (nhomId && nhap) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "nhap_khach_vao_nhom", doi_tuong: "nhom_khach", doi_tuong_id: nhomId, chi_tiet: { so_khach: nhap } });
   revalidatePath("/khach-hang");
-  return { ...kq, daNhap: nhap };
+  return { ...kq, daNhap: nhap, nhom: nhomTen || undefined };
 }

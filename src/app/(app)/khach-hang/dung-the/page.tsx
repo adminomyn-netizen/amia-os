@@ -80,10 +80,10 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
       </div>
 
       {hienTong && (
-        <dl className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Số khách hàng dùng thẻ</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{soVN(hienTong.so_khach)}</dd></div>
-          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ tiền</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_tien))}</dd></div>
-          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ lần (không tính thẻ không giới hạn)</dt><dd className="mt-1 text-[20px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_lan))}</dd></div>
+        <dl className="grid grid-cols-[repeat(auto-fit,minmax(11.5rem,1fr))] gap-3">
+          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Số khách hàng dùng thẻ</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{soVN(hienTong.so_khach)}</dd></div>
+          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ tiền</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_tien))}</dd></div>
+          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ lần (không tính thẻ không giới hạn)</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_lan))}</dd></div>
         </dl>
       )}
 

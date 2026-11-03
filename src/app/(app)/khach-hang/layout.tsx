@@ -20,13 +20,14 @@ const bayGio = () => Date.now();
 export default async function KhungKhachHang({ children }: { children: React.ReactNode }) {
   const nd = await yeuCauQuyen("khach.xem");
   const db = sb();
-  const [{ data: nv }, { data: cn }, { data: dv }, { data: hang }, so, tc] = await Promise.all([
+  const [{ data: nv }, { data: cn }, { data: dv }, { data: hang }, so, tc, { data: nhomNhap }] = await Promise.all([
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
     dsChiNhanhRutGon(),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("hang_khach").select("ten").order("thu_tu"),
     soLieuKhach(),
     tuyChonLocKhach(),
+    db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten"), // danh sách nhóm nhẹ cho hộp Nhập Excel (không đếm số khách)
   ]);
   const nvLC = luaChonNhanVien(nv ?? []);
   const cnLC = (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
@@ -49,7 +50,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/tai-kham" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CalendarClock aria-hidden strokeWidth={1.7} className="h-4 w-4" />Nhắc tái khám</Link>}
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/dung-the" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CreditCard aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách dùng thẻ</Link>}
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/the-sap-het" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><TicketX aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thẻ sắp hết</Link>}
-          {coQuyen(nd, "khach.nhap") && <NhapExcelKhach nguon={NGUON} nhanVien={nvLC} chiNhanh={cnLC} action={nhapKhachExcel} macDinh={{ nguoi: nd.nhanVienId, cn: nd.chiNhanhId ?? cn?.[0]?.id ?? "" }} />}
+          {coQuyen(nd, "khach.nhap") && <NhapExcelKhach nguon={NGUON} nhanVien={nvLC} chiNhanh={cnLC} nhom={(nhomNhap ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }))} action={nhapKhachExcel} macDinh={{ nguoi: nd.nhanVienId, cn: nd.chiNhanhId ?? cn?.[0]?.id ?? "" }} />}
           {coQuyen(nd, "khach.sua") && (
             <NutHop nhan="Thêm mới" tieuDe="Thêm khách hàng mới" moTa="Nguồn khách và người phụ trách là bắt buộc để tính hoa hồng và đánh giá quảng cáo." rong truong={truong}
               giaTri={{ chi_nhanh_id: nd.chiNhanhId ?? (cn?.[0]?.id ?? ""), nguoi_phu_trach_id: nd.nhanVienId, quan_tam: [] }} action={luuKhach} />

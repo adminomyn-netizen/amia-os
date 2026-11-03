@@ -32,6 +32,7 @@ const SAC = [
 const sacCua = (nhom: string) => SAC[[...nhom].reduce((t, c) => t + c.charCodeAt(0), 0) % SAC.length];
 const BIEU_TUONG = { dich_vu: Sparkles, goi_the: CreditCard, san_pham: Package } as const;
 const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ" }, { ma: "goi_the", ten: "Thẻ và liệu trình" }, { ma: "san_pham", ten: "Sản phẩm" }] as const;
+const TAO_MOI = { dich_vu: { nhan: "Tạo dịch vụ mới", href: "/danh-muc?tab=dich-vu" }, goi_the: { nhan: "Tạo thẻ mới", href: "/danh-muc?tab=goi-the" }, san_pham: { nhan: "Tạo sản phẩm mới", href: "/danh-muc?tab=san-pham" } } as const;
 const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 type PropsPos = {
@@ -39,6 +40,7 @@ type PropsPos = {
   tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher; luuNhap: typeof luuDonNhap; dsNhap: typeof dsDonNhap; xoaNhap: typeof xoaDonNhap; nhapBanDau?: DonNhapRut[];
   /** Đang sửa một hoá đơn đã chốt (đã mở lại về nháp): chỉ áp vào đơn đầu tiên. */ suaHd?: SuaHoaDon | null;
   /** "Chờ thanh toán": đơn đang xử lý của chi nhánh. */ dsCho?: typeof dsDonCho;
+  /** Có quyền sửa danh mục: hiện ô "Tạo thẻ / dịch vụ / sản phẩm mới" cuối lưới như SalonHero. */ taoMoi?: boolean;
   /** Nguồn giới thiệu cho người giới thiệu từng dòng. */ nguonGt?: NguonGt[];
 };
 type Tab = { k: number; ten: string; soDong: number; nhap?: DonNhapRut };
@@ -281,10 +283,11 @@ function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: stri
   );
 }
 
-function DonPos({ suaHd, nguonGt = [], muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+function DonPos({ suaHd, nguonGt = [], muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: () => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
+  const router = useRouter();
   const [dang, bat] = useTransition();
   const sua = dauTien && !nhapDau ? suaHd ?? null : null;
   const [khach, setKhach] = useState<KhachChon | null>(nhapDau ? nhapDau.khach : dauTien ? khachBanDau : null);
@@ -505,6 +508,16 @@ function DonPos({ suaHd, nguonGt = [], muc, nhanVien, khachBanDau, dongBanDau, c
             );
           })}
           {dsMuc.length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Không có mục nào.</p>}
+          {taoMoi && (
+            // Như ô "TẠO THẺ MỚI / Tạo dịch vụ mới / Tạo sản phẩm mới" cuối lưới Thu ngân SalonHero (bấm là sang trang danh mục).
+            // Mở tab mới để đơn đang bán không mất; tạo xong quay lại đây bấm "Tải lại danh mục" là có mục mới.
+            <div className="flex flex-wrap items-center gap-3 rounded-the border border-dashed border-vien-dam px-3 py-3">
+              <Link href={TAO_MOI[tab].href} target="_blank" rel="noopener" className="flex items-center gap-2 text-[14px] font-medium text-nhan-dam hover:underline">
+                <Plus aria-hidden strokeWidth={2} className="h-4 w-4" />{TAO_MOI[tab].nhan}
+              </Link>
+              <button type="button" onClick={() => router.refresh()} className={NUT_CHU}>Tải lại danh mục</button>
+            </div>
+          )}
         </div>
       </section>
 

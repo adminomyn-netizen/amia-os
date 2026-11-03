@@ -9955,6 +9955,12 @@ export type Database = {
         }
         Relationships: []
       }
+      quy_tt_ngay: {
+        Row: { chi_nhanh_id: string; huong: string; loai_quy: string; ngay: string; so_tien: number }
+        Insert: { chi_nhanh_id: string; huong: string; loai_quy: string; ngay: string; so_tien: number }
+        Update: { chi_nhanh_id?: string; huong?: string; loai_quy?: string; ngay?: string; so_tien?: number }
+        Relationships: []
+      }
       so_lieu_tinh_san: {
         Row: { ham: string; ket_qua: Json; luc: string; tham_so: Json }
         Insert: { ham: string; ket_qua: Json; luc?: string; tham_so: Json }
@@ -12787,6 +12793,7 @@ export type Database = {
         Returns: number
       }
       dem_canh_bao_nhanh: { Args: { p_cn?: string }; Returns: Json }
+      tinh_lai_quy_tt_ngay: { Args: never; Returns: number }
       dem_cham_soc: {
         Args: { p_cn?: string; p_sau_dt?: number }
         Returns: {

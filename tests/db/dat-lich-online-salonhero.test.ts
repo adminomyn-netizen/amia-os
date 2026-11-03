@@ -155,6 +155,12 @@ describe("chống spam theo SĐT / IP", () => {
     await dat({ bd: luc(await ngayVN(30), "10:00"), sdt: "0944000111", ip: IP(41) });
     expect(await datLoi({ bd: luc(await ngayVN(30), "10:15"), sdt: "0944000111", ip: IP(42) })).toMatch(/khung giờ đó/);
   });
+  it("lịch online đã bị huỷ không còn tính vào giới hạn của SĐT (0271)", async () => {
+    await db.query(`update lich_hen set trang_thai='huy' where id in (select lich_id from yeu_cau_dat_lich where dien_thoai='0933000111')`);
+    await dat({ bd: luc(await ngayVN(25), "10:00"), sdt: "0933000111", ip: IP(43) });
+    await db.query(`update lich_hen set trang_thai='huy' where id in (select lich_id from yeu_cau_dat_lich where dien_thoai='0944000111')`);
+    await dat({ bd: luc(await ngayVN(30), "10:15"), sdt: "0944000111", ip: IP(44) });
+  });
   it("một IP tối đa 10 lần mỗi giờ", async () => {
     await db.query(`update yeu_cau_dat_lich set tao_luc = now() - interval '2 hours'`);
     for (let i = 0; i < 10; i++) await dat({ bd: luc(await ngayVN(35 + (i % 5)), `1${i % 2}:${i < 5 ? "00" : "30"}`), sdt: `09550001${String(i).padStart(2, "0")}`, ip: IP(99) });

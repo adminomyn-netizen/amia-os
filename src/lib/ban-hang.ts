@@ -109,7 +109,19 @@ export type DonBan = {
   voucher?: string;
   /** Giờ vào / giờ ra của khách trong ngày (HH:MM giờ Việt Nam) và số khách đi cùng; để trống = không ghi. */
   gioVao?: string; gioRa?: string; soKhach?: number;
+  /** Lùi ngày hoá đơn (SalonHero "Ngày tạo" có cây bút, chỉ lùi): "YYYY-MM-DDTHH:MM" giờ Việt Nam. Trống = lúc chốt. */
+  ngayHd?: string;
 };
+/** Kiểm ngày hoá đơn lùi: đúng định dạng, không ở tương lai (so với `bayGio`). Trả ngày (YYYY-MM-DD) + mốc ISO; trống thì null (dùng giờ chốt). */
+export function kiemNgayLui(s: string | null | undefined, bayGio: Date = new Date()): { ok: true; lui: null } | { ok: true; lui: { ngay: string; iso: string } } | { ok: false; loi: string } {
+  if (!s) return { ok: true, lui: null };
+  if (!/^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d$/.test(s)) return { ok: false, loi: "Ngày hoá đơn chưa đúng." };
+  const d = new Date(`${s}:00+07:00`);
+  const [y, m, n] = s.slice(0, 10).split("-").map(Number);
+  if (Number.isNaN(d.getTime()) || new Date(Date.UTC(y, m - 1, n)).getUTCDate() !== n) return { ok: false, loi: "Ngày hoá đơn chưa đúng." };
+  if (d.getTime() > bayGio.getTime() + 60_000) return { ok: false, loi: "Ngày hoá đơn chỉ được lùi về trước, không chọn ngày giờ ở tương lai." };
+  return { ok: true, lui: { ngay: s.slice(0, 10), iso: d.toISOString() } };
+}
 export const tinhDon = (hang: number, giamDon: number, vatPct: number, phuPhi: number, tip: number) => {
   const sauGiam = Math.max(hang - giamDon, 0);
   const vat = Math.round((sauGiam * vatPct) / 100);

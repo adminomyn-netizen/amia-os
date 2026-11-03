@@ -4,7 +4,7 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { boDau, chuanSdt, homNayHCM } from "@/lib/dinh-dang";
-import { kiemGiaDong, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
+import { kiemGiaDong, kiemNgayLui, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
@@ -174,8 +174,17 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     if (!k.ngay_sinh && (count ?? 0) === 0) return { loi: "Khách mua lần đầu: cần nhập ngày sinh trong hồ sơ khách trước khi chốt đơn." };
   }
 
-  // Giờ vào / ra (HH:MM giờ Việt Nam, trong ngày hôm nay) và số khách; sai định dạng hoặc ra trước vào thì báo lỗi, không đoán.
-  const gioDon = (g: string | undefined) => (g ? new Date(`${homNayHCM()}T${g}:00+07:00`) : null);
+  // Lùi ngày hoá đơn (SalonHero: ai vào được Thu ngân là dùng được, chỉ lùi). Doanh thu và các khoản thu của đơn ghi về ngày lùi, như SalonHero (không thành "thu nợ cũ").
+  // Tháng đã khoá sổ kế toán thì không lùi vào được.
+  const lui = kiemNgayLui(don.ngayHd);
+  if (!lui.ok) return { loi: lui.loi };
+  if (lui.lui) {
+    const { data: ky } = await db.from("ky_ke_toan").select("trang_thai").eq("thang", lui.lui.ngay.slice(0, 7)).maybeSingle();
+    if (ky?.trang_thai === "da_khoa") return { loi: `Tháng ${lui.lui.ngay.slice(5, 7)}/${lui.lui.ngay.slice(0, 4)} đã khoá sổ, không lùi ngày hoá đơn vào tháng này được.` };
+  }
+  const ngayDon = lui.lui?.ngay ?? homNayHCM();
+  // Giờ vào / ra (HH:MM giờ Việt Nam, trong ngày của hoá đơn) và số khách; sai định dạng hoặc ra trước vào thì báo lỗi, không đoán.
+  const gioDon = (g: string | undefined) => (g ? new Date(`${ngayDon}T${g}:00+07:00`) : null);
   if ((don.gioVao && !/^([01]\d|2[0-3]):[0-5]\d$/.test(don.gioVao)) || (don.gioRa && !/^([01]\d|2[0-3]):[0-5]\d$/.test(don.gioRa))) return { loi: "Giờ vào hoặc giờ ra chưa đúng." };
   const gioVao = gioDon(don.gioVao), gioRa = gioDon(don.gioRa);
   if (gioVao && gioRa && gioRa < gioVao) return { loi: "Giờ ra phải sau giờ vào." };
@@ -186,6 +195,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     ma, chi_nhanh_id: don.chiNhanhId, khach_id: don.khachId, lich_hen_id: don.lichId, nguoi_lap_id: nd.nhanVienId, giam_gia_don: don.giamDon + tienDiem + tienVoucher, vat_pct: don.vatPct,
     phu_phi: don.phuPhi, tip: don.tip, nguoi_gioi_thieu_id: don.nguoiGioiThieu || null, ghi_chu: don.ghiChu?.trim() || null,
     gio_vao: gioVao?.toISOString() ?? null, gio_ra: gioRa?.toISOString() ?? null, so_khach: soKhach,
+    ...(lui.lui ? { ngay_hd: lui.lui.ngay, tao_luc: lui.lui.iso } : {}),
   }).select("id").single();
   if (eh || !h) return { loi: thongBaoLoi(eh) };
   const huyNhap = async () => { await db.from("hoa_don").delete().eq("id", h.id); };
@@ -204,7 +214,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   }
 
   for (const t of don.thu ?? []) {
-    const { error: et } = await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "thu", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.phuong_thuc === "the_tien" ? t.the_id ?? null : null, ngan_hang: nganHangKhoanThu(t.phuong_thuc, t.ngan_hang), loai_vi: loaiViKhoanThu(t.phuong_thuc, t.loai_vi), nguoi_id: nd.nhanVienId });
+    const { error: et } = await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "thu", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.phuong_thuc === "the_tien" ? t.the_id ?? null : null, ngan_hang: nganHangKhoanThu(t.phuong_thuc, t.ngan_hang), loai_vi: loaiViKhoanThu(t.phuong_thuc, t.loai_vi), nguoi_id: nd.nhanVienId, ...(lui.lui ? { ngay: lui.lui.ngay } : {}) });
     if (et) {
       const daCo = await db.from("thanh_toan").select("id", { count: "exact", head: true }).eq("hoa_don_id", h.id);
       if ((daCo.count ?? 0) === 0) await huyNhap(); else await db.rpc("huy_hoa_don", { p_id: h.id, p_ly_do: "Tự huỷ do lỗi khi tạo đơn", p_nguoi: nd.nhanVienId });
@@ -221,6 +231,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     if ((daCo.count ?? 0) === 0) await huyNhap(); else await db.rpc("huy_hoa_don", { p_id: h.id, p_ly_do: "Tự huỷ do lỗi khi chốt đơn", p_nguoi: nd.nhanVienId });
     return { loi: thongBaoLoi(ex) };
   }
+  if (lui.lui) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "lui_ngay_hoa_don", doi_tuong: "hoa_don", doi_tuong_id: h.id, chi_tiet: { ma, ngay_hd: lui.lui.ngay, tao_luc: lui.lui.iso, bam_luc: new Date().toISOString() } });
   if (don.lichId) await db.from("lich_hen").update({ trang_thai: "hoan_thanh" }).eq("id", don.lichId).eq("chi_nhanh_id", don.chiNhanhId).in("trang_thai", ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan", "chua_xac_nhan"]);
   return { ok: true, id: h.id, ma };
 }

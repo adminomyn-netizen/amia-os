@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { CreditCard, Minus, Package, Plus, Search, ShoppingBag, Sparkles, Ticket, Trash2, UserRound, X } from "lucide-react";
+import { CreditCard, Minus, Package, Pencil, Plus, Search, ShoppingBag, Sparkles, Ticket, Trash2, UserRound, X } from "lucide-react";
 import { Chon } from "@/components/ui/Chon";
 import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
@@ -184,16 +184,36 @@ export function Pos(props: PropsPos) {
 
 /** Một đơn. Dựng đơn trong trình duyệt, gửi MỘT lần lên máy chủ; máy chủ tự đọc lại giá từ danh mục và chốt trong một giao dịch. */
 /** Dải thông tin đơn như SalonHero: nguồn đặt lịch, ngày hoá đơn, giờ vào, nhân viên thu ngân, thẻ của khách. */
-function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu, hang }: { thuNgan: string; nguonLich: string; viTri: string; khach: KhachChon | null; coTheTien: boolean; coTheDichVu: boolean; hang: string }) {
+/** "YYYY-MM-DDTHH:MM" theo giờ Việt Nam (giá trị cho ô datetime-local). */
+const gioVNChuoi = (d: Date) => d.toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh", hour12: false }).slice(0, 16).replace(" ", "T");
+function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu, hang, ngayLui, onNgayLui }: { thuNgan: string; nguonLich: string; viTri: string; khach: KhachChon | null; coTheTien: boolean; coTheDichVu: boolean; hang: string; ngayLui: string; onNgayLui: (v: string) => void }) {
   const [vao] = useState(() => new Date());
+  const [suaNgay, setSuaNgay] = useState(false);
   const gio = (d: Date) => d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" });
   const ngay = vao.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
-  const muc: [string, string][] = [["Ngày hoá đơn", `${gio(vao)} ${ngay}`], ["Giờ vào", gio(vao)]];
-  if (nguonLich) muc.unshift(["Đặt lịch từ", nguonLich]);
+  const nhanLui = ngayLui ? `${ngayLui.slice(11, 16)} ${ngayLui.slice(8, 10)}/${ngayLui.slice(5, 7)}/${ngayLui.slice(0, 4)}` : "";
+  const muc: [string, string][] = [["Giờ vào", gio(vao)]];
   if (viTri) muc.push(["Vị trí / chỗ", viTri]);
   if (thuNgan) muc.push(["Nhân viên thu ngân", thuNgan]);
   return (
     <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
+      {nguonLich && <div className="flex gap-1.5"><dt className="text-muc-3">Đặt lịch từ:</dt><dd className="font-medium text-muc">{nguonLich}</dd></div>}
+      {/* SalonHero: "Ngày tạo" có cây bút, chọn ngày + giờ, chỉ lùi không tiến. Doanh thu và tiền thu của đơn ghi về ngày đã chọn. */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <dt className="text-muc-3">Ngày hoá đơn:</dt>
+        {suaNgay ? (
+          <dd className="flex items-center gap-2">
+            <input type="datetime-local" aria-label="Ngày hoá đơn (chỉ lùi)" value={ngayLui || gioVNChuoi(vao)} max={gioVNChuoi(new Date())} onChange={(e) => onNgayLui(e.target.value)} className="h-8 rounded-nho border border-vien-dam px-2 text-[13px]" />
+            <button type="button" className="text-[12px] font-medium text-nhan-dam hover:underline" onClick={() => setSuaNgay(false)}>Xong</button>
+            {ngayLui && <button type="button" className="text-[12px] text-muc-3 hover:underline" onClick={() => { onNgayLui(""); setSuaNgay(false); }}>Bỏ lùi ngày</button>}
+          </dd>
+        ) : (
+          <dd className="flex items-center gap-1 font-medium text-muc">
+            <span className={ngayLui ? "text-canh-bao" : ""}>{ngayLui ? `${nhanLui} (lùi ngày)` : `${gio(vao)} ${ngay}`}</span>
+            <button type="button" aria-label="Sửa ngày hoá đơn" title="Lùi ngày hoá đơn" className="p-1 text-muc-3 hover:text-nhan-dam" onClick={() => setSuaNgay(true)}><Pencil strokeWidth={1.6} className="h-3.5 w-3.5" /></button>
+          </dd>
+        )}
+      </div>
       {muc.map(([n, v]) => <div key={n} className="flex gap-1.5"><dt className="text-muc-3">{n}:</dt><dd className="font-medium text-muc">{v}</dd></div>)}
       {khach && hang && <div><dd className="rounded-tag bg-sac-cam-nen px-2 py-0.5 text-[12px] font-medium text-sac-cam">Hạng {hang}</dd></div>}
       {khach && coTheDichVu && <div><dd className="rounded-tag bg-sac-xanh-nen px-2 py-0.5 text-[12px] font-medium text-sac-xanh">Có thẻ dịch vụ</dd></div>}
@@ -257,6 +277,8 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const [gioVao, setGioVao] = useState("");
   const [gioRa, setGioRa] = useState("");
   const [soKhach, setSoKhach] = useState("1");
+  /** Lùi ngày hoá đơn ("YYYY-MM-DDTHH:MM" giờ VN), trống = lúc chốt. */
+  const [ngayHd, setNgayHd] = useState("");
   const [thu, setThu] = useState<KhoanThu[]>([]);
   /** Tiền khách đưa (chỉ hiển thị để tính tiền thối, không gửi lên máy chủ). */
   const [khachDua, setKhachDua] = useState(0);
@@ -334,7 +356,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
     for (const t of thu) if (t.phuong_thuc === "the_tien" && !t.the_id) return setLoi("Chọn thẻ tiền cho khoản trừ thẻ.");
     for (const t of thu) if (t.phuong_thuc === "vi_dien_tu" && !t.loai_vi) return setLoi("Chọn loại ví cho khoản thu bằng ví điện tử.");
     bat(async () => {
-      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "", gioVao, gioRa, soKhach: Number(soKhach) || 1 }));
+      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong, giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "", gioVao, gioRa, soKhach: Number(soKhach) || 1, ngayHd }));
       if ("loi" in kq && kq.loi) setLoi(kq.loi);
       else if ("id" in kq) {
         if (nhapId) { await xoaNhap(nhapId); onNhap(); }
@@ -359,7 +381,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
           <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
         </div>
         <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
-        <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} />
+        <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} />
         {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} />}
         {diemKhach && (
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>

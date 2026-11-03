@@ -6,6 +6,9 @@ import { sb } from "@/lib/db";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 import { tuyChonLocKhach } from "@/lib/khach-danh-sach";
 import { BieuDoKhachNgay, type DongKhachNgay } from "@/components/khach/BieuDoKhachNgay";
+import { NgayChon } from "@/components/ui/NgayChon";
+import { NUT_PHU } from "@/components/ui/dinh-dang";
+import { congNgay, homNayHCM, ngayVN } from "@/lib/dinh-dang";
 
 type ThongKe = {
   tong: number; gioi_tinh: Record<string, number>; nguon: Record<string, number>; chi_nhanh: Record<string, number>; tinh: { ten: string; so: number }[] | null;
@@ -20,11 +23,12 @@ const docThongKe = unstable_cache(async () => {
 }, ["khach-thong-ke"], { revalidate: 300 });
 
 /** Khách theo ngày 30 ngày gần đây + khách mới trong tuần (hàm thong_ke_khach_ngay, migration 0193), nhớ 5 phút. */
-const docKhachNgay = unstable_cache(async () => {
-  const { data, error } = await sb().rpc("thong_ke_khach_ngay", { p_so_ngay: 30 });
+const docKhachNgay = unstable_cache(async (soNgay: number, den: string) => {
+  const { data, error } = await sb().rpc("thong_ke_khach_ngay", { p_so_ngay: soNgay, ...(den ? { p_den: den } : {}) });
   if (error || !data) throw new Error(`thong_ke_khach_ngay: ${error?.code} ${error?.message}`);
-  return data as unknown as { ngay: DongKhachNgay[]; moi_tuan: number };
-}, ["khach-thong-ke-ngay"], { revalidate: 300 });
+  return data as unknown as { ngay: DongKhachNgay[]; moi_tuan: number; moi_khoang?: number };
+}, ["khach-thong-ke-ngay-2"], { revalidate: 300 });
+const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 
 const TUOI: [string, string][] = [["duoi_18", "Dưới 18"], ["18_24", "18–24"], ["25_34", "25–34"], ["35_44", "35–44"], ["45_54", "45–54"], ["tu_55", "Từ 55"], ["chua_ro", "Chưa có ngày sinh"]];
 const GIOI: Record<string, string> = { "nữ": "Nữ", nam: "Nam", "khác": "Khác", chua_ro: "Chưa rõ" };
@@ -51,9 +55,18 @@ function Khoi({ tieuDe, dong, tong, ghiChu }: { tieuDe: string; dong: { nhan: st
 }
 
 /** /khach-hang/thong-ke — Thống kê khách (như SalonHero): cơ cấu khách theo trạng thái, hạng, giới tính, tuổi, nguồn, chi nhánh, tỉnh; khách mới 12 tháng. */
-export default async function ThongKeKhach() {
+export default async function ThongKeKhach({ searchParams }: { searchParams: Promise<{ tu?: string; den?: string }> }) {
   await yeuCauQuyen("khach.xem");
-  const [t0, { data: cn }, ngay, tc] = await Promise.all([docThongKe().catch((e: Error) => { console.error("[khach-thong-ke]", e.message); return null; }), sb().from("chi_nhanh").select("id, ten"), docKhachNgay().catch((e: Error) => { console.error("[khach-thong-ke-ngay]", e.message); return null; }), tuyChonLocKhach()]);
+  // Khoảng ngày của biểu đồ lượng khách (như SalonHero): mặc định 30 ngày tới hôm nay, tối đa 92 ngày.
+  const sp = await searchParams;
+  const hom = homNayHCM();
+  let den = NGAY.test(sp.den ?? "") && sp.den! <= hom ? sp.den! : hom;
+  let tu = NGAY.test(sp.tu ?? "") ? sp.tu! : congNgay(den, -29);
+  if (tu > den) [tu, den] = [den, tu];
+  if (tu < congNgay(den, -91)) tu = congNgay(den, -91);
+  const soNgay = Math.round((Date.parse(den) - Date.parse(tu)) / 86_400_000) + 1;
+  const macDinh = !sp.tu && !sp.den;
+  const [t0, { data: cn }, ngay, tc] = await Promise.all([docThongKe().catch((e: Error) => { console.error("[khach-thong-ke]", e.message); return null; }), sb().from("chi_nhanh").select("id, ten"), docKhachNgay(soNgay, den === hom ? "" : den).catch((e: Error) => { console.error("[khach-thong-ke-ngay]", e.message); return null; }), tuyChonLocKhach()]);
   const t = t0 ?? ({ tong: 0, gioi_tinh: {}, nguon: {}, chi_nhanh: {}, tinh: [], chua_co_tinh: 0, tuoi: {}, moi_theo_thang: [], trang_thai: {}, hang: {}, co_the: 0, dang_no: 0, co_diem: 0, tong_diem: 0 } as ThongKe);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const sap = (o: Record<string, number>) => Object.entries(o ?? {}).sort((a, b) => b[1] - a[1]);
@@ -71,7 +84,13 @@ export default async function ThongKeKhach() {
         <div className="rounded-nho border border-vien bg-giay-sang px-3 py-2"><dt className="text-[12px] text-muc-3">Khách mới trong tuần <span className="text-muc-3">(hồ sơ tạo 7 ngày gần nhất)</span></dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{so(ngay?.moi_tuan ?? 0)}</dd></div>
       </dl>
       <section className="rounded-the border border-vien bg-giay-sang p-4">
-        <h2 className="mb-3 text-[15px] font-semibold text-muc">Lượng khách hàng ngày <span className="font-normal text-muc-3">· 30 ngày gần đây, tính theo hoá đơn hoàn thành</span></h2>
+        <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
+          <h2 className="text-[15px] font-semibold text-muc">Lượng khách hàng ngày <span className="font-normal text-muc-3">· {macDinh ? "30 ngày gần đây" : `${ngayVN(tu)} – ${ngayVN(den)}`}, tính theo hoá đơn hoàn thành{ngay?.moi_khoang != null ? ` · ${so(ngay.moi_khoang)} hồ sơ mới trong khoảng` : ""}</span></h2>
+          <form method="get" className="flex flex-wrap items-end gap-2 text-[13px]" aria-label="Chọn khoảng ngày">
+            <NgayChon ten="tu" giaTriMacDinh={tu} tuNam={2015} ariaLabel="Từ ngày" className="w-36" /><span aria-hidden className="pb-2 text-muc-3">–</span><NgayChon ten="den" giaTriMacDinh={den} tuNam={2015} ariaLabel="Đến ngày" className="w-36" />
+            <button type="submit" className={NUT_PHU}>Xem</button>
+          </form>
+        </div>
         {ngay ? <BieuDoKhachNgay dong={ngay.ngay} /> : <p role="alert" className="text-[13px] text-loi">Chưa tải được biểu đồ (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
       </section>
       {!t0 && <p role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Chưa tải được các số liệu cơ cấu bên dưới (hệ thống đang chậm). Tải lại trang sau ít phút để thử lại.</p>}

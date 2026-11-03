@@ -22,13 +22,19 @@ export async function guiChoNhanVien(nhanVienIds: string[], tin: Tin): Promise<K
   if (ids.length === 0 || !cauHinh()) return ra;
   try {
     const db = sb();
-    const { data: ds } = await db.from("dang_ky_thong_bao").select("id, endpoint, p256dh, auth").in("nhan_vien_id", ids);
+    const [{ data: ds }, { data: imLang }] = await Promise.all([
+      db.from("dang_ky_thong_bao").select("id, endpoint, p256dh, auth, nhan_vien_id").in("nhan_vien_id", ids),
+      db.from("nhan_vien").select("id").in("id", ids).eq("tat_tieng_thong_bao", true),
+    ]);
     ra.thietBi = ds?.length ?? 0;
-    const goi = JSON.stringify({ tieuDe: tin.tieuDe.slice(0, 80), noiDung: tin.noiDung.slice(0, 420), url: tin.url, tag: tin.tag });
+    // Người đã bấm "Tắt tiếng" ở chuông: thông báo vẫn tới thiết bị của họ nhưng không kêu/không rung (chỉ áp cho chính họ).
+    const tatTieng = new Set((imLang ?? []).map((n) => n.id));
+    const goiTin = (im: boolean) => JSON.stringify({ tieuDe: tin.tieuDe.slice(0, 80), noiDung: tin.noiDung.slice(0, 420), url: tin.url, tag: tin.tag, ...(im ? { imLang: true } : {}) });
+    const goi = goiTin(false), goiIm = goiTin(true);
     const hong: string[] = [], tot: string[] = [];
     await Promise.all((ds ?? []).map(async (d) => {
       try {
-        await webpush.sendNotification({ endpoint: d.endpoint, keys: { p256dh: d.p256dh, auth: d.auth } }, goi, { TTL: 60 * 60 * 12, urgency: "normal" });
+        await webpush.sendNotification({ endpoint: d.endpoint, keys: { p256dh: d.p256dh, auth: d.auth } }, tatTieng.has(d.nhan_vien_id) ? goiIm : goi, { TTL: 60 * 60 * 12, urgency: "normal" });
         tot.push(d.id);
       } catch (e) {
         const ma = (e as { statusCode?: number }).statusCode;

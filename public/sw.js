@@ -31,12 +31,14 @@ self.addEventListener("fetch", (e) => {
   }
 });
 
-/* Thông báo đẩy: máy chủ gửi {tieuDe, noiDung, url, tag}. Chạm vào thì mở/tập trung vào AMIA đúng trang. */
+/* Thông báo đẩy: máy chủ gửi {tieuDe, noiDung, url, tag, imLang}. imLang = người nhận đã bấm "Tắt tiếng" ở chuông: hiện thông báo không kêu, không rung.
+ * Chạm vào thì mở/tập trung vào AMIA đúng trang. */
 self.addEventListener("push", (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch { d = { noiDung: e.data ? e.data.text() : "" }; }
   e.waitUntil(self.registration.showNotification(d.tieuDe || "AMIA OS", {
-    body: d.noiDung || "", icon: "/icon-192.png", badge: "/icon-192.png", tag: d.tag || undefined, renotify: !!d.tag,
+    body: d.noiDung || "", icon: "/icon-192.png", badge: "/icon-192.png", tag: d.tag || undefined, renotify: !!d.tag && !d.imLang,
+    silent: !!d.imLang, ...(d.imLang ? {} : { vibrate: [120, 60, 120] }),
     data: { url: d.url || "/trang-chu" },
   }));
 });

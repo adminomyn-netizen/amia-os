@@ -7617,6 +7617,7 @@ export type Database = {
           quyen_rieng: string[] | null
           sh_id: number | null
           tao_luc: string
+          tat_tieng_thong_bao: boolean
           trang_thai_lam: string
           user_id: string | null
           vai_tro: string
@@ -7651,6 +7652,7 @@ export type Database = {
           quyen_rieng?: string[] | null
           sh_id?: number | null
           tao_luc?: string
+          tat_tieng_thong_bao?: boolean
           trang_thai_lam?: string
           user_id?: string | null
           vai_tro: string
@@ -7685,6 +7687,7 @@ export type Database = {
           quyen_rieng?: string[] | null
           sh_id?: number | null
           tao_luc?: string
+          tat_tieng_thong_bao?: boolean
           trang_thai_lam?: string
           user_id?: string | null
           vai_tro?: string

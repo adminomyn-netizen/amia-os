@@ -143,7 +143,7 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
         <div className="absolute right-0 top-full z-50 mt-2.5 w-[380px] max-sm:fixed max-sm:inset-x-3 max-sm:top-[60px] max-sm:mt-0 max-sm:w-auto">
         <div role="menu" aria-label="Thông báo" className="the-noi the-noi-thap vao overflow-hidden">
           <div className="flex items-center justify-between gap-2 px-5 pb-2 pt-5">
-            <span className="min-w-0 text-[15px] font-semibold text-muc">Việc đang chờ{n ? ` (${n} chưa đọc)` : ""}</span>
+            <span className="flex min-w-0 items-center gap-2 whitespace-nowrap text-[15px] font-semibold text-muc">Việc đang chờ{n > 0 && <span className="bg-loi-nen px-2 text-[11.5px] font-semibold leading-[20px] text-loi" style={{ borderRadius: 10 }}>{n} mới</span>}</span>
             <div className="flex shrink-0 items-center gap-3">
               {n > 0 && <button type="button" onClick={() => thaoTac("doc_het")} className="flex items-center gap-1 text-[13px] font-medium text-nhan-dam hover:underline"><Check strokeWidth={2} className="h-3.5 w-3.5" aria-hidden />Đọc hết</button>}
               <button type="button" onClick={doiTatTieng} aria-pressed={tatTieng} title={tatTieng ? "Đang tắt tiếng: bấm để bật lại âm/rung" : "Tắt âm và rung thông báo trên thiết bị của bạn"}

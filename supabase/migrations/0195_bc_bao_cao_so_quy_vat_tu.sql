@@ -25,15 +25,22 @@ $$;
 create or replace function public.bc_hoa_hong_nv_nhom(p_tu date, p_den date, p_cn uuid default null)
 returns table (nhan_vien_id uuid, nhom text, so_dong int, doanh_so bigint, hoa_hong bigint)
 language sql stable as $$
+  -- doanh_so tính như báo cáo Theo nhân viên (bc_nhan_vien_sh, 0117) và màn Hoa hồng nhân viên của SalonHero: dịch vụ làm bằng thẻ lấy giá một buổi của thẻ;
+  -- hoa_hong giữ NGUYÊN công thức của bc_nhan_vien (0087), tính trên doanh số hoá đơn (dòng dịch vụ làm bằng thẻ có doanh số hoá đơn = 0).
   select c.nhan_vien_id,
          case when c.vai = 'tu_van' then 'tu_van'
               when c.vai = 'phuc_vu' and v.loai = 'dich_vu' then 'dich_vu'
               when c.vai = 'ban' and v.loai = 'san_pham' then 'san_pham'
               when c.vai = 'ban' and v.loai = 'goi_the' then 'ban_the'
               else 'khac' end,
-         count(*)::int, round(sum(v.doanh_so * c.ti_le / 100))::bigint,
+         count(*)::int,
+         round(sum(c.ti_le / 100 * (case when d.the_khach_sh_id is not null and coalesce(t.so_buoi_tong, 0) > 0 and v.loai = 'dich_vu'
+                                          then v.so_luong * t.tong_tien::numeric / t.so_buoi_tong else v.doanh_so end)))::bigint,
          round(sum(c.ti_le / 100 * public.hh_tinh(v.doanh_so, v.so_luong, v.loai, c.vai, v.muc_id, c.nhan_vien_id)))::bigint
-    from public.dong_nhan_vien c join public.v_doanh_so_dong v on v.dong_id = c.dong_id
+    from public.dong_nhan_vien c
+    join public.v_doanh_so_dong v on v.dong_id = c.dong_id
+    join public.hoa_don_dong d on d.id = v.dong_id
+    left join public.the_khach t on t.sh_id = d.the_khach_sh_id
    where v.ngay_hd between p_tu and p_den and (p_cn is null or v.chi_nhanh_id = p_cn)
    group by 1, 2
 $$;
@@ -43,11 +50,13 @@ returns table (hoa_don_id uuid, ma_hd text, ngay_hd date, khach text, ten_dong t
 language sql stable as $$
   with l as (
     select h.id as hoa_don_id, coalesce(h.sh_ma, h.ma) as ma_hd, v.ngay_hd, coalesce(k.ho_ten, 'Khách lẻ') as khach, v.ten as ten_dong, v.loai, c.vai, v.so_luong,
-           round(v.doanh_so * c.ti_le / 100)::bigint as doanh_so,
+           round(c.ti_le / 100 * (case when d.the_khach_sh_id is not null and coalesce(t.so_buoi_tong, 0) > 0 and v.loai = 'dich_vu' then v.so_luong * t.tong_tien::numeric / t.so_buoi_tong else v.doanh_so end))::bigint as doanh_so,
            round(c.ti_le / 100 * public.hh_tinh(v.doanh_so, v.so_luong, v.loai, c.vai, v.muc_id, c.nhan_vien_id))::bigint as hoa_hong
       from public.dong_nhan_vien c
       join public.v_doanh_so_dong v on v.dong_id = c.dong_id
       join public.hoa_don h on h.id = v.hoa_don_id
+      join public.hoa_don_dong d on d.id = v.dong_id
+      left join public.the_khach t on t.sh_id = d.the_khach_sh_id
       left join public.khach_hang k on k.id = h.khach_id
      where c.nhan_vien_id = p_nv and v.ngay_hd between p_tu and p_den and (p_cn is null or v.chi_nhanh_id = p_cn))
   select l.*, count(*) over () from l order by l.ngay_hd desc, l.ma_hd, l.ten_dong limit greatest(p_gioi_han, 1)

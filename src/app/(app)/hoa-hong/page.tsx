@@ -1,10 +1,14 @@
+import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { docHet } from "@/lib/xuat-excel";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
-import { tienVN } from "@/lib/dinh-dang";
+import { boDau, tienVN } from "@/lib/dinh-dang";
+import { HangChiSo } from "@/components/ui/HangChiSo";
+import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
+import { NutTinhLai } from "@/components/hoa-hong/NutTinhLai";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
@@ -19,7 +23,7 @@ const LOAI = [{ gia_tri: "dich_vu", nhan: "Dịch vụ" }, { gia_tri: "san_pham"
 const VAI = [{ gia_tri: "phuc_vu", nhan: "Phục vụ" }, { gia_tri: "tu_van", nhan: "Tư vấn" }, { gia_tri: "ban", nhan: "Bán hàng" }, { gia_tri: "gioi_thieu", nhan: "Giới thiệu" }];
 const nhan = (lc: { gia_tri: string; nhan: string }[], v: string) => lc.find((x) => x.gia_tri === v)?.nhan ?? v;
 
-export default async function TrangHoaHong({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string }> }) {
+export default async function TrangHoaHong({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; q?: string }> }) {
   const nd = await yeuCauQuyen("baocao.tien");
   const sp = await searchParams;
   const tab = sp.tab === "ti-le" ? "ti-le" : "bang";
@@ -29,17 +33,50 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
   const cn = nd.chiNhanhId ?? (sp.cn || undefined);
   let noiDung: React.ReactNode;
   if (tab === "bang") {
-    const [{ data }, { data: nv }] = await Promise.all([db.rpc("bc_nhan_vien", { p_tu: tu, p_den: den, p_cn: cn as string }), db.from("nhan_vien").select("id, ho_ten")]);
-    const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
-    const theo = new Map<string, { id: string; ds: number; hh: number; chiTiet: string[] }>();
-    for (const r of data ?? []) { const g = theo.get(r.nhan_vien_id) ?? { id: r.nhan_vien_id, ds: 0, hh: 0, chiTiet: [] }; g.ds += Number(r.doanh_so); g.hh += Number(r.hoa_hong); g.chiTiet.push(`${nhan(VAI, r.vai)} ${tienVN(r.hoa_hong)}`); theo.set(r.nhan_vien_id, g); }
-    const ds = [...theo.values()].sort((a, b) => b.hh - a.hh);
-    noiDung = (
+    const [{ data, error: loiHh }, { data: nv }, { data: dsCn }] = await Promise.all([db.rpc("bc_hoa_hong_nv_nhom", { p_tu: tu, p_den: den, p_cn: cn as string }), db.from("nhan_vien").select("id, ho_ten, chuc_danh"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
+    const nvMap = new Map((nv ?? []).map((n) => [n.id, n]));
+    type Nhom = { so: number; ds: number; hh: number };
+    const theo = new Map<string, { id: string; nhom: Record<string, Nhom>; tong: number }>();
+    for (const r of data ?? []) {
+      const g = theo.get(r.nhan_vien_id) ?? { id: r.nhan_vien_id, nhom: {}, tong: 0 };
+      g.nhom[r.nhom] = { so: r.so_dong, ds: Number(r.doanh_so), hh: Number(r.hoa_hong) }; g.tong += Number(r.hoa_hong); theo.set(r.nhan_vien_id, g);
+    }
+    const tuKhoa = boDau((sp.q ?? "").trim());
+    const ds = [...theo.values()].filter((g) => !tuKhoa || boDau(nvMap.get(g.id)?.ho_ten ?? "").includes(tuKhoa)).sort((a, b) => b.tong - a.tong || (nvMap.get(a.id)?.ho_ten ?? "").localeCompare(nvMap.get(b.id)?.ho_ten ?? "", "vi"));
+    const o = (g: (typeof ds)[number], k: string): Nhom => g.nhom[k] ?? { so: 0, ds: 0, hh: 0 };
+    const coKhac = ds.some((g) => o(g, "khac").ds !== 0 || o(g, "khac").hh !== 0);
+    const tongHh = ds.reduce((t, g) => t + g.tong, 0), tongDs = ds.reduce((t, g) => t + Object.values(g.nhom).reduce((x, y) => x + y.ds, 0), 0);
+    const hienDs = (g: (typeof ds)[number], k: string) => <span className="block"><span className="tabular-nums">{tienVN(o(g, k).ds)}</span><span className="block text-[12px] text-muc-3">Số lượng: {o(g, k).so}</span></span>;
+    const nutChiTiet = (g: (typeof ds)[number]) => <Link href={`/hoa-hong/chi-tiet?nv=${g.id}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="text-[13px] font-medium text-nhan-dam underline-offset-4 hover:underline">Chi tiết</Link>;
+    const cotNhom = [["tu_van", "tư vấn"], ["dich_vu", "d.vụ"], ["san_pham", "s.phẩm"], ["ban_the", "bán thẻ"]].flatMap(([k, t]) => [
+      { nhan: `Doanh số ${t}`, phai: true, hienThi: (g: (typeof ds)[number]) => hienDs(g, k) }, { nhan: `Hoa hồng ${t}`, phai: true, hienThi: (g: (typeof ds)[number]) => tienVN(o(g, k).hh) },
+    ]);
+    if (loiHh) console.error("[hoa-hong]", loiHh.message);
+    noiDung = loiHh ? (
       <>
-        <LocBaoCao goc="/hoa-hong" tu={tu} den={den} />
+        <LocBaoCao goc="/hoa-hong" tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />
+        <div role="alert" className="rounded-nho bg-loi-nen px-3.5 py-3 text-[14px] text-loi">Chưa tính được hoa hồng vì hệ thống đang chậm (không phải do chưa có doanh số). Chờ vài giây rồi bấm tải lại, hoặc chọn khoảng ngày ngắn hơn.</div>
+        <div className="mt-3"><NutTinhLai /></div>
+      </>
+    ) : (
+      <>
+        <LocBaoCao goc="/hoa-hong" tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <form method="get" action="/hoa-hong" className="flex flex-wrap gap-2">
+            <input type="hidden" name="tu" value={tu} /><input type="hidden" name="den" value={den} />{sp.cn && <input type="hidden" name="cn" value={sp.cn} />}
+            <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm nhân viên" aria-label="Tìm nhân viên" className={`${O_NHAP} w-60`} />
+            <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
+          </form>
+          <NutTinhLai />
+        </div>
+        <HangChiSo muc={[{ nhan: "Tổng hoa hồng", so: tienVN(tongHh), ghiChu: tongHh === 0 ? "chưa cài tỉ lệ nào nên đang tính 0" : undefined }, { nhan: "Tổng doanh số có gán người hưởng", so: tienVN(tongDs) }]} />
+        <div className="mt-6" />
         <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có doanh số nào có gán người hưởng trong khoảng này."
-          cot={[{ nhan: "Nhân viên", hienThi: (r) => <span className="text-muc">{tenNv.get(r.id)}</span> }, { nhan: "Doanh số", hienThi: (r) => tienVN(r.ds), phai: true }, { nhan: "Theo vai", hienThi: (r) => r.chiTiet.join(" · ") }, { nhan: "Hoa hồng", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.hh)}</span>, phai: true }]} />
-        <p className="mt-3 text-[12px] text-muc-3">Hoa hồng tạm tính theo tỉ lệ đang cài. Mục chưa cài tỉ lệ tính 0. Phí thực hiện theo buổi cho Chuyên viên trị liệu và hoa hồng giới thiệu chưa có trong bản này.</p>
+          cot={[{ nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="block"><span className="text-muc">{nvMap.get(r.id)?.ho_ten}</span><span className="block text-[12px] text-muc-3">{nvMap.get(r.id)?.chuc_danh ?? ""}</span></span> },
+            ...cotNhom,
+            ...(coKhac ? [{ nhan: "Doanh số khác", phai: true, hienThi: (g: (typeof ds)[number]) => hienDs(g, "khac") }, { nhan: "Hoa hồng khác", phai: true, hienThi: (g: (typeof ds)[number]) => tienVN(o(g, "khac").hh) }] : []),
+            { nhan: "Tổng hoa hồng", phai: true, hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.tong)}</span> }, { nhan: "", hienThi: nutChiTiet }]} />
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Hoa hồng tạm tính theo tỉ lệ đang cài (mục chưa cài tỉ lệ tính 0). Doanh số dịch vụ làm bằng thẻ tính theo giá một buổi của thẻ (như SalonHero), còn hoa hồng vẫn tính trên doanh số hoá đơn, nơi dòng dịch vụ làm bằng thẻ bằng 0 nên chưa sinh hoa hồng — cách tính hoa hồng cho buổi làm bằng thẻ cần chị Lâm quyết. Doanh số tư vấn = các dòng đứng vai Tư vấn; dịch vụ = vai Phục vụ ở dòng dịch vụ; sản phẩm / bán thẻ = vai Bán hàng ở dòng sản phẩm / thẻ. “Tính lại hoa hồng” chỉ tải lại số: AMIA tính trực tiếp từ hoá đơn mỗi lần mở trang nên không có số cũ lưu sẵn. Phí thực hiện theo buổi cho chuyên viên trị liệu, hoa hồng giới thiệu và chấm điểm dịch vụ chưa có ở bản này.</p>
       </>
     );
   } else {

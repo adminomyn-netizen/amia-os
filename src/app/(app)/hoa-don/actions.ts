@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
@@ -116,6 +117,23 @@ export async function luuDanhGia(json: string): Promise<KQ> {
 }
 
 /** "Điều chỉnh nợ" (SalonHero modify_debt, hiện chữ "Xoá nợ"): đặt số nợ mới nhỏ hơn nợ hiện tại, bắt lý do. Chỉ Chủ (no.xoa). Không vào sổ quỹ. */
+/** Sửa hoá đơn đã chốt (SalonHero nút "Sửa", quyền pos.update): DB ghi dòng đảo khoản thu / thẻ / kho rồi đưa về nháp; mở Thu ngân để sửa và chốt lại (giữ mã, giữ ngày). */
+export async function moLaiHoaDon(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("ban.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "hoa_don_id");
+  const db = sb();
+  const { data: h } = await db.from("hoa_don").select("chi_nhanh_id").eq("id", id).maybeSingle();
+  if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy hoá đơn." };
+  const lyDo = chuoi(fd, "ly_do").trim();
+  if (!lyDo) return { loi: "Ghi lý do sửa hoá đơn." };
+  const { error } = await db.rpc("mo_lai_hoa_don", { p_id: id, p_ly_do: lyDo.slice(0, 500), p_nguoi: nd.nhanVienId });
+  revalidatePath(`/hoa-don/${id}`);
+  revalidatePath("/hoa-don");
+  if (error) return { loi: thongBaoLoi(error) };
+  redirect(`/ban-hang?sua=${id}`);
+}
+
 export async function dieuChinhNo(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("no.xoa");
   if (!nd) return { loi: KHONG_DU_QUYEN };

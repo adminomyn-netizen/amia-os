@@ -112,7 +112,11 @@ export type DonBan = {
   gioVao?: string; gioRa?: string; soKhach?: number;
   /** Lùi ngày hoá đơn (SalonHero "Ngày tạo" có cây bút, chỉ lùi): "YYYY-MM-DDTHH:MM" giờ Việt Nam. Trống = lúc chốt. */
   ngayHd?: string;
+  /** Sửa hoá đơn đã chốt (đã mở lại về nháp bằng mo_lai_hoa_don): chốt lại vào CHÍNH hoá đơn này, giữ mã + ngày. */
+  hoaDonId?: string;
 };
+/** Hoá đơn đang sửa mở ở Thu ngân (?sua=): phần đầu đơn điền sẵn từ hoá đơn cũ. */
+export type SuaHoaDon = { id: string; ma: string; ngayHd: string; giamDon: number; vatPct: number; phuPhi: number; tip: number; ghiChu: string; gioVao: string; gioRa: string; soKhach: number };
 /** Kiểm ngày hoá đơn lùi: đúng định dạng, không ở tương lai (so với `bayGio`). Trả ngày (YYYY-MM-DD) + mốc ISO; trống thì null (dùng giờ chốt). */
 export function kiemNgayLui(s: string | null | undefined, bayGio: Date = new Date()): { ok: true; lui: null } | { ok: true; lui: { ngay: string; iso: string } } | { ok: false; loi: string } {
   if (!s) return { ok: true, lui: null };

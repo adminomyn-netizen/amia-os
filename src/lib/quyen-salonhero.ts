@@ -21,6 +21,7 @@ export const QUYEN_TU_SH: Partial<Record<Quyen, string[]>> = {
   "ban.xem": ["pos.read"],
   "ban.tao": ["pos.create"],
   "ban.huy": ["pos.void", "pos.delete"],
+  "ban.sua": ["pos.update"],  // Sửa hoá đơn đã chốt = về nháp (SalonHero nút "Sửa": quản lý, kế toán, nhà đầu tư, chủ — câu 4, 03/11/2026)
   "ban.giamgia": ["pos.discount.update"],
   "ban.sua_khoa": ["pos.editLockedOrder.update"],
   "ban.toan_co_so": ["pos.readByLoc.read"],

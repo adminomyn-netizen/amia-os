@@ -63,6 +63,14 @@ try {
     return ev(`(() => { const o = [...document.querySelectorAll('[role=option]')].find((x) => x.textContent.trim() === ${J(nhan)}); if (!o) return false; o.click(); return true; })()`);
   };
   const nutTheoNhan = (nhan) => `(() => { const l = [...document.querySelectorAll('[role=dialog] label')].find((x) => x.textContent.replace('*', '').trim().startsWith(${J(nhan)})); return l ? document.getElementById(l.htmlFor) : null; })()`;
+  // Bấm nút mở hộp thoại rồi chờ hộp hiện; bấm sớm trước khi trang nạp xong JS thì không mở — thử lại tối đa 3 lần.
+  const moHop = async (text) => {
+    const nut = `[...document.querySelectorAll('button')].filter((x) => x.textContent.trim() === ${J(text)}).pop()`;
+    // chờ nút đã gắn React (trang nạp xong JS) rồi mới bấm
+    if (!(await cho(`(() => { const b = ${nut}; return !!b && Object.keys(b).some((k) => k.startsWith("__reactProps")); })()`, 30000))) return false;
+    for (let i = 0; i < 2; i++) { await ev(`${nut}.click()`); if (await cho(`!!document.querySelector('[role=dialog]')`, 15000)) return true; }
+    return false;
+  };
   const luuHop = async (nhanLuu) => { await bam(nhanLuu, true); await cho(`!document.querySelector('[role=dialog]') || !!document.querySelector('[role=dialog] [role=alert]')`, 20000); await doi(1500); return ev(`document.querySelector('[role=dialog] [role=alert]')?.textContent ?? ""`); };
   await c.gui("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false });
 
@@ -111,7 +119,7 @@ try {
   // ───── Câu 3: thu nợ bằng ví ZaloPay trên trang hoá đơn ─────
   await di(`/hoa-don/${hdId}`);
   kiem("Trang hoá đơn hiện 'Ví điện tử · Momo' + số phiếu PT", (await chu()).includes("Ví điện tử · Momo") && /PT\d{6}/.test(await chu()));
-  await bam("Thu nợ"); await cho(`!!document.querySelector('[role=dialog]')`);
+  kiem("Mở hộp Thu nợ", await moHop("Thu nợ"));
   await chonO(nutTheoNhan("Phương thức"), "Ví điện tử"); await doi(300);
   kiem("Hộp thu nợ: chọn ví ZaloPay", await chonO(nutTheoNhan("Loại ví"), "Zalo Pay"));
   await go(`document.getElementById([...document.querySelectorAll('[role=dialog] label')].find((x) => x.textContent.startsWith("Số tiền thu")).htmlFor)`, "50000");
@@ -127,7 +135,7 @@ try {
   }
   // Điều chỉnh nợ (chỉ Chủ): nợ 150.000 → 50.000.
   await di(`/hoa-don/${hdId}`);
-  kiem("Chủ thấy nút Điều chỉnh nợ", await bam("Điều chỉnh nợ")); await cho(`!!document.querySelector('[role=dialog]')`);
+  kiem("Chủ thấy nút Điều chỉnh nợ", await moHop("Điều chỉnh nợ"));
   await go(`document.getElementById([...document.querySelectorAll('[role=dialog] label')].find((x) => x.textContent.startsWith("Số nợ mới")).htmlFor)`, "50000");
   const l2a = await luuHop("Lưu điều chỉnh"); kiem("Thiếu lý do thì báo lỗi", /lý do/i.test(l2a), l2a);
   if (await ev(`!!document.querySelector('[role=dialog]')`)) {
@@ -141,8 +149,8 @@ try {
   kiem("Lịch sử nợ: Xoá nợ + Trả nợ, chỉ 1 nút Huỷ", t3.includes("Lịch sử nợ") && t3.includes("Xoá nợ") && t3.includes("Trả nợ") && (await ev(`[...document.querySelectorAll('button')].filter((b) => b.textContent.trim() === "Huỷ").length`)) === 1);
   await chup("3-lich-su-no");
   // Huỷ dòng cuối (xoá nợ) rồi huỷ lần trả nợ.
-  await bam("Huỷ"); await cho(`!!document.querySelector('[role=dialog]')`); const l3 = await luuHop("Huỷ dòng này"); kiem("Huỷ lần xoá nợ", !l3, l3);
-  await di(`/hoa-don/${hdId}`); await bam("Huỷ"); await cho(`!!document.querySelector('[role=dialog]')`); const l4 = await luuHop("Huỷ dòng này"); kiem("Huỷ lần trả nợ Zalo Pay", !l4, l4);
+  kiem("Mở hộp Huỷ dòng cuối", await moHop("Huỷ")); const l3 = await luuHop("Huỷ dòng này"); kiem("Huỷ lần xoá nợ", !l3, l3);
+  await di(`/hoa-don/${hdId}`); kiem("Mở hộp Huỷ dòng cuối", await moHop("Huỷ")); const l4 = await luuHop("Huỷ dòng này"); kiem("Huỷ lần trả nợ Zalo Pay", !l4, l4);
   const no3 = (await db.from("hoa_don").select("con_no, no_da_xoa, da_thu").eq("id", hdId).single()).data;
   const { data: dao } = await db.from("thanh_toan").select("ngay, phuong_thuc, loai_vi, so_tien, dao_cua_id").eq("hoa_don_id", hdId).eq("loai", "hoan");
   kiem("DB: nợ về 200.000; dòng hoàn đảo đúng ví ZALO, cùng ngày", Number(no3.con_no) === 200000 && Number(no3.no_da_xoa) === 0 && dao?.length === 1 && dao[0].loai_vi === "ZALO" && dao[0].dao_cua_id === tn?.[0]?.id, J({ no3, dao }));
@@ -162,7 +170,7 @@ try {
   // ───── Câu 4 (cờ --sua): Sửa hoá đơn đã chốt ─────
   if (SUA) {
     await di(`/hoa-don/${hdId}`);
-    kiem("Có nút Sửa hoá đơn", await bam("Sửa hoá đơn")); await cho(`!!document.querySelector('[role=dialog]')`);
+    kiem("Có nút Sửa hoá đơn", await moHop("Sửa hoá đơn"));
     await go(`document.getElementById([...document.querySelectorAll('[role=dialog] label')].find((x) => x.textContent.startsWith("Lý do sửa")).htmlFor)`, "[THỬ-TN] sửa giá");
     await bam("Mở lại để sửa", true);
     await cho(`location.pathname === "/ban-hang" || !!document.querySelector('[role=dialog] [role=alert]')`, 30000);
@@ -177,9 +185,12 @@ try {
     await bam("Thêm khoản thu"); await doi(300);
     await go(`[...document.querySelectorAll('[aria-label="Số tiền thu"]')].pop()`, "300000"); await doi(300);
     await ev(`[...document.querySelectorAll('button')].find((b) => b.textContent.startsWith("Chốt đơn")).click()`);
-    await cho(`location.pathname.startsWith("/hoa-don/") || !!document.querySelector('[role=alert]')`, 40000);
-    const lc = await ev(`location.pathname.startsWith("/hoa-don/") ? "" : document.querySelector('[role=alert]')?.textContent ?? "?"`);
-    kiem("Chốt lại đơn đã sửa", !lc, lc);
+    let xong = false;
+    for (let i = 0; i < 160 && !xong; i++) { await doi(250); xong = (await db.from("hoa_don").select("trang_thai").eq("id", hdId).single()).data?.trang_thai === "hoan_thanh"; if (!xong && await ev(`!!document.querySelector('[role=tabpanel]:not([hidden]) [role=alert]')`)) break; }
+    const lc = xong ? "" : await ev(`document.querySelector('[role=tabpanel]:not([hidden]) [role=alert]')?.textContent ?? "?"`);
+    kiem("Chốt lại đơn đã sửa", xong, lc);
+    const { data: tt5 } = await db.from("thanh_toan").select("loai, so_tien, ngay, dao_cua_id, phuong_thuc, loai_vi").eq("hoa_don_id", hdId).order("so_phieu");
+    kiem("Khoản thu cũ (Momo 100.000) đảo cùng ngày 20/10; khoản mới 300.000 ghi ngày 20/10", tt5.some((x) => x.loai === "hoan" && x.loai_vi === "MOMO" && x.ngay === "2026-10-20" && x.dao_cua_id) && tt5.some((x) => x.loai === "thu" && x.so_tien === 300000 && x.ngay === "2026-10-20"), J(tt5));
     const h5 = (await db.from("hoa_don").select("id, ma, trang_thai, ngay_hd, con_no, da_thu").eq("id", hdId).single()).data;
     kiem("Cùng mã, cùng ngày 20/10, hoàn thành, đã thu 300.000", h5.ma === h1.ma && h5.trang_thai === "hoan_thanh" && h5.ngay_hd === "2026-10-20" && Number(h5.da_thu) === 300000 && Number(h5.con_no) === 0, J(h5));
   }

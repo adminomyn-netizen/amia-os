@@ -4,15 +4,15 @@ import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Pos } from "@/components/ban-hang/Pos";
-import { hienThuNgan, type DongDon, type MucBan, type TaiKhoanNhan } from "@/lib/ban-hang";
+import { hienThuNgan, type DongDon, type MucBan, type SuaHoaDon, type TaiKhoanNhan } from "@/lib/ban-hang";
 import { chotDonBanHang, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap } from "./actions";
 
 import { nhanNguon } from "@/lib/lich-hen";
 import { homNayHCM } from "@/lib/dinh-dang";
 
-export default async function TrangBanHang({ searchParams }: { searchParams: Promise<{ khach?: string; lich?: string }> }) {
+export default async function TrangBanHang({ searchParams }: { searchParams: Promise<{ khach?: string; lich?: string; sua?: string }> }) {
   const nd = await yeuCauQuyen("ban.tao");
-  const { khach: khachId, lich: lichId } = await searchParams;
+  const { khach: khachId, lich: lichId, sua: suaId } = await searchParams;
   const db = sb();
   // Đếm "Chờ thanh toán" như SalonHero: hoá đơn đã chốt còn nợ. Cùng luật xem với trang Hoá đơn (khoá chi nhánh; không có quyền toàn cơ sở thì chỉ đơn mình lập).
   let qNo = db.from("hoa_don").select("id", { count: "exact", head: true }).eq("trang_thai", "hoan_thanh").gt("con_no", 0);
@@ -61,6 +61,29 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
       }));
     }
   }
+  // Sửa hoá đơn đã chốt (?sua=): chỉ hoá đơn đã được mở lại về nháp (mo_lai_hoa_don); dòng hàng + người hưởng + phần đầu đơn điền sẵn từ hoá đơn cũ.
+  // Đơn giá cũ chỉ giữ khi mục bật "Sửa giá khi thanh toán"; không thì lấy giá danh mục hiện tại (máy chủ cũng chỉ nhận giá danh mục).
+  let suaHd: SuaHoaDon | null = null;
+  if (suaId && /^[0-9a-f-]{36}$/i.test(suaId)) {
+    const { data: hs } = await db.from("hoa_don").select("id, ma, chi_nhanh_id, khach_id, lich_hen_id, trang_thai, mo_lai_luc, la_lich_su, ngay_hd, giam_gia_don, vat_pct, phu_phi, tip, ghi_chu, gio_vao, gio_ra, so_khach").eq("id", suaId).maybeSingle();
+    if (hs && hs.trang_thai === "nhap" && hs.mo_lai_luc && !hs.la_lich_su && (!nd.chiNhanhId || hs.chi_nhanh_id === nd.chiNhanhId)) {
+      const [{ data: dd }, { data: kh }] = await Promise.all([
+        db.from("hoa_don_dong").select("id, loai, dich_vu_id, goi_id, san_pham_id, so_luong, don_gia, giam_gia, tao_luc, dong_nhan_vien(nhan_vien_id, vai, ti_le)").eq("hoa_don_id", hs.id).order("tao_luc"),
+        hs.khach_id ? db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", hs.khach_id).maybeSingle() : Promise.resolve({ data: null }),
+      ]);
+      const gioHHMM = (t: string | null) => (t ? new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" }) : "");
+      suaHd = { id: hs.id, ma: hs.ma, ngayHd: hs.ngay_hd, giamDon: Number(hs.giam_gia_don), vatPct: Number(hs.vat_pct), phuPhi: Number(hs.phu_phi), tip: Number(hs.tip), ghiChu: hs.ghi_chu ?? "", gioVao: gioHHMM(hs.gio_vao), gioRa: gioHHMM(hs.gio_ra), soKhach: hs.so_khach ?? 1 };
+      khach = kh; lichDung = hs.lich_hen_id; cnLich = hs.chi_nhanh_id;
+      dongBanDau = (dd ?? []).flatMap((d) => {
+        const ref = d.dich_vu_id ?? d.goi_id ?? d.san_pham_id;
+        const m = muc.find((x) => x.loai === d.loai && x.id === ref);
+        if (!ref || !m) return [];
+        const nvDong = (d.dong_nhan_vien ?? []) as { nhan_vien_id: string; vai: string; ti_le: number }[];
+        const nvVai = (vai: string) => nvDong.filter((x) => x.vai === vai).map((x) => ({ id: x.nhan_vien_id, ti: Number(x.ti_le) }));
+        return [{ loai: d.loai as DongDon["loai"], ref, sl: d.so_luong, giam: Number(d.giam_gia), nv: { phuc_vu: nvVai("phuc_vu"), tu_van: nvVai("tu_van"), ban: nvVai("ban") }, ...(m.choSuaGia && Number(d.don_gia) !== m.gia ? { gia: Number(d.don_gia) } : {}) }];
+      });
+    }
+  }
   // Khoá ở máy chủ: người gắn chi nhánh không mở được khách chi nhánh khác qua ?khach=; không có quyền xem SĐT thì không đưa số xuống trình duyệt.
   if (khach && nd.chiNhanhId && khach.chi_nhanh_id !== nd.chiNhanhId) khach = null;
   if (khach && !coQuyen(nd, "khach.sdt")) khach = { ...khach, dien_thoai: "" };
@@ -72,7 +95,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
       <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
-        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} />
+        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} suaHd={suaHd} />
     </>
   );
 }

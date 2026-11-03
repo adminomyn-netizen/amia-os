@@ -4,6 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { gioVN, homNayHCM, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
+import { NUT_CHINH } from "@/components/ui/dinh-dang";
 import { LOAI_VI, nhanKhoanThu, PHUONG_THUC_TIEN, VAI } from "@/lib/ban-hang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -11,7 +12,7 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
-import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, thuNo } from "../actions";
+import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, moLaiHoaDon, thuNo } from "../actions";
 import { maPhieuThu } from "@/lib/phieu-thu";
 import { luuDanhGiaSauDieuTri } from "../sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
@@ -83,6 +84,13 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         {coNo && !h.la_lich_su && coQuyen(nd, "no.xoa") && (
           <NutHop kieu="phu" nhan="Điều chỉnh nợ" tieuDe="Điều chỉnh nợ (xoá nợ)" moTa={`Nợ hiện tại ${tienVN(h.con_no)}. Nhập số nợ mới (nhỏ hơn nợ hiện tại; 0 = xoá hết). Phần chênh ghi là "Xoá nợ", không vào sổ quỹ.`} an={{ hoa_don_id: id }} giaTri={{ no_moi: 0 }} nhanLuu="Lưu điều chỉnh"
             truong={[{ ten: "no_moi", nhan: "Số nợ mới", loai: "tien", batBuoc: true }, { ten: "ly_do", nhan: "Lý do điều chỉnh nợ", loai: "nhieu_dong", batBuoc: true }]} action={dieuChinhNo} />
+        )}
+        {h.trang_thai === "hoan_thanh" && !h.la_lich_su && !h.la_so_du_dau && coQuyen(nd, "ban.sua") && (
+          <NutHop kieu="phu" nhan="Sửa hoá đơn" tieuDe="Sửa hoá đơn đã chốt" moTa="Hoá đơn về Nháp rồi mở ở Thu ngân để sửa và thanh toán lại (giữ mã, giữ ngày). Khoản thu cũ được ghi đảo cùng ngày, thẻ đã bán (chưa dùng) bị thu hồi, sản phẩm trả kho; khi chốt lại sẽ ghi mới."
+            an={{ hoa_don_id: id }} nhanLuu="Mở lại để sửa" truong={[{ ten: "ly_do", nhan: "Lý do sửa", loai: "nhieu_dong", batBuoc: true }]} action={moLaiHoaDon} />
+        )}
+        {h.trang_thai === "nhap" && h.mo_lai_luc && coQuyen(nd, "ban.tao") && (
+          <Link href={`/ban-hang?sua=${id}`} className={`${NUT_CHINH} inline-flex items-center`}>Tiếp tục sửa ở Thu ngân</Link>
         )}
         {h.trang_thai !== "huy" && coQuyen(nd, "ban.huy") && (
           <NutHop kieu="phu" nhan="Huỷ hoá đơn" tieuDe="Huỷ hoá đơn" moTa="Huỷ sẽ hoàn lại các khoản đã thu (kể cả thẻ tiền), thu hồi thẻ đã bán và trả kho. Không huỷ được nếu thẻ đã được dùng." an={{ hoa_don_id: id }} nhanLuu="Huỷ hoá đơn"

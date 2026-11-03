@@ -3750,6 +3750,7 @@ export type Database = {
           lich_hen_id: string | null
           ly_do_huy: string | null
           ma: string
+          mo_lai_luc: string | null
           ngay_hd: string
           nguoi_gioi_thieu_id: string | null
           nguoi_lap_id: string
@@ -3844,6 +3845,7 @@ export type Database = {
           lich_hen_id?: string | null
           ly_do_huy?: string | null
           ma?: string
+          mo_lai_luc?: string | null
           ngay_hd?: string
           nguoi_gioi_thieu_id?: string | null
           nguoi_lap_id?: string
@@ -3993,6 +3995,7 @@ export type Database = {
           ky_hieu?: string | null
           link_file?: string | null
           ma?: string
+          mo_lai_luc?: string | null
           muc_dich?: string | null
           ncc_id?: string
           ngay_hd?: string | null
@@ -11813,6 +11816,10 @@ export type Database = {
       }
       huy_lan_tra_no: {
         Args: { p_id: string; p_ly_do?: string; p_nguoi: string; p_ref: string }
+        Returns: undefined
+      }
+      mo_lai_hoa_don: {
+        Args: { p_id: string; p_ly_do: string; p_nguoi: string }
         Returns: undefined
       }
       bc_doanh_thu_ngay: {

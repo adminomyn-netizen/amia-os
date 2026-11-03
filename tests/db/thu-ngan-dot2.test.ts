@@ -116,3 +116,76 @@ describe("0200 xoá nợ, huỷ lần trả nợ, số phiếu thu", () => {
     expect(await loi(`select huy_lan_tra_no($1, $2, $3)`, [h, a, NV])).toMatch(/chưa có lần trả nợ|dòng cuối/);
   });
 });
+
+describe("0201 sửa hoá đơn đã chốt (về nháp bằng dòng đảo)", () => {
+  const hd = async (h: string) => (await q<{ trang_thai: string; da_thu: string; con_no: string; no_da_xoa: string; mo_lai: boolean; chot: boolean }>(
+    `select trang_thai, da_thu::text, con_no::text, no_da_xoa::text, mo_lai_luc is not null as mo_lai, chot_luc is not null as chot from hoa_don where id = $1`, [h]))[0];
+  const quyNgay = (ngay: string) => q<{ loai_quy: string; s: string }>(`select loai_quy, sum(bien_dong)::text as s from v_so_quy where ngay = $1 group by 1 order by 1`, [ngay]);
+
+  it("mở lại: đảo từng khoản thu cùng ngày gốc, huỷ xoá nợ, về nháp; chốt lại giữ mã + ngày; huỷ sau đó không hoàn hai lần", async () => {
+    const h = await taoDon(1_000_000, [["tien_mat", 300_000], ["vi_dien_tu", 200_000, "MOMO"]], "2026-10-10");
+    await q(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, ngay, nguoi_id) values ($1,'chuyen_khoan',100000,'2026-10-12',$2)`, [h, NV]);
+    await q(`select dieu_chinh_no($1, 100000, 'Bớt', $2)`, [h, NV]);
+    const truoc10 = await quyNgay("2026-10-10"), truoc12 = await quyNgay("2026-10-12");
+    expect(await loi(`select mo_lai_hoa_don($1, ' ', $2)`, [h, NV])).toMatch(/phải ghi lý do/);
+    await q(`select mo_lai_hoa_don($1, 'Sai dịch vụ', $2)`, [h, NV]);
+    expect(await hd(h)).toMatchObject({ trang_thai: "nhap", da_thu: "0", no_da_xoa: "0", mo_lai: true, chot: false });
+    const dao = await q<{ phuong_thuc: string; loai_vi: string | null; ngay: string; so_tien: string }>(`select phuong_thuc, loai_vi, ngay::text as ngay, so_tien::text from thanh_toan where hoa_don_id = $1 and loai = 'hoan' and dao_cua_id is not null order by so_tien`, [h]);
+    expect(dao.map((x) => [x.phuong_thuc, x.loai_vi, x.ngay, Number(x.so_tien)])).toEqual([["chuyen_khoan", null, "2026-10-12", 100_000], ["vi_dien_tu", "MOMO", "2026-10-10", 200_000], ["tien_mat", null, "2026-10-10", 300_000]]);
+    // sổ quỹ từng ngày: phần của hoá đơn này về 0
+    const sau10 = await quyNgay("2026-10-10"), sau12 = await quyNgay("2026-10-12");
+    const tru = (a: { loai_quy: string; s: string }[], b: { loai_quy: string; s: string }[]) => Object.fromEntries(a.map((x) => [x.loai_quy, Number(x.s) - Number(b.find((y) => y.loai_quy === x.loai_quy)?.s ?? 0)]));
+    expect(tru(truoc10, sau10)).toEqual({ ngan_hang: 200_000, tien_mat: 300_000 });
+    expect(tru(truoc12, sau12)).toEqual({ ngan_hang: 100_000 });
+    expect(await loi(`select mo_lai_hoa_don($1, 'lần nữa', $2)`, [h, NV])).toMatch(/Chỉ sửa được hoá đơn đã hoàn thành/);
+    // sửa dòng (được khi nháp) rồi chốt lại. Bẫy: xoá dòng kéo theo người hưởng thì trigger người hưởng không thấy hoá đơn → phải xoá người hưởng trước (Thu ngân làm vậy).
+    await q(`insert into dong_nhan_vien (dong_id, nhan_vien_id, vai, ti_le) select id, $2, 'phuc_vu', 100 from hoa_don_dong where hoa_don_id = $1`, [h, NV]);
+    expect(await loi(`delete from hoa_don_dong where hoa_don_id = $1`, [h])).toMatch(/không đổi người hưởng/);
+    await q(`delete from dong_nhan_vien where dong_id in (select id from hoa_don_dong where hoa_don_id = $1)`, [h]);
+    await q(`delete from hoa_don_dong where hoa_don_id = $1`, [h]);
+    await q(`insert into hoa_don_dong (hoa_don_id, loai, dich_vu_id, ten, so_luong, don_gia) values ($1,'dich_vu',$2,'Peel',1,800000)`, [h, DV]);
+    await q(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, ngay, nguoi_id) values ($1,'tien_mat',800000,'2026-10-10',$2)`, [h, NV]);
+    await q(`select chot_hoa_don($1,$2)`, [h, NV]);
+    expect(await hd(h)).toMatchObject({ trang_thai: "hoan_thanh", da_thu: "800000", con_no: "0" });
+    expect((await q<{ ngay_hd: string }>(`select ngay_hd::text from hoa_don where id = $1`, [h]))[0].ngay_hd).toBe("2026-10-10");
+    await q(`select huy_hoa_don($1,'thử',$2)`, [h, NV]);
+    const rong = await q<{ s: string }>(`select sum(case loai when 'thu' then so_tien else -so_tien end)::text as s from thanh_toan where hoa_don_id = $1`, [h]);
+    expect(Number(rong[0].s)).toBe(0);
+  });
+
+  it("thẻ bán trong đơn (chưa dùng) bị thu hồi + gỡ khỏi dòng; sản phẩm trả kho phần ròng, sửa rồi huỷ không trả hai lần", async () => {
+    const goi = (await q<{ id: string }>(`insert into goi_the (ma, ten, loai, gia, so_buoi) values ('G-SUA','Thẻ 5 buổi','lan',500000,5) returning id`))[0].id;
+    const sp = (await q<{ id: string }>(`insert into san_pham (ma, ten, don_vi, gia_ban, theo_doi_kho) values ('SP-SUA','Kem','hộp',100000,true) returning id`))[0].id;
+    const h = (await q<{ id: string }>(`insert into hoa_don (ma, chi_nhanh_id, khach_id, nguoi_lap_id) values ('HDSUA1',$1,$2,$3) returning id`, [CN, KH, NV]))[0].id;
+    await q(`insert into hoa_don_dong (hoa_don_id, loai, goi_id, ten, so_luong, don_gia) values ($1,'goi_the',$2,'Thẻ 5 buổi',1,500000)`, [h, goi]);
+    await q(`insert into hoa_don_dong (hoa_don_id, loai, san_pham_id, ten, so_luong, don_gia) values ($1,'san_pham',$2,'Kem',2,100000)`, [h, sp]);
+    await q(`select chot_hoa_don($1,$2)`, [h, NV]);
+    const kho = async () => Number((await q<{ s: string }>(`select coalesce(sum(so_luong),0)::text as s from kho_so_cai where san_pham_id = $1`, [sp]))[0].s);
+    expect(await kho()).toBe(-2);
+    await q(`select mo_lai_hoa_don($1, 'Đổi số lượng', $2)`, [h, NV]);
+    expect(await kho()).toBe(0);
+    const the = await q<{ trang_thai: string; dong: string | null; con: string }>(`select t.trang_thai, t.hoa_don_dong_id as dong, (select sum(so_buoi) from the_so_cai c where c.the_id = t.id)::text as con from the_khach t where t.goi_id = $1`, [goi]);
+    expect(the).toEqual([{ trang_thai: "thu_hoi", dong: null, con: "0" }]);
+    await q(`delete from hoa_don_dong where hoa_don_id = $1 and loai = 'san_pham'`, [h]);
+    await q(`insert into hoa_don_dong (hoa_don_id, loai, san_pham_id, ten, so_luong, don_gia) values ($1,'san_pham',$2,'Kem',1,100000)`, [h, sp]);
+    await q(`select chot_hoa_don($1,$2)`, [h, NV]);
+    expect(await kho()).toBe(-1);
+    expect((await q(`select 1 from the_khach where goi_id = $1 and trang_thai <> 'thu_hoi'`, [goi])).length).toBe(1);
+    await q(`select huy_hoa_don($1,'thử',$2)`, [h, NV]);
+    expect(await kho()).toBe(0);
+    expect((await q(`select 1 from the_khach where goi_id = $1 and trang_thai <> 'thu_hoi'`, [goi])).length).toBe(0);
+  });
+
+  it("chặn: đơn SalonHero, tháng khoá sổ, quá N giờ theo cài đặt", async () => {
+    const h1 = await taoDon(100_000, [["tien_mat", 100_000]], "2026-08-05");
+    await q(`insert into ky_ke_toan (thang, trang_thai) values ('2026-08','da_khoa')`);
+    expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h1, NV])).toMatch(/đã khoá sổ/);
+    const h2 = await taoDon(100_000, [["tien_mat", 100_000]]);
+    await q(`update cau_hinh set gia_tri = '1' where khoa = 'hoa_don.khoa_sua_sau_gio'`);
+    await q(`update hoa_don set chot_luc = now() - interval '2 hours' where id = $1`, [h2]);
+    expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h2, NV])).toMatch(/quá 1 giờ/);
+    await q(`update cau_hinh set gia_tri = '0' where khoa = 'hoa_don.khoa_sua_sau_gio'`);
+    await q(`update hoa_don set la_lich_su = true where id = $1`, [h2]);
+    expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h2, NV])).toMatch(/chuyển từ SalonHero/);
+  });
+});

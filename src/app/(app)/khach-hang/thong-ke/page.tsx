@@ -4,6 +4,8 @@ import { unstable_cache } from "next/cache";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
+import { tuyChonLocKhach } from "@/lib/khach-danh-sach";
+import { BieuDoKhachNgay, type DongKhachNgay } from "@/components/khach/BieuDoKhachNgay";
 
 type ThongKe = {
   tong: number; gioi_tinh: Record<string, number>; nguon: Record<string, number>; chi_nhanh: Record<string, number>; tinh: { ten: string; so: number }[] | null;
@@ -11,7 +13,18 @@ type ThongKe = {
   co_the: number; dang_no: number; co_diem: number; tong_diem: number;
 };
 /** Một lượt đọc ở CSDL (hàm thong_ke_khach, migration 0070), nhớ 5 phút. */
-const docThongKe = unstable_cache(async () => (await sb().rpc("thong_ke_khach")).data as unknown as ThongKe, ["khach-thong-ke"], { revalidate: 300 });
+const docThongKe = unstable_cache(async () => {
+  const { data, error } = await sb().rpc("thong_ke_khach");
+  if (error || !data) throw new Error(`thong_ke_khach: ${error?.code} ${error?.message}`); // lỗi/quá giờ thì không nhớ lại
+  return data as unknown as ThongKe;
+}, ["khach-thong-ke"], { revalidate: 300 });
+
+/** Khách theo ngày 30 ngày gần đây + khách mới trong tuần (hàm thong_ke_khach_ngay, migration 0193), nhớ 5 phút. */
+const docKhachNgay = unstable_cache(async () => {
+  const { data, error } = await sb().rpc("thong_ke_khach_ngay", { p_so_ngay: 30 });
+  if (error || !data) throw new Error(`thong_ke_khach_ngay: ${error?.code} ${error?.message}`);
+  return data as unknown as { ngay: DongKhachNgay[]; moi_tuan: number };
+}, ["khach-thong-ke-ngay"], { revalidate: 300 });
 
 const TUOI: [string, string][] = [["duoi_18", "Dưới 18"], ["18_24", "18–24"], ["25_34", "25–34"], ["35_44", "35–44"], ["45_54", "45–54"], ["tu_55", "Từ 55"], ["chua_ro", "Chưa có ngày sinh"]];
 const GIOI: Record<string, string> = { "nữ": "Nữ", nam: "Nam", "khác": "Khác", chua_ro: "Chưa rõ" };
@@ -40,7 +53,8 @@ function Khoi({ tieuDe, dong, tong, ghiChu }: { tieuDe: string; dong: { nhan: st
 /** /khach-hang/thong-ke — Thống kê khách (như SalonHero): cơ cấu khách theo trạng thái, hạng, giới tính, tuổi, nguồn, chi nhánh, tỉnh; khách mới 12 tháng. */
 export default async function ThongKeKhach() {
   await yeuCauQuyen("khach.xem");
-  const [t, { data: cn }] = await Promise.all([docThongKe(), sb().from("chi_nhanh").select("id, ten")]);
+  const [t0, { data: cn }, ngay, tc] = await Promise.all([docThongKe().catch((e: Error) => { console.error("[khach-thong-ke]", e.message); return null; }), sb().from("chi_nhanh").select("id, ten"), docKhachNgay().catch((e: Error) => { console.error("[khach-thong-ke-ngay]", e.message); return null; }), tuyChonLocKhach()]);
+  const t = t0 ?? ({ tong: 0, gioi_tinh: {}, nguon: {}, chi_nhanh: {}, tinh: [], chua_co_tinh: 0, tuoi: {}, moi_theo_thang: [], trang_thai: {}, hang: {}, co_the: 0, dang_no: 0, co_diem: 0, tong_diem: 0 } as ThongKe);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const sap = (o: Record<string, number>) => Object.entries(o ?? {}).sort((a, b) => b[1] - a[1]);
   const the = [{ nhan: "Có thẻ đang dùng", so: t.co_the, lk: "/khach-hang?the=co" }, { nhan: "Đang nợ", so: t.dang_no, lk: "/khach-hang?no=co" }, { nhan: "Có điểm thưởng", so: t.co_diem, lk: "/khach-hang?diem_tu=1" }];
@@ -50,19 +64,29 @@ export default async function ThongKeKhach() {
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h1 className="chu-tieu-de text-[22px] text-muc">Thống kê khách</h1>
         <NutXuatExcel loai="thong-ke-khach" ten="thống kê khách" />
-        <p className="text-[13px] text-muc-3">{so(t.tong)} khách · tổng {so(t.tong_diem)} điểm thưởng · số liệu làm mới mỗi 5 phút</p>
+        <p className="text-[13px] text-muc-3">{t0 ? `${so(t.tong)} khách · tổng ${so(t.tong_diem)} điểm thưởng · ` : ""}số liệu làm mới mỗi 5 phút</p>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <dl className="grid grid-cols-2 gap-2">
+        <div className="rounded-nho border border-vien bg-giay-sang px-3 py-2"><dt className="text-[12px] text-muc-3">Tổng số khách hàng</dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{t0 ? so(t.tong) : "—"}</dd></div>
+        <div className="rounded-nho border border-vien bg-giay-sang px-3 py-2"><dt className="text-[12px] text-muc-3">Khách mới trong tuần <span className="text-muc-3">(hồ sơ tạo 7 ngày gần nhất)</span></dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{so(ngay?.moi_tuan ?? 0)}</dd></div>
+      </dl>
+      <section className="rounded-the border border-vien bg-giay-sang p-4">
+        <h2 className="mb-3 text-[15px] font-semibold text-muc">Lượng khách hàng ngày <span className="font-normal text-muc-3">· 30 ngày gần đây, tính theo hoá đơn hoàn thành</span></h2>
+        {ngay ? <BieuDoKhachNgay dong={ngay.ngay} /> : <p role="alert" className="text-[13px] text-loi">Chưa tải được biểu đồ (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
+      </section>
+      {!t0 && <p role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Chưa tải được các số liệu cơ cấu bên dưới (hệ thống đang chậm). Tải lại trang sau ít phút để thử lại.</p>}
+      {t0 && <div className="grid gap-4 xl:grid-cols-2">
         <Khoi tieuDe="Trạng thái" tong={t.tong} dong={sap(t.trang_thai).map(([k, n]) => ({ nhan: TRANG_THAI_KHACH[k]?.nhan ?? k, so: n, lk: `/khach-hang?trang_thai=${k}` }))} />
         <Khoi tieuDe="Hạng" tong={t.tong} dong={sap(t.hang).map(([k, n]) => ({ nhan: k, so: n, lk: `/khach-hang?hang=${encodeURIComponent(k)}` }))} />
         <Khoi tieuDe="Thẻ, công nợ, điểm" tong={t.tong} dong={the} />
+        <Khoi tieuDe="Phân nhóm khách hàng" tong={t.tong} dong={tc.nhom.filter((n) => n.so > 0).slice(0, 15).map((n) => ({ nhan: n.ten, so: n.so, lk: `/khach-hang?nhom=${n.id}` }))} ghiChu="Một khách có thể thuộc nhiều nhóm nên tỉ lệ cộng lại có thể trên 100%. Xem đủ ở Quản lý nhóm." />
         <Khoi tieuDe="Giới tính" tong={t.tong} dong={sap(t.gioi_tinh).map(([k, n]) => ({ nhan: GIOI[k] ?? k, so: n }))} />
         <Khoi tieuDe="Độ tuổi" tong={t.tong} dong={TUOI.map(([k, nhan]) => ({ nhan, so: t.tuoi?.[k] ?? 0 }))} />
         <Khoi tieuDe="Nguồn khách" tong={t.tong} dong={sap(t.nguon).map(([k, n]) => ({ nhan: NHAN_NGUON[k] ?? k, so: n, lk: `/khach-hang?nguon=${k}` }))} />
         <Khoi tieuDe="Chi nhánh" tong={t.tong} dong={sap(t.chi_nhanh).map(([k, n]) => ({ nhan: tenCn.get(k) ?? "Chưa gắn chi nhánh", so: n }))} />
         <Khoi tieuDe="Tỉnh/thành (10 nơi nhiều khách nhất)" tong={t.tong} dong={(t.tinh ?? []).map((x) => ({ nhan: x.ten, so: x.so }))} ghiChu={`${so(t.chua_co_tinh)} khách chưa có tỉnh/thành.`} />
         <Khoi tieuDe="Khách mới 12 tháng gần nhất" tong={t.moi_theo_thang.reduce((s, x) => s + x.so, 0)} dong={t.moi_theo_thang.map((x) => ({ nhan: `Tháng ${Number(x.thang.slice(5))}/${x.thang.slice(0, 4)}`, so: x.so, lk: `/khach-hang?tao_tu=${x.thang}-01&tao_den=${x.thang}-${new Date(Number(x.thang.slice(0, 4)), Number(x.thang.slice(5)), 0).getDate()}` }))} />
-      </div>
+      </div>}
     </div>
   );
 }

@@ -189,3 +189,17 @@ describe("0201 sửa hoá đơn đã chốt (về nháp bằng dòng đảo)", (
     expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h2, NV])).toMatch(/chuyển từ SalonHero/);
   });
 });
+
+describe("0209 khoá sổ cho sổ thu tiền (thanh_toan)", () => {
+  it("tháng đã khoá: không ghi khoản thu / dòng đảo vào đó; huỷ trả nợ và sửa hoá đơn báo rõ PT + tháng", async () => {
+    const h = await taoDon(1_000_000, [["tien_mat", 400_000]], "2026-06-28");
+    const tra = (await q<{ id: string }>(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu) values ($1,'chuyen_khoan',100000,'2026-07-02',$2,'Thu nợ') returning id`, [h, NV]))[0].id;
+    await q(`insert into ky_ke_toan (thang, trang_thai) values ('2026-07','da_khoa')`);
+    expect(await loi(`select huy_lan_tra_no($1, $2, $3)`, [h, tra, NV])).toMatch(/Lần trả nợ PT\d+ ngày 02\/07\/2026 thuộc tháng 07\/2026 đã khoá sổ/);
+    expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h, NV])).toMatch(/khoản thu PT\d+ ngày 02\/07\/2026 thuộc tháng 07\/2026 đã khoá sổ/);
+    expect(await loi(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, ngay, nguoi_id) values ($1,'tien_mat',1000,'2026-07-20',$2)`, [h, NV])).toMatch(/Tháng 07\/2026 đã khoá sổ/);
+    expect(await loi(`insert into thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, dao_cua_id) values ($1,'hoan','chuyen_khoan',100000,'2026-07-02',$2,$3)`, [h, NV, tra])).toMatch(/đã khoá sổ/);
+    expect(await loi(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, ngay, nguoi_id) values ($1,'tien_mat',1000,'2026-06-30',$2)`, [h, NV])).toBe("");
+    expect((await q<{ n: string }>(`select count(*)::text as n from thanh_toan where hoa_don_id = $1 and loai = 'hoan'`, [h]))[0].n).toBe("0");
+  });
+});

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { docWebDatLich, dongWebDatLich, loiWebDatLich, WEB_MAC_DINH } from "@/lib/web-dat-lich";
+import { docGioiHan, docWebDatLich, dongWebDatLich, loiWebDatLich, thoiLuongMacDinh, WEB_MAC_DINH } from "@/lib/web-dat-lich";
 
 describe("Web đặt Lịch (tuỳ chọn như SalonHero)", () => {
   it("chưa có dòng nào thì dùng mặc định; trang đang khoá vì dat_online.mo chưa phải 1", () => {
@@ -27,5 +27,18 @@ describe("Web đặt Lịch (tuỳ chọn như SalonHero)", () => {
     expect(loiWebDatLich({ ...WEB_MAC_DINH, mau: "đỏ" })).toMatch(/Màu/);
     expect(loiWebDatLich({ ...WEB_MAC_DINH, emailNhan: ["sai"] })).toMatch(/Email/);
     expect(loiWebDatLich({ ...WEB_MAC_DINH, toiDaLuot: 0 })).toMatch(/lượt/);
+  });
+  it("bảng giới hạn số lịch đặt + ảnh bìa: đọc lại đúng, dòng hỏng bị loại, kiểm giờ/số", () => {
+    const gh = [{ tu: "08:00", den: "10:00", so: 2, thu: ["t2", "cn"], cn: null }];
+    const moi = { ...WEB_MAC_DINH, gioiHanRieng: gh, anhBia: "dat-lich/abc.jpg" };
+    expect(docWebDatLich(dongWebDatLich(moi))).toEqual(moi);
+    expect(docGioiHan([{ tu: "8h", den: "10:00", so: 1 }, { tu: "09:00", den: "11:00", so: 1, thu: ["t9", "t3"], cn: "khong-phai-uuid" }, "x"])).toEqual([{ tu: "09:00", den: "11:00", so: 1, thu: ["t3"], cn: null }]);
+    expect(docWebDatLich([{ khoa: "dat_online.tuy_chon", gia_tri: JSON.stringify({ anhBia: "../bi-mat.jpg" }) }]).anhBia).toBeNull();
+    expect(loiWebDatLich({ ...WEB_MAC_DINH, gioiHanRieng: [{ tu: "10:00", den: "09:00", so: 1, thu: [], cn: null }] })).toMatch(/sau giờ bắt đầu/);
+    expect(loiWebDatLich({ ...WEB_MAC_DINH, gioiHanRieng: [{ tu: "08:00", den: "09:00", so: 100, thu: [], cn: null }] })).toMatch(/0 đến 99/);
+  });
+  it("thời lượng mặc định 0 phút thì lịch dài 30 phút như SalonHero", () => {
+    expect(thoiLuongMacDinh({ ...WEB_MAC_DINH, thoiLuongPhut: 0 })).toBe(30);
+    expect(thoiLuongMacDinh({ ...WEB_MAC_DINH, thoiLuongPhut: 90 })).toBe(90);
   });
 });

@@ -1,11 +1,8 @@
-// Các tuỳ chọn "Web đặt Lịch" của SalonHero (#/setting-public-booking, đọc 29/10/2026).
-// BA tuỳ chọn ĐÃ CÓ HIỆU LỰC vì dùng chung khoá cũ của trang /dat-lich (không có bản sao thứ hai):
-//   • Cho phép đặt lịch trước giờ bắt đầu  = dat_online.bao_truoc_phut (phút; "Không hạn chế" = 0)
-//   • Giới hạn số ngày đặt lịch trước      = dat_online.toi_da_ngay (ngày; "Không giới hạn" = 60, mức tối đa của hàm đặt lịch)
-//   • Khoá trang web đặt lịch              = ngược của dat_online.mo
-// Từ 03/11/2026 (đợt 3) có hiệu lực thêm: hienGia (giá ở /dat-lich), mau + macDinhMau (màu nhấn trang /dat-lich), trangThai (lịch tạo khi lễ tân duyệt yêu cầu online),
-//   tatThongBao (không đẩy thông báo cho lễ tân khi có yêu cầu mới).
-// Các tuỳ chọn còn lại ĐÃ LƯU (JSON ở khoá dat_online.tuy_chon) nhưng trang /dat-lich CHƯA dùng; giá trị mặc định = SalonHero của AMIA.
+// Các tuỳ chọn "Web đặt Lịch" của SalonHero (#/setting-public-booking, đọc 29/10 và 03/11/2026).
+// Khoá cũ của trang /dat-lich (không có bản sao thứ hai): đặt trước tối thiểu = dat_online.bao_truoc_phut, giới hạn số ngày = dat_online.toi_da_ngay (Không giới hạn = 60),
+//   khoá trang = ngược của dat_online.mo. Mọi tuỳ chọn còn lại ở JSON dat_online.tuy_chon.
+// Từ đợt 4 (03/11/2026, migration 0270) TẤT CẢ tuỳ chọn đều có hiệu lực trên /dat-lich: hàm khung_gio_online + dat_lich_online trong DB đọc khungPhut, toiDaLuot,
+//   gioiHanRieng, thoiLuongPhut, hienDvSp, chonKtv, doiTuong, trangThai; trang đọc hienBuoi, hienGia, ngonNgu, mau, anhBia; thông báo đọc tatThongBao, amThanh, guiEmailNv, emailNhan.
 import type { sb } from "@/lib/db";
 
 export type LuaChonWeb = { gia_tri: string; nhan: string };
@@ -17,18 +14,37 @@ export const THOI_LUONG: LuaChonWeb[] = [["0", "0 phút"], ["15", "15 phút"], [
 export const TRANG_THAI: LuaChonWeb[] = [{ gia_tri: "chua_xac_nhan", nhan: "Chưa xác nhận" }, { gia_tri: "da_xac_nhan", nhan: "Đã xác nhận" }];
 export const NGON_NGU: LuaChonWeb[] = [{ gia_tri: "vi", nhan: "Tiếng Việt" }, { gia_tri: "en", nhan: "English" }];
 
+/** Một dòng "Tùy chọn giới hạn số lịch đặt" (SalonHero custom_limit_booking): khung giờ bắt đầu trong [tu, den) của các thứ đã chọn (rỗng = mọi thứ), tại chi nhánh (null = mọi chi nhánh), tối đa `so` lượt. */
+export type GioiHan = { tu: string; den: string; so: number; thu: string[]; cn: string | null };
+export const THU_WEB = ["t2", "t3", "t4", "t5", "t6", "t7", "cn"] as const;
+
 export type WebDatLich = {
-  // có hiệu lực
   baoTruocPhut: number; toiDaNgay: number; khoaTrang: boolean;
-  // đã lưu, chưa áp dụng
   chonKtv: boolean; hienDvSp: boolean; hienBuoi: boolean; hienGia: boolean; doiTuong: string; khungPhut: number; toiDaLuot: number; thoiLuongPhut: number;
   trangThai: string; ngonNgu: string; mau: string; macDinhMau: boolean; tatThongBao: boolean; guiEmailNv: boolean; emailNhan: string[]; amThanh: boolean;
+  gioiHanRieng: GioiHan[]; /** Đường dẫn ảnh bìa trong kho blog-anh (null = ảnh bìa mặc định theo màu). */ anhBia: string | null;
 };
 export const WEB_MAC_DINH: WebDatLich = {
   baoTruocPhut: 120, toiDaNgay: 60, khoaTrang: true,
   chonKtv: false, hienDvSp: false, hienBuoi: true, hienGia: false, doiTuong: "ca", khungPhut: 15, toiDaLuot: 10, thoiLuongPhut: 30,
   trangThai: "chua_xac_nhan", ngonNgu: "vi", mau: "#207f7e", macDinhMau: false, tatThongBao: false, guiEmailNv: true, emailNhan: [], amThanh: true,
+  gioiHanRieng: [], anhBia: null,
 };
+const GIO = /^([01]\d|2[0-3]):[0-5]\d$/;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+/** Lọc các dòng giới hạn riêng: bỏ dòng hỏng, tối đa 30 dòng. */
+export function docGioiHan(v: unknown): GioiHan[] {
+  if (!Array.isArray(v)) return [];
+  return v.flatMap((x): GioiHan[] => {
+    if (!x || typeof x !== "object") return [];
+    const r = x as Record<string, unknown>;
+    if (typeof r.tu !== "string" || typeof r.den !== "string" || !GIO.test(r.tu) || !GIO.test(r.den) || typeof r.so !== "number" || !Number.isInteger(r.so)) return [];
+    const thu = Array.isArray(r.thu) ? r.thu.filter((t): t is string => typeof t === "string" && (THU_WEB as readonly string[]).includes(t)) : [];
+    return [{ tu: r.tu, den: r.den, so: r.so, thu, cn: typeof r.cn === "string" && UUID.test(r.cn) ? r.cn : null }];
+  }).slice(0, 30);
+}
+/** Thời lượng lịch khi khách không chọn dịch vụ (SalonHero: 0 phút → 30 phút). */
+export const thoiLuongMacDinh = (t: WebDatLich) => (t.thoiLuongPhut >= 5 ? t.thoiLuongPhut : 30);
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MAU = /^#[0-9a-fA-F]{6}$/;
 const thuocDs = (ds: LuaChonWeb[], v: string) => ds.some((d) => d.gia_tri === v);
@@ -49,6 +65,7 @@ export function docWebDatLich(dong: { khoa: string; gia_tri: string }[] | null):
     thoiLuongPhut: Number(s(String(j.thoiLuongPhut ?? ""), THOI_LUONG, String(d.thoiLuongPhut))), trangThai: s(j.trangThai, TRANG_THAI, d.trangThai), ngonNgu: s(j.ngonNgu, NGON_NGU, d.ngonNgu),
     mau: typeof j.mau === "string" && MAU.test(j.mau) ? j.mau : d.mau, macDinhMau: b(j.macDinhMau, d.macDinhMau), tatThongBao: b(j.tatThongBao, d.tatThongBao), guiEmailNv: b(j.guiEmailNv, d.guiEmailNv),
     emailNhan: Array.isArray(j.emailNhan) ? j.emailNhan.filter((e): e is string => typeof e === "string" && EMAIL.test(e)).slice(0, 20) : [], amThanh: b(j.amThanh, d.amThanh),
+    gioiHanRieng: docGioiHan(j.gioiHanRieng), anhBia: typeof j.anhBia === "string" && /^dat-lich\/[\w.-]+$/.test(j.anhBia) ? j.anhBia : null,
   };
 }
 
@@ -63,6 +80,11 @@ export function loiWebDatLich(t: WebDatLich): string {
   if (!Number.isInteger(t.toiDaLuot) || t.toiDaLuot < 1 || t.toiDaLuot > 999) return "Số lượt khách tối đa cho 1 khung giờ từ 1 đến 999.";
   if (!MAU.test(t.mau)) return "Màu nhập dạng #207f7e.";
   if (t.emailNhan.length > 20 || t.emailNhan.some((e) => !EMAIL.test(e))) return "Email nhận thông báo chưa đúng (tối đa 20 địa chỉ).";
+  if (t.gioiHanRieng.length > 30) return "Tối đa 30 dòng giới hạn số lịch đặt.";
+  for (const [i, g] of t.gioiHanRieng.entries()) {
+    if (!GIO.test(g.tu) || !GIO.test(g.den) || g.tu >= g.den) return `Dòng giới hạn ${i + 1}: giờ kết thúc phải sau giờ bắt đầu (dạng 08:00).`;
+    if (!Number.isInteger(g.so) || g.so < 0 || g.so > 99) return `Dòng giới hạn ${i + 1}: số lịch từ 0 đến 99.`;
+  }
   return "";
 }
 
@@ -72,7 +94,7 @@ export function dongWebDatLich(t: WebDatLich) {
     { khoa: "dat_online.bao_truoc_phut", gia_tri: String(baoTruocPhut), ghi_chu: "Khách phải đặt trước giờ hẹn ít nhất bao nhiêu phút (0 = không hạn chế)" },
     { khoa: "dat_online.toi_da_ngay", gia_tri: String(toiDaNgay), ghi_chu: "Khách chỉ đặt được trong bấy nhiêu ngày tới (60 = không giới hạn)" },
     { khoa: "dat_online.mo", gia_tri: khoaTrang ? "0" : "1", ghi_chu: "1 = mở trang đặt lịch cho khách; 0 = khoá" },
-    { khoa: "dat_online.tuy_chon", gia_tri: JSON.stringify(rest), ghi_chu: "Tuỳ chọn Web đặt Lịch như SalonHero (hienGia, mau, trangThai, tatThongBao đã có hiệu lực; còn lại đã lưu, chưa dùng)" },
+    { khoa: "dat_online.tuy_chon", gia_tri: JSON.stringify(rest), ghi_chu: "Tuỳ chọn Web đặt Lịch như SalonHero (mọi tuỳ chọn có hiệu lực trên /dat-lich từ migration 0270)" },
   ];
 }
 

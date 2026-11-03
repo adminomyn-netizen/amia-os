@@ -1,39 +1,54 @@
-import Image from "next/image";
 import type { Metadata } from "next";
 import { sb } from "@/lib/db";
 import { homNayHCM } from "@/lib/dinh-dang";
-import { FormDatLich } from "./FormDatLich";
+import { gioBaThu, type KhoaThu } from "@/lib/gio-lam-viec";
 import { NOI_DAT_LICH } from "@/lib/ban-hang";
-import { layWebDatLich } from "@/lib/web-dat-lich";
+import { anhBlogUrl } from "@/lib/blog";
+import { layWebDatLich, thoiLuongMacDinh } from "@/lib/web-dat-lich";
+import { FormDatLich, type CnDat, type DvDat, type NvDat } from "./FormDatLich";
+import type { NgonNgu } from "./chu";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Đặt lịch hẹn · AMIA", description: "Chọn chi nhánh, dịch vụ và giờ hẹn tại AMIA Beauty Center.", robots: { index: false } };
+export const metadata: Metadata = { title: "Đặt lịch hẹn · AMIA", description: "Chọn chi nhánh và giờ hẹn tại AMIA Beauty Center.", robots: { index: false } };
 
-/** TRANG CÔNG KHAI (không đăng nhập): chỉ hiện tên chi nhánh, địa chỉ, số điện thoại, tên + thời lượng dịch vụ đã được bật đặt online (giá chỉ hiện khi Cài đặt › Web đặt lịch bật "Hiện giá"). Không có dữ liệu khách. */
-export default async function TrangDatLich() {
+const THU_JS: KhoaThu[] = ["cn", "t2", "t3", "t4", "t5", "t6", "t7"];
+
+/** TRANG CÔNG KHAI (không đăng nhập) y SalonHero amia.salonhero.vn/dat-lich: chỉ hiện tên/địa chỉ chi nhánh, giờ mở cửa, dịch vụ (khi cài đặt bật), tên người làm (khi bật "Cho phép chọn stylist"). Không có dữ liệu khách. */
+export default async function TrangDatLich({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
   const db = sb();
-  const [{ data: mo }, { data: cn }, { data: dv }, { data: nhom }, { data: cho }, web] = await Promise.all([
-    db.from("cau_hinh").select("gia_tri").eq("khoa", "dat_online.mo").maybeSingle(),
-    db.from("chi_nhanh").select("id, ten, dia_chi, dien_thoai").eq("hoat_dong", true).eq("hien_dat_lich", true).order("thu_tu").order("ma"),
+  const web = await layWebDatLich(db);
+  const sp = await searchParams;
+  const nn: NgonNgu = sp.lang === "en" || sp.lang === "vi" ? sp.lang : web.ngonNgu === "en" ? "en" : "vi";
+  const [{ data: ch }, { data: cn }, { data: cho }, dvKq, nhomKq, nvKq] = await Promise.all([
+    db.from("cua_hang").select("ten_thuong_hieu, dien_thoai, gio_lam_viec").eq("id", 1).maybeSingle(),
+    db.from("chi_nhanh").select("id, ten, dia_chi, dien_thoai, thanh_pho, gio_lam_viec").eq("hoat_dong", true).eq("hien_dat_lich", true).order("thu_tu").order("ma"),
+    db.from("cho_lam").select("chi_nhanh_id").eq("hoat_dong", true),
     db.from("dich_vu").select("id, ten, gia, thoi_luong_phut, nhom_id, chi_nhanh_ids").eq("hoat_dong", true).eq("dat_online", true).in("noi_hien_thi", NOI_DAT_LICH).order("ma"),
     db.from("dich_vu_nhom").select("id, ten, thu_tu").order("thu_tu"),
-    db.from("cho_lam").select("chi_nhanh_id").eq("hoat_dong", true),
-    layWebDatLich(db),
+    web.chonKtv ? db.from("nhan_vien").select("id, ho_ten, chuc_danh, chi_nhanh_id").eq("hoat_dong", true).eq("la_phuc_vu", true).eq("hien_dat_lich", true).order("ho_ten") : Promise.resolve({ data: [] as { id: string; ho_ten: string; chuc_danh: string | null; chi_nhanh_id: string | null }[] }),
   ]);
-  // Màu trang (SalonHero "Màu sắc trang đặt lịch"): bỏ tick "dùng màu mặc định" thì thay màu nhấn của trang bằng màu đã chọn.
+  const homNay = homNayHCM();
+  const thu = THU_JS[new Date(`${homNay}T12:00:00+07:00`).getUTCDay()];
+  const coCho = new Set((cho ?? []).map((x) => x.chi_nhanh_id));
+  const chiNhanh: CnDat[] = (cn ?? []).map((c) => {
+    const g = gioBaThu(c.gio_lam_viec, ch?.gio_lam_viec)[thu];
+    return { id: c.id, ten: c.ten, diaChi: c.dia_chi ?? "", khuVuc: c.thanh_pho ?? "", dienThoai: c.dien_thoai ?? "", gioHomNay: g.nghi ? null : `${g.mo} – ${g.dong}`, datDuoc: coCho.has(c.id) };
+  });
+  const tenNhom = new Map((nhomKq.data ?? []).map((n) => [n.id, n.ten]));
+  const dichVu: DvDat[] = (dvKq.data ?? []).map((d) => ({ id: d.id, ten: d.ten, phut: d.thoi_luong_phut, nhom: tenNhom.get(d.nhom_id) ?? "Dịch vụ", cn: d.chi_nhanh_ids, ...(web.hienGia ? { gia: Number(d.gia) } : {}) }));
+  const nhanVien: NvDat[] = (nvKq.data ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, chucDanh: n.chuc_danh ?? "", cn: n.chi_nhanh_id }));
+  const mo = !web.khoaTrang && chiNhanh.some((c) => c.datDuoc);
+  const sdt = ch?.dien_thoai || chiNhanh.map((c) => c.dienThoai).find(Boolean);
+  // Màu trang (SalonHero "Đặt màu cho web đặt lịch"): bỏ tick "Mặc định" thì thay màu nhấn bằng màu đã chọn.
   const mau = web.macDinhMau ? undefined : ({ "--nhan": web.mau, "--nhan-dam": web.mau } as React.CSSProperties);
-  const tenNhom = new Map((nhom ?? []).map((n) => [n.id, n.ten]));
-  const cnCoCho = (cn ?? []).filter((c) => (cho ?? []).some((x) => x.chi_nhanh_id === c.id));
-  const san = mo?.gia_tri === "1" && cnCoCho.length > 0 && (dv ?? []).length > 0;
-  const sdt = (cn ?? []).map((c) => c.dien_thoai).filter(Boolean)[0];
   return (
-    <main className="mx-auto w-full max-w-[560px] px-4 py-8 sm:py-12" style={mau}>
-      <Image src="/logo-amia.png" alt="AMIA Beauty Center" width={150} height={65} priority className="mb-6 h-auto w-[120px]" />
-      <h1 className="chu-tieu-de text-[30px] leading-tight text-muc">Đặt lịch hẹn</h1>
-      <p className="mb-7 mt-1.5 text-[14px] text-muc-3">Chọn dịch vụ và giờ còn trống, để lại số điện thoại. Phòng khám sẽ gọi xác nhận với bạn.</p>
-      {san
-        ? <FormDatLich chiNhanh={cnCoCho.map((c) => ({ id: c.id, ten: c.ten, dia_chi: c.dia_chi }))} dichVu={(dv ?? []).map((d) => ({ id: d.id, ten: d.ten, phut: d.thoi_luong_phut, nhom: tenNhom.get(d.nhom_id) ?? "Dịch vụ", cn: d.chi_nhanh_ids, ...(web.hienGia ? { gia: Number(d.gia) } : {}) }))} homNay={homNayHCM()} />
-        : <div className="rounded-the border border-vien bg-giay-sang p-5 text-[15px] text-muc-2"><p className="font-semibold text-muc">Đặt lịch online hiện chưa mở.</p><p className="mt-1">{sdt ? `Vui lòng gọi ${sdt} để đặt lịch.` : "Vui lòng liên hệ trực tiếp phòng khám để đặt lịch."}</p></div>}
-    </main>
+    <div style={mau} className="min-h-dvh bg-giay-tram/40">
+      <FormDatLich
+        nn={nn} mo={mo} sdt={sdt ?? ""} tenCuaHang={ch?.ten_thuong_hieu || "AMIA Beauty Center"} anhBia={anhBlogUrl(web.anhBia)}
+        chiNhanh={chiNhanh} dichVu={web.hienDvSp ? dichVu : []} nhanVien={nhanVien}
+        homNay={homNay} soNgay={Math.min(web.toiDaNgay, 60)} khungPhut={web.khungPhut} hienBuoi={web.hienBuoi} doiTuong={web.doiTuong}
+        phutMacDinh={thoiLuongMacDinh(web)}
+      />
+    </div>
   );
 }

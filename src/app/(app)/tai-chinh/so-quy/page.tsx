@@ -13,10 +13,10 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { LocSoQuy } from "@/components/tai-chinh/LocSoQuy";
 import { LocBaoCao } from "@/components/bao-cao/LocBaoCao";
-import { chuyenQuy, daoPhieu, ghiThuChi, luuLoaiThuChi, nhapSoDuDau } from "./actions";
+import { chuyenQuy, daoPhieu, ghiNapRut, ghiThuChi, luuLoaiThuChi } from "./actions";
 
 const TAB = [{ ma: "tien-mat", ten: "Sổ quỹ tiền mặt" }, { ma: "ngan-hang", ten: "Sổ quỹ ngân hàng" }, { ma: "loai", ten: "Phân loại thu/chi" }];
-const NHAN_LOAI: Record<string, { ten: string; kieu: "tot" | "loi" | "cho" | "tram" }> = { thu: { ten: "Thu vào", kieu: "tot" }, chi: { ten: "Chi ra", kieu: "loi" }, nap: { ten: "Nạp quỹ", kieu: "cho" }, rut: { ten: "Rút quỹ", kieu: "cho" } };
+const NHAN_LOAI: Record<string, { ten: string; kieu: "tot" | "loi" | "cho" | "tram" }> = { thu: { ten: "Thu vào", kieu: "tot" }, chi: { ten: "Chi ra", kieu: "loi" }, nap: { ten: "Nạp tiền", kieu: "cho" }, rut: { ten: "Rút tiền", kieu: "cho" } };
 
 type SP = { tab?: string; tu?: string; den?: string; cn?: string; loai?: string; pl?: string; da?: string; q?: string };
 
@@ -48,6 +48,8 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
     <>
       <NutHop nhan="Thêm khoản thu" tieuDe="Thêm khoản thu" truong={truongThu} action={ghiThuChi} an={{ huong: "thu" }} giaTri={{ quy_id: quyMacDinh, ngay: homNay }} />
       <NutHop kieu="phu" nhan="Thêm khoản chi" tieuDe="Thêm khoản chi" truong={truongChi} action={ghiThuChi} an={{ huong: "chi" }} giaTri={{ quy_id: quyMacDinh, ngay: homNay }} />
+      <NutHop kieu="phu" nhan="Nạp tiền" tieuDe="Nạp tiền vào quỹ" moTa="Tiền đưa thêm vào quỹ (không phải tiền khách trả, không phải chuyển giữa 2 quỹ)." truong={chung} action={ghiNapRut} an={{ huong: "nap" }} giaTri={{ quy_id: quyMacDinh, ngay: homNay }} />
+      <NutHop kieu="phu" nhan="Rút tiền" tieuDe="Rút tiền khỏi quỹ" moTa="Tiền lấy ra khỏi quỹ (không phải khoản chi, không phải chuyển giữa 2 quỹ)." truong={chung} action={ghiNapRut} an={{ huong: "rut" }} giaTri={{ quy_id: quyMacDinh, ngay: homNay }} />
       <NutHop kieu="phu" nhan="Chuyển quỹ" tieuDe="Chuyển tiền giữa hai quỹ" moTa="Rút từ quỹ này, nạp vào quỹ kia (vd nộp tiền mặt vào ngân hàng)." action={chuyenQuy}
         truong={[{ ten: "quy_tu", nhan: "Từ quỹ", loai: "chon", luaChon: luaQuy, batBuoc: true }, { ten: "quy_den", nhan: "Sang quỹ", loai: "chon", luaChon: luaQuy, batBuoc: true }, { ten: "so_tien", nhan: "Số tiền", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày", loai: "ngay", batBuoc: true }, { ten: "noi_dung", nhan: "Nội dung", loai: "chu", rong: true }]}
         giaTri={{ ngay: homNay }} />
@@ -82,6 +84,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
     let ds = tatCa;
     if (sp.da !== "1") ds = ds.filter((r) => !r.da_dao && r.nguon !== "dao_phieu");
     if (sp.loai === "chuyen-di" || sp.loai === "chuyen-den") ds = ds.filter((r) => r.nguon === "chuyen_quy" && r.loai === (sp.loai === "chuyen-di" ? "rut" : "nap"));
+    else if (sp.loai === "nap" || sp.loai === "rut") ds = ds.filter((r) => r.loai === sp.loai && r.nguon !== "chuyen_quy");
     else if (sp.loai) ds = ds.filter((r) => r.loai === sp.loai);
     const tuKhoa = boDau((sp.q ?? "").trim());
     if (tuKhoa) ds = ds.filter((r) => boDau(`${r.ma ?? ""} ${r.noi_dung ?? ""} ${r.doi_tuong ?? ""} ${r.loai_thu_chi ?? ""}`).includes(tuKhoa));
@@ -92,7 +95,6 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
     const tenNguoi = new Map((nvTen ?? []).map((n) => [n.id, n.ho_ten]));
     const tenCn = new Map((dsCn ?? []).map((c) => [c.id, c.ten]));
     const coCotCn = !cn && (dsCn ?? []).length > 1;
-    const chuaNhap = quyHienTai.filter((q) => !q.da_nhap_so_du);
     noiDung = (loiTong || loiDong) ? (
       <>
         <LocBaoCao goc={goc} tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />
@@ -103,12 +105,6 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
         <LocBaoCao goc={goc} tu={tu} den={den} chiNhanh={nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} cn={sp.cn} />
         <ChiSoQuy dau={dau} thu={Number(t?.thu ?? 0)} chi={Number(t?.chi ?? 0)} nap={Number(t?.nap ?? 0)} rut={Number(t?.rut ?? 0)} hienTai={Number(t?.hien_tai ?? 0)} />
         {tab === "ngan-hang" && <TachQuyNganHang chiNhanhIds={[...new Set(quyHienTai.map((q) => q.chi_nhanh_id))]} tu={tu} den={den} />}
-        {chuaNhap.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-3 rounded-nho bg-canh-bao-nen px-3.5 py-2.5 text-[13.5px] text-canh-bao" role="status">
-            <span>{chuaNhap.length}/{quyHienTai.length} quỹ chưa nhập số dư ban đầu, nên tồn quỹ đang là tổng tiền khách đã trả được ghi vào quỹ từ trước tới nay (chưa có khoản chi cũ) — chưa phải số tiền thật trong két hay tài khoản. Cần nhập số dư đầu cho từng quỹ.</span>
-            {ghi && chuaNhap.map((q) => <NutHop key={q.id} kieu="chu" nhan={`Nhập số dư: ${q.ten}`} tieuDe="Nhập số dư ban đầu" moTa={q.ten} truong={[{ ten: "so_du_dau", nhan: "Số dư ban đầu", loai: "tien", batBuoc: true }]} action={nhapSoDuDau} an={{ quy_id: q.id }} giaTri={{ so_du_dau: Number(q.so_du_dau) }} />)}
-          </div>
-        )}
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <LocSoQuy goc={goc} loai={sp.loai ?? ""} pl={sp.pl ?? ""} da={sp.da === "1"} q={sp.q ?? ""} phanLoai={(loaiTC ?? []).map((l) => l.ten)} quyKia={tab === "ngan-hang" ? "quỹ tiền mặt" : "quỹ ngân hàng"} />
           <a href={`/api/xuat/so-quy?quy=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>
@@ -117,14 +113,14 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
           <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có giao dịch nào trong bộ lọc này."
             cot={[
               { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Mã", hienThi: (r) => <span className="tabular-nums">{r.ma}</span> },
-              { nhan: "Loại", hienThi: (r) => { const n = NHAN_LOAI[r.loai ?? ""]; return n ? <NhanTrangThai kieu={n.kieu}>{n.ten}</NhanTrangThai> : null; } },
+              { nhan: "Loại", hienThi: (r) => { const n = NHAN_LOAI[r.loai ?? ""]; if (!n) return null; const quyKia = tab === "ngan-hang" ? "quỹ tiền mặt" : "quỹ ngân hàng"; return <NhanTrangThai kieu={n.kieu}>{r.nguon === "chuyen_quy" ? (r.loai === "rut" ? `Chuyển sang ${quyKia}` : `Nhận từ ${quyKia}`) : n.ten}</NhanTrangThai>; } },
               ...(coCotCn ? [{ nhan: "Chi nhánh", hienThi: (r: (typeof ds)[number]) => tenCn.get(r.chi_nhanh_id ?? "") ?? "" }] : []),
               { nhan: "Phân loại", hienThi: (r) => r.loai_thu_chi ?? "" },
               { nhan: "Nội dung", chinh: true, hienThi: (r) => <span className="text-muc">{r.noi_dung}{r.doi_tuong ? <span className="text-muc-3"> · {r.doi_tuong}</span> : null}{r.da_dao ? <span className="text-muc-3"> · đã đảo</span> : null}</span> },
-              { nhan: "Người thu / chi", hienThi: (r) => (r.nguon === "ban_hang" ? <span className="text-muc-3">—</span> : tenNguoi.get(r.nguoi_id ?? "") ?? "") },
+              { nhan: "Người thu / chi", hienThi: (r) => (r.nguon === "ban_hang" ? <span className="text-muc-3">—</span> : r.nguoi_ten ?? tenNguoi.get(r.nguoi_id ?? "") ?? "") },
               { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={Number(r.bien_dong) < 0 ? "text-loi" : "text-nhan-dam"}>{Number(r.bien_dong) < 0 ? "−" : "+"}{soVN(r.so_tien)}</span> },
               { nhan: "Số dư", phai: true, hienThi: (r) => soVN(r.du) },
-              { nhan: "", hienThi: (r) => (ghi && r.sua_duoc && !r.da_dao && r.nguon !== "dao_phieu" ? <NutHop kieu="chu" nguy nhan="Đảo phiếu" tieuDe="Đảo phiếu" xacNhan={`Ghi dòng ngược chiều để huỷ ${r.ma}. Phiếu gốc vẫn còn trong sổ.`} truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={daoPhieu} an={{ id: r.id ?? "" }} nhanLuu="Đảo phiếu" /> : null) },
+              { nhan: "", hienThi: (r) => (ghi && r.sua_duoc && r.sh_id == null && !r.da_dao && r.nguon !== "dao_phieu" ? <NutHop kieu="chu" nguy nhan="Đảo phiếu" tieuDe="Đảo phiếu" xacNhan={`Ghi dòng ngược chiều để huỷ ${r.ma}. Phiếu gốc vẫn còn trong sổ.`} truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={daoPhieu} an={{ id: r.id ?? "" }} nhanLuu="Đảo phiếu" /> : null) },
             ]} />
         </div>
         {ds.length === 0 ? null : <p className="mt-3 text-[12px] text-muc-3">Số dư chạy tính từ tồn đầu kỳ {tienVN(dau)}. Tiền khách trả (tiền mặt vào quỹ tiền mặt; chuyển khoản, quẹt thẻ, ví điện tử vào quỹ ngân hàng; trừ thẻ tiền và Ship COD không tính) tự vào sổ quỹ.</p>}
@@ -134,7 +130,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
   return (
     <div>
       <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính - Kế toán</Link>
-      <TieuDeTrang tieuDe="Sổ quỹ thu/chi" phu="Tiền mặt và ngân hàng: thu, chi, chuyển quỹ, số dư chạy. Dòng đã ghi chỉ đảo được, không sửa hay xoá.">{nutGhi}</TieuDeTrang>
+      <TieuDeTrang tieuDe="Sổ quỹ thu/chi" phu="Tiền mặt và ngân hàng: thu, chi, nạp, rút, chuyển quỹ. Tồn quỹ cộng dồn từ ngày đầu dùng (như SalonHero, không có số dư đầu). Dòng đã ghi chỉ đảo được, không sửa hay xoá.">{nutGhi}</TieuDeTrang>
       <Tab muc={TAB} dang={tab} goc={goc} them={them} />
       {noiDung}
     </div>

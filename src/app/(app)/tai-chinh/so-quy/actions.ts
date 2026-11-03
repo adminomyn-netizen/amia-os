@@ -35,6 +35,21 @@ export async function ghiThuChi(fd: FormData): Promise<KQ> {
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
 
+/** Nạp tiền / Rút tiền (SalonHero: Nạp tiền, Rút tiền ở sổ tiền mặt và sổ ngân hàng): tiền vào/ra một quỹ, không phải thu/chi kinh doanh, không phải chuyển giữa 2 quỹ. */
+export async function ghiNapRut(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("quy.ghi");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const huong = chuoi(fd, "huong") === "nap" ? "nap" : "rut";
+  const tien = so(fd, "so_tien"), ngay = chuoi(fd, "ngay") || homNayHCM(), noiDung = chuoi(fd, "noi_dung");
+  if (!Number.isInteger(tien) || tien <= 0 || tien > TOI_DA) return { loi: "Số tiền phải là số đồng lớn hơn 0 và không quá 100 tỷ." };
+  if (!ngayHopLe(ngay)) return { loi: "Ngày ghi không được ở tương lai." };
+  if (!noiDung) return { loi: huong === "nap" ? "Nhập nội dung khoản nạp tiền." : "Nhập nội dung khoản rút tiền." };
+  const quy = await layQuy(chuoi(fd, "quy_id"), nd.chiNhanhId);
+  if (!quy) return { loi: "Chọn quỹ hợp lệ." };
+  const { error } = await sb().from("so_quy").insert({ ma: await ma(huong === "nap" ? "NT" : "RT"), ngay, quy_id: quy.id, loai: huong, so_tien: tien, noi_dung: noiDung, doi_tuong: chuoiHoacNull(fd, "doi_tuong"), nguoi_id: nd.nhanVienId });
+  return error ? { loi: thongBaoLoi(error) } : xong();
+}
+
 export async function chuyenQuy(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("quy.ghi");
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -58,6 +73,7 @@ export async function daoPhieu(fd: FormData): Promise<KQ> {
   const db = sb();
   const { data: goc } = await db.from("so_quy").select("*").eq("id", chuoi(fd, "id")).maybeSingle();
   if (!goc || goc.nguon === "dao_phieu") return { loi: "Không tìm thấy phiếu để đảo." };
+  if (goc.sh_id != null) return { loi: "Phiếu này lấy từ SalonHero: sửa hoặc xoá ở SalonHero, đồng bộ đêm sẽ tự đảo theo." };
   const nhomDong = goc.nhom_chuyen ? (await db.from("so_quy").select("*").eq("nhom_chuyen", goc.nhom_chuyen)).data ?? [goc] : [goc];
   const { data: quy } = await db.from("quy").select("id, chi_nhanh_id").in("id", nhomDong.map((d) => d.quy_id));
   if (nd.chiNhanhId && (quy ?? []).some((q) => q.chi_nhanh_id !== nd.chiNhanhId)) return { loi: KHONG_DU_QUYEN };
@@ -69,17 +85,6 @@ export async function daoPhieu(fd: FormData): Promise<KQ> {
   for (const d of nhomDong) dong.push({ ma: `DP${d.ma}`, ngay, quy_id: d.quy_id, loai: nguoc[d.loai as keyof typeof nguoc], so_tien: d.so_tien, loai_thu_chi_id: d.loai_thu_chi_id, noi_dung: `Đảo phiếu ${d.ma}: ${ly}`, doi_tuong: d.doi_tuong, nguon: "dao_phieu" as const, phieu_goc_id: d.id, nguoi_id: nd.nhanVienId });
   const { error } = await db.from("so_quy").insert(dong);
   return error ? { loi: error.code === "23505" ? "Phiếu này đã được đảo rồi." : thongBaoLoi(error) } : xong();
-}
-
-export async function nhapSoDuDau(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("quy.ghi");
-  if (!nd) return { loi: KHONG_DU_QUYEN };
-  const quy = await layQuy(chuoi(fd, "quy_id"), nd.chiNhanhId);
-  if (!quy) return { loi: "Chọn quỹ hợp lệ." };
-  const tien = so(fd, "so_du_dau");
-  if (!Number.isInteger(tien) || tien < 0 || tien > TOI_DA) return { loi: "Số dư đầu phải là số đồng từ 0 đến 100 tỷ." };
-  const { error } = await sb().from("quy").update({ so_du_dau: tien, da_nhap_so_du: true }).eq("id", quy.id);
-  return error ? { loi: thongBaoLoi(error) } : xong();
 }
 
 export async function luuLoaiThuChi(fd: FormData): Promise<KQ> {

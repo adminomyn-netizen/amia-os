@@ -27,7 +27,31 @@ try {
   await g("Network.enable");
   for (const [j, p] of parts.entries()) await g("Network.setCookie", { name: parts.length === 1 ? `sb-${ref}-auth-token` : `sb-${ref}-auth-token.${j}`, value: encodeURIComponent(p), url: BASE });
   await g("Page.enable"); await g("Runtime.enable");
+  // KHONG_SW=1: bỏ qua service worker (so có/không SW).
+  if (process.env.KHONG_SW) await g("Network.setBypassServiceWorker", { bypass: true });
   const doc = async (expr) => (await g("Runtime.evaluate", { expression: expr, returnByValue: true })).result?.result?.value;
+  // BAM=1: mở trang đầu tiên rồi BẤM link menu sang từng trang còn lại (chuyển trang trong app), đo từ lúc bấm tới khi URL đổi + hết khung xương.
+  if (process.env.BAM) {
+    const [dau, ...con] = process.argv.slice(2);
+    const choXong = async (t0, path) => { for (let i = 0; i < 300; i++) { const v = await doc(`location.pathname + location.search === ${JSON.stringify(path)} && document.querySelector('main') && [...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).length === 0`); if (v) return Date.now() - t0; await ngu(20); } return null; };
+    for (let vong = 0; vong < 2; vong++) {
+      await g("Page.navigate", { url: BASE + dau }); await choXong(Date.now(), dau); await ngu(1500); // để link menu kịp prefetch như người dùng thật
+      for (const p of con) {
+        su.length = 0; const t0 = Date.now();
+        const ok = await doc(`(() => { const a = [...document.querySelectorAll('a[href=${JSON.stringify(p)}]')].find((x) => x.checkVisibility()); if (!a) return false; a.click(); return true; })()`);
+        const ms = ok ? await choXong(t0, p) : null;
+        if (vong === 1) {
+          // Yêu cầu RSC (?_rsc=) phát ra trong lúc chuyển trang: thời gian máy chủ trả byte đầu / xong, cỡ.
+          const yc = new Map(); for (const m of su) { if (m.method === "Network.requestWillBeSent" && m.params.request.url.includes("_rsc=")) yc.set(m.params.requestId, { url: m.params.request.url, t: m.params.timestamp }); }
+          const rsc = [...yc.entries()].map(([id, x]) => { const r = su.find((m) => m.method === "Network.responseReceived" && m.params.requestId === id); const f = su.find((m) => m.method === "Network.loadingFinished" && m.params.requestId === id);
+            return `${new URL(x.url).pathname} byte-đầu ${r ? Math.round((r.params.timestamp - x.t) * 1000) : "?"}ms xong ${f ? Math.round((f.params.timestamp - x.t) * 1000) : "?"}ms ${f ? Math.round(f.params.encodedDataLength / 1024) : "?"}KB`; });
+          console.log(`bấm ${dau} → ${p.padEnd(24)} ${ok ? (ms ?? ">6000") + " ms" : "không thấy link menu"}   RSC: ${rsc.join(" | ") || "không (đã có sẵn)"}`);
+        }
+        await ngu(800);
+      }
+    }
+    s.close(); process.exit(0);
+  }
   for (const p of process.argv.slice(2)) {
     let kq;
     for (let lan = 0; lan < 2; lan++) {
@@ -36,10 +60,10 @@ try {
       for (let i = 0; i < 300 && !su.some((m) => m.method === "Page.loadEventFired"); i++) await ngu(50);
       // chờ hết khung xương (aria-busy) tối đa 15 s
       let xong = null; for (let i = 0; i < 300; i++) { const b = await doc(`[...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).length`); if (b === 0) { xong = Date.now() - t0; break; } await ngu(50); }
-      const nav = await doc(`JSON.stringify((() => { const n = performance.getEntriesByType("navigation")[0]; return { ttfb: Math.round(n.responseStart), dcl: Math.round(n.domContentLoadedEventEnd), load: Math.round(n.loadEventEnd) }; })())`);
+      const nav = await doc(`JSON.stringify((() => { const n = performance.getEntriesByType("navigation")[0]; const r = (x) => Math.round(x); return { ttfb: r(n.responseStart), dcl: r(n.domContentLoadedEventEnd), load: r(n.loadEventEnd), ws: r(n.workerStart), fs: r(n.fetchStart), ce: r(n.connectEnd), rq: r(n.requestStart), sw: !!navigator.serviceWorker.controller }; })())`);
       kq = { ...JSON.parse(nav ?? "{}"), hien_xong: xong };
     }
-    console.log(`${p.padEnd(34)} ttfb ${String(kq.ttfb).padStart(5)}  dcl ${String(kq.dcl).padStart(5)}  load ${String(kq.load).padStart(5)}  hiện xong ${String(kq.hien_xong ?? ">15000").padStart(5)} ms`);
+    console.log(`${p.padEnd(34)} ttfb ${String(kq.ttfb).padStart(5)}  dcl ${String(kq.dcl).padStart(5)}  load ${String(kq.load).padStart(5)}  hiện xong ${String(kq.hien_xong ?? ">15000").padStart(5)} ms  [sw ${kq.sw ? "có" : "không"} workerStart ${kq.ws} fetchStart ${kq.fs} connectEnd ${kq.ce} requestStart ${kq.rq}]`);
   }
   s.close();
 } finally {

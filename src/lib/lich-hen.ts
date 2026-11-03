@@ -88,3 +88,15 @@ export const NV_CHUA_PHAN = "_";
 /** Tham số `nv` có thể là nhiều mã nhân viên cách nhau dấu phẩy (chọn nhiều như SalonHero); chỉ giữ mã dạng uuid hoặc mã giữ chỗ. */
 export const dsNvLoc = (v: string | undefined) =>
   [...new Set((v ?? "").split(",").map((x) => x.trim()).filter((x) => x === NV_CHUA_PHAN || /^[0-9a-f-]{36}$/i.test(x)))].slice(0, 60);
+
+/** Màu thẻ lịch theo trạng thái (theo SalonHero: chưa xác nhận cam, đã xác nhận xanh dương, chờ phục vụ đỏ cam, đang phục vụ xanh lá, hoàn thành xanh ngọc, huỷ/không đến đỏ), dùng màu của bộ nhận diện AMIA.
+ *  `the` = thẻ trong lưới, `chip` = chấm màu ở chú thích và nhãn trạng thái. Viết nguyên chữ để Tailwind quét thấy. */
+export const MAU_TRANG_THAI: Record<string, { the: string; chip: string }> = {
+  chua_xac_nhan: { the: "border-l-sac-cam bg-sac-cam-nen", chip: "bg-sac-cam-nen text-sac-cam" },
+  da_xac_nhan: { the: "border-l-sac-xanh bg-sac-xanh-nen", chip: "bg-sac-xanh-nen text-sac-xanh" },
+  cho_phuc_vu: { the: "border-l-canh-bao bg-canh-bao-nen", chip: "bg-canh-bao-nen text-canh-bao" },
+  dang_phuc_vu: { the: "border-l-sac-luc bg-sac-luc-nen", chip: "bg-sac-luc-nen text-sac-luc" },
+  hoan_thanh: { the: "border-l-nhan bg-nhan-nhat", chip: "bg-nhan-nhat text-nhan-dam" },
+  huy: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi" },
+  khong_den: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi" },
+};

@@ -59,7 +59,7 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
   let ids: string[];
   if (id) {
-    const { error } = await db.from("lich_hen").update({ ...row, bat_dau: buoi[0].bd.toISOString(), ket_thuc: buoi[0].kt.toISOString() }).eq("id", id).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]);
+    const { error } = await db.from("lich_hen").update({ ...row, bat_dau: buoi[0].bd.toISOString(), ket_thuc: buoi[0].kt.toISOString(), cap_nhat_luc: new Date().toISOString() }).eq("id", id).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]);
     if (error) return { loi: thongBaoLoi(error) };
     ids = [id];
   } else {
@@ -100,7 +100,7 @@ export async function doiTrangThaiLich(fd: FormData): Promise<KQ> {
   if (nd.chiNhanhId && nd.chiNhanhId !== l.chi_nhanh_id) return { loi: KHONG_DU_QUYEN };
   if (!(CHUYEN[l.trang_thai] ?? []).includes(moi)) return { loi: "Không chuyển được sang trạng thái này." };
   if (moi === "huy" && !chuoi(fd, "ly_do")) return { loi: "Huỷ lịch phải ghi lý do." };
-  const { error } = await db.from("lich_hen").update({ trang_thai: moi, ly_do_huy: moi === "huy" ? chuoi(fd, "ly_do") : null }).eq("id", id);
+  const { error } = await db.from("lich_hen").update({ trang_thai: moi, ly_do_huy: moi === "huy" ? chuoi(fd, "ly_do") : null, cap_nhat_luc: new Date().toISOString() }).eq("id", id);
   lamMoi();
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }

@@ -40,10 +40,11 @@ function Buoc({ so, chu, xong, phu }: { so: number; chu: string; xong: boolean; 
   return (
     <div className="mb-4 flex items-center justify-between gap-3">
       <h2 className="flex items-center gap-3 text-[17px] font-semibold text-muc">
-        <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-nho text-[14px] font-bold transition-colors ${xong ? "bg-nhan text-white" : "bg-nhan-nhat text-nhan-dam"}`}>
-          {xong ? <Check strokeWidth={2.6} className="h-4 w-4" aria-hidden /> : so}
+        <span className={`relative flex h-8 w-8 shrink-0 items-center justify-center rounded-nho text-[14px] font-bold tabular-nums transition-colors ${xong ? "bg-nhan text-white" : "bg-nhan-nhat text-nhan-dam"}`}>
+          {so}
+          {xong && <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-[4px] text-espresso ring-2 ring-giay-sang" style={VANG}><Check strokeWidth={3.5} className="h-2.5 w-2.5" aria-hidden /></span>}
         </span>
-        {chu}
+        {chu}{xong && <span className="sr-only"> (đã xong)</span>}
       </h2>
       {phu}
     </div>
@@ -135,17 +136,23 @@ export function FormDatLich(p: Props) {
   );
   const dau = (
     <>
-    {p.anhBia && (
-      <div className="relative bg-espresso">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={p.anhBia} alt={`${p.tenCuaHang} – ${T.khauHieu}`} fetchPriority="high" className="mx-auto block aspect-[2048/777] max-h-[520px] w-full max-w-[1600px] object-cover" />
-        <div className="absolute right-3 top-3 sm:right-5 sm:top-5">{nutNgonNgu}</div>
-      </div>
-    )}
     <header className="nen-toi relative overflow-hidden text-white">
+      {p.anhBia && (
+        <div className="relative">
+          {/* Quầng màu của chính ảnh phủ kín bề ngang, để mép ảnh tan vào nền tối thay vì cắt cứng */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={p.anhBia} alt="" aria-hidden className="pointer-events-none absolute inset-0 h-full w-full scale-110 object-cover opacity-45" style={{ filter: "blur(28px) saturate(1.2)" }} />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={p.anhBia} alt={`${p.tenCuaHang} – ${T.khauHieu}`} fetchPriority="high"
+            className="relative mx-auto block aspect-[2048/777] max-h-[540px] w-full max-w-[1600px] object-cover"
+            style={{ maskImage: "linear-gradient(to bottom, #000 62%, transparent 100%), linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%)", maskComposite: "intersect", WebkitMaskImage: "linear-gradient(to bottom, #000 62%, transparent 100%), linear-gradient(to right, transparent 0, #000 7%, #000 93%, transparent 100%)", WebkitMaskComposite: "source-in" }} />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: "linear-gradient(to bottom, transparent, rgb(10 43 38 / 0.85))" }} />
+          <div className="absolute right-3 top-3 z-10 sm:right-5 sm:top-5">{nutNgonNgu}</div>
+        </div>
+      )}
       <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] opacity-60" style={{ background: "radial-gradient(closest-side, rgb(217 184 119 / 0.35), transparent)" }} />
       <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-20 h-[380px] w-[380px] opacity-50" style={{ background: "radial-gradient(closest-side, rgb(20 163 148 / 0.35), transparent)" }} />
-      <div className={`relative mx-auto w-full max-w-[1120px] px-4 pb-10 sm:px-6 sm:pb-14 ${p.anhBia ? "pt-7 sm:pt-9" : "pt-5"}`}>
+      <div className={`relative mx-auto w-full max-w-[1120px] px-4 pb-10 sm:px-6 sm:pb-14 ${p.anhBia ? "pt-3 sm:-mt-16 sm:pt-0" : "pt-5"}`}>
         {!p.anhBia && (
           <div className="flex items-center justify-between gap-3">
             <Link href="/dat-lich" aria-label={p.tenCuaHang}><Image src="/logo-amia-trang.png" alt={p.tenCuaHang} width={600} height={272} priority className="h-auto w-[104px] sm:w-[124px]" /></Link>
@@ -462,9 +469,9 @@ export function FormDatLich(p: Props) {
           )}
 
           <section className={THE} ref={gioRef}>
-            <Buoc so={3 + soBuocDv + soBuocNv} chu={T.b3} xong={!!gio} phu={<span className="hidden text-[13px] font-medium text-muc-2 sm:block">{T.thu[thuSo(ngay)]}, {ddmm(ngay)}/{ngay.slice(0, 4)}</span>} />
+            <Buoc so={3 + soBuocDv + soBuocNv} chu={T.b3} xong={!!gio} phu={gio ? <span className="flex items-center gap-1.5 rounded-nho px-3 py-1.5 text-[13px] font-bold text-espresso" style={VANG}><CalendarCheck className="h-4 w-4" aria-hidden />{gio} · {T.thu[thuSo(ngay)]}, {ddmm(ngay)}</span> : <span className="hidden text-[13px] font-medium text-muc-2 sm:block">{T.thu[thuSo(ngay)]}, {ddmm(ngay)}/{ngay.slice(0, 4)}</span>} />
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <LichTongQuan nn={p.nn} homNay={p.homNay} ngayDatDuoc={ngays} ngay={ngay} gio={gio} tongPhut={tongPhut} nhanHen={p.nn === "en" ? "your visit" : "lịch hẹn"} onChon={(d) => { setNgay(d); setGio(""); }} />
+              <LichTongQuan nn={p.nn} homNay={p.homNay} ngayDatDuoc={ngays} ngay={ngay} gio={gio} onChon={(d) => { setNgay(d); setGio(""); }} />
               <div>
             <div className="flex items-center gap-2 xl:hidden">
               <button type="button" aria-label={T.buocTruoc} onClick={() => cuon(-1)} className="hidden h-10 w-10 shrink-0 items-center justify-center rounded-nho border border-vien-dam text-muc hover:bg-giay-tram sm:flex"><ChevronLeft size={18} /></button>
@@ -486,7 +493,15 @@ export function FormDatLich(p: Props) {
             <p className="mb-2.5 mt-5 text-[12px] font-semibold uppercase tracking-wide text-muc-3 xl:mt-0">{T.thu[thuSo(ngay)]}, {ddmm(ngay)} · {T.chonKhung} <span className="text-loi">*</span></p>
             {chiaBuoi && khung && khung.length > 0 && (
               <div className="mb-3 grid grid-cols-3 gap-1 rounded-the bg-giay-tram p-1" role="tablist" aria-label={T.chonKhung}>
-                {[T.sang, T.chieu, T.toi].map((b, i) => <button key={b} type="button" role="tab" aria-selected={buoi === i} onClick={() => setBuoi(i)} className={`h-9 rounded-nho text-[13px] font-semibold transition-colors ${buoi === i ? "bg-giay-sang text-nhan-dam shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-muc-2"}`}>{b}</button>)}
+                {[T.sang, T.chieu, T.toi].map((b, i) => {
+                  const con = khung.filter((k) => k.con && buoiCua(k.gio) === i).length;
+                  return (
+                    <button key={b} type="button" role="tab" aria-selected={buoi === i} onClick={() => setBuoi(i)} className={`flex h-11 flex-col items-center justify-center rounded-nho leading-tight transition-colors ${buoi === i ? "bg-giay-sang text-nhan-dam shadow-[0_1px_3px_rgba(0,0,0,0.12)]" : "text-muc-2 hover:text-muc"}`}>
+                      <span className="text-[13px] font-semibold">{b}</span>
+                      <span className={`text-[10.5px] ${con ? "text-nhan" : "text-muc-3"}`}>{con ? `${con} ${T.conCho.toLowerCase()}` : T.hetCho}</span>
+                    </button>
+                  );
+                })}
               </div>
             )}
             {khung === null && (
@@ -505,9 +520,9 @@ export function FormDatLich(p: Props) {
               <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 xl:grid-cols-4" role="radiogroup" aria-label={T.chonKhung}>
                 {khung.filter((k) => !chiaBuoi || buoiCua(k.gio) === buoi).map((k) => (
                   <button key={k.gio} type="button" role="radio" aria-checked={gio === k.gio} disabled={!k.con} onClick={() => { setGio(k.gio); setLoi(""); }}
-                    className={`flex h-12 flex-col items-center justify-center rounded-nho border transition-colors ${gio === k.gio ? "border-nhan bg-nhan text-white" : k.con ? "border-nhan/35 bg-giay-sang text-muc hover:bg-nhan-nhat" : "cursor-not-allowed border-vien bg-giay-tram text-muc-3 line-through decoration-muc-3/50"}`}>
-                    <span className="text-[14.5px] font-bold tabular-nums">{k.gio}</span>
-                    <span className={`text-[10px] ${gio === k.gio ? "text-white/85" : ""}`}>{k.con ? T.conCho : T.hetCho}</span>
+                    className={`flex h-[52px] flex-col items-center justify-center rounded-nho border transition-colors ${gio === k.gio ? "border-nhan bg-nhan text-white shadow-[0_4px_12px_rgba(0,111,98,0.35)]" : k.con ? "border-nhan/35 bg-giay-sang text-muc hover:border-nhan hover:bg-nhan-nhat" : "cursor-not-allowed border-vien bg-giay-tram text-muc-3 line-through decoration-muc-3/50"}`}>
+                    <span className="flex items-center gap-1 text-[14.5px] font-bold tabular-nums">{gio === k.gio && <Check strokeWidth={3} className="h-3.5 w-3.5" aria-hidden />}{k.gio}</span>
+                    <span className={`text-[10px] ${gio === k.gio ? "text-white/85" : k.con ? "text-nhan" : ""}`}>{k.con ? T.conCho : T.hetCho}</span>
                   </button>
                 ))}
               </div>

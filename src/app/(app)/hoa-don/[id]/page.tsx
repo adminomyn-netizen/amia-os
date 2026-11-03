@@ -11,7 +11,8 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
-import { ghiNhanVat, huyHoaDon, luuDanhGia, thuNo } from "../actions";
+import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, thuNo } from "../actions";
+import { maPhieuThu } from "@/lib/phieu-thu";
 import { luuDanhGiaSauDieuTri } from "../sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
 import { DanhGiaNhanVien } from "@/components/hoa-don/DanhGiaNhanVien";
@@ -35,6 +36,8 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
     h.nguoi_gioi_thieu_id ? db.from("khach_hang").select("id, ma, ho_ten").eq("id", h.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
     db.from("chi_nhanh").select("ten").eq("id", h.chi_nhanh_id).maybeSingle(),
   ]);
+  // Lịch sử nợ (như hộp "Nợ của khách" SalonHero): các lần trả nợ sau khi chốt đơn và các lần xoá nợ; chỉ dòng cuối còn hiệu lực được huỷ.
+  const { data: lsNo } = h.trang_thai === "hoan_thanh" ? await db.rpc("lich_su_no_hoa_don", { p_id: id }) : { data: [] };
   const idsDong = (dong ?? []).map((d) => d.id);
   const { data: chia } = idsDong.length ? await db.from("dong_nhan_vien").select("*").in("dong_id", idsDong) : { data: [] };
   const tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
@@ -77,6 +80,10 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
             truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC_TIEN, batBuoc: true }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
         )}
+        {coNo && !h.la_lich_su && coQuyen(nd, "no.xoa") && (
+          <NutHop kieu="phu" nhan="Điều chỉnh nợ" tieuDe="Điều chỉnh nợ (xoá nợ)" moTa={`Nợ hiện tại ${tienVN(h.con_no)}. Nhập số nợ mới (nhỏ hơn nợ hiện tại; 0 = xoá hết). Phần chênh ghi là "Xoá nợ", không vào sổ quỹ.`} an={{ hoa_don_id: id }} giaTri={{ no_moi: 0 }} nhanLuu="Lưu điều chỉnh"
+            truong={[{ ten: "no_moi", nhan: "Số nợ mới", loai: "tien", batBuoc: true }, { ten: "ly_do", nhan: "Lý do điều chỉnh nợ", loai: "nhieu_dong", batBuoc: true }]} action={dieuChinhNo} />
+        )}
         {h.trang_thai !== "huy" && coQuyen(nd, "ban.huy") && (
           <NutHop kieu="phu" nhan="Huỷ hoá đơn" tieuDe="Huỷ hoá đơn" moTa="Huỷ sẽ hoàn lại các khoản đã thu (kể cả thẻ tiền), thu hồi thẻ đã bán và trả kho. Không huỷ được nếu thẻ đã được dùng." an={{ hoa_don_id: id }} nhanLuu="Huỷ hoá đơn"
             truong={[{ ten: "ly_do", nhan: "Lý do huỷ", loai: "nhieu_dong", batBuoc: true }]} action={huyHoaDon} />
@@ -107,11 +114,35 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         </MucTrang>
         <MucTrang tieuDe="Sổ thu tiền">
           <Bang duLieu={tt ?? []} khoa={(r) => r.id} trong="Chưa thu khoản nào." cot={[
-            { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => nhanKhoanThu(r.phuong_thuc, r.loai_vi) },
+            { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Số phiếu", hienThi: (r) => <span className="tabular-nums">{maPhieuThu(r.so_phieu)}</span> }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : r.dao_cua_id ? "Huỷ trả nợ" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => nhanKhoanThu(r.phuong_thuc, r.loai_vi) },
             { nhan: "Ngân hàng nhận", hienThi: (r) => r.ngan_hang ?? "" }, { nhan: "Người thu", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
             { nhan: "Số tiền", hienThi: (r) => <span className={r.loai === "hoan" ? "text-loi" : ""}>{r.loai === "hoan" ? "− " : ""}{tienVN(r.so_tien)}</span>, phai: true },
           ]} />
         </MucTrang>
+        {(lsNo ?? []).length > 0 && (
+          <MucTrang tieuDe="Lịch sử nợ">
+            <Bang duLieu={lsNo ?? []} khoa={(r) => r.ref} cot={[
+              { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) },
+              { nhan: "Loại", hienThi: (r) => <span className={r.da_huy ? "text-muc-3 line-through" : "text-muc"}>{r.loai === "xoa_no" ? "Xoá nợ" : "Trả nợ"}</span> },
+              { nhan: "Số phiếu", hienThi: (r) => (r.loai === "tra_no" ? <span className="tabular-nums">{maPhieuThu(r.so_phieu)}</span> : "") },
+              { nhan: "Hình thức", hienThi: (r) => (r.phuong_thuc ? `${nhanKhoanThu(r.phuong_thuc, r.loai_vi)}${r.ngan_hang ? ` · ${r.ngan_hang}` : ""}` : "") },
+              { nhan: "Người làm", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" },
+              { nhan: "Ghi chú", hienThi: (r) => <span className="text-muc-2">{r.da_huy ? "Đã huỷ · " : ""}{r.ly_do ?? ""}</span> },
+              { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={r.da_huy ? "text-muc-3 line-through" : ""}>{tienVN(r.so_tien)}</span> },
+              { nhan: "", hienThi: (r) => (
+                <span className="flex flex-wrap justify-end gap-2">
+                  {r.loai === "tra_no" && !r.da_huy && coQuyen(nd, "no.thu") && <Link href={`/in/phieu-thu/${r.ref}`} target="_blank" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu thu</Link>}
+                  {r.la_cuoi && !h.la_lich_su && coQuyen(nd, "no.thu") && (
+                    <NutHop kieu="chu" nguy nhan="Huỷ" tieuDe={r.loai === "xoa_no" ? "Huỷ lần xoá nợ" : "Huỷ lần trả nợ"} an={{ hoa_don_id: id, ref: r.ref }} nhanLuu="Huỷ dòng này"
+                      moTa={r.loai === "xoa_no" ? `Nợ ${tienVN(r.so_tien)} được tính lại cho khách.` : `Ghi dòng hoàn ${tienVN(r.so_tien)} cùng ngày ${ngayVN(r.ngay)}, cùng hình thức để sổ quỹ và báo cáo về như chưa thu. Dòng gốc vẫn còn trong sổ.`}
+                      truong={[{ ten: "ly_do", nhan: "Lý do (không bắt buộc)", loai: "chu", rong: true }]} action={huyLanTraNo} />
+                  )}
+                </span>
+              ) },
+            ]} />
+            {Number(h.no_da_xoa) > 0 && <p className="mt-2 text-[12px] text-muc-3">Đã xoá nợ {tienVN(h.no_da_xoa)} (không tính vào tiền đã thu).</p>}
+          </MucTrang>
+        )}
         {h.trang_thai === "hoan_thanh" && dongDg.length > 0 && (
           <MucTrang tieuDe="Đánh giá nhân viên">
             <DanhGiaNhanVien key={dongDg.map((x) => `${x.nhanVienId}${x.diem}${x.yKien}`).join("|")} hoaDonId={id} dong={dongDg} duocGhi={duocGhiDg} luu={luuDanhGia} />

@@ -26,6 +26,7 @@ export const QUYEN_TU_SH: Partial<Record<Quyen, string[]>> = {
   "ban.toan_co_so": ["pos.readByLoc.read"],
   "ban.tip": ["pos.tip.update"],
   "no.thu": ["pos.update", "reportCustomer.customerDebt.update", "reportCustomer.customerDebt.create"],
+  "no.xoa": ["reportCustomer.customerDebt.delete"],  // Xoá nợ / điều chỉnh nợ: SalonHero chỉ Chủ có (câu 3, 03/11/2026)
   "the.xem": ["settingCustomer.memberCards.read", "reportCustomer.useCardHistory.read", "pos.read"],
   "the.dieuchinh": ["settingCustomer.memberCards.update"],
   "danhmuc.sua": ["seviceAndProduct.service.update", "seviceAndProduct.service.create", "seviceAndProduct.product.update", "seviceAndProduct.product.create", "seviceAndProduct.card.update", "seviceAndProduct.card.create"],

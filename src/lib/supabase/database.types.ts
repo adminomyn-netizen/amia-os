@@ -3731,6 +3731,7 @@ export type Database = {
           nguoi_gioi_thieu_id: string | null
           nguoi_lap_id: string
           nhap_dot: string | null
+          no_da_xoa: number
           phu_phi: number
           sh_id: number | null
           sh_ma: string | null
@@ -3777,6 +3778,7 @@ export type Database = {
           nguoi_gioi_thieu_id?: string | null
           nguoi_lap_id: string
           nhap_dot?: string | null
+          no_da_xoa?: number
           phu_phi?: number
           sh_id?: number | null
           sh_ma?: string | null
@@ -3823,6 +3825,7 @@ export type Database = {
           nguoi_gioi_thieu_id?: string | null
           nguoi_lap_id?: string
           nhap_dot?: string | null
+          no_da_xoa?: number
           phu_phi?: number
           sh_id?: number | null
           sh_ma?: string | null
@@ -4015,6 +4018,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hoa_don_dieu_chinh_no: {
+        Row: {
+          dao_cua_id: number | null
+          hoa_don_id: string
+          id: number
+          loai: string
+          ly_do: string
+          ngay: string
+          nguoi_id: string
+          so_tien: number
+          tao_luc: string
+        }
+        Insert: {
+          dao_cua_id?: number | null
+          hoa_don_id: string
+          id?: never
+          loai: string
+          ly_do: string
+          ngay?: string
+          nguoi_id: string
+          so_tien: number
+          tao_luc?: string
+        }
+        Update: {
+          dao_cua_id?: number | null
+          hoa_don_id?: string
+          id?: never
+          loai?: string
+          ly_do?: string
+          ngay?: string
+          nguoi_id?: string
+          so_tien?: number
+          tao_luc?: string
+        }
+        Relationships: []
       }
       hoa_don_dong: {
         Row: {
@@ -9659,6 +9698,7 @@ export type Database = {
       }
       thanh_toan: {
         Row: {
+          dao_cua_id: string | null
           ghi_chu: string | null
           hoa_don_id: string
           id: string
@@ -9670,11 +9710,13 @@ export type Database = {
           nguoi_id: string
           nhap_dot: string | null
           phuong_thuc: string
+          so_phieu: number
           so_tien: number
           tao_luc: string
           the_id: string | null
         }
         Insert: {
+          dao_cua_id?: string | null
           ghi_chu?: string | null
           hoa_don_id: string
           id?: string
@@ -9686,11 +9728,13 @@ export type Database = {
           nguoi_id: string
           nhap_dot?: string | null
           phuong_thuc: string
+          so_phieu?: number
           so_tien: number
           tao_luc?: string
           the_id?: string | null
         }
         Update: {
+          dao_cua_id?: string | null
           ghi_chu?: string | null
           hoa_don_id?: string
           id?: string
@@ -9702,6 +9746,7 @@ export type Database = {
           nguoi_id?: string
           nhap_dot?: string | null
           phuong_thuc?: string
+          so_phieu?: number
           so_tien?: number
           tao_luc?: string
           the_id?: string | null
@@ -11641,6 +11686,32 @@ export type Database = {
           vi_khac: number
           vnpay: number
         }[]
+      }
+      lich_su_no_hoa_don: {
+        Args: { p_id: string }
+        Returns: {
+          da_huy: boolean
+          la_cuoi: boolean
+          loai: string
+          loai_vi: string
+          ly_do: string
+          ngan_hang: string
+          ngay: string
+          nguoi_id: string
+          phuong_thuc: string
+          ref: string
+          so_phieu: number
+          so_tien: number
+          tao_luc: string
+        }[]
+      }
+      dieu_chinh_no: {
+        Args: { p_id: string; p_ly_do: string; p_no_moi: number; p_nguoi: string }
+        Returns: number
+      }
+      huy_lan_tra_no: {
+        Args: { p_id: string; p_ly_do?: string; p_nguoi: string; p_ref: string }
+        Returns: undefined
       }
       bc_doanh_thu_ngay: {
         Args: { p_cn?: string; p_den: string; p_tu: string }

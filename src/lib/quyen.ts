@@ -28,7 +28,7 @@ export type Quyen =
   | "khach.xem" | "khach.sua" | "khach.nhap" | "khach.xuat" | "khach.sdt" | "khach.email"
   | "hoso.xem" | "hoso.sua" | "anh.xem" | "anh.them"
   | "lich.xem" | "lich.sua" | "lich.xuat"
-  | "ban.xem" | "ban.tao" | "ban.huy" | "ban.giamgia" | "ban.sua_khoa" | "ban.toan_co_so" | "ban.tip" | "no.thu" | "hd.vat"
+  | "ban.xem" | "ban.tao" | "ban.huy" | "ban.giamgia" | "ban.sua_khoa" | "ban.toan_co_so" | "ban.tip" | "no.thu" | "no.xoa" | "hd.vat"
   | "the.xem" | "the.thuchien" | "the.dieuchinh"
   | "danhmuc.xem" | "danhmuc.sua"
   | "kho.xem" | "kho.nhap" | "kho.duyet" | "ky.khoa" | "ky.mo_lai"
@@ -56,8 +56,9 @@ const TAT_CA: Quyen[] = [
 ];
 
 const MAC_DINH_CU: Record<VaiTro, Quyen[]> = {
-  chu: [...TAT_CA, "hethong.phanquyen"],
-  ky_thuat: [...TAT_CA, "hethong.phanquyen"],
+  // "no.xoa" = Xoá nợ / điều chỉnh nợ: SalonHero reportCustomer.customerDebt.delete chỉ Chủ có (câu 3, 03/11/2026). Không nằm trong TAT_CA nên Quản lý và quyền riêng không cấp được.
+  chu: [...TAT_CA, "hethong.phanquyen", "no.xoa"],
+  ky_thuat: [...TAT_CA, "hethong.phanquyen", "no.xoa"],
   quan_ly: TAT_CA,
   nhan_su: ["tongquan.xem", "khach.xem", "khach.sdt", "khach.email", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "viec.tatca", "cong.xem", "cong.sua", "nghi.duyet", "luong.xem", "luong.sua", "hr.hoso", "vb.xem", "vb.soan", "mkt.xem"],
   le_tan: ["khach.xem", "khach.sdt", "khach.sua", "lich.xem", "lich.sua", "ban.xem", "the.xem", "danhmuc.xem", "noibo.dung", "lead.xu_ly", "vb.xem", "vb.soan", "kn.ghi", "bc.bao"],

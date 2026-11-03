@@ -114,3 +114,35 @@ export async function luuDanhGia(json: string): Promise<KQ> {
   revalidatePath("/bao-cao");
   return luu ? { ok: true } : { loi: "Chưa có thay đổi nào để lưu." };
 }
+
+/** "Điều chỉnh nợ" (SalonHero modify_debt, hiện chữ "Xoá nợ"): đặt số nợ mới nhỏ hơn nợ hiện tại, bắt lý do. Chỉ Chủ (no.xoa). Không vào sổ quỹ. */
+export async function dieuChinhNo(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("no.xoa");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "hoa_don_id");
+  const db = sb();
+  const { data: h } = await db.from("hoa_don").select("chi_nhanh_id").eq("id", id).maybeSingle();
+  if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy hoá đơn." };
+  const lyDo = chuoi(fd, "ly_do").trim();
+  if (!lyDo) return { loi: "Ghi lý do điều chỉnh nợ." };
+  const { error } = await db.rpc("dieu_chinh_no", { p_id: id, p_no_moi: so(fd, "no_moi"), p_ly_do: lyDo.slice(0, 500), p_nguoi: nd.nhanVienId });
+  revalidatePath(`/hoa-don/${id}`);
+  revalidatePath("/hoa-don");
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** "Huỷ trả nợ" (SalonHero revertPaymentDebt): chỉ dòng cuối của lịch sử nợ, cả lần trả nợ lẫn lần xoá nợ. Quyền như thu nợ (thu ngân, quản lý, kế toán, chủ).
+ *  Lần trả nợ được huỷ bằng dòng hoàn cùng ngày, cùng hình thức (sổ cái chỉ thêm, dòng gốc vẫn còn). */
+export async function huyLanTraNo(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("no.thu");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "hoa_don_id");
+  const db = sb();
+  const { data: h } = await db.from("hoa_don").select("chi_nhanh_id").eq("id", id).maybeSingle();
+  if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy hoá đơn." };
+  const { error } = await db.rpc("huy_lan_tra_no", { p_id: id, p_ref: chuoi(fd, "ref"), p_nguoi: nd.nhanVienId, p_ly_do: chuoi(fd, "ly_do").trim().slice(0, 300) || undefined });
+  revalidatePath(`/hoa-don/${id}`);
+  revalidatePath("/hoa-don");
+  revalidatePath("/bao-cao");
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}

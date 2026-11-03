@@ -65,3 +65,54 @@ describe("0199 hình thức trả tiền như SalonHero", () => {
     expect(r.map((x) => [x.phuong_thuc, x.ngan_hang, x.loai_vi, Number(x.so_tien)])).toEqual([["vi_dien_tu", null, "MOMO", 200_000], ["chuyen_khoan", "OCB", null, 300_000]]);
   });
 });
+
+describe("0200 xoá nợ, huỷ lần trả nợ, số phiếu thu", () => {
+  const lichSu = (h: string) => q<{ loai: string; ref: string; so_tien: string; da_huy: boolean; la_cuoi: boolean; so_phieu: string | null }>(`select * from lich_su_no_hoa_don($1)`, [h]);
+  const no = async (h: string) => (await q<{ con_no: string; da_thu: string; no_da_xoa: string }>(`select con_no::text, da_thu::text, no_da_xoa::text from hoa_don where id = $1`, [h]))[0];
+  const cho = () => new Promise((r) => setTimeout(r, 15));
+  const traNo = async (h: string, pt: string, tien: number, ngay: string, vi?: string) =>
+    (await q<{ id: string }>(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, loai_vi, ngay, nguoi_id, ghi_chu) values ($1,$2,$3,$4,$5,$6,'Thu nợ') returning id`, [h, pt, tien, vi ?? null, ngay, NV]))[0].id;
+
+  it("trả nợ có số phiếu tự tăng; thu khi chốt không nằm trong lịch sử nợ", async () => {
+    const h = await taoDon(1_000_000, [["tien_mat", 400_000]], "2026-10-01");
+    const a = await traNo(h, "chuyen_khoan", 100_000, "2026-10-05");
+    await cho();
+    const b = await traNo(h, "vi_dien_tu", 200_000, "2026-10-06", "MOMO");
+    const ls = await lichSu(h);
+    expect(ls.map((x) => [x.ref, Number(x.so_tien), x.la_cuoi])).toEqual([[b, 200_000, true], [a, 100_000, false]]);
+    expect(Number(ls[0].so_phieu)).toBeGreaterThan(Number(ls[1].so_phieu));
+    expect(Number((await no(h)).con_no)).toBe(300_000);
+  });
+
+  it("xoá nợ: số nợ mới nhỏ hơn nợ hiện tại, bắt lý do, không vào sổ quỹ; thu sau đó không vượt nợ còn", async () => {
+    const h = await taoDon(1_000_000, [["tien_mat", 400_000]], "2026-10-02");
+    expect(await loi(`select dieu_chinh_no($1, 100000, '  ', $2)`, [h, NV])).toMatch(/phải ghi lý do/);
+    expect(await loi(`select dieu_chinh_no($1, 600000, 'x', $2)`, [h, NV])).toMatch(/nhỏ hơn nợ hiện tại/);
+    expect(await loi(`select dieu_chinh_no($1, -1, 'x', $2)`, [h, NV])).toMatch(/nhỏ hơn nợ hiện tại/);
+    const quyTruoc = (await q<{ s: string }>(`select coalesce(sum(bien_dong),0) as s from v_so_quy`))[0].s;
+    await q(`select dieu_chinh_no($1, 100000, 'Khách khó khăn, chủ cho bớt', $2)`, [h, NV]);
+    expect(await no(h)).toMatchObject({ con_no: "100000", no_da_xoa: "500000", da_thu: "400000" });
+    expect((await q<{ s: string }>(`select coalesce(sum(bien_dong),0) as s from v_so_quy`))[0].s).toBe(quyTruoc);
+    expect(await loi(`insert into thanh_toan (hoa_don_id, phuong_thuc, so_tien, nguoi_id) values ($1,'tien_mat',150000,$2)`, [h, NV])).toMatch(/vượt phần còn phải thu 100000/);
+    expect(await loi(`update hoa_don_dieu_chinh_no set so_tien = 1 where hoa_don_id = $1`, [h])).not.toBe("");
+  });
+
+  it("huỷ chỉ dòng cuối: đảo cùng ngày, cùng hình thức / ví; huỷ lần xoá nợ trả lại nợ; huỷ lần lượt từ dưới lên", async () => {
+    const h = await taoDon(1_000_000, [["tien_mat", 400_000]], "2026-10-03");
+    const a = await traNo(h, "vi_dien_tu", 100_000, "2026-10-04", "MOMO");
+    await cho();
+    await q(`select dieu_chinh_no($1, 200000, 'Bớt cho khách', $2)`, [h, NV]);
+    const ls = await lichSu(h);
+    expect(ls[0].loai).toBe("xoa_no");
+    expect(await loi(`select huy_lan_tra_no($1, $2, $3)`, [h, a, NV])).toMatch(/dòng cuối cùng/);
+    await q(`select huy_lan_tra_no($1, $2, $3, 'Ghi nhầm')`, [h, ls[0].ref, NV]);
+    expect(await no(h)).toMatchObject({ con_no: "500000", no_da_xoa: "0" });
+    await q(`select huy_lan_tra_no($1, $2, $3)`, [h, a, NV]);
+    const d = await q<{ phuong_thuc: string; loai_vi: string; ngay: string; so_tien: string; dao_cua_id: string }>(`select phuong_thuc, loai_vi, ngay::text as ngay, so_tien, dao_cua_id from thanh_toan where hoa_don_id = $1 and loai = 'hoan'`, [h]);
+    expect(d.map((x) => ({ ...x, so_tien: Number(x.so_tien) }))).toEqual([{ phuong_thuc: "vi_dien_tu", loai_vi: "MOMO", ngay: "2026-10-04", so_tien: 100_000, dao_cua_id: a }]);
+    expect(Number((await no(h)).con_no)).toBe(600_000);
+    const vi = await q<{ momo: string }>(`select momo from bc_doanh_thu_ngay_vi('2026-10-04','2026-10-04',$1)`, [CN]);
+    expect(Number(vi[0].momo)).toBe(0);
+    expect(await loi(`select huy_lan_tra_no($1, $2, $3)`, [h, a, NV])).toMatch(/chưa có lần trả nợ|dòng cuối/);
+  });
+});

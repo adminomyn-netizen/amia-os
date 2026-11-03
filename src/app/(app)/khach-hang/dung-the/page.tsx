@@ -14,14 +14,14 @@ import { Chon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { NutHop } from "@/components/ui/BieuMau";
 import { NHAN_TINH_TRANG } from "../../the/page";
-import { capTheTay } from "../../the/actions";
+import { capTheTay, suaThe, thuHoiThe } from "../../the/actions";
 
 const MOI_TRANG = 50;
 const KHONG_GIOI_HAN = 999999;
 
 type TongDungThe = { so_khach: number; tong_tien: number; tong_lan: number } | null;
 
-/** /khach-hang/dung-the — Danh sách khách dùng thẻ (như SalonHero #/membercards): lọc chi nhánh, nhóm khách, ngày cấp, ngày hết hạn, 8 tình trạng, loại thẻ, ô tìm; cột Gần nhất, Lần sử dụng, link lịch sử dùng thẻ; dòng báo thẻ sắp hết hạn. Gia hạn thẻ CHƯA làm (chờ luật của chị Lâm). */
+/** /khach-hang/dung-the — Danh sách khách dùng thẻ (như SalonHero #/membercards): lọc chi nhánh, nhóm khách, ngày cấp, ngày hết hạn, 8 tình trạng, loại thẻ, ô tìm; cột Gần nhất, Lần sử dụng, link lịch sử dùng thẻ; dòng báo thẻ sắp hết hạn. Sửa thẻ (hạn, chủ thẻ, giá 1 buổi) + Thu hồi thẻ như SalonHero (câu 8, 9 đợt 2). */
 export default async function KhachDungThe({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const nd = await yeuCauQuyen("the.xem");
   const sp = await searchParams;
@@ -133,7 +133,19 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
           } },
           { nhan: "Còn lại", phai: true, hienThi: (r) => <span className="tabular-nums">{r.loai === "tien" ? tienVN(r.so_du_tien) : (r.so_buoi_tong ?? 0) >= KHONG_GIOI_HAN ? "Không giới hạn" : tienVN(Math.max(0, (r.so_buoi_con ?? 0)) * Number(r.gia_tri_buoi ?? 0))}</span> },
           { nhan: "Tình trạng", hienThi: (r) => { const t = NHAN_TINH_TRANG[r.tinh_trang ?? "hoat_dong"]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
-          { nhan: "Lịch sử", hienThi: (r) => <Link href={`/the/${r.id}`} className="whitespace-nowrap text-[13px] font-medium text-nhan-dam hover:underline">Lịch sử dùng thẻ</Link> },
+          { nhan: "Lịch sử", hienThi: (r) => (
+            <div className="flex flex-col items-start gap-1">
+              <Link href={`/the/${r.id}`} className="whitespace-nowrap text-[13px] font-medium text-nhan-dam hover:underline">Lịch sử dùng thẻ</Link>
+              {choCap && r.trang_thai !== "thu_hoi" && <>
+                <NutHop kieu="chu" nhan="Sửa thẻ" tieuDe={`Sửa thẻ ${r.ma ?? ""}`} rong moTa="Sửa hạn thẻ, đổi chủ thẻ, giá 1 buổi làm dịch vụ, ghi chú. Không đổi số buổi / số dư. Mỗi lần sửa ghi vào Lịch sử thẻ."
+                  an={{ the_id: r.id ?? "" }} giaTri={{ han_dung: r.han_dung ?? "", khach: khach.get(r.khach_id ?? "")?.ma ?? "", gia_tri_buoi: r.loai === "lan" ? Number(r.gia_tri_buoi ?? 0) : "", ghi_chu: r.ghi_chu ?? "" }}
+                  truong={[{ ten: "han_dung", nhan: "Hạn thẻ", loai: "ngay", ghiChu: "Để trống = thẻ không hạn." }, { ten: "khach", nhan: "Chủ thẻ (mã khách hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true },
+                    ...(r.loai === "lan" ? [{ ten: "gia_tri_buoi", nhan: "Giá 1 buổi làm dịch vụ", loai: "tien" as const, ghiChu: "Áp cho các buổi làm từ nay về sau." }] : []),
+                    { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong", rong: true }, { ten: "ly_do", nhan: "Lý do sửa (không bắt buộc)", loai: "chu", rong: true }]} action={suaThe} />
+                <NutHop kieu="chu" nguy nhan="Thu hồi thẻ" tieuDe={`Thu hồi thẻ ${r.ma ?? ""}`} moTa="Thẻ đã thu hồi KHÔNG cấp lại được, chỉ có thể cấp thẻ mới. Không hoàn tiền, không đụng hoá đơn / sổ quỹ: nếu trả tiền cho khách thì ghi phiếu chi ở Sổ quỹ."
+                  an={{ the_id: r.id ?? "" }} truong={[{ ten: "ly_do", nhan: "Lý do thu hồi", loai: "nhieu_dong", batBuoc: true }]} nhanLuu="Thu hồi thẻ" action={thuHoiThe} />
+              </>}
+            </div>) },
         ]} />
       <ThanhTrang trang={trang} tong={tong} moi={MOI_TRANG} gan={gan} don="thẻ" />
     </div>

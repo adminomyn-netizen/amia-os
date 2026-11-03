@@ -11,11 +11,11 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
-import { dieuChinhThe, doiTrangThaiThe, henBuoiKeTiep, huyBuoi, thucHienBuoi } from "../actions";
+import { dieuChinhThe, doiTrangThaiThe, henBuoiKeTiep, huyBuoi, suaThe, thucHienBuoi, thuHoiThe } from "../actions";
 import { NHAN_TINH_TRANG } from "../page";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
-const NHAN_LOAI: Record<string, string> = { cap: "Cấp thẻ", dung_buoi: "Dùng 1 buổi", hoan_buoi: "Hoàn buổi", dieu_chinh: "Điều chỉnh", nap: "Nạp tiền", tru_tien: "Trừ tiền", hoan_tien: "Hoàn tiền", thu_hoi: "Thu hồi", khoa: "Khoá thẻ", mo_khoa: "Mở khoá thẻ" };
+const NHAN_LOAI: Record<string, string> = { cap: "Cấp thẻ", dung_buoi: "Dùng 1 buổi", hoan_buoi: "Hoàn buổi", dieu_chinh: "Điều chỉnh", nap: "Nạp tiền", tru_tien: "Trừ tiền", hoan_tien: "Hoàn tiền", thu_hoi: "Thu hồi", khoa: "Khoá thẻ", mo_khoa: "Mở khoá thẻ", sua_the: "Sửa thẻ" };
 
 export default async function HoSoThe({ params }: { params: Promise<{ id: string }> }) {
   const nd = await yeuCauQuyen("the.xem");
@@ -44,9 +44,19 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
       <TieuDeTrang tieuDe={t.ma ?? ""} phu={<span className="flex flex-wrap items-center gap-2"><span>{g?.ten}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{t.cap_tay && <NhanTrangThai kieu="cho">Cấp tay, không tính doanh thu</NhanTrangThai>}</span>}>
         {t.loai === "lan" && coQuyen(nd, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutBuoi theId={id} nhanVien={nvLC} bacSi={bsLC} dichVu={dvLC} action={thucHienBuoi} nhan="Thực hiện buổi" />}
         {t.loai === "lan" && coQuyen(nd, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutHop kieu="phu" nhan="Hẹn buổi kế tiếp" tieuDe="Hẹn buổi kế tiếp" moTa="Ghi ngày + nội dung buổi sau và tạo nhắc ở hồ sơ khách. Không trừ buổi, không đổi tiền." an={{ the_id: id }} truong={[{ ten: "ke_tiep_ngay", nhan: "Ngày hẹn", loai: "ngay", batBuoc: true }, { ten: "ke_tiep_noi_dung", nhan: "Nội dung buổi kế tiếp", loai: "nhieu_dong", goiY: "Vd: làm vùng cổ, kiểm tra sau 2 tuần" }]} action={henBuoiKeTiep} />}
+        {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="phu" nhan="Sửa thẻ" tieuDe={`Sửa thẻ ${t.ma ?? ""}`} rong
+          moTa="Như SalonHero: sửa hạn thẻ, đổi chủ thẻ, giá 1 buổi làm dịch vụ, ghi chú. Không đổi số buổi / số dư (muốn cộng trừ thì dùng Điều chỉnh số dư). Mỗi lần sửa ghi vào Lịch sử thẻ: ai sửa, lúc nào, cũ → mới."
+          an={{ the_id: id }} giaTri={{ han_dung: t.han_dung ?? "", khach: k?.ma ?? "", gia_tri_buoi: t.loai === "lan" ? Number(t.gia_tri_buoi ?? 0) : "", ghi_chu: t.ghi_chu ?? "" }}
+          truong={[{ ten: "han_dung", nhan: "Hạn thẻ", loai: "ngay", ghiChu: "Để trống = thẻ không hạn." }, { ten: "khach", nhan: "Chủ thẻ (mã khách hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true, ghiChu: "Đổi sang khách khác cùng chi nhánh để chuyển chủ thẻ." },
+            ...(t.loai === "lan" ? [{ ten: "gia_tri_buoi", nhan: "Giá 1 buổi làm dịch vụ", loai: "tien" as const, ghiChu: "Doanh thu ghi cho mỗi buổi làm từ nay về sau; buổi đã làm giữ nguyên." }] : []),
+            { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong", rong: true }, { ten: "ly_do", nhan: "Lý do sửa (không bắt buộc)", loai: "chu", rong: true }]} action={suaThe} />}
         {dieuChinh && <NutHop kieu="phu" nhan="Điều chỉnh số dư" tieuDe="Điều chỉnh thẻ" moTa="Cộng hoặc trừ (dùng số âm). Mọi điều chỉnh đều ghi lý do vào lịch sử." an={{ the_id: id }} truong={[{ ten: t.loai === "lan" ? "so_buoi" : "so_tien", nhan: t.loai === "lan" ? "Số buổi cộng/trừ (VD 2 hoặc -1)" : "Số tiền cộng/trừ (VD 500000 hoặc -200000)", loai: "chu", batBuoc: true, rong: true }, { ten: "ly_do", nhan: "Lý do", loai: "nhieu_dong", batBuoc: true }]} action={dieuChinhThe} />}
         {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="phu" nhan={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} tieuDe={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} moTa={t.trang_thai === "khoa" ? "Cho phép dùng thẻ trở lại. Lý do được ghi vào lịch sử thẻ." : "Thẻ khoá không dùng được cho tới khi mở lại. Lý do được ghi vào lịch sử thẻ."} an={{ the_id: id, trang_thai: t.trang_thai === "khoa" ? "hoat_dong" : "khoa" }} truong={[{ ten: "ly_do", nhan: t.trang_thai === "khoa" ? "Lý do mở khoá" : "Lý do khoá", loai: "nhieu_dong", batBuoc: true, goiY: t.trang_thai === "khoa" ? "Vd: khách đã thanh toán đủ, xác nhận lại" : "Vd: khách tranh chấp hoá đơn, chờ chị Dung xác nhận" }]} nhanLuu="Xác nhận" action={doiTrangThaiThe} />}
+        {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="chu" nguy nhan="Thu hồi thẻ" tieuDe={`Thu hồi thẻ ${t.ma ?? ""}`}
+          moTa="Thẻ đã thu hồi KHÔNG cấp lại được, chỉ có thể cấp thẻ mới. Thu hồi không hoàn tiền và không đụng tới hoá đơn, sổ quỹ: nếu trả tiền cho khách thì ghi một phiếu chi ở Sổ quỹ."
+          an={{ the_id: id }} truong={[{ ten: "ly_do", nhan: "Lý do thu hồi", loai: "nhieu_dong", batBuoc: true, goiY: "Vd: khách chuyển nhượng, cấp nhầm thẻ" }]} nhanLuu="Thu hồi thẻ" action={thuHoiThe} />}
       </TieuDeTrang>
+      {t.trang_thai === "thu_hoi" && (() => { const k0 = (so ?? []).find((r) => r.loai === "thu_hoi"); return <p className="mb-4 rounded-nho border border-vien bg-loi-nen px-4 py-3 text-[14px] text-loi">Thẻ đã thu hồi{k0 ? <>: {k0.ghi_chu} <span className="text-muc-3">({ngayGioVN(k0.tao_luc)}{tenNv.get(k0.nguoi_id ?? "") ? `, ${tenNv.get(k0.nguoi_id ?? "")}` : ""})</span></> : " (chuyển từ SalonHero)."}</p>; })()}
       {t.trang_thai === "khoa" && (() => { const k0 = (so ?? []).find((r) => r.loai === "khoa"); return k0 ? <p className="mb-4 rounded-nho border border-vien bg-dat-nen px-4 py-3 text-[14px] text-muc-2">Thẻ đang khoá: {k0.ghi_chu} <span className="text-muc-3">({ngayGioVN(k0.tao_luc)}{tenNv.get(k0.nguoi_id ?? "") ? `, ${tenNv.get(k0.nguoi_id ?? "")}` : ""})</span></p> : null; })()}
       <HangChiSo muc={t.loai === "lan"
         ? [{ nhan: "Buổi còn lại", so: (t.so_buoi_tong ?? 0) >= 999999 ? "Không giới hạn" : `${t.so_buoi_con}/${t.so_buoi_tong}` }, { nhan: "Doanh thu mỗi buổi", so: tienVN(t.gia_tri_buoi) }, { nhan: "Ngày cấp", so: ngayVN(t.ngay_cap) }, { nhan: "Hạn dùng", so: ngayVN(t.han_dung) || "Không hạn" }]

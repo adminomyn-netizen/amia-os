@@ -124,6 +124,71 @@ export async function doiTrangThaiThe(fd: FormData): Promise<KQ> {
   return eSc ? { loi: thongBaoLoi(eSc) } : { ok: true };
 }
 
+/** Tìm đúng MỘT khách theo mã hoặc số điện thoại (bỏ ký tự làm hỏng điều kiện lọc). Trùng số nhiều khách thì bắt nhập mã. */
+async function timKhachMaSdt(nhap: string): Promise<{ k?: { id: string; chi_nhanh_id: string | null; ho_ten: string; ma: string }; loi?: string }> {
+  const ma = nhap.trim().toUpperCase().replace(/[^A-Z0-9._-]/g, ""), sdt = chuanSdt(nhap);
+  const dk = [ma ? `ma.eq.${ma}` : "", sdt.length >= 9 ? `dien_thoai.eq.${sdt}` : ""].filter(Boolean);
+  if (!dk.length) return { loi: "Nhập mã khách hoặc số điện thoại." };
+  const { data } = await sb().from("khach_hang").select("id, chi_nhanh_id, ho_ten, ma").or(dk.join(",")).limit(3);
+  const ds = data ?? [];
+  const dungMa = ds.filter((x) => x.ma?.toUpperCase() === ma);
+  if (dungMa.length === 1) return { k: dungMa[0] };
+  if (ds.length > 1) return { loi: "Có nhiều khách trùng số điện thoại này. Nhập mã khách." };
+  return ds.length ? { k: ds[0] } : { loi: "Không tìm thấy khách theo mã hoặc số điện thoại đó." };
+}
+
+/** Sửa thẻ (SalonHero "Sửa thẻ", quyền memberCards.update → the.dieuchinh): hạn dùng, chủ thẻ, giá 1 buổi làm dịch vụ, ghi chú.
+ *  Hàm Postgres sua_the khoá dòng thẻ, chỉ đổi mục có khác, ghi 1 dòng sổ cái "Sửa thẻ" (0 buổi, 0 tiền) kèm cũ → mới. Không đụng số buổi / số dư. */
+export async function suaThe(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("the.dieuchinh");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const theId = chuoi(fd, "the_id");
+  const db = sb();
+  const { data: t } = await db.from("the_khach").select("id, khach_id, chi_nhanh_id, loai, han_dung, gia_tri_buoi, ghi_chu, trang_thai").eq("id", theId).maybeSingle();
+  if (!t || (nd.chiNhanhId && t.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy thẻ." };
+  if (t.trang_thai === "thu_hoi") return { loi: "Thẻ đã thu hồi, không sửa được." };
+  const han = chuoi(fd, "han_dung");
+  if (han && !NGAY.test(han)) return { loi: "Hạn thẻ không hợp lệ." };
+  let khachMoi: string | null = null;
+  const nhapKhach = chuoi(fd, "khach");
+  if (nhapKhach) {
+    const r = await timKhachMaSdt(nhapKhach);
+    if (!r.k) return { loi: r.loi };
+    if (r.k.chi_nhanh_id !== t.chi_nhanh_id) return { loi: "Chủ thẻ mới phải là khách cùng chi nhánh với thẻ." };
+    khachMoi = r.k.id;
+  }
+  const doiGia = t.loai === "lan" && chuoi(fd, "gia_tri_buoi") !== "";
+  const gia = doiGia ? so(fd, "gia_tri_buoi") : null;
+  if (doiGia && (gia === null || !Number.isInteger(gia) || gia < 0)) return { loi: "Giá 1 buổi phải là số tiền không âm." };
+  const ghiChu = chuoi(fd, "ghi_chu").slice(0, 500), lyDo = chuoi(fd, "ly_do").slice(0, 300);
+  const { error } = await db.rpc("sua_the", {
+    p_the: theId, p_nguoi: nd.nhanVienId,
+    p_doi_han: han !== (t.han_dung ?? ""), p_han: han || undefined,
+    p_doi_chu: !!khachMoi && khachMoi !== t.khach_id, p_khach: khachMoi ?? undefined,
+    p_doi_gia: doiGia && gia !== Number(t.gia_tri_buoi ?? 0), p_gia: gia ?? undefined,
+    p_doi_ghi_chu: ghiChu !== (t.ghi_chu ?? ""), p_ghi_chu: ghiChu,
+    p_ly_do: lyDo || undefined,
+  });
+  lamMoi(theId); revalidatePath("/khach-hang/dung-the");
+  if (khachMoi && khachMoi !== t.khach_id) { revalidatePath(`/khach-hang/${t.khach_id}`); revalidatePath(`/khach-hang/${khachMoi}`); }
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** Thu hồi thẻ (SalonHero: khoá vĩnh viễn + lý do, KHÔNG hoàn tiền, không đụng quỹ / hoá đơn; thẻ thu hồi không cấp lại được, chỉ cấp thẻ mới).
+ *  Nếu có trả tiền cho khách thì ghi phiếu CHI ở Sổ quỹ riêng (như SalonHero phải làm tay). */
+export async function thuHoiThe(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("the.dieuchinh");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const theId = chuoi(fd, "the_id"), lyDo = chuoi(fd, "ly_do");
+  if (lyDo.length < 3) return { loi: "Nhập lý do thu hồi thẻ (ít nhất 3 ký tự)." };
+  if (lyDo.length > 500) return { loi: "Lý do dài quá (tối đa 500 ký tự)." };
+  const { data: t } = await sb().from("the_khach").select("chi_nhanh_id").eq("id", theId).maybeSingle();
+  if (!t || (nd.chiNhanhId && t.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy thẻ." };
+  const { error } = await sb().rpc("thu_hoi_the", { p_the: theId, p_ly_do: lyDo, p_nguoi: nd.nhanVienId });
+  lamMoi(theId); revalidatePath("/khach-hang/dung-the");
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
 /** Cấp thẻ tay (tặng, chuyển đổi từ phần mềm cũ): không có hoá đơn nên KHÔNG tính doanh thu. */
 export async function capTheTay(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("the.dieuchinh");

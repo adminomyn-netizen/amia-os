@@ -127,6 +127,8 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const bsLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
   // "Nơi hiển thị" / "Địa điểm cung cấp": hộp đặt lịch chỉ ẩn khỏi danh sách chọn; lịch cũ đã có dịch vụ đó vẫn giữ và hiện tên.
   const dichVu = (dv ?? []).map((d) => ({ id: d.id, ma: d.ma, ten: d.ten, thoiLuong: d.thoi_luong_phut, an: !hienDatLich(d.noi_hien_thi), chiNhanhIds: d.chi_nhanh_ids }));
+  // Ô của hộp "Báo bất thường" dựng MỘT lần và dùng lại cho mọi lịch (trước đây mỗi lịch dựng lại ~230 dịch vụ → trang nặng hàng trăm KB).
+  const truongBBT = truongBaoBatThuong((dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), false);
   const cnLC = (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
   const choDm = (choLam ?? []).filter((c) => c.hoat_dong).map((c) => ({ chiNhanhId: c.chi_nhanh_id, ten: c.ten }));
   const choCn = choDm.filter((c) => c.chiNhanhId === cnId);
@@ -215,7 +217,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         {sua && ["da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && <NutNhanh nhan="Không đến" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "khong_den" }} />}
         {sua && ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && <NutHop kieu="chu" nguy nhan="Huỷ" tieuDe="Huỷ lịch hẹn" an={{ id: l.id, trang_thai: "huy" }} nhanLuu="Huỷ lịch" truong={[{ ten: "ly_do", nhan: "Lý do huỷ", loai: "chu", batBuoc: true, rong: true }]} action={doiTrangThaiLich} />}
         {(coQuyen(nd, "bc.bao") || coQuyen(nd, "kn.ghi")) && ["cho_phuc_vu", "dang_phuc_vu", "hoan_thanh"].includes(l.trang_thai) && (
-          <NutHop kieu="chu" nguy nhan="Báo bất thường" tieuDe={`Báo bất thường: ${k?.ho_ten ?? ""}`} moTa="Thấy đỏ, rát, phồng, sưng, chóng mặt...: ngừng thao tác gây rủi ro, đưa khách đến bác sĩ rồi ghi vào đây. Bác sĩ và lãnh đạo nhận thông báo ngay." action={baoBienChung} an={{ khach_id: l.khach_id }} giaTri={{ dich_vu_id: dvIds.length === 1 ? dvIds[0] : "" }} rong nhanLuu="Báo ngay" truong={truongBaoBatThuong((dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), false)} />
+          <NutHop kieu="chu" nguy nhan="Báo bất thường" tieuDe={`Báo bất thường: ${k?.ho_ten ?? ""}`} moTa="Thấy đỏ, rát, phồng, sưng, chóng mặt...: ngừng thao tác gây rủi ro, đưa khách đến bác sĩ rồi ghi vào đây. Bác sĩ và lãnh đạo nhận thông báo ngay." action={baoBienChung} an={{ khach_id: l.khach_id }} giaTri={{ dich_vu_id: dvIds.length === 1 ? dvIds[0] : "" }} rong nhanLuu="Báo ngay" truong={truongBBT} />
         )}
       </div>
     );

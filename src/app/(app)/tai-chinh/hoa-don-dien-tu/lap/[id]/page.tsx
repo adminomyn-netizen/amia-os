@@ -9,6 +9,7 @@ import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { MauHoaDonGtgt } from "@/components/hoa-don/MauHoaDonGtgt";
+import { KhungXemPdf } from "@/components/hoa-don/KhungXemPdf";
 import { huyGtgt, luuNhapGtgt, xuatGtgt } from "../../gtgt-actions";
 
 const NUT = "h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram";
@@ -76,8 +77,10 @@ export default async function LapHoaDonGtgt({ params }: { params: Promise<{ id: 
       {(x ? x.noi_dung : d.noiDung).tru_the > 0 && <p className="mb-3 text-[13px] text-muc-3">Trong đơn có {tienVN((x ? x.noi_dung : d.noiDung).tru_the)} trả bằng thẻ tiền (vẫn tính trong tổng hoá đơn).</p>}
       {(x ? x.noi_dung : d.noiDung).tip > 0 && <p className="mb-3 text-[13px] text-muc-3">Tiền tip {tienVN((x ? x.noi_dung : d.noiDung).tip)} không đưa lên hoá đơn GTGT.</p>}
 
-      {x ? <MauHoaDonGtgt mauSo={x.mau_so} kyHieu={x.ky_hieu} so={x.so} ngayLap={x.ngay_lap} ban={x.nguoi_ban} nd={x.noi_dung} trangThai="da_xuat" />
-        : <MauHoaDonGtgt mauSo={d.nguoiBanCd?.mau_so ?? "1"} kyHieu={d.nguoiBanCd?.ky_hieu ?? ""} so={null} ngayLap={d.homNay} ban={d.nguoiBan} nd={d.noiDung} trangThai={trangThai} />}
+      <KhungXemPdf tenTep={x ? `HoaDonGTGT_${x.mau_so}${x.ky_hieu}_${String(x.so).padStart(8, "0")}` : `HoaDonGTGT_nhap_${d.hd.ma}`} hrefIn={`/in/hoa-don-gtgt/${d.hd.id}`}>
+        {x ? <MauHoaDonGtgt mauSo={x.mau_so} kyHieu={x.ky_hieu} so={x.so} ngayLap={x.ngay_lap} ban={x.nguoi_ban} nd={x.noi_dung} trangThai="da_xuat" />
+          : <MauHoaDonGtgt mauSo={d.nguoiBanCd?.mau_so ?? "1"} kyHieu={d.nguoiBanCd?.ky_hieu ?? ""} so={null} ngayLap={d.homNay} ban={d.nguoiBan} nd={d.noiDung} trangThai={trangThai} />}
+      </KhungXemPdf>
 
       {d.daHuy.length > 0 && (
         <section className="mt-6 text-[13px] text-muc-3">

@@ -70,7 +70,7 @@ export function chuanTenNganHang(ten) {
   const sachTen = goc.replace(/^ngân hàng\s+/i, "").replace(/^(tmcp|nh)\s+/i, "").trim();
   return sachTen ? sachTen.slice(0, 40) : null;
 }
-const PT_SH = { CASH: "tien_mat", TRANSFER: "chuyen_khoan", CARD: "quet_the", COD: "ship_cod", WALLET: "vi_dien_tu" }; // 0199: COD/ví vào quỹ ngân hàng như SalonHero
+const PT_SH = { CASH: "tien_mat", TRANSFER: "chuyen_khoan", CARD: "quet_the", COD: "ship_cod", WALLET: "vi_dien_tu" }; // 0199: mã riêng cho COD/ví. Ví vào quỹ ngân hàng; Ship COD không vào quỹ nào (0208, như SalonHero)
 const ptShDich = (t) => PT_SH[String(t ?? "").toUpperCase()] ?? "chuyen_khoan";
 const soTien = (v) => Math.round(Number(v) || 0);
 

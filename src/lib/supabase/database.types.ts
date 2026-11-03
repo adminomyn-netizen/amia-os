@@ -83,6 +83,189 @@ export type Database = {
           },
         ]
       }
+      hddt_day_so: {
+        Row: {
+          ky_hieu: string
+          ma_so_thue: string
+          mau_so: string
+          so_cuoi: number
+        }
+        Insert: {
+          ky_hieu: string
+          ma_so_thue: string
+          mau_so: string
+          so_cuoi?: number
+        }
+        Update: {
+          ky_hieu?: string
+          ma_so_thue?: string
+          mau_so?: string
+          so_cuoi?: number
+        }
+        Relationships: []
+      }
+      hddt_nguoi_ban: {
+        Row: {
+          chi_nhanh_id: string
+          dia_chi: string | null
+          dien_thoai: string | null
+          email: string | null
+          ky_hieu: string | null
+          ma_so_thue: string | null
+          mau_so: string
+          ngan_hang: string | null
+          so_tai_khoan: string | null
+          sua_boi: string | null
+          sua_luc: string
+          ten_don_vi: string | null
+          thue_suat: string
+        }
+        Insert: {
+          chi_nhanh_id: string
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          ky_hieu?: string | null
+          ma_so_thue?: string | null
+          mau_so?: string
+          ngan_hang?: string | null
+          so_tai_khoan?: string | null
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_don_vi?: string | null
+          thue_suat?: string
+        }
+        Update: {
+          chi_nhanh_id?: string
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          ky_hieu?: string | null
+          ma_so_thue?: string | null
+          mau_so?: string
+          ngan_hang?: string | null
+          so_tai_khoan?: string | null
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_don_vi?: string | null
+          thue_suat?: string
+        }
+        Relationships: []
+      }
+      hoa_don_gtgt: {
+        Row: {
+          chi_nhanh_id: string | null
+          hoa_don_id: string | null
+          huy_boi: string | null
+          huy_luc: string | null
+          id: string
+          ky_hieu: string
+          ly_do_huy: string | null
+          ma_hoa_don: string
+          ma_so_thue_ban: string
+          mau_so: string
+          ngay_lap: string
+          nguoi_ban: Json
+          nguoi_xuat: string | null
+          noi_dung: Json
+          so: number
+          trang_thai: string
+          xml: string | null
+          xuat_luc: string
+        }
+        Insert: {
+          chi_nhanh_id?: string | null
+          hoa_don_id?: string | null
+          huy_boi?: string | null
+          huy_luc?: string | null
+          id?: string
+          ky_hieu: string
+          ly_do_huy?: string | null
+          ma_hoa_don: string
+          ma_so_thue_ban: string
+          mau_so: string
+          ngay_lap: string
+          nguoi_ban: Json
+          nguoi_xuat?: string | null
+          noi_dung: Json
+          so: number
+          trang_thai?: string
+          xml?: string | null
+          xuat_luc?: string
+        }
+        Update: {
+          chi_nhanh_id?: string | null
+          hoa_don_id?: string | null
+          huy_boi?: string | null
+          huy_luc?: string | null
+          id?: string
+          ky_hieu?: string
+          ly_do_huy?: string | null
+          ma_hoa_don?: string
+          ma_so_thue_ban?: string
+          mau_so?: string
+          ngay_lap?: string
+          nguoi_ban?: Json
+          nguoi_xuat?: string | null
+          noi_dung?: Json
+          so?: number
+          trang_thai?: string
+          xml?: string | null
+          xuat_luc?: string
+        }
+        Relationships: []
+      }
+      hoa_don_gtgt_nhap: {
+        Row: {
+          cccd: string | null
+          dia_chi: string | null
+          dien_thoai: string | null
+          email: string | null
+          ghi_chu: string | null
+          hinh_thuc_tt: string | null
+          ho_ten_nguoi_mua: string | null
+          hoa_don_id: string
+          loai_nguoi_mua: string
+          ma_so_thue: string | null
+          sua_boi: string | null
+          sua_luc: string
+          ten_don_vi: string | null
+          thue_suat: string | null
+        }
+        Insert: {
+          cccd?: string | null
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          ghi_chu?: string | null
+          hinh_thuc_tt?: string | null
+          ho_ten_nguoi_mua?: string | null
+          hoa_don_id: string
+          loai_nguoi_mua?: string
+          ma_so_thue?: string | null
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_don_vi?: string | null
+          thue_suat?: string | null
+        }
+        Update: {
+          cccd?: string | null
+          dia_chi?: string | null
+          dien_thoai?: string | null
+          email?: string | null
+          ghi_chu?: string | null
+          hinh_thuc_tt?: string | null
+          ho_ten_nguoi_mua?: string | null
+          hoa_don_id?: string
+          loai_nguoi_mua?: string
+          ma_so_thue?: string | null
+          sua_boi?: string | null
+          sua_luc?: string
+          ten_don_vi?: string | null
+          thue_suat?: string | null
+        }
+        Relationships: []
+      }
       hoa_don_xuat_tuy_chinh: {
         Row: {
           dia_chi: string | null
@@ -11929,6 +12112,14 @@ export type Database = {
           tru_voucher: number
           vat: number
         }[]
+      }
+      hddt_huy: {
+        Args: { p_cn: string; p_id: string; p_ly_do: string; p_nguoi: string }
+        Returns: undefined
+      }
+      hddt_xuat: {
+        Args: { p_cn: string; p_hoa_don: string; p_ngay: string; p_noi_dung: Json; p_nguoi: string }
+        Returns: { id: string; ky_hieu: string; mau_so: string; so: number }[]
       }
       bc_tong_khoan_chi: {
         Args: { p_cn?: string; p_den: string; p_tu: string }

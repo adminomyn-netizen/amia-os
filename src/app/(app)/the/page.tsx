@@ -7,7 +7,7 @@ import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
-import { NutHop } from "@/components/ui/BieuMau";
+import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { capTheTay, thucHienBuoi } from "./actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
@@ -16,6 +16,12 @@ export const NHAN_TINH_TRANG: Record<string, { nhan: string; kieu: "tot" | "cho"
   hoat_dong: { nhan: "Đang dùng", kieu: "tot" }, sap_het: { nhan: "Sắp hết", kieu: "cho" }, het_han: { nhan: "Hết hạn", kieu: "loi" },
   hoan_thanh: { nhan: "Đã dùng hết", kieu: "tram" }, khoa: { nhan: "Đang khoá", kieu: "cho" }, thu_hoi: { nhan: "Đã thu hồi", kieu: "loi" },
 };
+/** Các ô của hộp Cấp thẻ tay (SalonHero "Cấp thẻ mới"): số lần / số tiền trong thẻ + đã dùng ban đầu, hạn, lý do. Dùng chung ở /the và Khách dùng thẻ. */
+export const TRUONG_CAP_THE: Truong[] = [
+  { ten: "so_buoi", nhan: "Số lần (thẻ lần, nếu khác gói)", loai: "so" }, { ten: "da_dung_buoi", nhan: "Số lần đã dùng ban đầu", loai: "so", ghiChu: "Thẻ chuyển sang đang dùng dở: số lần khách đã làm." },
+  { ten: "so_tien", nhan: "Số tiền trong thẻ (thẻ tiền, nếu khác gói)", loai: "tien" }, { ten: "da_dung_tien", nhan: "Số tiền đã dùng ban đầu", loai: "tien" },
+  { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ly_do", nhan: "Lý do cấp tay", loai: "chu", rong: true, batBuoc: true },
+];
 const TAB = [{ ma: "lan", ten: "Thẻ liệu trình" }, { ma: "tien", ten: "Thẻ tiền" }];
 
 export default async function TrangThe({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; het?: string }> }) {
@@ -52,7 +58,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
         {coQuyen(nd, "the.dieuchinh") && (
           <NutHop kieu="phu" nhan="Cấp thẻ tay" tieuDe="Cấp thẻ tay" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Thẻ cấp tay không tính doanh thu." rong
             truong={[{ ten: "khach", nhan: "Khách (mã hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true }, { ten: "goi_id", nhan: "Gói thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: (goi ?? []).map((g) => ({ gia_tri: g.id, nhan: `${g.ten} (${g.loai === "lan" ? `${g.so_buoi} buổi` : "thẻ tiền"})` })) },
-              { ten: "so_buoi", nhan: "Số buổi còn lại (nếu khác gói)", loai: "so" }, { ten: "so_tien", nhan: "Số dư (thẻ tiền, nếu khác gói)", loai: "tien" }, { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ly_do", nhan: "Lý do cấp tay", loai: "chu", rong: true, batBuoc: true }]} action={capTheTay} />
+              ...TRUONG_CAP_THE]} action={capTheTay} />
         )}
       </TieuDeTrang>
       <Tab muc={TAB} dang={tab} goc="/the" />

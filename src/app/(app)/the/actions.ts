@@ -189,27 +189,41 @@ export async function thuHoiThe(fd: FormData): Promise<KQ> {
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }
 
-/** Cấp thẻ tay (tặng, chuyển đổi từ phần mềm cũ): không có hoá đơn nên KHÔNG tính doanh thu. */
+/** Cấp thẻ tay (SalonHero "Cấp thẻ mới", quyền memberCards.create = the.dieuchinh): tặng, chuyển thẻ từ phần mềm cũ. Không thu tiền, không tạo hoá đơn nên KHÔNG tính doanh thu.
+ *  Như SalonHero: nhập số lần / số tiền trong thẻ + số lần / số tiền ĐÃ DÙNG ban đầu (thẻ chuyển sang đang dùng dở). Bán thẻ có thu tiền vẫn qua Thu ngân. */
 export async function capTheTay(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("the.dieuchinh");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const db = sb();
-  const kh = chuoi(fd, "khach");
-  const { data: k } = await db.from("khach_hang").select("id, chi_nhanh_id").or(`ma.eq.${kh.toUpperCase()},dien_thoai.eq.${chuanSdt(kh)}`).maybeSingle();
-  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy khách theo mã hoặc số điện thoại đó." };
+  const r = await timKhachMaSdt(chuoi(fd, "khach"));
+  if (!r.k || (nd.chiNhanhId && r.k.chi_nhanh_id !== nd.chiNhanhId)) return { loi: r.loi ?? "Không tìm thấy khách theo mã hoặc số điện thoại đó." };
+  const k = r.k;
+  if (!k.chi_nhanh_id) return { loi: "Khách này chưa gắn chi nhánh, sửa hồ sơ khách trước." };
   const { data: g } = await db.from("goi_the").select("*").eq("id", chuoi(fd, "goi_id")).maybeSingle();
   if (!g) return { loi: "Chọn gói thẻ." };
   const soBuoi = g.loai === "lan" ? Math.trunc(so(fd, "so_buoi")) || g.so_buoi || 0 : null;
   const soTien = g.loai === "tien" ? so(fd, "so_tien") || g.gia_tri_the || 0 : null;
-  if (g.loai === "lan" && !soBuoi) return { loi: "Nhập số buổi." };
-  if (g.loai === "tien" && !soTien) return { loi: "Nhập số dư." };
+  if (g.loai === "lan" && !soBuoi) return { loi: "Nhập số lần." };
+  if (g.loai === "tien" && !soTien) return { loi: "Nhập số tiền trong thẻ." };
+  if ((soBuoi ?? 0) < 0 || (soTien ?? 0) < 0) return { loi: "Số lần / số tiền không được âm." };
+  const daDung = g.loai === "lan" ? Math.trunc(so(fd, "da_dung_buoi")) : so(fd, "da_dung_tien");
+  if (daDung < 0) return { loi: "Số đã dùng ban đầu không được âm." };
+  if (g.loai === "lan" && daDung > (soBuoi ?? 0)) return { loi: "Số lần đã dùng ban đầu lớn hơn số lần của thẻ." };
+  if (g.loai === "tien" && daDung > (soTien ?? 0)) return { loi: "Số tiền đã dùng ban đầu lớn hơn số tiền trong thẻ." };
+  const han = chuoi(fd, "han_dung");
+  if (han && !NGAY.test(han)) return { loi: "Hạn dùng không hợp lệ." };
+  const lyDo = chuoi(fd, "ly_do").slice(0, 300);
   const ma = "TH" + String(Number((await db.rpc("so_tiep_theo", { p_khoa: "the" })).data ?? 0)).padStart(6, "0");
   const { data: t, error } = await db.from("the_khach").insert({
-    ma, khach_id: k.id, goi_id: g.id, chi_nhanh_id: k.chi_nhanh_id, loai: g.loai, so_buoi_tong: soBuoi, tong_tien: soTien, gia_tri_buoi: 0, cap_tay: true,
-    han_dung: chuoiHoacNull(fd, "han_dung"), ghi_chu: chuoiHoacNull(fd, "ly_do"),
+    ma, khach_id: k.id, goi_id: g.id, chi_nhanh_id: k.chi_nhanh_id as string, loai: g.loai, so_buoi_tong: soBuoi, tong_tien: soTien, gia_tri_buoi: 0, cap_tay: true,
+    han_dung: han || null, ghi_chu: lyDo || null,
   }).select("id").single();
   if (error || !t) return { loi: thongBaoLoi(error) };
-  await db.from("the_so_cai").insert({ the_id: t.id, loai: g.loai === "lan" ? "cap" : "nap", so_buoi: soBuoi ?? 0, so_tien: soTien ?? 0, nguoi_id: nd.nhanVienId, ghi_chu: `Cấp tay: ${chuoi(fd, "ly_do") || "không ghi lý do"}` });
-  lamMoi();
+  const dong = [{ the_id: t.id, loai: g.loai === "lan" ? "cap" : "nap", so_buoi: soBuoi ?? 0, so_tien: soTien ?? 0, nguoi_id: nd.nhanVienId, ghi_chu: `Cấp tay: ${lyDo || "không ghi lý do"}` }];
+  if (daDung > 0) dong.push({ the_id: t.id, loai: "dieu_chinh", so_buoi: g.loai === "lan" ? -daDung : 0, so_tien: g.loai === "tien" ? -daDung : 0, nguoi_id: nd.nhanVienId, ghi_chu: `Đã dùng ban đầu khi cấp tay (${g.loai === "lan" ? `${daDung} lần` : `${daDung.toLocaleString("vi-VN")} đ`})` });
+  const { error: eSc } = await db.from("the_so_cai").insert(dong);
+  if (eSc) return { loi: `Đã tạo thẻ ${ma} nhưng chưa ghi được sổ thẻ (${thongBaoLoi(eSc)}). Báo Kỹ thuật, đừng cấp lại.` };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "cap_the_tay", doi_tuong: "the_khach", doi_tuong_id: t.id, chi_tiet: { khach_id: k.id, goi_id: g.id, so_buoi: soBuoi, so_tien: soTien, da_dung: daDung } });
+  lamMoi(); revalidatePath("/khach-hang/dung-the");
   return { ok: true };
 }

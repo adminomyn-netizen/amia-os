@@ -13,7 +13,7 @@ import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { Chon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { NutHop } from "@/components/ui/BieuMau";
-import { NHAN_TINH_TRANG } from "../../the/page";
+import { NHAN_TINH_TRANG, TRUONG_CAP_THE } from "../../the/page";
 import { capTheTay, suaThe, thuHoiThe } from "../../the/actions";
 
 const MOI_TRANG = 50;
@@ -72,7 +72,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
           {choCap && (
             <NutHop kieu="chinh" nhan="Cấp thẻ mới" tieuDe="Cấp thẻ mới" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Thẻ cấp tay không tính doanh thu; muốn bán thẻ có thu tiền thì dùng Thu ngân." rong
               truong={[{ ten: "khach", nhan: "Khách (mã hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true }, { ten: "goi_id", nhan: "Gói thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: (goi ?? []).map((g) => ({ gia_tri: g.id, nhan: `${g.ten} (${g.loai === "lan" ? `${g.so_buoi} buổi` : "thẻ tiền"})` })) },
-                { ten: "so_buoi", nhan: "Số buổi còn lại (nếu khác gói)", loai: "so" }, { ten: "so_tien", nhan: "Số dư (thẻ tiền, nếu khác gói)", loai: "tien" }, { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ly_do", nhan: "Lý do cấp tay", loai: "chu", rong: true, batBuoc: true }]} action={capTheTay} />
+                ...TRUONG_CAP_THE]} action={capTheTay} />
           )}
           {coQuyen(nd, "ban.tao") && <Link href="/ban-hang" className="flex h-10 items-center rounded-nho border border-vien-dam px-4 text-[14px] font-medium text-muc-2 hover:bg-giay-tram">Bán thẻ ở Thu ngân</Link>}
           <NutXuatExcel loai="khach-dung-the" ten="khách dùng thẻ" tham={{ cn: cn ?? undefined, ...thamSoDiaChi(f) }} />

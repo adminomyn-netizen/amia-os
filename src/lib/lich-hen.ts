@@ -82,3 +82,9 @@ export function cacNgayTrong(tu: string, den: string, toiDa = 31): string[] {
 }
 /** Số ô hạng khách: Vàng → cúp, Bạch kim/Kim cương → kim cương, Bạc → huy chương, Thường → không biểu tượng. */
 export const BIEU_TUONG_HANG: Record<string, "cup" | "kim_cuong" | "huy_chuong" | ""> = { "Vàng": "cup", "Bạch kim": "kim_cuong", "Kim cương": "kim_cuong", "Bạc": "huy_chuong", "Thường": "" };
+
+/** Mã giữ chỗ cho "Chưa chọn nhân viên" trong tham số `nv` của Lịch hẹn (lịch chưa giao người). */
+export const NV_CHUA_PHAN = "_";
+/** Tham số `nv` có thể là nhiều mã nhân viên cách nhau dấu phẩy (chọn nhiều như SalonHero); chỉ giữ mã dạng uuid hoặc mã giữ chỗ. */
+export const dsNvLoc = (v: string | undefined) =>
+  [...new Set((v ?? "").split(",").map((x) => x.trim()).filter((x) => x === NV_CHUA_PHAN || /^[0-9a-f-]{36}$/i.test(x)))].slice(0, 60);

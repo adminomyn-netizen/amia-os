@@ -15,8 +15,9 @@ import { timKhach } from "../ban-hang/actions";
 import { thucHienBuoi } from "../the/actions";
 import { doiTrangThaiLich, duyetYeuCauOnline, luuLichHen, tuChoiYeuCauOnline } from "./actions";
 import { LocNguon } from "@/components/lich-hen/LocNguon";
-import { ChonKhoang, KhungNgay, LocCho, LocNhanVien, TimVaLoc, XemThemO } from "@/components/lich-hen/DieuKhienLich";
-import { BIEU_TUONG_HANG, cacNgayTrong, chuTatTen, moTaLap, NGUON_DAT, nhanCotNgay, nhanNgayDai, nhanNguon, tenNvHoa, thuCuaNgay } from "@/lib/lich-hen";
+import { ChonKhoang, KhungNgay, LocCho, TimVaLoc, XemThemO } from "@/components/lich-hen/DieuKhienLich";
+import { LocNhieuNhanVien } from "@/components/lich-hen/LocNhieuNhanVien";
+import { BIEU_TUONG_HANG, cacNgayTrong, chuTatTen, dsNvLoc, moTaLap, NGUON_DAT, NV_CHUA_PHAN, nhanCotNgay, nhanNgayDai, nhanNguon, tenNvHoa, thuCuaNgay } from "@/lib/lich-hen";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
@@ -56,6 +57,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   if (den < tu) den = tu;
   if (den > congNgay(tu, 30)) den = congNgay(tu, 30);
   const ngay = DAT.test(sp.ngay ?? "") ? sp.ngay! : homNay >= tu && homNay <= den ? homNay : tu;
+  const nvLoc = dsNvLoc(sp.nv);
   const kieu = KIEU_XEM.some((k) => k.ma === sp.kieu) ? sp.kieu! : "nv";
   const q = (sp.q ?? "").trim().slice(0, 60);
   const tt = TT[sp.tt ?? ""] ? sp.tt! : "";
@@ -65,7 +67,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const cnId = nd.chiNhanhId ?? sp.cn ?? dsCn?.[0]?.id ?? "";
   // Đường dẫn giữ mọi bộ lọc hiện có, chỉ đổi phần được nêu (chuỗi rỗng = bỏ tham số).
   const url = (doi: Record<string, string> = {}) => {
-    const m: Record<string, string> = { tu, den, ngay, cn: cnId, kieu, q, tt, nguon, nv: sp.nv ?? "", cho: sp.cho ?? "", ...doi };
+    const m: Record<string, string> = { tu, den, ngay, cn: cnId, kieu, q, tt, nguon, nv: nvLoc.join(","), cho: sp.cho ?? "", ...doi };
     const u = new URLSearchParams(Object.entries(m).filter(([, v]) => v));
     return `/lich-hen?${u}`;
   };
@@ -89,7 +91,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const qThuong = q.toLowerCase();
   const lich = (lichTho ?? []).filter((l) => {
     if (tt && l.trang_thai !== tt) return false;
-    if (sp.nv && (l.nhan_vien_id ?? "") !== sp.nv) return false;
+    if (nvLoc.length && !nvLoc.includes(l.nhan_vien_id ?? NV_CHUA_PHAN)) return false;
     if (sp.cho && (l.phong ?? "").trim().toLowerCase() !== sp.cho.toLowerCase()) return false;
     if (!qThuong) return true;
     const k = tenK.get(l.khach_id);
@@ -119,6 +121,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const cnLC = (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
   const choDm = (choLam ?? []).filter((c) => c.hoat_dong).map((c) => ({ chiNhanhId: c.chi_nhanh_id, ten: c.ten }));
   const choCn = choDm.filter((c) => c.chiNhanhId === cnId);
+  const nvLocLC = (nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }));
   const sua = coQuyen(nd, "lich.sua");
   const moFormMoi = !!sp.khach;
   let khachMoi = null;
@@ -132,9 +135,9 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   let khoaHang: (l: Tables<"lich_hen">) => string;
   if (kieu === "nv") {
     const coLich = new Set(lich.map((l) => l.nhan_vien_id ?? ""));
-    const ds = (nv ?? []).filter((n) => !["nha_dau_tu"].includes(n.vai_tro) && (sp.nv ? n.id === sp.nv : ((n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)) || coLich.has(n.id))));
+    const ds = (nv ?? []).filter((n) => !["nha_dau_tu"].includes(n.vai_tro) && (nvLoc.length ? nvLoc.includes(n.id) : ((n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)) || coLich.has(n.id))));
     hang = [{ khoa: "", ten: "CHƯA CHỌN NHÂN VIÊN" }, ...ds.map((n, i) => ({ khoa: n.id, ten: tenNvHoa(n.ho_ten), phu: n.chuc_danh ?? undefined, vong: chuTatTen(n.ho_ten), mau: i % MAU_VONG.length }))];
-    if (sp.nv) hang = hang.filter((h) => h.khoa);
+    if (nvLoc.length) hang = hang.filter((h) => (h.khoa ? nvLoc.includes(h.khoa) : nvLoc.includes(NV_CHUA_PHAN)));
     khoaHang = (l) => l.nhan_vien_id ?? "";
   } else if (kieu === "cho") {
     // Chỗ trong danh mục (đang dùng) của chi nhánh + chỗ chỉ có trong chữ ghi ở lịch (lịch cũ/nhập tay); đang lọc một chỗ thì chỉ hiện chỗ đó.
@@ -215,9 +218,9 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-muc-3">
         {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && (dsCn ?? []).map((c) => <Link key={c.id} href={url({ cn: c.id })} className={`rounded-nho px-3 py-1.5 ${c.id === cnId ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}
-        <span className="flex items-center gap-2"><span>Nhân viên</span><span className="w-[170px]"><LocNhanVien giaTri={sp.nv ?? ""} luaChon={(nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }))} /></span></span>
+        <span className="flex items-center gap-2"><span>Nhân viên</span><span className="w-[190px]"><LocNhieuNhanVien giaTri={nvLoc.join(",")} luaChon={nvLocLC} /></span></span>
         <span className="flex items-center gap-2"><span>Chỗ</span><span className="w-[140px]"><LocCho giaTri={sp.cho ?? ""} luaChon={[...new Set([...choCn.map((c) => c.ten), ...lich.map((l) => (l.phong ?? "").trim()).filter(Boolean)])].map((t) => ({ gia_tri: t, nhan: t }))} /></span></span>
-        <span className="tabular-nums" aria-live="polite">{lich.filter(homLich).length} lịch đang hiệu lực{sp.nv || sp.cho || q || tt || nguon ? " theo bộ lọc" : ""} trong khoảng ngày</span>
+        <span className="tabular-nums" aria-live="polite">{lich.filter(homLich).length} lịch đang hiệu lực{nvLoc.length || sp.cho || q || tt || nguon ? " theo bộ lọc" : ""} trong khoảng ngày</span>
         <span className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:ml-auto">
           <div className="mr-1 w-[190px]"><LocNguon giaTri={nguon} /></div>
           {coQuyen(nd, "lich.xuat") && <>
@@ -248,7 +251,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         <div className="min-w-0 overflow-x-auto rounded-the border border-vien bg-giay-sang" tabIndex={0} aria-label="Lưới lịch hẹn, cuộn ngang để xem các ngày">
           <div className="grid min-w-max" style={{ gridTemplateColumns: cotLuoi }}>
             <div className="sticky left-0 z-10 flex items-center border-b border-r border-vien bg-giay-sang px-3 py-2">
-              {kieu === "nv" ? <div className="w-full"><LocNhanVien giaTri={sp.nv ?? ""} luaChon={(nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }))} /></div>
+              {kieu === "nv" ? <div className="w-full"><LocNhieuNhanVien giaTri={nvLoc.join(",")} luaChon={nvLocLC} /></div>
                 : kieu === "cho" ? <div className="w-full"><LocCho giaTri={sp.cho ?? ""} luaChon={[...new Set([...choCn.map((c) => c.ten), ...lich.map((l) => (l.phong ?? "").trim()).filter(Boolean)])].map((t) => ({ gia_tri: t, nhan: t.toLocaleUpperCase("vi-VN") }))} /></div>
                 : <span className="text-[13px] font-medium text-muc-2">Giờ</span>}
             </div>

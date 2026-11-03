@@ -33,7 +33,7 @@ const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ" }, { ma: "goi_the", ten: "
 const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 type PropsPos = {
-  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string; taiKhoanNhan?: TaiKhoanNhan[];
+  muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string; /** Phòng / chỗ ghi ở lịch hẹn của đơn (chỉ hiển thị). */ viTriLich?: string; taiKhoanNhan?: TaiKhoanNhan[];
   tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher; luuNhap: typeof luuDonNhap; dsNhap: typeof dsDonNhap; xoaNhap: typeof xoaDonNhap; nhapBanDau?: DonNhapRut[];
 };
 type Tab = { k: number; ten: string; soDong: number; nhap?: DonNhapRut };
@@ -184,12 +184,13 @@ export function Pos(props: PropsPos) {
 
 /** Một đơn. Dựng đơn trong trình duyệt, gửi MỘT lần lên máy chủ; máy chủ tự đọc lại giá từ danh mục và chốt trong một giao dịch. */
 /** Dải thông tin đơn như SalonHero: nguồn đặt lịch, ngày hoá đơn, giờ vào, nhân viên thu ngân, thẻ của khách. */
-function ThongTinDon({ thuNgan, nguonLich, khach, coTheTien, coTheDichVu, hang }: { thuNgan: string; nguonLich: string; khach: KhachChon | null; coTheTien: boolean; coTheDichVu: boolean; hang: string }) {
+function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu, hang }: { thuNgan: string; nguonLich: string; viTri: string; khach: KhachChon | null; coTheTien: boolean; coTheDichVu: boolean; hang: string }) {
   const [vao] = useState(() => new Date());
   const gio = (d: Date) => d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" });
   const ngay = vao.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
   const muc: [string, string][] = [["Ngày hoá đơn", `${gio(vao)} ${ngay}`], ["Giờ vào", gio(vao)]];
   if (nguonLich) muc.unshift(["Đặt lịch từ", nguonLich]);
+  if (viTri) muc.push(["Vị trí / chỗ", viTri]);
   if (thuNgan) muc.push(["Nhân viên thu ngân", thuNgan]);
   return (
     <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
@@ -228,7 +229,7 @@ function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: stri
   );
 }
 
-function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string }) => void; onHuy: () => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
@@ -355,7 +356,7 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
           <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
         </div>
         <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
-        <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} />
+        <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} />
         {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} />}
         {diemKhach && (
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>

@@ -46,10 +46,11 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   let lichDung: string | null = null;
   let cnLich: string | null = null;
   let nguonLich = "";
+  let viTriLich = "";
   if (lichId) {
-    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id, nguon").eq("id", lichId).maybeSingle();
+    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id, nguon, phong").eq("id", lichId).maybeSingle();
     if (l && (!nd.chiNhanhId || l.chi_nhanh_id === nd.chiNhanhId)) {
-      lichDung = l.id; cnLich = l.chi_nhanh_id; nguonLich = nhanNguon(l.nguon);
+      lichDung = l.id; cnLich = l.chi_nhanh_id; nguonLich = nhanNguon(l.nguon); viTriLich = l.phong ?? "";
       if (!khach) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", l.khach_id).maybeSingle()).data;
       const { data: ld } = await db.from("lich_hen_dich_vu").select("dich_vu_id, so_luong").eq("lich_id", l.id);
       dongBanDau = (ld ?? []).filter((x) => muc.some((m) => m.loai === "dich_vu" && m.id === x.dich_vu_id)).map((x) => ({
@@ -68,7 +69,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   return (
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
-      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} thuNgan={nd.hoTen} nguonLich={nguonLich} taiKhoanNhan={taiKhoanNhan}
+      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
         tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} />
     </>
   );

@@ -42,7 +42,7 @@ export type KetQuaHD = { ok?: boolean; loi?: string; [k: string]: unknown };
 export type ThongTinDong = { chu: string; kieu?: "tot" | "cho" | "loi" };
 export type ThongTinBieuMau = { theoDoi: string[]; lay: (fd: FormData) => Promise<{ dong?: ThongTinDong[] } | void> };
 
-function ONhieu({ luaChon, giaTri, onDoi }: { luaChon: LuaChon[]; giaTri: string[]; onDoi: (v: string[]) => void }) {
+export function ONhieu({ luaChon, giaTri, onDoi }: { luaChon: LuaChon[]; giaTri: string[]; onDoi: (v: string[]) => void }) {
   const [tim, setTim] = useState("");
   const ds = luaChon.filter((l) => l.nhan.toLowerCase().includes(tim.toLowerCase()));
   return (

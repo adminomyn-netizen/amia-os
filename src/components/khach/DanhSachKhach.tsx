@@ -6,17 +6,35 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "
 import { Download, Search, SlidersHorizontal } from "lucide-react";
 import { Chon, type LuaChon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
+import { ONhieu } from "@/components/ui/BieuMau";
 import { O_NHAP } from "@/components/ui/dinh-dang";
 import { KHOA_LOC, SAP_XEP_KHACH, TRANG_THAI_KHACH, type KhoaLoc } from "@/lib/khach";
 
 type Dong = { id: string; ma: string; ho_ten: string; dien_thoai: string; trang_thai: string | null; hang: string | null; diem: number; nhom: { ten: string; mau: string | null }[] };
 type Loc = Record<KhoaLoc, string>;
-export type DanhMucLoc = { nhom: { id: string; ten: string; mau: string | null; so: number }[]; chiNhanh: LuaChon[]; tinh: { tinh: string; so: number; quan: string[] | null }[]; dichVu: string[] };
+export type DanhMucLoc = { nhom: { id: string; ten: string; mau: string | null; so: number }[]; chiNhanh: LuaChon[]; tinh: { tinh: string; so: number; quan: string[] | null }[]; dichVu: string[]; sanPham?: string[] };
 const MOI_LAN = 40;
 const TAT_CA = { gia_tri: "", nhan: "Tất cả" };
 const LOC_TRONG = Object.fromEntries(KHOA_LOC.map((k) => [k, ""])) as Loc;
 const THANG = Array.from({ length: 12 }, (_, i) => ({ gia_tri: String(i + 1), nhan: `Sinh nhật tháng ${i + 1}` }));
 const O_SO = `${O_NHAP} !h-9 !text-[13px] tabular-nums`;
+/** Một lần gọi danh sách chờ tối đa 20 giây; quá thì tự thử lại một lần rồi mới báo lỗi (trước đây treo "Đang tải…" mãi khi máy chủ chậm). */
+const CHO_TOI_DA = 20_000;
+async function layDanhSach(url: string): Promise<{ ds: Dong[]; tong: number }> {
+  for (let lanThu = 0; ; lanThu++) {
+    const ac = new AbortController();
+    const hen = setTimeout(() => ac.abort(), CHO_TOI_DA);
+    try {
+      const r = await fetch(url, { signal: ac.signal, cache: "no-store" });
+      if (!r.ok) throw new Error(String(r.status));
+      return (await r.json()) as { ds: Dong[]; tong: number };
+    } catch (e) {
+      if (lanThu >= 1 || (e instanceof Error && e.message === "403")) throw e;
+    } finally {
+      clearTimeout(hen);
+    }
+  }
+}
 
 /** Nhãn nhóm khách (SHOPPER, VIP…): chấm màu gốc SalonHero + tên, chữ vẫn đủ tương phản trên nền nhạt. */
 export function NhanNhom({ ten, mau }: { ten: string; mau: string | null }) {
@@ -73,9 +91,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
     setDang(true);
     setLoi("");
     try {
-      const r = await fetch(`/api/khach/tim?${u}`);
-      if (!r.ok) throw new Error();
-      const j = (await r.json()) as { ds: Dong[]; tong: number };
+      const j = await layDanhSach(`/api/khach/tim?${u}`);
       if (n !== lan.current) return;
       const moi = ghiDe ? j.ds : [...dsRef.current, ...j.ds];
       dsRef.current = moi;
@@ -107,9 +123,13 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
     return () => clearTimeout(t);
   }, [tai, thamSo, hoatDong, moc]);
 
-  const soLoc = Object.values(loc).filter(Boolean).length;
+  const soLoc = Object.entries(loc).filter(([k, v]) => v && k !== "nhom_kieu").length;
   const datLoc = (k: KhoaLoc, v: string) => setLoc((x) => ({ ...x, [k]: v, ...(k === "tinh" ? { quan: "" } : {}) }));
-  const nhomLC = [{ gia_tri: "", nhan: "Mọi nhóm khách" }, ...danhMuc.nhom.map((n) => ({ gia_tri: n.id, nhan: `${n.ten} (${n.so.toLocaleString("vi-VN")})` })), { gia_tri: "khong", nhan: "Chưa thuộc nhóm nào" }];
+  const nhomLC = danhMuc.nhom.map((n) => ({ gia_tri: n.id, nhan: `${n.ten} (${n.so.toLocaleString("vi-VN")})` }));
+  // Kiểu lọc nhóm như Tìm nâng cao SalonHero: thuộc 1 trong các nhóm đã chọn / thuộc tất cả / chưa thuộc nhóm nào.
+  const kieuNhom = loc.nhom === "khong" ? "khong" : loc.nhom_kieu === "tat_ca" ? "tat_ca" : "mot";
+  const nhomDaChon = loc.nhom && loc.nhom !== "khong" ? loc.nhom.split(",") : [];
+  const datKieuNhom = (v: string) => setLoc((x) => v === "khong" ? { ...x, nhom: "khong", nhom_kieu: "" } : { ...x, nhom: x.nhom === "khong" ? "" : x.nhom, nhom_kieu: v === "tat_ca" ? "tat_ca" : "" });
   const tinhLC = [{ gia_tri: "", nhan: "Mọi tỉnh/thành" }, ...danhMuc.tinh.map((t) => ({ gia_tri: t.tinh, nhan: `${t.tinh} (${t.so.toLocaleString("vi-VN")})` }))];
   const quanLC = [{ gia_tri: "", nhan: "Mọi quận/huyện" }, ...(danhMuc.tinh.find((t) => t.tinh === loc.tinh)?.quan ?? []).map((x) => ({ gia_tri: x, nhan: x }))];
   const trangThaiLC = Object.entries(TRANG_THAI_KHACH).map(([gia_tri, v]) => ({ gia_tri, nhan: v.nhan }));
@@ -129,12 +149,14 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
         </div>
         {moLoc && (
           <div role="group" aria-label="Bộ lọc khách" className="grid max-h-[55dvh] grid-cols-2 gap-2 overflow-y-auto pr-0.5">
-            <Chon nho ariaLabel="Nhóm khách" giaTri={loc.nhom} onDoi={(v) => datLoc("nhom", v)} luaChon={nhomLC} className="col-span-2" />
+            <Chon nho ariaLabel="Kiểu lọc nhóm khách" giaTri={kieuNhom} onDoi={datKieuNhom} className="col-span-2"
+              luaChon={[{ gia_tri: "mot", nhan: "Nhóm khách: thuộc 1 trong các nhóm" }, { gia_tri: "tat_ca", nhan: "Nhóm khách: thuộc tất cả các nhóm" }, { gia_tri: "khong", nhan: "Chưa thuộc nhóm nào" }]} />
+            {kieuNhom !== "khong" && <div className="col-span-2 text-[13px]"><ONhieu luaChon={nhomLC} giaTri={nhomDaChon} onDoi={(v) => datLoc("nhom", v.join(","))} /></div>}
             <Chon nho ariaLabel="Trạng thái" trong="Trạng thái" giaTri={loc.trang_thai} onDoi={(v) => datLoc("trang_thai", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi trạng thái" }, ...trangThaiLC]} />
             <Chon nho ariaLabel="Hạng" trong="Hạng" giaTri={loc.hang} onDoi={(v) => datLoc("hang", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi hạng" }, ...hang]} />
             <Chon nho ariaLabel="Nguồn" trong="Nguồn" giaTri={loc.nguon} onDoi={(v) => datLoc("nguon", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi nguồn" }, ...nguon]} />
             <Chon nho ariaLabel="Giới tính" giaTri={loc.gioi_tinh} onDoi={(v) => datLoc("gioi_tinh", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi giới tính" }, { gia_tri: "nữ", nhan: "Nữ" }, { gia_tri: "nam", nhan: "Nam" }, { gia_tri: "chua_ro", nhan: "Chưa rõ giới tính" }]} />
-            <Chon nho ariaLabel="Sinh nhật" giaTri={loc.sinh_nhat} onDoi={(v) => datLoc("sinh_nhat", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi ngày sinh" }, { gia_tri: "hom_nay", nhan: "Sinh nhật hôm nay" }, { gia_tri: "thang", nhan: "Sinh nhật tháng này" }, ...THANG]} />
+            <Chon nho ariaLabel="Sinh nhật" giaTri={loc.sinh_nhat} onDoi={(v) => datLoc("sinh_nhat", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi ngày sinh" }, { gia_tri: "hom_nay", nhan: "Sinh nhật hôm nay" }, { gia_tri: "7_ngay", nhan: "Sinh nhật 7 ngày tới" }, { gia_tri: "thang", nhan: "Sinh nhật tháng này" }, ...THANG]} />
             <Chon nho ariaLabel="Ngày sinh nhật" trong="Ngày sinh nhật" giaTri={loc.sinh_ngay} onDoi={(v) => datLoc("sinh_ngay", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi ngày trong tháng" }, ...Array.from({ length: 31 }, (_, i) => ({ gia_tri: String(i + 1), nhan: `Sinh nhật ngày ${i + 1}` }))]} />
             <Chon nho ariaLabel="Thẻ đang dùng" giaTri={loc.the} onDoi={(v) => datLoc("the", v)} luaChon={[{ ...TAT_CA, nhan: "Thẻ: tất cả" }, { gia_tri: "co", nhan: "Có thẻ đang dùng" }, { gia_tri: "khong", nhan: "Không có thẻ đang dùng" }]} />
             <Chon nho ariaLabel="Công nợ" giaTri={loc.no} onDoi={(v) => datLoc("no", v)} luaChon={[{ ...TAT_CA, nhan: "Nợ: tất cả" }, { gia_tri: "co", nhan: "Đang nợ" }, { gia_tri: "khong", nhan: "Không nợ" }]} />
@@ -146,6 +168,8 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
             <Chon nho ariaLabel="Nhân viên từng phục vụ" giaTri={loc.nhan_vien} onDoi={(v) => datLoc("nhan_vien", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi nhân viên phục vụ" }, ...nhanVien]} className="col-span-2" />
             <input list="ds-dich-vu-da-ban" aria-label="Dịch vụ đã dùng" placeholder="Dịch vụ đã dùng (gõ tên)" value={loc.dich_vu} onChange={(e) => datLoc("dich_vu", e.target.value.slice(0, 120))} className={`${O_SO} col-span-2`} />
             <datalist id="ds-dich-vu-da-ban">{danhMuc.dichVu.map((d) => <option key={d} value={d} />)}</datalist>
+            <input list="ds-san-pham-da-ban" aria-label="Sản phẩm đã mua" placeholder="Sản phẩm đã mua (gõ tên)" value={loc.san_pham} onChange={(e) => datLoc("san_pham", e.target.value.slice(0, 120))} className={`${O_SO} col-span-2`} />
+            <datalist id="ds-san-pham-da-ban">{(danhMuc.sanPham ?? []).map((d) => <option key={d} value={d} />)}</datalist>
             <OSo nhan="Điểm từ" giaTri={loc.diem_tu} onDoi={(v) => datLoc("diem_tu", v)} />
             <OSo nhan="Điểm đến" giaTri={loc.diem_den} onDoi={(v) => datLoc("diem_den", v)} />
             <OSo nhan="Tuổi từ" giaTri={loc.tuoi_tu} onDoi={(v) => datLoc("tuoi_tu", v.slice(0, 3))} />
@@ -197,7 +221,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
       </div>
 
       <div className="flex items-center justify-between gap-2 border-t border-[color:var(--khach-vien)] px-3 py-2 text-[12px]">
-        <span>{tong.toLocaleString("vi-VN")} khách{soLoc > 0 || q ? " khớp" : ""}</span>
+        <span>{dang && ds.length === 0 ? "Đang tải…" : `${tong.toLocaleString("vi-VN")} khách${soLoc > 0 || q ? " khớp" : ""}`}</span>
         {choGanNhom && <Link href={`/khach-hang/nhom?${thamSo()}`} className="font-medium text-nhan-dam hover:underline">Gán nhóm</Link>}
         {choXuat && <a href={lienKetXuat} download className="flex items-center gap-1 font-medium text-nhan-dam hover:underline"><Download aria-hidden strokeWidth={1.7} className="h-3.5 w-3.5" />Xuất Excel</a>}
       </div>

@@ -12783,7 +12783,7 @@ export type Database = {
       khach_gan_den_het: { Args: { p_cn?: string }; Returns: { hd_ma: string; khach_id: string; ngay: string; tien: number }[] }
       thong_ke_khach_ngay: { Args: { p_so_ngay?: number }; Returns: Json }
       nhac_cham_soc_loc: {
-        Args: { p_cn?: string; p_den?: string; p_lim?: number; p_off?: number; p_phu_trach?: string; p_tt?: string; p_tu?: string }
+        Args: { p_cn?: string; p_den?: string; p_lim?: number; p_off?: number; p_phu_trach?: string; p_q?: string; p_tt?: string; p_tu?: string }
         Returns: { id: string; khach_id: string; ngay: string; so_lan: number; tong: number }[]
       }
       sua_the: {

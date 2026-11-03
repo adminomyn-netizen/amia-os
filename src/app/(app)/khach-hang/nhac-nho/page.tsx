@@ -11,7 +11,7 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { Chon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
-import { NUT_PHU } from "@/components/ui/dinh-dang";
+import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { HopTaoNhac, type DichVuNhac } from "@/components/khach/HopTaoNhac";
 import { NutTrangThaiNhac } from "@/components/khach/NutTrangThaiNhac";
@@ -35,11 +35,12 @@ export default async function LichNhacChamSoc({ searchParams }: { searchParams: 
   const tt = TT.some((x) => x.gia_tri === sp.tt) ? sp.tt! : "dang_nhac";
   const pt = sp.pt === "toi" ? nd.nhanVienId : sp.pt && /^[0-9a-f-]{36}$/i.test(sp.pt) ? sp.pt : null;
   const trang = Math.max(1, Math.min(2000, Number(sp.trang) || 1));
+  const q = (sp.q ?? "").trim().slice(0, 60);
   const db = sb();
   const sua = coQuyen(nd, "khach.sua"), xemSdt = coQuyen(nd, "khach.sdt");
 
   const [{ data: dong, error }, { data: nv }, dv] = await Promise.all([
-    db.rpc("nhac_cham_soc_loc", { p_cn: cn ?? undefined, p_tu: tu, p_den: den, p_tt: tt === "tat_ca" ? undefined : tt, p_phu_trach: pt ?? undefined, p_lim: MOI_TRANG, p_off: (trang - 1) * MOI_TRANG }),
+    db.rpc("nhac_cham_soc_loc", { p_cn: cn ?? undefined, p_tu: tu, p_den: den, p_tt: tt === "tat_ca" ? undefined : tt, p_phu_trach: pt ?? undefined, p_lim: MOI_TRANG, p_off: (trang - 1) * MOI_TRANG, ...(q ? { p_q: q } : {}) }),
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
     sua ? dichVuChoNhac() : Promise.resolve([] as DichVuNhac[]),
   ]);
@@ -55,7 +56,7 @@ export default async function LichNhacChamSoc({ searchParams }: { searchParams: 
   const nvLC = luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"));
   const tenCn = new Map(dsCn.map((c) => [c.id, c.ten]));
   const gan = (t?: number) => {
-    const u = new URLSearchParams({ ...(cn && !khoa ? { cn } : {}), tu, den, ...(tt !== "dang_nhac" ? { tt } : {}), ...(sp.pt ? { pt: sp.pt } : {}), ...(t && t > 1 ? { trang: String(t) } : {}) });
+    const u = new URLSearchParams({ ...(cn && !khoa ? { cn } : {}), tu, den, ...(tt !== "dang_nhac" ? { tt } : {}), ...(sp.pt ? { pt: sp.pt } : {}), ...(q ? { q } : {}), ...(t && t > 1 ? { trang: String(t) } : {}) });
     return `/khach-hang/nhac-nho?${u}`;
   };
 
@@ -81,6 +82,8 @@ export default async function LichNhacChamSoc({ searchParams }: { searchParams: 
           <div className="w-44"><Chon ten="tt" ariaLabel="Trạng thái nhắc" giaTriMacDinh={tt} luaChon={TT} /></div></label>
         <label className="block"><span className="mb-1 block font-medium text-muc-2">Người phụ trách</span>
           <div className="w-56"><Chon ten="pt" ariaLabel="Người phụ trách" giaTriMacDinh={sp.pt ?? ""} luaChon={[{ gia_tri: "", nhan: "Mọi người" }, { gia_tri: "toi", nhan: "Tôi phụ trách" }, ...nvLC]} /></div></label>
+        <label className="block"><span className="mb-1 block font-medium text-muc-2">Khách hàng</span>
+          <input name="q" defaultValue={q} placeholder="Tên, SĐT hoặc mã khách" aria-label="Tìm khách hàng" className={`${O_NHAP} !h-10 w-56 !text-[13px]`} /></label>
         <button type="submit" className={NUT_PHU}>Lọc</button>
       </form>
 

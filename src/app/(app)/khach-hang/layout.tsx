@@ -72,7 +72,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
   return (
     <div className="man-khach">
       <KhungHaiCot dau={dau} danhSach={<DanhSachKhach nhanVien={nvLC} nguon={NGUON} hang={(hang ?? []).map((h) => ({ gia_tri: h.ten, nhan: h.ten }))} moc={bayGio()} choXuat={coQuyen(nd, "khach.xuat")} xemSdt={coQuyen(nd, "khach.sdt")} choGanNhom={coQuyen(nd, "khach.nhap")}
-        danhMuc={{ nhom: tc.nhom, chiNhanh: cnLC, tinh: tc.tuyChon.tinh, dichVu: tc.tuyChon.dich_vu }} />}>
+        danhMuc={{ nhom: tc.nhom, chiNhanh: cnLC, tinh: tc.tuyChon.tinh, dichVu: tc.tuyChon.dich_vu, sanPham: tc.tuyChon.san_pham ?? [] }} />}>
         {children}
       </KhungHaiCot>
     </div>

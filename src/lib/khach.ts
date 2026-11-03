@@ -22,7 +22,7 @@ export const NHAN_TRANG_THAI_LICH: Record<string, string> = {
 /** Các ô lọc danh sách khách (giống SalonHero). Dùng chung cho danh sách bên trái, API và nút Xuất Excel để mọi nơi luôn khớp nhau. */
 export const KHOA_LOC = [
   "trang_thai", "nguon", "hang", "phu_trach", "nhom", "gioi_tinh", "diem_tu", "diem_den", "tuoi_tu", "tuoi_den", "the", "no", "sinh_nhat", "sinh_ngay",
-  "chi_nhanh", "nhieu_cn", "tinh", "quan", "den_tu", "den_den", "tao_tu", "tao_den", "dich_vu", "nhan_vien", "ds_tu", "ds_den",
+  "chi_nhanh", "nhieu_cn", "tinh", "quan", "den_tu", "den_den", "tao_tu", "tao_den", "dich_vu", "san_pham", "nhan_vien", "ds_tu", "ds_den", "nhom_kieu",
 ] as const;
 export type KhoaLoc = (typeof KHOA_LOC)[number];
 

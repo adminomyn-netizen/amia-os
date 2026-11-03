@@ -1,10 +1,12 @@
 // Kiểm nhanh trên bản thật: đăng nhập tài khoản tạm vai Chủ, tải từng trang, báo mã HTTP, thời gian, và có chữ lỗi không.
-// Dùng: node scripts/thu/kiem-trang-ban-that.mjs [BASE] -- /duong/dan1 /duong/dan2 ...   Không xuất Excel (để xoá được tài khoản tạm).
+// Dùng: node scripts/thu/kiem-trang-ban-that.mjs [BASE] [--lap N] -- /duong/dan1 /duong/dan2 ...   Không xuất Excel (để xoá được tài khoản tạm).
+// In: mã HTTP, TTFB (byte đầu) và thời gian tải trọn HTML (gồm phần stream sau); --lap N đo N lần mỗi trang, in số tốt nhất.
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 
 const args = process.argv.slice(2); const i = args.indexOf("--");
-const BASE = (i > 0 ? args[0] : null) ?? "https://amia-os-neon.vercel.app";
+const iLap = args.indexOf("--lap"), LAP = iLap >= 0 && iLap < i ? Math.max(1, +args[iLap + 1] || 1) : 1;
+const BASE = (i > 0 && !args[0].startsWith("--") ? args[0] : null) ?? "https://amia-os-neon.vercel.app";
 const TRANG = i >= 0 ? args.slice(i + 1) : args;
 const env = Object.fromEntries(readFileSync(new URL("../../.env.local", import.meta.url), "utf8").split("\n").filter((l) => l.includes("=") && !l.startsWith("#")).map((l) => { const k = l.indexOf("="); return [l.slice(0, k), l.slice(k + 1).replace(/^"|"$/g, "")]; }));
 const URL_ = env.NEXT_PUBLIC_SUPABASE_URL, ref = new URL(URL_).host.split(".")[0];
@@ -19,11 +21,17 @@ try {
   for (let j = 0; j < val.length; j += 3180) parts.push(val.slice(j, j + 3180));
   const cookie = parts.map((p, j) => `${parts.length === 1 ? `sb-${ref}-auth-token` : `sb-${ref}-auth-token.${j}`}=${encodeURIComponent(p)}`).join("; ");
   for (const p of TRANG) {
-    const t = Date.now();
-    const r = await fetch(BASE + p, { headers: { cookie }, redirect: "manual" });
-    const html = r.status === 200 ? await r.text() : "";
+    let tot = null, r, html = "";
+    for (let k = 0; k < LAP; k++) {
+      const t = Date.now();
+      r = await fetch(BASE + p, { headers: { cookie }, redirect: "manual" });
+      const ttfb = Date.now() - t;
+      html = r.status === 200 ? await r.text() : "";
+      const xong = Date.now() - t;
+      if (!tot || xong < tot.xong) tot = { ttfb, xong };
+    }
     const loi = /Đã có lỗi|Application error|statement timeout|Không tải được/i.exec(html)?.[0] ?? "";
-    console.log(`${r.status} ${String(Date.now() - t).padStart(5)}ms ${p}${r.headers.get("location") ? " → " + r.headers.get("location") : ""}${loi ? "  LỖI: " + loi : ""}`);
+    console.log(`${r.status} ttfb ${String(tot.ttfb).padStart(5)}ms  trọn ${String(tot.xong).padStart(5)}ms ${p}${r.headers.get("location") ? " → " + r.headers.get("location") : ""}${loi ? "  LỖI: " + loi : ""}`);
   }
 } finally {
   if (nvId) await db.from("nhan_vien").delete().eq("id", nvId);

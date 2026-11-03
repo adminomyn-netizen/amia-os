@@ -11,7 +11,7 @@ import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 const SO_DONG = ["10", "20", "50", "100"].map((s) => ({ gia_tri: s, nhan: `Hiển thị ${s} dòng` }));
 
 export function LocKhachThe({ kieu, tu, den, chiNhanh, cn, nhomKhach, nhom, hang, cacHang, loai, q, tenThe, so }: {
-  kieu: "khach" | "the"; tu: string; den: string; chiNhanh?: LuaChon[]; cn?: string; nhomKhach?: LuaChon[]; nhom?: string; hang?: string; cacHang?: LuaChon[]; loai?: string; q?: string; tenThe?: string; so: number;
+  kieu: "khach" | "the" | "chi-nhanh"; tu: string; den: string; chiNhanh?: LuaChon[]; cn?: string; nhomKhach?: LuaChon[]; nhom?: string; hang?: string; cacHang?: LuaChon[]; loai?: string; q?: string; tenThe?: string; so: number;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -31,7 +31,7 @@ export function LocKhachThe({ kieu, tu, den, chiNhanh, cn, nhomKhach, nhom, hang
       {kieu === "khach" && cacHang && <Chon ariaLabel="Hạng khách hàng" giaTri={hang ?? ""} onDoi={(v) => dat({ hang: v })} luaChon={[{ gia_tri: "", nhan: "Tất cả hạng KH" }, ...cacHang]} />}
       {kieu === "the" && <Chon ariaLabel="Loại thẻ" giaTri={loai ?? ""} onDoi={(v) => dat({ lt: v })} luaChon={[{ gia_tri: "", nhan: "Loại thẻ: Tất cả" }, { gia_tri: "lan", nhan: "Thẻ lần" }, { gia_tri: "tien", nhan: "Thẻ tiền" }]} />}
       {kieu === "the" && <input value={chu.tenThe} onChange={(e) => setChu({ ...chu, tenThe: e.target.value })} placeholder="Lọc theo tên thẻ" aria-label="Lọc theo tên thẻ" className={O_NHAP} />}
-      <input value={chu.q} onChange={(e) => setChu({ ...chu, q: e.target.value })} placeholder={kieu === "the" ? "Tìm khách hàng theo tên hoặc số điện thoại" : "Tìm kiếm khách hàng"} aria-label="Tìm khách hàng" className={`${O_NHAP} sm:col-span-2 lg:col-span-2`} />
+      <input value={chu.q} onChange={(e) => setChu({ ...chu, q: e.target.value })} placeholder={kieu === "the" ? "Tìm khách hàng theo tên hoặc số điện thoại" : kieu === "chi-nhanh" ? "Tìm chi nhánh" : "Tìm kiếm khách hàng"} aria-label={kieu === "chi-nhanh" ? "Tìm chi nhánh" : "Tìm khách hàng"} className={`${O_NHAP} sm:col-span-2 lg:col-span-2`} />
       <Chon ariaLabel="Số dòng mỗi trang" giaTri={String(so)} onDoi={(v) => dat({ so: v })} luaChon={SO_DONG} />
       <button type="submit" className={NUT_PHU}>Tìm kiếm</button>
     </form>

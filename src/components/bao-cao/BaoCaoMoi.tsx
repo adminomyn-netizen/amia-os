@@ -3,6 +3,7 @@ import { soVN, tienVN } from "@/lib/dinh-dang";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { CotNgang } from "@/components/bieu-do/CotNgang";
+import { CotDung } from "@/components/bieu-do/CotDung";
 import { layDatLich, layDungDichVu, layThuNgan, SH_MAU, tenKy, tenNguon, tiLe, TRANG_THAI_LICH, type NhomKy } from "@/lib/bao-cao-du-lieu";
 
 /** Ba báo cáo kiểu SalonHero: theo thu ngân, thống kê đặt lịch, thống kê dùng dịch vụ (máy chủ tính, trang chỉ hiển thị). */
@@ -71,7 +72,10 @@ const cotLich = <T extends DongLich = DongLich>(dau: { nhan: string; hienThi: (r
 
 export async function BaoCaoDatLich({ loc, coChiNhanh }: { loc: Loc; coChiNhanh: boolean }) {
   const db = sb();
-  const [d, mau] = await Promise.all([layDatLich(db, loc.tu, loc.den, loc.cn, loc.nhom), layDatLich(db, SH_MAU.ky.tu, SH_MAU.ky.den, undefined, "thang")]);
+  const [d, mau, { data: khungGio }] = await Promise.all([layDatLich(db, loc.tu, loc.den, loc.cn, loc.nhom), layDatLich(db, SH_MAU.ky.tu, SH_MAU.ky.den, undefined, "thang"), db.rpc("bc_dat_lich_khung_gio", { p_tu: loc.tu, p_den: loc.den, p_cn: loc.cn as string })]);
+  const kg = khungGio ?? [];
+  const gioDau = Math.min(8, ...kg.map((g) => g.gio)), gioCuoi = Math.max(20, ...kg.map((g) => g.gio));
+  const theoGio = Array.from({ length: gioCuoi - gioDau + 1 }, (_, i) => gioDau + i).map((h) => ({ gio: h, ...(kg.find((g) => g.gio === h) ?? { so_lich: 0, hoan_thanh: 0, huy: 0 }) }));
   const t = d.tong;
   const ttMau = (k: string) => mau.trangThai.find((x) => x.khoa === k)?.so_lich ?? 0;
   const ngMau = (k: string) => mau.nguon.find((x) => x.khoa === k)?.so_lich ?? 0;
@@ -91,6 +95,12 @@ export async function BaoCaoDatLich({ loc, coChiNhanh }: { loc: Loc; coChiNhanh:
       <TieuDeMuc id="lich-trang-thai">Theo trạng thái</TieuDeMuc>
       <Bang duLieu={d.trangThai} khoa={(r) => r.khoa} trong="Không có lịch hẹn trong khoảng này."
         cot={[{ nhan: "Trạng thái", chinh: true, hienThi: (r) => tenTt(r.khoa) }, { nhan: "Số lịch", hienThi: (r) => soVN(r.so_lich), phai: true }, { nhan: "Tỉ lệ", hienThi: (r) => tiLe(r.so_lich, t.so_lich), phai: true }]} />
+      <TieuDeMuc id="lich-khung-gio">Khách hay đặt vào khung giờ nào</TieuDeMuc>
+      <CotDung ten="Số lịch hẹn theo khung giờ" duLieu={theoGio.map((g) => ({ nhan: `${g.gio}h`, gia_tri: g.so_lich }))} />
+      <details className="mt-2"><summary className="cursor-pointer text-[13px] text-muc-2">Bảng số theo khung giờ</summary>
+        <div className="mt-2"><Bang duLieu={theoGio.filter((g) => g.so_lich > 0)} khoa={(r) => String(r.gio)} trong="Không có lịch hẹn."
+          cot={[{ nhan: "Khung giờ", chinh: true, hienThi: (r) => `${String(r.gio).padStart(2, "0")}:00 – ${String(r.gio + 1).padStart(2, "0")}:00` }, { nhan: "Số lịch", hienThi: (r) => soVN(r.so_lich), phai: true }, { nhan: "Khách đến", hienThi: (r) => soVN(r.hoan_thanh), phai: true }, { nhan: "Huỷ", hienThi: (r) => soVN(r.huy), phai: true }, { nhan: "Tỉ lệ", hienThi: (r) => tiLe(r.so_lich, t.so_lich), phai: true }]} /></div>
+      </details>
       <TieuDeMuc id="lich-nguon">Theo nguồn đặt</TieuDeMuc>
       <Bang duLieu={d.nguon} khoa={(r) => r.khoa} trong="Không có lịch hẹn." cot={cotLich({ nhan: "Nguồn", hienThi: (r) => tenNguon(r.khoa) })} />
       <TieuDeMuc id="lich-ky">{loc.nhom === "ngay" ? "Theo ngày" : "Theo tháng"}</TieuDeMuc>

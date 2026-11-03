@@ -85,7 +85,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   } else if (tab === "chi-phi-dv") {
     noiDung = <BaoCaoChiPhiDichVu l={lKho} dv={sp.dv || undefined} nv={sp.nv || undefined} ct={sp.ct || undefined} />;
   } else if (tab === "chi-nhanh") {
-    noiDung = <>{lc}<BaoCaoTheoChiNhanh tu={tu} den={den} cn={cn} /></>;
+    noiDung = <><LocKhachThe kieu="chi-nhanh" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} q={sp.q} so={soDongTrang(sp.so)} /><BaoCaoTheoChiNhanh tu={tu} den={den} cn={cn} q={sp.q || undefined} so={soDongTrang(sp.so)} trang={soTrang(sp.trang)} /></>;
   } else if (tab === "khach-hang") {
     const { data: nhomKh } = await db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten");
     const loaiK = { tu, den, cn, nhom: sp.nk || undefined, hang: sp.hang || undefined, q: sp.q || undefined, trang: soTrang(sp.trang), so: soDongTrang(sp.so) };

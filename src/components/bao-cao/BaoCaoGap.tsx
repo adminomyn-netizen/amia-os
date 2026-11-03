@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { sb } from "@/lib/db";
-import { gioVN, ngayCuaIso, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { boDau as boDauGap, gioVN, ngayCuaIso, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
@@ -29,9 +29,14 @@ const SdtAn = "•••";
 const gan = (goc: Record<string, string | undefined>) => (trang: number | undefined) => `/bao-cao?${new URLSearchParams(Object.entries({ ...goc, trang: trang ? String(trang) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`;
 const ngayGio = (iso: string) => `${ngayVN(ngayCuaIso(iso))} ${gioVN(iso)}`;
 
-export async function BaoCaoTheoChiNhanh({ tu, den, cn }: { tu: string; den: string; cn?: string }) {
+export async function BaoCaoTheoChiNhanh({ tu, den, cn, q, so = 20, trang = 1 }: { tu: string; den: string; cn?: string; q?: string; so?: number; trang?: number }) {
   const db = sb();
-  const [{ ds, tong }, mau] = await Promise.all([layTheoChiNhanh(db, tu, den, cn), layTheoChiNhanh(db, SH_MAU_GAP.ky.tu, SH_MAU_GAP.ky.den)]);
+  const [{ ds: tatCa, tong }, mau] = await Promise.all([layTheoChiNhanh(db, tu, den, cn), layTheoChiNhanh(db, SH_MAU_GAP.ky.tu, SH_MAU_GAP.ky.den)]);
+  // Như SalonHero: ô tìm tên chi nhánh + chọn 10/20/50/100 dòng mỗi trang (tổng ở đầu trang vẫn là mọi chi nhánh trong bộ lọc ngày/chi nhánh).
+  const tuKhoa = boDauGap((q ?? "").trim());
+  const locTen = tatCa.filter((r) => !tuKhoa || boDauGap(r.ten).includes(tuKhoa));
+  const ds = locTen.slice((trang - 1) * so, trang * so);
+  const goc = { tab: "chi-nhanh", tu, den, cn, q, so: so === 20 ? undefined : String(so) };
   const dongDc = SH_MAU_GAP.chiNhanh.flatMap((s) => {
     const a = mau.ds.find((m) => m.ten === s.ten);
     return [
@@ -52,7 +57,7 @@ export async function BaoCaoTheoChiNhanh({ tu, den, cn }: { tu: string; den: str
       <TieuDeMuc>Doanh thu (VND)</TieuDeMuc>
       <CotNgang duLieu={ds.map((r) => ({ nhan: r.ten, gia_tri: r.doanhThu }))} dinhDang={(n) => tienVN(n)} trong="Không có hoá đơn trong khoảng này." />
       <TieuDeMuc>Bảng số liệu chi tiết</TieuDeMuc>
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Không có chi nhánh nào để hiện."
+      <Bang duLieu={ds} khoa={(r) => r.id} trong={q ? "Không tìm thấy chi nhánh nào." : "Không có chi nhánh nào để hiện."}
         cot={[
           { nhan: "Chi nhánh", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
           { nhan: "Số nhân viên", hienThi: (r) => soVN(r.soNhanVien), phai: true },
@@ -61,6 +66,7 @@ export async function BaoCaoTheoChiNhanh({ tu, den, cn }: { tu: string; den: str
           { nhan: "Còn nợ", hienThi: (r) => tienVN(r.conNo), phai: true },
           { nhan: "Doanh thu", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.doanhThu)}</span>, phai: true },
         ]} />
+      <ThanhTrang trang={trang} tong={locTen.length} moi={so} gan={gan(goc)} />
       <GhiChu>Tổng doanh thu ở đầu trang = tổng tiền đã thu trong kỳ của mọi chi nhánh (như SalonHero). Đã thu = tiền mặt + chuyển khoản + quẹt thẻ thu trong kỳ, kể cả thu nợ; Còn nợ = nợ của các đơn lập trong kỳ; Doanh thu = tổng đơn hoàn thành (tiền hàng − giảm giá + VAT + phụ phí + tip) trừ phần trả bằng thẻ tiền, cùng cách tính với Doanh thu theo ngày. Bán hàng = thu cùng ngày với đơn, thu nợ = thu sau ngày đơn. Số nhân viên = nhân viên đang làm gắn với chi nhánh (SalonHero đếm theo danh sách người làm của chi nhánh nên có thể lệch).</GhiChu>
       <DoiChieu dong={dongDc} ghiChu="Đọc trực tiếp từ SalonHero (Báo cáo → Theo chi nhánh) cho tháng đã đóng, đơn vị đồng. Với tháng đang chạy, Đà Lạt trong app nhiều hơn SalonHero một hoá đơn tạo thẳng trong app (HD000003, 900.000 đ, 26/10/2026) nên số lệch đúng bằng hoá đơn đó." />
     </>

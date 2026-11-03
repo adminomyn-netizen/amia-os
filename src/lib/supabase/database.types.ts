@@ -11882,6 +11882,10 @@ export type Database = {
       dieu_chinh_no: {
         Args: { p_id: string; p_ly_do: string; p_no_moi: number; p_nguoi: string }
         Returns: number
+      bc_dat_lich_khung_gio: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: { gio: number; hoan_thanh: number; huy: number; so_lich: number }[]
+      }
       }
       huy_lan_tra_no: {
         Args: { p_id: string; p_ly_do?: string; p_nguoi: string; p_ref: string }

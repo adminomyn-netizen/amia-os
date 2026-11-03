@@ -9955,6 +9955,12 @@ export type Database = {
         }
         Relationships: []
       }
+      so_lieu_tinh_san: {
+        Row: { ham: string; ket_qua: Json; luc: string; tham_so: Json }
+        Insert: { ham: string; ket_qua: Json; luc?: string; tham_so: Json }
+        Update: { ham?: string; ket_qua?: Json; luc?: string; tham_so?: Json }
+        Relationships: []
+      }
       so_quy: {
         Row: {
           doi_tuong: string | null

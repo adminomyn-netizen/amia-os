@@ -1,3 +1,4 @@
+import { bcDoanhThuNgayNho } from "@/lib/bao-cao-nho-dem";
 import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
@@ -49,7 +50,9 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
   const canhBao: { nhan: string; href: string }[] = [];
   if (coBaoCao) {
     const tuNgay = congNgay(homNay, -13);
-    const { data: ngay } = await db.rpc("bc_doanh_thu_ngay", { p_tu: tuNgay, p_den: homNay, p_cn: (cn ?? undefined) as string });
+    // Đọc bản tính sẵn của trang chủ (từ đầu tháng trước đến hôm nay, 0305) rồi lấy 14 ngày cuối — số theo ngày y hệt gọi riêng 14 ngày.
+    const dauThang = `${homNay.slice(0, 8)}01`, dThang = new Date(`${dauThang}T00:00:00Z`); dThang.setUTCMonth(dThang.getUTCMonth() - 1);
+    const ngay = (await bcDoanhThuNgayNho(dThang.toISOString().slice(0, 10), homNay, cn ?? null)).filter((n) => n.ngay >= tuNgay);
     const hn = (ngay ?? []).find((n) => n.ngay === homNay);
     const max = Math.max(1, ...(ngay ?? []).map((n) => Number(n.doanh_thu)));
     let nq = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0);

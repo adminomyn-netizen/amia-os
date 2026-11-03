@@ -2,11 +2,12 @@ import Link from "next/link";
 import { unstable_cache } from "next/cache";
 import { Bell, Cake, CalendarCheck, CalendarX, Receipt, Repeat, UserPlus, UserX, type LucideIcon } from "lucide-react";
 import { sb } from "@/lib/db";
-import { soVN } from "@/lib/dinh-dang";
+import { homNayHCM, soVN } from "@/lib/dinh-dang";
+import { docTinhSan } from "@/lib/bao-cao-nho-dem";
 import { gioVNHienTai, namVNHienTai, tieuDeTheoGio, vietBaoCaoSang, type BaoCaoSang as KqBaoCao } from "@/lib/bao-cao-sang";
 import { NutSaoChep } from "./NutSaoChep";
 import { MoRongBaoCao } from "./MoRongBaoCao";
-import { locKhach } from "@/lib/khach-danh-sach";
+import { locKhach, type DongKhach } from "@/lib/khach-danh-sach";
 
 type Mau = "xanh" | "luc" | "tim" | "cam" | "hong";
 
@@ -72,13 +73,21 @@ function KhungSinhNhat({ tong, ds, tenDuPhong }: { tong: number; ds: KhachSn[]; 
 type DuLieuNgay = { b: KqBaoCao; sn: { id: string; ten: string; hang: string | null; ngay_sinh: string | null }[] };
 
 /** Tính hàm báo cáo + danh sách sinh nhật MỘT lần rồi giữ 5 phút (hàm tính trên DB nhỏ có thể mất vài giây lúc nguội). Lỗi thì ném ra để KHÔNG bị lưu đệm. */
-const docDuLieuNgay = unstable_cache(async (cn: string | null): Promise<DuLieuNgay> => {
+const docDuLieuNgaySong = unstable_cache(async (cn: string | null): Promise<DuLieuNgay> => {
   const { data, error } = await sb().rpc("bao_cao_sang_tinh", cn ? { p_cn: cn } : {});
   if (error || !data) throw new Error(error?.message ?? "không có dữ liệu");
   const b = data as unknown as KqBaoCao;
   const ds = b.hom_nay.sinh_nhat > 0 ? await locKhach({ sinh_nhat: "hom_nay", sx: "ten", ...(cn ? { chi_nhanh: cn } : {}) }, 0, 200) : null;
   return { b, sn: (ds?.ds ?? []).map((k) => ({ id: k.id, ten: k.ho_ten, hang: k.hang, ngay_sinh: k.ngay_sinh })) };
 }, ["bao-cao-ngay-du-lieu-v2"], { revalidate: 300 });
+
+/** Đường chính: đọc bản TÍNH SẴN (pg_cron 2 phút/lần, 0305) — báo cáo + danh sách sinh nhật hôm nay đúng tham số như trên; thiếu thì tính trực tiếp. */
+async function docDuLieuNgay(cn: string | null): Promise<DuLieuNgay> {
+  const ts = { p_cn: cn, ngay: homNayHCM() };
+  const [b, sn] = await Promise.all([docTinhSan<KqBaoCao>("bao_cao_sang_tinh", ts), docTinhSan<{ dong: DongKhach }[]>("sinh_nhat_hom_nay", ts)]);
+  if (!b || !sn) return docDuLieuNgaySong(cn);
+  return { b, sn: b.hom_nay.sinh_nhat > 0 ? sn.map(({ dong: k }) => ({ id: k.id, ten: k.ho_ten, hang: k.hang, ngay_sinh: k.ngay_sinh })) : [] };
+}
 
 /** Khung xương hiện ngay trong lúc khối đang tính (trang chủ không phải đợi khối này). */
 export function BaoCaoNgayDangTai() {

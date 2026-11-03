@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Store } from "lucide-react";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { luuDoiDiem, luuThongTinChung } from "../actions";
 import { cauHinhDiem } from "@/lib/diem-thuong";
@@ -29,13 +29,12 @@ export default async function TrangThongTinChung() {
   ];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Thông tin chung" phu="Thông tin cửa hàng và pháp nhân, giờ làm việc chung.">
+      <TieuDeNoi icon={Store} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Thông tin chung" phu="Thông tin cửa hàng và pháp nhân, giờ làm việc chung.">
         {coQuyen(nd, "danhmuc.sua") && (
           <NutHop nhan="Sửa thông tin" tieuDe="Sửa thông tin chung" truong={truong} action={luuThongTinChung} rong
             giaTri={{ id: "1", ten_thuong_hieu: ch?.ten_thuong_hieu ?? "", ten_phap_nhan: ch?.ten_phap_nhan ?? "", ma_so_thue: ch?.ma_so_thue ?? "", dia_chi: ch?.dia_chi ?? "", dien_thoai: ch?.dien_thoai ?? "", email: ch?.email ?? "", website: ch?.website ?? "", gio_mo: gio.mo ?? "08:00", gio_dong: gio.dong ?? "20:00", nghi: gio.nghi ?? [] }} />
         )}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <dl className="the-noi the-noi-thap divide-y divide-vien p-2 sm:p-4">
         {dong.map(([k, v]) => (
           <div key={k} className="grid gap-1 py-3 sm:grid-cols-[200px_1fr] sm:gap-4">

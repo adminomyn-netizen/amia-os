@@ -4,7 +4,8 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { boDau } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Building2 } from "lucide-react";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { O_NHAP, NUT_PHU } from "@/components/ui/dinh-dang";
@@ -32,10 +33,9 @@ export default async function TrangChiNhanh({ searchParams }: { searchParams: Pr
   ];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Quản lý chi nhánh" phu={`Tổng số chi nhánh: ${tat.length}`}>
+      <TieuDeNoi icon={Building2} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Quản lý chi nhánh" phu={`Tổng số chi nhánh: ${tat.length}`}>
         {quanLy && <NutHop nhan="Thêm chi nhánh" tieuDe="Thêm chi nhánh" truong={truong} rong giaTri={{ hoat_dong: true, thu_tu: 100, hien_dat_lich: "hien", quoc_gia: "VN" }} action={luuChiNhanhCaiDat} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <form method="get" className="mb-5 flex max-w-md gap-2" role="search">
         <input name="q" defaultValue={q} placeholder="Tìm theo tên chi nhánh, địa chỉ..." aria-label="Tìm chi nhánh" className={O_NHAP} autoComplete="off" />
         <button type="submit" className={NUT_PHU}>Tìm</button>

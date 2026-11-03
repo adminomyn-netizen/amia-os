@@ -5,7 +5,7 @@ import Link from "next/link";
 import dynamic from "next/dynamic";
 import { useActionState, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import {
-  CalendarCheck, CalendarDays, Check, ChevronDown, ChevronLeft, ChevronRight, Clock, MapPin, Minus, Navigation, Phone, Plus, Search, ShieldCheck, Sparkles, User, Users,
+  CalendarCheck, CalendarDays, Check, RotateCcw, ChevronDown, ChevronLeft, ChevronRight, Clock, MapPin, Minus, Navigation, Phone, Plus, Search, ShieldCheck, Sparkles, User, Users,
 } from "lucide-react";
 import { O_NHAP, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
 import { coOChiNhanh } from "@/lib/ban-hang";
@@ -77,6 +77,7 @@ export function FormDatLich(p: Props) {
   const [moLuc] = useState(() => Date.now());
   const thanhNgay = useRef<HTMLDivElement>(null);
   const gioRef = useRef<HTMLElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   const chiNhanhChon = p.chiNhanh.find((c) => c.id === cn) ?? datDuoc[0] ?? p.chiNhanh[0];
   const dsDv = p.dichVu.filter((d) => coOChiNhanh(d.cn, cn));
@@ -123,6 +124,17 @@ export function FormDatLich(p: Props) {
     if (!xong1) { e.preventDefault(); setLoi(T.thieuTT); document.getElementById("form-dat-lich")?.scrollIntoView({ behavior: "smooth" }); return; }
     if (!gio) { e.preventDefault(); setLoi(T.chonGio); gioRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }
   };
+  const coNhap = !!(ten || sdt || dv.length || gio || nv || khach > 1);
+  const lamLai = () => {
+    if (coNhap && !window.confirm(T.hoiLamLai)) return;
+    formRef.current?.reset();
+    setTen(""); setSdt(""); setDv([]); setNv(""); setGio(""); setKhach(1); setTimDv(""); setNhomLoc(""); setLoi(""); setKhu("");
+    setGt(p.doiTuong === "nam" ? "nam" : "nữ"); setNgay(p.homNay); setCn(datDuoc[0]?.id ?? "");
+    document.getElementById("form-dat-lich")?.scrollIntoView({ behavior: "smooth" });
+  };
+  const nutLamLai = (lop: string) => (
+    <button type="button" onClick={lamLai} disabled={!coNhap} className={`inline-flex items-center gap-1.5 text-[12.5px] font-medium transition-opacity disabled:opacity-40 ${lop}`}><RotateCcw className="h-3.5 w-3.5" aria-hidden />{T.lamLai}</button>
+  );
   const chonDv = (id: string) => { setDv(dv.includes(id) ? dv.filter((x) => x !== id) : [...dv, id]); setGio(""); };
 
   /* ---------- Đầu trang ---------- */
@@ -346,7 +358,7 @@ export function FormDatLich(p: Props) {
           )}
         </main>
       )}
-      <form action={action} onSubmit={kiemTruocKhiGui} hidden={tab !== "dat"} id="form-dat-lich" className="mx-auto grid w-full max-w-[1120px] scroll-mt-16 gap-5 px-4 pb-8 pt-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_350px]">
+      <form ref={formRef} action={action} onSubmit={kiemTruocKhiGui} hidden={tab !== "dat"} id="form-dat-lich" className="mx-auto grid w-full max-w-[1120px] scroll-mt-16 gap-5 px-4 pb-8 pt-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_350px]">
         <input type="hidden" name="mo_luc" value={moLuc} />
         <input type="hidden" name="chi_nhanh_id" value={cn} />
         <input type="hidden" name="dich_vu_ids" value={dv.join(",")} />
@@ -362,7 +374,7 @@ export function FormDatLich(p: Props) {
           {(loi || kq?.loi) && <p role="alert" className="rounded-the border border-loi/30 bg-loi-nen px-4 py-3 text-[14px] text-loi"><b>{kq?.loi && !loi ? `${T.loiDat}: ` : ""}</b>{loi || kq?.loi}</p>}
 
           <section className={THE}>
-            <Buoc so={1} chu={T.b1} xong={xong1} />
+            <Buoc so={1} chu={T.b1} xong={xong1} phu={<span className="lg:hidden">{nutLamLai("text-muc-3 hover:text-loi")}</span>} />
             <div className="grid gap-4 sm:grid-cols-2">
               <div><label htmlFor="dien_thoai" className="mb-1.5 block text-[13px] font-medium text-muc-2">{T.sdt} <span className="text-loi">*</span></label><input id="dien_thoai" name="dien_thoai" type="tel" inputMode="tel" required autoComplete="tel" maxLength={20} placeholder="091 234 56 78" value={sdt} onChange={(e) => setSdt(e.target.value)} className={O_NHAP} /></div>
               <div>
@@ -543,7 +555,7 @@ export function FormDatLich(p: Props) {
             <div className="p-5">
               <h2 className="text-[17px] font-bold">{T.lichCuaBan}</h2>
               <div className="mt-3">
-                <div className="flex justify-between text-[12px] text-menu-chu-phu"><span>{T.tienDo}</span><span className="tabular-nums">{T.buocXong(soXong, cacBuoc.length)}</span></div>
+                <div className="flex items-center justify-between text-[12px] text-menu-chu-phu"><span>{T.tienDo} · <span className="tabular-nums">{T.buocXong(soXong, cacBuoc.length)}</span></span>{nutLamLai("text-menu-chu hover:text-white")}</div>
                 <div className="mt-1.5 h-1.5 overflow-hidden rounded-nho bg-white/10"><div className="h-full rounded-nho transition-[width] duration-500" style={{ ...VANG, width: `${(soXong / cacBuoc.length) * 100}%` }} /></div>
               </div>
               <ul className="mt-5 space-y-4 text-[14px]">

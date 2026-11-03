@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { boDau } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { UserCheck } from "lucide-react";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -50,10 +50,9 @@ export default async function TrangNhanVienPhucVu({ searchParams }: { searchPara
   ];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Nhân viên phục vụ">
+      <TieuDeNoi icon={UserCheck} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Nhân viên phục vụ">
         {quanLy && <NutHop nhan="Thêm nhân viên" tieuDe="Thêm nhân viên phục vụ" moTa="Tạo hồ sơ mới không có tài khoản đăng nhập. Muốn cấp tài khoản thì vào Tài khoản đăng nhập." truong={truongMo} giaTri={{ nhom_nv: "Nhóm thợ 1", chi_nhanh_id: "", hien_dat_lich: true, trang_thai: "hoat_dong" }} action={luuNhanVienPhucVu} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <form method="get" action="/cai-dat/nhan-vien-phuc-vu" className="mb-5 grid grid-cols-2 items-end gap-3 md:grid-cols-4">
         <div><label className={NHAN_O}>Trạng thái:</label><Chon ten="tt" giaTriMacDinh={tt} luaChon={[{ gia_tri: "", nhan: "Tất Cả" }, { gia_tri: "hoat_dong", nhan: "Hoạt động" }, { gia_tri: "tam_dung", nhan: "Tạm dừng" }]} /></div>
         <div><label className={NHAN_O}>Chi nhánh:</label><Chon ten="cn" giaTriMacDinh={sp.cn ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả các chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div>

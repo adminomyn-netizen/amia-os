@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Megaphone } from "lucide-react";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -27,10 +27,9 @@ export default async function TrangBangTin() {
   ];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Bảng tin công ty" phu="Thông báo hiển thị cho toàn công ty ở Trang chủ, đăng và hẹn lịch hiển thị.">
+      <TieuDeNoi icon={Megaphone} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Bảng tin công ty" phu="Thông báo hiển thị cho toàn công ty ở Trang chủ, đăng và hẹn lịch hiển thị.">
         {sua && <NutHop nhan="Đăng tin" tieuDe="Đăng tin mới" truong={truong} action={luuBangTin} giaTri={{ hoat_dong: true, hien_tu: nay, ghim: false }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có tin nào."
         cot={[
           { nhan: "Tiêu đề", chinh: true, hienThi: (r) => <span className="text-muc">{r.ghim ? "Ghim · " : ""}{r.tieu_de}</span> },

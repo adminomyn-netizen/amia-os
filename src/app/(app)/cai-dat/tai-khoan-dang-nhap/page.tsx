@@ -3,7 +3,8 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { boDau } from "@/lib/dinh-dang";
 import { NHAN_VAI_TRO, VAI_TRO, laVaiTro } from "@/lib/quyen";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { KeyRound } from "lucide-react";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { Chon } from "@/components/ui/Chon";
@@ -42,11 +43,10 @@ export default async function TrangTaiKhoanDangNhap({ searchParams }: { searchPa
   ];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Tài khoản đăng nhập">
+      <TieuDeNoi icon={KeyRound} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Tài khoản đăng nhập">
         <Link href="/cai-dat/vai-tro" className={`${NUT_PHU} inline-flex items-center`}>Thiết lập quyền</Link>
         <NutHop nhan="Tạo người dùng mới" tieuDe="Tạo người dùng mới" truong={truongTao} giaTri={{ vai_tro: "le_tan", chi_nhanh_id: "" }} action={taoNhanVien} />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <form method="get" action="/cai-dat/tai-khoan-dang-nhap" className="mb-5 grid grid-cols-2 items-end gap-3 md:grid-cols-4" role="search">
         <div><label className={NHAN_O}>Lọc theo Vai trò:</label><Chon ten="vt" giaTriMacDinh={vt} luaChon={[{ gia_tri: "", nhan: "Tất cả" }, ...VAI_TRO.map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] }))]} /></div>
         <div><label className={NHAN_O}>Chi nhánh:</label><Chon ten="cn" giaTriMacDinh={sp.cn ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả các chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div>

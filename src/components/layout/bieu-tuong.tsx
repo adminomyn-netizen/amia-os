@@ -1,10 +1,29 @@
 import { ArrowLeftRight, BookOpen, Boxes, CalendarClock, CalendarOff, ChartColumn, ClipboardCheck, ClipboardList, Clock, CreditCard, FilePenLine, FileText, HandCoins, LayoutGrid, Lock, Megaphone, Percent, PiggyBank, Receipt, ShoppingCart, Truck, UserPlus, Users, Wallet } from "lucide-react";
+import { Award, Building2, Calculator, CalendarCheck, KeyRound, Landmark as NganHang, MessageSquareText, Newspaper, Package, Printer, ScanSearch, ShieldCheck, SlidersHorizontal, Sparkles, Store, TicketPercent, UserCheck } from "lucide-react";
 import { createElement, type ComponentType } from "react";
 
 type BieuTuong = ComponentType<{ className?: string; strokeWidth?: number }>;
 
 /** Chọn biểu tượng cho thẻ chức năng theo tên (khớp từ đầu tiên trong danh sách); không khớp thì dùng biểu tượng chung. */
 const BANG: [RegExp, BieuTuong][] = [
+  [/^thông tin chung/i, Store],
+  [/^chi nhánh/i, Building2],
+  [/^ngày tháng|thiết lập khác/i, SlidersHorizontal],
+  [/^thiết lập in/i, Printer],
+  [/tài khoản ngân hàng/i, NganHang],
+  [/^blog/i, Newspaper],
+  [/^bảng tin/i, Megaphone],
+  [/^web đặt lịch/i, CalendarCheck],
+  [/voucher/i, TicketPercent],
+  [/chi phí dịch vụ/i, Calculator],
+  [/^danh mục dịch vụ/i, Sparkles],
+  [/^danh mục sản phẩm/i, Package],
+  [/^rà soát/i, ScanSearch],
+  [/^vai trò|phân quyền/i, ShieldCheck],
+  [/tài khoản đăng nhập/i, KeyRound],
+  [/zalo|sms/i, MessageSquareText],
+  [/^điểm khách|tích điểm/i, Award],
+  [/^nhân viên phục vụ/i, UserCheck],
   [/chấm công|giờ làm/i, Clock],
   [/ca kíp|ca làm|lịch|ca /i, CalendarClock],
   [/nghỉ|phép/i, CalendarOff],

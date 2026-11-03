@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { boDau } from "@/lib/dinh-dang";
 import { DANH_SACH_NGAN_HANG, chucNangNganHang } from "@/lib/ngan-hang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Landmark } from "lucide-react";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -36,10 +36,9 @@ export default async function TrangNganHang({ searchParams }: { searchParams: Pr
   ];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Tài khoản Ngân Hàng">
+      <TieuDeNoi icon={Landmark} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Tài khoản Ngân Hàng">
         {sua && <NutHop nhan="Thêm tài khoản" tieuDe="Thêm tài khoản" nhanLuu="Lưu thông tin" truong={truong} action={luuNganHang} giaTri={{ ngan_hang: "", ghi_chu: "", dung_quet_the: true, dung_chuyen_khoan: true, mac_dinh: false }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <form method="get" role="search" className="mb-5 flex max-w-md items-center gap-2">
         <label htmlFor="tim-nh" className="shrink-0 text-[13px] font-medium text-muc-2">Tìm kiếm:</label>
         <input id="tim-nh" name="q" defaultValue={q} aria-label="Tìm kiếm" className={O_NHAP} autoComplete="off" />

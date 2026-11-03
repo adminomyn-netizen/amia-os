@@ -1,13 +1,14 @@
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { Boxes, Briefcase, ChevronRight, FilePenLine, Landmark, Megaphone, Settings } from "lucide-react";
 import { layNguoiDungDangNhap } from "@/lib/auth";
 import { moduleTheoMa, NHAN_TRANG_THAI, type The, type TrangThaiThe } from "@/lib/module";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { BieuTuongChucNang } from "@/components/layout/bieu-tuong";
 import { redirect } from "next/navigation";
 import { coMotQuyen as coMot, trangDau } from "@/lib/nav";
 
+const ICON_MODULE: Record<string, typeof Settings> = { "noi-lam-viec": Briefcase, "tai-chinh": Landmark, "kho-mua-sam": Boxes, "van-ban": FilePenLine, marketing: Megaphone, "cai-dat": Settings };
 const KIEU: Record<TrangThaiThe, "tot" | "cho" | "tram"> = { san_sang: "tot", dang_lam: "cho", sap_co: "tram" };
 
 /** Trang tổng quan của một mục lớn: các thẻ chức năng gom theo nhóm; thẻ đã làm bấm vào được, chưa làm thì mờ và có nhãn trạng thái (thẻ sẵn sàng không cần nhãn). */
@@ -20,7 +21,7 @@ export async function TrangModule({ ma }: { ma: string }) {
     .filter((g) => g.the.length > 0);
   return (
     <div>
-      <TieuDeTrang tieuDe={m.ten} phu={m.moTa} />
+      <TieuDeNoi icon={ICON_MODULE[m.ma]} tieuDe={m.ten} phu={m.moTa} so={`${nhom.reduce((a, g) => a + g.the.length, 0)} chức năng`} />
       <div className="space-y-9">
         {nhom.map((g) => (
           <section key={g.nhan} aria-labelledby={`nhom-${g.nhan}`}>

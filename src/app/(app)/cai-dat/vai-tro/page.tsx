@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { NHAN_VAI_TRO, NHOM_QUYEN, QUYEN_THEO_VAI_TRO, VAI_TRO } from "@/lib/quyen";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { ShieldCheck } from "lucide-react";
 import { MucTrang } from "@/components/ui/MucTrang";
 
 /** Bảng "ai làm được gì": vai trò (cột) × quyền (hàng). Chủ và Kỹ thuật luôn đủ quyền; quyền riêng từng người chỉnh ở Tài khoản & phân quyền. */
@@ -10,7 +11,7 @@ export default async function VaiTroVaQuyen() {
   await yeuCauQuyen("hethong.phanquyen");
   return (
     <div className="space-y-6">
-      <TieuDeTrang tieuDe="Vai trò & quyền" phu="Mỗi vai trò mặc định làm được những gì. Muốn một người có thêm hay bớt quyền so với vai trò thì chỉnh riêng cho người đó." />
+      <TieuDeNoi icon={ShieldCheck} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Vai trò & quyền" phu="Mỗi vai trò mặc định làm được những gì. Muốn một người có thêm hay bớt quyền so với vai trò thì chỉnh riêng cho người đó." />
       <p className="text-[14px] text-muc-2">
         Chỉnh quyền từng người ở <Link href="/nhan-vien" className="font-medium text-nhan-dam hover:underline">Tài khoản & phân quyền</Link> (nút Phân quyền cạnh tên). Chủ và Kỹ thuật luôn đủ mọi quyền; riêng Kỹ thuật được bỏ qua quy tắc “người lập không tự duyệt”.
       </p>

@@ -1,7 +1,7 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Award } from "lucide-react";
 import { DiemKhachHangForm } from "@/components/cai-dat/DiemKhachHang";
 import { layDiemKhachHang } from "@/lib/diem-khach-hang";
 import { luuDiemKhachHang } from "./actions";
@@ -12,8 +12,7 @@ export default async function TrangDiemKhachHang() {
   const t = await layDiemKhachHang(sb());
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Điểm khách hàng" />
+      <TieuDeNoi icon={Award} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Điểm khách hàng" />
       <DiemKhachHangForm dau={t} sua luu={luuDiemKhachHang} />
     </div>
   );

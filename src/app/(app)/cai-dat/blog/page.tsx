@@ -2,7 +2,8 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { ngayVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Newspaper } from "lucide-react";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -107,12 +108,11 @@ export default async function TrangBlog({ searchParams }: { searchParams: Promis
 
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Blog" phu="Bài viết hiện trên website AMIA. Chủ và Kỹ thuật quản lý chuyên mục và bài viết.">
+      <TieuDeNoi icon={Newspaper} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Blog" phu="Bài viết hiện trên website AMIA. Chủ và Kỹ thuật quản lý chuyên mục và bài viết.">
         {tab === "chuyen-muc"
           ? <NutHop nhan="Thêm chuyên mục mới" tieuDe="Thêm chuyên mục" truong={truongCm} action={luuChuyenMuc} giaTri={{ hoat_dong: true, thu_tu: 0 }} />
           : <BlogBaiViet chuyenMuc={dsCm} luu={luuBaiViet} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={MUC} dang={tab} goc="/cai-dat/blog" />
       {noiDung}
     </div>

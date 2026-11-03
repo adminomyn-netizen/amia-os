@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Clock } from "lucide-react";
 import { GioLamViec } from "@/components/cai-dat/GioLamViec";
 import { gioBaThu, tomTatGio } from "@/lib/gio-lam-viec";
 import { luuGioLamViec } from "./actions";
@@ -16,8 +16,7 @@ export default async function TrangGioLamViec() {
   const chung = tomTatGio(gioBaThu(null, ch?.gio_lam_viec));
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Giờ làm việc" phu="Giờ mở cửa và ngày nghỉ của từng chi nhánh. Khách đặt lịch online chỉ thấy giờ nằm trong khung này." />
+      <TieuDeNoi icon={Clock} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Giờ làm việc" phu="Giờ mở cửa và ngày nghỉ của từng chi nhánh. Khách đặt lịch online chỉ thấy giờ nằm trong khung này." />
       <p className="mb-5 max-w-3xl text-[13.5px] leading-relaxed text-muc-3">Giờ chung của cơ sở (sửa ở Thông tin chung): {chung}. Chi nhánh chưa chỉnh riêng sẽ dùng giờ chung. Giờ này dùng để tính khung giờ trống ở trang đặt lịch online; lưới Lịch hẹn của nhân viên vẫn hiện đủ ngày, không bị chặn theo giờ này.</p>
       <div className="grid gap-5 lg:grid-cols-2">
         {(cn ?? []).map((c) => (

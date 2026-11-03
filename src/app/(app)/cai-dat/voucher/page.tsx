@@ -7,7 +7,8 @@ import { GIOI_HAN_VOUCHER } from "@/lib/ban-hang";
 import { LUA_CHON_NGUON } from "@/lib/lich-hen";
 import { chuGiamGia, NHAN_THU, nhanGioiHan } from "@/lib/voucher";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { TicketPercent } from "lucide-react";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NgayChon } from "@/components/ui/NgayChon";
@@ -74,11 +75,10 @@ export default async function TrangVoucher({ searchParams }: { searchParams: Pro
   ];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Quản lý voucher/thẻ giảm giá" phu="Khách đưa mã, thu ngân bấm Chọn thẻ ở màn Bán hàng. Máy chủ tự kiểm hạn, lượt dùng, chi nhánh, hạng khách và tính tiền giảm; huỷ hoá đơn thì hoàn lại lượt.">
+      <TieuDeNoi icon={TicketPercent} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Quản lý voucher/thẻ giảm giá" phu="Khách đưa mã, thu ngân bấm Chọn thẻ ở màn Bán hàng. Máy chủ tự kiểm hạn, lượt dùng, chi nhánh, hạng khách và tính tiền giảm; huỷ hoá đơn thì hoàn lại lượt.">
         {sua && <NutHop nhan="Tạo voucher" tieuDe="Thông tin voucher" nhanLuu="Lưu thông tin" truong={truong} action={luuVoucher}
           giaTri={{ loai_giam: "tien", loai_ma: "mot_ma", gioi_han: "tong_don", don_toi_thieu: 0, hien_thi_tim_kiem: "co", khach_moi_cu: "", chi_nhanh_ids: nd.chiNhanhId ? [nd.chiNhanhId] : [], hang_khach: [], ngay_trong_tuan: [] }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <form method="get" className="mb-4 grid gap-3 sm:grid-cols-[1fr_auto_auto_auto] sm:items-end">
         {sp.tt && <input type="hidden" name="tt" value={sp.tt} />}
         <label className="block text-[13px] text-muc-2"><span className="mb-1 block">Tìm kiếm</span><input name="q" defaultValue={sp.q ?? ""} placeholder="Tên voucher hoặc mã" className={O_NHAP} /></label>

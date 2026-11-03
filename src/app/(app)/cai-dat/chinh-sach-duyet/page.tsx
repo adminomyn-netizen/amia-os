@@ -1,10 +1,10 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { tienVN } from "@/lib/dinh-dang";
 import { CHUC_DANH_TC, hanMucHieuLuc } from "@/lib/de-xuat";
 import { NHAN_VAI_TRO, laVaiTro } from "@/lib/quyen";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { ClipboardCheck } from "lucide-react";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -18,8 +18,7 @@ export default async function TrangChinhSachDuyet() {
   const truong: Truong[] = [{ ten: "nguong_tien", nhan: "Ngưỡng (đ)", loai: "tien", batBuoc: true }, { ten: "hieu_luc", nhan: "Đã được chủ phòng khám xác nhận, đang áp dụng", loai: "gat" }];
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Chính sách phê duyệt" phu="Ngưỡng tiền theo quy trình tài chính MSC và hạn mức duyệt của từng người. Người duyệt phải có hạn mức từ số tiền đề xuất trở lên; người gửi không tự duyệt; người duyệt không tự chi cùng đề xuất (trừ Kỹ thuật)." />
+      <TieuDeNoi icon={ClipboardCheck} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Chính sách phê duyệt" phu="Ngưỡng tiền theo quy trình tài chính MSC và hạn mức duyệt của từng người. Người duyệt phải có hạn mức từ số tiền đề xuất trở lên; người gửi không tự duyệt; người duyệt không tự chi cùng đề xuất (trừ Kỹ thuật)." />
       <h2 className="nhan-muc mb-2">Ngưỡng tiền</h2>
       <Bang duLieu={qt ?? []} khoa={(r) => r.id}
         cot={[

@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -6,7 +5,8 @@ import { ngayGioVN } from "@/lib/dinh-dang";
 import { KENH_NOI, THONG_TIN_KENH, type KenhNoi } from "@/lib/ket-noi-ben-thu-ba";
 import { trangThaiCacKenh } from "@/lib/ket-noi-ben-thu-ba-may-chu";
 import { BIEN_TIN, cheSdt, KENH_TIN, tenKenh } from "@/lib/tin-nhan";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { MessageSquareText } from "lucide-react";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -79,8 +79,7 @@ export default async function TrangZaloSms({ searchParams }: { searchParams: Pro
 
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Zalo OA và SMS" phu="Nối kênh nhắn tin, soạn mẫu tin nhắc lịch, chăm sóc, sinh nhật. Khoá được mã hoá và không hiện lại." />
+      <TieuDeNoi icon={MessageSquareText} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Zalo OA và SMS" phu="Nối kênh nhắn tin, soạn mẫu tin nhắc lịch, chăm sóc, sinh nhật. Khoá được mã hoá và không hiện lại." />
       <Tab muc={TAB} dang={tab} goc="/cai-dat/zalo-sms" />
       {noiDung}
     </div>

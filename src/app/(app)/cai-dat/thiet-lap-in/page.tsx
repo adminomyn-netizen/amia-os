@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { Printer } from "lucide-react";
 import { ThietLapInForm } from "@/components/cai-dat/ThietLapIn";
 import type { DuLieuIn } from "@/components/cai-dat/BanInHoaDon";
 import { TAT_CA, docIn, laLoaiIn } from "@/lib/thiet-lap-in";
@@ -34,8 +34,7 @@ export default async function TrangThietLapIn({ searchParams }: { searchParams: 
   };
   return (
     <div>
-      <Link href="/cai-dat" className="text-[13px] text-muc-3 hover:text-muc">← Cài đặt</Link>
-      <TieuDeTrang tieuDe="Thiết lập in" phu="Khổ giấy, các dòng hiện trên tờ in hoá đơn / lịch hẹn và nội dung cuối tờ, theo từng chi nhánh. Chỉ cấu hình hiển thị." />
+      <TieuDeNoi icon={Printer} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Thiết lập in" phu="Khổ giấy, các dòng hiện trên tờ in hoá đơn / lịch hẹn và nội dung cuối tờ, theo từng chi nhánh. Chỉ cấu hình hiển thị." />
       <ThietLapInForm key={`${loai}-${ma}`} loai={loai} cn={ma} chiNhanh={(cn ?? []).map((x) => ({ id: x.id, ten: x.ten }))} dau={cauHinh} nguon={nguon} mau={mau} sua={coQuyen(nd, "hethong.phanquyen")} luu={luuThietLapIn} />
     </div>
   );

@@ -15,10 +15,11 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { LocHoaDonDienTu } from "@/components/hoa-don/LocHoaDonDienTu";
 import { LocNganHangHddt } from "@/components/hoa-don/LocNganHangHddt";
 import { BangCanXuat } from "@/components/hoa-don/BangCanXuat";
+import { NguoiBanTheoChiNhanh } from "./NguoiBanTheoChiNhanh";
 import { ghiHoaDonDienTu, goHoaDonDienTu, layTenXuat, luuTenXuat, luuKetNoiHoaDonDienTu, ngatKetNoiHoaDonDienTu } from "./actions";
 
 const HIEN_KET_NOI = false;
-const TAB = [{ ma: "can", ten: "Cần xuất" }, { ma: "da", ten: "Đã xuất" }, { ma: "ket-noi", ten: "Kết nối" }];
+const TAB = [{ ma: "can", ten: "Cần xuất" }, { ma: "da", ten: "Đã xuất" }, { ma: "nguoi-ban", ten: "Thông tin người bán" }, { ma: "ket-noi", ten: "Kết nối" }];
 const NUT_XUAT = "h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram";
 
 export default async function TrangHoaDonDienTu({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -28,13 +29,16 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
   const duocGhi = coQuyen(nd, "hd.vat") && coQuyen(nd, "ban.sua_khoa");
   const duocKetNoi = coQuyen(nd, "hd.vat") && coQuyen(nd, "ky.khoa");
   // Kế toán xuất hoá đơn có chọn lọc, làm thủ công (chị Dung 30/10): ẩn ngăn Kết nối, giữ mã để bật lại khi cần.
-  const tab = loc.tab === "ket-noi" && !(HIEN_KET_NOI && coQuyen(nd, "hd.vat")) ? "can" : loc.tab;
-  const tabCoThe = TAB.filter((t) => t.ma !== "ket-noi" || (HIEN_KET_NOI && coQuyen(nd, "hd.vat")));
+  const xemGtgt = coQuyen(nd, "hd.vat");
+  const tab = sp.tab === "nguoi-ban" && xemGtgt ? "nguoi-ban" : loc.tab === "ket-noi" && !(HIEN_KET_NOI && coQuyen(nd, "hd.vat")) ? "can" : loc.tab;
+  const tabCoThe = TAB.filter((t) => (t.ma !== "ket-noi" || (HIEN_KET_NOI && coQuyen(nd, "hd.vat"))) && (t.ma !== "nguoi-ban" || xemGtgt));
   const hom = homNayHCM();
   let noiDung: React.ReactNode;
   let nutXuat: React.ReactNode = null;
 
-  if (tab === "ket-noi") {
+  if (tab === "nguoi-ban") {
+    noiDung = <NguoiBanTheoChiNhanh nd={nd} />;
+  } else if (tab === "ket-noi") {
     const kn = await docKetNoiHienThi();
     const truong: Truong[] = [
       { ten: "nha_cung_cap", nhan: "Nhà cung cấp", loai: "chon", batBuoc: true, luaChon: NHA_CUNG_CAP.map((n) => ({ gia_tri: n.gia_tri, nhan: n.nhan })) },
@@ -81,6 +85,8 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
     const tenK = new Map((k ?? []).map((x) => [x.id, x])), tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
     const khach = (id: string | null) => (id ? tenK.get(id) : undefined);
     const daSua = tab === "can" ? await layDaSuaTen(dong.map((r) => r.id)) : new Set<string>();
+    // Hoá đơn GTGT lập trong app (đợt 4): không cho Sửa/Gỡ số bằng tay, thay bằng Xem · In · XML và Huỷ ở màn lập.
+    const gtgt = tab === "da" && dong.length ? new Map(((await db.from("hoa_don_gtgt").select("id, hoa_don_id").in("hoa_don_id", dong.map((r) => r.id)).eq("trang_thai", "da_xuat")).data ?? []).map((g) => [g.hoa_don_id, g.id])) : new Map<string | null, string>();
     const tham = new URLSearchParams({ tu: loc.tu, den: loc.den, ...(loc.q ? { q: loc.q } : {}) });
     const cotChung = [
       { nhan: "Hoá đơn bán", chinh: true, hienThi: (r: (typeof dong)[number]) => <Link href={`/hoa-don/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}<span className="block text-[12.5px] font-normal text-muc-3">{ngayVN(r.ngay_hd)}</span></Link> },
@@ -97,7 +103,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
         {tab === "can" ? (
           <>
             <LocNganHangHddt nh={loc.nh} taiKhoan={loc.taiKhoan} tu={loc.tu} den={loc.den} q={loc.q} />
-            <BangCanXuat conNua={conNua} duocGhi={duocGhi} truongGhi={truongGhi} ngayHomNay={hom} ghiAction={ghiHoaDonDienTu} layTen={layTenXuat} luuTen={luuTenXuat}
+            <BangCanXuat lapGtgt={xemGtgt} conNua={conNua} duocGhi={duocGhi} truongGhi={truongGhi} ngayHomNay={hom} ghiAction={ghiHoaDonDienTu} layTen={layTenXuat} luuTen={luuTenXuat}
               dong={dong.map((r) => {
                 const x = khach(r.khach_id);
                 return { id: r.id, ma: r.ma, ngay: ngayVN(r.ngay_hd), khach: r.khach_id ? x?.ho_ten ?? "" : "Khách lẻ", mst: x?.ma_so_thue ?? "", phaiThu: tienVN(r.tong_phai_thu),
@@ -115,7 +121,13 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
               ) },
               { nhan: "Người ghi", hienThi: (r) => (r.vat_hd_nguoi_id ? tenNv.get(r.vat_hd_nguoi_id) ?? "" : "") },
               { nhan: "Phải thu", phai: true, hienThi: (r) => tienVN(r.tong_phai_thu) },
-              { nhan: "", hienThi: (r) => (duocGhi ? (
+              { nhan: "", hienThi: (r) => (gtgt.has(r.id) ? (
+                <div className="flex flex-wrap justify-end gap-3 text-[13.5px]">
+                  <Link href={`/tai-chinh/hoa-don-dien-tu/lap/${r.id}`} className="text-nhan-dam hover:underline">Xem · Huỷ</Link>
+                  <a href={`/in/hoa-don-gtgt/${r.id}`} target="_blank" rel="noopener" className="text-nhan-dam hover:underline">In</a>
+                  <a href={`/api/xuat/hoa-don-gtgt/${gtgt.get(r.id)}`} download className="text-nhan-dam hover:underline">XML</a>
+                </div>
+              ) : duocGhi ? (
                 <div className="flex flex-wrap justify-end gap-2">
                   <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa hoá đơn điện tử của ${r.ma}`} truong={truongGhi} action={ghiHoaDonDienTu} an={{ hoa_don_id: r.id, moi: "0" }}
                     giaTri={{ vat_hd_so: r.vat_hd_so ?? "", vat_hd_ngay: r.vat_hd_ngay ?? r.vat_hd_luc?.slice(0, 10) ?? hom, vat_hd_mau_so: r.vat_hd_mau_so ?? "", vat_hd_ky_hieu: r.vat_hd_ky_hieu ?? "", vat_hd_tra_cuu: r.vat_hd_tra_cuu ?? "" }} />
@@ -132,7 +144,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
   return (
     <div>
       <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe="Hoá đơn điện tử" phu="Chọn các đơn cần xuất rồi bấm Xuất Excel. Xuất hoá đơn điện tử vẫn làm tay ở phần mềm nhà cung cấp, xong ghi số hoá đơn vào đây.">
+      <TieuDeTrang tieuDe="Hoá đơn điện tử" phu="Lập hoá đơn GTGT ngay trong app (mẫu chuẩn, cấp số theo ký hiệu, in/PDF, XML để đẩy lên nhà cung cấp sau), hoặc xuất Excel rồi làm ở phần mềm nhà cung cấp và ghi số vào đây.">
         {nutXuat}
       </TieuDeTrang>
       <Tab muc={tabCoThe} dang={tab} goc="/tai-chinh/hoa-don-dien-tu" />

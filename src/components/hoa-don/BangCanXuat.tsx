@@ -18,7 +18,8 @@ export type DongCanXuat = {
 const O_TICK = "h-4 w-4 cursor-pointer accent-[var(--nhan)]";
 
 /** Ngăn "Cần xuất": tick từng đơn hoặc tất cả rồi "Xuất Excel" các đơn đã chọn. Vẫn thủ công: ghi số hoá đơn điện tử sau khi xuất ở phần mềm nhà cung cấp. */
-export function BangCanXuat({ dong, duocGhi, truongGhi, ngayHomNay, ghiAction, layTen, luuTen, conNua }: {
+export function BangCanXuat({ lapGtgt = false, dong, duocGhi, truongGhi, ngayHomNay, ghiAction, layTen, luuTen, conNua }: {
+  /** Có quyền hd.vat: hiện nút "Lập HĐ GTGT" (mẫu hoá đơn lập trong app, đợt 4). */ lapGtgt?: boolean;
   dong: DongCanXuat[]; duocGhi: boolean; truongGhi: Truong[]; ngayHomNay: string; ghiAction: (fd: FormData) => Promise<KetQuaHD | void>; conNua: boolean;
   layTen: (id: string) => Promise<{ loi: string } | { ok: DuLieuSuaTen }>; luuTen: (fd: FormData) => Promise<KetQuaHD | void>;
 }) {
@@ -48,10 +49,11 @@ export function BangCanXuat({ dong, duocGhi, truongGhi, ngayHomNay, ghiAction, l
           { nhan: "Tiền thu vào", hienThi: (r) => (r.thu.length ? <div>{r.thu.map((t) => <div key={t}>{t}</div>)}</div> : <span className="text-muc-3">Chưa thu</span>) },
           { nhan: "Vì sao cần xuất", hienThi: (r) => r.lyDo },
           { nhan: "Phải thu", phai: true, hienThi: (r) => r.phaiThu },
-          { nhan: "", hienThi: (r) => (duocGhi ? (
+          { nhan: "", hienThi: (r) => (duocGhi || lapGtgt ? (
             <div className="flex flex-wrap items-center justify-end gap-x-4 gap-y-1">
-              <SuaTenXuat hoaDonId={r.id} ma={r.ma} daSua={r.daSua} lay={layTen} luu={luuTen} />
-              <NutHop kieu="chu" nhan="Ghi số hoá đơn điện tử" tieuDe={`Ghi số hoá đơn điện tử cho ${r.ma}`} moTa="Nhập số hoá đơn đã xuất ở phần mềm của nhà cung cấp." truong={truongGhi} action={ghiAction} an={{ hoa_don_id: r.id, moi: "1" }} giaTri={{ vat_hd_ngay: ngayHomNay }} />
+              {lapGtgt && <Link href={`/tai-chinh/hoa-don-dien-tu/lap/${r.id}`} className="text-[13.5px] font-medium text-nhan-dam hover:underline">Lập HĐ GTGT</Link>}
+              {duocGhi && <SuaTenXuat hoaDonId={r.id} ma={r.ma} daSua={r.daSua} lay={layTen} luu={luuTen} />}
+              {duocGhi && <NutHop kieu="chu" nhan="Ghi số hoá đơn điện tử" tieuDe={`Ghi số hoá đơn điện tử cho ${r.ma}`} moTa="Nhập số hoá đơn đã xuất ở phần mềm của nhà cung cấp." truong={truongGhi} action={ghiAction} an={{ hoa_don_id: r.id, moi: "1" }} giaTri={{ vat_hd_ngay: ngayHomNay }} />}
             </div>
           ) : null) },
         ]} />

@@ -8,6 +8,7 @@ import { chuoi } from "@/lib/form";
 import { kiemGhiHddt, kiemKetNoi } from "@/lib/hoa-don-dien-tu";
 import { biMatHddt, khoaDeLuu } from "@/lib/hoa-don-dien-tu-ket-noi";
 import { kiemTenXuat, nguoiMuaMacDinh, nguoiMuaXuat, quyetSuaTenXuat } from "@/lib/hoa-don-dien-tu-xuat";
+import { coGtgtDangXuat } from "@/lib/hoa-don-gtgt-may-chu";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => { revalidatePath("/tai-chinh/hoa-don-dien-tu"); revalidatePath("/hoa-don"); };
@@ -38,6 +39,7 @@ export async function ghiHoaDonDienTu(fd: FormData): Promise<KQ> {
   if ("loi" in kt) return { loi: kt.loi };
   const d = await hoaDonGhiDuoc(id, nd.chiNhanhId);
   if ("loi" in d) return d;
+  if (!laMoi && await coGtgtDangXuat(id)) return { loi: "Số này do app cấp khi xuất hoá đơn GTGT, không sửa/gỡ tay được. Mở Lập HĐ GTGT › Huỷ hoá đơn GTGT nếu cần." };
   const cu = d.ok.vat_hd_so;
   const dat = { vat_hd_so: kt.ok.so, vat_hd_ngay: kt.ok.ngay, vat_hd_ky_hieu: kt.ok.kyHieu, vat_hd_mau_so: kt.ok.mauSo, vat_hd_tra_cuu: kt.ok.traCuu, vat_hd_luc: new Date().toISOString(), vat_hd_nguoi_id: nd.nhanVienId };
   const q = sb().from("hoa_don").update(dat).eq("id", id).eq("trang_thai", "hoan_thanh");
@@ -56,6 +58,7 @@ export async function goHoaDonDienTu(fd: FormData): Promise<KQ> {
   const id = chuoi(fd, "hoa_don_id");
   const d = await hoaDonGhiDuoc(id, nd.chiNhanhId);
   if ("loi" in d) return d;
+  if (await coGtgtDangXuat(id)) return { loi: "Số này do app cấp khi xuất hoá đơn GTGT, không sửa/gỡ tay được. Mở Lập HĐ GTGT › Huỷ hoá đơn GTGT nếu cần." };
   const { data, error } = await sb().from("hoa_don").update({ vat_hd_so: null, vat_hd_ngay: null, vat_hd_ky_hieu: null, vat_hd_mau_so: null, vat_hd_tra_cuu: null, vat_hd_luc: null, vat_hd_nguoi_id: null }).eq("id", id).eq("trang_thai", "hoan_thanh").not("vat_hd_luc", "is", null).select("id");
   if (error) return { loi: thongBaoLoi(error) };
   if (!data?.length) return { loi: "Hoá đơn này chưa có số để gỡ." };

@@ -108,7 +108,7 @@ export function kiemNguoiBan(x: Record<string, unknown>): { loi: string } | { ok
   if ([v.dien_thoai, v.so_tai_khoan, v.ngan_hang, v.email].some((s) => s.length > 200)) return { loi: "Một ô quá dài (tối đa 200 ký tự)." };
   return { ok: v };
 }
-export const thieuNguoiBan = (b: Partial<NhapNguoiBan> | null | undefined) =>
+export const thieuNguoiBan = (b: { [K in "ten_don_vi" | "ma_so_thue" | "dia_chi" | "ky_hieu"]?: string | null } | null | undefined) =>
   [["tên đơn vị", b?.ten_don_vi], ["mã số thuế", b?.ma_so_thue], ["địa chỉ", b?.dia_chi], ["ký hiệu hoá đơn", b?.ky_hieu]].filter(([, v]) => !String(v ?? "").trim()).map(([t]) => t as string);
 
 /** Người mua như hộp "Khởi tạo hoá đơn điện tử" của SalonHero: Doanh nghiệp (MST bắt buộc, tên DN, địa chỉ DN) / Cá nhân (CCCD tuỳ chọn) / Khách lẻ. */

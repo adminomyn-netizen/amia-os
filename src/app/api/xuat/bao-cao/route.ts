@@ -28,14 +28,20 @@ export async function GET(req: Request) {
   const bangs: Bang[] = [];
 
   if (tab === "doanh-thu") {
-    const { data, error } = await db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string });
-    if (error) return new Response("Lỗi đọc dữ liệu", { status: 500 });
+    const [{ data, error }, { data: dataVi, error: loiVi }] = await Promise.all([db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string }), db.rpc("bc_doanh_thu_ngay_vi", { p_tu: tu, p_den: den, p_cn: cn as string })]);
+    if (error || loiVi) return new Response("Lỗi đọc dữ liệu", { status: 500 });
+    // Cột ví như trang Báo cáo › Doanh thu (0199): Momo, VNPay, Shopee Pay, GrabPay, Ví khác; Ship COD chỉ khi có số.
+    const viNgay = new Map((dataVi ?? []).map((r) => [r.ngay, r]));
+    const coCod = (dataVi ?? []).some((r) => Number(r.ship_cod) !== 0);
+    const vi = (ngay: string, k: "momo" | "vnpay" | "shopee" | "grab" | "vi_khac" | "ship_cod") => Number(viNgay.get(ngay)?.[k] ?? 0);
     const gom = kieuGom(u.searchParams.get("gom") ?? undefined);
-    const dsGom = gomTheoKy((data ?? []).map((r) => ({ ...r, ngay: r.ngay, so_don: Number(r.so_don), doanh_thu: Number(r.doanh_thu), thu_don_moi: Number(r.thu_don_moi), thu_no_cu: Number(r.thu_no_cu), thuc_thu: Number(r.thuc_thu), tien_mat: Number(r.tien_mat), chuyen_khoan: Number(r.chuyen_khoan), quet_the: Number(r.quet_the), tru_the_tien: Number(r.tru_the_tien), no_moi: Number(r.no_moi), so_buoi: Number(r.so_buoi), doanh_thu_buoi: Number(r.doanh_thu_buoi) })), gom, ["so_don", "doanh_thu", "thu_don_moi", "thu_no_cu", "thuc_thu", "tien_mat", "chuyen_khoan", "quet_the", "tru_the_tien", "no_moi", "so_buoi", "doanh_thu_buoi"]);
+    const dsGom = gomTheoKy((data ?? []).map((r) => ({ ...r, ngay: r.ngay, so_don: Number(r.so_don), doanh_thu: Number(r.doanh_thu), thu_don_moi: Number(r.thu_don_moi), thu_no_cu: Number(r.thu_no_cu), thuc_thu: Number(r.thuc_thu), tien_mat: Number(r.tien_mat), chuyen_khoan: Number(r.chuyen_khoan), quet_the: Number(r.quet_the), momo: vi(r.ngay, "momo"), vnpay: vi(r.ngay, "vnpay"), shopee: vi(r.ngay, "shopee"), grab: vi(r.ngay, "grab"), vi_khac: vi(r.ngay, "vi_khac"), ship_cod: vi(r.ngay, "ship_cod"), tru_the_tien: Number(r.tru_the_tien), no_moi: Number(r.no_moi), so_buoi: Number(r.so_buoi), doanh_thu_buoi: Number(r.doanh_thu_buoi) })), gom, ["so_don", "doanh_thu", "thu_don_moi", "thu_no_cu", "thuc_thu", "tien_mat", "chuyen_khoan", "quet_the", "momo", "vnpay", "shopee", "grab", "vi_khac", "ship_cod", "tru_the_tien", "no_moi", "so_buoi", "doanh_thu_buoi"]);
     bangs.push({ ten: "Doanh thu theo ngày", dong: dsGom.map((r) => ({ ...r, ngay: r.nhan })), cot: [
       { nhan: "Thời gian", khoa: "ngay", rong: 24 }, { nhan: "Đơn mới", khoa: "so_don", so: true }, { nhan: "Doanh thu", khoa: "doanh_thu", tien: true }, { nhan: "Thu đơn mới", khoa: "thu_don_moi", tien: true },
       { nhan: "Thu nợ cũ", khoa: "thu_no_cu", tien: true }, { nhan: "Thực thu", khoa: "thuc_thu", tien: true }, { nhan: "Tiền mặt", khoa: "tien_mat", tien: true }, { nhan: "Chuyển khoản", khoa: "chuyen_khoan", tien: true },
-      { nhan: "Quẹt thẻ", khoa: "quet_the", tien: true }, { nhan: "Trừ thẻ tiền", khoa: "tru_the_tien", tien: true }, { nhan: "Nợ mới", khoa: "no_moi", tien: true }, { nhan: "Buổi đã làm", khoa: "so_buoi", so: true }, { nhan: "Doanh thu buổi", khoa: "doanh_thu_buoi", tien: true }] });
+      { nhan: "Quẹt thẻ", khoa: "quet_the", tien: true }, { nhan: "Momo", khoa: "momo", tien: true }, { nhan: "VNPay", khoa: "vnpay", tien: true }, { nhan: "Shopee Pay", khoa: "shopee", tien: true },
+      { nhan: "GrabPay", khoa: "grab", tien: true }, { nhan: "Ví điện tử khác", khoa: "vi_khac", tien: true }, ...(coCod ? [{ nhan: "Ship COD", khoa: "ship_cod", tien: true }] : []),
+      { nhan: "Trừ thẻ tiền", khoa: "tru_the_tien", tien: true }, { nhan: "Nợ mới", khoa: "no_moi", tien: true }, { nhan: "Buổi đã làm", khoa: "so_buoi", so: true }, { nhan: "Doanh thu buổi", khoa: "doanh_thu_buoi", tien: true }] });
   } else if (tab === "thu-ngan") {
     const { nhom } = chonNhom(u.searchParams.get("nhom") ?? undefined, tu, den, "tong");
     const ds = await layThuNgan(db, tu, den, cn, nhom);

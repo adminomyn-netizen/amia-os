@@ -20,3 +20,10 @@ export const bcDoanhThuNgayNho = unstable_cache(async (tu: string, den: string, 
   if (error) throw new Error(error.message);
   return data ?? [];
 }, ["bc-doanh-thu-ngay-nho-v1"], { revalidate: GIAY });
+
+/** Tổng thu bằng ví điện tử (Momo, VNPay, Shopee Pay, GrabPay, ví khác) và Ship COD theo ngày (0199) — cho ô "Cơ cấu thu" ở trang chủ. */
+export const bcDoanhThuNgayViNho = unstable_cache(async (tu: string, den: string, cn: string | null): Promise<Ham["bc_doanh_thu_ngay_vi"]["Returns"]> => {
+  const { data, error } = await sb().rpc("bc_doanh_thu_ngay_vi", { p_tu: tu, p_den: den, p_cn: (cn ?? undefined) as string });
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}, ["bc-doanh-thu-ngay-vi-nho-v1"], { revalidate: GIAY });

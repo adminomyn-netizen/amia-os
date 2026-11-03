@@ -35,12 +35,16 @@ const ngayNganVN = (d: string) => d.slice(8) + "/" + d.slice(5, 7);
 export async function BangDoanhThu({ cn }: { cn: string | null }) {
   const db = sb();
   const homNay = homNayHCM(), dauThang = `${homNay.slice(0, 8)}01`;
-  const [{ data: ngay30 }, { data: thang }, { data: mucBan }, { data: nv }] = await Promise.all([
+  const [{ data: ngay30 }, { data: thang }, { data: mucBan }, { data: nv }, { data: viThang }] = await Promise.all([
     db.rpc("bc_doanh_thu_ngay", { p_tu: congNgay(homNay, -29), p_den: homNay, p_cn: cnArg(cn) }),
     db.rpc("bc_doanh_thu_ngay", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
     db.rpc("bc_muc_ban", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
     db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
+    db.rpc("bc_doanh_thu_ngay_vi", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
   ]);
+  // Ví điện tử (Momo, VNPay, Shopee Pay, GrabPay, ví khác) và Ship COD tháng này — hình thức thu như SalonHero (0199).
+  const tVi = (viThang ?? []).reduce((s, r) => s + Number(r.momo) + Number(r.vnpay) + Number(r.shopee) + Number(r.grab) + Number(r.vi_khac), 0);
+  const tCod = (viThang ?? []).reduce((s, r) => s + Number(r.ship_cod), 0);
   const t = (k: "doanh_thu" | "thuc_thu" | "so_don" | "so_buoi" | "no_moi" | "tien_mat" | "chuyen_khoan" | "quet_the" | "tru_the_tien") => (thang ?? []).reduce((s, r) => s + Number(r[k]), 0);
   const ids = [...new Set((nv ?? []).map((r) => r.nhan_vien_id).filter((x): x is string => !!x))];
   const { data: ten } = ids.length ? await db.from("nhan_vien").select("id, ho_ten").in("id", ids) : { data: [] };
@@ -54,7 +58,7 @@ export async function BangDoanhThu({ cn }: { cn: string | null }) {
     <div className="space-y-6">
       <HangChiSo muc={[
         { nhan: "Doanh thu tháng này", so: tienVN(t("doanh_thu")), ghiChu: `${soVN(t("so_don"))} đơn` },
-        { nhan: "Thực thu tháng này", so: tienVN(t("thuc_thu")), ghiChu: "tiền mặt, chuyển khoản, quẹt thẻ" },
+        { nhan: "Thực thu tháng này", so: tienVN(t("thuc_thu")), ghiChu: "tiền mặt, chuyển khoản, quẹt thẻ, ví điện tử" },
         { nhan: "Công nợ mới trong tháng", so: tienVN(t("no_moi")) },
         { nhan: "Buổi đã làm", so: soVN(t("so_buoi")) },
       ]} />
@@ -63,7 +67,7 @@ export async function BangDoanhThu({ cn }: { cn: string | null }) {
           chuoi={[{ ten: "Doanh thu", gia_tri: (ngay30 ?? []).map((r) => Number(r.doanh_thu)), mau: "var(--sac-luc-mau)" }, { ten: "Thực thu", gia_tri: (ngay30 ?? []).map((r) => Number(r.thuc_thu)), mau: "var(--dat)" }]} />
       </MucTrang>
       <div className={luoi}>
-        <MucTrang noi tieuDe="Thực thu theo hình thức (tháng này)"><BieuDoTron ten="Thực thu theo hình thức" kieu="vong" nhanTam="đồng" dinhDang={tienVN} dinhDangGon={tr} dinhDangTam={tienGon} duLieu={[{ nhan: "Tiền mặt", gia_tri: t("tien_mat") }, { nhan: "Chuyển khoản", gia_tri: t("chuyen_khoan") }, { nhan: "Quẹt thẻ", gia_tri: t("quet_the") }, { nhan: "Trừ thẻ tiền", gia_tri: t("tru_the_tien") }]} /></MucTrang>
+        <MucTrang noi tieuDe="Thực thu theo hình thức (tháng này)"><BieuDoTron ten="Thực thu theo hình thức" kieu="vong" nhanTam="đồng" dinhDang={tienVN} dinhDangGon={tr} dinhDangTam={tienGon} duLieu={[{ nhan: "Tiền mặt", gia_tri: t("tien_mat") }, { nhan: "Chuyển khoản", gia_tri: t("chuyen_khoan") }, { nhan: "Quẹt thẻ", gia_tri: t("quet_the") }, ...(tVi ? [{ nhan: "Ví điện tử", gia_tri: tVi }] : []), ...(tCod ? [{ nhan: "Ship COD", gia_tri: tCod }] : []), { nhan: "Trừ thẻ tiền", gia_tri: t("tru_the_tien") }]} /></MucTrang>
         <MucTrang noi tieuDe="Cơ cấu doanh số (tháng này)"><BieuDoTron ten="Cơ cấu doanh số" kieu="banh" dinhDang={tienVN} dinhDangGon={tr} duLieu={[...theoLoai].map(([k, v]) => ({ nhan: NHAN_LOAI_BAN[k as keyof typeof NHAN_LOAI_BAN] ?? k, gia_tri: v }))} /></MucTrang>
         <MucTrang noi tieuDe="Top dịch vụ / sản phẩm bán chạy (tháng này)"><CotNgang dinhDang={tr} duLieu={(mucBan ?? []).slice(0, 8).map((r) => ({ nhan: r.ten, gia_tri: Number(r.doanh_so) }))} trong="Tháng này chưa có đơn nào." /></MucTrang>
         <MucTrang noi tieuDe="Doanh số theo nhân viên (tháng này)"><CotNgang mau="var(--sac-xanh-mau)" dinhDang={tr} duLieu={DAY([...theoNv].map(([id, v]) => ({ nhan: tenNv.get(id) ?? "Không rõ", gia_tri: v }))).slice(0, 8)} trong="Tháng này chưa có doanh số theo nhân viên." /></MucTrang>

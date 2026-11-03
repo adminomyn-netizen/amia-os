@@ -12,7 +12,7 @@ export type SoLieu = {
   ngay30: DiemNgay[];                                     // 30 ngày gần nhất, cũ → mới
   lichDs: { gio: string; ten: string; tt: string }[];
   thang: { doanhThu: number; thangTruoc: number; donHang: number; buoi: number; khachMoi: number; tongKhach: number; congNo: number; theSapHet: number };
-  coCauThu: { tienMat: number; chuyenKhoan: number; quetThe: number };
+  coCauThu: { tienMat: number; chuyenKhoan: number; quetThe: number; viDienTu?: number; shipCod?: number };
   nguon: { ten: string; so: number }[];
   lich: { nhan: string; so: number }[];
   chamCong: { da: number; tong: number };
@@ -41,6 +41,9 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
     { nhan: "Tiền mặt", gt: d.coCauThu.tienMat, mau: "var(--sac-luc-mau)" },
     { nhan: "Chuyển khoản", gt: d.coCauThu.chuyenKhoan, mau: "var(--sac-xanh-mau)" },
     { nhan: "Quẹt thẻ", gt: d.coCauThu.quetThe, mau: "var(--sac-tim-mau)" },
+    // Ví điện tử (Momo, VNPay, Shopee Pay, GrabPay, ví khác) và Ship COD: chỉ hiện khi tháng có số, để biểu đồ gọn.
+    ...(d.coCauThu.viDienTu ? [{ nhan: "Ví điện tử", gt: d.coCauThu.viDienTu, mau: "var(--sac-cam-mau)" }] : []),
+    ...(d.coCauThu.shipCod ? [{ nhan: "Ship COD", gt: d.coCauThu.shipCod, mau: "var(--sac-hong-mau)" }] : []),
   ];
   const maxNguon = Math.max(1, ...d.nguon.map((n) => n.so));
   const tongLich = d.lich.reduce((s, x) => s + x.so, 0);

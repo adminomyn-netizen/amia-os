@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { sb } from "@/lib/db";
 import { chiNhanhHoatDong, tatCaChiNhanh } from "@/lib/chi-nhanh";
 import { layCanhBao } from "@/lib/canh-bao";
-import { bcDoanhThuNgayNho, bcNhanVienNho } from "@/lib/bao-cao-nho-dem";
+import { bcDoanhThuNgayNho, bcDoanhThuNgayViNho, bcNhanVienNho } from "@/lib/bao-cao-nho-dem";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
 import { DongHo } from "@/components/layout/DongHo";
@@ -115,6 +115,8 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
   const pKhMoi = khoiDong(kq), pTk = khoiDong(tk), pTc = khoiDong(tc), pNv = khoiDong(nvq);
   const pTopBan = khoiDong(db.rpc("top_ban_thang", { p_tu: dauThang, ...(cn ? { p_cn: cn } : {}) }));
   const pTopKh = khoiDong(db.rpc("top_khach_chi_12_thang", { p_so: 10, ...(cn ? { p_cn: cn } : {}) }));
+  // Ví điện tử / Ship COD tháng này (cơ cấu thu chia theo hình thức như SalonHero, 0199). Không quyền báo cáo thì không chạy.
+  const pVi = khoiDong(coQuyen(nd, "baocao.xem") ? bcDoanhThuNgayViNho(dauThang, homNay, cn ?? null).then((data): { data: typeof data | null } => ({ data })) : Promise.resolve({ data: null }));
   const [canhBao, { data: ban }, { data: dtNgay }, { data: tatCaLich }, { data: dsNo }] = await Promise.all([
     layCanhBao(nd),
     bcNhanVienNho(dauThang, homNay, cn ?? null).then((data) => ({ data })),
@@ -141,7 +143,7 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
       {sp["khong-du-quyen"] && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p>}
 
       <BangDieuHanh canhBao={canhBao} tin={tin.map((t) => ({ id: t.id, tieu_de: t.tieu_de, noi_dung: t.noi_dung }))} top={top}
-          so={{ lich: soLich, dangCho, khongDen, hoanThanh: Math.max(0, soLich - dangCho), choXacNhan: demLich("chua_xac_nhan"), dangPhucVu: demLich("dang_phuc_vu"), thuChiTiet: hn ? `doanh thu ${tienVN(Number(hn.doanh_thu))}` : "", tongNo: dsNo.reduce((x, r) => x + Number(r.con_no), 0), khoThap: canhBao.filter((c) => c.ma === "kho").length, leadChua: 0, nhanCn: dsCn, cnDangChon: cn, thuHomNay: coQuyen(nd, "baocao.tien") ? Number(hn?.thuc_thu ?? 0) : null, noMoi: coQuyen(nd, "baocao.tien") ? Number(hn?.no_moi ?? 0) : null }} soLieuNode={<Suspense fallback={<Xuong cao="h-96" nhan="Đang tải số liệu kinh doanh" />}><KhoiSoLieu nd={nd} homNay={homNay} dauThang={dauThang} rows={dtNgay ?? []} ds={ds} canhBao={canhBao} dsNo={dsNo} pKhMoi={pKhMoi} pTk={pTk} pTc={pTc} pNv={pNv} pTopBan={pTopBan} pTopKh={pTopKh} />
+          so={{ lich: soLich, dangCho, khongDen, hoanThanh: Math.max(0, soLich - dangCho), choXacNhan: demLich("chua_xac_nhan"), dangPhucVu: demLich("dang_phuc_vu"), thuChiTiet: hn ? `doanh thu ${tienVN(Number(hn.doanh_thu))}` : "", tongNo: dsNo.reduce((x, r) => x + Number(r.con_no), 0), khoThap: canhBao.filter((c) => c.ma === "kho").length, leadChua: 0, nhanCn: dsCn, cnDangChon: cn, thuHomNay: coQuyen(nd, "baocao.tien") ? Number(hn?.thuc_thu ?? 0) : null, noMoi: coQuyen(nd, "baocao.tien") ? Number(hn?.no_moi ?? 0) : null }} soLieuNode={<Suspense fallback={<Xuong cao="h-96" nhan="Đang tải số liệu kinh doanh" />}><KhoiSoLieu nd={nd} homNay={homNay} dauThang={dauThang} rows={dtNgay ?? []} ds={ds} canhBao={canhBao} dsNo={dsNo} pKhMoi={pKhMoi} pTk={pTk} pTc={pTc} pNv={pNv} pTopBan={pTopBan} pTopKh={pTopKh} pVi={pVi} />
 </Suspense>}
           baoCaoNode={coQuyen(nd, "baocao.xem") && <Suspense fallback={<BaoCaoNgayDangTai />}><BaoCaoSang cn={cn} tenCn={dsCn.find((c) => c.id === cn)?.ten ?? null} /></Suspense>} />
 
@@ -152,17 +154,18 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
 }
 
 /** Khối "Số liệu kinh doanh" của bảng điều hành (biểu đồ 14/30 ngày, cơ cấu thu, top dịch vụ/sản phẩm/khách…). Nạp riêng nên bảng điều hành hiện trước. */
-async function KhoiSoLieu({ nd, homNay, dauThang, rows, ds, canhBao, dsNo, pKhMoi, pTk, pTc, pNv, pTopBan, pTopKh }: {
+async function KhoiSoLieu({ nd, homNay, dauThang, rows, ds, canhBao, dsNo, pKhMoi, pTk, pTc, pNv, pTopBan, pTopKh, pVi }: {
   nd: Nd; homNay: string; dauThang: string; rows: BcNgay[]; ds: { khach_id: string; bat_dau: string; trang_thai: string }[]; canhBao: CanhBao[]; dsNo: { con_no: number }[];
   pKhMoi: PromiseLike<{ data: { nguon: string | null }[] | null; count: number | null }>; pTk: PromiseLike<{ count: number | null }>; pTc: PromiseLike<{ count: number | null }>; pNv: PromiseLike<{ count: number | null }>;
   pTopBan: PromiseLike<{ data: { nhom: string; ten: string; so: number; tien: number }[] | null }>; pTopKh: PromiseLike<{ data: { ho_ten: string; chi: number }[] | null }>;
+  pVi: PromiseLike<{ data: { momo: number; vnpay: number; shopee: number; grab: number; vi_khac: number; ship_cod: number }[] | null }>;
 }) {
   const db = sb(), congThang = (ngay: string, n: number) => { const d = new Date(`${ngay}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
   const NHAN_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành" };
   const idsK = [...new Set(ds.slice(0, 6).map((l) => l.khach_id))];
-  const [{ data: ksL }, { data: khMoi, count: nKhMoi }, { count: nKh }, { count: nCc }, { count: nNv }, { data: topBan }, { data: topKh }] = await Promise.all([
+  const [{ data: ksL }, { data: khMoi, count: nKhMoi }, { count: nKh }, { count: nCc }, { count: nNv }, { data: topBan }, { data: topKh }, { data: vi }] = await Promise.all([
     idsK.length ? db.from("khach_hang").select("id, ho_ten").in("id", idsK) : Promise.resolve({ data: [] as { id: string; ho_ten: string }[] }),
-    pKhMoi, pTk, pTc, pNv, pTopBan, pTopKh,
+    pKhMoi, pTk, pTc, pNv, pTopBan, pTopKh, pVi,
   ]);
   const tenKL = new Map((ksL ?? []).map((k) => [k.id, k.ho_ten]));
   const lichDs = ds.slice(0, 6).map((l) => ({ gio: gioVN(l.bat_dau), ten: tenKL.get(l.khach_id) ?? "Khách", tt: NHAN_LICH[l.trang_thai] ?? l.trang_thai }));
@@ -177,7 +180,8 @@ async function KhoiSoLieu({ nd, homNay, dauThang, rows, ds, canhBao, dsNo, pKhMo
     ngay30: rows.filter((r) => r.ngay > congNgay(homNay, -30)).map((r) => ({ ngay: r.ngay, doanhThu: Number(r.doanh_thu), thucThu: Number(r.thuc_thu), noMoi: Number(r.no_moi) })).sort((a, b) => a.ngay.localeCompare(b.ngay)),
     ngay: rows.filter((r) => r.ngay > congNgay(homNay, -14)).map((r) => ({ ngay: r.ngay, doanhThu: Number(r.doanh_thu), soDon: Number(r.so_don), thucThu: Number(r.thuc_thu) })).sort((a, b) => a.ngay.localeCompare(b.ngay)),
     thang: { doanhThu: tong(thangNay, "doanh_thu"), thangTruoc: tong(thangTruoc, "doanh_thu"), donHang: tong(thangNay, "so_don"), buoi: tong(thangNay, "so_buoi"), khachMoi: nKhMoi ?? (khMoi ?? []).length, tongKhach: nKh ?? 0, congNo: (dsNo ?? []).reduce((x, r) => x + Number(r.con_no), 0), theSapHet: canhBao.filter((c) => c.ma === "the").reduce((x, c) => x + (Number(c.nhan.match(/^\d+/)?.[0]) || 0), 0) },
-    coCauThu: { tienMat: tong(thangNay, "tien_mat"), chuyenKhoan: tong(thangNay, "chuyen_khoan"), quetThe: tong(thangNay, "quet_the") },
+    coCauThu: { tienMat: tong(thangNay, "tien_mat"), chuyenKhoan: tong(thangNay, "chuyen_khoan"), quetThe: tong(thangNay, "quet_the"),
+      viDienTu: (vi ?? []).reduce((x, r) => x + Number(r.momo) + Number(r.vnpay) + Number(r.shopee) + Number(r.grab) + Number(r.vi_khac), 0), shipCod: (vi ?? []).reduce((x, r) => x + Number(r.ship_cod), 0) },
     nguon: [...dem].map(([ten, so]) => ({ ten, so })).sort((a, b) => b.so - a.so).slice(0, 5),
     lich: Object.entries(NHAN_LICH).map(([m, nhan]) => ({ nhan, so: ds.filter((l) => l.trang_thai === m).length })),
     chamCong: { da: nCc ?? 0, tong: nNv ?? 0 },

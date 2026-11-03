@@ -29,4 +29,6 @@ else
   echo "## KHÔNG GHI: chạy thử có lệch/lỗi — xem $THU" >> "$BC"
   sed 's/\x1b\[[0-9;]*m//g' "$THU" | grep -E "LỆCH|DỪNG|Error|lỗi" | head -10 >> "$BC"
 fi
+# số dư thẻ tính sẵn (the_so_du, migration 0301) phải khớp sổ cái sau đồng bộ: hàm trả số thẻ phải sửa, mong đợi 0
+node --input-type=module -e 'import { ketNoi } from "./scripts/chuyen-salonhero/lib.mjs"; const db = await ketNoi(); const r = await db.query("select public.tinh_lai_the_so_du() n"); console.log("- số dư thẻ tính sẵn phải sửa: " + r.rows[0].n + " (mong đợi 0)"); await db.end();' >> "$BC" 2>&1
 echo "- kết thúc $(date +%H:%M)" >> "$BC"

@@ -79,7 +79,7 @@ export async function datLichOnline(_: KQGui | undefined, fd: FormData): Promise
     web.chonKtv && nv ? db.from("nhan_vien").select("ho_ten, email").eq("id", nv).maybeSingle() : Promise.resolve({ data: null }),
   ]);
   const ten = chuoi("ho_ten").trim().replace(/\s+/g, " ").slice(0, 100);
-  const daDat: DaDat = { gio, ngay, ten, sdt: chuoi("dien_thoai").trim(), diaChi: [c?.ten, c?.dia_chi].filter(Boolean).join(" · "), dichVu: tl.ten, nguoiLam: n?.ho_ten ?? "" };
+  const daDat: DaDat = { gio, ngay, ten, sdt: chuoi("dien_thoai").trim(), diaChi: [c?.ten, c?.dia_chi].filter(Boolean).join(" · "), dichVu: tl.ten, nguoiLam: (n?.ho_ten ?? "").replace(/^MSC[.\-A-Z0-9]*?\d\.\s*/, "").trim() };
   // Báo cho lễ tân sau khi đã trả lời khách; hỏng thì thôi, không ảnh hưởng lịch đã đặt.
   // "Tắt tất cả thông báo lịch hẹn" → không đẩy, không gửi thư. "Âm thanh" tắt → thông báo im lặng. Email: danh sách nhận + người làm (nếu bật).
   after(async () => {

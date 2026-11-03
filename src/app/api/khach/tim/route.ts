@@ -12,6 +12,6 @@ export async function GET(req: Request) {
   const kq = await locKhach(khoaCnKhach(docThamSo(u), nd), tu, so);
   if (!kq) return Response.json({ loi: "Không tải được danh sách khách. Thử lại." }, { status: 500 });
   // Cột trái chỉ cần vài trường: không gửi thông tin liên hệ thừa xuống trình duyệt.
-  const ds = kq.ds.map((r) => ({ id: r.id, ma: r.ma, ho_ten: r.ho_ten, dien_thoai: coQuyen(nd, "khach.sdt") ? r.dien_thoai : "", trang_thai: r.trang_thai, hang: r.hang, diem: r.diem_so_du, nhom: r.nhom }));
+  const ds = kq.ds.map((r) => ({ id: r.id, ma: r.ma, ho_ten: r.ho_ten, dien_thoai: coQuyen(nd, "khach.sdt") ? r.dien_thoai : "", trang_thai: r.trang_thai, hang: r.hang, diem: r.diem_so_du, ngay_sinh: r.ngay_sinh, nhom: r.nhom }));
   return Response.json({ ds, tong: kq.tong });
 }

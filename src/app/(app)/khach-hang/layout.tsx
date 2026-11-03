@@ -9,6 +9,7 @@ import { soLieuKhach, tuyChonLocKhach } from "@/lib/khach-danh-sach";
 import { NutHop } from "@/components/ui/BieuMau";
 import { DanhSachKhach } from "@/components/khach/DanhSachKhach";
 import { KhungHaiCot } from "@/components/khach/KhungHaiCot";
+import { HopSinhNhat } from "@/components/khach/HopSinhNhat";
 import { NhapExcelKhach } from "@/components/khach/NhapExcelKhach";
 import { luuKhach, nhapKhachExcel } from "./actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
@@ -33,9 +34,10 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
   const cnLC = (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: cnLC, nhom: (nhomNhap ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten })) });
   const chiSo = [
-    { nhan: "Tổng số khách hàng", so: so.tong }, { nhan: "Khách hàng mới hôm nay", so: so.moiHomNay },
-    { nhan: "Khách hàng sinh nhật hôm nay", so: so.sinhNhatHomNay }, { nhan: "Khách hàng sinh nhật tháng này", so: so.sinhNhatThang },
+    { nhan: "Tổng số khách hàng", so: so.tong, tab: undefined }, { nhan: "Khách hàng mới hôm nay", so: so.moiHomNay, tab: undefined },
+    { nhan: "Khách hàng sinh nhật hôm nay", so: so.sinhNhatHomNay, tab: "hom_nay" as const }, { nhan: "Khách hàng sinh nhật tháng này", so: so.sinhNhatThang, tab: "thang" as const },
   ];
+  const hangLC = (hang ?? []).map((h) => ({ gia_tri: h.ten, nhan: h.ten }));
 
   const dau = (
     <div className="pb-4">
@@ -59,7 +61,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
         </div>
       </div>
       <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {chiSo.map((c) => (
+        {chiSo.map((c) => c.tab ? <HopSinhNhat key={c.nhan} nhan={c.nhan} so={c.so} tab={c.tab} hang={hangLC} /> : (
           <div key={c.nhan} className="rounded-nho border border-vien bg-giay-sang px-3 py-2">
             <dt className="text-muc-3">{c.nhan}</dt>
             <dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{c.so.toLocaleString("vi-VN")}</dd>

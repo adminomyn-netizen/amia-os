@@ -11,6 +11,8 @@ const db = createClient(URL_, env.SUPABASE_SERVICE_ROLE_KEY);
 const prof = mkdtempSync(process.env.TMPDIR + "/cdp-");
 const chrome = spawn("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", ["--headless=new", "--remote-debugging-port=9333", `--user-data-dir=${prof}`, "--no-first-run", "--window-size=1440,900", "about:blank"], { stdio: "ignore" });
 let uid, nvId;
+// Chế độ BAM/PREFETCH kết thúc sớm bằng lỗi này (qua finally). Trước 03/11 tối dùng process.exit → Chrome headless còn mở, vẫn đăng nhập và tự hỏi máy chủ (chuông, prefetch) mãi, tài khoản tạm không bị xoá.
+class Xong extends Error {}
 const ngu = (ms) => new Promise((r) => setTimeout(r, ms));
 try {
   let ws; for (let i = 0; i < 40 && !ws; i++) { await ngu(250); try { const l = await (await fetch("http://127.0.0.1:9333/json/list")).json(); const p = l.find((x) => x.type === "page"); if (p) ws = p.webSocketDebuggerUrl; } catch {} }
@@ -38,7 +40,7 @@ try {
       const nhom = new Map(); for (const m of yc) { const h = m.params.request.headers; const k = `${new URL(m.params.request.url).pathname.replace(/[0-9a-f-]{36}/, ":id")} [${h["Next-Router-Segment-Prefetch"] ?? h["next-router-segment-prefetch"] ?? (h["Next-Router-Prefetch"] ?? h["next-router-prefetch"] ? "prefetch" : "đầy đủ")}]`; nhom.set(k, (nhom.get(k) ?? 0) + 1); }
       console.log(`${p}: ${yc.length} yêu cầu RSC trong 8 s (tổng ${su.filter((m) => m.method === "Network.requestWillBeSent").length} yêu cầu)`, su.filter((m) => m.method === "Network.requestWillBeSent").slice(-6).map((m) => m.params.request.url.slice(-70))); for (const [k, n] of [...nhom].sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log(`   ${String(n).padStart(3)} × ${k}`);
     }
-    s.close(); process.exit(0);
+    s.close(); throw new Xong(); // KHÔNG process.exit ở đây: phải qua finally để tắt Chrome và xoá tài khoản tạm
   }
   // BAM=1: mở trang đầu tiên rồi BẤM link menu sang từng trang còn lại (chuyển trang trong app), đo từ lúc bấm tới khi URL đổi + hết khung xương.
   if (process.env.BAM) {
@@ -62,7 +64,7 @@ try {
         await ngu(800);
       }
     }
-    s.close(); process.exit(0);
+    s.close(); throw new Xong(); // KHÔNG process.exit ở đây: phải qua finally để tắt Chrome và xoá tài khoản tạm
   }
   for (const p of process.argv.slice(2)) {
     let kq;
@@ -78,10 +80,11 @@ try {
     console.log(`${p.padEnd(34)} ttfb ${String(kq.ttfb).padStart(5)}  dcl ${String(kq.dcl).padStart(5)}  load ${String(kq.load).padStart(5)}  hiện xong ${String(kq.hien_xong ?? ">15000").padStart(5)} ms  [sw ${kq.sw ? "có" : "không"} workerStart ${kq.ws} fetchStart ${kq.fs} connectEnd ${kq.ce} requestStart ${kq.rq}]`);
   }
   s.close();
-} finally {
+} catch (e) { if (!(e instanceof Xong)) throw e; } finally {
   chrome.kill();
   // Xoá nhân viên tạm (thử lại vì lúc CSDL bận có thể hết giờ); không xoá được thì khoá lại và báo, để không sót tài khoản Chủ còn mở.
   if (nvId) { let r; for (let k = 0; k < 3; k++) { r = await db.from("nhan_vien").delete().eq("id", nvId); if (!r.error) break; await new Promise((x) => setTimeout(x, 2000)); }
     if (r.error) { await db.from("nhan_vien").update({ hoat_dong: false }).eq("id", nvId); console.error("CẢNH BÁO: chưa xoá được nhân viên tạm", nvId, r.error.message, "→ đã khoá (hoat_dong=false)"); } }
   if (uid) await db.auth.admin.deleteUser(uid);
 }
+process.exit(process.exitCode ?? 0);

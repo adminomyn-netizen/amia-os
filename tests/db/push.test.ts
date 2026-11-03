@@ -27,10 +27,10 @@ describe("gửi thông báo đẩy", () => {
     subs = [{ id: "a", endpoint: "https://x/1", p256dh: "k", auth: "t" }, { id: "b", endpoint: "https://x/2", p256dh: "k", auth: "t" }];
     gui.mockResolvedValue({});
     const { guiChoNhanVien } = await nap();
-    const kq = await guiChoNhanVien(["n1", "n1"], { tieuDe: "T".repeat(200), noiDung: "N".repeat(400), url: "/lich-hen" });
+    const kq = await guiChoNhanVien(["n1", "n1"], { tieuDe: "T".repeat(200), noiDung: "N".repeat(600), url: "/lich-hen" });
     expect(kq).toEqual({ thietBi: 2, thanhCong: 2, daGo: 0 });
     expect(JSON.parse(gui.mock.calls[0][1] as string).tieuDe).toHaveLength(80);
-    expect(JSON.parse(gui.mock.calls[0][1] as string).noiDung).toHaveLength(160);
+    expect(JSON.parse(gui.mock.calls[0][1] as string).noiDung).toHaveLength(420);
     expect(capNhat[0].sort()).toEqual(["a", "b"]);
   });
   it("thiết bị hết hạn (410/404) bị gỡ; lỗi khác giữ lại; một thiết bị hỏng không chặn thiết bị khác", async () => {

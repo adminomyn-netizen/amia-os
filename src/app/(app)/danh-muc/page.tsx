@@ -216,6 +216,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     noiDung = (
       <>
       <LocNhomDanhMuc tab="san-pham" nhom={nhomSp} tong={tatSp.length} chon={nhomChon} q={tuKhoa} hien={spLoc.length} giu={{ n: giuN }} />
+      {pt.hang.length > 0 && <p className="-mt-2 mb-3 text-[13px]"><Link href={`/danh-muc/in-ma-vach?id=${pt.hang.map((r) => r.id).join(",")}`} className="font-medium text-nhan-dam hover:underline">In tem mã vạch trang này ({pt.hang.length} sản phẩm)</Link></p>}
       <Bang duLieu={pt.hang} khoa={(r) => r.id} trong={tatSp.length ? "Không có sản phẩm nào khớp." : "Chưa có sản phẩm hoặc vật tư."}
         cot={[
           { nhan: "Ảnh", hienThi: (r) => <NutDoiAnh id={r.id} an={{ bang: "san_pham" }} anh={urlAnhDanhMuc(r.anh)} ten={r.ten} sua={sua} action={datAnhDanhMuc} /> },
@@ -223,6 +224,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Đơn vị", hienThi: (r) => (r.don_vi_mua ? `${r.don_vi} (mua: ${r.don_vi_mua} = ${soVN(r.he_so_quy_doi)})` : r.don_vi) },
           ...(xemVon ? [{ nhan: "Giá vốn / đv", hienThi: (r: NonNullable<typeof sp>[number]) => (r.gia_nhap_don_vi == null ? "chưa có" : tienVN(r.gia_nhap_don_vi)), phai: true }] : []), { nhan: "Giá bán", hienThi: (r) => (r.ban_le ? tienVN(r.gia_ban) : ""), phai: true },
           { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
+          { nhan: "Tem", hienThi: (r) => <Link href={`/danh-muc/in-ma-vach?id=${r.id}`} className="whitespace-nowrap text-[13px] font-medium text-nhan-dam hover:underline">In tem</Link> },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <span className="flex flex-wrap gap-x-4 gap-y-1"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={giaTriSanPham(r)} action={luuSanPham} /><NutHop kieu="chu" nhan="Nhân bản" tieuDe={`Nhân bản: ${r.ten}`} moTa="Tạo sản phẩm mới có cùng thông tin. Đổi tên (và mã vạch) trước khi lưu; mã nội bộ để trống sẽ tự sinh. Ảnh, tồn kho và định mức không được sao chép." rong truong={truong} giaTri={{ ...giaTriSanPham(r), id: undefined, ma: "", ma_vach: "", ten: `${r.ten} (bản sao)` }} action={luuSanPham} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaSanPham} /></span> }] : []),
         ]} />
       <PhanTrangDanhMuc tong={spLoc.length} trang={pt.trang} moi={moi} don="sản phẩm" thamSo={{ tab: "san-pham", nhom: nhomChon, q: tuKhoa }} />

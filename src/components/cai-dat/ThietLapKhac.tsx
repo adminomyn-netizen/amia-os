@@ -57,7 +57,7 @@ export function ThietLapKhacForm({ dau, sua, luu }: { dau: ThietLapKhac; sua: bo
               {sua ? <Gat nhan="Tự động khoá hoá đơn sau" giaTriMacDinh={t.khoaHdBat} onDoi={(v) => dat({ khoaHdBat: v })} /> : <span className="text-[14px] text-muc-2">Tự động khoá hoá đơn sau{t.khoaHdBat ? "" : ": tắt"}</span>}
               <input aria-label="Số giờ tự khoá hoá đơn" inputMode="numeric" {...CHON_HET} disabled={!sua || !t.khoaHdBat} value={String(t.khoaHdGio)} onChange={(e) => dat({ khoaHdGio: Number(e.target.value.replace(/\D/g, "")) || 0 })} className={`${O_NHAP} !w-24 text-right tabular-nums`} /><span className="text-[14px] text-muc-2">giờ</span>
             </div>
-            <p className="mt-1.5 text-[12px] text-muc-3">Đã lưu nhưng chưa áp dụng: app chưa có chức năng tự khoá hoá đơn theo giờ.</p>
+            <p className="mt-1.5 text-[12px] text-muc-3">Bật thì hoá đơn đã chốt quá số giờ này không Sửa (mở lại) được nữa.</p>
           </Hang>
           <Hang nhan="Phụ phí dịch vụ cho hoá đơn">
             <div className="grid gap-2 sm:grid-cols-[1fr_120px]">
@@ -72,7 +72,7 @@ export function ThietLapKhacForm({ dau, sua, luu }: { dau: ThietLapKhac; sua: bo
               ))}
             </div>
           </Hang>
-          <p className="text-[12.5px] leading-snug text-muc-3">Các cài đặt VAT, phụ phí và tip đã được lưu để dùng khi nối vào màn Thu ngân. Hiện Thu ngân vẫn để ô VAT mặc định 0%, phụ phí và tip nhập tay như trước nên tổng tiền hoá đơn không đổi.</p>
+          <p className="text-[12.5px] leading-snug text-muc-3">Thu ngân áp theo cài đặt này khi lập hoá đơn mới (đang nối vào màn Thu ngân). Như SalonHero: “Áp dụng cho mọi hoá đơn” tự cộng % vào hoá đơn mới; “Tuỳ chọn tại thu ngân” để thu ngân bật khi cần; “Không áp dụng” ẩn ô. Tiền tip Tắt thì Thu ngân không hiện ô tip. Chỉ áp cho hoá đơn lập mới, hoá đơn cũ giữ nguyên số.</p>
         </section>
       </div>
     </div>

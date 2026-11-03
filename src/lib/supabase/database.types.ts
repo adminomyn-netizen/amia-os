@@ -1898,6 +1898,7 @@ export type Database = {
           ma: string
           mo_ta: string | null
           phuong_quan: string | null
+          quoc_gia: string
           tao_luc: string
           ten: string
           thanh_pho: string | null
@@ -1913,6 +1914,7 @@ export type Database = {
           ma: string
           mo_ta?: string | null
           phuong_quan?: string | null
+          quoc_gia?: string
           tao_luc?: string
           ten: string
           thanh_pho?: string | null
@@ -1928,6 +1930,7 @@ export type Database = {
           ma?: string
           mo_ta?: string | null
           phuong_quan?: string | null
+          quoc_gia?: string
           tao_luc?: string
           ten?: string
           thanh_pho?: string | null
@@ -11691,6 +11694,8 @@ export type Database = {
     }
     Functions: {
       chuan_don_vi: { Args: { p: string }; Returns: string }
+      hoa_don_da_khoa: { Args: { p_hoa_don_id: string }; Returns: boolean }
+      so_gio_khoa_hoa_don: { Args: never; Returns: number }
       bao_cao_sang_tinh: {
         Args: { p_cn?: string; p_ngay?: string }
         Returns: Json

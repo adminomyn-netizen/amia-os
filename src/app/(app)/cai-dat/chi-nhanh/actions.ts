@@ -4,10 +4,11 @@ import { revalidatePath, updateTag } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, so } from "@/lib/form";
+import { MA_QUOC_GIA } from "@/lib/quoc-gia";
 
 type KQ = { ok?: true; loi?: string };
 const XONG = (): KQ => { updateTag("chi-nhanh"); revalidatePath("/cai-dat/chi-nhanh"); revalidatePath("/dat-lich"); revalidatePath("/danh-muc"); return { ok: true }; };
-const COT = "ma, ten, mo_ta, dien_thoai, dia_chi, thanh_pho, phuong_quan, hien_dat_lich, hoat_dong, thu_tu";
+const COT = "ma, ten, mo_ta, dien_thoai, dia_chi, thanh_pho, phuong_quan, quoc_gia, hien_dat_lich, hoat_dong, thu_tu";
 
 /** Thêm / sửa chi nhánh theo hộp "Sửa thông tin chi nhánh" của SalonHero. Quyền như cũ (nhanvien.quanly = Sửa chi nhánh); nhật ký ghi giá trị trước và sau. */
 export async function luuChiNhanhCaiDat(fd: FormData): Promise<KQ> {
@@ -16,10 +17,11 @@ export async function luuChiNhanhCaiDat(fd: FormData): Promise<KQ> {
   const id = chuoi(fd, "id");
   const row = {
     ma: chuoi(fd, "ma").toUpperCase(), ten: chuoi(fd, "ten"), mo_ta: chuoiHoacNull(fd, "mo_ta"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"), dia_chi: chuoiHoacNull(fd, "dia_chi"),
-    thanh_pho: chuoiHoacNull(fd, "thanh_pho"), phuong_quan: chuoiHoacNull(fd, "phuong_quan"), hien_dat_lich: chuoi(fd, "hien_dat_lich") !== "an", hoat_dong: bat(fd, "hoat_dong"), thu_tu: so(fd, "thu_tu") || 100,
+    thanh_pho: chuoiHoacNull(fd, "thanh_pho"), phuong_quan: chuoiHoacNull(fd, "phuong_quan"), quoc_gia: (chuoi(fd, "quoc_gia") || "VN").toUpperCase(), hien_dat_lich: chuoi(fd, "hien_dat_lich") !== "an", hoat_dong: bat(fd, "hoat_dong"), thu_tu: so(fd, "thu_tu") || 100,
   };
   if (!row.ma || !row.ten) return { loi: "Nhập mã và tên chi nhánh." };
   if (!row.dia_chi) return { loi: "Nhập địa chỉ chi nhánh." };
+  if (!MA_QUOC_GIA.has(row.quoc_gia)) return { loi: "Chọn quốc gia trong danh sách." };
   if ((row.mo_ta ?? "").length > 500) return { loi: "Mô tả tối đa 500 ký tự." };
   const db = sb();
   const { data: cu } = id ? await db.from("chi_nhanh").select(COT).eq("id", id).maybeSingle() : { data: null };

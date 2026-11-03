@@ -20,5 +20,18 @@ export const TT_DUYET_ND: Record<string, { ten: string; kieu: "tot" | "cho" | "l
   nhap: { ten: "Đang làm", kieu: "tram" }, cho_duyet: { ten: "Chờ duyệt", kieu: "cho" }, da_duyet: { ten: "Đã duyệt", kieu: "tot" }, chua_dat: { ten: "Chưa đạt", kieu: "loi" },
 };
 export const LOAI_DOI_TAC: Record<string, string> = { ctv: "Cộng tác viên", khach_cu: "Khách cũ giới thiệu", kol: "KOL / KOC", khac: "Khác" };
+/** "Mức hoa hồng mặc định" của một nguồn giới thiệu, như SalonHero: Theo phần trăm / Theo tiền / Theo điểm (cột doi_tac_gt.hh_kieu, hh_gia_tri — migration 0206).
+ *  Hoa hồng giới thiệu tự tính ở /hoa-hong (báo cáo hoa hồng) từ hai cột này: % × doanh số dòng sau giảm; tiền × số lượng; điểm = 0 đồng. */
+export const KIEU_HH_GIOI_THIEU = [{ gia_tri: "phan_tram", nhan: "Theo phần trăm" }, { gia_tri: "tien", nhan: "Theo tiền" }, { gia_tri: "diem", nhan: "Theo điểm" }] as const;
+export type KieuHhGioiThieu = (typeof KIEU_HH_GIOI_THIEU)[number]["gia_tri"];
+export const nhanMucHoaHong = (kieu: string, giaTri: number) => (kieu === "tien" ? `${Math.round(giaTri).toLocaleString("vi-VN")} đ` : kieu === "diem" ? `${giaTri.toLocaleString("vi-VN")} điểm` : `${giaTri.toLocaleString("vi-VN")}%`);
+/** Kiểm mức hoa hồng nhập tay; trả lỗi tiếng Việt hoặc giá trị đã chuẩn hoá (tiền / điểm làm tròn số nguyên). */
+export function docMucHoaHong(kieu: string, giaTri: number): { loi: string } | { kieu: KieuHhGioiThieu; giaTri: number } {
+  if (!KIEU_HH_GIOI_THIEU.some((k) => k.gia_tri === kieu)) return { loi: "Chọn mức hoa hồng: theo phần trăm, theo tiền hoặc theo điểm." };
+  if (!Number.isFinite(giaTri) || giaTri < 0) return { loi: "Mức hoa hồng không được âm." };
+  if (kieu === "phan_tram" && giaTri > 100) return { loi: "Phần trăm hoa hồng từ 0 đến 100." };
+  if (kieu !== "phan_tram" && giaTri > 1_000_000_000) return { loi: "Mức hoa hồng quá lớn." };
+  return { kieu: kieu as KieuHhGioiThieu, giaTri: kieu === "phan_tram" ? Math.round(giaTri * 100) / 100 : Math.round(giaTri) };
+}
 /** Quá 5 phút chưa có người xác nhận lead thì vào danh sách cảnh báo (SOP SALES-PROC-01). */
 export const PHUT_XAC_NHAN = 5;

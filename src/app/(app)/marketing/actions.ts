@@ -6,7 +6,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, so } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM } from "@/lib/dinh-dang";
-import { CAN_LY_DO, KET_QUA_LIEN_HE } from "@/lib/marketing";
+import { CAN_LY_DO, KET_QUA_LIEN_HE, docMucHoaHong } from "@/lib/marketing";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => { revalidatePath("/marketing", "layout"); };
@@ -206,16 +206,29 @@ export async function luuDoiTac(fd: FormData): Promise<KQ> {
   if (!ten) return { loi: "Nhập tên đối tác." };
   const sdt = chuoi(fd, "dien_thoai") ? chuanSdt(chuoi(fd, "dien_thoai")) : null;
   if (sdt && !coSdtHopLe(sdt)) return { loi: "Số điện thoại chưa hợp lệ." };
-  const row = { ten, loai: ["ctv", "khach_cu", "kol", "khac"].includes(chuoi(fd, "loai")) ? chuoi(fd, "loai") : "ctv", dien_thoai: sdt, ghi_chu: chuoiHoacNull(fd, "ghi_chu"), hoat_dong: chuoi(fd, "hoat_dong") !== "0" };
+  // Mức hoa hồng mặc định (như SalonHero): biểu mẫu không gửi ô này (bản cũ) thì giữ nguyên khi sửa, thêm mới thì 0%.
+  const coMuc = fd.has("hh_kieu");
+  const muc = coMuc ? docMucHoaHong(chuoi(fd, "hh_kieu"), so(fd, "hh_gia_tri")) : null;
+  if (muc && "loi" in muc) return { loi: muc.loi };
+  const row = {
+    ten, loai: ["ctv", "khach_cu", "kol", "khac"].includes(chuoi(fd, "loai")) ? chuoi(fd, "loai") : "ctv", dien_thoai: sdt, ghi_chu: chuoiHoacNull(fd, "ghi_chu"), hoat_dong: chuoi(fd, "hoat_dong") !== "0",
+    ...(muc ? { hh_kieu: muc.kieu, hh_gia_tri: muc.giaTri } : {}),
+  };
   if (id) {
-    const { error } = await sb().from("doi_tac_gt").update(row).eq("id", id);
+    const db = sb();
+    const { data: cu } = await db.from("doi_tac_gt").select("id, ten, hh_kieu, hh_gia_tri").eq("id", id).maybeSingle();
+    if (!cu) return { loi: "Không tìm thấy đối tác." };
+    const { error } = await db.from("doi_tac_gt").update(row).eq("id", id);
     if (error) return { loi: thongBaoLoi(error) };
+    if (muc && (cu.hh_kieu !== muc.kieu || Number(cu.hh_gia_tri) !== muc.giaTri))
+      await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_muc_hoa_hong_gioi_thieu", doi_tuong: "doi_tac_gt", doi_tuong_id: id, chi_tiet: { ten: cu.ten, truoc: { hh_kieu: cu.hh_kieu, hh_gia_tri: Number(cu.hh_gia_tri) }, sau: { hh_kieu: muc.kieu, hh_gia_tri: muc.giaTri } } });
   } else {
     const ma = await dem("doi_tac", "DT", 4);
     const { error } = await sb().from("doi_tac_gt").insert({ ...row, ma, ma_gioi_thieu: `GT${Math.random().toString(36).slice(2, 7).toUpperCase()}` });
     if (error) return { loi: thongBaoLoi(error) };
   }
   lamMoi();
+  revalidatePath("/hoa-hong");
   return { ok: true };
 }
 

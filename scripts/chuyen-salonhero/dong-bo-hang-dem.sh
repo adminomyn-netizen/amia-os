@@ -17,9 +17,9 @@ for i in 1 2 3 4 5 6; do
   [ "$ok" = "1" ] && [ "${ms:-99999}" -le 3000 ] && break; echo "- $(date +%H:%M) đăng nhập chậm (${ms:-?} ms), chờ 2 phút" >> "$BC"; sleep 120
 done
 node scripts/chuyen-salonhero/sao-luu-db.mjs truoc-dong-bo-$NGAY 2>&1 | tail -2 >> "$BC"
-node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot > "$THU" 2>&1
+node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot --ghi-de > "$THU" 2>&1
 if grep -q "CHẠY THỬ XONG" "$THU" && ! grep -q "CÓ LỆCH" "$THU"; then
-  node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot --that > "$THAT" 2>&1
+  node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot --ghi-de --that > "$THAT" 2>&1
   echo "## Kết quả ghi thật" >> "$BC"; grep -E "ĐÃ GHI THẬT|DỪNG|HUỶ|LỆCH" "$THAT" | head -5 >> "$BC"
   echo '```' >> "$BC"; sed 's/\x1b\[[0-9;]*m//g' "$THAT" | grep -E "│ [0-9]+ +│" | cut -c1-200 >> "$BC"; echo '```' >> "$BC"
   # giờ thu thật của các lần khách trả tiền (bảng tra sh_gio_thanh_toan, migration 0251) — chỉ ghi bảng tra

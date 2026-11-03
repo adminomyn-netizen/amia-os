@@ -7,6 +7,7 @@
 //   • KHÔNG đụng dữ liệu tạo trong app: chỉ xử lý dòng có sh_id. Dòng có sh_id nhưng bị sửa trong app sau lần đồng bộ trước (khách/lịch có cap_nhat_luc mới hơn mốc;
 //     hoá đơn có thanh toán/dòng tạo trong app; thẻ có dòng sổ cái tạo trong app) = XUNG ĐỘT: bỏ qua, liệt kê, không ghi đè.
 //   • Không xoá khách/hoá đơn/lịch nào; chỉ thêm, và sửa các dòng lịch sử (la_lich_su) khi SalonHero đã đổi.
+// --ghi-de: lấy theo SalonHero cả chỗ đã sửa trong app (khách/thẻ/lịch/nhắc; hoá đơn có tiền app vẫn bỏ qua). Bật trong chạy đêm từ 03/11/2026.
 // Dùng:
 //   PW=$(security find-generic-password -s amia-os-db-password -w) node scripts/chuyen-salonhero/dong-bo-dem.mjs [--tu 2026-10-28] [--den 2026-11-15] [--thu-muc <thư mục xuất có sẵn>] [--tab <id>] [--that] [--bo-qua-xung-dot] [--tu-kiem]
 //   --tu       ngày VN bắt đầu (mặc định: mốc lần đồng bộ trước trong sao-luu/dong-bo-moc.json, nếu chưa có thì 2026-10-28)
@@ -22,6 +23,10 @@ import { fileURLToPath } from "node:url";
 const ABA = "/Applications/AGS.app/Contents/MacOS/ags";
 const arg = (t, mac) => { const i = process.argv.indexOf(t); return i > 0 ? process.argv[i + 1] : mac; };
 const co = (t) => process.argv.includes(t);
+// --ghi-de (chị Lâm 03/11/2026: "bê hết qua cho đầy đủ"): tới 15/11 SalonHero là gốc → khách/thẻ/lịch/nhắc lệch thì LẤY THEO SALONHERO dù đã sửa trong app
+// (thẻ: thêm dòng điều chỉnh sổ cái, không xoá dòng cũ). Hoá đơn có tiền/dòng tạo trong app vẫn KHÔNG ghi đè (giữ tiền thật nhập ở AMIA), chỉ liệt kê.
+const GHI_DE = co("--ghi-de");
+const daGhiDe = { khach: 0, the: 0, lich: 0, nhac: 0 };
 const that = co("--that"), tuKiem = co("--tu-kiem");
 if (that && tuKiem) throw new Error("--tu-kiem luôn rollback, không dùng chung với --that");
 const dich = (ms) => new Date(ms).toISOString();
@@ -264,7 +269,9 @@ try {
     const dMoTa = COT_MO_TA.filter((k) => (COT_COALESCE.has(k) ? d[k] != null && khacNhau(d[k], am[k]) : khacNhau(d[k], am[k])));
     const dChiSo = COT_CHI_SO.filter((k) => (k === "hang_goc" || k === "lan_den_cuoi" ? d[k] != null && khacNhau(d[k], am[k]) : khacNhau(d[k], am[k])));
     if (!dMoTa.length && !dChiSo.length) continue;
-    const appSua = am.cap_nhat_luc && new Date(am.cap_nhat_luc) > new Date(cdMoc);
+    const appSua0 = am.cap_nhat_luc && new Date(am.cap_nhat_luc) > new Date(cdMoc);
+    if (appSua0 && GHI_DE && dMoTa.length) daGhiDe.khach++;
+    const appSua = appSua0 && !GHI_DE;
     if (dMoTa.length && appSua) xungDot.khach.push({ sh_id: id, cot: dMoTa });
     const dung = appSua ? { ...d, ...Object.fromEntries(COT_MO_TA.map((k) => [k, am[k] ?? null])) } : d; // đã bị sửa trong app: giữ nguyên phần mô tả, chỉ cập nhật chỉ số gốc
     if (dMoTa.length && !appSua) baoK.doi_thong_tin++;
@@ -341,7 +348,8 @@ try {
     if (cu) {
       const lechSoDu = t.buoi !== cu.buoi || t.tien !== Number(cu.tien);
       const lechTT = cu.trang_thai !== tt && cu.trang_thai !== "thu_hoi";
-      if ((lechSoDu || lechTT) && cu.app > 0) { xungDot.the.push({ sh_id: Number(c.id), ma: c.code, ghi: "thẻ đã có dòng sổ cái tạo trong app" }); continue; }
+      if ((lechSoDu || lechTT) && cu.app > 0 && GHI_DE) daGhiDe.the++;
+      else if ((lechSoDu || lechTT) && cu.app > 0) { xungDot.the.push({ sh_id: Number(c.id), ma: c.code, ghi: "thẻ đã có dòng sổ cái tạo trong app" }); continue; }
       if (lechSoDu) dieuChinh.push({ the_id: cu.id, so_buoi: t.buoi - cu.buoi, so_tien: t.tien - Number(cu.tien) });
       if (lechTT) { dichTrangThai.push({ id: cu.id, trang_thai: tt }); baoT.trang_thai_doi++; }
       continue;
@@ -559,7 +567,8 @@ try {
     const giong = cu.trang_thai === dong.trang_thai && new Date(cu.bat_dau).getTime() === bd.getTime() && new Date(cu.ket_thuc).getTime() === new Date(dong.ket_thuc).getTime() && (cu.nhan_vien_id ?? null) === (dong.nhan_vien_id ?? null)
       && (cu.ghi_chu ?? null) === (dong.ghi_chu ?? null) && Number(cu.so_khach) === dong.so_khach && (cu.hoa_don_sh_id == null ? null : Number(cu.hoa_don_sh_id)) === dong.hoa_don_sh_id && cu.dv === dvKey;
     if (giong) { baoL.khong_doi++; continue; }
-    if (cu.cap_nhat_luc && new Date(cu.cap_nhat_luc) > new Date(cdMoc)) { xungDot.lich.push({ sh_id: shId, ghi: "lịch bị sửa trong app sau lần đồng bộ trước", amia: cu.trang_thai, salonhero: dong.trang_thai }); continue; }
+    if (cu.cap_nhat_luc && new Date(cu.cap_nhat_luc) > new Date(cdMoc) && GHI_DE) daGhiDe.lich++;
+    else if (cu.cap_nhat_luc && new Date(cu.cap_nhat_luc) > new Date(cdMoc)) { xungDot.lich.push({ sh_id: shId, ghi: "lịch bị sửa trong app sau lần đồng bộ trước", amia: cu.trang_thai, salonhero: dong.trang_thai }); continue; }
     baoL.doi++; lichDoi.push({ ...dong, dv: dem });
   }
   let nLichMoi = 0;
@@ -598,7 +607,7 @@ try {
   for (const r of nhacSh) {
     const kh = khach.get(Number(r.customer_id)); const cu = nhacCo.get(Number(r.id));
     if (cu) {
-      if (cu.sh_trang_thai !== r.status) { if (cu.trang_thai !== (TTN[cu.sh_trang_thai] ?? "dang_nhac")) { xungDot.nhac.push({ sh_id: Number(r.id), ghi: "nhắc đã đổi trạng thái trong app" }); continue; } nhacDoi.push({ sh_id: Number(r.id), trang_thai: TTN[r.status] ?? "dang_nhac", sh_trang_thai: r.status, hoan_thanh_luc: iso(r.finish_at), ngay_nhac: iso(r.reminded_date) }); }
+      if (cu.sh_trang_thai !== r.status) { if (cu.trang_thai !== (TTN[cu.sh_trang_thai] ?? "dang_nhac") && GHI_DE) daGhiDe.nhac++; else if (cu.trang_thai !== (TTN[cu.sh_trang_thai] ?? "dang_nhac")) { xungDot.nhac.push({ sh_id: Number(r.id), ghi: "nhắc đã đổi trạng thái trong app" }); continue; } nhacDoi.push({ sh_id: Number(r.id), trang_thai: TTN[r.status] ?? "dang_nhac", sh_trang_thai: r.status, hoan_thanh_luc: iso(r.finish_at), ngay_nhac: iso(r.reminded_date) }); }
       continue;
     }
     if (!kh) { nhacKhongKhach++; continue; }
@@ -685,6 +694,8 @@ try {
   console.log("── DOANH THU / HOÁ ĐƠN THEO NGÀY (SalonHero | AMIA) ──"); inBang(bangNgay.slice(-14));
   if (bangLich.length) { console.log("── LỊCH LỆCH ──"); inBang(bangLich.slice(0, 20)); }
   if (bangQuy.length) { console.log("── TỒN QUỸ HIỆN TẠI (để xem; lệch hợp lệ = tiền khách trả sau lúc xuất / dòng tạo trong app) ──"); inBang(bangQuy); }
+  tom.ghi_de_theo_salonhero = GHI_DE ? daGhiDe : "tắt";
+  console.log(`  Ghi đè theo SalonHero (--ghi-de): ${GHI_DE ? JSON.stringify(daGhiDe) : "tắt"}`);
   tom.xung_dot = Object.fromEntries(Object.entries(xungDot).map(([k, a]) => [k, a.length]));
   tom.doi_chieu_lech = kq.filter((x) => x.khop === "LỆCH").map((x) => x.muc);
   console.log(JSON.stringify(tom, null, 1));

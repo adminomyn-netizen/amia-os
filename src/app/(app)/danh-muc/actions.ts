@@ -236,12 +236,14 @@ export const xoaSanPham = async (fd: FormData) => xoaMuc("danhmuc.sua", "san_pha
 export const xoaNhomDichVu = async (fd: FormData) => xoaMuc("danhmuc.sua", "dich_vu_nhom", fd);
 export const xoaChiNhanh = async (fd: FormData) => xoaMuc("nhanvien.quanly", "chi_nhanh", fd);
 
-/** Chỗ làm (giường/phòng) theo chi nhánh: tên chỗ được ghi vào lich_hen.phong khi đặt lịch; số chỗ đang hoạt động là sức chứa để tính giờ trống cho khách đặt online. */
+/** Chỗ làm (giường/phòng) theo chi nhánh, như SalonHero: thuộc một khu, có sức chứa. Tên chỗ được ghi vào lich_hen.phong khi đặt lịch; tổng sức chứa các chỗ đang dùng là số khách tối đa cùng lúc để tính giờ trống. */
 export async function luuChoLam(fd: FormData): Promise<KQ> {
   if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
   const id = chuoi(fd, "id");
-  const row = { chi_nhanh_id: chuoi(fd, "chi_nhanh_id"), ten: chuoi(fd, "ten").replace(/\s+/g, " "), thu_tu: so(fd, "thu_tu") || 100, hoat_dong: bat(fd, "hoat_dong") };
+  const row = { chi_nhanh_id: chuoi(fd, "chi_nhanh_id"), ten: chuoi(fd, "ten").replace(/\s+/g, " "), khu: chuoi(fd, "khu").replace(/\s+/g, " ") || null, suc_chua: Math.trunc(so(fd, "suc_chua")) || 1, thu_tu: so(fd, "thu_tu") || 100, hoat_dong: bat(fd, "hoat_dong") };
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
+  if (row.suc_chua < 1 || row.suc_chua > 50) return { loi: "Sức chứa từ 1 đến 50 khách." };
+  if (row.khu && row.khu.length > 40) return { loi: "Tên khu tối đa 40 ký tự." };
   if (row.ten.length < 1 || row.ten.length > 40) return { loi: "Tên chỗ từ 1 đến 40 ký tự." };
   const db = sb();
   const { error } = id ? await db.from("cho_lam").update(row).eq("id", id) : await db.from("cho_lam").insert(row);

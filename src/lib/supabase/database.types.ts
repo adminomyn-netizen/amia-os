@@ -2080,6 +2080,8 @@ export type Database = {
           chi_nhanh_id: string
           hoat_dong: boolean
           id: string
+          khu: string | null
+          suc_chua: number
           tao_luc: string
           ten: string
           thu_tu: number
@@ -2088,6 +2090,8 @@ export type Database = {
           chi_nhanh_id: string
           hoat_dong?: boolean
           id?: string
+          khu?: string | null
+          suc_chua?: number
           tao_luc?: string
           ten: string
           thu_tu?: number
@@ -2096,6 +2100,8 @@ export type Database = {
           chi_nhanh_id?: string
           hoat_dong?: boolean
           id?: string
+          khu?: string | null
+          suc_chua?: number
           tao_luc?: string
           ten?: string
           thu_tu?: number

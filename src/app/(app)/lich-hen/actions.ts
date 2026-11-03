@@ -155,14 +155,14 @@ export async function khungGioTrong(p: { ngay: string; chiNhanhId: string; nhanV
     db.from("cua_hang").select("gio_lam_viec").eq("id", 1).maybeSingle(),
     db.from("lich_hen").select("id, bat_dau, ket_thuc, nhan_vien_id").eq("chi_nhanh_id", cn).not("trang_thai", "in", "(huy,khong_den)")
       .lt("bat_dau", new Date(dau + 86400e3).toISOString()).gt("ket_thuc", new Date(dau).toISOString()).limit(2000),
-    db.from("cho_lam").select("id").eq("chi_nhanh_id", cn).eq("hoat_dong", true),
+    db.from("cho_lam").select("suc_chua").eq("chi_nhanh_id", cn).eq("hoat_dong", true),
   ]);
   const khoaThu = (["cn", "t2", "t3", "t4", "t5", "t6", "t7"] as const)[thuCuaNgay(p.ngay)];
   const g = gioBaThu(c?.gio_lam_viec, ch?.gio_lam_viec)[khoaThu];
   if (g.nghi) return { gio: [], ghiChu: "Chi nhánh nghỉ ngày này." };
   const phutCua = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
   const khoang = (ls ?? []).filter((l) => l.id !== p.boQuaLichId).map((l) => ({ bd: (Date.parse(l.bat_dau) - dau) / 60000, kt: (Date.parse(l.ket_thuc) - dau) / 60000, nv: l.nhan_vien_id }));
-  const soCho = cho?.length ?? 0;
+  const soCho = (cho ?? []).reduce((t, c) => t + (c.suc_chua ?? 1), 0); // như SalonHero: tổng sức chứa (số giường) các chỗ đang dùng
   const bayGio = (Date.now() - dau) / 60000; // ngày hôm nay: bỏ các mốc đã qua
   const gio: string[] = [];
   for (let t = phutCua(g.mo); t + phut <= phutCua(g.dong); t += 30) {

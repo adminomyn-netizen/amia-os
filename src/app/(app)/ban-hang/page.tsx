@@ -4,8 +4,8 @@ import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Pos } from "@/components/ban-hang/Pos";
-import { hienThuNgan, type DongDon, type MucBan, type SuaHoaDon, type TaiKhoanNhan } from "@/lib/ban-hang";
-import { chotDonBanHang, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap } from "./actions";
+import { hienThuNgan, nhomNguonGt, type DongDon, type MucBan, type NguonGt, type SuaHoaDon, type TaiKhoanNhan } from "@/lib/ban-hang";
+import { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap } from "./actions";
 
 import { nhanNguon } from "@/lib/lich-hen";
 import { docNhomLich } from "@/lib/lich-hen-nhom-may-chu";
@@ -15,15 +15,15 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   const nd = await yeuCauQuyen("ban.tao");
   const { khach: khachId, lich: lichId, sua: suaId } = await searchParams;
   const db = sb();
-  // Đếm "Chờ thanh toán" như SalonHero: hoá đơn đã chốt còn nợ. Cùng luật xem với trang Hoá đơn (khoá chi nhánh; không có quyền toàn cơ sở thì chỉ đơn mình lập).
-  let qNo = db.from("hoa_don").select("id", { count: "exact", head: true }).eq("trang_thai", "hoan_thanh").gt("con_no", 0);
-  if (nd.chiNhanhId) qNo = qNo.eq("chi_nhanh_id", nd.chiNhanhId);
-  if (!coQuyen(nd, "ban.toan_co_so")) qNo = qNo.eq("nguoi_lap_id", nd.nhanVienId ?? "");
+  // Đếm "Chờ thanh toán" như SalonHero (đơn đang xử lý, chưa thanh toán): đơn nháp của mọi thu ngân trong chi nhánh + hoá đơn đã mở lại để sửa.
+  let qNo = db.from("don_nhap").select("id", { count: "exact", head: true });
+  let qSua = db.from("hoa_don").select("id", { count: "exact", head: true }).eq("trang_thai", "nhap").not("mo_lai_luc", "is", null).eq("la_lich_su", false);
+  if (nd.chiNhanhId) { qNo = qNo.eq("chi_nhanh_id", nd.chiNhanhId); qSua = qSua.eq("chi_nhanh_id", nd.chiNhanhId); }
   // Mọi truy vấn không phụ thuộc nhau chạy CÙNG LÚC (trước đây xếp hàng nối đuôi): đếm chờ thanh toán, danh mục, ngân hàng nhận, đơn nháp.
   let qTk = db.from("tai_khoan_ngan_hang").select("ngan_hang, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true);
   if (nd.chiNhanhId) qTk = qTk.or(`chi_nhanh_id.is.null,chi_nhanh_id.eq.${nd.chiNhanhId}`);
-  const [{ count: demNo }, { data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }, { data: dsTk }, nhapBanDau] = await Promise.all([
-    coQuyen(nd, "ban.xem") ? qNo : Promise.resolve({ count: null as number | null }),
+  const [{ count: demNo }, { count: demSua }, { data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }, { data: dsTk }, nhapBanDau, { data: gt }] = await Promise.all([
+    qNo, qSua,
     db.from("dich_vu").select("id, ma, ten, gia, nhom_id, vat_pct, tao_luc, noi_hien_thi, chi_nhanh_ids, cho_sua_gia").eq("hoat_dong", true).order("ten"),
     db.from("dich_vu_nhom").select("id, ten"),
     db.from("goi_the").select("id, ma, ten, gia, loai, so_buoi, tao_luc, noi_hien_thi, cho_sua_gia").eq("hoat_dong", true).order("ten"),
@@ -32,8 +32,11 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     dsChiNhanhRutGon(),
     qTk,
     dsDonNhap(),
+    db.from("doi_tac_gt").select("id, ma, ma_gioi_thieu, ten, loai, loai_sh, hh_kieu, hh_gia_tri").eq("hoat_dong", true).order("ten"),
   ]);
-  const choThanhToan = coQuyen(nd, "ban.xem") ? demNo ?? 0 : null;
+  const choThanhToan = (demNo ?? 0) + (demSua ?? 0);
+  // Nguồn giới thiệu cho ô "Người giới thiệu" từng dòng (mức hoa hồng mặc định theo nguồn; theo điểm không phải tiền nên mặc định 0%).
+  const nguonGt: NguonGt[] = (gt ?? []).map((g) => ({ id: g.id, ten: g.ten, ma: g.ma_gioi_thieu ?? g.ma, nhom: nhomNguonGt(g.loai, g.loai_sh), kieu: g.hh_kieu === "tien" ? "tien" : "phan_tram", giaTri: g.hh_kieu === "diem" ? 0 : Number(g.hh_gia_tri) }));
   const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
   // "Nơi hiển thị" + "Địa điểm cung cấp" (Danh mục): chỉ ẨN khỏi ô chọn mục; vẫn giữ trong danh sách để dòng cũ (lịch hẹn, đơn nháp) còn tên và giá.
   const anTN = (noi: string) => !hienThuNgan(noi);
@@ -79,7 +82,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     const { data: hs } = await db.from("hoa_don").select("id, ma, chi_nhanh_id, khach_id, lich_hen_id, trang_thai, mo_lai_luc, la_lich_su, ngay_hd, giam_gia_don, vat_pct, phu_phi, tip, ghi_chu, gio_vao, gio_ra, so_khach").eq("id", suaId).maybeSingle();
     if (hs && hs.trang_thai === "nhap" && hs.mo_lai_luc && !hs.la_lich_su && (!nd.chiNhanhId || hs.chi_nhanh_id === nd.chiNhanhId)) {
       const [{ data: dd }, { data: kh }] = await Promise.all([
-        db.from("hoa_don_dong").select("id, loai, dich_vu_id, goi_id, san_pham_id, so_luong, don_gia, giam_gia, tao_luc, dong_nhan_vien(nhan_vien_id, vai, ti_le)").eq("hoa_don_id", hs.id).order("tao_luc"),
+        db.from("hoa_don_dong").select("id, loai, dich_vu_id, goi_id, san_pham_id, so_luong, don_gia, giam_gia, tao_luc, ghi_chu, gt_doi_tac_id, gt_kieu, gt_gia_tri, dong_nhan_vien(nhan_vien_id, vai, ti_le)").eq("hoa_don_id", hs.id).order("tao_luc"),
         hs.khach_id ? db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", hs.khach_id).maybeSingle() : Promise.resolve({ data: null }),
       ]);
       const gioHHMM = (t: string | null) => (t ? new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" }) : "");
@@ -91,7 +94,8 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
         if (!ref || !m) return [];
         const nvDong = (d.dong_nhan_vien ?? []) as { nhan_vien_id: string; vai: string; ti_le: number }[];
         const nvVai = (vai: string) => nvDong.filter((x) => x.vai === vai).map((x) => ({ id: x.nhan_vien_id, ti: Number(x.ti_le) }));
-        return [{ loai: d.loai as DongDon["loai"], ref, sl: d.so_luong, giam: Number(d.giam_gia), nv: { phuc_vu: nvVai("phuc_vu"), tu_van: nvVai("tu_van"), ban: nvVai("ban") }, ...(m.choSuaGia && Number(d.don_gia) !== m.gia ? { gia: Number(d.don_gia) } : {}) }];
+        return [{ loai: d.loai as DongDon["loai"], ref, sl: d.so_luong, giam: Number(d.giam_gia), nv: { phuc_vu: nvVai("phuc_vu"), tu_van: nvVai("tu_van"), ban: nvVai("ban") }, ...(m.choSuaGia && Number(d.don_gia) !== m.gia ? { gia: Number(d.don_gia) } : {}),
+          ...(d.ghi_chu ? { ghiChu: d.ghi_chu } : {}), ...(d.gt_doi_tac_id && (d.gt_kieu === "phan_tram" || d.gt_kieu === "tien") ? { gt: { id: d.gt_doi_tac_id, kieu: d.gt_kieu as "phan_tram" | "tien", giaTri: Number(d.gt_gia_tri ?? 0) } } : {}) }];
       });
     }
   }
@@ -106,7 +110,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     <>
       <TieuDeTrang tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
       <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} soKhachLich={suaHd ? undefined : soKhachLich} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
-        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} suaHd={suaHd} />
+        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} dsCho={dsDonCho} nguonGt={nguonGt} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} suaHd={suaHd} />
     </>
   );
 }

@@ -3,7 +3,8 @@
 //   • tiền cho 1 điểm / 1 điểm đổi bao nhiêu tiền theo từng hạng = bảng hang_diem_cau_hinh (như trước, các hàm DB diem_tich_duoc / diem_ra_tien đọc bảng này).
 //     SalonHero lưu CẶP "X ₫ = Y điểm"; AMIA chỉ lưu tỉ lệ (X chia Y đồng cho 1 điểm) nên màn này luôn hiện dạng "… ₫ = 1 điểm". Nhập "20.000.000 = 200" vẫn lưu đúng tỉ lệ 100.000đ/điểm.
 //   • bật/tắt đổi điểm ở Thu ngân + số tiền cho 1 điểm = cau_hinh diem.doi_bat / diem.doi_tien (Thu ngân đang đọc hai khoá này).
-//   • các khoá còn lại (áp dụng tích điểm, loại tính điểm, ngưỡng hạng, tự động tính hạng) = cau_hinh diem.* , ĐÃ LƯU nhưng app CHƯA tự tích điểm hay tự đổi hạng theo điểm (hạng vẫn theo hạng gốc / chi tiêu).
+//   • các khoá còn lại (áp dụng tích điểm, loại tính điểm, ngưỡng hạng, tự động tính hạng) = cau_hinh diem.* — CÓ HIỆU LỰC từ 0214: DB tự cộng điểm khi chốt đơn lập ở AMIA
+//     (hàm diem_cong_hoa_don) và tự nâng hang_goc khi điểm tích luỹ đạt ngưỡng (trigger khach_diem_so_doi_hang); "cho thu ngân đổi điểm" + tỉ lệ đổi theo hạng đọc ở diem-thuong.ts.
 import type { sb } from "@/lib/db";
 import { HANG_KHACH } from "@/lib/diem-hang";
 
@@ -74,13 +75,13 @@ export function loiDiemKhachHang(t: DiemKhachHang): string {
 export function dongDiemKhachHang(t: DiemKhachHang) {
   const bit = (v: boolean) => (v ? "1" : "0");
   return [
-    { khoa: "diem.tich_bat", gia_tri: bit(t.tichBat), ghi_chu: "1 = áp dụng quy đổi tiền thành điểm (đã lưu, app chưa tự tích điểm)" },
+    { khoa: "diem.tich_bat", gia_tri: bit(t.tichBat), ghi_chu: "1 = áp dụng quy đổi tiền thành điểm: tự cộng điểm khi chốt hoá đơn lập ở AMIA (0214)" },
     { khoa: "diem.tich_tien", gia_tri: String(tiLeMotDiem(t.tichMacDinh)), ghi_chu: "Số đồng cho 1 điểm — dòng mặc định ở màn Điểm khách hàng (SalonHero: 100.000đ = 1 điểm)" },
     { khoa: "diem.tich_dv", gia_tri: bit(t.tichDv), ghi_chu: "1 = tính điểm khi khách mua dịch vụ" }, { khoa: "diem.tich_sp", gia_tri: bit(t.tichSp), ghi_chu: "1 = tính điểm khi khách mua sản phẩm" },
-    { khoa: "diem.tich_the", gia_tri: bit(t.tichThe), ghi_chu: "1 = tính điểm khi khách mua thẻ dịch vụ" }, { khoa: "diem.doi_thu_ngan", gia_tri: bit(t.doiThuNgan), ghi_chu: "1 = có lựa chọn đổi điểm cho thu ngân (đã lưu, chưa dùng)" },
+    { khoa: "diem.tich_the", gia_tri: bit(t.tichThe), ghi_chu: "1 = tính điểm khi khách mua thẻ dịch vụ" }, { khoa: "diem.doi_thu_ngan", gia_tri: bit(t.doiThuNgan), ghi_chu: "1 = có lựa chọn đổi điểm cho thu ngân (0 = Thu ngân không cho đổi điểm)" },
     { khoa: "diem.doi_bat", gia_tri: bit(t.doiBat), ghi_chu: "Cho đổi điểm thưởng thành giảm giá ở Thu ngân: 1 = bật, 0 = tắt (SalonHero đang tắt)" },
     { khoa: "diem.doi_tien", gia_tri: String(tiLeMotDiem(t.doiMacDinh)), ghi_chu: "Số đồng được giảm cho 1 điểm thưởng (SalonHero: 1 điểm = 10.000đ)" },
-    { khoa: "diem.tu_dong_hang", gia_tri: bit(t.tuDongHang), ghi_chu: "1 = tự tính hạng theo mức điểm (đã lưu, app chưa tự đổi hạng theo điểm)" },
+    { khoa: "diem.tu_dong_hang", gia_tri: bit(t.tuDongHang), ghi_chu: "1 = tự nâng hạng khách khi điểm tích luỹ đạt ngưỡng (0214)" },
     ...(Object.entries(KHOA_NGUONG) as [Exclude<Hang, "Thường">, string][]).map(([h, khoa]) => ({ khoa, gia_tri: String(t.nguong[h]), ghi_chu: `Điểm tối thiểu của hạng ${h}` })),
   ];
 }

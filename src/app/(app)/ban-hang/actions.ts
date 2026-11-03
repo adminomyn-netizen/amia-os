@@ -4,7 +4,7 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { boDau, chuanSdt, homNayHCM } from "@/lib/dinh-dang";
-import { kiemGiaDong, kiemNgayLui, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
+import { kiemGiaDong, kiemGioiThieuDong, kiemNgayLui, kiemNoDong, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, GIA_SUA_TOI_DA, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
@@ -64,8 +64,11 @@ export async function layDiemKhach(khachId: string) {
   const nd = await kiemQuyen("ban.tao");
   if (!nd || !(await khachTrongPhamVi(nd.chiNhanhId, khachId))) return null;
   const db = sb();
-  const [{ data: k }, ch] = await Promise.all([db.from("khach_hang").select("diem_so_du").eq("id", khachId).maybeSingle(), cauHinhDiem(db)]);
-  return k ? { soDu: Number(k.diem_so_du ?? 0), ...ch } : null;
+  // Tỉ lệ đổi điểm theo HẠNG khách (màn Điểm khách hàng, như SalonHero).
+  const [{ data: k }, { data: vk }] = await Promise.all([db.from("khach_hang").select("diem_so_du").eq("id", khachId).maybeSingle(), db.from("v_khach_hang").select("hang").eq("id", khachId).maybeSingle()]);
+  if (!k) return null;
+  const ch = await cauHinhDiem(db, vk?.hang ?? null);
+  return { soDu: Number(k.diem_so_du ?? 0), ...ch };
 }
 
 /** Hộp "Áp dụng voucher" ở màn Bán hàng. "Kiểm tra mã": kiểm mã (có, không khoá, trong hạn, đúng chi nhánh/ngày/hạng khách, còn lượt) rồi trả định nghĩa để màn hình tự tính theo dòng hàng. Máy chủ tính lại và DB kiểm lại khi chốt. */
@@ -141,8 +144,9 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   let tienDiem = 0;
   if (diem > 0) {
     if (!don.khachId) return { loi: "Đổi điểm phải chọn khách hàng." };
-    const ch = await cauHinhDiem(db);
-    if (!ch.bat) return { loi: "Đổi điểm thưởng đang tắt (Cài đặt › Thông tin chung)." };
+    const { data: vk } = await db.from("v_khach_hang").select("hang").eq("id", don.khachId).maybeSingle();
+    const ch = await cauHinhDiem(db, vk?.hang ?? null);
+    if (!ch.bat) return { loi: "Đổi điểm thưởng đang tắt (Cài đặt › Thông tin chung / Điểm khách hàng)." };
     const { data: k } = await db.from("khach_hang").select("diem_so_du").eq("id", don.khachId).maybeSingle();
     if ((k?.diem_so_du ?? 0) < diem) return { loi: `Khách chỉ còn ${k?.diem_so_du ?? 0} điểm.` };
     tienDiem = diem * ch.tienMoiDiem;
@@ -165,6 +169,20 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   if ((don.thu ?? []).some((t) => loaiViKhoanThu(t.phuong_thuc, t.loai_vi) === undefined)) return { loi: "Khoản thu bằng ví điện tử phải chọn loại ví." };
   if (tongThu > phai) return { loi: "Tổng các khoản thu lớn hơn số phải thu." };
   if (tongThu < phai && !don.khachId) return { loi: "Còn nợ thì phải chọn khách hàng." };
+  // Chia nợ theo dòng ("Xác nhận các mục còn nợ" của SalonHero): các phần cộng đúng số còn nợ.
+  const kn = kiemNoDong(don.dong.map((d) => d.no), phai - tongThu);
+  if (!kn.ok) return { loi: kn.loi };
+  // Người giới thiệu theo dòng: nguồn phải có trong danh sách nguồn giới thiệu đang dùng.
+  const idsGt = [...new Set(don.dong.map((d) => d.gt?.id).filter((x): x is string => typeof x === "string" && /^[0-9a-f-]{36}$/i.test(x)))];
+  const { data: gtCo } = idsGt.length ? await db.from("doi_tac_gt").select("id").in("id", idsGt).eq("hoat_dong", true) : { data: [] as { id: string }[] };
+  const coGt = new Set((gtCo ?? []).map((x) => x.id));
+  const gtDong: ({ id: string; kieu: "phan_tram" | "tien"; giaTri: number } | null)[] = [];
+  for (const d of don.dong) {
+    const g = kiemGioiThieuDong(d.gt, (id) => coGt.has(id));
+    if (!g.ok) return { loi: g.loi };
+    gtDong.push(g.gt);
+  }
+  const khachDua = Number.isInteger(don.khachDua) && (don.khachDua ?? 0) > 0 && (don.khachDua ?? 0) <= GIA_SUA_TOI_DA ? don.khachDua! : null;
   if (don.dong.some((d) => d.loai === "goi_the") && !don.khachId) return { loi: "Bán thẻ phải chọn khách hàng." };
 
   if (don.khachId) {
@@ -203,7 +221,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   const soKhach = Math.min(99, Math.max(1, Math.floor(Number(don.soKhach) || 1)));
 
   const dauDon = { khach_id: don.khachId, lich_hen_id: don.lichId, giam_gia_don: don.giamDon + tienDiem + tienVoucher, vat_pct: don.vatPct, phu_phi: don.phuPhi, tip: don.tip,
-    nguoi_gioi_thieu_id: don.nguoiGioiThieu || null, ghi_chu: don.ghiChu?.trim() || null, gio_vao: gioVao?.toISOString() ?? null, gio_ra: gioRa?.toISOString() ?? null, so_khach: soKhach };
+    nguoi_gioi_thieu_id: don.nguoiGioiThieu || null, ghi_chu: don.ghiChu?.trim() || null, gio_vao: gioVao?.toISOString() ?? null, gio_ra: gioRa?.toISOString() ?? null, so_khach: soKhach, khach_dua: khachDua };
   let h: { id: string };
   let ma: string;
   if (suaCu) {
@@ -241,12 +259,16 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     for (const t of thuMoi) await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "hoan", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.the_id, ngan_hang: t.ngan_hang, loai_vi: t.loai_vi, ngay: t.ngay, nguoi_id: nd.nhanVienId, ghi_chu: lyDo, dao_cua_id: t.id });
   };
 
+  const ghiChuThe: { dongId: string; ghiChu: string }[] = [];
   for (const [i, d] of don.dong.entries()) {
     const m = gia.get(`${d.loai}:${d.ref}`)!;
     const row: TablesInsert<"hoa_don_dong"> = { hoa_don_id: h.id, loai: d.loai, ten: m.ten, so_luong: d.sl, don_gia: donGia[i], giam_gia: d.giam,
-      dich_vu_id: d.loai === "dich_vu" ? d.ref : null, goi_id: d.loai === "goi_the" ? d.ref : null, san_pham_id: d.loai === "san_pham" ? d.ref : null };
+      dich_vu_id: d.loai === "dich_vu" ? d.ref : null, goi_id: d.loai === "goi_the" ? d.ref : null, san_pham_id: d.loai === "san_pham" ? d.ref : null,
+      ghi_chu: typeof d.ghiChu === "string" && d.ghiChu.trim() ? d.ghiChu.trim().slice(0, 500) : null,
+      gt_doi_tac_id: gtDong[i]?.id ?? null, gt_kieu: gtDong[i]?.kieu ?? null, gt_gia_tri: gtDong[i]?.giaTri ?? null, no_dong: kn.no ? kn.no[i] : null };
     const { data: dg, error: ed } = await db.from("hoa_don_dong").insert(row).select("id").single();
     if (ed || !dg) { await huyNhap(); return { loi: thongBaoLoi(ed) }; }
+    if (row.ghi_chu && d.loai === "goi_the") ghiChuThe.push({ dongId: dg.id, ghiChu: row.ghi_chu });
     const chia = (["phuc_vu", "tu_van", "ban"] as const).flatMap((vai) => (d.nv?.[vai] ?? []).map((x) => ({ dong_id: dg.id, nhan_vien_id: x.id, vai, ti_le: x.ti })));
     if (chia.length) {
       const { error: ec } = await db.from("dong_nhan_vien").insert(chia);
@@ -272,6 +294,8 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     await goDo("Tự huỷ do lỗi khi chốt đơn");
     return { loi: thongBaoLoi(ex) };
   }
+  // Ghi chú dòng bán thẻ → ghi chú của thẻ vừa cấp (SalonHero: ghi chú thẻ dịch vụ / liệu trình). Thẻ do chot_hoa_don cấp theo hoa_don_dong_id.
+  for (const g of ghiChuThe) await db.from("the_khach").update({ ghi_chu: g.ghiChu }).eq("hoa_don_dong_id", g.dongId).is("ghi_chu", null);
   if (suaCu) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "chot_lai_hoa_don_sua", doi_tuong: "hoa_don", doi_tuong_id: h.id, chi_tiet: { ma, ngay_hd: suaCu.ngay_hd, bam_luc: new Date().toISOString() } });
   if (lui.lui) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "lui_ngay_hoa_don", doi_tuong: "hoa_don", doi_tuong_id: h.id, chi_tiet: { ma, ngay_hd: lui.lui.ngay, tao_luc: lui.lui.iso, bam_luc: new Date().toISOString() } });
   if (don.lichId) await db.from("lich_hen").update({ trang_thai: "hoan_thanh" }).eq("id", don.lichId).eq("chi_nhanh_id", don.chiNhanhId).in("trang_thai", ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan", "chua_xac_nhan"]);
@@ -298,8 +322,10 @@ export async function luuDonNhap(p: { id?: string | null; khachId: string | null
   const tieuDe = (p.tieuDe ?? "").trim().slice(0, 80) || null;
   if (p.id) {
     if (!UUID_RE.test(p.id)) return { loi: "Đơn nháp không hợp lệ." };
-    const { data, error } = await db.from("don_nhap").update({ khach_id: p.khachId, tieu_de: tieuDe, dong: dong as unknown as TablesInsert<"don_nhap">["dong"], chi_nhanh_id: cn, cap_nhat_luc: new Date().toISOString() })
-      .eq("id", p.id).eq("nguoi_lap_id", nd.nhanVienId).select("id").maybeSingle();
+    // Đơn chờ thanh toán dùng chung trong chi nhánh như SalonHero: ai mở đơn nháp của chi nhánh cũng lưu tiếp được vào chính đơn đó.
+    let qu = db.from("don_nhap").update({ khach_id: p.khachId, tieu_de: tieuDe, dong: dong as unknown as TablesInsert<"don_nhap">["dong"], chi_nhanh_id: cn, cap_nhat_luc: new Date().toISOString() }).eq("id", p.id);
+    qu = nd.chiNhanhId ? qu.eq("chi_nhanh_id", nd.chiNhanhId) : qu;
+    const { data, error } = await qu.select("id").maybeSingle();
     if (error) return { loi: thongBaoLoi(error) };
     if (data) return { ok: true, id: data.id };
   }
@@ -329,7 +355,34 @@ export async function xoaDonNhap(id: string): Promise<{ ok: true } | { ok?: fals
   const nd = await kiemQuyen("ban.tao");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   if (!UUID_RE.test(id)) return { loi: "Đơn nháp không hợp lệ." };
-  const { error } = await sb().from("don_nhap").delete().eq("id", id).eq("nguoi_lap_id", nd.nhanVienId);
+  // Xoá được đơn nháp của mình; đơn của người khác trong cùng chi nhánh (mở từ "Chờ thanh toán") cũng xoá được khi đã chốt thành hoá đơn.
+  let q = sb().from("don_nhap").delete().eq("id", id);
+  q = nd.chiNhanhId ? q.eq("chi_nhanh_id", nd.chiNhanhId) : q;
+  const { error } = await q;
   if (error) return { loi: thongBaoLoi(error) };
   return { ok: true };
+}
+
+export type DonCho = { id: string; loai: "nhap" | "sua"; khach: string; soDong: number; nguoiLap: string; capNhat: string; ma?: string; nhap?: DonNhapRut };
+/** "Chờ thanh toán" như SalonHero: các đơn đang xử lý (chưa thanh toán) của chi nhánh — đơn nháp của mọi thu ngân + hoá đơn đã mở lại để sửa. */
+export async function dsDonCho(chiNhanhId: string): Promise<DonCho[]> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return [];
+  const cn = nd.chiNhanhId ?? (UUID_RE.test(chiNhanhId) ? chiNhanhId : null);
+  const db = sb();
+  let qn = db.from("don_nhap").select("id, tieu_de, dong, cap_nhat_luc, nguoi_lap_id, chi_nhanh_id, khach_hang(id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id)").order("cap_nhat_luc", { ascending: false }).limit(100);
+  let qh = db.from("hoa_don").select("id, ma, mo_lai_luc, nguoi_lap_id, khach_hang!hoa_don_khach_id_fkey(ho_ten)").eq("trang_thai", "nhap").not("mo_lai_luc", "is", null).eq("la_lich_su", false).order("mo_lai_luc", { ascending: false }).limit(50);
+  if (cn) { qn = qn.eq("chi_nhanh_id", cn); qh = qh.eq("chi_nhanh_id", cn); }
+  const [{ data: n }, { data: h }, { data: nv }] = await Promise.all([qn, qh, db.from("nhan_vien").select("id, ho_ten")]);
+  const ten = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
+  const xemSdt = coQuyen(nd, "khach.sdt");
+  return [
+    ...(n ?? []).map((r) => {
+      const k = r.khach_hang as unknown as { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string } | null;
+      const khach = k ? { id: k.id, ma: k.ma, ho_ten: k.ho_ten, dien_thoai: xemSdt ? k.dien_thoai : "", nguoi_phu_trach_id: k.nguoi_phu_trach_id } : null;
+      const dong = lamSachDongNhap(r.dong);
+      return { id: r.id, loai: "nhap" as const, khach: k?.ho_ten ?? "Khách lẻ", soDong: dong.length, nguoiLap: ten.get(r.nguoi_lap_id) ?? "", capNhat: r.cap_nhat_luc, nhap: { id: r.id, tieuDe: r.tieu_de ?? "", khach, dong, capNhat: r.cap_nhat_luc } };
+    }),
+    ...(h ?? []).map((r) => ({ id: r.id, loai: "sua" as const, khach: (r.khach_hang as unknown as { ho_ten: string } | null)?.ho_ten ?? "Khách lẻ", soDong: 0, nguoiLap: ten.get(r.nguoi_lap_id ?? "") ?? "", capNhat: r.mo_lai_luc ?? "", ma: r.ma })),
+  ];
 }

@@ -1,5 +1,5 @@
 // Quy đổi điểm thưởng theo hạng khách (cấu hình bảng hang_diem_cau_hinh, migration 0088). Hàm thuần: cùng công thức với hàm DB diem_tich_duoc / diem_ra_tien.
-// CHƯA gắn vào Thu ngân: app chưa tự tích điểm cho hoá đơn mới (chờ chị Lâm chốt luật); đổi điểm ở Thu ngân vẫn theo cài đặt chung diem.doi_*.
+// ĐÃ có hiệu lực (0214): DB tự cộng điểm khi chốt hoá đơn lập ở AMIA theo tiền cho 1 điểm của hạng khách; Thu ngân đổi điểm theo tỉ lệ đổi của hạng (diem-thuong.ts).
 import type { sb } from "@/lib/db";
 
 export const HANG_KHACH = ["Thường", "Bạc", "Vàng", "Bạch kim", "Kim cương"] as const;

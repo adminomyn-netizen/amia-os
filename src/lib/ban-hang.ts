@@ -48,7 +48,51 @@ export const khopMuc = (m: Pick<MucBan, "ten" | "ma" | "maVach">, tu: string) =>
   return !k || boDau(`${m.ten} ${m.ma ?? ""} ${m.maVach ?? ""}`).includes(k);
 };
 export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: number; nv: Record<Vai, { id: string; ti: number }[]>;
-  /** Đơn giá thu ngân sửa (chỉ khi mục bật "Sửa giá khi thanh toán"); không có = giá danh mục. */ gia?: number };
+  /** Đơn giá thu ngân sửa (chỉ khi mục bật "Sửa giá khi thanh toán"); không có = giá danh mục. */ gia?: number;
+  /** % giảm của dòng đang chọn ở ô "%" (chỉ để hiển thị lại; tiền giảm thật là `giam`). */ pct?: number;
+  /** Ghi chú dòng (SalonHero: ghi chú thẻ dịch vụ / liệu trình); dòng bán thẻ thì chép sang ghi chú của thẻ. */ ghiChu?: string;
+  /** Người giới thiệu của dòng (SalonHero: nguồn giới thiệu + mức hoa hồng % hoặc tiền cho từng dòng). */ gt?: GioiThieuDong | null;
+  /** Phần nợ của dòng ("Xác nhận các mục còn nợ"); chỉ gửi khi đơn còn nợ. */ no?: number };
+/** Người giới thiệu theo dòng: nguồn giới thiệu (bảng doi_tac_gt) + mức hoa hồng. */
+export type GioiThieuDong = { id: string; kieu: "phan_tram" | "tien"; giaTri: number };
+/** Nguồn giới thiệu rút gọn cho Thu ngân. Nhóm như SalonHero: Khách hàng / Nhân viên / Khác. */
+export type NguonGt = { id: string; ten: string; ma: string; nhom: "khach" | "nhan_vien" | "khac"; kieu: "phan_tram" | "tien"; giaTri: number };
+export const NHOM_GT: { ma: NguonGt["nhom"]; ten: string }[] = [{ ma: "khach", ten: "Khách hàng" }, { ma: "nhan_vien", ten: "Nhân viên" }, { ma: "khac", ten: "Khác" }];
+/** doi_tac_gt → nhóm SalonHero: loai_sh STAFF = Nhân viên; loại khach_cu / CUSTOMER = Khách hàng; còn lại = Khác. */
+export const nhomNguonGt = (loai: string, loaiSh: string | null | undefined): NguonGt["nhom"] => (loaiSh === "STAFF" ? "nhan_vien" : loai === "khach_cu" || loaiSh === "CUSTOMER" ? "khach" : "khac");
+/** Máy chủ kiểm người giới thiệu dòng. Trả null khi không có. */
+export function kiemGioiThieuDong(gt: unknown, coNguon: (id: string) => boolean): { ok: true; gt: GioiThieuDong | null } | { ok: false; loi: string } {
+  if (gt == null) return { ok: true, gt: null };
+  const o = gt as Partial<GioiThieuDong>;
+  if (!o.id || !coNguon(String(o.id))) return { ok: false, loi: "Người giới thiệu của dòng không còn trong danh sách nguồn giới thiệu." };
+  if (o.kieu !== "phan_tram" && o.kieu !== "tien") return { ok: false, loi: "Mức hoa hồng giới thiệu phải theo % hoặc theo tiền." };
+  const v = Number(o.giaTri);
+  if (!Number.isFinite(v) || v < 0 || (o.kieu === "phan_tram" && v > 100) || (o.kieu === "tien" && !Number.isInteger(v))) return { ok: false, loi: "Mức hoa hồng giới thiệu chưa hợp lệ." };
+  return { ok: true, gt: { id: String(o.id), kieu: o.kieu, giaTri: v } };
+}
+/** Tiền giảm của dòng theo % (mốc 5% ở Thu ngân): làm tròn đồng, không quá thành tiền dòng. */
+export const giamTheoPct = (donGia: number, sl: number, pct: number) => Math.min(Math.max(Math.round((donGia * sl * Math.min(Math.max(pct, 0), 100)) / 100), 0), donGia * sl);
+/** Chia nợ cho các dòng theo tỉ lệ thành tiền (SalonHero "Xác nhận các mục còn nợ"); phần lẻ dồn vào dòng cuối có tiền. */
+export function chiaNoTheoDong(thanh: number[], conNo: number): number[] {
+  const n = Math.max(Math.round(conNo), 0);
+  const co = thanh.map((t) => Math.max(t, 0));
+  const tong = co.reduce((a, b) => a + b, 0);
+  if (!n || !thanh.length) return thanh.map(() => 0);
+  if (tong <= 0) return thanh.map((_, i) => (i === thanh.length - 1 ? n : 0));
+  const ra = co.map((t) => Math.floor((n * t) / tong));
+  const cuoi = co.reduce((j, t, i) => (t > 0 ? i : j), thanh.length - 1);
+  ra[cuoi] += n - ra.reduce((a, b) => a + b, 0);
+  return ra;
+}
+/** Máy chủ kiểm phần nợ theo dòng: mỗi phần là số nguyên không âm, cộng đúng số nợ. Không gửi phần nào = không chia (null). */
+export function kiemNoDong(no: (number | undefined)[], conNo: number): { ok: true; no: number[] | null } | { ok: false; loi: string } {
+  if (no.every((x) => x == null)) return { ok: true, no: null };
+  if (conNo <= 0) return { ok: false, loi: "Đơn không còn nợ nên không chia nợ theo dòng." };
+  const ds = no.map((x) => Number(x ?? 0));
+  if (ds.some((x) => !Number.isInteger(x) || x < 0)) return { ok: false, loi: "Phần nợ của dòng chưa hợp lệ." };
+  if (ds.reduce((a, b) => a + b, 0) !== conNo) return { ok: false, loi: "Các mục còn nợ phải cộng đúng số tiền còn nợ." };
+  return { ok: true, no: ds };
+}
 /** Đơn giá tối đa thu ngân được gõ khi sửa giá (chặn gõ nhầm thừa số 0). */
 export const GIA_SUA_TOI_DA = 10_000_000_000;
 /** Loại dòng được sửa đơn giá theo cờ cho_sua_gia (SalonHero edit_price_in_order: dịch vụ, sản phẩm, thẻ).
@@ -78,8 +122,10 @@ export function lamSachDongNhap(v: unknown): DongDon[] {
       if (Array.isArray(ds)) nv[vai] = ds.slice(0, TOI_DA_NGUOI_HUONG).filter((x) => x && UUID_NHAP.test(String((x as { id?: unknown }).id)) && Number.isFinite(Number((x as { ti?: unknown }).ti))).map((x) => ({ id: String((x as { id: string }).id), ti: Math.min(100, Math.max(0, Number((x as { ti: number }).ti))) }));
     }
     const gia = o.gia == null ? NaN : Number(o.gia);
+    const gt = o.gt && UUID_NHAP.test(String(o.gt.id)) && (o.gt.kieu === "phan_tram" || o.gt.kieu === "tien") && Number.isFinite(Number(o.gt.giaTri)) ? { id: String(o.gt.id), kieu: o.gt.kieu, giaTri: Math.max(0, Number(o.gt.giaTri)) } : null;
     ra.push({ loai: o.loai as DongDon["loai"], ref: String(o.ref), sl: Math.min(999, Math.max(1, Math.floor(Number(o.sl) || 1))), giam: Math.max(0, Math.floor(Number(o.giam) || 0)), nv,
-      ...(Number.isInteger(gia) && gia >= 0 && gia <= GIA_SUA_TOI_DA ? { gia } : {}) });
+      ...(Number.isInteger(gia) && gia >= 0 && gia <= GIA_SUA_TOI_DA ? { gia } : {}),
+      ...(typeof o.ghiChu === "string" && o.ghiChu.trim() ? { ghiChu: o.ghiChu.slice(0, 500) } : {}), ...(gt ? { gt } : {}) });
   }
   return ra;
 }
@@ -114,6 +160,8 @@ export type DonBan = {
   ngayHd?: string;
   /** Sửa hoá đơn đã chốt (đã mở lại về nháp bằng mo_lai_hoa_don): chốt lại vào CHÍNH hoá đơn này, giữ mã + ngày. */
   hoaDonId?: string;
+  /** Tiền khách đưa (tiền mặt) — chỉ để in "Trả lại khách" như SalonHero, không phải khoản thu. 0 = không ghi. */
+  khachDua?: number;
 };
 /** Hoá đơn đang sửa mở ở Thu ngân (?sua=): phần đầu đơn điền sẵn từ hoá đơn cũ. */
 export type SuaHoaDon = { id: string; ma: string; ngayHd: string; giamDon: number; vatPct: number; phuPhi: number; tip: number; ghiChu: string; gioVao: string; gioRa: string; soKhach: number };

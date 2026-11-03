@@ -22,6 +22,9 @@ if grep -q "CHẠY THỬ XONG" "$THU" && ! grep -q "CÓ LỆCH" "$THU"; then
   node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot --that > "$THAT" 2>&1
   echo "## Kết quả ghi thật" >> "$BC"; grep -E "ĐÃ GHI THẬT|DỪNG|HUỶ|LỆCH" "$THAT" | head -5 >> "$BC"
   echo '```' >> "$BC"; sed 's/\x1b\[[0-9;]*m//g' "$THAT" | grep -E "│ [0-9]+ +│" | cut -c1-200 >> "$BC"; echo '```' >> "$BC"
+  # giờ thu thật của các lần khách trả tiền (bảng tra sh_gio_thanh_toan, migration 0251) — chỉ ghi bảng tra
+  XQ=$(ls -dt "$G"/sao-luu/dong-bo-$NGAY-*/gio_thu.ndjson 2>/dev/null | head -1)
+  [ -n "$XQ" ] && node scripts/chuyen-salonhero/gio-thanh-toan-sh.mjs --tep "$XQ" 2>&1 | tail -1 | sed 's/^/- giờ thu: /' >> "$BC"
 else
   echo "## KHÔNG GHI: chạy thử có lệch/lỗi — xem $THU" >> "$BC"
   sed 's/\x1b\[[0-9;]*m//g' "$THU" | grep -E "LỆCH|DỪNG|Error|lỗi" | head -10 >> "$BC"

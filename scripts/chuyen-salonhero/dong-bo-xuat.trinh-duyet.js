@@ -76,6 +76,8 @@
           for (const at of ['CASH', 'BANK']) {
             try { const d = unwrap(await retry(() => CS.getCashBook({ startDate: sqTu, endDate: sqDen, location_id: loc, merchant_id: MID, account_type: at })));
               await emit('so_quy', (Array.isArray(d) ? d : []).filter((x) => !String(x.id).startsWith('order')).map((x) => ({ ...x, __loc: loc, __at: at })));
+              // dòng "order_…" riêng ra tệp gio_thu: chỉ để tra GIỜ THU thật của từng lần khách trả (gio-thanh-toan-sh.mjs → sh_gio_thanh_toan)
+              await emit('gio_thu', (Array.isArray(d) ? d : []).filter((x) => String(x.id).startsWith('order')).map((x) => ({ ...x, __loc: loc, __at: at })));
             } catch (e) { E.err.push(['so_quy', `${loc}|${at}`, String((e && e.message) || e).slice(0, 120)]); }
           }
           try { put('ton_quy', JSON.stringify({ loc, ...unwrap(await retry(() => CS.getTotalRevenueByCashAndBank({ location_id: loc, merchant_id: MID }))), luc: new Date().toISOString() })); }

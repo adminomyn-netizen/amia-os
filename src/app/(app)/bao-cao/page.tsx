@@ -26,6 +26,8 @@ import { soDongKho } from "@/lib/bao-cao-kho";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { BangNoKhach } from "@/components/bao-cao/BangNoKhach";
 import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
+import { LocNo } from "@/components/bao-cao/LocNo";
+import { layDanhSachNo } from "@/lib/bao-cao-no";
 import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
 const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "voucher", ten: "Hiệu quả voucher" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }, { ma: "nhap-xuat-kho", ten: "Nhập xuất kho hàng" }, { ma: "nhap-kho", ten: "Báo cáo nhập kho" }, { ma: "xuat-kho", ten: "Xuất kho bởi nhân viên" }, { ma: "ban-san-pham", ten: "Sản phẩm đã bán" }, { ma: "ton-lo", ten: "Báo cáo tồn theo lô hàng" }, { ma: "chi-phi-dv", ten: "Báo cáo chi phí dịch vụ" }];
@@ -266,19 +268,19 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
       </>
     );
   } else if (tab === "no") {
-    let q = db.from("hoa_don").select("id, ma, ngay_hd, tong_phai_thu, da_thu, con_no, khach_id").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd");
-    if (cn) q = q.eq("chi_nhanh_id", cn);
-    const { data } = await q;
-    const ids = [...new Set((data ?? []).map((d) => d.khach_id).filter(Boolean))] as string[];
-    const { data: ks } = ids.length ? await db.from("khach_hang").select("id, ho_ten, dien_thoai").in("id", ids) : { data: [] };
-    const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
+    const ds = await layDanhSachNo(db, { cn, tu: sp.tu || undefined, den: sp.den || undefined, q: sp.q?.trim() || undefined });
+    const gomKhach = sp.gom !== "hd";
+    const linkGom = (g: string) => `/bao-cao?tab=no${them}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${g === "hd" ? "&gom=hd" : ""}`;
     noiDung = (
       <>
         <ChipNo nt="ds" them={them} />
-        {lc}
-        <HangChiSo muc={[{ nhan: "Tổng nợ", so: tienVN((data ?? []).reduce((s, r) => s + Number(r.con_no), 0)) }, { nhan: "Số hoá đơn nợ", so: String((data ?? []).length) }]} />
-        <div className="mt-6"><BangNoKhach choPhepThu={coQuyen(nd, "no.thu")} homNay={kn.homNay}
-          dong={(data ?? []).map((r) => ({ id: r.id, ma: r.ma, khachId: r.khach_id, khach: tenK.get(r.khach_id ?? "")?.ho_ten ?? "", dienThoai: tenK.get(r.khach_id ?? "")?.dien_thoai ?? "", ngay: r.ngay_hd, tong: Number(r.tong_phai_thu), daThu: Number(r.da_thu), conNo: Number(r.con_no) }))} /></div>
+        <LocNo tu={sp.tu ?? ""} den={sp.den ?? ""} q={sp.q ?? ""} chiNhanh={dsChiNhanh} cn={sp.cn} />
+        <HangChiSo muc={[{ nhan: "Tổng số tiền khách nợ", so: tienVN(ds.reduce((s, r) => s + r.conNo, 0)) }, { nhan: "Số hoá đơn còn nợ", so: soVN(ds.length) }, { nhan: "Số khách còn nợ", so: soVN(new Set(ds.map((r) => r.khachId ?? r.id)).size) }]} />
+        <nav aria-label="Cách xem" className="mb-3 mt-6 flex gap-2 overflow-x-auto pb-1">
+          <Chip href={linkGom("khach")} dang={gomKhach} ten="Gom theo khách" /><Chip href={linkGom("hd")} dang={!gomKhach} ten="Từng hoá đơn" />
+        </nav>
+        <BangNoKhach choPhepThu={coQuyen(nd, "no.thu")} homNay={kn.homNay} gom={gomKhach} coChiNhanh={coChiNhanh} dong={ds} />
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Mặc định hiện mọi khoản nợ; chọn ngày lập hoá đơn để thu hẹp. Số lần thanh toán = số khoản đã thu trên hoá đơn (tối thiểu 1, giống SalonHero); Ngày trả nợ cuối = ngày khoản thu gần nhất, chưa thu đồng nào thì là ngày lập hoá đơn. Mã phiếu thu chưa có vì SalonHero không có mã riêng cho từng khoản thu khi chuyển sang.</p>
       </>
     );
   } else {

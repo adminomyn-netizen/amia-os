@@ -331,6 +331,7 @@ body {
 }
 .thanh-tab a:active, .thanh-tab button:active { background: var(--giay-tram); }
 .thanh-tab a[aria-current="page"] { color: var(--nhan-dam); font-weight: 600; background: var(--nhan-nhat); }
+.thanh-tab a[aria-current="page"]::before { content: ""; position: absolute; top: -6px; left: 28%; right: 28%; height: 3px; border-radius: 0 0 3px 3px; background: linear-gradient(90deg, var(--nhan), var(--dat)); }
 .thanh-tab a[aria-current="page"] svg { color: var(--nhan); }
 @media (min-width: 1024px) { .thanh-tab { display: none; } }
 /* Khung điện thoại: cao đúng màn hình, tiêu đề + thanh dưới đứng yên, chỉ <main> cuộn. In ấn thì trả về cuộn cả trang. */

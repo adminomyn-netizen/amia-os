@@ -1,9 +1,10 @@
 "use client";
 
+import { ThanhLuu } from "@/components/cai-dat/ThanhLuu";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Chon } from "@/components/ui/Chon";
-import { CHON_HET, NHAN_O, NUT_CHINH, NUT_CHU, O_NHAP, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
+import { CHON_HET, NHAN_O, NUT_CHU, O_NHAP, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
 import { BanInHoaDon, type DuLieuIn } from "@/components/cai-dat/BanInHoaDon";
 import { KHO_GIAY, type CauHinhIn, type LoaiIn } from "@/lib/thiet-lap-in";
 import { NGAN_HANG_QR } from "@/lib/vietqr";
@@ -39,10 +40,8 @@ export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu }
     <div>
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <p className="text-[13px] text-muc-3">{nguon === "chi_nhanh" ? "Đang dùng cài đặt riêng của chi nhánh này." : nguon === "chung" && cn !== "tat_ca" ? "Chi nhánh này đang dùng cài đặt chung; bấm Lưu để tách cài đặt riêng." : nguon === "mac_dinh" ? "Chưa lưu cài đặt nào, đang hiện giá trị mặc định." : "Cài đặt chung cho mọi chi nhánh."}</p>
-        {sua && <button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : "Lưu thông tin"}</button>}
       </div>
       {loi && <div role="alert" className="mb-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
-      {ok && <p role="status" className="mb-4 text-[14px] text-nhan-dam">Đã lưu thông tin.</p>}
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <section className="the-noi the-noi-thap space-y-4 p-4 sm:p-5" aria-label="Thiết lập in">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -85,6 +84,7 @@ export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu }
           <div className="overflow-x-auto rounded-nho bg-giay-tram p-3"><div className="mx-auto shadow-sm"><BanInHoaDon cfg={c} d={mau} /></div></div>
         </section>
       </div>
+      {sua && <ThanhLuu dang={dang} ok={ok} onLuu={gui} />}
     </div>
   );
 }

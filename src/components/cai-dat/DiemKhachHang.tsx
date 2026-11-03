@@ -1,8 +1,9 @@
 "use client";
 
+import { ThanhLuu } from "@/components/cai-dat/ThanhLuu";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { NUT_CHINH, O_NHAP } from "@/components/ui/dinh-dang";
+import { O_NHAP } from "@/components/ui/dinh-dang";
 import { HANG_KHACH } from "@/lib/diem-hang";
 import type { Cap, DiemKhachHang, Hang } from "@/lib/diem-khach-hang";
 
@@ -53,9 +54,7 @@ export function DiemKhachHangForm({ dau, sua, luu }: { dau: DiemKhachHang; sua: 
   const khoa = !sua;
   return (
     <div>
-      {sua && <div className="mb-5 flex justify-end"><button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : "Lưu thông tin"}</button></div>}
       {loi && <div role="alert" className="mb-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
-      {ok && <p role="status" className="mb-4 text-[14px] text-nhan-dam">Đã lưu thông tin.</p>}
       <p role="note" className="mb-5 rounded-nho border border-vien px-4 py-3 text-[13px] leading-relaxed text-muc-2">Mọi mục đều có hiệu lực: chốt hoá đơn lập ở AMIA tự cộng điểm theo số đồng cho 1 điểm của hạng khách và loại tính điểm (huỷ đơn tự trừ lại); Thu ngân đổi điểm theo tỉ lệ của hạng khi bật đổi điểm và cho thu ngân đổi; điểm tích luỹ đạt mức của hạng thì khách tự lên hạng khi bật tự động tính hạng. Đơn chuyển từ SalonHero giữ điểm như SalonHero. Mỗi hạng lưu theo tỉ lệ đồng cho 1 điểm (nhập 20.000.000 = 200 vẫn được, lưu là 100.000đ cho 1 điểm).</p>
       <div className="grid gap-5 lg:grid-cols-3">
         <section className="the-noi the-noi-thap space-y-4 p-4 sm:p-5" aria-labelledby="dkh-1">
@@ -93,6 +92,7 @@ export function DiemKhachHangForm({ dau, sua, luu }: { dau: DiemKhachHang; sua: 
           ))}
         </section>
       </div>
+      {sua && <ThanhLuu dang={dang} ok={ok} onLuu={gui} />}
     </div>
   );
 }

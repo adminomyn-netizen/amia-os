@@ -1,12 +1,13 @@
 "use client";
 
+import { ThanhLuu } from "@/components/cai-dat/ThanhLuu";
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Bell, CalendarClock, Check, Code2, Copy, ExternalLink, ImagePlus, Link2, Palette, Save, Trash2 } from "lucide-react";
+import { Bell, CalendarClock, Check, Code2, Copy, ExternalLink, ImagePlus, Link2, Palette, Trash2 } from "lucide-react";
 import { Chon } from "@/components/ui/Chon";
 import { Gat } from "@/components/ui/Gat";
-import { CHON_HET, NHAN_O, NUT_CHINH, NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
+import { CHON_HET, NHAN_O, NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { DAT_TRUOC, DOI_TUONG, GIOI_HAN_NGAY, KHUNG_GIO, NGON_NGU, THOI_LUONG, THU_WEB, TRANG_THAI, type GioiHan, type LuaChonWeb, type WebDatLich } from "@/lib/web-dat-lich";
 
 const Hang = ({ nhan, phu, children }: { nhan: string; phu?: string; children: React.ReactNode }) => (
@@ -57,7 +58,7 @@ export function WebDatLichForm({ dau, sua, duongDan, luu, chiNhanh, anhBiaUrl }:
   const dangMo = !t.khoaTrang;
   const coAnh = !goAnh && (anh || anhBiaUrl);
   return (
-    <div className="pb-24">
+    <div className="pb-4">
       {loi && <div role="alert" className="mb-4 rounded-the border border-loi/30 bg-loi-nen px-4 py-3 text-[14px] text-loi">{loi}</div>}
 
       {/* Thẻ trạng thái: mở/đóng trang + đường dẫn */}
@@ -209,15 +210,7 @@ export function WebDatLichForm({ dau, sua, duongDan, luu, chiNhanh, anhBiaUrl }:
         </div>
       </div>
 
-      {/* Thanh lưu nổi */}
-      {sua && (
-        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-vien bg-giay-sang/95 px-4 py-3 shadow-[0_-6px_20px_rgba(6,26,23,0.08)]">
-          <div className="mx-auto flex max-w-[1200px] items-center justify-end gap-3">
-            <span role="status" className={`text-[13.5px] ${ok ? "flex items-center gap-1.5 font-medium text-nhan-dam" : "text-muc-3"}`}>{ok ? <><Check className="h-4 w-4" aria-hidden />Đã lưu thông tin</> : "Thay đổi chỉ có hiệu lực sau khi lưu"}</span>
-            <button type="button" className={`${NUT_CHINH} inline-flex items-center gap-2`} disabled={dang} onClick={gui}><Save className="h-4 w-4" aria-hidden />{dang ? "Đang lưu" : "Lưu thông tin"}</button>
-          </div>
-        </div>
-      )}
+      {sua && <ThanhLuu dang={dang} ok={ok} onLuu={gui} />}
     </div>
   );
 }

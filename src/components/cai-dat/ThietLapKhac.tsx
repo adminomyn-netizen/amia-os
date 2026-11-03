@@ -1,10 +1,11 @@
 "use client";
 
+import { ThanhLuu } from "@/components/cai-dat/ThanhLuu";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Chon } from "@/components/ui/Chon";
 import { Gat } from "@/components/ui/Gat";
-import { CHON_HET, NHAN_O, NUT_CHINH, O_NHAP } from "@/components/ui/dinh-dang";
+import { CHON_HET, NHAN_O, O_NHAP } from "@/components/ui/dinh-dang";
 import { CHE_DO_THUE, PHAN_TRAM_PHU_PHI, type ThietLapKhac } from "@/lib/thiet-lap-khac";
 
 const Hang = ({ nhan, children }: { nhan: string; children: React.ReactNode }) => (
@@ -28,9 +29,7 @@ export function ThietLapKhacForm({ dau, sua, luu }: { dau: ThietLapKhac; sua: bo
   };
   return (
     <div>
-      {sua && <div className="mb-5 flex justify-end"><button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : "Lưu thông tin"}</button></div>}
       {loi && <div role="alert" className="mb-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
-      {ok && <p role="status" className="mb-4 text-[14px] text-nhan-dam">Đã lưu thông tin.</p>}
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="the-noi the-noi-thap space-y-4 p-4 sm:p-5" aria-labelledby="tl-tg">
           <h2 id="tl-tg" className="text-[16px] font-semibold text-muc">Thiết lập thời gian</h2>
@@ -75,6 +74,7 @@ export function ThietLapKhacForm({ dau, sua, luu }: { dau: ThietLapKhac; sua: bo
           <p className="text-[12.5px] leading-snug text-muc-3">Thu ngân áp theo cài đặt này khi lập hoá đơn mới (đang nối vào màn Thu ngân). Như SalonHero: “Áp dụng cho mọi hoá đơn” tự cộng % vào hoá đơn mới; “Tuỳ chọn tại thu ngân” để thu ngân bật khi cần; “Không áp dụng” ẩn ô. Tiền tip Tắt thì Thu ngân không hiện ô tip. Chỉ áp cho hoá đơn lập mới, hoá đơn cũ giữ nguyên số.</p>
         </section>
       </div>
+      {sua && <ThanhLuu dang={dang} ok={ok} onLuu={gui} />}
     </div>
   );
 }

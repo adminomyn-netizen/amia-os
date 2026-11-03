@@ -5,6 +5,7 @@
 set -u
 export PATH="/Users/phamtunglam/.local/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
 cd /Users/phamtunglam/project___1140/amia-os/.claude/worktrees/tula-dongbo || exit 1
+git merge -q --ff-only main >/dev/null 2>&1  # tự theo mã mới nhất của main (worktree đứng yên thì script đồng bộ bị cũ)
 git fetch -q origin && git reset -q --hard origin/main
 export PW="$(security find-generic-password -s amia-os-db-password -w)"
 G=/Users/phamtunglam/project___1140/amia-os

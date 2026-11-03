@@ -9,7 +9,7 @@ import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { tienVN } from "@/lib/dinh-dang";
 import { GioChon } from "@/components/ui/GioChon";
-import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHACH, khopMuc, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
+import { chiaDeuTi, chiaDoanhThuNguoiHuong, GIOI_HAN_VOUCHER, KENH_MAN_HINH_KHACH, khopMuc, lamTron, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -257,6 +257,8 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const [gioRa, setGioRa] = useState("");
   const [soKhach, setSoKhach] = useState("1");
   const [thu, setThu] = useState<KhoanThu[]>([]);
+  /** Tiền khách đưa (chỉ hiển thị để tính tiền thối, không gửi lên máy chủ). */
+  const [khachDua, setKhachDua] = useState(0);
   const [theTienTai, setTheTien] = useState<TheTien[]>([]);
   const [loi, setLoi] = useState("");
   const [suaNv, setSuaNv] = useState<number | null>(null);
@@ -294,6 +296,8 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
   const { vat, phai } = tinhDon(hang, giamDon + tienDiem + tienVoucher, Number(vatPct) || 0, phuPhi, tip);
   const daThu = thu.reduce((s, t) => s + t.so_tien, 0);
   const conNo = phai - daThu;
+  const tienMat = thu.filter((t) => t.phuong_thuc === "tien_mat").reduce((s, t) => s + t.so_tien, 0);
+  const { traLai, thieu } = tinhTraLai(khachDua, tienMat);
   useEffect(() => {
     if (!dangXem) return;
     onDonChoKhach({
@@ -500,6 +504,13 @@ function DonPos({ muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, 
                     </li>
                   ))}
                 </ul>
+                {tienMat > 0 && (
+                  <div className="mt-3 rounded-nho bg-giay-tram px-3 py-2.5 text-[14px]">
+                    <div className="flex items-center justify-between gap-3"><label className="text-muc-3" htmlFor={`khach-dua-${k}`}>Tiền khách đưa (tiền mặt {tienVN(tienMat)})</label>
+                      <span className="flex items-center gap-2"><button type="button" className={NUT_CHU} onClick={() => setKhachDua(tienMat)}>Vừa đủ</button><OTien id={`khach-dua-${k}`} className="w-[130px]" giaTri={khachDua} onDoi={setKhachDua} ariaLabel="Tiền khách đưa" /></span></div>
+                    {khachDua > 0 && <div className={`mt-1.5 flex justify-between font-medium ${thieu > 0 ? "text-canh-bao" : "text-nhan-dam"}`}><span>{thieu > 0 ? "Khách còn thiếu" : "Trả lại khách"}</span><span className="tabular-nums">{tienVN(thieu > 0 ? thieu : traLai)}</span></div>}
+                  </div>
+                )}
                 <dl className="mt-3 space-y-1 text-[14px]">
                   <div className="flex justify-between"><dt className="text-muc-3">Đã thu</dt><dd className="tabular-nums">{tienVN(daThu)}</dd></div>
                   <div className={`flex justify-between font-medium ${conNo > 0 ? "text-canh-bao" : conNo < 0 ? "text-loi" : "text-nhan-dam"}`}><dt>{conNo < 0 ? "Thu thừa" : "Còn nợ"}</dt><dd className="tabular-nums">{tienVN(Math.abs(conNo))}</dd></div>

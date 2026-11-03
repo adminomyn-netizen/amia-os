@@ -49,6 +49,9 @@ export function dsNganHangNhan(tk: TaiKhoanNhan[], chiNhanhId: string, phuongThu
 export const nganHangChonSan = (ds: string[], lanTruoc: string | null | undefined) => (lanTruoc && ds.includes(lanTruoc) ? lanTruoc : ds[0]);
 /** Máy chủ: ngân hàng ghi vào thanh_toan. Chỉ chuyển khoản / quẹt thẻ mới có; tiền mặt và trừ thẻ tiền luôn null; trống thì null. */
 export const nganHangKhoanThu = (phuongThuc: string, ten: string | undefined | null) => (coNganHang(phuongThuc) ? chuanTenNganHang(ten) : null);
+/** "Tiền khách đưa / Trả lại khách" của Thu ngân (chỉ để tính tiền thối tại quầy, KHÔNG ghi vào sổ thu tiền): khách đưa bao nhiêu so với phần thu bằng tiền mặt.
+ *  Chưa nhập tiền khách đưa (0) thì chưa có kết quả; đưa thiếu thì báo còn thiếu. */
+export const tinhTraLai = (khachDua: number, tienMat: number) => ({ traLai: khachDua > 0 ? Math.max(khachDua - tienMat, 0) : 0, thieu: khachDua > 0 ? Math.max(tienMat - khachDua, 0) : 0 });
 export type DonBan = {
   khachId: string | null; lichId: string | null; chiNhanhId: string;
   dong: DongDon[]; giamDon: number; vatPct: number; phuPhi: number; tip: number; nguoiGioiThieu: string; ghiChu: string; thu: KhoanThu[];

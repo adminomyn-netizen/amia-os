@@ -25,12 +25,14 @@ beforeAll(async () => {
   KH = (await q<{ id: string }>(`insert into khach_hang (ma, ho_ten, dien_thoai, chi_nhanh_id, nguon, nguoi_phu_trach_id) values ('KH1','Khách','0900000001',$1,'mkt',$2) returning id`, [CN, NV]))[0].id;
   const nhom = (await q<{ id: string }>(`select id from dich_vu_nhom where ten='Peel da'`))[0].id;
   DV = (await q<{ id: string }>(`insert into dich_vu (ma, nhom_id, ten, gia) values ('PEEL01',$1,'Peel',1500000) returning id`, [nhom]))[0].id;
+  // 0214 tự cộng điểm khi chốt đơn; file này chỉ kiểm cơ chế ĐỔI điểm nên tắt tích điểm để số dư không bị cộng thêm.
+  await q(`insert into cau_hinh (khoa, gia_tri) values ('diem.tich_bat','0') on conflict (khoa) do update set gia_tri='0'`);
   await q(`insert into khach_diem_so (khach_id, loai, so_diem) values ($1,'dieu_chinh',30)`, [KH]);
 });
 
 describe("đổi điểm thưởng ở thu ngân", () => {
   it("cấu hình theo SalonHero: 1 điểm = 10.000đ, mặc định tắt", async () => {
-    const r = await q<{ khoa: string; gia_tri: string }>(`select khoa, gia_tri from cau_hinh where khoa like 'diem.%' order by khoa`);
+    const r = await q<{ khoa: string; gia_tri: string }>(`select khoa, gia_tri from cau_hinh where khoa in ('diem.doi_bat','diem.doi_tien') order by khoa`);
     expect(r).toEqual([{ khoa: "diem.doi_bat", gia_tri: "0" }, { khoa: "diem.doi_tien", gia_tri: "10000" }]);
   });
   it("không đủ điểm: báo lỗi, không trừ điểm, đơn vẫn là nháp", async () => {

@@ -7,6 +7,7 @@ import { chuoi, chuoiHoacNull, so } from "@/lib/form";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import type { NguoiDung } from "@/lib/auth";
 import { timKhachMaSdt } from "@/lib/tim-khach-ma-sdt";
+import { tinhHanThe } from "@/lib/danh-muc";
 
 type KQ = { ok?: true; loi?: string; canhBao?: string };
 const lamMoi = (id?: string) => { revalidatePath("/the"); if (id) revalidatePath(`/the/${id}`); };
@@ -177,8 +178,27 @@ export async function thuHoiThe(fd: FormData): Promise<KQ> {
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }
 
+/** Hạn thẻ khi cấp, như SalonHero: ngày cấp (hoặc ngày tạo, tuỳ loại thẻ) + số tháng + số ngày của loại thẻ. Null = không hạn. */
+function hanTheKhiCap(g: { han_dung_thang: number | null; han_dung_ngay: number | null; han_tinh_tu: string }, ngayCap: string): string | null {
+  return tinhHanThe(g.han_dung_thang, g.han_dung_ngay, g.han_tinh_tu === "ngay_tao" ? homNayHCM() : ngayCap);
+}
+
+/** Dòng "Thời hạn thẻ" tính sẵn trong hộp Cấp thẻ (SalonHero hiện hạn ngay khi chọn loại thẻ + ngày cấp). Chỉ đọc. */
+export async function duKienHanThe(fd: FormData): Promise<{ dong?: { chu: string; kieu?: "tot" | "cho" | "loi" }[] }> {
+  if (!(await kiemQuyen("the.dieuchinh"))) return {};
+  const goiId = chuoi(fd, "goi_id");
+  if (!goiId) return {};
+  const { data: g } = await sb().from("goi_the").select("han_dung_thang, han_dung_ngay, han_tinh_tu").eq("id", goiId).maybeSingle();
+  if (!g) return {};
+  const ngayCap = NGAY.test(chuoi(fd, "ngay_cap")) ? chuoi(fd, "ngay_cap") : homNayHCM();
+  const han = hanTheKhiCap(g, ngayCap);
+  const tay = chuoi(fd, "han_dung");
+  return { dong: [{ chu: tay && NGAY.test(tay) ? `Thời hạn thẻ: ${ngayVN(tay)} (nhập tay; theo loại thẻ là ${han ? ngayVN(han) : "không hạn"})` : `Thời hạn thẻ: ${han ? ngayVN(han) : "không giới hạn"}` }] };
+}
+
 /** Cấp thẻ tay (SalonHero "Cấp thẻ mới", quyền memberCards.create = the.dieuchinh): tặng, chuyển thẻ từ phần mềm cũ. Không thu tiền, không tạo hoá đơn nên KHÔNG tính doanh thu.
- *  Như SalonHero: nhập số lần / số tiền trong thẻ + số lần / số tiền ĐÃ DÙNG ban đầu (thẻ chuyển sang đang dùng dở). Bán thẻ có thu tiền vẫn qua Thu ngân. */
+ *  Như SalonHero: số lần / số tiền trong thẻ + đã dùng ban đầu, NGÀY CẤP (hạn tự tính theo tháng + ngày của loại thẻ, sửa tay được), SỐ LƯỢNG CẤP, TẠI CHI NHÁNH, ghi chú.
+ *  Bán thẻ có thu tiền vẫn qua Thu ngân. */
 export async function capTheTay(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("the.dieuchinh");
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -186,7 +206,12 @@ export async function capTheTay(fd: FormData): Promise<KQ> {
   const r = await timKhachMaSdt(chuoi(fd, "khach"));
   if (!r.k || (nd.chiNhanhId && r.k.chi_nhanh_id !== nd.chiNhanhId)) return { loi: r.loi ?? "Không tìm thấy khách theo mã hoặc số điện thoại đó." };
   const k = r.k;
-  if (!k.chi_nhanh_id) return { loi: "Khách này chưa gắn chi nhánh, sửa hồ sơ khách trước." };
+  // Tại chi nhánh: mặc định chi nhánh của khách; người bị giới hạn chi nhánh chỉ cấp tại chi nhánh của mình.
+  const cnId = chuoi(fd, "chi_nhanh_id") || k.chi_nhanh_id || nd.chiNhanhId || "";
+  if (!cnId) return { loi: "Chọn chi nhánh cấp thẻ (khách này chưa gắn chi nhánh)." };
+  if (nd.chiNhanhId && cnId !== nd.chiNhanhId) return { loi: "Chỉ được cấp thẻ tại chi nhánh của mình." };
+  const { data: cn } = await db.from("chi_nhanh").select("id").eq("id", cnId).eq("hoat_dong", true).maybeSingle();
+  if (!cn) return { loi: "Chi nhánh cấp thẻ không còn hoạt động." };
   const { data: g } = await db.from("goi_the").select("*").eq("id", chuoi(fd, "goi_id")).maybeSingle();
   if (!g) return { loi: "Chọn gói thẻ." };
   const soBuoi = g.loai === "lan" ? Math.trunc(so(fd, "so_buoi")) || g.so_buoi || 0 : null;
@@ -198,20 +223,32 @@ export async function capTheTay(fd: FormData): Promise<KQ> {
   if (daDung < 0) return { loi: "Số đã dùng ban đầu không được âm." };
   if (g.loai === "lan" && daDung > (soBuoi ?? 0)) return { loi: "Số lần đã dùng ban đầu lớn hơn số lần của thẻ." };
   if (g.loai === "tien" && daDung > (soTien ?? 0)) return { loi: "Số tiền đã dùng ban đầu lớn hơn số tiền trong thẻ." };
-  const han = chuoi(fd, "han_dung");
-  if (han && !NGAY.test(han)) return { loi: "Hạn dùng không hợp lệ." };
+  const homNay = homNayHCM();
+  const ngayCap = chuoi(fd, "ngay_cap") || homNay;
+  if (!NGAY.test(ngayCap)) return { loi: "Ngày cấp không hợp lệ." };
+  if (ngayCap > homNay) return { loi: "Ngày cấp không được sau hôm nay." };
+  const hanTay = chuoi(fd, "han_dung");
+  if (hanTay && !NGAY.test(hanTay)) return { loi: "Hạn dùng không hợp lệ." };
+  const han = hanTay || hanTheKhiCap(g, ngayCap);
+  if (han && han < ngayCap) return { loi: "Hạn dùng phải từ ngày cấp trở đi." };
+  const soLuong = chuoi(fd, "so_luong") ? Math.trunc(so(fd, "so_luong")) : 1;
+  if (soLuong < 1 || soLuong > 20) return { loi: "Số lượng cấp từ 1 đến 20 thẻ mỗi lần." };
   const lyDo = chuoi(fd, "ly_do").slice(0, 300);
-  const ma = "TH" + String(Number((await db.rpc("so_tiep_theo", { p_khoa: "the" })).data ?? 0)).padStart(6, "0");
-  const { data: t, error } = await db.from("the_khach").insert({
-    ma, khach_id: k.id, goi_id: g.id, chi_nhanh_id: k.chi_nhanh_id as string, loai: g.loai, so_buoi_tong: soBuoi, tong_tien: soTien, gia_tri_buoi: 0, cap_tay: true,
-    han_dung: han || null, ghi_chu: lyDo || null,
-  }).select("id").single();
-  if (error || !t) return { loi: thongBaoLoi(error) };
-  const dong = [{ the_id: t.id, loai: g.loai === "lan" ? "cap" : "nap", so_buoi: soBuoi ?? 0, so_tien: soTien ?? 0, nguoi_id: nd.nhanVienId, ghi_chu: `Cấp tay: ${lyDo || "không ghi lý do"}` }];
-  if (daDung > 0) dong.push({ the_id: t.id, loai: "dieu_chinh", so_buoi: g.loai === "lan" ? -daDung : 0, so_tien: g.loai === "tien" ? -daDung : 0, nguoi_id: nd.nhanVienId, ghi_chu: `Đã dùng ban đầu khi cấp tay (${g.loai === "lan" ? `${daDung} lần` : `${daDung.toLocaleString("vi-VN")} đ`})` });
+  const ma: string[] = [];
+  for (let i = 0; i < soLuong; i++) ma.push("TH" + String(Number((await db.rpc("so_tiep_theo", { p_khoa: "the" })).data ?? 0)).padStart(6, "0"));
+  const { data: ds, error } = await db.from("the_khach").insert(ma.map((m) => ({
+    ma: m, khach_id: k.id, goi_id: g.id, chi_nhanh_id: cnId, loai: g.loai, so_buoi_tong: soBuoi, tong_tien: soTien, gia_tri_buoi: 0, cap_tay: true,
+    ngay_cap: ngayCap, han_dung: han || null, ghi_chu: lyDo || null,
+  }))).select("id, ma");
+  if (error || !ds?.length) return { loi: thongBaoLoi(error) };
+  const dong = ds.flatMap((t) => {
+    const d = [{ the_id: t.id, loai: g.loai === "lan" ? "cap" : "nap", so_buoi: soBuoi ?? 0, so_tien: soTien ?? 0, nguoi_id: nd.nhanVienId, ghi_chu: `Cấp tay: ${lyDo || "không ghi lý do"}` }];
+    if (daDung > 0) d.push({ the_id: t.id, loai: "dieu_chinh", so_buoi: g.loai === "lan" ? -daDung : 0, so_tien: g.loai === "tien" ? -daDung : 0, nguoi_id: nd.nhanVienId, ghi_chu: `Đã dùng ban đầu khi cấp tay (${g.loai === "lan" ? `${daDung} lần` : `${daDung.toLocaleString("vi-VN")} đ`})` });
+    return d;
+  });
   const { error: eSc } = await db.from("the_so_cai").insert(dong);
-  if (eSc) return { loi: `Đã tạo thẻ ${ma} nhưng chưa ghi được sổ thẻ (${thongBaoLoi(eSc)}). Báo Kỹ thuật, đừng cấp lại.` };
-  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "cap_the_tay", doi_tuong: "the_khach", doi_tuong_id: t.id, chi_tiet: { khach_id: k.id, goi_id: g.id, so_buoi: soBuoi, so_tien: soTien, da_dung: daDung } });
+  if (eSc) return { loi: `Đã tạo thẻ ${ds.map((t) => t.ma).join(", ")} nhưng chưa ghi được sổ thẻ (${thongBaoLoi(eSc)}). Báo Kỹ thuật, đừng cấp lại.` };
+  await db.from("nhat_ky_truy_cap").insert(ds.map((t) => ({ nguoi_id: nd.nhanVienId, hanh_dong: "cap_the_tay", doi_tuong: "the_khach", doi_tuong_id: t.id, chi_tiet: { khach_id: k.id, goi_id: g.id, so_buoi: soBuoi, so_tien: soTien, da_dung: daDung, ngay_cap: ngayCap, han_dung: han, chi_nhanh_id: cnId, so_luong: soLuong } })));
   lamMoi(); revalidatePath("/khach-hang/dung-the");
   return { ok: true };
 }

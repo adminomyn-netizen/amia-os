@@ -42,6 +42,8 @@ const chot = (h: string, ma: string, tien: number, diem = 0, tienDiem = 0) => lo
 
 beforeAll(async () => {
   db = await taoDbVoiMigration();
+  // 0214 tự cộng điểm khi chốt đơn; file này chỉ kiểm voucher + cơ chế ĐỔI điểm nên tắt tích điểm để số dư không bị cộng thêm từ các đơn trước.
+  await q(`insert into cau_hinh (khoa, gia_tri) values ('diem.tich_bat','0') on conflict (khoa) do update set gia_tri='0'`);
   CN = (await q<{ id: string }>(`select id from chi_nhanh where ma='VINH'`))[0].id;
   CN2 = (await q<{ id: string }>(`insert into chi_nhanh (ma, ten) values ('DL','Đà Lạt') returning id`))[0].id;
   await q(`insert into nhan_vien (id, ho_ten, vai_tro, chi_nhanh_id) values ($1,'Thu Ngân','thu_ngan',$2)`, [NV, CN]);

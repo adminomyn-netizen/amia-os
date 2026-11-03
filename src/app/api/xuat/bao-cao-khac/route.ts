@@ -6,6 +6,7 @@ import { khoangNgay } from "@/lib/bao-cao";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat } from "@/lib/xuat-excel";
 import { docLocDungThe, thamSoDiaChi, thamSoRpc } from "@/lib/khach-dung-the";
+import { nhanHanThe } from "@/lib/danh-muc";
 import { chuDoiTuongXuat, NHAN_LOAI, NHAN_VAI, TIEU_DE_NHAP, TIEU_DE_TEN_MUC } from "@/lib/hoa-hong-nhap";
 
 /** Xuất Excel cho các màn báo cáo nằm ngoài trang Báo cáo: hoa hồng, quyết toán hoa hồng, công nợ khách, đối soát bán hàng, thống kê khách, báo cáo marketing, công nợ nhà cung cấp.
@@ -164,15 +165,15 @@ export async function GET(req: Request) {
     const [{ data: dv }, { data: nhomDv }, { data: gt }, { data: sp }] = await Promise.all([
       db.from("dich_vu").select("ma, nhom_id, ten, don_vi_tinh, thoi_luong_phut, gia, gia_von, vat_pct, hoat_dong, dat_online").order("ma"),
       db.from("dich_vu_nhom").select("id, ten"),
-      db.from("goi_the").select("ma, ten, loai, gia, so_buoi, gia_tri_the, han_dung_ngay, hoat_dong").order("ma"),
+      db.from("goi_the").select("ma, ten, loai, gia, so_buoi, gia_tri_the, han_dung_thang, han_dung_ngay, hoat_dong").order("ma"),
       db.from("san_pham").select("ma, ten, nhom, don_vi, gia_ban, gia_nhap_don_vi, ton_toi_thieu, hoat_dong").order("ma"),
     ]);
     const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
     const tt = (b: boolean | null) => (b ? "Đang bán" : "Ngừng");
     bangs.push({ ten: "Dịch vụ", dong: (dv ?? []).map((r) => ({ ma: r.ma, nhom: r.nhom_id ? tenNhom.get(r.nhom_id) ?? "" : "", ten: r.ten, dvt: r.don_vi_tinh, tg: r.thoi_luong_phut, gia: Number(r.gia), von: tien ? Number(r.gia_von ?? 0) : "", vat: r.vat_pct, on: r.dat_online ? "Có" : "", tt: tt(r.hoat_dong) })),
       cot: [{ nhan: "Mã", khoa: "ma", rong: 14 }, { nhan: "Nhóm", khoa: "nhom", rong: 24 }, { nhan: "Tên dịch vụ", khoa: "ten", rong: 48 }, { nhan: "Đơn vị", khoa: "dvt", rong: 10 }, { nhan: "Thời gian (phút)", khoa: "tg", so: true }, { nhan: "Giá bán", khoa: "gia", tien: true }, ...(tien ? [{ nhan: "Giá vốn", khoa: "von", tien: true }] : []), { nhan: "VAT (%)", khoa: "vat", so: true }, { nhan: "Đặt online", khoa: "on", rong: 10 }, { nhan: "Tình trạng", khoa: "tt", rong: 12 }] });
-    bangs.push({ ten: "Gói thẻ", dong: (gt ?? []).map((r) => ({ ma: r.ma, ten: r.ten, loai: r.loai, gia: Number(r.gia), buoi: r.so_buoi ?? "", gtt: r.gia_tri_the != null ? Number(r.gia_tri_the) : "", han: r.han_dung_ngay ?? "", tt: tt(r.hoat_dong) })),
-      cot: [{ nhan: "Mã", khoa: "ma", rong: 14 }, { nhan: "Tên gói", khoa: "ten", rong: 52 }, { nhan: "Loại", khoa: "loai", rong: 10 }, { nhan: "Giá bán", khoa: "gia", tien: true }, { nhan: "Số buổi", khoa: "buoi", so: true }, { nhan: "Giá trị thẻ", khoa: "gtt", tien: true }, { nhan: "Hạn (ngày)", khoa: "han", so: true }, { nhan: "Tình trạng", khoa: "tt", rong: 12 }] });
+    bangs.push({ ten: "Gói thẻ", dong: (gt ?? []).map((r) => ({ ma: r.ma, ten: r.ten, loai: r.loai, gia: Number(r.gia), buoi: r.so_buoi ?? "", gtt: r.gia_tri_the != null ? Number(r.gia_tri_the) : "", han: nhanHanThe(r.han_dung_thang, r.han_dung_ngay), tt: tt(r.hoat_dong) })),
+      cot: [{ nhan: "Mã", khoa: "ma", rong: 14 }, { nhan: "Tên gói", khoa: "ten", rong: 52 }, { nhan: "Loại", khoa: "loai", rong: 10 }, { nhan: "Giá bán", khoa: "gia", tien: true }, { nhan: "Số buổi", khoa: "buoi", so: true }, { nhan: "Giá trị thẻ", khoa: "gtt", tien: true }, { nhan: "Thời hạn thẻ", khoa: "han", rong: 18 }, { nhan: "Tình trạng", khoa: "tt", rong: 12 }] });
     bangs.push({ ten: "Sản phẩm", dong: (sp ?? []).map((r) => ({ ma: r.ma, ten: r.ten, nhom: r.nhom ?? "", dv: r.don_vi ?? "", ban: Number(r.gia_ban ?? 0), nhap: tien ? Number(r.gia_nhap_don_vi ?? 0) : "", min: r.ton_toi_thieu ?? "", tt: tt(r.hoat_dong) })),
       cot: [{ nhan: "Mã", khoa: "ma", rong: 14 }, { nhan: "Sản phẩm", khoa: "ten", rong: 52 }, { nhan: "Nhóm", khoa: "nhom", rong: 22 }, { nhan: "Đơn vị", khoa: "dv", rong: 10 }, { nhan: "Giá bán", khoa: "ban", tien: true }, ...(tien ? [{ nhan: "Giá nhập", khoa: "nhap", tien: true }] : []), { nhan: "Tồn tối thiểu", khoa: "min", so: true }, { nhan: "Tình trạng", khoa: "tt", rong: 12 }] });
     tenTep = `danh-muc-${hom}`;

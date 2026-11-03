@@ -2,17 +2,21 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { tienVN } from "@/lib/dinh-dang";
+import { boDau, tienVN } from "@/lib/dinh-dang";
+import { O_NHAP, NUT_PHU } from "@/components/ui/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { luuNhaCungCap } from "../actions";
 
-export default async function TrangNhaCungCap() {
+export default async function TrangNhaCungCap({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const nd = await yeuCauQuyen("mua.xem");
+  const { q: tuKhoa = "" } = await searchParams;
+  const khoa = boDau(tuKhoa.trim());
   const sua = coQuyen(nd, "mua.tao");
   const [{ data: ncc }, { data: no }] = await Promise.all([sb().from("nha_cung_cap").select("*").order("ten"), sb().from("v_cong_no_ncc").select("ncc_id, con_no")]);
+  const dsLoc = (ncc ?? []).filter((r) => !khoa || boDau([r.ma, r.ten, r.nguoi_lien_he, r.dien_thoai, r.email, r.ma_so_thue].filter(Boolean).join(" ")).includes(khoa));
   const noMap = new Map((no ?? []).map((n) => [n.ncc_id, Number(n.con_no)]));
   const truong: Truong[] = [
     { ten: "ten", nhan: "Tên nhà cung cấp", loai: "chu", batBuoc: true, rong: true }, { ten: "nguoi_lien_he", nhan: "Người liên hệ", loai: "chu" }, { ten: "dien_thoai", nhan: "Điện thoại", loai: "chu" },
@@ -25,7 +29,13 @@ export default async function TrangNhaCungCap() {
       <TieuDeTrang tieuDe="Nhà cung cấp" phu="Danh mục nhà cung cấp, hạn thanh toán và công nợ hiện tại.">
         {sua && <NutHop nhan="Thêm nhà cung cấp" tieuDe="Thêm nhà cung cấp" truong={truong} action={luuNhaCungCap} giaTri={{ so_ngay_no: 30, hoat_dong: true }} />}
       </TieuDeTrang>
-      <Bang duLieu={ncc ?? []} khoa={(r) => r.id} trong="Chưa có nhà cung cấp nào."
+      {/* Ô tìm như SalonHero: tìm theo mã, tên, người liên hệ, điện thoại, email, mã số thuế (không dấu). */}
+      <form method="get" action="/kho-mua-sam/nha-cung-cap" role="search" className="mb-4 flex max-w-md gap-2">
+        <input name="q" defaultValue={tuKhoa} placeholder="Tìm mã, tên, người liên hệ, điện thoại..." aria-label="Tìm nhà cung cấp" className={O_NHAP} autoComplete="off" />
+        <button type="submit" className={NUT_PHU}>Tìm</button>
+      </form>
+      {khoa && <p className="-mt-2 mb-3 text-[12.5px] text-muc-3">Đang hiện {dsLoc.length}/{(ncc ?? []).length} nhà cung cấp. <Link href="/kho-mua-sam/nha-cung-cap" className="font-medium text-nhan-dam hover:underline">Bỏ tìm</Link></p>}
+      <Bang duLieu={dsLoc} khoa={(r) => r.id} trong={khoa ? "Không có nhà cung cấp nào khớp." : "Chưa có nhà cung cấp nào."}
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Nhà cung cấp", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
           { nhan: "Liên hệ", hienThi: (r) => [r.nguoi_lien_he, r.dien_thoai].filter(Boolean).join(" · ") },

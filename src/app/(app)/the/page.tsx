@@ -9,19 +9,27 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
-import { capTheTay, thucHienBuoi } from "./actions";
+import { capTheTay, duKienHanThe, thucHienBuoi } from "./actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 export const NHAN_TINH_TRANG: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
   hoat_dong: { nhan: "Đang dùng", kieu: "tot" }, sap_het: { nhan: "Sắp hết", kieu: "cho" }, het_han: { nhan: "Hết hạn", kieu: "loi" },
   hoan_thanh: { nhan: "Đã dùng hết", kieu: "tram" }, khoa: { nhan: "Đang khoá", kieu: "cho" }, thu_hoi: { nhan: "Đã thu hồi", kieu: "loi" },
 };
-/** Các ô của hộp Cấp thẻ tay (SalonHero "Cấp thẻ mới"): số lần / số tiền trong thẻ + đã dùng ban đầu, hạn, lý do. Dùng chung ở /the và Khách dùng thẻ. */
+/** Các ô của hộp Cấp thẻ tay (SalonHero "Cấp thẻ mới"): số lần / số tiền trong thẻ + đã dùng ban đầu, ngày cấp, hạn (trống = tự tính theo loại thẻ), số lượng cấp, lý do.
+ *  Dùng chung ở /the và Khách dùng thẻ. Ô "Tại chi nhánh" cần danh sách chi nhánh nên thêm bằng truongCapThe(chiNhanh). */
 export const TRUONG_CAP_THE: Truong[] = [
   { ten: "so_buoi", nhan: "Số lần (thẻ lần, nếu khác gói)", loai: "so" }, { ten: "da_dung_buoi", nhan: "Số lần đã dùng ban đầu", loai: "so", ghiChu: "Thẻ chuyển sang đang dùng dở: số lần khách đã làm." },
   { ten: "so_tien", nhan: "Số tiền trong thẻ (thẻ tiền, nếu khác gói)", loai: "tien" }, { ten: "da_dung_tien", nhan: "Số tiền đã dùng ban đầu", loai: "tien" },
-  { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ly_do", nhan: "Lý do cấp tay", loai: "chu", rong: true, batBuoc: true },
+  { ten: "ngay_cap", nhan: "Ngày cấp", loai: "ngay", ghiChu: "Bỏ trống = hôm nay." }, { ten: "han_dung", nhan: "Thời hạn thẻ (ngày hết hạn)", loai: "ngay", ghiChu: "Bỏ trống = tự tính: ngày cấp + số tháng, số ngày của loại thẻ." },
+  { ten: "so_luong", nhan: "Số lượng cấp", loai: "so", goiY: "1", ghiChu: "Cấp nhiều thẻ giống nhau cho cùng khách (tối đa 20)." },
+  { ten: "ly_do", nhan: "Lý do cấp tay", loai: "chu", rong: true, batBuoc: true },
 ];
+/** Hộp Cấp thẻ đủ như SalonHero: các ô chung + "Tại chi nhánh" (bỏ trống = chi nhánh của khách). */
+export function truongCapThe(chiNhanh: { id: string; ten: string }[]): Truong[] {
+  const i = TRUONG_CAP_THE.findIndex((t) => t.ten === "so_luong");
+  return [...TRUONG_CAP_THE.slice(0, i + 1), { ten: "chi_nhanh_id", nhan: "Tại chi nhánh", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Chi nhánh của khách" }, ...chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))] }, ...TRUONG_CAP_THE.slice(i + 1)];
+}
 const TAB = [{ ma: "lan", ten: "Thẻ liệu trình" }, { ma: "tien", ten: "Thẻ tiền" }];
 
 export default async function TrangThe({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; het?: string }> }) {
@@ -39,10 +47,11 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
     q = q.or(ids.length ? `ma.ilike.%${tuKhoa}%,khach_id.in.(${ids.join(",")})` : `ma.ilike.%${tuKhoa}%`);
   }
   if (sp.het !== "1") q = q.in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]);
-  const [{ data: the }, { data: goi }, { data: nv }, { data: dv }, { data: lk }] = await Promise.all([
+  const [{ data: the }, { data: goi }, { data: nv }, { data: dv }, { data: lk }, { data: cnCap }] = await Promise.all([
     q, db.from("goi_the").select("id, ten, loai, so_buoi, gia_tri_the").eq("hoat_dong", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"), db.from("dich_vu").select("id, ten").eq("hoat_dong", true).order("ten"),
     db.from("goi_the_dich_vu").select("goi_id, dich_vu_id"),
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
   ]);
   const idsK = [...new Set((the ?? []).map((t) => t.khach_id))] as string[];
   const { data: ks } = idsK.length ? await db.from("khach_hang").select("id, ho_ten, ma, dien_thoai").in("id", idsK) : { data: [] };
@@ -56,9 +65,10 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
     <>
       <TieuDeTrang tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Thực hiện buổi để trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
         {coQuyen(nd, "the.dieuchinh") && (
-          <NutHop kieu="phu" nhan="Cấp thẻ tay" tieuDe="Cấp thẻ tay" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Thẻ cấp tay không tính doanh thu." rong
+          <NutHop kieu="phu" nhan="Cấp thẻ tay" tieuDe="Cấp thẻ tay" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Cấp thẻ tại màn hình này không tính vào doanh thu của chi nhánh; muốn tính doanh thu thì bán thẻ ở Thu ngân." rong
+            thongTin={{ theoDoi: ["goi_id", "ngay_cap", "han_dung"], lay: duKienHanThe }}
             truong={[{ ten: "khach", nhan: "Khách (mã hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true }, { ten: "goi_id", nhan: "Gói thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: (goi ?? []).map((g) => ({ gia_tri: g.id, nhan: `${g.ten} (${g.loai === "lan" ? `${g.so_buoi} buổi` : "thẻ tiền"})` })) },
-              ...TRUONG_CAP_THE]} action={capTheTay} />
+              ...truongCapThe((cnCap ?? []).filter((c) => !nd.chiNhanhId || c.id === nd.chiNhanhId))]} action={capTheTay} />
         )}
       </TieuDeTrang>
       <Tab muc={TAB} dang={tab} goc="/the" />

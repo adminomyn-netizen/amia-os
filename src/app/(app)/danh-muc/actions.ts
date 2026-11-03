@@ -6,11 +6,11 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { chuanHoaTen, khoaTen, loiMa, loiMaVach, loiTen, tienToTheoNhom } from "@/lib/san-pham";
 import { bat, chuoi, chuoiHoacNull, mang, so, soHoacNull } from "@/lib/form";
 import type { TablesInsert } from "@/lib/supabase/database.types";
-import { CHE_DO_SUA_LAN, CHE_DO_SUA_TIEN, DON_VI_DICH_VU, DOI_TUONG, DON_VI_DUNG_TICH, HAN_TINH_TU, HINH_THUC_NHAP, MAU_THE, NOI_HIEN_THI, SO_BUOI_KHONG_GIOI_HAN, vatTuChon } from "@/lib/danh-muc";
+import { CHE_DO_SUA_LAN, CHE_DO_SUA_TIEN, DON_VI_DICH_VU, DOI_TUONG, DON_VI_DUNG_TICH, HAN_TINH_TU, HINH_THUC_NHAP, MAU_THE, NOI_HIEN_THI, SO_BUOI_KHONG_GIOI_HAN, THOI_GIAN_1_LAN, vatTuChon } from "@/lib/danh-muc";
 
 const KHO_ANH_DM = "danh-muc-anh";
 
-type KQ = { ok?: true; loi?: string };
+type KQ = { ok?: true; loi?: string; canhBao?: string };
 const xong = (): KQ => { revalidatePath("/danh-muc"); return { ok: true }; };
 
 export async function luuNhomDichVu(fd: FormData): Promise<KQ> {
@@ -43,14 +43,43 @@ export async function luuDichVu(fd: FormData): Promise<KQ> {
   const cnHopLe = new Set((cnAll ?? []).map((c) => c.id));
   if (chon.some((c) => !cnHopLe.has(c))) return { loi: "Có chi nhánh không còn hoạt động trong danh sách địa điểm. Mở lại hộp và chọn lại." };
   const diaDiem = chon.length === 0 || chon.length >= cnHopLe.size ? null : chon;
+  // Mã/SKU để trống thì tự sinh như SalonHero (DV + số): DV000123, bỏ qua số đã có người dùng đặt tay.
+  let ma = chuoi(fd, "ma").toUpperCase().replace(/\s+/g, "");
+  if (!ma && !id) ma = await maDichVuMoi();
   const row: TablesInsert<"dich_vu"> = {
-    ma: chuoi(fd, "ma").toUpperCase(), nhom_id: chuoi(fd, "nhom_id"), ten: chuoi(fd, "ten"), don_vi_tinh: donVi,
+    ma, nhom_id: chuoi(fd, "nhom_id"), ten: chuoi(fd, "ten"), don_vi_tinh: donVi,
     thoi_luong_phut: phut, gia: so(fd, "gia"), gia_von: so(fd, "gia_von"), vat_pct: vat.vat_pct, vat_loai: vat.vat_loai, hoat_dong: bat(fd, "hoat_dong"), dat_online: bat(fd, "dat_online"),
     ten_en: tenEn, mo_ta: moTa, doi_tuong: doiTuong, cho_sua_gia: bat(fd, "cho_sua_gia"), in_gio_phuc_vu: bat(fd, "in_gio_phuc_vu"), noi_hien_thi: noiHienThi, chi_nhanh_ids: diaDiem,
   };
-  if (!row.ma || !row.ten || !row.nhom_id) return { loi: "Nhập mã, tên và chọn nhóm dịch vụ." };
+  if (!row.ma || !row.ten || !row.nhom_id) return { loi: id ? "Nhập mã, tên và chọn nhóm dịch vụ." : "Nhập tên và chọn nhóm dịch vụ." };
   const { error } = id ? await db.from("dich_vu").update(row).eq("id", id) : await db.from("dich_vu").insert(row);
   if (error?.code === "23505") return { loi: "Mã dịch vụ này đã có. Đặt mã khác." };
+  return error ? { loi: thongBaoLoi(error) } : xong();
+}
+
+/** Mã dịch vụ tự sinh: DV + 6 chữ số theo bộ đếm dem_ma ("dich_vu"); gặp mã đã có (đặt tay) thì lấy số kế tiếp. */
+async function maDichVuMoi(): Promise<string> {
+  const db = sb();
+  for (let i = 0; i < 20; i++) {
+    const ma = "DV" + String(Number((await db.rpc("so_tiep_theo", { p_khoa: "dich_vu" })).data ?? 0)).padStart(6, "0");
+    const { count } = await db.from("dich_vu").select("id", { count: "exact", head: true }).eq("ma", ma);
+    if (!count) return ma;
+  }
+  return "DV" + Date.now().toString().slice(-8);
+}
+
+/** Tùy chọn giá của dịch vụ (SalonHero tab "Tùy chọn giá"): theo nhân viên + dịch vụ bổ sung, mỗi dòng có Giá cộng thêm.
+ *  Lưu = thay cả danh sách trong một giao dịch (hàm Postgres luu_tuy_chon_gia_dich_vu). Thu ngân đọc bảng dich_vu_tuy_chon_gia. */
+export async function luuTuyChonGia(fd: FormData): Promise<KQ> {
+  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const dichVuId = chuoi(fd, "dich_vu_id");
+  let ds: unknown;
+  try { ds = JSON.parse(chuoi(fd, "ds") || "[]"); } catch { return { loi: "Danh sách tùy chọn giá không hợp lệ." }; }
+  if (!Array.isArray(ds)) return { loi: "Danh sách tùy chọn giá không hợp lệ." };
+  const sach = ds.map((x: Record<string, unknown>) => x?.loai === "nhan_vien"
+    ? { loai: "nhan_vien", nhan_vien_id: String(x.nhan_vien_id ?? ""), gia_cong_them: Math.max(0, Math.round(Number(x.gia_cong_them) || 0)) }
+    : { loai: "bo_sung", ten: String(x?.ten ?? "").trim(), gia_cong_them: Math.max(0, Math.round(Number(x?.gia_cong_them) || 0)) });
+  const { error } = await sb().rpc("luu_tuy_chon_gia_dich_vu", { p_dich_vu: dichVuId, p_ds: sach });
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
 
@@ -120,12 +149,15 @@ export async function luuGoiThe(fd: FormData): Promise<KQ> {
     ma: chuoi(fd, "ma").toUpperCase(), ten: chuoi(fd, "ten"), loai, gia: so(fd, "gia"),
     so_buoi: soBuoi,
     gia_tri_the: loai === "tien" ? so(fd, "gia_tri_the") || null : null,
-    han_dung_ngay: soHoacNull(fd, "han_dung_ngay") || null, hoat_dong: bat(fd, "hoat_dong"),
+    han_dung_thang: Math.trunc(so(fd, "han_dung_thang")) || null, han_dung_ngay: Math.trunc(so(fd, "han_dung_ngay")) || null, hoat_dong: bat(fd, "hoat_dong"),
+    thoi_gian_1_lan_phut: loai === "lan" ? Math.trunc(so(fd, "thoi_gian_1_lan_phut")) : null,
     ten_en: tenEn, mo_ta: moTa, mau_the: mau || null, han_tinh_tu: hanTu, nhom_id: nhomId, cho_sua_gia: bat(fd, "cho_sua_gia"), che_do_sua_so: cheDo,
     gia_tri_1_lan: loai === "lan" ? (soHoacNull(fd, "gia_tri_1_lan") || null) : null, noi_hien_thi: noiHienThi,
     tu_tinh_gia_tri_1_lan: loai === "lan" && bat(fd, "tu_tinh_gia_tri_1_lan"), giam_hh_theo_giam_gia: loai === "lan" && bat(fd, "giam_hh_theo_giam_gia"),
   };
   if (!row.ma || !row.ten) return { loi: "Nhập mã và tên gói." };
+  if ((row.han_dung_thang ?? 0) < 0 || (row.han_dung_ngay ?? 0) < 0 || (row.han_dung_thang ?? 0) > 1200 || (row.han_dung_ngay ?? 0) > 36500) return { loi: "Thời hạn thẻ: số tháng từ 0 đến 1200, số ngày từ 0 đến 36500." };
+  if (loai === "lan" && !THOI_GIAN_1_LAN.some((x) => x.gia_tri === String(row.thoi_gian_1_lan_phut ?? 0))) return { loi: "Thời gian làm 1 lần dịch vụ không có trong danh sách." };
   if (loai === "lan" && !row.so_buoi) return { loi: "Thẻ liệu trình bắt buộc nhập số buổi (hoặc bật Không giới hạn số lần)." };
   if (loai === "tien" && !row.gia_tri_the) return { loi: "Thẻ tiền bắt buộc nhập giá trị nạp vào thẻ." };
   let goiId = id;
@@ -189,6 +221,14 @@ export async function luuSanPham(fd: FormData): Promise<KQ> {
   if ((dungTich != null && dungTich < 0) || (uoc != null && uoc < 0)) return { loi: "Dung tích và mức dùng một lần không được âm." };
   if ([dungTichDv, uocDv].some((d) => d && !DON_VI_DUNG_TICH.some((x) => x.gia_tri === d))) return { loi: "Đơn vị dung tích không có trong danh sách." };
   if (!HINH_THUC_NHAP.some((h) => h.gia_tri === hinhThuc) || !NOI_HIEN_THI.some((h) => h.gia_tri === noiHienThi)) return { loi: "Hình thức nhập hoặc nơi hiển thị không hợp lệ." };
+  // VAT (SalonHero "Mức thuế VAT (nếu có)") + địa điểm bán (bỏ trống / chọn đủ = mọi chi nhánh, như dịch vụ).
+  const vat = vatTuChon(chuoi(fd, "vat") || "0");
+  if (!vat) return { loi: "Chọn mức thuế VAT trong danh sách." };
+  const chonCn = [...new Set(mang(fd, "chi_nhanh_ids"))];
+  const { data: cnAll } = await db.from("chi_nhanh").select("id").eq("hoat_dong", true);
+  const cnHopLe = new Set((cnAll ?? []).map((c) => c.id));
+  if (chonCn.some((c) => !cnHopLe.has(c))) return { loi: "Có chi nhánh không còn hoạt động trong danh sách địa điểm. Mở lại hộp và chọn lại." };
+  const diaDiem = chonCn.length === 0 || chonCn.length >= cnHopLe.size ? null : chonCn;
   const { data: ds } = await db.from("san_pham").select("id, ma, ten, ma_vach");
   const trung = (ds ?? []).find((x) => x.id !== id && khoaTen(x.ten) === khoaTen(ten));
   if (trung) return { loi: `Tên này trùng sản phẩm đã có (${trung.ma}: ${trung.ten}). Sửa sản phẩm đó hoặc đặt tên khác (thêm quy cách, dung tích).` };
@@ -201,6 +241,7 @@ export async function luuSanPham(fd: FormData): Promise<KQ> {
     ban_le: bat(fd, "ban_le"), tieu_hao: bat(fd, "tieu_hao"), theo_doi_kho: bat(fd, "theo_doi_kho"), ton_toi_thieu: so(fd, "ton_toi_thieu"), hoat_dong: bat(fd, "hoat_dong"),
     ten_en: tenEn, mo_ta: moTa, nhan_hieu: nhanHieu, dung_tich: dungTich, dung_tich_dv: dungTich == null ? null : dungTichDv, uoc_tinh_1_lan: uoc, uoc_tinh_1_lan_dv: uoc == null ? null : uocDv,
     hinh_thuc_nhap: hinhThuc, cho_sua_gia: bat(fd, "cho_sua_gia"), noi_hien_thi: noiHienThi,
+    vat_pct: vat.vat_pct, vat_loai: vat.vat_loai, chi_nhanh_ids: diaDiem,
   };
   const { error } = id ? await db.from("san_pham").update(row).eq("id", id) : await db.from("san_pham").insert(row);
   return error ? { loi: thongBaoLoi(error) } : xong();
@@ -232,7 +273,44 @@ async function xoaMuc(quyen: "danhmuc.sua" | "nhanvien.quanly", bang: "dich_vu" 
   return xong();
 }
 export const xoaDichVu = async (fd: FormData) => xoaMuc("danhmuc.sua", "dich_vu", fd);
-export const xoaGoiThe = async (fd: FormData) => xoaMuc("danhmuc.sua", "goi_the", fd);
+/** Xoá loại thẻ như SalonHero: "các thẻ đã cấp ra vẫn còn nguyên giá trị sau khi loại thẻ này được xoá".
+ *  Loại chưa dùng ở đâu → xoá hẳn. Loại đã cấp cho khách / đã nằm trong hoá đơn → KHÔNG xoá cứng dữ liệu thật, chuyển "Ngừng" (ẩn khỏi bán), báo rõ. */
+async function xoaHoacNgungGoiThe(ids: string[]): Promise<{ xoa: number; ngung: number; loi?: string }> {
+  const db = sb();
+  let xoa = 0, ngung = 0;
+  for (const id of ids) {
+    // goi_the_dich_vu xoá theo (on delete cascade); thẻ khách / dòng hoá đơn chặn bằng khoá ngoại → 23503 → chuyển Ngừng.
+    const { error, count } = await db.from("goi_the").delete({ count: "exact" }).eq("id", id);
+    if (!error) { xoa += count ?? 0; continue; }
+    if (error.code !== "23503") return { xoa, ngung, loi: thongBaoLoi(error) };
+    const { error: e2, count: c2 } = await db.from("goi_the").update({ hoat_dong: false }, { count: "exact" }).eq("id", id);
+    if (e2) return { xoa, ngung, loi: thongBaoLoi(e2) };
+    ngung += c2 ?? 0;
+  }
+  return { xoa, ngung };
+}
+const baoXoaGoi = (r: { xoa: number; ngung: number }) => r.ngung ? `${r.xoa ? `Đã xoá ${r.xoa} loại thẻ. ` : ""}${r.ngung} loại thẻ đã cấp cho khách (hoặc đã có trong hoá đơn) nên KHÔNG xoá hẳn mà chuyển sang Ngừng, ẩn khỏi bán. Các thẻ đã cấp vẫn còn nguyên giá trị.` : undefined;
+export async function xoaGoiThe(fd: FormData): Promise<KQ> {
+  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  if (!id) return { loi: "Thiếu mục cần xoá." };
+  const r = await xoaHoacNgungGoiThe([id]);
+  if (r.loi) return { loi: r.loi };
+  if (!r.xoa && !r.ngung) return { loi: "Loại thẻ này không còn tồn tại." };
+  revalidatePath("/danh-muc");
+  return { ok: true, canhBao: baoXoaGoi(r) };
+}
+/** Chọn nhiều + Xoá hàng loạt loại thẻ (SalonHero #/cards: ô chọn từng dòng + nút Xoá). */
+export async function xoaNhieuGoiThe(fd: FormData): Promise<KQ> {
+  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const ids = [...new Set(mang(fd, "ids"))];
+  if (!ids.length) return { loi: "Chưa chọn loại thẻ nào." };
+  if (ids.length > 200) return { loi: "Mỗi lần xoá tối đa 200 loại thẻ." };
+  const r = await xoaHoacNgungGoiThe(ids);
+  revalidatePath("/danh-muc");
+  if (r.loi) return { loi: `${r.xoa || r.ngung ? `Đã xử lý ${r.xoa + r.ngung} loại, rồi dừng vì lỗi: ` : ""}${r.loi}` };
+  return { ok: true, canhBao: baoXoaGoi(r) ?? `Đã xoá ${r.xoa} loại thẻ.` };
+}
 export const xoaSanPham = async (fd: FormData) => xoaMuc("danhmuc.sua", "san_pham", fd);
 export const xoaNhomDichVu = async (fd: FormData) => xoaMuc("danhmuc.sua", "dich_vu_nhom", fd);
 export const xoaChiNhanh = async (fd: FormData) => xoaMuc("nhanvien.quanly", "chi_nhanh", fd);

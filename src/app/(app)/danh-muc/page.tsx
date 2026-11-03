@@ -14,9 +14,14 @@ import { LocNhomDanhMuc } from "@/components/cai-dat/LocNhomDanhMuc";
 import { NHAN_VAN_DE, khoaTen, vanDeSanPham } from "@/lib/san-pham";
 import { NutDoiAnh } from "@/components/danh-muc/NutDoiAnh";
 import { NutNhapExcel } from "@/components/danh-muc/NutNhapExcel";
+import { LocThemDanhMuc } from "@/components/danh-muc/LocThemDanhMuc";
+import { NutXoaNhieu, OChonDong } from "@/components/danh-muc/NutXoaNhieu";
+import { NutTuyChonGia, type TuyChonGia } from "@/components/danh-muc/NutTuyChonGia";
+import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
+import type { LuaChon } from "@/components/ui/Chon";
 import { nhapExcelDichVu, nhapExcelGoiThe, nhapExcelSanPham } from "./nhap-excel";
-import { CHE_DO_SUA_LAN, CHE_DO_SUA_TIEN, DOI_TUONG, DON_VI_DICH_VU, DON_VI_DUNG_TICH, GIO_CHON, HAN_TINH_TU, HINH_THUC_NHAP, MAU_THE, NOI_HIEN_THI, PHUT_CHON, VAT_CHON, laKhongGioiHan, nhanThoiLuong, tachGioPhut, urlAnhDanhMuc, vatThanhChon } from "@/lib/danh-muc";
-import { chuyenNhomDichVu, datAnhDanhMuc, luuChiNhanh, luuChoLam, luuDatLichOnline, luuDichVu, luuGoiThe, luuNhomDichVu, luuNhomThe, luuSanPham, xoaChiNhanh, xoaChoLam, xoaDichVu, xoaGoiThe, xoaNhomDichVu, xoaNhomThe, xoaSanPham } from "./actions";
+import { CHE_DO_SUA_LAN, CHE_DO_SUA_TIEN, DOI_TUONG, DON_VI_DICH_VU, DON_VI_DUNG_TICH, GIO_CHON, HAN_TINH_TU, HINH_THUC_NHAP, MAU_THE, NOI_HIEN_THI, PHUT_CHON, THOI_GIAN_1_LAN, VAT_CHON, laKhongGioiHan, nhanHanThe, nhanThoiLuong, tachGioPhut, urlAnhDanhMuc, vatThanhChon } from "@/lib/danh-muc";
+import { chuyenNhomDichVu, datAnhDanhMuc, luuChiNhanh, luuChoLam, luuDatLichOnline, luuDichVu, luuGoiThe, luuNhomDichVu, luuNhomThe, luuSanPham, luuTuyChonGia, xoaChiNhanh, xoaChoLam, xoaDichVu, xoaGoiThe, xoaNhieuGoiThe, xoaNhomDichVu, xoaNhomThe, xoaSanPham } from "./actions";
 
 const TAB = [
   { ma: "dich-vu", ten: "Dịch vụ" }, { ma: "goi-the", ten: "Gói thẻ" }, { ma: "san-pham", ten: "Sản phẩm và vật tư" },
@@ -55,13 +60,27 @@ const NHOM_CAP = [{ gia_tri: "", nhan: "Không phải vật tư cấp theo ca" }
 /** Giá trị đưa vào hộp Sửa / Nhân bản: cột có thể null đổi thành chuỗi rỗng để ô nhập hiện đúng. */
 function giaTriSanPham(r: Record<string, unknown>): GiaTri {
   const x = r as Record<string, string | number | boolean | null>;
-  return { ...x, ma_vach: x.ma_vach ?? "", nhom_cap: x.nhom_cap ?? "", ten_en: x.ten_en ?? "", nhan_hieu: x.nhan_hieu ?? "", mo_ta: x.mo_ta ?? "", dung_tich: x.dung_tich ?? "", dung_tich_dv: x.dung_tich_dv ?? "", uoc_tinh_1_lan: x.uoc_tinh_1_lan ?? "", uoc_tinh_1_lan_dv: x.uoc_tinh_1_lan_dv ?? "" };
+  return { ...x, vat: vatThanhChon(x.vat_pct as number | null, x.vat_loai as string | null), chi_nhanh_ids: Array.isArray(r.chi_nhanh_ids) ? (r.chi_nhanh_ids as string[]) : [], ma_vach: x.ma_vach ?? "", nhom_cap: x.nhom_cap ?? "", ten_en: x.ten_en ?? "", nhan_hieu: x.nhan_hieu ?? "", mo_ta: x.mo_ta ?? "", dung_tich: x.dung_tich ?? "", dung_tich_dv: x.dung_tich_dv ?? "", uoc_tinh_1_lan: x.uoc_tinh_1_lan ?? "", uoc_tinh_1_lan_dv: x.uoc_tinh_1_lan_dv ?? "" };
 }
-function truongSanPham(): Truong[] {
+/** Lựa chọn dùng trong hộp sản phẩm: chi nhánh (địa điểm bán) + nhãn hiệu (danh mục ~314 hãng của SalonHero + tên hãng đang có trên sản phẩm). */
+type LcSanPham = { chiNhanh: LuaChon[]; nhanHieu: LuaChon[] };
+async function luaChonSanPham(db: ReturnType<typeof sb>, nhanHieuDangCo: (string | null)[]): Promise<LcSanPham> {
+  const [{ data: cn }, { data: nh }] = await Promise.all([
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
+    db.from("nhan_hieu").select("ten, quoc_gia, ma_quoc_gia").eq("hoat_dong", true).order("ten"),
+  ]);
+  const daCo = new Set((nh ?? []).map((x) => x.ten.trim().toLowerCase()));
+  const them = [...new Set(nhanHieuDangCo.map((x) => x?.trim()).filter((x): x is string => !!x && !daCo.has(x.toLowerCase())))];
+  const nhanHieu: LuaChon[] = [{ gia_tri: "", nhan: "Chọn nhãn hiệu" },
+    ...[...(nh ?? []).map((x) => ({ gia_tri: x.ten, nhan: x.quoc_gia || x.ma_quoc_gia ? `${x.ten} · ${x.quoc_gia ?? x.ma_quoc_gia}` : x.ten })), ...them.map((x) => ({ gia_tri: x, nhan: x }))]
+      .sort((a, b) => a.gia_tri.localeCompare(b.gia_tri, "vi", { sensitivity: "base" }))];
+  return { chiNhanh: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })), nhanHieu };
+}
+function truongSanPham(lc: LcSanPham): Truong[] {
   return [
     { ten: "ma", nhan: "Mã nội bộ (để trống = tự sinh)", loai: "chu", goiY: "MP-0001, VT-0001..." }, { ten: "ma_vach", nhan: "Mã vạch (8–14 chữ số)", loai: "chu" },
     { ten: "ten", nhan: "Tên (loại hàng + thương hiệu + tên + quy cách)", loai: "chu", batBuoc: true, rong: true, goiY: "Kem chống nắng Heliocare 360 SPF50+ 50ml" },
-    { ten: "ten_en", nhan: "Tên tiếng Anh", loai: "chu", rong: true }, { ten: "nhan_hieu", nhan: "Nhãn hiệu", loai: "chu", goiY: "Heliocare, Dr.Lab..." },
+    { ten: "ten_en", nhan: "Tên tiếng Anh", loai: "chu", rong: true }, { ten: "nhan_hieu", nhan: "Nhãn hiệu", loai: "chon", luaChon: lc.nhanHieu, goiY: "Chọn nhãn hiệu" },
     { ten: "mo_ta", nhan: "Mô tả", loai: "nhieu_dong", goiY: "Công dụng, cách dùng..." },
     { ten: "nhom", nhan: "Nhóm hàng", loai: "chu", goiY: "Mỹ phẩm, vật tư tiêm..." }, { ten: "nhom_cap", nhan: "Nhóm cấp vật tư", loai: "chon", luaChon: NHOM_CAP },
     { ten: "don_vi", nhan: "Đơn vị DÙNG/CẤP", loai: "chu", batBuoc: true, goiY: "ml, shot, cái..." }, { ten: "don_vi_mua", nhan: "Đơn vị MUA", loai: "chu", goiY: "chai, hộp..." },
@@ -70,15 +89,21 @@ function truongSanPham(): Truong[] {
     { ten: "cho_sua_gia", nhan: "Sửa giá khi thanh toán", loai: "gat" }, { ten: "hinh_thuc_nhap", nhan: "Hình thức nhập hàng", loai: "chon", luaChon: HINH_THUC_NHAP },
     { ten: "dung_tich", nhan: "Dung tích / số lượng", loai: "so", goiY: "VD: 300" }, { ten: "dung_tich_dv", nhan: "Đơn vị dung tích", loai: "chon", luaChon: DON_VI_DUNG_TICH },
     { ten: "uoc_tinh_1_lan", nhan: "Ước tính một lần sử dụng", loai: "so", ghiChu: "Chỉ để tham khảo, có thể thay đổi khi thanh toán." }, { ten: "uoc_tinh_1_lan_dv", nhan: "Đơn vị ước tính", loai: "chon", luaChon: DON_VI_DUNG_TICH },
-    { ten: "noi_hien_thi", nhan: "Nơi hiển thị", loai: "chon", luaChon: NOI_HIEN_THI, rong: true },
+    { ten: "vat", nhan: "Mức thuế VAT (nếu có)", loai: "chon", luaChon: VAT_CHON, ghiChu: "Dùng khi kết nối phần mềm hoá đơn điện tử. Giá bán là giá sau thuế." },
+    { ten: "noi_hien_thi", nhan: "Nơi hiển thị", loai: "chon", luaChon: NOI_HIEN_THI },
+    { ten: "chi_nhanh_ids", nhan: "Địa điểm bán (bỏ trống = tất cả các địa điểm)", loai: "nhieu", luaChon: lc.chiNhanh },
     { ten: "ban_le", nhan: "Bán lẻ cho khách", loai: "gat" }, { ten: "tieu_hao", nhan: "Vật tư tiêu hao dịch vụ", loai: "gat" },
     { ten: "theo_doi_kho", nhan: "Theo dõi tồn kho", loai: "gat" }, { ten: "bat_buoc_han_dung", nhan: "Bắt buộc nhập hạn dùng khi nhập kho", loai: "gat" }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" },
   ];
 }
 
-export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string; loai?: string; nhom?: string; q?: string; n?: string; trang?: string }> }) {
+export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string; loai?: string; nhom?: string; q?: string; n?: string; trang?: string; cn?: string; hien?: string }> }) {
   const nd = await yeuCauQuyen("danhmuc.xem");
-  const { tab: t, loai, nhom: nhomChon = "", q: tuKhoa = "", n: nS, trang: trangS } = await searchParams;
+  const { tab: t, loai, nhom: nhomChon = "", q: tuKhoa = "", n: nS, trang: trangS, cn: cnS = "", hien: hienS = "" } = await searchParams;
+  // Lọc chi nhánh (SalonHero "Tất cả các chi nhánh") và nơi hiển thị (SalonHero "Tùy chọn nơi hiển thị") trên danh sách.
+  const cnChon = /^[0-9a-f-]{36}$/i.test(cnS) ? cnS : "";
+  const hienChon = NOI_HIEN_THI.some((x) => x.gia_tri === hienS) ? hienS : "";
+  const coCn = (ids: string[] | null) => !cnChon || !ids || ids.length === 0 || ids.includes(cnChon);
   const moi = (CO_TRANG as readonly number[]).includes(Number(nS)) ? Number(nS) : CO_TRANG_MAC_DINH;
   const trangXin = Math.max(1, Math.floor(Number(trangS)) || 1);
   const giuN = moi !== CO_TRANG_MAC_DINH ? String(moi) : "";
@@ -97,9 +122,16 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
   let nutThem: React.ReactNode = null;
 
   if (tab === "dich-vu") {
-    const { data: cnDv } = await db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma");
+    const [{ data: cnDv }, { data: tcg }, { data: nvTcg }] = await Promise.all([
+      db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
+      db.from("dich_vu_tuy_chon_gia").select("dich_vu_id, loai, nhan_vien_id, ten, gia_cong_them, thu_tu").order("thu_tu"),
+      db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"),
+    ]);
+    const tcgTheoDv = new Map<string, TuyChonGia[]>();
+    for (const x of tcg ?? []) tcgTheoDv.set(x.dich_vu_id, [...(tcgTheoDv.get(x.dich_vu_id) ?? []), { loai: x.loai === "nhan_vien" ? "nhan_vien" : "bo_sung", nhan_vien_id: x.nhan_vien_id, ten: x.ten, gia_cong_them: Number(x.gia_cong_them) }]);
+    const nvLC = luaChonNhanVien(nvTcg ?? []);
     const truong: Truong[] = [
-      { ten: "ma", nhan: "Mã dịch vụ", loai: "chu", batBuoc: true, goiY: "VD: MFU01" }, { ten: "nhom_id", nhan: "Nhóm", loai: "chon", luaChon: nhomLC, batBuoc: true },
+      { ten: "ma", nhan: "Mã dịch vụ (để trống = tự sinh)", loai: "chu", goiY: "VD: MFU01 · trống: DV000001" }, { ten: "nhom_id", nhan: "Nhóm", loai: "chon", luaChon: nhomLC, batBuoc: true },
       { ten: "ten", nhan: "Tên dịch vụ", loai: "chu", batBuoc: true, rong: true }, { ten: "ten_en", nhan: "Tên tiếng Anh", loai: "chu", rong: true },
       { ten: "mo_ta", nhan: "Mô tả", loai: "nhieu_dong", goiY: "Dịch vụ gồm những gì, ai nên làm..." },
       { ten: "doi_tuong", nhan: "Đối tượng", loai: "chon", luaChon: DOI_TUONG }, { ten: "don_vi_tinh", nhan: "Đơn vị tính", loai: "chon", luaChon: DON_VI_DICH_VU },
@@ -120,12 +152,14 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
       <NutHop nhan="Thêm dịch vụ" tieuDe="Thêm dịch vụ" truong={truong} giaTri={{ don_vi_tinh: "buổi", tg_gio: "1", tg_phut: "0", doi_tuong: "ca_hai", vat: "0", noi_hien_thi: "tat_ca", hoat_dong: true, chi_nhanh_ids: [] }} action={luuDichVu} />
     </>;
     const tatDv = dv.data ?? [];
-    const dvLoc = tatDv.filter((r) => (!nhomChon || r.nhom_id === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ten_en ?? ""}`).includes(khoaTim)));
+    const dvLoc = tatDv.filter((r) => (!nhomChon || r.nhom_id === nhomChon) && coCn(r.chi_nhanh_ids) && (!hienChon || r.noi_hien_thi === hienChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ten_en ?? ""}`).includes(khoaTim)));
     const nhomDv = (nhom.data ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten, dem: tatDv.filter((r) => r.nhom_id === n.id).length })).filter((n) => n.dem > 0);
     const pt = catTrang(dvLoc, trangXin, moi);
     noiDung = (
       <>
-      <LocNhomDanhMuc tab="dich-vu" nhom={nhomDv} tong={tatDv.length} chon={nhomChon} q={tuKhoa} hien={dvLoc.length} giu={{ n: giuN }} />
+      <LocThemDanhMuc ten="cn" aria="Lọc chi nhánh" nhanTatCa="Tất cả các chi nhánh" muc={(cnDv ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} chon={cnChon} thamSo={{ tab: "dich-vu", nhom: nhomChon, q: tuKhoa, n: giuN, hien: hienChon }} />
+      <LocThemDanhMuc ten="hien" aria="Lọc nơi hiển thị" nhanTatCa="Mọi nơi hiển thị" muc={NOI_HIEN_THI} chon={hienChon} thamSo={{ tab: "dich-vu", nhom: nhomChon, q: tuKhoa, n: giuN, cn: cnChon }} />
+      <LocNhomDanhMuc tab="dich-vu" nhom={nhomDv} tong={tatDv.length} chon={nhomChon} q={tuKhoa} hien={dvLoc.length} giu={{ n: giuN, cn: cnChon, hien: hienChon }} />
       <Bang duLieu={pt.hang} khoa={(r) => r.id} trong={tatDv.length ? "Không có dịch vụ nào khớp." : "Chưa có dịch vụ. Bấm Thêm dịch vụ để bắt đầu."}
         cot={[
           { nhan: "Ảnh", hienThi: (r) => <NutDoiAnh id={r.id} an={{ bang: "dich_vu" }} anh={urlAnhDanhMuc(r.anh)} ten={r.ten} sua={sua} action={datAnhDanhMuc} /> },
@@ -135,6 +169,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           ...(sua ? [{ nhan: "", hienThi: (r: Dv) => (
             <span className="flex flex-wrap gap-x-4 gap-y-1">
               <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={giaTriDv(r)} action={luuDichVu} />
+              <NutTuyChonGia dichVuId={r.id} tenDv={r.ten} giaGoc={Number(r.gia)} ds={tcgTheoDv.get(r.id) ?? []} nhanVien={nvLC} sua={sua} action={luuTuyChonGia} />
               <NutHop kieu="chu" nhan="Nhân bản" tieuDe={`Nhân bản: ${r.ten}`} moTa="Tạo dịch vụ mới có cùng thông tin. Đổi mã và tên trước khi lưu; ảnh và định mức không được sao chép." truong={truong} giaTri={{ ...giaTriDv(r), id: undefined, ma: `${r.ma}-2`, ten: `${r.ten} (bản sao)` }} action={luuDichVu} />
               <NutHop kieu="chu" nhan="Chuyển nhóm" tieuDe={`Chuyển nhóm: ${r.ten}`} moTa="Chọn nhóm đích và các dịch vụ (cùng nhóm hiện tại) cần chuyển." truong={[
                 { ten: "nhom_id", nhan: "Chuyển sang nhóm", loai: "chon", luaChon: nhomLC.filter((n) => n.gia_tri !== r.nhom_id), batBuoc: true, rong: true },
@@ -144,7 +179,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
             </span>
           ) }] : []),
         ]} />
-      <PhanTrangDanhMuc tong={dvLoc.length} trang={pt.trang} moi={moi} don="dịch vụ" thamSo={{ tab: "dich-vu", nhom: nhomChon, q: tuKhoa }} />
+      <PhanTrangDanhMuc tong={dvLoc.length} trang={pt.trang} moi={moi} don="dịch vụ" thamSo={{ tab: "dich-vu", nhom: nhomChon, q: tuKhoa, cn: cnChon, hien: hienChon }} />
       </>
     );
   } else if (tab === "goi-the") {
@@ -167,15 +202,17 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
       { ten: "che_do_lan", nhan: "Số lần tại thu ngân", loai: "chon", luaChon: CHE_DO_SUA_LAN, hienKhi: { ten: "loai", la: ["lan"] } },
       { ten: "gia_tri_the", nhan: "Giá trị nạp vào thẻ (thẻ tiền)", loai: "tien", hienKhi: { ten: "loai", la: ["tien"] } },
       { ten: "che_do_tien", nhan: "Số tiền tại thu ngân", loai: "chon", luaChon: CHE_DO_SUA_TIEN, hienKhi: { ten: "loai", la: ["tien"] } },
-      { ten: "han_dung_ngay", nhan: "Hạn dùng (ngày, bỏ trống = không hạn)", loai: "so" }, { ten: "han_tinh_tu", nhan: "Hạn tính từ", loai: "chon", luaChon: HAN_TINH_TU },
+      { ten: "han_tinh_tu", nhan: "Thời hạn thẻ tính", loai: "chon", luaChon: HAN_TINH_TU, rong: true },
+      { ten: "han_dung_thang", nhan: "Thời hạn: số tháng", loai: "so", goiY: "VD: 12" }, { ten: "han_dung_ngay", nhan: "Thời hạn: số ngày", loai: "so", goiY: "VD: 0", ghiChu: "Hạn = ngày cấp + số tháng + số ngày. Bỏ trống cả hai = không hạn. Thời hạn thẻ có thể thay đổi khi bán thẻ." },
+      { ten: "thoi_gian_1_lan_phut", nhan: "Thời gian làm 1 lần dịch vụ", loai: "chon", luaChon: THOI_GIAN_1_LAN, hienKhi: { ten: "loai", la: ["lan"] } },
       { ten: "noi_hien_thi", nhan: "Nơi hiển thị", loai: "chon", luaChon: NOI_HIEN_THI }, { ten: "hoat_dong", nhan: "Đang bán", loai: "gat" },
       { ten: "dich_vu_ids", nhan: "Dịch vụ được dùng thẻ (bỏ trống = mọi dịch vụ)", loai: "nhieu", luaChon: dvLC },
     ];
     const giaTriGoi = (r: Goi): GiaTri => {
       const kgh = r.loai === "lan" && laKhongGioiHan(r.so_buoi);
-      return { ...r, ten_en: r.ten_en ?? "", mo_ta: r.mo_ta ?? "", mau_the: r.mau_the ?? "", nhom_id: nhomCuaThe(r), khong_gioi_han: kgh, so_buoi: kgh ? "" : r.so_buoi, gia_tri_1_lan: r.gia_tri_1_lan ?? "", che_do_lan: r.che_do_sua_so, che_do_tien: r.che_do_sua_so, dich_vu_ids: (lk.data ?? []).filter((l) => l.goi_id === r.id).map((l) => l.dich_vu_id) };
+      return { ...r, han_dung_thang: r.han_dung_thang ?? "", han_dung_ngay: r.han_dung_ngay ?? "", thoi_gian_1_lan_phut: String(r.thoi_gian_1_lan_phut ?? 0), ten_en: r.ten_en ?? "", mo_ta: r.mo_ta ?? "", mau_the: r.mau_the ?? "", nhom_id: nhomCuaThe(r), khong_gioi_han: kgh, so_buoi: kgh ? "" : r.so_buoi, gia_tri_1_lan: r.gia_tri_1_lan ?? "", che_do_lan: r.che_do_sua_so, che_do_tien: r.che_do_sua_so, dich_vu_ids: (lk.data ?? []).filter((l) => l.goi_id === r.id).map((l) => l.dich_vu_id) };
     };
-    nutThem = sua && <><NutNhapExcel tieuDe="Nhập loại thẻ từ Excel" moTa="Mẫu giống SalonHero (thẻ lần / thẻ tiền). Mã thẻ tự sinh; thời hạn tính tháng × 30 ngày." mau="/mau-nhap/the.xlsx" action={nhapExcelGoiThe} /><NutHop nhan="Thêm gói thẻ" tieuDe="Thêm gói thẻ" rong truong={truong} giaTri={{ loai: "lan", hoat_dong: true, han_tinh_tu: "ngay_cap", noi_hien_thi: "tat_ca", che_do_lan: "co_dinh", che_do_tien: "co_dinh", mau_the: "", nhom_id: macDinh?.id ?? "" }} action={luuGoiThe} /></>;
+    nutThem = sua && <><NutNhapExcel tieuDe="Nhập loại thẻ từ Excel" moTa="Mẫu giống SalonHero (thẻ lần / thẻ tiền). Mã thẻ tự sinh; thời hạn lưu đúng số tháng như SalonHero." mau="/mau-nhap/the.xlsx" action={nhapExcelGoiThe} /><NutHop nhan="Thêm gói thẻ" tieuDe="Thêm gói thẻ" rong truong={truong} giaTri={{ loai: "lan", hoat_dong: true, han_tinh_tu: "ngay_cap", thoi_gian_1_lan_phut: "0", noi_hien_thi: "tat_ca", che_do_lan: "co_dinh", che_do_tien: "co_dinh", mau_the: "", nhom_id: macDinh?.id ?? "" }} action={luuGoiThe} /></>;
     const tatGoi = goi.data ?? [];
     const loaiLoc = loai === "lan" || loai === "tien" ? loai : "";
     const goiLoc = tatGoi.filter((r) => (!loaiLoc || r.loai === loaiLoc) && (!nhomChon || nhomCuaThe(r) === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ten_en ?? ""}`).includes(khoaTim)));
@@ -192,32 +229,37 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
         <Link href={hrefLoai("tien")} className={chipLoai(loaiLoc === "tien")}>Thẻ số tiền ({demLoai("tien")})</Link>
       </nav>
       <LocNhomDanhMuc tab="goi-the" nhom={nhomGoi} tong={tatGoi.length} chon={nhomChon} q={tuKhoa} hien={goiLoc.length} giu={{ loai: loaiLoc, n: giuN }} />
+      {sua && pt.hang.length > 0 && <NutXoaNhieu nhom="goi-the" don="loại thẻ" canhBao="Chú ý: các thẻ đã cấp ra vẫn còn nguyên giá trị sau khi loại thẻ này được xoá. Loại thẻ đã cấp cho khách hoặc đã có trong hoá đơn sẽ không bị xoá hẳn mà chuyển sang Ngừng (ẩn khỏi bán)." action={xoaNhieuGoiThe} />}
       <Bang duLieu={pt.hang} khoa={(r) => r.id} trong={tatGoi.length ? "Không có gói thẻ nào khớp." : "Chưa có gói thẻ."}
         cot={[
+          ...(sua ? [{ nhan: "Chọn", hienThi: (r: Goi) => <OChonDong nhom="goi-the" id={r.id} ten={r.ten} /> }] : []),
           { nhan: "Mã", hienThi: (r) => r.ma }, { chinh: true, nhan: "Gói", hienThi: (r) => <span className="flex items-center gap-2 text-muc">{r.mau_the && <span aria-hidden className="inline-block h-3 w-3 shrink-0 rounded-[3px]" style={{ backgroundColor: r.mau_the }} />}{r.ten}</span> },
           { nhan: "Loại", hienThi: (r) => (r.loai === "lan" ? (laKhongGioiHan(r.so_buoi) ? "Liệu trình không giới hạn" : `Liệu trình ${r.so_buoi} buổi`) : "Thẻ tiền") }, { nhan: "Giá bán", hienThi: (r) => tienVN(r.gia), phai: true },
           { nhan: "Giá trị / buổi", hienThi: (r) => (r.loai === "lan" ? (laKhongGioiHan(r.so_buoi) ? "" : tienVN(Math.round(r.gia / (r.so_buoi || 1)))) : `nạp ${tienVN(r.gia_tri_the)}`), phai: true },
-          { nhan: "Hạn", hienThi: (r) => (r.han_dung_ngay ? `${r.han_dung_ngay} ngày${r.han_tinh_tu === "ngay_tao" ? " (từ ngày tạo)" : ""}` : "Không hạn") }, { nhan: "Nhóm thẻ", hienThi: (r) => tenNhomThe.get(nhomCuaThe(r)) ?? "" }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
-          ...(sua ? [{ nhan: "", hienThi: (r: Goi) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={giaTriGoi(r)} action={luuGoiThe} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaGoiThe} /></span> }] : []),
+          { nhan: "Thời hạn", hienThi: (r) => { const h = nhanHanThe(r.han_dung_thang, r.han_dung_ngay); return h !== "Không hạn" && r.han_tinh_tu === "ngay_tao" ? `${h} (từ ngày tạo)` : h; } },
+          { nhan: "1 lần làm", hienThi: (r) => (r.loai === "lan" && r.thoi_gian_1_lan_phut ? `${r.thoi_gian_1_lan_phut} phút` : ""), phai: true }, { nhan: "Nhóm thẻ", hienThi: (r) => tenNhomThe.get(nhomCuaThe(r)) ?? "" }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
+          ...(sua ? [{ nhan: "", hienThi: (r: Goi) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={giaTriGoi(r)} action={luuGoiThe} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan={`Bạn có muốn xoá ${r.ten} không? Chú ý: các thẻ đã cấp ra vẫn còn nguyên giá trị sau khi loại thẻ này được xoá. Nếu loại thẻ đã cấp cho khách thì chỉ chuyển sang Ngừng (ẩn khỏi bán), không xoá hẳn.`} an={{ id: r.id }} nhanLuu="Xoá" action={xoaGoiThe} /></span> }] : []),
         ]} />
       <PhanTrangDanhMuc tong={goiLoc.length} trang={pt.trang} moi={moi} don="loại thẻ" thamSo={{ tab: "goi-the", loai: loaiLoc, nhom: nhomChon, q: tuKhoa }} />
       </>
     );
   } else if (tab === "san-pham") {
     const { data: sp } = await db.from("san_pham").select("*").order("ma");
-    const truong: Truong[] = truongSanPham();
-    nutThem = sua && <><NutNhapExcel tieuDe="Nhập sản phẩm từ Excel" moTa="Mẫu giống SalonHero. Tên và mã phải theo quy ước của AMIA; dòng sai bị bỏ kèm lý do. Mã để trống sẽ tự sinh." mau="/mau-nhap/san-pham.xlsx" chon={{ ten: "nhom", nhan: "Nhóm hàng", luaChon: [{ gia_tri: "", nhan: "Chưa phân nhóm" }, ...[...new Set((sp ?? []).map((x) => x.nhom?.trim()).filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b, "vi")).map((x) => ({ gia_tri: x, nhan: x }))] }} action={nhapExcelSanPham} /><NutHop nhan="Thêm sản phẩm / vật tư" tieuDe="Thêm sản phẩm / vật tư" rong truong={truong} giaTri={{ he_so_quy_doi: 1, theo_doi_kho: true, bat_buoc_han_dung: true, hoat_dong: true, hinh_thuc_nhap: "mua_dut", noi_hien_thi: "tat_ca", dung_tich_dv: "", uoc_tinh_1_lan_dv: "" }} action={luuSanPham} /></>;
+    const lcSp = await luaChonSanPham(db, (sp ?? []).map((x) => x.nhan_hieu));
+    const truong: Truong[] = truongSanPham(lcSp);
+    nutThem = sua && <><NutNhapExcel tieuDe="Nhập sản phẩm từ Excel" moTa="Mẫu giống SalonHero. Tên và mã phải theo quy ước của AMIA; dòng sai bị bỏ kèm lý do. Mã để trống sẽ tự sinh." mau="/mau-nhap/san-pham.xlsx" chon={{ ten: "nhom", nhan: "Nhóm hàng", luaChon: [{ gia_tri: "", nhan: "Chưa phân nhóm" }, ...[...new Set((sp ?? []).map((x) => x.nhom?.trim()).filter((x): x is string => !!x))].sort((a, b) => a.localeCompare(b, "vi")).map((x) => ({ gia_tri: x, nhan: x }))] }} action={nhapExcelSanPham} /><NutHop nhan="Thêm sản phẩm / vật tư" tieuDe="Thêm sản phẩm / vật tư" rong truong={truong} giaTri={{ he_so_quy_doi: 1, theo_doi_kho: true, bat_buoc_han_dung: true, hoat_dong: true, hinh_thuc_nhap: "mua_dut", noi_hien_thi: "tat_ca", vat: "0", chi_nhanh_ids: [], nhan_hieu: "", dung_tich_dv: "", uoc_tinh_1_lan_dv: "" }} action={luuSanPham} /></>;
     const tatSp = sp ?? [];
     const KHONG_NHOM = "__khong";
     const nhomCua = (r: (typeof tatSp)[number]) => (r.nhom && r.nhom.trim() ? r.nhom.trim() : KHONG_NHOM);
-    const spLoc = tatSp.filter((r) => (!nhomChon || nhomCua(r) === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ma_vach ?? ""} ${r.nhan_hieu ?? ""} ${r.ten_en ?? ""}`).includes(khoaTim)));
+    const spLoc = tatSp.filter((r) => (!nhomChon || nhomCua(r) === nhomChon) && coCn(r.chi_nhanh_ids) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ma_vach ?? ""} ${r.nhan_hieu ?? ""} ${r.ten_en ?? ""}`).includes(khoaTim)));
     const demNhom = new Map<string, number>();
     for (const r of tatSp) demNhom.set(nhomCua(r), (demNhom.get(nhomCua(r)) ?? 0) + 1);
     const pt = catTrang(spLoc, trangXin, moi);
     const nhomSp = [...demNhom.entries()].sort((x, y) => (x[0] === KHONG_NHOM ? 1 : y[0] === KHONG_NHOM ? -1 : x[0].localeCompare(y[0], "vi"))).map(([k, dem]) => ({ gia_tri: k, nhan: k === KHONG_NHOM ? "Chưa phân nhóm" : k, dem }));
     noiDung = (
       <>
-      <LocNhomDanhMuc tab="san-pham" nhom={nhomSp} tong={tatSp.length} chon={nhomChon} q={tuKhoa} hien={spLoc.length} giu={{ n: giuN }} />
+      <LocThemDanhMuc ten="cn" aria="Lọc chi nhánh" nhanTatCa="Tất cả các chi nhánh" muc={lcSp.chiNhanh} chon={cnChon} thamSo={{ tab: "san-pham", nhom: nhomChon, q: tuKhoa, n: giuN }} />
+      <LocNhomDanhMuc tab="san-pham" nhom={nhomSp} tong={tatSp.length} chon={nhomChon} q={tuKhoa} hien={spLoc.length} giu={{ n: giuN, cn: cnChon }} />
       {pt.hang.length > 0 && <p className="-mt-2 mb-3 text-[13px]"><Link href={`/danh-muc/in-ma-vach?id=${pt.hang.map((r) => r.id).join(",")}`} className="font-medium text-nhan-dam hover:underline">In tem mã vạch trang này ({pt.hang.length} sản phẩm)</Link></p>}
       <Bang duLieu={pt.hang} khoa={(r) => r.id} trong={tatSp.length ? "Không có sản phẩm nào khớp." : "Chưa có sản phẩm hoặc vật tư."}
         cot={[
@@ -229,7 +271,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Tem", hienThi: (r) => <Link href={`/danh-muc/in-ma-vach?id=${r.id}`} className="whitespace-nowrap text-[13px] font-medium text-nhan-dam hover:underline">In tem</Link> },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <span className="flex flex-wrap gap-x-4 gap-y-1"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={giaTriSanPham(r)} action={luuSanPham} /><NutHop kieu="chu" nhan="Nhân bản" tieuDe={`Nhân bản: ${r.ten}`} moTa="Tạo sản phẩm mới có cùng thông tin. Đổi tên (và mã vạch) trước khi lưu; mã nội bộ để trống sẽ tự sinh. Ảnh, tồn kho và định mức không được sao chép." rong truong={truong} giaTri={{ ...giaTriSanPham(r), id: undefined, ma: "", ma_vach: "", ten: `${r.ten} (bản sao)` }} action={luuSanPham} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaSanPham} /></span> }] : []),
         ]} />
-      <PhanTrangDanhMuc tong={spLoc.length} trang={pt.trang} moi={moi} don="sản phẩm" thamSo={{ tab: "san-pham", nhom: nhomChon, q: tuKhoa }} />
+      <PhanTrangDanhMuc tong={spLoc.length} trang={pt.trang} moi={moi} don="sản phẩm" thamSo={{ tab: "san-pham", nhom: nhomChon, q: tuKhoa, cn: cnChon }} />
       </>
     );
   } else if (tab === "ra-soat") {
@@ -254,7 +296,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     for (const d of dong) for (const v of d.vd) dem.set(v, (dem.get(v) ?? 0) + 1);
     const loc = loai && NHAN[loai] ? loai : "";
     const hien = (loc ? dong.filter((d) => d.vd.includes(loc)) : dong).slice(0, 300);
-    const truong: Truong[] = truongSanPham();
+    const truong: Truong[] = truongSanPham(await luaChonSanPham(db, (sp ?? []).map((x) => x.nhan_hieu)));
     noiDung = (
       <>
         <p className="mb-4 max-w-3xl text-[13.5px] leading-snug text-muc-3">Danh sách việc cần làm để danh mục và kho sạch: mã và tên theo quy ước, đủ nhóm, tồn tối thiểu, giá, mã vạch, tồn âm và hàng hết hạn. Sửa dần từng nhóm; mỗi dòng có nút Sửa. Quy ước mã: chữ in hoa + số, không dấu cách (MP-0012). Quy ước tên: loại hàng + thương hiệu + tên + quy cách.</p>

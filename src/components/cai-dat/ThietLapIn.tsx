@@ -76,9 +76,9 @@ export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu }
               <div><label className={NHAN_O} htmlFor="in-qr-nd">Hoặc nội dung QRCode</label><textarea id="in-qr-nd" disabled={tat} value={c.qrNoiDung} onChange={(e) => dat({ qrNoiDung: e.target.value })} className={`${O_NHIEU_DONG} !min-h-[64px]`} /></div>
             </div>
           )}
-          <div className="sm:w-1/2"><label className={NHAN_O}>Ngôn ngữ</label><Chon ariaLabel="Ngôn ngữ" luaChon={[{ gia_tri: "vi", nhan: "Tiếng Việt" }, { gia_tri: "en", nhan: "English" }]} giaTri={c.ngonNgu} onDoi={(v) => dat({ ngonNgu: v as "vi" | "en" })} voHieu={tat} /><p className="mt-1.5 text-[12px] text-muc-3">Đã lưu nhưng bản in hiện chỉ có tiếng Việt.</p></div>
+          <div className="sm:w-1/2"><label className={NHAN_O}>Ngôn ngữ</label><Chon ariaLabel="Ngôn ngữ" luaChon={[{ gia_tri: "vi", nhan: "Tiếng Việt" }, { gia_tri: "en", nhan: "English" }]} giaTri={c.ngonNgu} onDoi={(v) => dat({ ngonNgu: v as "vi" | "en" })} voHieu={tat} /><p className="mt-1.5 text-[12px] text-muc-3">English: đổi nhãn trên tờ in (Invoice, Cashier, Total…); tên dịch vụ và nội dung cuối tờ giữ nguyên như đã nhập.</p></div>
           {loai === "lich_hen" && <p className="text-[12.5px] leading-snug text-muc-3">Phiếu lịch hẹn: AMIA chưa có nút in phiếu lịch hẹn, phần này mới chỉ là cấu hình để dùng khi có.</p>}
-          {loai === "hoa_don" && <p className="text-[12.5px] leading-snug text-muc-3">Nhân viên phục vụ, giờ vào/ra: đã lưu, bản in AMIA chưa có dữ liệu này nên chưa hiện. Các ô còn lại áp dụng ngay cho trang in hoá đơn.</p>}
+          {loai === "hoa_don" && <p className="text-[12.5px] leading-snug text-muc-3">Nhân viên phục vụ in dưới từng dòng “(NV: …)” theo người được gán ở Thu ngân; giờ vào/ra lấy giờ ghi trên hoá đơn, không có thì giờ lịch hẹn gắn với đơn.</p>}
         </section>
         <section className="the-noi the-noi-thap p-4 sm:p-5" aria-label="Bản in mẫu">
           <h2 className="mb-3 text-center text-[15px] font-semibold text-muc">{loai === "hoa_don" ? "Hoá đơn mẫu" : "Lịch hẹn mẫu"}</h2>

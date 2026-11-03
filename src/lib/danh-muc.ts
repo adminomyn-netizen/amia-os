@@ -44,3 +44,26 @@ export const MAU_THE: LuaChon[] = [{ gia_tri: "", nhan: "Không đặt màu" }, 
 
 /** Đường dẫn công khai của ảnh danh mục (kho 'danh-muc-anh'). */
 export const urlAnhDanhMuc = (duong: string | null | undefined): string | null => (duong ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/danh-muc-anh/${duong}` : null);
+
+/** Thời hạn loại thẻ như SalonHero: THÁNG + NGÀY (time_limit + time_limit_by_day). Hiện như SalonHero: "1 năm 6 tháng", "8 năm 3 tháng 99 ngày". */
+export function nhanHanThe(thang: number | null | undefined, ngay: number | null | undefined): string {
+  const t = Math.max(0, Math.trunc(Number(thang) || 0)), n = Math.max(0, Math.trunc(Number(ngay) || 0));
+  if (!t && !n) return "Không hạn";
+  const nam = Math.floor(t / 12), th = t % 12;
+  return [nam ? `${nam} năm` : "", th ? `${th} tháng` : "", n ? `${n} ngày` : ""].filter(Boolean).join(" ");
+}
+/** Hạn thẻ = ngày bắt đầu + N tháng (theo lịch: 31/01 + 1 tháng = 28/29/02) + M ngày. Giống hàm Postgres public.tinh_han_the. Trả null khi không hạn. */
+export function tinhHanThe(thang: number | null | undefined, ngay: number | null | undefined, tu: string): string | null {
+  const t = Math.max(0, Math.trunc(Number(thang) || 0)), n = Math.max(0, Math.trunc(Number(ngay) || 0));
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(tu);
+  if (!m || (!t && !n)) return null;
+  const y = Number(m[1]), mo = Number(m[2]) - 1 + t, d = Number(m[3]);
+  const nam = y + Math.floor(mo / 12), thang0 = mo % 12;
+  const cuoiThang = new Date(Date.UTC(nam, thang0 + 1, 0)).getUTCDate();
+  const kq = new Date(Date.UTC(nam, thang0, Math.min(d, cuoiThang)) + n * 86_400_000);
+  return kq.toISOString().slice(0, 10);
+}
+/** "Thời gian làm 1 lần dịch vụ" của loại thẻ lần: đúng các mốc trong ô chọn của SalonHero (0–180 phút). */
+export const THOI_GIAN_1_LAN: LuaChon[] = [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 90, 100, 120, 150, 180].map((p) => ({ gia_tri: String(p), nhan: `${p} phút` }));
+/** VAT của sản phẩm: như dịch vụ (SalonHero dùng cùng danh sách mức thuế cho sản phẩm). */
+export const VAT_CHON_SAN_PHAM = VAT_CHON;

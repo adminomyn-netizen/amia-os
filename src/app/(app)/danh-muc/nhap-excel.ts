@@ -124,7 +124,7 @@ export async function nhapExcelGoiThe(fd: FormData): Promise<KQNhap> {
     let ma = ""; do { ma = `T-${String(await soMa("goi_the_nhap_excel")).padStart(4, "0")}`; } while (co.has(ma));
     co.add(ma);
     const tuNgay = /^(tạo|tao)/i.test((o.expired_from ?? "").trim()) ? "ngay_tao" : "ngay_cap", gt1 = o.use_price ? soTuChu(o.use_price) : NaN;
-    rows.push({ ma, ten, loai, gia: giaBan, so_buoi: loai === "lan" ? soBuoi : null, gia_tri_the: loai === "tien" ? soDu : null, han_dung_ngay: thang > 0 ? Math.round(thang * 30) : null, han_tinh_tu: tuNgay, hoat_dong: true, mo_ta: boHuongDan(o.card_description ?? "") || null, cho_sua_gia: laCo(o.edit_price_in_order ?? ""), gia_tri_1_lan: loai === "lan" && gt1 >= 0 ? Math.round(gt1) : null });
+    rows.push({ ma, ten, loai, gia: giaBan, so_buoi: loai === "lan" ? soBuoi : null, gia_tri_the: loai === "tien" ? soDu : null, han_dung_thang: Math.trunc(thang) || null, han_dung_ngay: Math.round((thang - Math.trunc(thang)) * 30) || null, han_tinh_tu: tuNgay, hoat_dong: true, mo_ta: boHuongDan(o.card_description ?? "") || null, cho_sua_gia: laCo(o.edit_price_in_order ?? ""), gia_tri_1_lan: loai === "lan" && gt1 >= 0 ? Math.round(gt1) : null });
   }
   let them = 0;
   for (let i = 0; i < rows.length; i += CHUNK) {

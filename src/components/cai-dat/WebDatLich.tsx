@@ -143,7 +143,7 @@ export function WebDatLichForm({ dau, sua, duongDan, luu, chiNhanh, anhBiaUrl }:
               )}
             </div>
           </Hang>
-          <Hang nhan="Khoá trang web đặt lịch">{bt("Khoá trang", t.khoaTrang, (v) => dat({ khoaTrang: v }))}</Hang>
+          <Hang nhan="Mở web đặt lịch cho khách">{bt("Đang mở cho khách đặt", !t.khoaTrang, (v) => dat({ khoaTrang: !v }))}</Hang>
         </section>
         <section className="the-noi the-noi-thap space-y-4 self-start p-4 sm:p-5" aria-labelledby="tb-email">
           <h2 id="tb-email" className="text-[16px] font-semibold text-muc">Thông báo đặt lịch bằng Email</h2>

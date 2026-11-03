@@ -125,26 +125,34 @@ export function FormDatLich(p: Props) {
   const chonDv = (id: string) => { setDv(dv.includes(id) ? dv.filter((x) => x !== id) : [...dv, id]); setGio(""); };
 
   /* ---------- Đầu trang ---------- */
+  const nutNgonNgu = (
+    <div className="flex items-center gap-2">
+      {p.sdt && <a href={`tel:${p.sdt.replace(/\s/g, "")}`} className="hidden h-9 items-center gap-2 rounded-nho border border-white/20 bg-espresso/40 px-3 text-[13px] font-medium text-white hover:bg-white/10 sm:flex"><Phone className="h-4 w-4" aria-hidden />{p.sdt}</a>}
+      <div className="flex overflow-hidden rounded-nho border border-white/25 bg-espresso/40 text-[12px] font-semibold" role="group" aria-label="Ngôn ngữ / Language">
+        {(["vi", "en"] as const).map((x) => <Link key={x} href={`?lang=${x}`} hrefLang={x} aria-current={p.nn === x ? "true" : undefined} className={`px-2.5 py-1.5 ${p.nn === x ? "bg-white text-espresso" : "text-white/85 hover:bg-white/10"}`}>{x.toUpperCase()}</Link>)}
+      </div>
+    </div>
+  );
   const dau = (
+    <>
+    {p.anhBia && (
+      <div className="relative bg-espresso">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={p.anhBia} alt={`${p.tenCuaHang} – ${T.khauHieu}`} fetchPriority="high" className="mx-auto block aspect-[2048/777] max-h-[520px] w-full max-w-[1600px] object-cover" />
+        <div className="absolute right-3 top-3 sm:right-5 sm:top-5">{nutNgonNgu}</div>
+      </div>
+    )}
     <header className="nen-toi relative overflow-hidden text-white">
-      {p.anhBia && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={p.anhBia} alt="" className="absolute inset-0 h-full w-full object-cover opacity-25" />
-      )}
       <div aria-hidden className="pointer-events-none absolute -right-24 -top-24 h-[420px] w-[420px] opacity-60" style={{ background: "radial-gradient(closest-side, rgb(217 184 119 / 0.35), transparent)" }} />
       <div aria-hidden className="pointer-events-none absolute -bottom-40 -left-20 h-[380px] w-[380px] opacity-50" style={{ background: "radial-gradient(closest-side, rgb(20 163 148 / 0.35), transparent)" }} />
-      <div className="relative mx-auto w-full max-w-[1120px] px-4 pb-10 pt-5 sm:px-6 sm:pb-14">
-        <div className="flex items-center justify-between gap-3">
-          <Link href="/dat-lich" aria-label={p.tenCuaHang}><Image src="/logo-amia-trang.png" alt={p.tenCuaHang} width={600} height={272} priority className="h-auto w-[104px] sm:w-[124px]" /></Link>
-          <div className="flex items-center gap-2">
-            {p.sdt && <a href={`tel:${p.sdt.replace(/\s/g, "")}`} className="hidden h-9 items-center gap-2 rounded-nho border border-white/20 px-3 text-[13px] font-medium text-white hover:bg-white/10 sm:flex"><Phone className="h-4 w-4" aria-hidden />{p.sdt}</a>}
-            <div className="flex overflow-hidden rounded-nho border border-white/25 text-[12px] font-semibold" role="group" aria-label="Ngôn ngữ / Language">
-              {(["vi", "en"] as const).map((x) => <Link key={x} href={`?lang=${x}`} hrefLang={x} aria-current={p.nn === x ? "true" : undefined} className={`px-2.5 py-1.5 ${p.nn === x ? "bg-white text-espresso" : "text-white/80 hover:bg-white/10"}`}>{x.toUpperCase()}</Link>)}
-            </div>
+      <div className={`relative mx-auto w-full max-w-[1120px] px-4 pb-10 sm:px-6 sm:pb-14 ${p.anhBia ? "pt-7 sm:pt-9" : "pt-5"}`}>
+        {!p.anhBia && (
+          <div className="flex items-center justify-between gap-3">
+            <Link href="/dat-lich" aria-label={p.tenCuaHang}><Image src="/logo-amia-trang.png" alt={p.tenCuaHang} width={600} height={272} priority className="h-auto w-[104px] sm:w-[124px]" /></Link>
+            {nutNgonNgu}
           </div>
-        </div>
-
-        <div className="mt-8 grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_340px]">
+        )}
+        <div className={`${p.anhBia ? "" : "mt-8 "}grid items-end gap-8 lg:grid-cols-[minmax(0,1fr)_340px]`}>
           <div className="vao">
             <p className="flex items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-menu-nhan"><Sparkles className="h-4 w-4" aria-hidden />{T.khauHieu}</p>
             <h1 className="mt-3 text-[30px] font-bold leading-[1.15] text-white sm:text-[42px]">{T.tieuDe}<span className="block text-menu-nhan">{p.tenCuaHang}</span></h1>
@@ -169,6 +177,7 @@ export function FormDatLich(p: Props) {
       </div>
       <div aria-hidden className="h-[3px] w-full" style={VANG} />
     </header>
+    </>
   );
 
   const thanhTab = p.mo && !(kq?.ok && kq.daDat) && (

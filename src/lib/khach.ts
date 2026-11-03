@@ -38,7 +38,7 @@ import type { Truong } from "@/components/ui/BieuMau";
 import type { LuaChon } from "@/components/ui/Chon";
 
 /** Biểu mẫu khách dùng ở cả "Thêm khách" và "Sửa". 5 trường bắt buộc: nguồn · người phụ trách · (trạng thái, hạng tự tính) · dịch vụ quan tâm. */
-export function truongKhach(o: { dichVu: LuaChon[]; nhanVien: LuaChon[]; chiNhanh: LuaChon[] }): Truong[] {
+export function truongKhach(o: { dichVu: LuaChon[]; nhanVien: LuaChon[]; chiNhanh: LuaChon[]; nhom?: LuaChon[] }): Truong[] {
   return [
     { ten: "ho_ten", nhan: "Họ tên", loai: "chu", batBuoc: true }, { ten: "dien_thoai", nhan: "Số điện thoại (không trùng)", loai: "chu", batBuoc: true },
     { ten: "zalo", nhan: "Zalo", loai: "chu" }, { ten: "ngay_sinh", nhan: "Ngày sinh", loai: "ngay" },
@@ -49,9 +49,12 @@ export function truongKhach(o: { dichVu: LuaChon[]; nhanVien: LuaChon[]; chiNhan
     { ten: "nguon_chi_tiet", nhan: "Chi tiết nguồn (chiến dịch, bài quảng cáo...)", loai: "chu", rong: true },
     { ten: "nguoi_phu_trach_id", nhan: "Người phụ trách (telesale/tư vấn)", loai: "chon", luaChon: o.nhanVien, batBuoc: true, rong: true },
     { ten: "quan_tam", nhan: "Dịch vụ quan tâm", loai: "nhieu", luaChon: o.dichVu },
+    // Nhóm khách chọn ngay khi tạo như form SalonHero (khách đã có thì đổi bằng "Đổi nhóm" ở hồ sơ).
+    ...(o.nhom?.length ? [{ ten: "nhom_ids", nhan: "Nhóm khách hàng", loai: "nhieu" as const, luaChon: o.nhom, chiKhiTao: true }] : []),
     { ten: "dia_chi", nhan: "Địa chỉ", loai: "chu", rong: true }, { ten: "email", nhan: "Email", loai: "email" },
     // Các ô còn lại của form "Thêm khách hàng mới" ở SalonHero (cột đã có từ 0055; trước đây chỉ hiện ở hồ sơ, không nhập/sửa được).
-    { ten: "tinh_thanh", nhan: "Tỉnh/thành", loai: "chu" }, { ten: "quan_huyen", nhan: "Quận/huyện (phường)", loai: "chu" },
+    // Tỉnh/thành và phường/xã chọn từ danh mục như SalonHero (34 tỉnh sau sáp nhập 2025 + tỉnh cũ); giá trị cũ nhập tay vẫn giữ.
+    { ten: "tinh_thanh", nhan: "Tỉnh/thành", loai: "chon", diaBan: "tinh", goiY: "Chọn tỉnh/thành" }, { ten: "quan_huyen", nhan: "Phường/xã", loai: "chon", diaBan: { theoTinh: "tinh_thanh" }, goiY: "Chọn phường/xã" },
     { ten: "quoc_gia", nhan: "Quốc gia", loai: "chu", goiY: "VN" }, { ten: "sdt_phu", nhan: "Số điện thoại phụ", loai: "chu" },
     { ten: "facebook", nhan: "Facebook", loai: "chu" }, { ten: "website", nhan: "Website", loai: "chu" },
     { ten: "nghe_nghiep", nhan: "Nghề nghiệp", loai: "chu" }, { ten: "cong_ty", nhan: "Công ty", loai: "chu" },

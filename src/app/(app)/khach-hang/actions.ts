@@ -75,6 +75,12 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
     const { data, error } = await db.from("khach_hang").insert({ ...row, ma, tao_boi: nd.nhanVienId, dong_y_dung_hinh_luc: dongY ? new Date().toISOString() : null }).select("id").single();
     if (error || !data) return { loi: thongBaoLoi(error) };
     khachId = data.id;
+    // Nhóm khách chọn ngay trong form tạo (như SalonHero).
+    const nhom = mang(fd, "nhom_ids").filter((x) => /^[0-9a-f-]{36}$/i.test(x));
+    if (nhom.length) {
+      const { error: loiNhom } = await db.from("khach_nhom").insert(nhom.map((n) => ({ khach_id: data.id, nhom_id: n })));
+      if (loiNhom) console.error("[luuKhach] gán nhóm", loiNhom.message);
+    }
   }
   await db.from("khach_quan_tam").delete().eq("khach_id", khachId);
   const qt = mang(fd, "quan_tam");

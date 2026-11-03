@@ -24,7 +24,19 @@ export type Truong = {
   hienKhi?: { ten: string; la: string[] };
   /** Ô giờ (loai "gio"): chọn trong danh sách khung giờ cố định, mặc định 05:00–22:00 cách nhau 15 phút. */
   tuGio?: string; denGio?: string; buocPhut?: number;
+  /** Ô chọn (loai "chon") lấy danh mục địa bàn như SalonHero (public/dia-ban.json): "tinh" = tỉnh/thành; { theoTinh } = phường/xã của tỉnh đang chọn ở ô đó. */
+  diaBan?: "tinh" | { theoTinh: string };
 };
+/** Danh mục tỉnh/thành → phường/xã (danh sách SalonHero đang dùng: 34 tỉnh sau sáp nhập 2025 + 29 tỉnh cũ). Tải một lần khi biểu mẫu có ô địa bàn. */
+let diaBanCache: Promise<Map<string, string[]>> | null = null;
+const taiDiaBan = () => (diaBanCache ??= fetch("/dia-ban.json").then((r) => r.json()).then((j: { tinh: [string, string[]][] }) => new Map(j.tinh)).catch(() => { diaBanCache = null; return new Map<string, string[]>(); }));
+function luaChonDiaBan(t: Truong, v: Record<string, unknown>, db: Map<string, string[]> | null): LuaChon[] {
+  if (!t.diaBan) return t.luaChon ?? [];
+  const ds = !db ? [] : t.diaBan === "tinh" ? [...db.keys()] : db.get(String(v[t.diaBan.theoTinh] ?? "")) ?? [];
+  const gt = String(v[t.ten] ?? "");
+  // Giá trị đã lưu không có trong danh mục (dữ liệu cũ nhập tay) vẫn hiện để không mất khi sửa.
+  return [{ gia_tri: "", nhan: "Chưa chọn" }, ...(gt && !ds.includes(gt) ? [gt] : []).concat(ds).map((x) => ({ gia_tri: x, nhan: x }))];
+}
 const gioSlot = (tu = "05:00", den = "22:00", buoc = 15): LuaChon[] => {
   const ra: LuaChon[] = [], phut = (g: string) => Number(g.slice(0, 2)) * 60 + Number(g.slice(3, 5));
   for (let m = phut(tu); m <= phut(den); m += buoc) { const g = `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`; ra.push({ gia_tri: g, nhan: g }); }
@@ -93,8 +105,12 @@ export function NutHop({
     for (const k of thongTin.theoDoi) fd.set(k, gt[k] == null ? "" : String(gt[k]));
     thongTin.lay(fd).then((kq) => { if (lan === lanTin.current) setDongTin((kq && kq.dong) || []); }).catch(() => { if (lan === lanTin.current) setDongTin([]); });
   };
+  const [diaBan, setDiaBan] = useState<Map<string, string[]> | null>(null);
+  const coDiaBan = truong.some((t) => t.diaBan);
   const dat = (ten: string, gt: GiaTri[string]) => {
     const moi = { ...v, [ten]: gt };
+    // Đổi tỉnh/thành thì bỏ phường/xã đã chọn của tỉnh cũ.
+    for (const t of truong) if (t.diaBan && t.diaBan !== "tinh" && t.diaBan.theoTinh === ten && gt !== v[ten]) moi[t.ten] = "";
     setV(moi);
     if (thongTin?.theoDoi.includes(ten)) hoiTin(moi);
   };
@@ -133,7 +149,7 @@ export function NutHop({
   const lopNut = kieu === "chinh" ? NUT_CHINH : kieu === "phu" ? NUT_PHU : nguy ? NUT_CHU_NGUY : NUT_CHU;
   return (
     <>
-      <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setDongTin([]); setMo(true); hoiTin(giaTri); }}>{nhan}</button>
+      <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setDongTin([]); setMo(true); hoiTin(giaTri); if (coDiaBan && !diaBan) void taiDiaBan().then(setDiaBan); }}>{nhan}</button>
       <Hop mo={mo} dong={() => setMo(false)} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
         {xacNhan && <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p>}
         <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
@@ -150,7 +166,7 @@ export function NutHop({
                 {t.loai === "mat_khau_an" && <input id={id} type="password" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} className={O_NHAP} autoComplete="new-password" />}
                 {t.loai === "so" && <input id={id} inputMode="decimal" {...CHON_HET} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value.replace(/[^\d.,-]/g, ""))} placeholder={t.goiY} className={`${O_NHAP} text-right tabular-nums`} autoComplete="off" />}
                 {t.loai === "tien" && <OTien id={id} giaTriMacDinh={Number(gt) || 0} onDoi={(n) => dat(t.ten, n)} />}
-                {t.loai === "chon" && <Chon id={id} luaChon={t.luaChon ?? []} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn"} />}
+                {t.loai === "chon" && <Chon id={id} luaChon={luaChonDiaBan(t, v, diaBan)} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn"} />}
                 {t.loai === "ngay" && <NgayChon id={id} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} />}
                 {t.loai === "gio" && <Chon id={id} luaChon={[{ gia_tri: "", nhan: "Chưa chọn" }, ...gioSlot(t.tuGio, t.denGio, t.buocPhut)]} giaTri={String(gt ?? "").slice(0, 5)} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn giờ"} />}
                 {t.loai === "nhieu_dong" && <textarea id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHIEU_DONG} />}

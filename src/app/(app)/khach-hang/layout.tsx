@@ -31,7 +31,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
   ]);
   const nvLC = luaChonNhanVien(nv ?? []);
   const cnLC = (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
-  const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: cnLC });
+  const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: cnLC, nhom: (nhomNhap ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten })) });
   const chiSo = [
     { nhan: "Tổng số khách hàng", so: so.tong }, { nhan: "Khách hàng mới hôm nay", so: so.moiHomNay },
     { nhan: "Khách hàng sinh nhật hôm nay", so: so.sinhNhatHomNay }, { nhan: "Khách hàng sinh nhật tháng này", so: so.sinhNhatThang },

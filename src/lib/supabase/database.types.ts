@@ -6824,6 +6824,7 @@ export type Database = {
           id: string
           ket_thuc: string
           khach_id: string
+          khach_moi: boolean | null
           kieu_lap: string | null
           la_lich_su: boolean
           lap_khoang: number | null
@@ -6860,6 +6861,7 @@ export type Database = {
           id?: string
           ket_thuc: string
           khach_id: string
+          khach_moi?: boolean | null
           kieu_lap?: string | null
           la_lich_su?: boolean
           lap_khoang?: number | null
@@ -6896,6 +6898,7 @@ export type Database = {
           id?: string
           ket_thuc?: string
           khach_id?: string
+          khach_moi?: boolean | null
           kieu_lap?: string | null
           la_lich_su?: boolean
           lap_khoang?: number | null
@@ -12439,6 +12442,26 @@ export type Database = {
       khach_gan_den_tong: { Args: { p_cn?: string }; Returns: number }
       khach_gan_den_het: { Args: { p_cn?: string }; Returns: { hd_ma: string; khach_id: string; ngay: string; tien: number }[] }
       thong_ke_khach_ngay: { Args: { p_so_ngay?: number }; Returns: Json }
+      sua_the: {
+        Args: {
+          p_doi_chu?: boolean
+          p_doi_gia?: boolean
+          p_doi_ghi_chu?: boolean
+          p_doi_han?: boolean
+          p_gia?: number
+          p_ghi_chu?: string
+          p_han?: string
+          p_khach?: string
+          p_ly_do?: string
+          p_nguoi: string
+          p_the: string
+        }
+        Returns: undefined
+      }
+      thu_hoi_the: {
+        Args: { p_ly_do: string; p_nguoi: string; p_the: string }
+        Returns: undefined
+      }
       thuc_hien_buoi: {
         Args: {
           p_bac_si: string

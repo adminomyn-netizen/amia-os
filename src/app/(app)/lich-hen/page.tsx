@@ -337,6 +337,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
                       <div className="mt-1.5 flex flex-wrap gap-1.5">
                         {l.nguon && <span className="rounded-tag bg-giay-tram px-2 py-0.5 text-[12px] text-muc-2">{nhanNguon(l.nguon)}</span>}
                         <span className={`rounded-tag px-2 py-0.5 text-[12px] font-medium ${MAU_TRANG_THAI[l.trang_thai]?.chip ?? "bg-giay-tram text-muc-2"}`}>{t.nhan}</span>
+                        {l.khach_moi && <span className="rounded-tag bg-loi-nen px-2 py-0.5 text-[12px] font-medium text-loi">Khách mới</span>}
                       </div>
                       {(dvIds.length > 0 || l.nhan_vien_id || l.phong) && <div className="mt-1 text-[12px] text-muc-3">{dvIds.map((d) => tenDv.get(d)).join(", ")}{l.nhan_vien_id ? ` · ${tenNv.get(l.nhan_vien_id)}` : ""}{l.phong ? ` · ${l.phong}` : ""}</div>}
                       {moTaLap(l) && <div className="text-[12px] text-muc-3">{moTaLap(l)}</div>}

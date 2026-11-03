@@ -32,9 +32,9 @@ function OTim({ nhan, giaTri, tham, khungDat }: { nhan: string; giaTri: string; 
   );
 }
 
-/** Bộ lọc bảng Lịch sử như SalonHero: tìm khách/mã đặt lịch, trạng thái, nguồn, khoảng ngày giờ hẹn, người tạo, cỡ trang. Mọi thứ nằm trên địa chỉ nên chia sẻ được. */
-export function BoLocLichSu({ q, tt, nguon, tao, tu, den, moi, luaChonTt, luaChonNguon }: {
-  q: string; tt: string; nguon: string; tao: string; tu: string; den: string; moi: string; luaChonTt: LuaChon[]; luaChonNguon: LuaChon[];
+/** Bộ lọc bảng Lịch sử như SalonHero: tìm khách/mã đặt lịch, trạng thái, nguồn, khoảng ngày giờ hẹn, người tạo, khách mới/quay lại, cỡ trang. Mọi thứ nằm trên địa chỉ nên chia sẻ được. */
+export function BoLocLichSu({ q, tt, nguon, tao, km, tu, den, moi, luaChonTt, luaChonNguon }: {
+  q: string; tt: string; nguon: string; tao: string; km: string; tu: string; den: string; moi: string; luaChonTt: LuaChon[]; luaChonNguon: LuaChon[];
 }) {
   const doi = useDoiUrl();
   return (
@@ -43,6 +43,7 @@ export function BoLocLichSu({ q, tt, nguon, tao, tu, den, moi, luaChonTt, luaCho
       <Chon ariaLabel="Lọc theo trạng thái" giaTri={tt} luaChon={luaChonTt} onDoi={(v) => doi({ tt: v })} />
       <Chon ariaLabel="Lọc theo nguồn đặt" giaTri={nguon} luaChon={luaChonNguon} onDoi={(v) => doi({ nguon: v })} />
       <OTim key={`t${tao}`} nhan="Tìm theo người tạo lịch hẹn" giaTri={tao} tham="tao" khungDat="Tìm theo người tạo lịch hẹn" />
+      <Chon ariaLabel="Lọc khách mới hoặc khách quay lại" giaTri={km} luaChon={[{ gia_tri: "", nhan: "Khách mới/quay lại" }, { gia_tri: "moi", nhan: "Khách mới" }, { gia_tri: "quay_lai", nhan: "Khách quay lại" }]} onDoi={(v) => doi({ km: v })} />
       <div className="flex items-center gap-2 sm:col-span-2" role="group" aria-label="Khoảng ngày giờ hẹn">
         <NgayChon giaTri={tu} ariaLabel="Từ ngày" tuNam={2018} denNam={2030} className="min-w-0 flex-1" onDoi={(v) => v && doi({ tu: v, den: v > den ? v : den })} />
         <span className="text-muc-3" aria-hidden>-</span>

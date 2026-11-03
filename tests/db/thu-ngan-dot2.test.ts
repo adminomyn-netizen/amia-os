@@ -203,3 +203,14 @@ describe("0209 khoá sổ cho sổ thu tiền (thanh_toan)", () => {
     expect((await q<{ n: string }>(`select count(*)::text as n from thanh_toan where hoa_don_id = $1 and loai = 'hoan'`, [h]))[0].n).toBe("0");
   });
 });
+
+describe("0210 sửa hoá đơn đã xuất hoá đơn điện tử", () => {
+  it("đã ghi số hoá đơn điện tử thì chặn, báo rõ; xoá số rồi mới sửa được", async () => {
+    const h = await taoDon(200_000, [["tien_mat", 200_000]], "2026-09-20");
+    await q(`update hoa_don set vat_hd_so = '0000123', vat_hd_ky_hieu = 'C26TAA', vat_hd_luc = now() where id = $1`, [h]);
+    expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h, NV])).toMatch(/đã xuất hoá đơn điện tử \(số C26TAA 0000123\)/);
+    expect((await q<{ n: string }>(`select count(*)::text as n from thanh_toan where hoa_don_id = $1 and loai = 'hoan'`, [h]))[0].n).toBe("0");
+    await q(`update hoa_don set vat_hd_so = null, vat_hd_ky_hieu = null, vat_hd_luc = null where id = $1`, [h]);
+    expect(await loi(`select mo_lai_hoa_don($1,'x',$2)`, [h, NV])).toBe("");
+  });
+});

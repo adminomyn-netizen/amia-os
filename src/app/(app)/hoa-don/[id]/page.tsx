@@ -85,7 +85,10 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           <NutHop kieu="phu" nhan="Điều chỉnh nợ" tieuDe="Điều chỉnh nợ (xoá nợ)" moTa={`Nợ hiện tại ${tienVN(h.con_no)}. Nhập số nợ mới (nhỏ hơn nợ hiện tại; 0 = xoá hết). Phần chênh ghi là "Xoá nợ", không vào sổ quỹ.`} an={{ hoa_don_id: id }} giaTri={{ no_moi: 0 }} nhanLuu="Lưu điều chỉnh"
             truong={[{ ten: "no_moi", nhan: "Số nợ mới", loai: "tien", batBuoc: true }, { ten: "ly_do", nhan: "Lý do điều chỉnh nợ", loai: "nhieu_dong", batBuoc: true }]} action={dieuChinhNo} />
         )}
-        {h.trang_thai === "hoan_thanh" && !h.la_lich_su && !h.la_so_du_dau && coQuyen(nd, "ban.sua") && (
+        {h.trang_thai === "hoan_thanh" && !h.la_lich_su && !h.la_so_du_dau && coQuyen(nd, "ban.sua") && (h.vat_hd_so || h.vat_hd_luc) && (
+          <span className="self-center text-[13px] text-muc-3">Không sửa được: đã xuất hoá đơn điện tử{h.vat_hd_so ? ` số ${h.vat_hd_so}` : ""}. Xử lý hoá đơn điện tử (điều chỉnh/thay thế) và xoá số ở mục Hoá đơn VAT trước.</span>
+        )}
+        {h.trang_thai === "hoan_thanh" && !h.la_lich_su && !h.la_so_du_dau && coQuyen(nd, "ban.sua") && !h.vat_hd_so && !h.vat_hd_luc && (
           <NutHop kieu="phu" nhan="Sửa hoá đơn" tieuDe="Sửa hoá đơn đã chốt" moTa="Hoá đơn về Nháp rồi mở ở Thu ngân để sửa và thanh toán lại (giữ mã, giữ ngày). Khoản thu cũ được ghi đảo cùng ngày, thẻ đã bán (chưa dùng) bị thu hồi, sản phẩm trả kho; khi chốt lại sẽ ghi mới."
             an={{ hoa_don_id: id }} nhanLuu="Mở lại để sửa" truong={[{ ten: "ly_do", nhan: "Lý do sửa", loai: "nhieu_dong", batBuoc: true }]} action={moLaiHoaDon} />
         )}

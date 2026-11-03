@@ -245,3 +245,25 @@ export async function hauKiemXuatKhan(fd: FormData): Promise<KQ> {
   lamMoi();
   return { ok: true };
 }
+
+// ─── Kho nội bộ: nhập từ kho hàng bán / xuất tiêu dùng (như SalonHero #/internal_stock) ──────────────
+export async function nhapNoiBoTuHangBan(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("kho.nhap");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const cn = nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id");
+  if (!cn) return { loi: "Chọn chi nhánh." };
+  if (!chuoi(fd, "san_pham_id")) return { loi: "Chọn sản phẩm." };
+  if (!(so(fd, "so_luong") > 0)) return { loi: "Số lượng phải lớn hơn 0." };
+  const kq = await goi("kho_nhap_noi_bo", { p_cn: cn, p_sp: chuoi(fd, "san_pham_id"), p_sl: so(fd, "so_luong"), p_ghi_chu: chuoi(fd, "ghi_chu"), p_nguoi: nd.nhanVienId });
+  if (kq.ok) revalidatePath("/kho-mua-sam", "layout");
+  return kq;
+}
+
+export async function tieuDungNoiBo(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("kho.nhap");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const cn = chuoi(fd, "chi_nhanh_id");
+  if (!cn || !trongPhamVi(nd, cn)) return { loi: KHONG_DU_QUYEN };
+  if (!(so(fd, "so_luong") > 0)) return { loi: "Số lượng phải lớn hơn 0." };
+  return goi("kho_tieu_dung_noi_bo", { p_cn: cn, p_sp: chuoi(fd, "san_pham_id"), p_sl: so(fd, "so_luong"), p_ghi_chu: chuoi(fd, "ghi_chu"), p_nguoi: nd.nhanVienId });
+}

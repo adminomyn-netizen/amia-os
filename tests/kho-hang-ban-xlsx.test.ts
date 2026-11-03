@@ -3,7 +3,7 @@ import ExcelJS from "exceljs";
 import { COT_KHO_HANG_BAN, dungExcelKhoHangBan } from "../src/lib/kho-hang-ban-xlsx";
 import type { SanPhamKho } from "../src/lib/kho-hang-ban-doc";
 
-const sp = (o: Partial<SanPhamKho>): SanPhamKho => ({ id: "1", ma: "SP1", ma_vach: null, ten: "Kem", nhom: "Thermo", don_vi: "Chai", ton_toi_thieu: 0, gia_nhap_don_vi: null, gia_ban: 650000, ton: 0, ...o });
+const sp = (o: Partial<SanPhamKho>): SanPhamKho => ({ id: "1", ma: "SP1", ma_vach: null, ten: "Kem", nhom: "Thermo", nhan_hieu: null, anh: null, don_vi: "Chai", ton_toi_thieu: 0, gia_nhap_don_vi: null, gia_ban: 650000, ton: 0, ...o });
 
 describe("Xuất Excel kho hàng bán (như tệp SalonHero so_luong_trong_kho)", () => {
   it("bố cục: tiêu đề gộp A1:H2, Chi nhánh ở C3:D3, tiêu đề cột dòng 5, dữ liệu từ dòng 6", async () => {

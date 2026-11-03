@@ -1,6 +1,6 @@
 export const NHAN_LOAI_KHO: Record<string, string> = {
   nhap: "Nhập kho", xuat_ban: "Bán lẻ", cap_ca: "Cấp theo phiếu", tra_ca: "Trả lại kho", kiem_ke: "Kiểm kê", dieu_chinh: "Điều chỉnh",
-  chuyen_di: "Chuyển đi", chuyen_den: "Chuyển đến", hao_hut: "Huỷ / hao hụt", xuat_khan: "Xuất khẩn cấp", tra_ncc: "Trả nhà cung cấp",
+  chuyen_di: "Chuyển đi", chuyen_den: "Chuyển đến", hao_hut: "Huỷ / hao hụt", xuat_khan: "Xuất khẩn cấp", tra_ncc: "Trả nhà cung cấp", xuat_noi_bo: "Xuất sang kho nội bộ",
 };
 export const TT_CHUYEN: Record<string, { ten: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
   dang_chuyen: { ten: "Đang chuyển", kieu: "cho" }, da_nhan: { ten: "Đã nhận", kieu: "tot" }, cho_xu_ly_chenh_lech: { ten: "Chờ xử lý chênh lệch", kieu: "loi" },

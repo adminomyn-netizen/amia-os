@@ -4,6 +4,10 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, soVN } from "@/lib/dinh-dang";
 import { TT_CHUYEN } from "@/lib/kho";
+import { locPhieuChuyen, type LocChuyen } from "@/lib/kho-chuyen";
+import { Chon } from "@/components/ui/Chon";
+import { NgayChon } from "@/components/ui/NgayChon";
+import { NHAN_O, NUT_CHINH, NUT_PHU } from "@/components/ui/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -12,15 +16,15 @@ import { guiChuyenKho, huyChuyenKho, nhanChuyenKho, xuLyLechChuyenKho } from "..
 
 const phutConLai = (iso: string) => (new Date(iso).getTime() - Date.now()) / 60000;
 
-export default async function TrangChuyenKho() {
+export default async function TrangChuyenKho({ searchParams }: { searchParams: Promise<LocChuyen> }) {
+  const loc = await searchParams;
   const nd = await yeuCauQuyen("kho.xem");
   const nhap = coQuyen(nd, "kho.nhap"), duyet = coQuyen(nd, "kho.duyet");
   const db = sb();
-  let q = db.from("phieu_chuyen_kho").select("*").order("gui_luc", { ascending: false }).limit(200);
-  if (nd.chiNhanhId) q = q.or(`tu_chi_nhanh_id.eq.${nd.chiNhanhId},den_chi_nhanh_id.eq.${nd.chiNhanhId}`);
+  const { q, tu, den, thamSo } = locPhieuChuyen(db, nd, loc, 500);
   const [{ data: ds }, { data: cn }, { data: sp }, { data: nv }] = await Promise.all([
     q, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("san_pham").select("id, ten, don_vi").eq("hoat_dong", true).eq("theo_doi_kho", true).order("ten"),
-    db.from("nhan_vien").select("id, ho_ten"),
+    db.from("nhan_vien").select("id, ho_ten").order("ho_ten"),
   ]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten])), tenSp = new Map((sp ?? []).map((s) => [s.id, s])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const truong: Truong[] = [
@@ -36,6 +40,13 @@ export default async function TrangChuyenKho() {
       <TieuDeTrang tieuDe="Chuyển kho" phu="Kho đi trừ ngay khi gửi. Kho nhận đếm và xác nhận trong 24 giờ thì mới được cộng vào tồn; nhận lệch phải ghi lý do và chờ xử lý, không tự đóng.">
         {nhap && <NutHop nhan="Tạo phiếu chuyển" tieuDe="Tạo phiếu chuyển kho" truong={truong} action={guiChuyenKho} giaTri={{ tu_chi_nhanh_id: "", den_chi_nhanh_id: "", san_pham_id: "" }} rong />}
       </TieuDeTrang>
+      <form method="get" action="/kho/chuyen-kho" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+        <div><label htmlFor="ck-tu" className={NHAN_O}>Từ ngày</label><NgayChon id="ck-tu" ten="tu" giaTriMacDinh={tu} tuNam={2018} /></div>
+        <div><label htmlFor="ck-den" className={NHAN_O}>Đến ngày</label><NgayChon id="ck-den" ten="den" giaTriMacDinh={den} tuNam={2018} /></div>
+        <div><label className={NHAN_O}>Tình trạng</label><Chon ten="tt" giaTriMacDinh={loc.tt ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả tình trạng" }, ...Object.entries(TT_CHUYEN).map(([gia_tri, v]) => ({ gia_tri, nhan: v.ten }))]} /></div>
+        <div><label className={NHAN_O}>Người tạo</label><Chon ten="nguoi" giaTriMacDinh={loc.nguoi ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả người tạo" }, ...(nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))]} /></div>
+        <div className="flex items-end gap-2"><button type="submit" className={NUT_CHINH}>Lọc</button><a href={`/api/xuat/chuyen-kho?${thamSo}`} download className={`${NUT_PHU} inline-flex items-center`}>Xuất Excel</a></div>
+      </form>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu chuyển."
         cot={[
           { nhan: "Phiếu", chinh: true, hienThi: (r) => <div>{r.ma}<div className="text-[12.5px] text-muc-3">{ngayGioVN(r.gui_luc)} · {tenNv.get(r.nguoi_gui_id)}</div></div> },

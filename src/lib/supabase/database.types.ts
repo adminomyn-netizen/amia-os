@@ -6498,6 +6498,12 @@ export type Database = {
           },
         ]
       }
+      kho_noi_bo_so_cai: {
+        Row: { chi_nhanh_id: string; don_gia: number | null; ghi_chu: string | null; id: number; loai: string; ma: string; nguoi_id: string; san_pham_id: string; so_luong: number; tao_luc: string }
+        Insert: { chi_nhanh_id: string; don_gia?: number | null; ghi_chu?: string | null; id?: never; loai: string; ma: string; nguoi_id: string; san_pham_id: string; so_luong: number; tao_luc?: string }
+        Update: { chi_nhanh_id?: string; don_gia?: number | null; ghi_chu?: string | null; id?: never; loai?: string; ma?: string; nguoi_id?: string; san_pham_id?: string; so_luong?: number; tao_luc?: string }
+        Relationships: []
+      }
       kho_ton_sh_tham_chieu: {
         Row: {
           chi_nhanh_id: string
@@ -11623,6 +11629,10 @@ export type Database = {
           },
         ]
       }
+      v_ton_kho_noi_bo: {
+        Row: { cap_nhat_luc: string | null; chi_nhanh_id: string | null; san_pham_id: string | null; ton: number | null }
+        Relationships: []
+      }
       v_ton_kho: {
         Row: {
           chi_nhanh_id: string | null
@@ -11955,6 +11965,10 @@ export type Database = {
           so_hd: number
           vai: string
         }[]
+      }
+      bc_phieu_kho: {
+        Args: { p_cn?: string; p_den: string; p_huong: string; p_nguoi?: string; p_pl?: string; p_so?: number; p_tim?: string; p_tt?: string; p_tu: string; p_tu_dong?: number }
+        Returns: { chi_nhanh: string; chi_nhanh_id: string; ghi_chu: string; ma: string; mat_hang: string; ncc: string; nguoi: string; nguoi_id: string; phan_loai: string; so_mat_hang: number; thoi_gian: string; tinh_trang: string; tong_dong: number; tong_sl: number; tong_tien: number; tong_tien_tat_ca: number }[]
       }
       bc_kho_nhap: {
         Args: {
@@ -12673,6 +12687,14 @@ export type Database = {
           ma: string
           nguoi_phu_trach_id: string
         }[]
+      }
+      kho_nhap_noi_bo: {
+        Args: { p_cn: string; p_ghi_chu: string; p_nguoi: string; p_sl: number; p_sp: string }
+        Returns: string
+      }
+      kho_tieu_dung_noi_bo: {
+        Args: { p_cn: string; p_ghi_chu: string; p_nguoi: string; p_sl: number; p_sp: string }
+        Returns: string
       }
       khoa_ky: {
         Args: { p_ghi_chu: string; p_nguoi: string; p_thang: string }

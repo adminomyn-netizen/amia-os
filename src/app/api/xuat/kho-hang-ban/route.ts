@@ -3,7 +3,8 @@ import { sb } from "@/lib/db";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { khopTinhTrang, laTinhTrang } from "@/lib/kho-hang-ban";
-import { docSanPhamKhoHangBan } from "@/lib/kho-hang-ban-doc";
+import { docSanPhamKhoHangBan, locNhanHieuTim } from "@/lib/kho-hang-ban-doc";
+import { boDau } from "@/lib/dinh-dang";
 import { dungExcelKhoHangBan } from "@/lib/kho-hang-ban-xlsx";
 
 /** Xuất Excel "Quản lý kho hàng bán" y như tệp SalonHero (so_luong_trong_kho): tiêu đề SỐ LƯỢNG SẢN PHẨM TRONG KHO, dòng Chi nhánh, rồi bảng
@@ -21,7 +22,7 @@ export async function GET(req: Request) {
   const db = sb();
   const tenCn = cn ? (dsCn ?? []).find((c) => c.id === cn)?.ten ?? "" : "Tất cả các chi nhánh";
   const tatCa = await docSanPhamKhoHangBan(db, cn);
-  const ds = tatCa.filter((s) => (!nhom || s.nhom === nhom) && khopTinhTrang(s.ton, s.ton_toi_thieu, ttHopLe));
+  const ds = locNhanHieuTim(tatCa, u.searchParams.get("nh") ?? "", (u.searchParams.get("q") ?? "").slice(0, 80), boDau).filter((s) => (!nhom || s.nhom === nhom) && khopTinhTrang(s.ton, s.ton_toi_thieu, ttHopLe));
 
   const wb = dungExcelKhoHangBan(ds, tenCn);
 

@@ -305,7 +305,9 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const dem = new Map<string, number>();
     for (const d of dong) for (const v of d.vd) dem.set(v, (dem.get(v) ?? 0) + 1);
     const loc = loai && NHAN[loai] ? loai : "";
-    const hien = (loc ? dong.filter((d) => d.vd.includes(loc)) : dong).slice(0, 300);
+    const dongLoc = loc ? dong.filter((d) => d.vd.includes(loc)) : dong;
+    const pt = catTrang(dongLoc, trangXin, moi); // trước đây gửi một lần 300 dòng (~1 MB) → phân trang như các tab khác
+    const hien = pt.hang;
     const truong: Truong[] = truongSanPham(await luaChonSanPham(db, (sp ?? []).map((x) => x.nhan_hieu)));
     noiDung = (
       <>
@@ -320,7 +322,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
             { nhan: "Cần xử lý", hienThi: (r) => <span className="text-canh-bao">{r.vd.map((v) => NHAN[v]).join(" · ")}</span> },
             ...(sua ? [{ nhan: "", hienThi: (r: (typeof hien)[number]) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.sp.ten}`} rong truong={truong} giaTri={giaTriSanPham(r.sp)} action={luuSanPham} /> }] : []),
           ]} />
-        {dong.length > hien.length && <p className="mt-3 text-[12px] text-muc-3">Đang hiện {hien.length}/{dong.length} dòng đầu; lọc theo vấn đề để xem tiếp.</p>}
+        <PhanTrangDanhMuc tong={dongLoc.length} trang={pt.trang} moi={moi} don="dòng" thamSo={{ tab: "ra-soat", loai: loc }} />
       </>
     );
   } else if (tab === "nhom") {

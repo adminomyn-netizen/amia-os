@@ -9,12 +9,12 @@ type Ham = Database["public"]["Functions"];
 // Chỉ lưu SỐ LIỆU THÔ; ai được xem phần nào vẫn do từng trang lọc sau khi lấy. Lỗi thì ném ra để KHÔNG bị lưu đệm.
 const GIAY = 45;
 
-/** Đọc kết quả TÍNH SẴN (bảng so_lieu_tinh_san, pg_cron 2 phút/lần — migration 0305) của đúng hàm + tham số; không có hoặc cũ quá 10 phút thì trả undefined
+/** Đọc kết quả TÍNH SẴN (bảng so_lieu_tinh_san, pg_cron 10 phút/lần — migration 0305, 0308) của đúng hàm + tham số; không có hoặc cũ quá 25 phút thì trả undefined
  *  để nơi gọi tự tính trực tiếp như cũ. Đây là đường chính của trang chủ: 1 truy vấn khoá chính vài ms thay vì chạy hàm báo cáo (3–28 s lúc máy CSDL bận). */
 export async function docTinhSan<T>(ham: string, thamSo: Record<string, string | number | null>): Promise<T | undefined> {
   try {
     const { data } = await sb().from("so_lieu_tinh_san").select("ket_qua, luc").eq("ham", ham).eq("tham_so", JSON.stringify(thamSo)).maybeSingle();
-    if (!data || Date.now() - new Date(data.luc).getTime() > 10 * 60_000) return undefined;
+    if (!data || Date.now() - new Date(data.luc).getTime() > 25 * 60_000) return undefined;
     return data.ket_qua as T;
   } catch { return undefined; }
 }

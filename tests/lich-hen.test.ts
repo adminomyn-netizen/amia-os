@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { moTaLap, ngayLap, nhanNguon } from "@/lib/lich-hen";
+import { dsNvLoc, MAU_TRANG_THAI, moTaLap, NHAN_TRANG_THAI, ngayLap, nhanNguon, NV_CHUA_PHAN } from "@/lib/lich-hen";
 
 describe("lịch lặp", () => {
   it("theo ngày / tuần, qua tháng và năm", () => {
@@ -38,5 +38,24 @@ describe("lưới lịch hẹn kiểu SalonHero", () => {
     expect(chuTatTen("MSC.0134. Đinh Thị Hôngg Mây")).toBe("MĐ");
     expect(chuTatTen("MSC.TV-25.0115.Nguyễn Thị Thư")).toBe("TN");
     expect(chuTatTen("Tuyết Nhung KTV")).toBe("KT");
+  });
+});
+
+describe("lọc nhân viên chọn nhiều (tham số nv)", () => {
+  const a = "0195001f-c64a-4456-9cf5-3916b03e1ef8", b = "17cbda78-d36d-44c0-babb-4b22aaddffd6";
+  it("tách theo dấu phẩy, bỏ trùng, giữ mã 'chưa chọn nhân viên'", () => {
+    expect(dsNvLoc(`${a},${b},${a},${NV_CHUA_PHAN}`)).toEqual([a, b, NV_CHUA_PHAN]);
+    expect(dsNvLoc(a)).toEqual([a]);
+  });
+  it("bỏ giá trị lạ và rỗng, không phá điều kiện lọc", () => {
+    expect(dsNvLoc(undefined)).toEqual([]);
+    expect(dsNvLoc("")).toEqual([]);
+    expect(dsNvLoc(`x'); drop table lich_hen;--,${b}`)).toEqual([b]);
+  });
+});
+
+describe("màu và nhãn trạng thái", () => {
+  it("mọi trạng thái đều có nhãn và màu", () => {
+    for (const t of Object.keys(NHAN_TRANG_THAI)) { expect(MAU_TRANG_THAI[t]?.the).toBeTruthy(); expect(MAU_TRANG_THAI[t]?.chip).toBeTruthy(); }
   });
 });

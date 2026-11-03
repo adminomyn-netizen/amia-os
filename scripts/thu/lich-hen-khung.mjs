@@ -20,9 +20,14 @@ export async function batDau(BASE, { ra = "/tmp/lich-hen-thu", vaiTro = "chu", p
   const anonKey = env[Object.keys(env).find((x) => /ANON|PUBLISHABLE/.test(x))];
   const THU_MUC = mkdtempSync(join(tmpdir(), "amia-lh-"));
   const pw = "Th-" + Math.random().toString(36).slice(2) + "A9!", email = `thu-lich-${Date.now()}@amia-os.invalid`;
-  const uid = (await db.auth.admin.createUser({ email, password: pw, email_confirm: true })).data.user.id;
+  let nguoi = null;
+  for (let lan = 0; lan < 4 && !nguoi; lan++) { const r = await db.auth.admin.createUser({ email, password: pw, email_confirm: true }); nguoi = r.data?.user; if (!nguoi) { console.error("tạo tài khoản tạm lỗi:", r.error?.message); await doi(3000); } }
+  if (!nguoi) throw new Error("không tạo được tài khoản tạm");
+  const uid = nguoi.id;
   const { data: cn } = await db.from("chi_nhanh").select("id").eq("hoat_dong", true).order("thu_tu").order("ma").limit(1).single();
-  const nv = (await db.from("nhan_vien").insert({ user_id: uid, ho_ten: "[THỬ] Chủ lịch hẹn", vai_tro: vaiTro, email }).select("id").single()).data;
+  let nv = null;
+  for (let lan = 0; lan < 4 && !nv; lan++) { const r = await db.from("nhan_vien").insert({ user_id: uid, ho_ten: "[THỬ] Chủ lịch hẹn", vai_tro: vaiTro, email }).select("id").single(); nv = r.data; if (!nv) { console.error("tạo nhân viên tạm lỗi:", r.error?.message); await doi(3000); } }
+  if (!nv) { await db.auth.admin.deleteUser(uid); throw new Error("không tạo được nhân viên tạm"); }
   const s = await createClient(URL_, anonKey).auth.signInWithPassword({ email, password: pw });
   const val = "base64-" + Buffer.from(JSON.stringify(s.data.session)).toString("base64url"); const parts = []; for (let i = 0; i < val.length; i += 3180) parts.push(val.slice(i, i + 3180));
   const cookies = parts.map((p, i) => ({ name: parts.length === 1 ? `sb-${ref}-auth-token` : `sb-${ref}-auth-token.${i}`, value: encodeURIComponent(p) }));

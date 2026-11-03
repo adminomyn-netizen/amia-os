@@ -17,7 +17,7 @@ export function NutInLich({ tieuDe, phu, dong }: { tieuDe: string; phu?: string;
     const hang = dong.filter(([, v]) => v).map(([n, v]) => `<tr><th>${thoat(n)}</th><td>${thoat(v)}</td></tr>`).join("");
     d.open();
     d.write(`<!doctype html><html lang="vi"><head><meta charset="utf-8"><title>${thoat(tieuDe)}</title><style>
-      body{font:14px/1.5 -apple-system,Segoe UI,Roboto,Arial,sans-serif;color:#111;margin:24px}
+      body{font:14px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#111;margin:24px}
       h1{font-size:18px;margin:0 0 2px}p{margin:0 0 14px;color:#555}
       table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #ddd;padding:7px 8px;text-align:left;vertical-align:top}
       th{width:34%;font-weight:600;color:#444}

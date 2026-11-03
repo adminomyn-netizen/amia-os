@@ -14,7 +14,8 @@ import { NutInLich } from "@/components/lich-hen/NutInLich";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
 import { thucHienBuoi } from "../the/actions";
-import { doiTrangThaiLich, duyetYeuCauOnline, luuLichHen, tuChoiYeuCauOnline } from "./actions";
+import { doiTrangThaiLich, duyetYeuCauOnline, khungGioTrong, luuLichHen, tuChoiYeuCauOnline } from "./actions";
+import { luuKhach } from "../khach-hang/actions";
 import { LocNguon } from "@/components/lich-hen/LocNguon";
 import { ChonKhoang, KhungNgay, LocCho, TimVaLoc, XemThemO } from "@/components/lich-hen/DieuKhienLich";
 import { LocNhieuNhanVien } from "@/components/lich-hen/LocNhieuNhanVien";
@@ -198,7 +199,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
               { ten: "vung", nhan: "Vùng làm", loai: "chu" }, { ten: "shot", nhan: "Số shot thực tế", loai: "so" }, { ten: "line", nhan: "Số line thực tế", loai: "so" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong" }]} action={thucHienBuoi} />
         )}
         {sua && ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && (
-          <FormLichHen kieu="chu" nhan="Đổi lịch" dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} homNay={ngay}
+          <FormLichHen kieu="chu" nhan="Đổi lịch" khungGio={khungGioTrong} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} homNay={ngay}
             sua={{ id: l.id, khach: { id: l.khach_id, ma: k?.ma ?? "", ho_ten: k?.ho_ten ?? "", dien_thoai: k?.dien_thoai ?? "", nguoi_phu_trach_id: k?.nguoi_phu_trach_id ?? "" }, ngay: ngayCuaIso(l.bat_dau), gio: gioVN(l.bat_dau), thoiLuong: Math.round((new Date(l.ket_thuc).getTime() - new Date(l.bat_dau).getTime()) / 60000), nhanVienId: l.nhan_vien_id ?? "", phong: l.phong ?? "", nguon: l.nguon ?? "", ghiChu: l.ghi_chu ?? "", dichVuIds: dvIds, chiNhanhId: l.chi_nhanh_id }} />
         )}
         {sua && ["da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && <NutNhanh nhan="Không đến" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "khong_den" }} />}
@@ -222,10 +223,10 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
           <div className="flex overflow-hidden rounded-nho border border-vien-dam" role="group" aria-label="Kiểu xem lịch">
             {KIEU_XEM.map((k) => <Link key={k.ma} href={url({ kieu: k.ma })} aria-current={k.ma === kieu ? "true" : undefined} className={nutKieu(k.ma === kieu)}>{k.nhan}</Link>)}
           </div>
-          <Link href={url({ kieu: "cho" })} className={nutPhu}>Sơ đồ chỗ</Link>
-          <Link href={url({ tu: congNgay(homNay, -30), den: congNgay(homNay, -1), ngay: congNgay(homNay, -1) })} className={nutPhu}>Lịch sử</Link>
+          <Link href={`/lich-hen/so-do-cho?cn=${cnId}`} className={nutPhu}>Sơ đồ chỗ</Link>
+          <Link href={`/lich-hen/lich-su?cn=${cnId}`} className={nutPhu}>Lịch sử</Link>
           <ChonKhoang tu={tu} den={den} />
-          {sua && <FormLichHen nhan="Đặt lịch" cho={choDm} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
+          {sua && <FormLichHen nhan="Đặt lịch" cho={choDm} khungGio={khungGioTrong} taoKhach={coQuyen(nd, "khach.sua") ? { action: luuKhach, macDinhNv: nd.nhanVienId } : undefined} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-muc-3">

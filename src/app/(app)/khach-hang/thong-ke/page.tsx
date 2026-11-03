@@ -66,7 +66,7 @@ export default async function ThongKeKhach({ searchParams }: { searchParams: Pro
   if (tu < congNgay(den, -91)) tu = congNgay(den, -91);
   const soNgay = Math.round((Date.parse(den) - Date.parse(tu)) / 86_400_000) + 1;
   const macDinh = !sp.tu && !sp.den;
-  const [t0, { data: cn }, ngay, tc] = await Promise.all([docThongKe().catch((e: Error) => { console.error("[khach-thong-ke]", e.message); return null; }), sb().from("chi_nhanh").select("id, ten"), docKhachNgay(soNgay, den === hom ? "" : den).catch((e: Error) => { console.error("[khach-thong-ke-ngay]", e.message); return null; }), tuyChonLocKhach()]);
+  const [t0, { data: cn }, ngay, tc] = await Promise.all([docThongKe().catch((e: Error) => { console.error("[khach-thong-ke]", e.message); return null; }), sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true), docKhachNgay(soNgay, den === hom ? "" : den).catch((e: Error) => { console.error("[khach-thong-ke-ngay]", e.message); return null; }), tuyChonLocKhach()]);
   const t = t0 ?? ({ tong: 0, gioi_tinh: {}, nguon: {}, chi_nhanh: {}, tinh: [], chua_co_tinh: 0, tuoi: {}, moi_theo_thang: [], trang_thai: {}, hang: {}, co_the: 0, dang_no: 0, co_diem: 0, tong_diem: 0 } as ThongKe);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const sap = (o: Record<string, number>) => Object.entries(o ?? {}).sort((a, b) => b[1] - a[1]);

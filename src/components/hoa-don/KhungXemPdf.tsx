@@ -31,21 +31,26 @@ export function KhungXemPdf({ tenTep, hrefIn, children }: { tenTep: string; href
       return MUC_ZOOM[Math.max(0, Math.min(MUC_ZOOM.length - 1, k))];
     });
   };
-  const NUT = "flex h-8 items-center gap-1.5 rounded-nho px-2.5 text-[13px] text-menu-chu hover:bg-white/10";
+  const NUT = "flex h-9 items-center gap-1.5 rounded-nho px-2.5 text-[13px] font-medium text-muc-2 hover:bg-giay-tram";
   return (
-    <section className="overflow-hidden rounded-the border border-vien">
-      <div className="nen-toi flex flex-wrap items-center justify-between gap-2 px-3 py-2">
-        <span className="flex min-w-0 items-center gap-2 text-[13px] text-menu-sang"><FileText strokeWidth={1.6} className="h-4 w-4 shrink-0" aria-hidden /><span className="truncate">{tenTep}.pdf</span></span>
-        <span className="flex items-center gap-1">
-          <span className="px-2 text-[12.5px] tabular-nums text-menu-chu-phu">1 / 1</span>
-          <button type="button" onClick={() => doi(-1)} aria-label="Thu nhỏ" className={NUT}><Minus strokeWidth={1.8} className="h-4 w-4" /></button>
-          <span className="w-12 text-center text-[12.5px] tabular-nums text-menu-chu">{Math.round(zoom * 100)}%</span>
-          <button type="button" onClick={() => doi(1)} aria-label="Phóng to" className={NUT}><Plus strokeWidth={1.8} className="h-4 w-4" /></button>
-          <button type="button" onClick={() => setVuaKhung(true)} aria-pressed={vuaKhung} title="Vừa khung" className={NUT}><Maximize2 strokeWidth={1.6} className="h-4 w-4" /><span className="max-sm:hidden">Vừa khung</span></button>
+    <section className="overflow-hidden rounded-the border border-vien bg-giay-sang">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-vien px-4 py-2.5">
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-nho bg-nhan-nhat text-nhan-dam"><FileText strokeWidth={1.6} className="h-4 w-4" aria-hidden /></span>
+          <span className="min-w-0">
+            <span className="block truncate text-[14px] font-medium text-muc">{tenTep}</span>
+            <span className="block text-[12px] text-muc-3">Bản xem trước · khổ A4 · 1 trang</span>
+          </span>
         </span>
-        <span className="flex items-center gap-1">
+        <span className="flex flex-wrap items-center gap-1">
+          <span className="flex items-center rounded-nho border border-vien-dam">
+            <button type="button" onClick={() => doi(-1)} aria-label="Thu nhỏ" className={NUT}><Minus strokeWidth={1.8} className="h-4 w-4" /></button>
+            <span className="w-11 text-center text-[13px] tabular-nums text-muc-2">{Math.round(zoom * 100)}%</span>
+            <button type="button" onClick={() => doi(1)} aria-label="Phóng to" className={NUT}><Plus strokeWidth={1.8} className="h-4 w-4" /></button>
+          </span>
+          <button type="button" onClick={() => setVuaKhung(true)} aria-pressed={vuaKhung} title="Vừa khung" className={`${NUT} ${vuaKhung ? "bg-giay-tram text-muc" : ""}`}><Maximize2 strokeWidth={1.6} className="h-4 w-4" /><span className="max-sm:hidden">Vừa khung</span></button>
           <a href={`${hrefIn}?in=1`} target="_blank" rel="noopener" title="Mở hộp in, chọn Lưu thành PDF" className={NUT}><Download strokeWidth={1.6} className="h-4 w-4" />Tải PDF</a>
-          <a href={`${hrefIn}?in=1`} target="_blank" rel="noopener" className={NUT}><Printer strokeWidth={1.6} className="h-4 w-4" />In</a>
+          <a href={`${hrefIn}?in=1`} target="_blank" rel="noopener" className="nut-vang flex h-9 items-center gap-1.5 rounded-nho px-3.5 text-[13px]"><Printer strokeWidth={1.6} className="h-4 w-4" />In hoá đơn</a>
         </span>
       </div>
       <div ref={khung} className="overflow-auto bg-giay-tram px-4 py-6" style={{ maxHeight: "80vh" }}>

@@ -351,7 +351,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     );
   } else if (tab === "cho-lam") {
     const [{ data: cn }, { data: cho }, { data: cfg }, { count: nDv }] = await Promise.all([
-      db.from("chi_nhanh").select("id, ten").order("thu_tu").order("ma"),
+      db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
       db.from("cho_lam").select("*").order("chi_nhanh_id").order("thu_tu").order("ten"),
       db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "dat_online.%"),
       db.from("dich_vu").select("id", { count: "exact", head: true }).eq("dat_online", true).eq("hoat_dong", true),

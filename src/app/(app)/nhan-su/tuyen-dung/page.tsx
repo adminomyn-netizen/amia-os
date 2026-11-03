@@ -25,7 +25,7 @@ export default async function TrangTuyenDung({ searchParams }: { searchParams: P
   const tab = TAB.some((x) => x.ma === t) ? t! : "ung-vien";
   const trongPhamVi = (cn: string | null) => !nd.chiNhanhId || !cn || cn === nd.chiNhanhId;
   const [{ data: cn }, { data: tinAll }, { data: ucAll }] = await Promise.all([
-    db.from("chi_nhanh").select("id, ten").order("thu_tu").order("ma"),
+    db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("tin_tuyen_dung").select("*").order("tao_luc", { ascending: false }),
     db.from("yeu_cau_tuyen_dung").select("*").order("tao_luc", { ascending: false }),
   ]);

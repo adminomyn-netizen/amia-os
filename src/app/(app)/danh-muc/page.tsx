@@ -7,6 +7,7 @@ import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
+import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type GiaTri, type Truong } from "@/components/ui/BieuMau";
 import { LocNhomDanhMuc } from "@/components/cai-dat/LocNhomDanhMuc";
@@ -21,6 +22,33 @@ const TAB = [
   { ma: "dich-vu", ten: "Dịch vụ" }, { ma: "goi-the", ten: "Gói thẻ" }, { ma: "san-pham", ten: "Sản phẩm và vật tư" },
   { ma: "ra-soat", ten: "Rà soát sản phẩm" }, { ma: "nhom", ten: "Nhóm dịch vụ" }, { ma: "nhom-the", ten: "Nhóm thẻ" }, { ma: "cho-lam", ten: "Chỗ / giường" }, { ma: "chi-nhanh", ten: "Chi nhánh" },
 ];
+/** Phân trang bảng dài (dịch vụ, gói thẻ, sản phẩm): lọc và tìm (không dấu) chạy ở máy chủ trên cả danh mục, chỉ các dòng của trang đang xem được gửi xuống trình duyệt. */
+const CO_TRANG = [20, 50, 100] as const;
+const CO_TRANG_MAC_DINH = 50;
+function PhanTrangDanhMuc({ tong, trang, moi, thamSo, don }: { tong: number; trang: number; moi: number; thamSo: Record<string, string>; don: string }) {
+  const gan = (o: { trang?: number; n?: number }) => {
+    const u = new URLSearchParams(Object.entries(thamSo).filter(([, v]) => v));
+    const n = o.n ?? moi;
+    if (n !== CO_TRANG_MAC_DINH) u.set("n", String(n)); else u.delete("n");
+    if (o.trang && o.trang > 1) u.set("trang", String(o.trang));
+    return `/danh-muc?${u}`;
+  };
+  return (
+    <div className="mt-1">
+      <ThanhTrang trang={trang} tong={tong} moi={moi} don={don} luonHien gan={(t) => gan({ trang: t })} />
+      <nav aria-label="Số dòng mỗi trang" className="mt-3 flex flex-wrap items-center gap-1.5 text-[13px] text-muc-3">
+        <span className="mr-1">Mỗi trang</span>
+        {CO_TRANG.map((x) => <Link key={x} href={gan({ n: x })} aria-current={x === moi ? "true" : undefined} className={`rounded-nho px-2.5 py-1 ${x === moi ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-2 hover:bg-giay-tram"}`}>{x}</Link>)}
+        <span className="ml-1">dòng</span>
+      </nav>
+    </div>
+  );
+}
+function catTrang<T>(ds: T[], trang: number, moi: number) {
+  const t = Math.min(Math.max(1, trang), Math.max(1, Math.ceil(ds.length / moi)));
+  return { hang: ds.slice((t - 1) * moi, t * moi), trang: t };
+}
+
 const NHOM_CAP = [{ gia_tri: "", nhan: "Không phải vật tư cấp theo ca" }, { gia_tri: "A", nhan: "A · đắt, đếm được (cấp từng ca)" }, { gia_tri: "B", nhan: "B · chai dùng chung (cấp theo ngày)" }, { gia_tri: "C", nhan: "C · rẻ, khó đếm (cấp theo tuần)" }];
 
 /** Biểu mẫu sản phẩm / vật tư, dùng ở tab Sản phẩm và tab Rà soát. Mã để trống khi thêm mới thì hệ thống tự sinh theo nhóm (MP-0001...). */
@@ -48,9 +76,12 @@ function truongSanPham(): Truong[] {
   ];
 }
 
-export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string; loai?: string; nhom?: string; q?: string }> }) {
+export default async function TrangDanhMuc({ searchParams }: { searchParams: Promise<{ tab?: string; loai?: string; nhom?: string; q?: string; n?: string; trang?: string }> }) {
   const nd = await yeuCauQuyen("danhmuc.xem");
-  const { tab: t, loai, nhom: nhomChon = "", q: tuKhoa = "" } = await searchParams;
+  const { tab: t, loai, nhom: nhomChon = "", q: tuKhoa = "", n: nS, trang: trangS } = await searchParams;
+  const moi = (CO_TRANG as readonly number[]).includes(Number(nS)) ? Number(nS) : CO_TRANG_MAC_DINH;
+  const trangXin = Math.max(1, Math.floor(Number(trangS)) || 1);
+  const giuN = moi !== CO_TRANG_MAC_DINH ? String(moi) : "";
   const khoaTim = boDau(tuKhoa.trim());
   const tab = TAB.some((x) => x.ma === t) ? t! : "dich-vu";
   const sua = coQuyen(nd, "danhmuc.sua");
@@ -91,10 +122,11 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const tatDv = dv.data ?? [];
     const dvLoc = tatDv.filter((r) => (!nhomChon || r.nhom_id === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ten_en ?? ""}`).includes(khoaTim)));
     const nhomDv = (nhom.data ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten, dem: tatDv.filter((r) => r.nhom_id === n.id).length })).filter((n) => n.dem > 0);
+    const pt = catTrang(dvLoc, trangXin, moi);
     noiDung = (
       <>
-      <LocNhomDanhMuc tab="dich-vu" nhom={nhomDv} tong={tatDv.length} chon={nhomChon} q={tuKhoa} hien={dvLoc.length} />
-      <Bang duLieu={dvLoc} khoa={(r) => r.id} trong={tatDv.length ? "Không có dịch vụ nào khớp." : "Chưa có dịch vụ. Bấm Thêm dịch vụ để bắt đầu."}
+      <LocNhomDanhMuc tab="dich-vu" nhom={nhomDv} tong={tatDv.length} chon={nhomChon} q={tuKhoa} hien={dvLoc.length} giu={{ n: giuN }} />
+      <Bang duLieu={pt.hang} khoa={(r) => r.id} trong={tatDv.length ? "Không có dịch vụ nào khớp." : "Chưa có dịch vụ. Bấm Thêm dịch vụ để bắt đầu."}
         cot={[
           { nhan: "Ảnh", hienThi: (r) => <NutDoiAnh id={r.id} an={{ bang: "dich_vu" }} anh={urlAnhDanhMuc(r.anh)} ten={r.ten} sua={sua} action={datAnhDanhMuc} /> },
           { nhan: "Mã", hienThi: (r) => r.ma }, { chinh: true, nhan: "Dịch vụ", hienThi: (r) => <span className="text-muc">{r.ten}{r.cho_sua_gia && <span className="ml-2 text-[12px] text-muc-3">sửa giá khi thanh toán</span>}</span> }, { nhan: "Nhóm", hienThi: (r) => tenNhom.get(r.nhom_id) ?? "" },
@@ -112,6 +144,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
             </span>
           ) }] : []),
         ]} />
+      <PhanTrangDanhMuc tong={dvLoc.length} trang={pt.trang} moi={moi} don="dịch vụ" thamSo={{ tab: "dich-vu", nhom: nhomChon, q: tuKhoa }} />
       </>
     );
   } else if (tab === "goi-the") {
@@ -146,7 +179,8 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const goiLoc = tatGoi.filter((r) => (!loaiLoc || r.loai === loaiLoc) && (!nhomChon || nhomCuaThe(r) === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ten_en ?? ""}`).includes(khoaTim)));
     const nhomGoi = (nhomThe.data ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten, dem: tatGoi.filter((r) => nhomCuaThe(r) === n.id).length })).filter((n) => n.dem > 0);
     const demLoai = (l: string) => tatGoi.filter((r) => r.loai === l).length;
-    const hrefLoai = (l: string) => `/danh-muc?tab=goi-the${l ? `&loai=${l}` : ""}${nhomChon ? `&nhom=${encodeURIComponent(nhomChon)}` : ""}${tuKhoa ? `&q=${encodeURIComponent(tuKhoa)}` : ""}`;
+    const hrefLoai = (l: string) => `/danh-muc?tab=goi-the${l ? `&loai=${l}` : ""}${nhomChon ? `&nhom=${encodeURIComponent(nhomChon)}` : ""}${tuKhoa ? `&q=${encodeURIComponent(tuKhoa)}` : ""}${giuN ? `&n=${giuN}` : ""}`;
+    const pt = catTrang(goiLoc, trangXin, moi);
     const chipLoai = (act: boolean) => `rounded-nho px-3 py-1.5 text-[13px] ${act ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-2 hover:bg-giay-tram"}`;
     noiDung = (
       <>
@@ -155,8 +189,8 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
         <Link href={hrefLoai("lan")} className={chipLoai(loaiLoc === "lan")}>Thẻ số lần ({demLoai("lan")})</Link>
         <Link href={hrefLoai("tien")} className={chipLoai(loaiLoc === "tien")}>Thẻ số tiền ({demLoai("tien")})</Link>
       </nav>
-      <LocNhomDanhMuc tab="goi-the" nhom={nhomGoi} tong={tatGoi.length} chon={nhomChon} q={tuKhoa} hien={goiLoc.length} giu={{ loai: loaiLoc }} />
-      <Bang duLieu={goiLoc} khoa={(r) => r.id} trong={tatGoi.length ? "Không có gói thẻ nào khớp." : "Chưa có gói thẻ."}
+      <LocNhomDanhMuc tab="goi-the" nhom={nhomGoi} tong={tatGoi.length} chon={nhomChon} q={tuKhoa} hien={goiLoc.length} giu={{ loai: loaiLoc, n: giuN }} />
+      <Bang duLieu={pt.hang} khoa={(r) => r.id} trong={tatGoi.length ? "Không có gói thẻ nào khớp." : "Chưa có gói thẻ."}
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { chinh: true, nhan: "Gói", hienThi: (r) => <span className="flex items-center gap-2 text-muc">{r.mau_the && <span aria-hidden className="inline-block h-3 w-3 shrink-0 rounded-[3px]" style={{ backgroundColor: r.mau_the }} />}{r.ten}</span> },
           { nhan: "Loại", hienThi: (r) => (r.loai === "lan" ? (laKhongGioiHan(r.so_buoi) ? "Liệu trình không giới hạn" : `Liệu trình ${r.so_buoi} buổi`) : "Thẻ tiền") }, { nhan: "Giá bán", hienThi: (r) => tienVN(r.gia), phai: true },
@@ -164,6 +198,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Hạn", hienThi: (r) => (r.han_dung_ngay ? `${r.han_dung_ngay} ngày${r.han_tinh_tu === "ngay_tao" ? " (từ ngày tạo)" : ""}` : "Không hạn") }, { nhan: "Nhóm thẻ", hienThi: (r) => tenNhomThe.get(nhomCuaThe(r)) ?? "" }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: Goi) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={giaTriGoi(r)} action={luuGoiThe} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaGoiThe} /></span> }] : []),
         ]} />
+      <PhanTrangDanhMuc tong={goiLoc.length} trang={pt.trang} moi={moi} don="loại thẻ" thamSo={{ tab: "goi-the", loai: loaiLoc, nhom: nhomChon, q: tuKhoa }} />
       </>
     );
   } else if (tab === "san-pham") {
@@ -176,11 +211,12 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const spLoc = tatSp.filter((r) => (!nhomChon || nhomCua(r) === nhomChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ma_vach ?? ""} ${r.nhan_hieu ?? ""} ${r.ten_en ?? ""}`).includes(khoaTim)));
     const demNhom = new Map<string, number>();
     for (const r of tatSp) demNhom.set(nhomCua(r), (demNhom.get(nhomCua(r)) ?? 0) + 1);
+    const pt = catTrang(spLoc, trangXin, moi);
     const nhomSp = [...demNhom.entries()].sort((x, y) => (x[0] === KHONG_NHOM ? 1 : y[0] === KHONG_NHOM ? -1 : x[0].localeCompare(y[0], "vi"))).map(([k, dem]) => ({ gia_tri: k, nhan: k === KHONG_NHOM ? "Chưa phân nhóm" : k, dem }));
     noiDung = (
       <>
-      <LocNhomDanhMuc tab="san-pham" nhom={nhomSp} tong={tatSp.length} chon={nhomChon} q={tuKhoa} hien={spLoc.length} />
-      <Bang duLieu={spLoc} khoa={(r) => r.id} trong={tatSp.length ? "Không có sản phẩm nào khớp." : "Chưa có sản phẩm hoặc vật tư."}
+      <LocNhomDanhMuc tab="san-pham" nhom={nhomSp} tong={tatSp.length} chon={nhomChon} q={tuKhoa} hien={spLoc.length} giu={{ n: giuN }} />
+      <Bang duLieu={pt.hang} khoa={(r) => r.id} trong={tatSp.length ? "Không có sản phẩm nào khớp." : "Chưa có sản phẩm hoặc vật tư."}
         cot={[
           { nhan: "Ảnh", hienThi: (r) => <NutDoiAnh id={r.id} an={{ bang: "san_pham" }} anh={urlAnhDanhMuc(r.anh)} ten={r.ten} sua={sua} action={datAnhDanhMuc} /> },
           { nhan: "Mã", hienThi: (r) => <span>{r.ma}{r.ma_vach && r.ma_vach !== r.ma ? <span className="block text-[12px] text-muc-3">{r.ma_vach}</span> : null}</span> }, { chinh: true, nhan: "Tên", hienThi: (r) => <span className="text-muc">{r.ten}{r.cho_sua_gia && <span className="ml-2 text-[12px] text-muc-3">sửa giá khi thanh toán</span>}</span> }, { nhan: "Nhãn hiệu", hienThi: (r) => r.nhan_hieu ?? "" }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
@@ -189,6 +225,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
           { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof sp>[number]) => <span className="flex flex-wrap gap-x-4 gap-y-1"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} rong truong={truong} giaTri={giaTriSanPham(r)} action={luuSanPham} /><NutHop kieu="chu" nhan="Nhân bản" tieuDe={`Nhân bản: ${r.ten}`} moTa="Tạo sản phẩm mới có cùng thông tin. Đổi tên (và mã vạch) trước khi lưu; mã nội bộ để trống sẽ tự sinh. Ảnh, tồn kho và định mức không được sao chép." rong truong={truong} giaTri={{ ...giaTriSanPham(r), id: undefined, ma: "", ma_vach: "", ten: `${r.ten} (bản sao)` }} action={luuSanPham} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaSanPham} /></span> }] : []),
         ]} />
+      <PhanTrangDanhMuc tong={spLoc.length} trang={pt.trang} moi={moi} don="sản phẩm" thamSo={{ tab: "san-pham", nhom: nhomChon, q: tuKhoa }} />
       </>
     );
   } else if (tab === "ra-soat") {
@@ -265,6 +302,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const c = Object.fromEntries((cfg ?? []).map((x) => [x.khoa, x.gia_tri]));
     const truong: Truong[] = [
       { ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon", luaChon: (cn ?? []).map((x) => ({ gia_tri: x.id, nhan: x.ten })), batBuoc: true }, { ten: "ten", nhan: "Tên chỗ (giường / phòng)", loai: "chu", batBuoc: true, goiY: "Giường 1, Phòng VIP..." },
+      { ten: "khu", nhan: "Khu (tầng)", loai: "chu", goiY: "Tầng 2" }, { ten: "suc_chua", nhan: "Sức chứa (số khách cùng lúc)", loai: "so", batBuoc: true },
       { ten: "thu_tu", nhan: "Thứ tự hiện (nhỏ đứng trước)", loai: "so" }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" },
     ];
     const truongOnline: Truong[] = [
@@ -273,14 +311,14 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const dangMo = c["dat_online.mo"] === "1";
     nutThem = <span className="flex flex-wrap gap-2.5">
       {quanLy && <NutHop kieu="phu" nhan="Đặt lịch online" tieuDe="Đặt lịch online cho khách" moTa="Khách vào trang /dat-lich, chọn dịch vụ và giờ còn trống rồi gửi YÊU CẦU; lễ tân duyệt trong màn Lịch hẹn. Cần có chỗ đang dùng ở chi nhánh và ít nhất một dịch vụ được bật đặt online. Đầy đủ tuỳ chọn như SalonHero: Cài đặt › Web đặt Lịch." truong={truongOnline} giaTri={{ mo: dangMo, bao_truoc_phut: Number(c["dat_online.bao_truoc_phut"] ?? 120), toi_da_ngay: Number(c["dat_online.toi_da_ngay"] ?? 60) }} action={luuDatLichOnline} />}
-      {sua && <NutHop nhan="Thêm chỗ" tieuDe="Thêm chỗ làm" truong={truong} giaTri={{ hoat_dong: true, thu_tu: 100, chi_nhanh_id: cn?.[0]?.id ?? "" }} action={luuChoLam} />}
+      {sua && <NutHop nhan="Thêm chỗ" tieuDe="Thêm chỗ làm" truong={truong} giaTri={{ hoat_dong: true, thu_tu: 100, suc_chua: 1, chi_nhanh_id: cn?.[0]?.id ?? "" }} action={luuChoLam} />}
     </span>;
     noiDung = (
       <>
         <p className="mb-4 text-[14px] text-muc-2">Chỗ làm (giường, phòng) dùng cho Sơ đồ chỗ ở Lịch hẹn. Trang đặt lịch online cho khách: <b className={dangMo ? "text-nhan-dam" : "text-muc-3"}>{dangMo ? "đang mở" : "đang tắt"}</b> · {nDv ?? 0} dịch vụ được bật đặt online (bật ở tab Dịch vụ) · số chỗ đang dùng của chi nhánh là số lịch tối đa chạy cùng lúc.</p>
         <Bang duLieu={cho ?? []} khoa={(r) => r.id} trong="Chưa có chỗ nào. Bấm Thêm chỗ để tạo giường/phòng của từng chi nhánh."
           cot={[
-            { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id) ?? "" }, { nhan: "Chỗ", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Thứ tự", hienThi: (r) => r.thu_tu, phai: true }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
+            { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id) ?? "" }, { nhan: "Khu", hienThi: (r) => r.khu ?? "" }, { nhan: "Chỗ", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Sức chứa", hienThi: (r) => r.suc_chua, phai: true }, { nhan: "Thứ tự", hienThi: (r) => r.thu_tu, phai: true }, { nhan: "Trạng thái", hienThi: (r) => trangThai(r.hoat_dong) },
             ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof cho>[number]) => <span className="flex gap-4"><NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={{ ...r }} an={{ ten_cu: r.ten }} action={luuChoLam} /><NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn chỗ này? Lịch hẹn đã ghi tên chỗ vẫn giữ nguyên chữ. Muốn tạm ngừng thì Sửa và tắt Đang dùng." an={{ id: r.id }} nhanLuu="Xoá" action={xoaChoLam} /></span> }] : []),
           ]} />
       </>

@@ -153,13 +153,13 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
               </button>
             </div>
           </div>
-          <div role="tablist" aria-label="Loại thông báo" className="flex gap-1 overflow-x-auto border-b border-vien px-4">
+          <div role="tablist" aria-label="Loại thông báo" className="flex gap-1 overflow-x-auto border-b border-vien px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {([{ ma: "tat_ca", nhan: "Tất cả" }, ...NHOM_THONG_BAO] as { ma: NhomThongBao | "tat_ca"; nhan: string }[]).map((g) => {
               const so = g.ma === "tat_ca" ? n : chuaDocNhom(g.ma);
               const chon = tab === g.ma;
               return (
                 <button key={g.ma} type="button" role="tab" aria-selected={chon} onClick={() => setTab(g.ma)}
-                  className={`-mb-px flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-1.5 py-2 text-[13px] ${chon ? "border-nhan-dam font-semibold text-muc" : "border-transparent text-muc-3 hover:text-muc"}`}>
+                  className={`-mb-px flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-1 py-2 text-[13px] ${chon ? "border-nhan-dam font-semibold text-muc" : "border-transparent text-muc-3 hover:text-muc"}`}>
                   {g.nhan}{so > 0 && <span className="min-w-[16px] bg-loi px-1 text-center text-[10px] font-semibold leading-[16px] text-white" style={{ borderRadius: 8 }}>{so}</span>}
                 </button>
               );

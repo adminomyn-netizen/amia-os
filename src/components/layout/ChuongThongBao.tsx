@@ -2,12 +2,39 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Bell, BellOff, Check, Volume2, X } from "lucide-react";
+import { Bell, BellOff, CalendarClock, Check, ClipboardList, CreditCard, Receipt, Volume2, X, type LucideIcon } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { NHOM_THONG_BAO, type NhomThongBao } from "@/lib/nhom-thong-bao";
 
 type Muc = { ma: string; nhan: string; href: string; trang: "chua_doc" | "da_doc"; nhom: NhomThongBao };
 type KetQua = { ds: Muc[]; tatTieng?: boolean };
+
+/** Biểu tượng + màu nền theo nhóm, để nhìn lướt là biết loại việc (kiểu thông báo Facebook). */
+const KIEU_NHOM: Record<NhomThongBao, { Icon: LucideIcon; nen: string; chu: string }> = {
+  lich: { Icon: CalendarClock, nen: "bg-nhan-nhat", chu: "text-nhan-dam" },
+  hoa_don: { Icon: Receipt, nen: "bg-canh-bao-nen", chu: "text-canh-bao" },
+  the: { Icon: CreditCard, nen: "bg-nhan-nhat", chu: "text-nhan" },
+  khac: { Icon: ClipboardList, nen: "bg-giay-tram", chu: "text-muc-2" },
+};
+
+/** Tách nhãn "1204 thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)" thành: số (in đậm), phần chính, phần phụ (trong ngoặc hoặc sau dấu ":"/", tổng"). */
+function tachNhan(nhan: string): { so: string; chinh: string; phu: string } {
+  const m = /^(\d[\d.,]*)\s+(.*)$/.exec(nhan);
+  const so = m ? m[1] : "";
+  let chinh = m ? m[2] : nhan, phu = "";
+  const ngoac = /^(.*?)\s*\((.*)\)\s*$/.exec(chinh);
+  if (ngoac) { chinh = ngoac[1]; phu = ngoac[2]; }
+  else {
+    const i = chinh.search(/, tổng |: /);
+    if (i > 0) { phu = chinh.slice(i + 2); chinh = chinh.slice(0, i); }
+  }
+  return { so, chinh, phu: phu ? phu.charAt(0).toUpperCase() + phu.slice(1) : "" };
+}
+
+/** Số tiền ("1.331.642.500 đ") không bị ngắt dòng giữa số và chữ "đ". */
+function giuTien(chu: string) {
+  return chu.split(/(\d[\d.,]*\s?(?:đ|₫))/).map((p, i) => (i % 2 ? <span key={i} className="whitespace-nowrap font-semibold text-muc">{p.replace(" ", "\u00a0")}</span> : p));
+}
 
 /* Trang có 2 chuông (đầu trang máy tính + đầu trang điện thoại, một cái bị ẩn), mỗi chuông hỏi lúc mở trang và lúc nối realtime
  * → 3–4 lần gọi /api/canh-bao (~1 s mỗi lần, cả chục truy vấn đếm) cho MỘT lần mở trang. Dùng chung một lượt hỏi:
@@ -113,7 +140,7 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
       </button>
       {mo && (
         // Lớp ngoài lo vị trí (máy tính: thả dưới chuông; điện thoại: cố định sát hai mép màn hình để không bị cắt bên trái), lớp trong là thẻ nổi.
-        <div className="absolute right-0 top-full z-50 mt-2.5 w-[340px] max-sm:fixed max-sm:inset-x-3 max-sm:top-[60px] max-sm:mt-0 max-sm:w-auto">
+        <div className="absolute right-0 top-full z-50 mt-2.5 w-[380px] max-sm:fixed max-sm:inset-x-3 max-sm:top-[60px] max-sm:mt-0 max-sm:w-auto">
         <div role="menu" aria-label="Thông báo" className="the-noi the-noi-thap vao overflow-hidden">
           <div className="flex items-center justify-between gap-2 px-5 pb-2 pt-5">
             <span className="min-w-0 text-[15px] font-semibold text-muc">Việc đang chờ{n ? ` (${n} chưa đọc)` : ""}</span>
@@ -140,15 +167,28 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
           </div>
           {ds === null ? <p className="px-5 py-6 text-[14px] text-muc-3">Đang tải…</p> : hienThi.length === 0 ? <p className="px-5 py-6 text-[14px] text-muc-3">{tab === "tat_ca" ? "Không có việc nào đang chờ." : "Không có việc nào trong mục này."}</p> : (
             <ul className="max-h-[60vh] divide-y divide-vien overflow-y-auto">
-              {hienThi.map((m) => (
-                <li key={m.ma} className="flex items-stretch hover:bg-giay-tram">
-                  <Link href={m.href} role="menuitem" onClick={() => { setMo(false); if (m.trang === "chua_doc") thaoTac("doc", m.ma); }} className={`flex min-w-0 flex-1 items-center gap-3 py-3 pl-5 pr-2 text-[14px] ${m.trang === "chua_doc" ? "font-medium text-muc" : "text-muc-3"}`}>
-                    <span aria-hidden className={`inline-block h-2 w-2 shrink-0 ${m.trang === "chua_doc" ? "bg-loi" : "bg-transparent"}`} style={{ borderRadius: 9999 }} />
-                    <span className="min-w-0 flex-1">{m.nhan}{m.trang === "chua_doc" ? <span className="sr-only"> (chưa đọc)</span> : null}</span>
+              {hienThi.map((m) => {
+                const chua = m.trang === "chua_doc";
+                const { Icon, nen, chu } = KIEU_NHOM[m.nhom] ?? KIEU_NHOM.khac;
+                const { so, chinh, phu } = tachNhan(m.nhan);
+                return (
+                <li key={m.ma} className={`group flex items-stretch ${chua ? "bg-nhan-nhat/30" : ""} hover:bg-giay-tram`}>
+                  <Link href={m.href} role="menuitem" onClick={() => { setMo(false); if (chua) thaoTac("doc", m.ma); }} className="flex min-w-0 flex-1 items-start gap-3 py-3 pl-4 pr-1">
+                    <span aria-hidden className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-nho ${nen} ${chu}`}><Icon strokeWidth={1.8} className="h-[18px] w-[18px]" /></span>
+                    <span className="min-w-0 flex-1 leading-snug">
+                      <span className={`block text-[14px] ${chua ? "text-muc" : "text-muc-2"}`}>
+                        {so && <span className="mr-1 font-semibold tabular-nums text-muc">{so}</span>}
+                        <span className={chua ? "font-medium" : ""}>{giuTien(chinh)}</span>
+                      </span>
+                      {phu && <span className="mt-0.5 block text-[12.5px] text-muc-3">{giuTien(phu)}</span>}
+                      {chua ? <span className="sr-only"> (chưa đọc)</span> : null}
+                    </span>
+                    <span aria-hidden className={`mt-2 inline-block h-2 w-2 shrink-0 ${chua ? "bg-loi" : "bg-transparent"}`} style={{ borderRadius: 9999 }} />
                   </Link>
-                  <button type="button" onClick={() => thaoTac("xoa", m.ma)} aria-label={`Xoá thông báo: ${m.nhan}`} title="Xoá thông báo" className="flex w-10 shrink-0 items-center justify-center pr-2 text-muc-3 hover:text-loi"><X strokeWidth={1.8} className="h-4 w-4" aria-hidden /></button>
+                  <button type="button" onClick={() => thaoTac("xoa", m.ma)} aria-label={`Xoá thông báo: ${m.nhan}`} title="Xoá thông báo" className="flex w-9 shrink-0 items-center justify-center pr-1 text-muc-3 opacity-60 hover:text-loi hover:opacity-100 group-hover:opacity-100"><X strokeWidth={1.8} className="h-4 w-4" aria-hidden /></button>
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
           <div className="flex items-center gap-2 border-t border-vien px-5 py-2.5 text-[12px] text-muc-3">

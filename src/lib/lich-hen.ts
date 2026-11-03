@@ -100,3 +100,8 @@ export const MAU_TRANG_THAI: Record<string, { the: string; chip: string }> = {
   huy: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi" },
   khong_den: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi" },
 };
+
+/** Nhãn trạng thái lịch hẹn (mã trong DB → chữ hiển thị), theo thứ tự quy trình: dùng ở bảng Lịch sử và lọc trạng thái. */
+export const NHAN_TRANG_THAI: Record<string, string> = {
+  chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành", huy: "Đã huỷ", khong_den: "Khách không đến",
+};

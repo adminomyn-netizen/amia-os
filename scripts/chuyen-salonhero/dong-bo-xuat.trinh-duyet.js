@@ -67,7 +67,22 @@
         E.phase = 'nhac';
         const nhac = asArr(await retry(() => g('ReminderService').getListReminder({}))).filter(sauMoc);
         await emit('nhac_cham_soc', nhac);
-        put('meta', JSON.stringify({ merchant_id: MID, xuat_luc: new Date().toISOString(), pha: 'ds', tham_so: P }));
+        // 6. sổ quỹ (câu 16): dòng tay của 2 sổ (tiền mặt / ngân hàng) × 2 cơ sở trong [tuDon, denExcl); dòng "order_…" (tiền khách trả) AMIA đã có qua thanh toán → bỏ.
+        //    getCashBook tính CẢ mốc cuối → lùi 1 ms. Tồn quỹ hiện tại 4 quỹ để đối chiếu (getTotalRevenueByCashAndBank).
+        E.phase = 'so_quy';
+        const CS = g('CostService');
+        const sqTu = new Date(P.tuDon + 'T00:00:00+07:00').toISOString(), sqDen = new Date(new Date(P.denExcl + 'T00:00:00+07:00').getTime() - 1).toISOString();
+        for (const loc of [8377, 9202]) {
+          for (const at of ['CASH', 'BANK']) {
+            try { const d = unwrap(await retry(() => CS.getCashBook({ startDate: sqTu, endDate: sqDen, location_id: loc, merchant_id: MID, account_type: at })));
+              await emit('so_quy', (Array.isArray(d) ? d : []).filter((x) => !String(x.id).startsWith('order')).map((x) => ({ ...x, __loc: loc, __at: at })));
+            } catch (e) { E.err.push(['so_quy', `${loc}|${at}`, String((e && e.message) || e).slice(0, 120)]); }
+          }
+          try { put('ton_quy', JSON.stringify({ loc, ...unwrap(await retry(() => CS.getTotalRevenueByCashAndBank({ location_id: loc, merchant_id: MID }))), luc: new Date().toISOString() })); }
+          catch (e) { E.err.push(['ton_quy', String(loc), String((e && e.message) || e).slice(0, 120)]); }
+        }
+        flushAll();
+        put('meta',JSON.stringify({ merchant_id: MID, xuat_luc: new Date().toISOString(), pha: 'ds', tham_so: P }));
       } else if (P.pha === 'ct') {
         E.phase = 'hoa_don_ct';
         await pool('hoa_don', P.donIds, 3, async (id) => { const d = unwrap(await retry(() => g('OrderService').getOrderById({ id }))); put('hoa_don', JSON.stringify({ id, d })); });

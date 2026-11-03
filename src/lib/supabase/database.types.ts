@@ -3460,6 +3460,9 @@ export type Database = {
           cho_sua_gia: boolean
           che_do_sua_so: string
           gia_tri_1_lan: number | null
+          tu_tinh_gia_tri_1_lan: boolean
+          giam_hh_theo_giam_gia: boolean
+          ti_le_giam_hh: number
           noi_hien_thi: string
           gia: number
           gia_tri_the: number | null
@@ -3483,6 +3486,9 @@ export type Database = {
           cho_sua_gia?: boolean
           che_do_sua_so?: string
           gia_tri_1_lan?: number | null
+          tu_tinh_gia_tri_1_lan?: boolean
+          giam_hh_theo_giam_gia?: boolean
+          ti_le_giam_hh?: number
           noi_hien_thi?: string
           gia: number
           gia_tri_the?: number | null
@@ -3506,6 +3512,9 @@ export type Database = {
           cho_sua_gia?: boolean
           che_do_sua_so?: string
           gia_tri_1_lan?: number | null
+          tu_tinh_gia_tri_1_lan?: boolean
+          giam_hh_theo_giam_gia?: boolean
+          ti_le_giam_hh?: number
           noi_hien_thi?: string
           gia?: number
           gia_tri_the?: number | null
@@ -4116,6 +4125,48 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      hoa_hong_cai_dat: {
+        Row: {
+          chi_nhanh_id: string
+          chia_deu_dich_vu: boolean
+          chia_deu_ban: boolean
+          chia_deu_tu_van: boolean
+          so_nv_tieu_chuan: number
+          tinh_sau_giam_gia: boolean
+          ap_giam_gia_tong_don: boolean
+          he_so_gio: Json
+          he_so_sao: Json
+          sua_luc: string
+          sua_boi: string | null
+        }
+        Insert: {
+          chi_nhanh_id: string
+          chia_deu_dich_vu?: boolean
+          chia_deu_ban?: boolean
+          chia_deu_tu_van?: boolean
+          so_nv_tieu_chuan?: number
+          tinh_sau_giam_gia?: boolean
+          ap_giam_gia_tong_don?: boolean
+          he_so_gio?: Json
+          he_so_sao?: Json
+          sua_luc?: string
+          sua_boi?: string | null
+        }
+        Update: {
+          chi_nhanh_id?: string
+          chia_deu_dich_vu?: boolean
+          chia_deu_ban?: boolean
+          chia_deu_tu_van?: boolean
+          so_nv_tieu_chuan?: number
+          tinh_sau_giam_gia?: boolean
+          ap_giam_gia_tong_don?: boolean
+          he_so_gio?: Json
+          he_so_sao?: Json
+          sua_luc?: string
+          sua_boi?: string | null
+        }
+        Relationships: []
       }
       hoa_hong_ti_le: {
         Row: {
@@ -9809,6 +9860,7 @@ export type Database = {
           goi_id: string
           han_dung: string | null
           hoa_don_dong_id: string | null
+          gia_tri_1_lan_hh: number | null
           id: string
           khach_id: string
           loai: string
@@ -9829,6 +9881,7 @@ export type Database = {
           goi_id: string
           han_dung?: string | null
           hoa_don_dong_id?: string | null
+          gia_tri_1_lan_hh?: number | null
           id?: string
           khach_id: string
           loai: string
@@ -9849,6 +9902,7 @@ export type Database = {
           goi_id?: string
           han_dung?: string | null
           hoa_don_dong_id?: string | null
+          gia_tri_1_lan_hh?: number | null
           id?: string
           khach_id?: string
           loai?: string
@@ -12299,6 +12353,18 @@ export type Database = {
           p_muc: string
           p_nv?: string
           p_so_luong: number
+      hh_gia_1_lan_the: {
+        Args: { p_the_sh_id: number }
+        Returns: number
+      }
+      hh_la_dong_the: {
+        Args: { p_dong: string }
+        Returns: boolean
+      }
+      hh_nguoi: {
+        Args: { p_dong: string; p_nv: string; p_ti_le_chia: number; p_vai: string }
+        Returns: number
+      }
           p_vai: string
         }
         Returns: number

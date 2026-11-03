@@ -13,6 +13,7 @@
 //   --thu-muc  dùng lại bản xuất đã có (bỏ qua bước xuất từ SalonHero)
 //   --tu-kiem  TỰ KIỂM: trong giao dịch, giả lập "mất" vài khách/HĐ/lịch/thẻ và đổi vài dòng rồi cho đồng bộ vá lại; luôn rollback.
 import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, nganHangKhoan } from "./lib.mjs";
+import { chuanHoaSoQuySh, napSoQuySh, tonQuyAmia } from "./so-quy-sh.mjs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync, statSync } from "node:fs";
 import { spawnSync, execSync } from "node:child_process";
 import { dirname, resolve } from "node:path";
@@ -140,8 +141,12 @@ await dbTruoc.end();
 const loiXuat = existsSync(`${D}/_loi_xuat.json`) ? JSON.parse(readFileSync(`${D}/_loi_xuat.json`, "utf8")) : [];
 
 // ══════════ 2. NẠP VÀO AMIA ══════════
-const PT = { CASH: "tien_mat", TRANSFER: "chuyen_khoan", CARD: "quet_the", COD: "tien_mat", WALLET: "chuyen_khoan" };
+// SalonHero: COD và Ví điện tử vào QUỸ NGÂN HÀNG (không phải tiền mặt) — mã riêng từ migration 0199 (03/11/2026).
+const PT = { CASH: "tien_mat", TRANSFER: "chuyen_khoan", CARD: "quet_the", COD: "ship_cod", WALLET: "vi_dien_tu" };
 const ptDich = (t) => PT[String(t ?? "").toUpperCase()] ?? "chuyen_khoan";
+const VI_SH = new Set(["ZALO", "MOMO", "GRAB", "VNPAY", "SAMSUNG", "SHOPEE", "VINID", "GOTIT", "NETSPAY", "PAYNOW", "AIRTEL", "MTN"]);
+/** Loại ví (migration 0199): chỉ khi phương thức là ví điện tử; mã lạ/trống = KHAC. */
+const viDich = (pt, wallet) => (pt === "vi_dien_tu" ? (VI_SH.has(String(wallet ?? "").toUpperCase()) ? String(wallet).toUpperCase() : "KHAC") : null);
 const TT = { BOOKED: "chua_xac_nhan", CONFIRMED: "da_xac_nhan", CHECKIN: "cho_phuc_vu", PROCESSED: "dang_phuc_vu", FINISHED: "hoan_thanh", CANCELED: "huy", NOSHOW: "khong_den" };
 const TTN = { ACTIVE: "dang_nhac", INACTIVE: "da_xong", CANCEL: "huy" };
 const mang = (s) => { try { const v = typeof s === "string" ? JSON.parse(s) : s; return Array.isArray(v) ? v.map(Number).filter(Boolean) : []; } catch { return []; } };
@@ -431,10 +436,10 @@ try {
       const ev = (d.paymentHistory ?? []).filter((x) => !x.is_deleted && so(x.amount_paid) > 0);
       const chNh = chuanBiNganHangSh({ l, d }), nh = (pt, tien) => nganHangKhoan(chNh, pt, tien).ten; // ngân hàng nhận (migration 0179)
       let tong = 0;
-      for (const x of ev) { ttC.push({ don_sh: shId, pt: ptDich(x.payment_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
+      for (const x of ev) { ttC.push({ don_sh: shId, pt: ptDich(x.payment_type), vi: viDich(ptDich(x.payment_type), x.wallet_type ?? d.wallet_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
       const thieu = Math.max(0, phai - so(d.total_amount_card) - tong);
       if (daThuNguon > phai) baoH.khach_dong_du.push([shId, daThuNguon - phai]);
-      if (tong !== so(d.amount_paid)) { const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) ttC.push({ don_sh: shId, pt: ptDich(d.payment_type), nh: nh(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
+      if (tong !== so(d.amount_paid)) { const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) ttC.push({ don_sh: shId, pt: ptDich(d.payment_type), vi: viDich(ptDich(d.payment_type), d.wallet_type), nh: nh(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
       if (so(d.total_amount_card) > 0) ttC.push({ don_sh: shId, pt: "the_tien", so_tien: so(d.total_amount_card), ngay, ghi: "Trừ thẻ (lịch sử SalonHero, không ghi sổ thẻ)" });
     }
     const dau = {
@@ -510,8 +515,8 @@ try {
   const ttCan = tt.filter((x) => dsHd.has(x.don_sh)).map((x) => ({ ...x, dot: dotHd.get(x.don_sh) }));
   let nTt = 0;
   await theoLo(ttCan, 2000, async (l) => {
-    nTt += (await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang)
-       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, x.dot, x.nh from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, so_tien bigint, ngay date, ghi text, dot text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(l), he])).length;
+    nTt += (await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang, loai_vi)
+       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, x.dot, x.nh, x.vi from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, vi text, so_tien bigint, ngay date, ghi text, dot text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(l), he])).length;
   });
   await q(`select public.tinh_lai_hoa_don(h.id) from public.hoa_don h where h.sh_id = any($1::bigint[])`, [[...dsHd]]);
   tom.hoa_don = { moi: nHd, doi: doi.length, huy_moi_trong_doi: baoH.huy_moi, nang_cap_no_dau: baoH.nang_cap_no_dau, khong_doi: baoH.khong_doi, dong: nDong, thanh_toan: nTt, nhap_bo_qua: baoH.nhap_bo_qua, khong_co_khach_o_amia: baoH.khong_co_khach_o_amia,
@@ -609,6 +614,22 @@ try {
   tom.nhac = { moi: nNhacMoi, doi: nNhacDoi, khong_co_khach: nhacKhongKhach };
 
   tik('nhắc xong');
+  // ── SỔ QUỸ (câu 16): phiếu tay SalonHero mới/sửa/xoá trong cửa sổ [tuDon, denNgay] → so_quy (hàm so_quy_nhap_sh / so_quy_dao_sh, không sửa sổ cái) ──
+  let bangQuy = [];
+  if (existsSync(`${D}/so_quy.ndjson`)) {
+    const loiSq = loiXuat.filter((x) => x[0] === "so_quy").length;
+    tom.so_quy = await napSoQuySh(db, chuanHoaSoQuySh(await docMang(`${D}/so_quy.ndjson`)), { nguoiId: he, cuaSo: loiSq ? null : { tu: tuDon, den: denNgay } });
+    if (loiSq) tom.so_quy.ghi = "xuất sổ quỹ có lỗi → không dò phiếu bị xoá lần này";
+    // Đối chiếu tồn quỹ hiện tại 4 quỹ (CHỈ ĐỂ XEM, không chặn ghi: dòng tạo trong app và tiền khách trả sau lúc xuất làm lệch hợp lệ)
+    const shTon = new Map((await docMang(`${D}/ton_quy.ndjson`)).map((r) => [cnTheoLoc(r.loc), r]));
+    const am = await tonQuyAmia(db);
+    for (const cn of ["VINH", "DALAT"]) for (const [l, k] of [["tien_mat", "cash"], ["ngan_hang", "bank"]]) {
+      const sh = shTon.get(cn)?.[k]; const a = am[cn]?.[l] ?? { ton: 0, tu_app: 0 };
+      bangQuy.push({ quy: `${cn} ${l}`, SalonHero: sh ?? "?", AMIA: a.ton, tu_app: a.tu_app, lech_tru_app: sh == null ? "?" : a.ton - a.tu_app - Number(sh) });
+    }
+    tom.ton_quy = bangQuy;
+    tik('sổ quỹ xong');
+  } else console.log("  (bản xuất không có so_quy.ndjson → bỏ qua sổ quỹ)");
   // ════ ĐỐI CHIẾU VỚI SALONHERO (cùng giao dịch) ════
   const kq = []; const them = (muc, sh, am, ghi = "") => kq.push({ muc, salonhero: Number(sh), amia: Number(am), lech: Number(am) - Number(sh), khop: Number(sh) === Number(am) ? "KHỚP" : "LỆCH", ghi });
   const bo = new Set(xungDot.hoa_don.map((x) => x.sh_id));
@@ -659,6 +680,7 @@ try {
   console.log("\n── ĐỐI CHIẾU VỚI SALONHERO ──"); inBang(kq);
   console.log("── DOANH THU / HOÁ ĐƠN THEO NGÀY (SalonHero | AMIA) ──"); inBang(bangNgay.slice(-14));
   if (bangLich.length) { console.log("── LỊCH LỆCH ──"); inBang(bangLich.slice(0, 20)); }
+  if (bangQuy.length) { console.log("── TỒN QUỸ HIỆN TẠI (để xem; lệch hợp lệ = tiền khách trả sau lúc xuất / dòng tạo trong app) ──"); inBang(bangQuy); }
   tom.xung_dot = Object.fromEntries(Object.entries(xungDot).map(([k, a]) => [k, a.length]));
   tom.doi_chieu_lech = kq.filter((x) => x.khop === "LỆCH").map((x) => x.muc);
   console.log(JSON.stringify(tom, null, 1));

@@ -8224,6 +8224,52 @@ export type Database = {
           },
         ]
       }
+      nhan_vien_chi_nhanh: {
+        Row: {
+          cap_nhat_luc: string
+          chi_nhanh_id: string
+          nguoi_sua_id: string | null
+          nhan_vien_id: string
+          vai_tro: string
+        }
+        Insert: {
+          cap_nhat_luc?: string
+          chi_nhanh_id: string
+          nguoi_sua_id?: string | null
+          nhan_vien_id: string
+          vai_tro: string
+        }
+        Update: {
+          cap_nhat_luc?: string
+          chi_nhanh_id?: string
+          nguoi_sua_id?: string | null
+          nhan_vien_id?: string
+          vai_tro?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nhan_vien_chi_nhanh_chi_nhanh_id_fkey"
+            columns: ["chi_nhanh_id"]
+            isOneToOne: false
+            referencedRelation: "chi_nhanh"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nhan_vien_chi_nhanh_nguoi_sua_id_fkey"
+            columns: ["nguoi_sua_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nhan_vien_chi_nhanh_nhan_vien_id_fkey"
+            columns: ["nhan_vien_id"]
+            isOneToOne: false
+            referencedRelation: "nhan_vien"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       nhan_vien_ghep_lark: {
         Row: {
           ly_do: string
@@ -13229,6 +13275,7 @@ export type Database = {
         }[]
       }
       tuy_chon_loc_khach: { Args: never; Returns: Json }
+      vai_tai_chi_nhanh: { Args: { p_cn: string; p_nv: string }; Returns: string }
       voucher_loai_dong: { Args: { p_gioi_han: string }; Returns: string[] }
       xu_ly_lech_chuyen_kho: {
         Args: { p_cach: string; p_nguoi: string; p_phieu: string }

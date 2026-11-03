@@ -2,6 +2,7 @@ import "server-only";
 import webpush from "web-push";
 import { sb } from "@/lib/db";
 import { quyenHieuLuc, laVaiTro, type Quyen } from "@/lib/quyen";
+import { dsCoSoDuocVao, vaiTaiChiNhanh } from "@/lib/vai-chi-nhanh";
 
 export type Tin = { tieuDe: string; noiDung: string; url: string; tag?: string; /** true = gửi im lặng cho mọi người nhận (VD Web đặt lịch tắt "thông báo bằng âm thanh"). */ imLang?: boolean };
 export type KetQuaGui = { thietBi: number; thanhCong: number; daGo: number };
@@ -52,6 +53,12 @@ export async function guiChoNhanVien(nhanVienIds: string[], tin: Tin): Promise<K
 
 /** Nhân viên đang làm việc, có quyền `quyen` (theo quyền thật: vai trò + danh sách riêng) và thuộc chi nhánh đó (hoặc phụ trách mọi chi nhánh). */
 export async function nguoiCoQuyen(quyen: Quyen, chiNhanhId: string | null): Promise<string[]> {
-  const { data } = await sb().from("nhan_vien").select("id, vai_tro, quyen_rieng, chi_nhanh_id").eq("hoat_dong", true);
-  return (data ?? []).filter((n) => laVaiTro(n.vai_tro) && quyenHieuLuc(n.vai_tro, n.quyen_rieng).includes(quyen) && (!chiNhanhId || !n.chi_nhanh_id || n.chi_nhanh_id === chiNhanhId)).map((n) => n.id);
+  const { data } = await sb().from("nhan_vien").select("id, vai_tro, quyen_rieng, chi_nhanh_id, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").eq("hoat_dong", true);
+  // Vai trò theo từng chi nhánh (0280): việc của một chi nhánh → xét vai của người đó TẠI chi nhánh ấy; việc chung → vai ở bất kỳ chi nhánh nào được vào.
+  return (data ?? []).filter((n) => {
+    if (!laVaiTro(n.vai_tro)) return false;
+    const hs = { vai_tro: n.vai_tro, chi_nhanh_id: n.chi_nhanh_id, quyen_rieng: n.quyen_rieng };
+    if (chiNhanhId) return !!vaiTaiChiNhanh(hs, n.them, chiNhanhId)?.quyen.includes(quyen);
+    return quyenHieuLuc(n.vai_tro, n.quyen_rieng).includes(quyen) || dsCoSoDuocVao(hs, n.them).some((c) => vaiTaiChiNhanh(hs, n.them, c.chiNhanhId)?.quyen.includes(quyen));
+  }).map((n) => n.id);
 }

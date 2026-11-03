@@ -4,16 +4,19 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, Settings, UserCog } from "lucide-react";
 import { dangXuat } from "@/app/dang-nhap/actions";
+import { doiChiNhanhLamViec } from "@/app/(app)/chi-nhanh-lam-viec/actions";
 import { AnhDaiDien } from "./AnhDaiDien";
 import { ChonGiaoDien } from "./ChonGiaoDien";
 import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 
 export type NhomCaiDat = { nhan: string; the: { ten: string; moTa: string; duongDan?: string }[] };
-type Props = { hoTen: string; vaiTro: string; chucDanh: string | null; email: string; chiNhanh: string | null; anh: string | null; toi?: boolean; caiDat?: NhomCaiDat[] };
+/** Chi nhánh được vào (vai trò theo từng chi nhánh). ≥ 2 thì bảng tài khoản có danh sách "Chọn" để đổi chi nhánh làm việc như SalonHero. */
+export type CoSoMenu = { id: string; ten: string; vai: string; dang: boolean };
+type Props = { hoTen: string; vaiTro: string; chucDanh: string | null; email: string; chiNhanh: string | null; anh: string | null; toi?: boolean; caiDat?: NhomCaiDat[]; coSo?: CoSoMenu[] };
 
 /** Nút "avatar + tên" mở bảng nhỏ: ảnh lớn, họ tên, vị trí đầy đủ (vai trò, chức danh, chi nhánh), email;
  *  rồi lối vào chỉnh thông tin cá nhân / đổi mật khẩu; đăng xuất nằm dưới cùng. Đóng bằng Esc, bấm ra ngoài hoặc chọn một mục. */
-export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, toi = false, caiDat = [] }: Props) {
+export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, toi = false, caiDat = [], coSo = [] }: Props) {
   const [mo, setMo] = useState(false);
   const [moCD, setMoCD] = useState(false);
   const goc = useRef<HTMLDivElement>(null);
@@ -50,8 +53,26 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
           </div>
           <dl className="space-y-2.5 border-t border-vien px-5 py-3.5 text-[13px]">
             <div><dt className="nhan-muc">Email đăng nhập</dt><dd className="mt-0.5 break-all text-muc-2">{email}</dd></div>
-            <div><dt className="nhan-muc">Chi nhánh</dt><dd className="mt-0.5 text-muc-2">{chiNhanh ?? "Mọi chi nhánh"}</dd></div>
+            {coSo.length < 2 && <div><dt className="nhan-muc">Chi nhánh</dt><dd className="mt-0.5 text-muc-2">{chiNhanh ?? "Mọi chi nhánh"}</dd></div>}
           </dl>
+          {coSo.length >= 2 && (
+            <div className="border-t border-vien px-5 py-3.5">
+              <div className="nhan-muc mb-1.5">Chi nhánh làm việc</div>
+              <ul className="space-y-1">
+                {coSo.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-3 text-[13px]">
+                    <span className="min-w-0"><span className={`block truncate ${c.dang ? "font-medium text-muc" : "text-muc-2"}`}>{c.ten}</span><span className="block text-[12px] text-muc-3">{c.vai}</span></span>
+                    {c.dang ? <span className="shrink-0 text-[12px] font-medium text-nhan-dam">Đang làm</span> : (
+                      <form action={doiChiNhanhLamViec} onSubmit={() => setMo(false)}>
+                        <input type="hidden" name="chi_nhanh_id" value={c.id} />
+                        <button type="submit" role="menuitem" className="shrink-0 rounded-nho border border-vien px-3 py-1 text-[12.5px] text-muc hover:bg-giay-tram">Chọn</button>
+                      </form>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <ChonGiaoDien />
           <BatThongBao />
           <div className="border-t border-vien p-2">

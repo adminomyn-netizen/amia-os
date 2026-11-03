@@ -7,9 +7,35 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
 import { laVaiTro, NHOM_QUYEN } from "@/lib/quyen";
 import { MK_MAC_DINH } from "@/lib/mat-khau";
+import { vaiGanTheoChiNhanh } from "@/lib/vai-chi-nhanh";
+import { TIEN_TO_VAI_CN } from "./truong-chi-nhanh";
 
 type KQ = { ok?: true; loi?: string };
-const xong = (): KQ => { revalidatePath("/nhan-vien"); return { ok: true }; };
+const xong = (): KQ => { revalidatePath("/nhan-vien"); revalidatePath("/cai-dat/tai-khoan-dang-nhap"); return { ok: true }; };
+
+/** Ghi "Quyền chi nhánh" (vai trò theo từng chi nhánh, bảng nhan_vien_chi_nhanh) từ các ô vai_cn_<chi nhánh>.
+ *  Người "Mọi chi nhánh" hoặc Chủ / Kỹ thuật: xoá hết dòng thêm (họ dùng hồ sơ chính). Chi nhánh chính bỏ qua (dùng ô Vai trò).
+ *  Biểu mẫu không gửi ô nào (form khác gọi tới) thì giữ nguyên. Chỉ nhận chi nhánh có thật, vai hợp lệ. */
+async function luuVaiTheoChiNhanh(nvId: string, cnChinh: string | null, vaiChinh: string, fd: FormData, nguoiSua: string): Promise<string | null> {
+  const db = sb();
+  const coO = [...fd.keys()].some((k) => k.startsWith(TIEN_TO_VAI_CN));
+  if (!cnChinh || !vaiGanTheoChiNhanh(vaiChinh)) {
+    const { error } = await db.from("nhan_vien_chi_nhanh").delete().eq("nhan_vien_id", nvId);
+    return error ? thongBaoLoi(error) : null;
+  }
+  if (!coO) return null;
+  const { data: cn } = await db.from("chi_nhanh").select("id");
+  const muon = (cn ?? []).filter((c) => c.id !== cnChinh).map((c) => ({ chi_nhanh_id: c.id, vai_tro: chuoi(fd, `${TIEN_TO_VAI_CN}${c.id}`) })).filter((g) => fd.has(`${TIEN_TO_VAI_CN}${g.chi_nhanh_id}`));
+  const bo = muon.filter((g) => !vaiGanTheoChiNhanh(g.vai_tro)).map((g) => g.chi_nhanh_id).concat(cnChinh);
+  const giu = muon.filter((g) => vaiGanTheoChiNhanh(g.vai_tro));
+  const { error: e1 } = await db.from("nhan_vien_chi_nhanh").delete().eq("nhan_vien_id", nvId).in("chi_nhanh_id", bo);
+  if (e1) return thongBaoLoi(e1);
+  if (giu.length) {
+    const { error: e2 } = await db.from("nhan_vien_chi_nhanh").upsert(giu.map((g) => ({ nhan_vien_id: nvId, chi_nhanh_id: g.chi_nhanh_id, vai_tro: g.vai_tro, nguoi_sua_id: nguoiSua, cap_nhat_luc: new Date().toISOString() })), { onConflict: "nhan_vien_id,chi_nhanh_id" });
+    if (e2) return thongBaoLoi(e2);
+  }
+  return null;
+}
 const MK_TOI_THIEU = 8;
 
 export async function taoNhanVien(fd: FormData): Promise<KQ> {
@@ -28,11 +54,14 @@ export async function taoNhanVien(fd: FormData): Promise<KQ> {
     if (error || !data.user) return { loi: error?.message.includes("registered") ? "Email này đã có tài khoản." : "Không tạo được tài khoản đăng nhập." };
     userId = data.user.id;
   }
-  const { error } = await sb().from("nhan_vien").insert({ user_id: userId, ho_ten: hoTen, email: email || null, dien_thoai: chuoiHoacNull(fd, "dien_thoai"), vai_tro: vaiTro, chuc_danh: chuoiHoacNull(fd, "chuc_danh"), chi_nhanh_id: chuoiHoacNull(fd, "chi_nhanh_id"), phai_doi_mat_khau: !!userId });
-  if (error) {
+  const cnChinh = chuoiHoacNull(fd, "chi_nhanh_id");
+  const { data: moi, error } = await sb().from("nhan_vien").insert({ user_id: userId, ho_ten: hoTen, email: email || null, dien_thoai: chuoiHoacNull(fd, "dien_thoai"), vai_tro: vaiTro, chuc_danh: chuoiHoacNull(fd, "chuc_danh"), chi_nhanh_id: cnChinh, phai_doi_mat_khau: !!userId }).select("id").single();
+  if (error || !moi) {
     if (userId) await createAdminClient().auth.admin.deleteUser(userId);
-    return { loi: thongBaoLoi(error) };
+    return { loi: error ? thongBaoLoi(error) : "Không tạo được hồ sơ." };
   }
+  const loiCn = await luuVaiTheoChiNhanh(moi.id, cnChinh, vaiTro, fd, nd.nhanVienId);
+  if (loiCn) return { loi: `Đã tạo người dùng nhưng chưa lưu được quyền chi nhánh: ${loiCn}` };
   return xong();
 }
 
@@ -58,6 +87,8 @@ export async function suaNhanVien(fd: FormData): Promise<KQ> {
     chuc_danh_tai_chinh: chuoiHoacNull(fd, "chuc_danh_tai_chinh"), han_muc_duyet: chuoiHoacNull(fd, "han_muc_duyet") === null ? null : Math.max(0, Math.round(so(fd, "han_muc_duyet"))),
   }).eq("id", id);
   if (error) return { loi: thongBaoLoi(error) };
+  const loiCn = await luuVaiTheoChiNhanh(id, chuoiHoacNull(fd, "chi_nhanh_id"), vaiTro, fd, nd.nhanVienId);
+  if (loiCn) return { loi: `Đã lưu hồ sơ nhưng chưa lưu được quyền chi nhánh: ${loiCn}` };
   if (cu.user_id) {
     const a = createAdminClient().auth.admin;
     await a.updateUserById(cu.user_id, { app_metadata: { vai_tro: vaiTro }, ban_duration: hoatDong ? "none" : "876000h" });

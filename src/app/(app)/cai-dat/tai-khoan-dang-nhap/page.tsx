@@ -10,6 +10,7 @@ import { Chon } from "@/components/ui/Chon";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { taoNhanVien } from "../../nhan-vien/actions";
+import { truongVaiTheoChiNhanh } from "../../nhan-vien/truong-chi-nhanh";
 
 const MOI_TRANG = 10;
 type Sp = { vt?: string; cn?: string; q?: string; trang?: string };
@@ -20,13 +21,13 @@ export default async function TrangTaiKhoanDangNhap({ searchParams }: { searchPa
   const sp = await searchParams;
   const db = sb();
   const [{ data: ds }, { data: cn }] = await Promise.all([
-    db.from("nhan_vien").select("id, ma_nv, ho_ten, email, dien_thoai, vai_tro, chi_nhanh_id, la_phuc_vu, hoat_dong").not("user_id", "is", null).order("ho_ten"),
+    db.from("nhan_vien").select("id, ma_nv, ho_ten, email, dien_thoai, vai_tro, chi_nhanh_id, la_phuc_vu, hoat_dong, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").not("user_id", "is", null).order("ho_ten"),
     db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
   ]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const vt = laVaiTro(sp.vt ?? "") ? (sp.vt as string) : "";
   const q = (sp.q ?? "").trim().slice(0, 100), tuKhoa = boDau(q);
-  const loc = (ds ?? []).filter((r) => (!vt || r.vai_tro === vt) && (!sp.cn || !r.chi_nhanh_id || r.chi_nhanh_id === sp.cn) && (!tuKhoa || boDau(`${r.ho_ten} ${r.email ?? ""} ${r.dien_thoai ?? ""} ${r.ma_nv ?? ""}`).includes(tuKhoa)));
+  const loc = (ds ?? []).filter((r) => (!vt || r.vai_tro === vt || (!!r.chi_nhanh_id && r.them.some((g) => g.vai_tro === vt))) && (!sp.cn || !r.chi_nhanh_id || r.chi_nhanh_id === sp.cn || (r.vai_tro !== "chu" && r.vai_tro !== "ky_thuat" && r.them.some((g) => g.chi_nhanh_id === sp.cn))) && (!tuKhoa || boDau(`${r.ho_ten} ${r.email ?? ""} ${r.dien_thoai ?? ""} ${r.ma_nv ?? ""}`).includes(tuKhoa)));
   const cuoi = Math.max(1, Math.ceil(loc.length / MOI_TRANG));
   const trang = Math.min(Math.max(1, Math.floor(Number(sp.trang)) || 1), cuoi);
   const hien = loc.slice((trang - 1) * MOI_TRANG, trang * MOI_TRANG);
@@ -34,7 +35,8 @@ export default async function TrangTaiKhoanDangNhap({ searchParams }: { searchPa
   const truongTao: Truong[] = [
     { ten: "ho_ten", nhan: "Họ tên", loai: "chu", batBuoc: true }, { ten: "vai_tro", nhan: "Vai trò", loai: "chon", batBuoc: true, luaChon: VAI_TRO.map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] })) },
     { ten: "chuc_danh", nhan: "Chức danh hiển thị", loai: "chu" }, { ten: "dien_thoai", nhan: "Điện thoại", loai: "chu" },
-    { ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Mọi chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))] },
+    { ten: "chi_nhanh_id", nhan: "Chi nhánh chính", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Mọi chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))], ghiChu: "Mọi chi nhánh = một vai ở mọi nơi. Chọn chi nhánh thì đặt thêm quyền từng chi nhánh khác bên dưới (như SalonHero)." },
+    ...truongVaiTheoChiNhanh(cn ?? []),
     { ten: "email", nhan: "Email đăng nhập", loai: "email", rong: true },
     { ten: "mat_khau", nhan: "Mật khẩu ban đầu (bỏ trống = 12345678; người dùng buộc đổi khi vào lần đầu)", loai: "mat_khau", rong: true },
   ];
@@ -56,7 +58,7 @@ export default async function TrangTaiKhoanDangNhap({ searchParams }: { searchPa
           { nhan: "Ảnh", hienThi: (r) => <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-nho bg-giay-tram text-[13px] font-medium text-muc-2">{(r.ho_ten.trim().split(/\s+/).pop() ?? "?").charAt(0).toUpperCase()}</span> },
           { nhan: "Tên tài khoản", chinh: true, hienThi: (r) => <span className="text-muc">{r.ho_ten}</span> }, { nhan: "Tài khoản đăng nhập", hienThi: (r) => <span className="break-all">{r.email ?? ""}</span> },
           { nhan: "Số điện thoại", hienThi: (r) => r.dien_thoai ?? "" }, { nhan: "Nhân viên liên kết", hienThi: (r) => (r.la_phuc_vu ? r.ma_nv ?? "" : "") },
-          { nhan: "Quyền chi nhánh", hienThi: (r) => <span className="flex flex-col"><span>{NHAN_VAI_TRO[r.vai_tro as keyof typeof NHAN_VAI_TRO] ?? r.vai_tro}</span><span className="text-[12.5px] text-muc-3">{r.chi_nhanh_id ? tenCn.get(r.chi_nhanh_id) ?? "" : "Mọi chi nhánh"}</span></span> },
+          { nhan: "Quyền chi nhánh", hienThi: (r) => <span className="flex flex-col"><span>{NHAN_VAI_TRO[r.vai_tro as keyof typeof NHAN_VAI_TRO] ?? r.vai_tro}</span><span className="text-[12.5px] text-muc-3">{r.chi_nhanh_id ? tenCn.get(r.chi_nhanh_id) ?? "" : "Mọi chi nhánh"}</span>{r.chi_nhanh_id && r.vai_tro !== "chu" && r.vai_tro !== "ky_thuat" && r.them.filter((g) => g.chi_nhanh_id !== r.chi_nhanh_id).map((g) => <span key={g.chi_nhanh_id} className="mt-1 flex flex-col"><span>{NHAN_VAI_TRO[g.vai_tro as keyof typeof NHAN_VAI_TRO] ?? g.vai_tro}</span><span className="text-[12.5px] text-muc-3">{tenCn.get(g.chi_nhanh_id) ?? ""}</span></span>)}</span> },
           { nhan: "", hienThi: (r) => <Link href="/nhan-vien" className={NUT_CHU}>{r.vai_tro === "chu" ? "Xem" : "Sửa"}</Link> },
         ]} />
       <ThanhTrang trang={trang} tong={loc.length} moi={MOI_TRANG} gan={gan} luonHien />

@@ -3,10 +3,14 @@ import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { coQuyen, laVaiTro, quyenHieuLuc, type Quyen, type VaiTro } from "@/lib/quyen";
+import { cookies } from "next/headers";
+import { coQuyen, laVaiTro, type Quyen, type VaiTro } from "@/lib/quyen";
+import { COOKIE_CHI_NHANH, tinhVaiHieuLuc, type CoSoDuocVao } from "@/lib/vai-chi-nhanh";
 import { trangDau } from "@/lib/nav";
 
-export type NguoiDung = { userId: string; nhanVienId: string; hoTen: string; email: string; vaiTro: VaiTro; chiNhanhId: string | null; chucDanh: string | null; quyen: Quyen[]; anhDaiDien: string | null; phaiDoiMatKhau: boolean };
+/** `vaiTro`, `quyen`, `chiNhanhId` là theo CHI NHÁNH ĐANG LÀM VIỆC (vai trò theo từng chi nhánh, migration 0280). `chiNhanhId` null = mọi chi nhánh.
+ *  `dsCoSo` ≥ 2 phần tử thì đầu trang có nút đổi chi nhánh. */
+export type NguoiDung = { userId: string; nhanVienId: string; hoTen: string; email: string; vaiTro: VaiTro; chiNhanhId: string | null; chucDanh: string | null; quyen: Quyen[]; anhDaiDien: string | null; phaiDoiMatKhau: boolean; dsCoSo: CoSoDuocVao[] };
 
 /** Mỗi yêu cầu chỉ hỏi Supabase Auth + hồ sơ nhân viên MỘT lần (React cache). Không có hồ sơ đang hoạt động ⇒ null. */
 export const layNguoiDungHienTai = cache(async (): Promise<NguoiDung | null> => {
@@ -17,11 +21,14 @@ export const layNguoiDungHienTai = cache(async (): Promise<NguoiDung | null> => 
   const cl = dataClaims?.claims;
   if (!cl?.sub) return null;
   const user = { id: cl.sub, email: typeof cl.email === "string" ? cl.email : "" };
-  const { data: nv, error: loiNv } = await createAdminClient().from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id, chuc_danh, hoat_dong, quyen_rieng, anh_dai_dien, phai_doi_mat_khau").eq("user_id", user.id).maybeSingle();
+  const { data: nv, error: loiNv } = await createAdminClient().from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id, chuc_danh, hoat_dong, quyen_rieng, anh_dai_dien, phai_doi_mat_khau, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").eq("user_id", user.id).maybeSingle();
   // Lỗi đọc DB (quá tải, hết giờ chờ) khác với "không có hồ sơ": không được coi là chưa đăng nhập.
   if (loiNv) throw new Error("Hệ thống đang chậm, chưa đọc được hồ sơ. Tải lại trang sau vài giây.");
   if (!nv || !nv.hoat_dong || !laVaiTro(nv.vai_tro)) return null;
-  return { userId: user.id, nhanVienId: nv.id, hoTen: nv.ho_ten, email: user.email, vaiTro: nv.vai_tro, chiNhanhId: nv.chi_nhanh_id, chucDanh: nv.chuc_danh, quyen: quyenHieuLuc(nv.vai_tro, nv.quyen_rieng), anhDaiDien: nv.anh_dai_dien, phaiDoiMatKhau: nv.phai_doi_mat_khau };
+  // Chi nhánh đang làm việc lấy từ cookie nhưng KIỂM LẠI mỗi yêu cầu: không thuộc danh sách được vào thì về chi nhánh chính.
+  const chon = (await cookies()).get(COOKIE_CHI_NHANH)?.value ?? null;
+  const vai = tinhVaiHieuLuc({ vai_tro: nv.vai_tro, chi_nhanh_id: nv.chi_nhanh_id, quyen_rieng: nv.quyen_rieng }, nv.them, chon);
+  return { userId: user.id, nhanVienId: nv.id, hoTen: nv.ho_ten, email: user.email, vaiTro: vai.vaiTro, chiNhanhId: vai.chiNhanhId, chucDanh: nv.chuc_danh, quyen: vai.quyen, anhDaiDien: nv.anh_dai_dien, phaiDoiMatKhau: nv.phai_doi_mat_khau, dsCoSo: vai.dsCoSo };
 });
 
 /** Trang: chưa đăng nhập → /dang-nhap; thiếu quyền → về trang đầu tiên được phép. */

@@ -40,13 +40,15 @@ export default async function KhungUngDung({ children }: { children: React.React
     .map((g) => ({ nhan: g.nhan, the: g.the.filter((t) => coMotQuyen(nd, t.quyen)).map((t) => ({ ten: t.ten, moTa: t.moTa, duongDan: t.duongDan })) }))
     .filter((g) => g.the.length > 0);
   const chiNhanh = nd.chiNhanhId ? (dsChiNhanh.find((c) => c.id === nd.chiNhanhId)?.ten ?? null) : null;
+  // Vai trò theo từng chi nhánh: người được vào ≥ 2 chi nhánh thì bảng tài khoản có nút "Chọn" đổi chi nhánh làm việc.
+  const coSo = nd.dsCoSo.length > 1 ? nd.dsCoSo.map((c) => ({ id: c.chiNhanhId, ten: dsChiNhanh.find((x) => x.id === c.chiNhanhId)?.ten ?? "Chi nhánh", vai: NHAN_VAI_TRO[c.vaiTro], dang: c.chiNhanhId === nd.chiNhanhId })) : undefined;
   return (
     <div className="khung-di-dong flex min-h-screen w-full flex-col">
-      <DauTrangMay hoTen={nd.hoTen} vaiTro={NHAN_VAI_TRO[nd.vaiTro]} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} />
+      <DauTrangMay hoTen={nd.hoTen} vaiTro={NHAN_VAI_TRO[nd.vaiTro]} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} coSo={coSo} />
       <div className="flex min-h-0 min-w-0 flex-1">
         <Suspense fallback={<ThanhBen muc={mucNgang} />}><ThanhBenCoDem muc={mucNgang} cn={cnDem} /></Suspense>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-          <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} />
+          <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} coSo={coSo} />
           <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-10 lg:pb-16 lg:pt-6">{children}</main>
           <CuonVeDau />
           {muc.length > 0 && <ThanhTabDuoi muc={muc} />}

@@ -8,7 +8,8 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { DanhSachDichVu } from "@/components/dinh-muc/DanhSachDichVu";
 import { tinhGiaVonDinhMuc, canhBaoDinhMuc } from "@/lib/dinh-muc";
-import { apDungGiaVonDichVu, luuDinhMuc, nhapDinhMuc, xoaDinhMuc } from "./actions";
+import { SaoChepDinhMuc } from "@/components/dinh-muc/SaoChepDinhMuc";
+import { apDungGiaVonDichVu, apDungSaoChepDinhMuc, luuDinhMuc, nhapDinhMuc, xemTruocSaoChepDinhMuc, xoaDinhMuc } from "./actions";
 
 export default async function TrangDinhMuc({ searchParams }: { searchParams: Promise<{ dv?: string; chua?: string }> }) {
   const nd = await yeuCauQuyen("danhmuc.xem");
@@ -18,7 +19,7 @@ export default async function TrangDinhMuc({ searchParams }: { searchParams: Pro
   const db = sb();
   const [{ data: dv }, { data: sp }, { data: dem }, { data: nhomDv }] = await Promise.all([
     db.from("dich_vu").select("id, ma, ten, gia, gia_von, nhom_id").eq("hoat_dong", true).order("ma"),
-    db.from("san_pham").select("id, ma, ten, don_vi, nhom_cap, gia_nhap_don_vi").eq("hoat_dong", true).order("ten"),
+    db.from("san_pham").select("id, ma, ten, don_vi, nhom_cap, gia_nhap_don_vi, dung_tich, dung_tich_dv").eq("hoat_dong", true).order("ten"),
     db.from("dinh_muc").select("dich_vu_id"),
     db.from("dich_vu_nhom").select("id, ten, thu_tu").order("thu_tu").order("ten"),
   ]);
@@ -60,6 +61,7 @@ export default async function TrangDinhMuc({ searchParams }: { searchParams: Pro
                       <span className="rounded-nho bg-nhan-nhat px-3 py-2 text-[12px] font-semibold uppercase tracking-wide text-nhan-dam">Tổng chi phí khấu hao <b className="ml-1 text-[14px] tabular-nums">{tienVN(Math.round(tongKhauHao))}</b></span>
                     </>
                   )}
+                  {sua && <SaoChepDinhMuc dichId={chon.id} tenDich={chon.ten} luaChon={(dv ?? []).filter((d) => d.id !== chon.id && (coDm.get(d.id) ?? 0) > 0).map((d) => ({ gia_tri: d.id, nhan: `${d.ten} · ${coDm.get(d.id)} vật tư` }))} xemTruoc={xemTruocSaoChepDinhMuc} apDung={apDungSaoChepDinhMuc} />}
                   {sua && <NutHop nhan="Thêm sản phẩm" tieuDe={`Thêm vật tư cho ${chon.ten}`} an={{ dich_vu_id: chon.id }} truong={truong} giaTri={{ so_luong: 1 }} action={luuDinhMuc} />}
                 </div>
               </div>
@@ -76,6 +78,7 @@ export default async function TrangDinhMuc({ searchParams }: { searchParams: Pro
               <Bang duLieu={dm} khoa={(r) => r.id} trong="Dịch vụ này chưa có định mức. Cài đặt số lượng sử dụng và tính toán chi phí khấu hao cho sản phẩm kèm theo dịch vụ."
                 cot={[
                   { nhan: "Sản phẩm", hienThi: (r) => <span className="text-muc">{spMap.get(r.san_pham_id)?.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => spMap.get(r.san_pham_id)?.nhom_cap ?? "" },
+                  { nhan: "Dung tích", phai: true, hienThi: (r) => { const p = spMap.get(r.san_pham_id); return p?.dung_tich == null ? <span className="text-muc-3">chưa nhập</span> : `${soVN(Number(p.dung_tich))} ${p.dung_tich_dv ?? ""}`.trim(); } },
                   ...(xemVon ? [{ nhan: "Giá nhập vào", hienThi: (r: (typeof dm)[number]) => (spMap.get(r.san_pham_id)?.gia_nhap_don_vi == null ? "chưa có giá" : tienVN(spMap.get(r.san_pham_id)!.gia_nhap_don_vi)), phai: true }] : []),
                   { nhan: "Số lượng", hienThi: (r) => `${soVN(r.so_luong)} ${spMap.get(r.san_pham_id)?.don_vi ?? ""}`, phai: true },
                   ...(xemVon ? [{ nhan: "Chi phí khấu hao", hienThi: (r: (typeof dm)[number]) => (spMap.get(r.san_pham_id)?.gia_nhap_don_vi == null ? "chưa có giá" : tienVN(Math.round(tinh(r)))), phai: true }] : []),

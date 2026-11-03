@@ -13,7 +13,7 @@ const MOI_TRANG = 50;
 type Sp = { cn?: string; nhom?: string; trang?: string };
 
 /** Quản lý kho nội bộ, theo bố cục SalonHero #/internal_stock (Ảnh sản phẩm · Tên sản phẩm · Chi nhánh · Tồn kho · Dung tích còn lại · Giá nhập · Chi tiết; cây Phân nhóm sản phẩm; lọc chi nhánh).
- *  TỰ THIẾT KẾ về nghiệp vụ, chỉ XEM: AMIA chưa có "kho nội bộ" tách riêng và chưa theo dõi dung tích còn lại của chai đã mở. Kho nội bộ ở đây = vật tư tiêu hao (sản phẩm không bán lẻ) có số tồn khác 0 trong sổ kho. */
+ *  TỰ THIẾT KẾ về nghiệp vụ, chỉ XEM: AMIA chưa có "kho nội bộ" tách riêng; "Dung tích còn lại" = tồn kho × dung tích mỗi đơn vị (nhập ở Danh mục sản phẩm), chưa tính phần đã dùng dở của chai đang mở. Kho nội bộ ở đây = vật tư tiêu hao (sản phẩm không bán lẻ) có số tồn khác 0 trong sổ kho. */
 export default async function TrangKhoNoiBo({ searchParams }: { searchParams: Promise<Sp> }) {
   const nd = await yeuCauQuyen("kho.xem");
   const sp = await searchParams;
@@ -21,7 +21,7 @@ export default async function TrangKhoNoiBo({ searchParams }: { searchParams: Pr
   const { data: dsCn } = await dsChiNhanhRutGon();
   const cn = nd.chiNhanhId ?? (dsCn?.some((c) => c.id === sp.cn) ? sp.cn! : "");
   const [{ data: spAll }, { data: ton }] = await Promise.all([
-    db.from("san_pham").select("id, ma, ten, nhom, don_vi, gia_nhap_don_vi").eq("hoat_dong", true).eq("ban_le", false).order("ten"),
+    db.from("san_pham").select("id, ma, ten, nhom, don_vi, gia_nhap_don_vi, dung_tich, dung_tich_dv").eq("hoat_dong", true).eq("ban_le", false).order("ten"),
     cn ? db.from("v_ton_kho").select("chi_nhanh_id, san_pham_id, ton").eq("chi_nhanh_id", cn) : db.from("v_ton_kho").select("chi_nhanh_id, san_pham_id, ton"),
   ]);
   const sanPham = new Map((spAll ?? []).map((s) => [s.id, s]));
@@ -40,7 +40,7 @@ export default async function TrangKhoNoiBo({ searchParams }: { searchParams: Pr
       <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho & Mua sắm</Link>
       <TieuDeTrang tieuDe="Quản lý kho nội bộ" phu="Vật tư tiêu hao dùng trong phòng khám (không bán lẻ). Chỉ xem; cấp vật tư theo ca làm ở Phiếu cấp.">
         <Link href="/phieu-cap" className={`${NUT_PHU} inline-flex items-center`}>Xuất tiêu dùng kho nội bộ</Link>
-        <Link href="/bao-cao" className={`${NUT_PHU} inline-flex items-center`}>Báo cáo tiêu dùng kho nội bộ</Link>
+        <Link href="/bao-cao?tab=xuat-kho" className={`${NUT_PHU} inline-flex items-center`}>Báo cáo tiêu dùng kho nội bộ</Link>
       </TieuDeTrang>
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
         <aside aria-label="Phân nhóm sản phẩm" className="text-[14px]">
@@ -63,7 +63,7 @@ export default async function TrangKhoNoiBo({ searchParams }: { searchParams: Pr
             cot={[
               { nhan: "Tên sản phẩm", chinh: true, hienThi: (r) => <span><span className="text-muc">{r.sp.ten}</span><span className="block text-[12.5px] text-muc-3">{r.sp.ma}</span></span> },
               { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.cnId) ?? "" }, { nhan: "Tồn kho", phai: true, hienThi: (r) => `${soVN(r.ton)} ${r.sp.don_vi}` },
-              { nhan: "Dung tích còn lại", phai: true, hienThi: () => <span className="text-muc-3">Chưa theo dõi</span> },
+              { nhan: "Dung tích còn lại", phai: true, hienThi: (r) => (r.sp.dung_tich == null ? <span className="text-muc-3">chưa nhập dung tích</span> : `${soVN(Number(r.sp.dung_tich) * r.ton)} ${r.sp.dung_tich_dv ?? ""}`.trim()) },
               { nhan: "Giá nhập", phai: true, hienThi: (r) => (r.sp.gia_nhap_don_vi == null ? "0" : soVN(Number(r.sp.gia_nhap_don_vi))) },
               { nhan: "", hienThi: (r) => <Link href={`/kho?tab=so&cn=${r.cnId}`} className="text-[13px] font-medium text-nhan-dam underline-offset-4 hover:underline">Chi tiết</Link> },
             ]} />

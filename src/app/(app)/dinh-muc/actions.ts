@@ -65,3 +65,38 @@ export async function apDungGiaVonDichVu(fd: FormData): Promise<KQ> {
   lamMoi();
   return { ok: true };
 }
+
+// ---- SAO CHÉP ĐỊNH MỨC TỪ DỊCH VỤ KHÁC (như nút của SalonHero): xem trước rồi mới ghi; chỉ THÊM vật tư dịch vụ đích chưa có, không đổi số lượng đang có ----
+export type DongSaoChepDm = { san_pham_id: string; ten: string; don_vi: string; so_luong: number; chon_theo_chi_dinh: boolean; da_co: boolean };
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+async function docSaoChep(fd: FormData): Promise<{ loi: string } | { dich: string; nguon: string; dong: DongSaoChepDm[] }> {
+  const nguon = chuoi(fd, "nguon"), dich = chuoi(fd, "dich");
+  if (!UUID.test(nguon) || !UUID.test(dich)) return { loi: "Chọn dịch vụ nguồn." };
+  if (nguon === dich) return { loi: "Dịch vụ nguồn và đích đang giống nhau." };
+  const db = sb();
+  const [{ data: a }, { data: b }] = await Promise.all([db.from("dinh_muc").select("san_pham_id, so_luong, chon_theo_chi_dinh").eq("dich_vu_id", nguon), db.from("dinh_muc").select("san_pham_id").eq("dich_vu_id", dich)]);
+  if (!a?.length) return { loi: "Dịch vụ nguồn chưa có định mức để sao chép." };
+  const co = new Set((b ?? []).map((x) => x.san_pham_id));
+  const { data: sp } = await db.from("san_pham").select("id, ten, don_vi").in("id", a.map((x) => x.san_pham_id));
+  const m = new Map((sp ?? []).map((x) => [x.id, x]));
+  return { dich, nguon, dong: a.map((x) => ({ san_pham_id: x.san_pham_id, ten: m.get(x.san_pham_id)?.ten ?? "", don_vi: m.get(x.san_pham_id)?.don_vi ?? "", so_luong: Number(x.so_luong), chon_theo_chi_dinh: x.chon_theo_chi_dinh, da_co: co.has(x.san_pham_id) })).sort((x, y) => x.ten.localeCompare(y.ten, "vi")) };
+}
+export async function xemTruocSaoChepDinhMuc(fd: FormData): Promise<{ loi?: string; dong?: DongSaoChepDm[] }> {
+  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const kq = await docSaoChep(fd);
+  return "loi" in kq ? { loi: kq.loi } : { dong: kq.dong };
+}
+export async function apDungSaoChepDinhMuc(fd: FormData): Promise<KQ & { them?: number; boQua?: number }> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const kq = await docSaoChep(fd);
+  if ("loi" in kq) return { loi: kq.loi };
+  const moi = kq.dong.filter((d) => !d.da_co);
+  if (moi.length) {
+    const { error } = await sb().from("dinh_muc").insert(moi.map((d) => ({ dich_vu_id: kq.dich, san_pham_id: d.san_pham_id, so_luong: d.so_luong, chon_theo_chi_dinh: d.chon_theo_chi_dinh })));
+    if (error) return { loi: error.code === "23505" ? "Có người vừa thêm vật tư cho dịch vụ này, tải lại trang rồi thử lại." : thongBaoLoi(error) };
+  }
+  await sb().from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sao_chep_dinh_muc", doi_tuong: "dich_vu", doi_tuong_id: kq.dich, chi_tiet: { tu: kq.nguon, them: moi.length, bo_qua: kq.dong.length - moi.length } });
+  lamMoi();
+  return { ok: true, them: moi.length, boQua: kq.dong.length - moi.length };
+}

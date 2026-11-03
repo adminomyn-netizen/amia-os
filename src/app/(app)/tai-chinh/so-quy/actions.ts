@@ -31,7 +31,7 @@ export async function ghiThuChi(fd: FormData): Promise<KQ> {
   if (!quy) return { loi: "Chọn quỹ hợp lệ." };
   const { data: lt } = await sb().from("loai_thu_chi").select("id, huong, he_thong").eq("id", chuoi(fd, "loai_thu_chi_id")).eq("hoat_dong", true).maybeSingle();
   if (!lt || lt.huong !== huong || lt.he_thong) return { loi: "Chọn phân loại đúng với khoản " + (huong === "thu" ? "thu." : "chi.") };
-  const { error } = await sb().from("so_quy").insert({ ma: await ma(huong === "thu" ? "PT" : "PC"), ngay, quy_id: quy.id, loai: huong, so_tien: tien, loai_thu_chi_id: lt.id, noi_dung: noiDung, doi_tuong: chuoiHoacNull(fd, "doi_tuong"), nguoi_id: nd.nhanVienId });
+  const { error } = await sb().from("so_quy").insert({ ma: await ma(huong === "thu" ? "PT" : "PC"), ngay, quy_id: quy.id, loai: huong, so_tien: tien, loai_thu_chi_id: lt.id, noi_dung: noiDung, doi_tuong: chuoiHoacNull(fd, "doi_tuong"), nguoi_nhan: chuoiHoacNull(fd, "nguoi_nhan"), nguoi_id: nd.nhanVienId });
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
 
@@ -46,7 +46,7 @@ export async function ghiNapRut(fd: FormData): Promise<KQ> {
   if (!noiDung) return { loi: huong === "nap" ? "Nhập nội dung khoản nạp tiền." : "Nhập nội dung khoản rút tiền." };
   const quy = await layQuy(chuoi(fd, "quy_id"), nd.chiNhanhId);
   if (!quy) return { loi: "Chọn quỹ hợp lệ." };
-  const { error } = await sb().from("so_quy").insert({ ma: await ma(huong === "nap" ? "NT" : "RT"), ngay, quy_id: quy.id, loai: huong, so_tien: tien, noi_dung: noiDung, doi_tuong: chuoiHoacNull(fd, "doi_tuong"), nguoi_id: nd.nhanVienId });
+  const { error } = await sb().from("so_quy").insert({ ma: await ma(huong === "nap" ? "NT" : "RT"), ngay, quy_id: quy.id, loai: huong, so_tien: tien, noi_dung: noiDung, doi_tuong: chuoiHoacNull(fd, "doi_tuong"), nguoi_nhan: chuoiHoacNull(fd, "nguoi_nhan"), nguoi_id: nd.nhanVienId });
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
 

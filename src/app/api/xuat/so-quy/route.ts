@@ -25,17 +25,17 @@ export async function GET(req: Request) {
   const ws = wb.addWorksheet(loaiQuy === "tien_mat" ? "Sổ quỹ tiền mặt" : "Sổ quỹ ngân hàng");
   ws.columns = [
     { header: "Ngày", key: "ngay", width: 12 }, { header: "Mã", key: "ma", width: 16 }, { header: "Loại", key: "loai", width: 12 }, { header: "Phân loại", key: "pl", width: 30 },
-    { header: "Nội dung", key: "nd", width: 46 }, { header: "Đối tượng", key: "dt", width: 22 }, { header: "Thu / nạp", key: "vao", width: 16 }, { header: "Chi / rút", key: "ra", width: 16 }, { header: "Số dư", key: "du", width: 18 },
+    { header: "Nội dung", key: "nd", width: 46 }, { header: "Đối tượng", key: "dt", width: 22 }, { header: "Khách hàng", key: "kh", width: 24 }, { header: "Người thu / chi", key: "ntc", width: 22 }, { header: "Người nhận tiền", key: "nn", width: 22 }, { header: "Thu / nạp", key: "vao", width: 16 }, { header: "Chi / rút", key: "ra", width: 16 }, { header: "Số dư", key: "du", width: 18 },
   ];
   let du = dau;
   ws.addRow({ nd: "Tồn quỹ đầu kỳ", du });
   for (const r of data ?? []) {
     du += Number(r.bien_dong);
-    ws.addRow({ ngay: (r.ngay ?? "").split("-").reverse().join("/"), ma: r.ma, loai: NHAN[r.loai ?? ""] ?? "", pl: r.loai_thu_chi ?? "", nd: r.noi_dung, dt: r.doi_tuong ?? "", vao: Number(r.bien_dong) > 0 ? Number(r.so_tien) : null, ra: Number(r.bien_dong) < 0 ? Number(r.so_tien) : null, du });
+    ws.addRow({ ngay: (r.ngay ?? "").split("-").reverse().join("/"), ma: r.ma, loai: NHAN[r.loai ?? ""] ?? "", pl: r.loai_thu_chi ?? "", nd: r.noi_dung, dt: r.doi_tuong ?? "", kh: r.khach_ten ?? "", ntc: r.nguoi_ten ?? "", nn: r.nguoi_nhan ?? "", vao: Number(r.bien_dong) > 0 ? Number(r.so_tien) : null, ra: Number(r.bien_dong) < 0 ? Number(r.so_tien) : null, du });
   }
   ws.getRow(1).font = { bold: true };
   ws.views = [{ state: "frozen", ySplit: 1 }];
-  for (const k of ["G", "H", "I"]) ws.getColumn(k).numFmt = "#,##0";
+  for (const k of ["J", "K", "L"]) ws.getColumn(k).numFmt = "#,##0";
   await sb().from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xuat_excel", doi_tuong: "so_quy", chi_tiet: { tu, den, quy: loaiQuy, chi_nhanh_id: cn ?? null } });
   const buf = await wb.xlsx.writeBuffer();
   return new Response(buf as ArrayBuffer, { headers: { "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "Content-Disposition": `attachment; filename="so-quy-${loaiQuy === "tien_mat" ? "tien-mat" : "ngan-hang"}-${tu}-${den}.xlsx"` } });

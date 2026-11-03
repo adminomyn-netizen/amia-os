@@ -23,6 +23,7 @@ export function chuanHoaSoQuySh(rows) {
       tao_luc: r.createdAt, cap_nhat: r.updatedAt ?? r.createdAt,
       noi_dung: [String(r.content ?? "").trim(), r.tag_name ? `(nhóm SalonHero: ${String(r.tag_name).trim()})` : ""].filter(Boolean).join(" "),
       doi_tuong: String(r.owner ?? "").trim(), ma_sh: String(r.code ?? "").trim(), nguoi_tao: String(r.created_by_name ?? "").trim(),
+      nguoi_nhan: String(r.receiver_name ?? "").trim(), // "Người nhận tiền" của SalonHero → bảng so_quy_nguoi_nhan_sh (0250)
     });
   }
   return [...m.values()];
@@ -59,6 +60,9 @@ export async function napSoQuySh(db, phieu, { nguoiId, cuaSo = null } = {}) {
   if (sua.length) bao.dao_dong += (await q(`select public.so_quy_dao_sh($1::bigint[], $2, $3) n`, [sua, "SalonHero đã sửa phiếu này (đồng bộ)", nguoi]))[0].n;
   if (xoa.length) bao.dao_dong += (await q(`select public.so_quy_dao_sh($1::bigint[], $2, $3) n`, [xoa, "SalonHero đã xoá phiếu này (đồng bộ)", nguoi]))[0].n;
   for (let i = 0; i < can.length; i += 1000) bao.nhap_dong += (await q(`select public.so_quy_nhap_sh($1::jsonb, $2) n`, [JSON.stringify(can.slice(i, i + 1000)), nguoi]))[0].n;
+  const nhan = phieu.filter((p) => p.nguoi_nhan).map((p) => ({ sh_id: p.sh_id, ten: p.nguoi_nhan }));
+  if (nhan.length) await q(`insert into public.so_quy_nguoi_nhan_sh (sh_id, ten) select x.sh_id, x.ten from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, ten text)
+      on conflict (sh_id) do update set ten = excluded.ten`, [JSON.stringify(nhan)]);
   bao.mau_xoa = xoa.slice(0, 10); bao.mau_sua = sua.slice(0, 10);
   return bao;
 }

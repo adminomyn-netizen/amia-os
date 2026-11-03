@@ -9648,6 +9648,7 @@ export type Database = {
           ngay?: string
           nguoi_id: string
           nguon?: string
+          nguoi_nhan: string | null
           nhom_chuyen?: string | null
           noi_dung: string
           phieu_goc_id?: string | null
@@ -9668,6 +9669,7 @@ export type Database = {
           ngay?: string
           nguoi_id?: string
           nguon?: string
+          nguoi_nhan?: string | null
           nhom_chuyen?: string | null
           noi_dung?: string
           phieu_goc_id?: string | null
@@ -9688,6 +9690,7 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+          nguoi_nhan?: string | null
             foreignKeyName: "so_quy_nguoi_id_fkey"
             columns: ["nguoi_id"]
             isOneToOne: false
@@ -11531,12 +11534,15 @@ export type Database = {
       v_the_khach: {
         Row: {
           cap_tay: boolean | null
+          khach_id: string | null
+          khach_ten: string | null
           chi_nhanh_id: string | null
           ghi_chu: string | null
           gia_tri_buoi: number | null
           goi_id: string | null
           han_dung: string | null
           hoa_don_dong_id: string | null
+          nguoi_nhan: string | null
           id: string | null
           khach_id: string | null
           loai: string | null

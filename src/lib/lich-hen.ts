@@ -105,3 +105,6 @@ export const MAU_TRANG_THAI: Record<string, { the: string; chip: string }> = {
 export const NHAN_TRANG_THAI: Record<string, string> = {
   chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ", dang_phuc_vu: "Đang phục vụ", hoan_thanh: "Hoàn thành", huy: "Đã huỷ", khong_den: "Khách không đến",
 };
+/** Trạng thái chọn được lúc tạo lịch (SalonHero hộp Đặt lịch): mặc định "Chưa xác nhận"; khách đến trực tiếp thì "Chờ phục vụ". */
+export const TRANG_THAI_DAT = ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"] as const;
+export const LUA_CHON_TRANG_THAI_DAT = TRANG_THAI_DAT.map((t) => ({ gia_tri: t, nhan: { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ" }[t] }));

@@ -9,11 +9,11 @@ import { GioChon } from "@/components/ui/GioChon";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { timKhach } from "@/app/(app)/ban-hang/actions";
-import type { khungGioTrong } from "@/app/(app)/lich-hen/actions";
+import type { ganNhomKhachMoi, khungGioTrong, thongTinKhachDatLich } from "@/app/(app)/lich-hen/actions";
 import { TaoKhachNhanh } from "@/components/lich-hen/TaoKhachNhanh";
 import { KhachDiCungO } from "@/components/lich-hen/KhachDiCung";
 import type { KhachDiCung } from "@/lib/lich-hen-nhom";
-import { KIEU_LAP, laKieuLap, LUA_CHON_NGUON, nhanNguon, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
+import { KIEU_LAP, laKieuLap, LUA_CHON_NGUON, LUA_CHON_TRANG_THAI_DAT, nhanNguon, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
 import { ngayVN } from "@/lib/dinh-dang";
 import { coOChiNhanh } from "@/lib/ban-hang";
 
@@ -28,7 +28,7 @@ function bayGioLamTron() {
 }
 
 /** Đặt lịch / đổi lịch. Thời lượng tự cộng theo dịch vụ chọn nhưng sửa tay được. */
-export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, tim, action, ban, sua, mo: moSan, homNay, cho = [], khungGio, taoKhach }: {
+export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, tim, action, ban, sua, mo: moSan, homNay, cho = [], khungGio, taoKhach, ttKhach }: {
   nhan: string; kieu?: "chinh" | "chu"; dichVu: DV[]; nhanVien: LuaChon[]; chiNhanh: LuaChon[]; tim: typeof timKhach; action: (fd: FormData) => Promise<{ ok?: boolean; loi?: string }>;
   ban?: { khach?: KhachChon | null; chiNhanhId: string }; sua?: LichSua; mo?: boolean; homNay: string;
   /** Danh mục chỗ (giường/phòng) của các chi nhánh; chi nhánh nào có chỗ thì ô "Phòng / giường" thành danh sách chọn. */
@@ -36,7 +36,9 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   /** Gợi ý khung giờ trống (máy chủ tính theo giờ mở cửa, lịch của người thực hiện hoặc số chỗ). */
   khungGio?: typeof khungGioTrong;
   /** Có thì hiện nút "Tạo khách mới" ngay trong hộp (hàm lưu khách của màn Khách hàng; cần quyền nhập khách). */
-  taoKhach?: { action: (fd: FormData) => Promise<{ ok?: boolean; loi?: string; id?: string }>; macDinhNv: string };
+  taoKhach?: { action: (fd: FormData) => Promise<{ ok?: boolean; loi?: string; id?: string }>; macDinhNv: string; nhom?: LuaChon[]; ganNhom?: typeof ganNhomKhachMoi };
+  /** Dòng "Khách mới / Khách quay lại · được giới thiệu bởi · mã thẻ" khi đã chọn khách (như SalonHero). */
+  ttKhach?: typeof thongTinKhachDatLich;
 }) {
   const router = useRouter();
   const [mo, setMo] = useState(!!moSan);
@@ -54,6 +56,15 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   const [ghiChu, setGhiChu] = useState(sua?.ghiChu ?? "");
   const [diCung, setDiCung] = useState<KhachDiCung[]>(sua?.khachDiCung ?? []);
   const [kieuLap, setKieuLap] = useState("");
+  const [trangThai, setTrangThai] = useState("chua_xac_nhan");
+  const [ttk, setTtk] = useState<{ khachId: string; soLanDen: number; gioiThieu: string; maThe: string[] } | null>(null);
+  useEffect(() => {
+    if (!mo || !khach || !ttKhach) return;
+    let huy = false;
+    ttKhach(khach.id).then((r) => { if (!huy && r) setTtk({ khachId: khach.id, ...r }); }).catch(() => undefined);
+    return () => { huy = true; };
+  }, [mo, khach, ttKhach]);
+  const thongTinKhach = khach && ttk?.khachId === khach.id ? ttk : null;
   const [khoang, setKhoang] = useState("1");
   const [tongBuoi, setTongBuoi] = useState("4");
   // Nguồn cũ không thuộc danh sách (chữ nhập tay trước đây) vẫn hiện để không mất khi đổi lịch.
@@ -84,6 +95,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     setNgay(bay.ngay);
     chonGio(bay.gio);
     setNguon("WALKIN");
+    setTrangThai("cho_phuc_vu");
   };
   const doiDv = (id: string) => {
     const moi = dvs.includes(id) ? dvs.filter((x) => x !== id) : [...dvs, id];
@@ -96,6 +108,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     if (sua) fd.set("id", sua.id);
     fd.set("khach_id", khach?.id ?? ""); fd.set("ngay", ngay); fd.set("gio", gio); fd.set("thoi_luong", phut); fd.set("nhan_vien_id", nv); fd.set("chi_nhanh_id", cn);
     fd.set("phong", phong); fd.set("nguon", nguon); fd.set("ghi_chu", ghiChu);
+    if (!sua) fd.set("trang_thai", trangThai);
     if (!sua && kieuLap) { fd.set("kieu_lap", kieuLap); fd.set("lap_khoang", khoang || "1"); fd.set("lap_tong", tongBuoi); }
     dvs.forEach((d) => fd.append("dich_vu_ids", d));
     fd.set("khach_di_cung", JSON.stringify(diCung));
@@ -119,9 +132,18 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
             <div className="mb-1.5 flex items-center justify-between gap-3"><label className="block text-[13px] font-medium text-muc-2">Khách hàng <span className="text-loi">*</span></label>
               {taoKhach && !khach && !sua && <button type="button" className={NUT_CHU} onClick={() => setMoTaoKhach(!moTaoKhach)} aria-expanded={moTaoKhach}>{moTaoKhach ? "Đóng ô tạo khách" : "Tạo khách mới"}</button>}</div>
             <ChonKhach khach={khach} onDoi={setKhach} tim={tim} />
+            {thongTinKhach && (
+              <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muc-2" aria-live="polite">
+                {thongTinKhach.soLanDen > 0
+                  ? <span className="rounded-tag bg-nhan-nhat px-2 py-0.5 text-[12px] font-medium text-nhan-dam">Khách quay lại · đã đến {thongTinKhach.soLanDen} lần</span>
+                  : <span className="rounded-tag bg-loi-nen px-2 py-0.5 text-[12px] font-medium text-loi">Khách mới</span>}
+                {thongTinKhach.gioiThieu && <span>Được giới thiệu bởi <b className="font-medium text-muc">{thongTinKhach.gioiThieu}</b></span>}
+                {thongTinKhach.maThe.length > 0 && <span>Mã thẻ: <b className="font-medium tabular-nums text-muc">{thongTinKhach.maThe.join(", ")}</b></span>}
+              </p>
+            )}
           </div>
           {taoKhach && !khach && !sua && moTaoKhach && (
-            <TaoKhachNhanh chiNhanhId={cn} nhanVien={nhanVien} macDinhNv={taoKhach.macDinhNv} tim={tim} action={taoKhach.action} onDong={() => setMoTaoKhach(false)} onXong={(k) => { setKhach(k); setMoTaoKhach(false); }} />
+            <TaoKhachNhanh chiNhanhId={cn} nhanVien={nhanVien} macDinhNv={taoKhach.macDinhNv} tim={tim} action={taoKhach.action} nhom={taoKhach.nhom} ganNhom={taoKhach.ganNhom} onDong={() => setMoTaoKhach(false)} onXong={(k) => { setKhach(k); setMoTaoKhach(false); }} />
           )}
           <div className="grid gap-4 sm:grid-cols-3">
             <div><label className={NHAN_O}>Ngày</label><NgayChon giaTri={ngay} onDoi={setNgay} /></div>
@@ -157,6 +179,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
             {choCuaCn.length > 0
               ? <div><label className={NHAN_O}>Phòng / giường</label><Chon trong="Chưa xếp chỗ" ariaLabel="Phòng / giường" giaTri={phong} onDoi={setPhong} luaChon={[{ gia_tri: "", nhan: "Chưa xếp chỗ" }, ...(phong && !choCuaCn.includes(phong) ? [phong] : []).concat(choCuaCn).map((t) => ({ gia_tri: t, nhan: t }))]} /></div>
               : <div><label htmlFor="lh-phong" className={NHAN_O}>Phòng / giường</label><input id="lh-phong" value={phong} onChange={(e) => setPhong(e.target.value)} className={O_NHAP} /></div>}
+            {!sua && <div><label className={NHAN_O}>Trạng thái</label><Chon ariaLabel="Trạng thái lúc tạo" giaTri={trangThai} onDoi={setTrangThai} luaChon={LUA_CHON_TRANG_THAI_DAT} /></div>}
             <div><label className={NHAN_O}>Nguồn đặt lịch</label><Chon trong="Chọn nguồn" ariaLabel="Nguồn đặt lịch" giaTri={nguon} onDoi={setNguon} luaChon={[{ gia_tri: "", nhan: "Không ghi" }, ...dsNguon]} /></div>
           </div>
           <KhachDiCungO ds={diCung} onDoi={setDiCung} dichVu={dichVu.filter((d) => !d.an && coOChiNhanh(d.chiNhanhIds, cn) || diCung.some((k) => k.dichVuIds.includes(d.id)))} nhanVien={nhanVien} />

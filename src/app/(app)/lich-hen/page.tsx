@@ -15,7 +15,9 @@ import { NutInLich } from "@/components/lich-hen/NutInLich";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
 import { thucHienBuoi } from "../the/actions";
-import { doiTrangThaiLich, duyetYeuCauOnline, khungGioTrong, luuLichHen, tuChoiYeuCauOnline } from "./actions";
+import { doiTrangThaiLich, duyetYeuCauOnline, ganNhomKhachMoi, khungGioTrong, luuLichHen, thongTinKhachDatLich, tuChoiYeuCauOnline } from "./actions";
+import { XacNhanDen } from "@/components/lich-hen/XacNhanDen";
+import { XemLich } from "@/components/lich-hen/XemLich";
 import { luuKhach } from "../khach-hang/actions";
 import { LocNguon } from "@/components/lich-hen/LocNguon";
 import { ChonKhoang, KhungNgay, LocCho, TimVaLoc, XemThemO } from "@/components/lich-hen/DieuKhienLich";
@@ -133,6 +135,9 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const moFormMoi = !!sp.khach;
   let khachMoi = null;
   if (sp.khach) khachMoi = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id").eq("id", sp.khach).maybeSingle()).data;
+  // Nhóm khách hàng cho ô "Nhóm khách hàng" khi tạo khách trong hộp đặt lịch (như SalonHero).
+  const taoKhachDuoc = sua && coQuyen(nd, "khach.sua");
+  const { data: nhomKh } = taoKhachDuoc ? await db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten") : { data: [] as { id: string; ten: string }[] };
 
   // ───────── Lưới: hàng theo kiểu xem × cột theo ngày ─────────
   const cacNgay = cacNgayTrong(tu, den);
@@ -190,7 +195,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     return (
       <div className="flex flex-col items-start gap-2.5 p-3">
         {l.trang_thai === "chua_xac_nhan" && <NutNhanh chinh nhan="Xác nhận" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "da_xac_nhan" }} />}
-        {l.trang_thai === "da_xac_nhan" && <NutNhanh chinh nhan="Khách đã đến" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "cho_phuc_vu" }} />}
+        {l.trang_thai === "da_xac_nhan" && <XacNhanDen id={l.id} action={doiTrangThaiLich} />}
         {l.trang_thai === "cho_phuc_vu" && <NutNhanh chinh nhan="Mở ca" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "dang_phuc_vu" }} />}
         {l.trang_thai === "dang_phuc_vu" && <NutNhanh chinh nhan="Hoàn thành" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "hoan_thanh" }} />}
         {coQuyen(nd, "phieu.xem") && ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan"].includes(l.trang_thai) && <Link href={`/phieu-cap?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Phiếu cấp vật tư</Link>}
@@ -204,7 +209,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
               { ten: "vung", nhan: "Vùng làm", loai: "chu" }, { ten: "shot", nhan: "Số shot thực tế", loai: "so" }, { ten: "line", nhan: "Số line thực tế", loai: "so" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong" }]} action={thucHienBuoi} />
         )}
         {sua && ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && (
-          <FormLichHen kieu="chu" nhan="Đổi lịch" khungGio={khungGioTrong} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} homNay={ngay}
+          <FormLichHen kieu="chu" nhan="Đổi lịch" khungGio={khungGioTrong} ttKhach={thongTinKhachDatLich} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} homNay={ngay}
             sua={{ id: l.id, khach: { id: l.khach_id, ma: k?.ma ?? "", ho_ten: k?.ho_ten ?? "", dien_thoai: k?.dien_thoai ?? "", nguoi_phu_trach_id: k?.nguoi_phu_trach_id ?? "" }, ngay: ngayCuaIso(l.bat_dau), gio: gioVN(l.bat_dau), thoiLuong: Math.round((new Date(l.ket_thuc).getTime() - new Date(l.bat_dau).getTime()) / 60000), nhanVienId: l.nhan_vien_id ?? "", phong: l.phong ?? "", nguon: l.nguon ?? "", ghiChu: l.ghi_chu ?? "", dichVuIds: dvIds, chiNhanhId: l.chi_nhanh_id, khachDiCung: nhomCua(l.id).map((x) => ({ ten: x.ten, dichVuIds: x.dich_vu_ids ?? [], nhanVienId: x.nhan_vien_id, phong: x.phong, thoiLuong: x.thoi_luong_phut })) }} />
         )}
         {sua && ["da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && <NutNhanh nhan="Không đến" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "khong_den" }} />}
@@ -231,7 +236,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
           <Link href={`/lich-hen/so-do-cho?cn=${cnId}`} className={nutPhu}>Sơ đồ chỗ</Link>
           <Link href={`/lich-hen/lich-su?cn=${cnId}`} className={nutPhu}>Lịch sử</Link>
           <ChonKhoang tu={tu} den={den} />
-          {sua && <FormLichHen nhan="Đặt lịch" cho={choDm} khungGio={khungGioTrong} taoKhach={coQuyen(nd, "khach.sua") ? { action: luuKhach, macDinhNv: nd.nhanVienId } : undefined} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
+          {sua && <FormLichHen nhan="Đặt lịch" cho={choDm} khungGio={khungGioTrong} ttKhach={thongTinKhachDatLich} taoKhach={taoKhachDuoc ? { action: luuKhach, macDinhNv: nd.nhanVienId, nhom: (nhomKh ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten })), ganNhom: ganNhomKhachMoi } : undefined} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-muc-3">
@@ -322,6 +327,10 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
               const gioDen = gioVN(l.bat_dau);
               const nguoiTao = l.nguoi_tao_ten ?? tenNv.get(l.tao_boi ?? "") ?? "";
               const maLich = l.ma_dat_lich ?? l.id.slice(0, 8).toUpperCase();
+              // Chi tiết một lịch: dùng chung cho hộp "Xem lịch" và phiếu "In lịch hẹn".
+              const chiTiet: [string, string][] = [["Khách hàng", k?.ho_ten ?? ""], ["Điện thoại", k?.dien_thoai ?? ""], ["Mã khách", k?.ma ?? ""], ["Giờ hẹn", `${gioDen} ~ ${gioVN(l.ket_thuc)} ngày ${ngayVN(ngayCuaIso(l.bat_dau))} (${phut} phút)`], ["Trạng thái", t.nhan], ["Giờ đến", l.checkin_luc ? `${gioVN(l.checkin_luc)} ${ngayVN(ngayCuaIso(l.checkin_luc))}` : ""],
+                            ["Dịch vụ", dvIds.map((d) => tenDv.get(d)).filter(Boolean).join(", ")], ["Người thực hiện", l.nhan_vien_id ? (tenNv.get(l.nhan_vien_id) ?? "") : ""], ["Chỗ", l.phong ?? ""], ...nhomCua(l.id).map((x): [string, string] => [x.ten, [(x.dich_vu_ids ?? []).map((d) => tenDv.get(d)).filter(Boolean).join(", "), x.nhan_vien_id ? tenNv.get(x.nhan_vien_id) ?? "" : "", x.phong ?? ""].filter(Boolean).join(" · ")]), ["Nguồn đặt lịch", nhanNguon(l.nguon)], ["Ghi chú", l.ghi_chu ?? ""],
+                            ["Tạo bởi", `${nguoiTao ? `${nguoiTao} · ` : ""}${gioVN(l.tao_luc)} ${ngayVN(ngayCuaIso(l.tao_luc))}`], ["Sửa lần cuối", `${gioVN(l.cap_nhat_luc)} ${ngayVN(ngayCuaIso(l.cap_nhat_luc))}`]];
               return (
                 <article key={l.id} className={`rounded-the border border-vien border-l-[3px] bg-giay-sang p-3 ${MAU_TRANG_THAI[l.trang_thai]?.the.split(" ")[0] ?? ""} ${l.trang_thai === "huy" ? "opacity-70" : ""}`}>
                   <div className="flex gap-3">
@@ -350,11 +359,9 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
                       {phieu.length > 0 && <div className="text-[12px] text-dat-dam">{phieu.join(" · ")}</div>}
                       {hoaDon && <div className="mt-1 text-[12px]"><span className="text-muc-3">Có hoá đơn </span><Link href={`/hoa-don/${hoaDon.id}`} className="font-medium text-nhan-dam hover:underline">#{hoaDon.sh_ma ?? hoaDon.ma}</Link></div>}
                       <div className="mt-2 flex items-center gap-1.5">
-                        <Link href={`/khach-hang/${l.khach_id}`} className="rounded-nho border border-vien-dam px-3 py-1.5 text-[13px] font-medium text-muc-2 hover:bg-giay-tram">Xem lịch</Link>
+                        <XemLich tieuDe={`Lịch hẹn #${maLich}`} dong={chiTiet} khachId={l.khach_id} hoaDon={hoaDon ? { id: hoaDon.id, ma: hoaDon.sh_ma ?? hoaDon.ma } : null} />
                         <NutInLich tieuDe={`Lịch hẹn #${maLich}`} phu={cnLC.find((c) => c.gia_tri === l.chi_nhanh_id)?.nhan}
-                          dong={[["Khách hàng", k?.ho_ten ?? ""], ["Điện thoại", k?.dien_thoai ?? ""], ["Mã khách", k?.ma ?? ""], ["Giờ hẹn", `${gioDen} ~ ${gioVN(l.ket_thuc)} ngày ${ngayVN(ngayCuaIso(l.bat_dau))} (${phut} phút)`], ["Trạng thái", t.nhan],
-                            ["Dịch vụ", dvIds.map((d) => tenDv.get(d)).filter(Boolean).join(", ")], ["Người thực hiện", l.nhan_vien_id ? (tenNv.get(l.nhan_vien_id) ?? "") : ""], ["Chỗ", l.phong ?? ""], ...nhomCua(l.id).map((x): [string, string] => [x.ten, [(x.dich_vu_ids ?? []).map((d) => tenDv.get(d)).filter(Boolean).join(", "), x.nhan_vien_id ? tenNv.get(x.nhan_vien_id) ?? "" : "", x.phong ?? ""].filter(Boolean).join(" · ")]), ["Nguồn đặt lịch", nhanNguon(l.nguon)], ["Ghi chú", l.ghi_chu ?? ""],
-                            ["Tạo bởi", `${nguoiTao ? `${nguoiTao} · ` : ""}${gioVN(l.tao_luc)} ${ngayVN(ngayCuaIso(l.tao_luc))}`], ["Sửa lần cuối", `${gioVN(l.cap_nhat_luc)} ${ngayVN(ngayCuaIso(l.cap_nhat_luc))}`]]} />
+                          dong={chiTiet} />
                         <details className="group relative">
                           <summary className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-nho border border-vien-dam text-muc-2 hover:bg-giay-tram" aria-label="Thao tác với lịch hẹn"><ChevronDown className="h-4 w-4" aria-hidden /></summary>
                           <div className="absolute left-0 top-9 z-20 w-[240px] rounded-the border border-vien bg-giay-sang shadow-[0_14px_32px_rgba(5,40,36,0.18)]">{hanhDong(l, k, dvIds)}</div>

@@ -8,7 +8,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
 import { ngayVN } from "@/lib/dinh-dang";
 import { gioBaThu } from "@/lib/gio-lam-viec";
-import { laKieuLap, ngayLap, thuCuaNgay, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
+import { laKieuLap, ngayLap, thuCuaNgay, TOI_DA_BUOI_LAP, TRANG_THAI_DAT } from "@/lib/lich-hen";
 import { docKhachDiCung, dongKhachDiCung } from "@/lib/lich-hen-nhom";
 
 type KQ = { ok?: true; loi?: string };
@@ -77,6 +77,9 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
       if (vuong >= 0) return { loi: `${nvK === nv ? "Nhân viên này" : "Người thực hiện của khách đi cùng"} đã có lịch trùng giờ${buoi.length > 1 ? ` vào ngày ${ngayVN(cacNgay[vuong])}` : ""}. Chọn giờ khác hoặc người khác.` };
     }
   }
+  // Trạng thái lúc tạo (SalonHero: Chưa xác nhận / Đã xác nhận / Chờ phục vụ trong hộp đặt lịch); chỉ khi đặt mới, sai giá trị thì về "Chưa xác nhận".
+  const ttDau = id ? "" : TRANG_THAI_DAT.includes(chuoi(fd, "trang_thai") as (typeof TRANG_THAI_DAT)[number]) ? chuoi(fd, "trang_thai") : "chua_xac_nhan";
+  const mocDau = ttDau === "cho_phuc_vu" ? { xac_nhan_luc: new Date().toISOString(), checkin_luc: new Date().toISOString() } : ttDau === "da_xac_nhan" ? { xac_nhan_luc: new Date().toISOString() } : {};
   const row = { so_khach: 1 + diCung.length, khach_id: khachId, chi_nhanh_id: nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu") };
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
   let ids: string[];
@@ -90,7 +93,7 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   } else {
     const nhom = buoi.length > 1 ? crypto.randomUUID() : null;
     const { data, error } = await db.from("lich_hen").insert(buoi.map((b, i) => ({
-      ...row, bat_dau: b.bd.toISOString(), ket_thuc: b.kt.toISOString(), tao_boi: nd.nhanVienId,
+      ...row, bat_dau: b.bd.toISOString(), ket_thuc: b.kt.toISOString(), tao_boi: nd.nhanVienId, trang_thai: ttDau, ...mocDau,
       ...(nhom ? { kieu_lap: kieuLap, lap_nhom: nhom, lap_khoang: khoang, lap_tong: buoi.length, lap_thu_tu: i + 1 } : {}),
     }))).select("id");
     if (error || !data?.length) return { loi: thongBaoLoi(error) };
@@ -131,7 +134,17 @@ export async function doiTrangThaiLich(fd: FormData): Promise<KQ> {
   if (nd.chiNhanhId && nd.chiNhanhId !== l.chi_nhanh_id) return { loi: KHONG_DU_QUYEN };
   if (!(CHUYEN[l.trang_thai] ?? []).includes(moi)) return { loi: "Không chuyển được sang trạng thái này." };
   if (moi === "huy" && !chuoi(fd, "ly_do")) return { loi: "Huỷ lịch phải ghi lý do." };
-  const { error } = await db.from("lich_hen").update({ trang_thai: moi, ly_do_huy: moi === "huy" ? chuoi(fd, "ly_do") : null, cap_nhat_luc: new Date().toISOString() }).eq("id", id);
+  // Hộp "Xác nhận giờ đến" (SalonHero): khách đến → chờ phục vụ, ghi giờ đến lễ tân nhập (HH:MM hôm nay, giờ Việt Nam); không nhập thì lấy giờ bấm. Không ghi giờ ở tương lai.
+  const bayGio = new Date();
+  let moc: { checkin_luc?: string; xac_nhan_luc?: string } = {};
+  if (moi === "cho_phuc_vu" && l.trang_thai !== "dang_phuc_vu") {
+    const g = chuoi(fd, "gio_den");
+    if (g && !/^([01]\d|2[0-3]):[0-5]\d$/.test(g)) return { loi: "Giờ đến chưa đúng." };
+    const den = g ? new Date(`${bayGio.toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" })}T${g}:00${MUI}`) : bayGio;
+    if (den.getTime() > bayGio.getTime() + 60_000) return { loi: "Giờ đến không được sau giờ hiện tại." };
+    moc = { checkin_luc: den.toISOString() };
+  } else if (moi === "da_xac_nhan") moc = { xac_nhan_luc: bayGio.toISOString() };
+  const { error } = await db.from("lich_hen").update({ trang_thai: moi, ly_do_huy: moi === "huy" ? chuoi(fd, "ly_do") : null, cap_nhat_luc: bayGio.toISOString(), ...moc }).eq("id", id);
   lamMoi();
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }
@@ -205,4 +218,37 @@ export async function khungGioTrong(p: { ngay: string; chiNhanhId: string; nhanV
   }
   const ghiChu = !p.nhanVienId && soCho === 0 ? "Chưa chọn người thực hiện và chưa có danh mục chỗ nên chưa lọc được giờ bận: đây là các mốc trong giờ mở cửa." : gio.length === 0 ? "Hết giờ trống trong ngày này." : undefined;
   return { gio, ghiChu };
+}
+
+/** Dòng thông tin khách trong hộp đặt lịch (SalonHero: "Khách quay lại / được giới thiệu bởi / Mã thẻ"): số lần đã đến (hoá đơn hoàn thành, gồm đơn chuyển từ SalonHero),
+ *  người giới thiệu, mã thẻ giấy và mã các thẻ còn dùng được. Người gắn chi nhánh chỉ xem khách chi nhánh mình. */
+export async function thongTinKhachDatLich(khachId: string): Promise<{ soLanDen: number; gioiThieu: string; maThe: string[] } | null> {
+  const nd = await kiemQuyen("lich.xem");
+  if (!nd || !/^[0-9a-f-]{36}$/i.test(khachId)) return null;
+  const db = sb();
+  const [{ data: k }, { count }, { data: the }] = await Promise.all([
+    db.from("khach_hang").select("chi_nhanh_id, nguoi_gioi_thieu_id, ma_the_giay, so_lan_den_goc").eq("id", khachId).maybeSingle(),
+    db.from("hoa_don").select("id", { count: "exact", head: true }).eq("khach_id", khachId).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false),
+    db.from("v_the_khach").select("ma").eq("khach_id", khachId).in("tinh_trang", ["hoat_dong", "sap_het"]).order("ngay_cap", { ascending: false }).limit(5),
+  ]);
+  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return null;
+  const gt = k.nguoi_gioi_thieu_id ? (await db.from("khach_hang").select("ma, ho_ten").eq("id", k.nguoi_gioi_thieu_id).maybeSingle()).data : null;
+  return {
+    soLanDen: Math.max(count ?? 0, Number(k.so_lan_den_goc ?? 0)),
+    gioiThieu: gt ? `${gt.ho_ten}${gt.ma ? ` (${gt.ma})` : ""}` : "",
+    maThe: [...new Set([k.ma_the_giay, ...(the ?? []).map((t) => t.ma as string)].filter((x): x is string => !!x))],
+  };
+}
+
+/** Gán nhóm khách hàng cho khách vừa tạo ở hộp đặt lịch (SalonHero: ô "Nhóm khách hàng" khi tạo khách). */
+export async function ganNhomKhachMoi(khachId: string, nhomIds: string[]): Promise<KQ> {
+  const nd = await kiemQuyen("khach.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const ids = [...new Set(nhomIds)].filter((x) => /^[0-9a-f-]{36}$/i.test(x)).slice(0, 30);
+  if (!ids.length || !/^[0-9a-f-]{36}$/i.test(khachId)) return { ok: true };
+  const db = sb();
+  const { data: k } = await db.from("khach_hang").select("chi_nhanh_id").eq("id", khachId).maybeSingle();
+  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return { loi: KHONG_DU_QUYEN };
+  const { error } = await db.from("khach_nhom").upsert(ids.map((n) => ({ khach_id: khachId, nhom_id: n })), { onConflict: "khach_id,nhom_id", ignoreDuplicates: true });
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }

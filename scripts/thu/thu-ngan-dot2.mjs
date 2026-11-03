@@ -92,8 +92,8 @@ try {
   await c.gui("Emulation.setDeviceMetricsOverride", { width: 1280, height: 900, deviceScaleFactor: 1, mobile: false }); await doi(500);
   await ev(`[...document.querySelectorAll('button')].find((b) => b.textContent.startsWith("Chốt đơn")).click()`);
   // Chốt xong Thu ngân ở lại trang, hiện khung "đã chốt" — tìm hoá đơn của khách thử trong DB.
-  let hdId = null;
-  for (let i = 0; i < 160 && !hdId; i++) { await doi(250); hdId = (await db.from("hoa_don").select("id").eq("khach_id", khachId).maybeSingle()).data?.id ?? null; if (!hdId && await ev(`!!document.querySelector('[role=tabpanel]:not([hidden]) [role=alert]')`)) break; }
+  let hdId = null; // chờ trạng thái hoan_thanh: hoá đơn được tạo trước, chốt sau
+  for (let i = 0; i < 160 && !hdId; i++) { await doi(250); hdId = (await db.from("hoa_don").select("id").eq("khach_id", khachId).eq("trang_thai", "hoan_thanh").maybeSingle()).data?.id ?? null; if (!hdId && await ev(`!!document.querySelector('[role=tabpanel]:not([hidden]) [role=alert]')`)) break; }
   const loiChot = hdId ? "" : await ev(`document.querySelector('[role=tabpanel]:not([hidden]) [role=alert]')?.textContent ?? "?"`);
   kiem("Chốt đơn thành công", !!hdId, loiChot);
   if (!hdId) throw new Error("không có hoá đơn");

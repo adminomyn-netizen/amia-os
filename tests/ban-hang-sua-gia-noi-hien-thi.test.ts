@@ -37,7 +37,11 @@ describe("Sửa giá khi thanh toán (cho_sua_gia)", () => {
     expect(giaDong({ gia: 350_000 }, dv)).toBe(350_000);
   });
   it("mục KHÔNG bật cờ mà có giá sửa thì chặn", () => expect(kiemGiaDong({ loai: "dich_vu", gia: 1 }, { ...dv, choSuaGia: false }).ok).toBe(false));
-  it("thẻ không được sửa giá dù cờ bật", () => expect(kiemGiaDong({ loai: "goi_the", gia: 1 }, dv).ok).toBe(false));
+  // Đợt 2 câu 6 (03/11): y SalonHero, thẻ bật "Sửa giá khi thanh toán" cũng sửa được đơn giá dòng.
+  it("thẻ bật cờ thì sửa được giá, tắt cờ thì không", () => {
+    expect(kiemGiaDong({ loai: "goi_the", gia: 1 }, dv)).toEqual({ ok: true, gia: 1 });
+    expect(kiemGiaDong({ loai: "goi_the", gia: 1 }, { ...dv, choSuaGia: false }).ok).toBe(false);
+  });
   it("giá lẻ, âm hoặc quá lớn thì chặn", () => {
     for (const g of [-1, 1.5, Number.NaN, 20_000_000_000]) expect(kiemGiaDong({ loai: "dich_vu", gia: g }, dv).ok).toBe(false);
   });

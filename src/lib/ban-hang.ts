@@ -51,8 +51,9 @@ export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: num
   /** Đơn giá thu ngân sửa (chỉ khi mục bật "Sửa giá khi thanh toán"); không có = giá danh mục. */ gia?: number };
 /** Đơn giá tối đa thu ngân được gõ khi sửa giá (chặn gõ nhầm thừa số 0). */
 export const GIA_SUA_TOI_DA = 10_000_000_000;
-/** Loại dòng được sửa đơn giá theo cờ cho_sua_gia. Thẻ KHÔNG (giá thẻ đổi thì giá trị mỗi buổi đổi theo — chờ chị Lâm quyết). */
-export const LOAI_SUA_GIA: MucBan["loai"][] = ["dich_vu", "san_pham"];
+/** Loại dòng được sửa đơn giá theo cờ cho_sua_gia (SalonHero edit_price_in_order: dịch vụ, sản phẩm, thẻ).
+ *  Thẻ: giá trị mỗi buổi tính theo giá bán thực của dòng (chot_hoa_don); số buổi / số tiền trong thẻ giữ theo gói (chế độ "cố định"). */
+export const LOAI_SUA_GIA: MucBan["loai"][] = ["dich_vu", "san_pham", "goi_the"];
 /** Đơn giá dùng để tính dòng: giá sửa nếu có, không thì giá danh mục. Dùng chung cho màn Thu ngân và máy chủ. */
 export const giaDong = (d: Pick<DongDon, "gia">, m: { gia: number } | undefined) => d.gia ?? m?.gia ?? 0;
 /** Máy chủ kiểm giá sửa: chỉ mục bật cờ, đúng loại, số nguyên 0..GIA_SUA_TOI_DA. Trả đơn giá dùng để ghi hoá đơn. */

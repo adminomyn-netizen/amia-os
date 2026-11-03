@@ -107,12 +107,12 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   const idsSp = don.dong.filter((d) => d.loai === "san_pham").map((d) => d.ref);
   const [dv, goi, sp] = await Promise.all([
     idsDv.length ? db.from("dich_vu").select("id, ten, gia, hoat_dong, cho_sua_gia").in("id", idsDv) : Promise.resolve({ data: [] }),
-    idsGoi.length ? db.from("goi_the").select("id, ten, gia, hoat_dong").in("id", idsGoi) : Promise.resolve({ data: [] }),
+    idsGoi.length ? db.from("goi_the").select("id, ten, gia, hoat_dong, cho_sua_gia").in("id", idsGoi) : Promise.resolve({ data: [] }),
     idsSp.length ? db.from("san_pham").select("id, ten, gia_ban, hoat_dong, ban_le, cho_sua_gia").in("id", idsSp) : Promise.resolve({ data: [] }),
   ]);
   const gia = new Map<string, { ten: string; gia: number; ok: boolean; choSuaGia: boolean }>();
   for (const x of dv.data ?? []) gia.set(`dich_vu:${x.id}`, { ten: x.ten, gia: x.gia, ok: x.hoat_dong, choSuaGia: x.cho_sua_gia });
-  for (const x of goi.data ?? []) gia.set(`goi_the:${x.id}`, { ten: x.ten, gia: x.gia, ok: x.hoat_dong, choSuaGia: false });
+  for (const x of goi.data ?? []) gia.set(`goi_the:${x.id}`, { ten: x.ten, gia: x.gia, ok: x.hoat_dong, choSuaGia: x.cho_sua_gia });
   for (const x of sp.data ?? []) gia.set(`san_pham:${x.id}`, { ten: x.ten, gia: x.gia_ban, ok: x.hoat_dong && x.ban_le, choSuaGia: x.cho_sua_gia });
   // Đơn giá từng dòng: giá danh mục, hoặc giá thu ngân sửa khi mục bật "Sửa giá khi thanh toán" (kiểm lại cờ ở đây, không tin trình duyệt).
   const donGia: number[] = [];

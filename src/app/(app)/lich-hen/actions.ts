@@ -7,7 +7,8 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
 import { ngayVN } from "@/lib/dinh-dang";
-import { laKieuLap, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
+import { gioBaThu } from "@/lib/gio-lam-viec";
+import { laKieuLap, ngayLap, thuCuaNgay, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => revalidatePath("/lich-hen");
@@ -135,4 +136,43 @@ export async function tuChoiYeuCauOnline(fd: FormData): Promise<KQ> {
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "tu_choi_yeu_cau_dat_lich", doi_tuong: "yeu_cau_dat_lich", doi_tuong_id: id, chi_tiet: { ly_do: lyDo } });
   lamMoi();
   return { ok: true };
+}
+
+/** Gợi ý khung giờ trống cho hộp Đặt lịch (SalonHero: "Chọn tham khảo các khung giờ sau"). Mốc cách nhau 30 phút trong giờ mở cửa của chi nhánh (giờ riêng hoặc giờ chung).
+ *  Có chọn người thực hiện: giờ trống = người đó không có lịch trùng. Không chọn người: giờ trống = số lịch chạy cùng lúc nhỏ hơn số chỗ đang dùng của chi nhánh (như trang đặt lịch online).
+ *  Không có cả hai thì chưa có căn cứ lọc: trả mọi mốc trong giờ mở cửa kèm lời nhắn. Chỉ gợi ý, nút Lưu vẫn kiểm trùng giờ người thực hiện. */
+export async function khungGioTrong(p: { ngay: string; chiNhanhId: string; nhanVienId: string; phut: number; boQuaLichId?: string }): Promise<{ gio: string[]; ghiChu?: string; loi?: string }> {
+  const nd = await kiemQuyen("lich.sua");
+  if (!nd) return { gio: [], loi: KHONG_DU_QUYEN };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(p.ngay)) return { gio: [] };
+  const cn = nd.chiNhanhId ?? p.chiNhanhId;
+  if (!cn) return { gio: [], ghiChu: "Chọn chi nhánh để xem giờ trống." };
+  const phut = Math.min(600, Math.max(5, Math.round(p.phut) || 60));
+  const db = sb();
+  const dau = new Date(`${p.ngay}T00:00:00${MUI}`).getTime();
+  const [{ data: c }, { data: ch }, { data: ls }, { data: cho }] = await Promise.all([
+    db.from("chi_nhanh").select("gio_lam_viec").eq("id", cn).maybeSingle(),
+    db.from("cua_hang").select("gio_lam_viec").eq("id", 1).maybeSingle(),
+    db.from("lich_hen").select("id, bat_dau, ket_thuc, nhan_vien_id").eq("chi_nhanh_id", cn).not("trang_thai", "in", "(huy,khong_den)")
+      .lt("bat_dau", new Date(dau + 86400e3).toISOString()).gt("ket_thuc", new Date(dau).toISOString()).limit(2000),
+    db.from("cho_lam").select("id").eq("chi_nhanh_id", cn).eq("hoat_dong", true),
+  ]);
+  const khoaThu = (["cn", "t2", "t3", "t4", "t5", "t6", "t7"] as const)[thuCuaNgay(p.ngay)];
+  const g = gioBaThu(c?.gio_lam_viec, ch?.gio_lam_viec)[khoaThu];
+  if (g.nghi) return { gio: [], ghiChu: "Chi nhánh nghỉ ngày này." };
+  const phutCua = (hhmm: string) => Number(hhmm.slice(0, 2)) * 60 + Number(hhmm.slice(3, 5));
+  const khoang = (ls ?? []).filter((l) => l.id !== p.boQuaLichId).map((l) => ({ bd: (Date.parse(l.bat_dau) - dau) / 60000, kt: (Date.parse(l.ket_thuc) - dau) / 60000, nv: l.nhan_vien_id }));
+  const soCho = cho?.length ?? 0;
+  const bayGio = (Date.now() - dau) / 60000; // ngày hôm nay: bỏ các mốc đã qua
+  const gio: string[] = [];
+  for (let t = phutCua(g.mo); t + phut <= phutCua(g.dong); t += 30) {
+    if (t < bayGio) continue;
+    const trung = khoang.filter((k) => k.bd < t + phut && k.kt > t);
+    let trong = true;
+    if (p.nhanVienId) trong = !trung.some((k) => k.nv === p.nhanVienId);
+    else if (soCho > 0) trong = Math.max(0, ...[t, ...trung.map((k) => k.bd).filter((b) => b > t)].map((m) => trung.filter((k) => k.bd <= m && k.kt > m).length)) < soCho;
+    if (trong) gio.push(`${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`);
+  }
+  const ghiChu = !p.nhanVienId && soCho === 0 ? "Chưa chọn người thực hiện và chưa có danh mục chỗ nên chưa lọc được giờ bận: đây là các mốc trong giờ mở cửa." : gio.length === 0 ? "Hết giờ trống trong ngày này." : undefined;
+  return { gio, ghiChu };
 }

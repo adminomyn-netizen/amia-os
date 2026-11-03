@@ -141,7 +141,7 @@ await dbTruoc.end();
 const loiXuat = existsSync(`${D}/_loi_xuat.json`) ? JSON.parse(readFileSync(`${D}/_loi_xuat.json`, "utf8")) : [];
 
 // ══════════ 2. NẠP VÀO AMIA ══════════
-// SalonHero: COD và Ví điện tử vào QUỸ NGÂN HÀNG (không phải tiền mặt) — mã riêng từ migration 0199 (03/11/2026).
+// SalonHero: Ví điện tử vào QUỸ NGÂN HÀNG; Ship COD KHÔNG vào quỹ nào (tồn quỹ SalonHero không cộng COD — v_so_quy bỏ ship_cod, migration 0208). Mã riêng từ migration 0199 (03/11/2026).
 const PT = { CASH: "tien_mat", TRANSFER: "chuyen_khoan", CARD: "quet_the", COD: "ship_cod", WALLET: "vi_dien_tu" };
 const ptDich = (t) => PT[String(t ?? "").toUpperCase()] ?? "chuyen_khoan";
 const VI_SH = new Set(["ZALO", "MOMO", "GRAB", "VNPAY", "SAMSUNG", "SHOPEE", "VINID", "GOTIT", "NETSPAY", "PAYNOW", "AIRTEL", "MTN"]);
@@ -354,16 +354,18 @@ try {
     theMoi.push({ sh_id: Number(c.id), ma: dedupe(sach(c.code) || `TSH${c.id}`, maThe, c.id), khach_sh: Number(c.customer_id), goi_sh: Number(c.card_id), cn: cnTheoLoc(c.init_location_id), loai: t.lan ? "lan" : "tien",
       so_buoi_tong: t.lan ? t.limit : null, tong_tien: t.lan ? so(c.card_sale_price) : so(c.card_default_account_balance) || so(c.account_balance),
       gia_tri_buoi: t.lan ? (t.limit < 999999 ? Math.round((Number(c.card_sale_price) || 0) / t.limit) : so(c.card_use_price)) : 0, ngay_cap: vnNgay(c.created_at ?? c.createdAt), han_dung: vnNgay(c.expiry_date), trang_thai: tt,
-      ghi_chu: `Chuyển từ SalonHero (mã thẻ ${sach(c.code)}) — đồng bộ ${denNgay}${c.note ? ` — ${sach(c.note)}` : ""}${t.lan && t.limit >= 999999 ? " — thẻ không giới hạn số buổi" : ""}`, so_buoi_cap: t.lan ? t.limit : 0, so_buoi_da_dung: t.lan ? t.da : 0, so_du_tien: t.tien });
+      ghi_chu: `Chuyển từ SalonHero (mã thẻ ${sach(c.code)}) — đồng bộ ${denNgay}${c.note ? ` — ${sach(c.note)}` : ""}${t.lan && t.limit >= 999999 ? " — thẻ không giới hạn số buổi" : ""}`, so_buoi_cap: t.lan ? t.limit : 0, so_buoi_da_dung: t.lan ? t.da : 0, so_du_tien: t.tien,
+      // Giá trị 1 lần tính hoa hồng (0205, như nap-the.mjs của agent hoa hồng): card_use_price của thẻ khách; thẻ "tự tính" có card_use_price 0 → trống (AMIA tự tính giá bán ÷ số lần); thẻ tiền trống.
+      gia_tri_1_lan_hh: t.lan ? (Number(c.is_dynamic_use_price) === 1 && !so(c.card_use_price) ? null : so(c.card_use_price)) : null });
   }
   if (dieuChinh.length) await theoLo(dieuChinh, 1000, (l) => q(`insert into public.the_so_cai (the_id, loai, so_buoi, so_tien, nguoi_id, ghi_chu, nhap_dot)
       select x.the_id, 'dieu_chinh', x.so_buoi, x.so_tien, $2::uuid, 'Đồng bộ số dư với SalonHero (đợt ' || $3 || ')', $3 from jsonb_to_recordset($1::jsonb) as x(the_id uuid, so_buoi int, so_tien bigint)`, [JSON.stringify(l), he, dot]));
   if (dichTrangThai.length) await theoLo(dichTrangThai, 1000, (l) => q(`update public.the_khach t set trang_thai = x.trang_thai from jsonb_to_recordset($1::jsonb) as x(id uuid, trang_thai text) where t.id = x.id`, [JSON.stringify(l)]));
   let nTheMoi = 0;
   await theoLo(theMoi, 1000, async (l) => {
-    const them = await q(`with ins as (insert into public.the_khach (sh_id, ma, khach_id, goi_id, chi_nhanh_id, loai, so_buoi_tong, tong_tien, gia_tri_buoi, cap_tay, ngay_cap, han_dung, trang_thai, ghi_chu, nhap_dot)
-         select x.sh_id, x.ma, k.id, g.id, (select id from public.chi_nhanh where ma = x.cn), x.loai, x.so_buoi_tong, x.tong_tien, x.gia_tri_buoi, true, coalesce(x.ngay_cap, current_date), x.han_dung, x.trang_thai, x.ghi_chu, $2
-           from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, ma text, khach_sh bigint, goi_sh bigint, cn text, loai text, so_buoi_tong int, tong_tien bigint, gia_tri_buoi bigint, ngay_cap date, han_dung date, trang_thai text, ghi_chu text)
+    const them = await q(`with ins as (insert into public.the_khach (sh_id, ma, khach_id, goi_id, chi_nhanh_id, loai, so_buoi_tong, tong_tien, gia_tri_buoi, cap_tay, ngay_cap, han_dung, trang_thai, ghi_chu, nhap_dot, gia_tri_1_lan_hh)
+         select x.sh_id, x.ma, k.id, g.id, (select id from public.chi_nhanh where ma = x.cn), x.loai, x.so_buoi_tong, x.tong_tien, x.gia_tri_buoi, true, coalesce(x.ngay_cap, current_date), x.han_dung, x.trang_thai, x.ghi_chu, $2, x.gia_tri_1_lan_hh
+           from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, ma text, khach_sh bigint, goi_sh bigint, cn text, loai text, so_buoi_tong int, tong_tien bigint, gia_tri_buoi bigint, ngay_cap date, han_dung date, trang_thai text, ghi_chu text, gia_tri_1_lan_hh bigint)
            join public.khach_hang k on k.sh_id = x.khach_sh join public.goi_the g on g.sh_id = x.goi_sh on conflict (sh_id) do nothing returning id, sh_id) select id, sh_id from ins`, [JSON.stringify(l), dot]);
     nTheMoi += them.length;
     const idTheoSh = new Map(them.map((r) => [Number(r.sh_id), r.id])); const sc = [];
@@ -550,6 +552,7 @@ try {
       xac_nhan_luc: iso(r.confirmed_at), checkin_luc: iso(r.checkin_at), bat_dau_lam_luc: iso(r.process_at), hoan_thanh_luc: iso(r.finished_at), huy_luc: iso(r.canceled_at),
       nhan_vien_ten: sach(r.operator_names) || null, dich_vu_ten: sach(r.product_names) || null, so_khach: Number(r.number_of_guests) || 1,
       kieu_lap: iso(r.repeat_type), nguoi_tao_ten: sach(r.created_by_user_fullname) || null, hoa_don_sh_id: iso(r.order_id) ? Number(r.order_id) : null,
+      khach_moi: r.is_new_customer == null || r.is_new_customer === "" ? null : Number(r.is_new_customer) === 1, // cờ gốc SalonHero (0202); trống thì trigger tự tính
     };
     if (!cu) { lichMoi.push(dong); baoL.moi++; for (const [d, n] of dem) dvRows.push({ sh: shId, dv: d, n, dot }); continue; }
     const giong = cu.trang_thai === dong.trang_thai && new Date(cu.bat_dau).getTime() === bd.getTime() && new Date(cu.ket_thuc).getTime() === new Date(dong.ket_thuc).getTime() && (cu.nhan_vien_id ?? null) === (dong.nhan_vien_id ?? null)
@@ -561,12 +564,12 @@ try {
   let nLichMoi = 0;
   await theoLo(lichMoi, 2000, async (l) => {
     nLichMoi += (await q(`insert into public.lich_hen (sh_id, khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id, nguon, ghi_chu, ly_do_huy, tao_boi, tao_luc, cap_nhat_luc, ma_dat_lich, nguon_dat,
-         xac_nhan_luc, checkin_luc, bat_dau_lam_luc, hoan_thanh_luc, huy_luc, nhan_vien_ten, dich_vu_ten, so_khach, kieu_lap, nguoi_tao_ten, hoa_don_sh_id, la_lich_su, nhap_dot)
+         xac_nhan_luc, checkin_luc, bat_dau_lam_luc, hoan_thanh_luc, huy_luc, nhan_vien_ten, dich_vu_ten, so_khach, kieu_lap, nguoi_tao_ten, hoa_don_sh_id, la_lich_su, nhap_dot, khach_moi)
        select x.sh_id, x.khach_id, (select id from public.chi_nhanh where ma = x.chi_nhanh), x.bat_dau, x.ket_thuc, x.trang_thai, x.nhan_vien_id, x.nguon, x.ghi_chu, x.ly_do_huy, $2::uuid, x.tao_luc, x.tao_luc, x.ma_dat_lich, x.nguon_dat,
-         x.xac_nhan_luc, x.checkin_luc, x.bat_dau_lam_luc, x.hoan_thanh_luc, x.huy_luc, x.nhan_vien_ten, x.dich_vu_ten, x.so_khach, x.kieu_lap, x.nguoi_tao_ten, x.hoa_don_sh_id, true, $3
+         x.xac_nhan_luc, x.checkin_luc, x.bat_dau_lam_luc, x.hoan_thanh_luc, x.huy_luc, x.nhan_vien_ten, x.dich_vu_ten, x.so_khach, x.kieu_lap, x.nguoi_tao_ten, x.hoa_don_sh_id, true, $3, x.khach_moi
        from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, khach_id uuid, chi_nhanh text, bat_dau timestamptz, ket_thuc timestamptz, trang_thai text, nhan_vien_id uuid, nguon text, ghi_chu text, ly_do_huy text, tao_luc timestamptz,
          ma_dat_lich text, nguon_dat text, xac_nhan_luc timestamptz, checkin_luc timestamptz, bat_dau_lam_luc timestamptz, hoan_thanh_luc timestamptz, huy_luc timestamptz, nhan_vien_ten text, dich_vu_ten text, so_khach int,
-         kieu_lap text, nguoi_tao_ten text, hoa_don_sh_id bigint)
+         kieu_lap text, nguoi_tao_ten text, hoa_don_sh_id bigint, khach_moi boolean)
        on conflict (sh_id) do nothing returning 1`, [JSON.stringify(l), he, dot])).length;
   });
   let nLichDoi = 0;

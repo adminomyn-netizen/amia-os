@@ -12465,6 +12465,18 @@ export type Database = {
         }
         Returns: number
       }
+      hh_gia_1_lan_the: {
+        Args: { p_the_sh_id: number }
+        Returns: number
+      }
+      hh_la_dong_the: {
+        Args: { p_dong: string }
+        Returns: boolean
+      }
+      hh_nguoi: {
+        Args: { p_dong: string; p_nv: string; p_ti_le_chia: number; p_vai: string }
+        Returns: number
+      }
       hh_xem_truoc_sao_chep: {
         Args: {
           p_dich_khoa: string

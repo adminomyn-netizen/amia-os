@@ -123,6 +123,7 @@ export async function luuGoiThe(fd: FormData): Promise<KQ> {
     han_dung_ngay: soHoacNull(fd, "han_dung_ngay") || null, hoat_dong: bat(fd, "hoat_dong"),
     ten_en: tenEn, mo_ta: moTa, mau_the: mau || null, han_tinh_tu: hanTu, nhom_id: nhomId, cho_sua_gia: bat(fd, "cho_sua_gia"), che_do_sua_so: cheDo,
     gia_tri_1_lan: loai === "lan" ? (soHoacNull(fd, "gia_tri_1_lan") || null) : null, noi_hien_thi: noiHienThi,
+    tu_tinh_gia_tri_1_lan: loai === "lan" && bat(fd, "tu_tinh_gia_tri_1_lan"), giam_hh_theo_giam_gia: loai === "lan" && bat(fd, "giam_hh_theo_giam_gia"),
   };
   if (!row.ma || !row.ten) return { loi: "Nhập mã và tên gói." };
   if (loai === "lan" && !row.so_buoi) return { loi: "Thẻ liệu trình bắt buộc nhập số buổi (hoặc bật Không giới hạn số lần)." };

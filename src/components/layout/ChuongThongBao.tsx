@@ -7,6 +7,20 @@ import { createClient } from "@/lib/supabase/client";
 import { NHOM_THONG_BAO, type NhomThongBao } from "@/lib/nhom-thong-bao";
 
 type Muc = { ma: string; nhan: string; href: string; trang: "chua_doc" | "da_doc"; nhom: NhomThongBao };
+type KetQua = { ds: Muc[]; tatTieng?: boolean };
+
+/* Trang có 2 chuông (đầu trang máy tính + đầu trang điện thoại, một cái bị ẩn), mỗi chuông hỏi lúc mở trang và lúc nối realtime
+ * → 3–4 lần gọi /api/canh-bao (~1 s mỗi lần, cả chục truy vấn đếm) cho MỘT lần mở trang. Dùng chung một lượt hỏi:
+ * đang hỏi thì đợi chung; vừa hỏi xong < 3 s thì dùng lại (trừ khi có tín hiệu dữ liệu đổi / người dùng mở chuông → ep = hỏi mới). */
+let dangHoi: Promise<KetQua | null> | null = null, hoiLuc = 0, kqCuoi: KetQua | null = null;
+function hoiChung(ep: boolean): Promise<KetQua | null> {
+  if (dangHoi) return dangHoi;
+  if (!ep && kqCuoi && Date.now() - hoiLuc < 3000) return Promise.resolve(kqCuoi);
+  hoiLuc = Date.now();
+  dangHoi = fetch("/api/canh-bao", { cache: "no-store" }).then((r) => (r.ok ? (r.json() as Promise<KetQua>) : null))
+    .then((j) => { if (j) kqCuoi = j; return j; }).catch(() => null /* mất mạng: giữ số cũ */).finally(() => { dangHoi = null; });
+  return dangHoi;
+}
 
 /** Chuông thông báo: số việc đang chờ (lịch chưa xác nhận, phiếu cấp, thẻ sắp hết, nợ, kho thấp). Huy hiệu chỉ đếm việc CHƯA ĐỌC;
  * bấm vào một việc = đã đọc, có nút "Đọc hết" và nút xoá từng việc (việc hiện lại nếu nội dung/số lượng đổi).
@@ -25,8 +39,8 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
   const truocDo = useRef<number | null>(null);
   const trucRef = useRef(false);
   const goc = useRef<HTMLDivElement>(null);
-  const lamMoi = useCallback(() => {
-    fetch("/api/canh-bao", { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then((j) => {
+  const lamMoi = useCallback((ep = false) => {
+    void hoiChung(ep).then((j) => {
       if (!j) return;
       const moi = j.ds as Muc[];
       setDs(moi);
@@ -39,16 +53,16 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
         if (!tatTiengRef.current && typeof navigator !== "undefined" && "vibrate" in navigator) try { navigator.vibrate(120); } catch { /* trình duyệt chặn */ }
       }
       truocDo.current = chua;
-    }).catch(() => { /* mất mạng: giữ số cũ */ });
+    });
   }, []);
   useEffect(() => {
-    const dau = setTimeout(lamMoi, 0);
+    const dau = setTimeout(() => lamMoi(), 0);
     // Gộp nhiều tín hiệu dồn dập (vd một đơn bán ghi nhiều bảng, hay đồng bộ đêm ghi hàng trăm lô) thành một lần hỏi lại:
     // chờ yên 300 ms, và tối đa 1 lần mỗi 5 giây — trước đây mỗi lô ghi làm MỌI máy đang mở hỏi lại cả chục truy vấn đếm.
     let tre: ReturnType<typeof setTimeout> | undefined, lanCuoi = 0;
     const lamMoiTre = () => {
       clearTimeout(tre);
-      tre = setTimeout(() => { lanCuoi = Date.now(); lamMoi(); }, Math.max(300, lanCuoi + 5000 - Date.now()));
+      tre = setTimeout(() => { lanCuoi = Date.now(); lamMoi(true); }, Math.max(300, lanCuoi + 5000 - Date.now()));
     };
     const sb = createClient();
     const kenh = sb.channel("canh-bao").on("broadcast", { event: "doi" }, lamMoiTre).subscribe((tt) => {
@@ -92,7 +106,7 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
   return (
     <div ref={goc} className="relative">
       <span role="status" aria-live="polite" className="sr-only">{thongBaoMoi}</span>
-      <button type="button" onClick={() => { setMo((x) => !x); lamMoi(); }} aria-haspopup="menu" aria-expanded={mo} aria-label={n ? `Thông báo, ${n} việc đang chờ` : "Thông báo"} title="Việc đang chờ xử lý"
+      <button type="button" onClick={() => { setMo((x) => !x); lamMoi(true); }} aria-haspopup="menu" aria-expanded={mo} aria-label={n ? `Thông báo, ${n} việc đang chờ` : "Thông báo"} title="Việc đang chờ xử lý"
         className={`nut-nguoi relative flex h-10 w-10 items-center justify-center rounded-nho ${toi ? "text-menu-chu" : "text-muc-2"}`}>
         <Bell strokeWidth={1.7} className="h-[21px] w-[21px]" />
         {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: `0 0 0 2px var(${toi ? "--menu" : "--giay-sang"})` }}>{n}</span>}

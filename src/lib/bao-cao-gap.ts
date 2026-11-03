@@ -98,6 +98,14 @@ export async function layDoanhThuChiSo(db: Db, tu: string, den: string, cn?: str
     noMoiChuaThu: n(r?.no_moi_chua_thu), thuNoTrongKy: n(r?.thu_no_trong_ky), thuNoNgoaiKy: n(r?.thu_no_ngoai_ky), truThe: n(r?.tru_the_tien), soVoucher: n(r?.so_voucher), truVoucher: n(r?.tru_voucher), tip: n(r?.tip), vat: n(r?.vat) };
 }
 
+/** Ô "Tổng khoản chi" như SalonHero: phiếu chi tay ở Sổ quỹ (tiền mặt + ngân hàng) trong kỳ, bỏ phiếu đã đảo (migration 0290). */
+export async function layTongKhoanChi(db: Db, tu: string, den: string, cn?: string) {
+  const { data, error } = await db.rpc("bc_tong_khoan_chi", { p_tu: tu, p_den: den, p_cn: tuyChon(cn) });
+  if (error) throw new Error(error.message);
+  const r = data?.[0];
+  return { tong: Number(r?.tong ?? 0), tienMat: Number(r?.tien_mat ?? 0), nganHang: Number(r?.ngan_hang ?? 0) };
+}
+
 export async function layNhanVienSh(db: Db, tu: string, den: string, cn?: string) {
   const { data, error } = await db.rpc("bc_nhan_vien_sh", { p_tu: tu, p_den: den, p_cn: tuyChon(cn) });
   if (error) throw new Error(error.message);

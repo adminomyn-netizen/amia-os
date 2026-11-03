@@ -31,7 +31,7 @@ import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
 import { LocNo } from "@/components/bao-cao/LocNo";
 import { XemKhachMuc } from "@/components/bao-cao/XemKhachMuc";
 import { layDanhSachNo } from "@/lib/bao-cao-no";
-import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, layTongKhoanChi, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
 const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "voucher", ten: "Hiệu quả voucher" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }, { ma: "nhap-xuat-kho", ten: "Nhập xuất kho hàng" }, { ma: "nhap-kho", ten: "Báo cáo nhập kho" }, { ma: "xuat-kho", ten: "Xuất kho bởi nhân viên" }, { ma: "ban-san-pham", ten: "Sản phẩm đã bán" }, { ma: "ton-lo", ten: "Báo cáo tồn theo lô hàng" }, { ma: "chi-phi-dv", ten: "Báo cáo chi phí dịch vụ" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
@@ -155,7 +155,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
     noiDung = <>{lc}<BaoCaoDungDichVu loc={loc} coChiNhanh={coChiNhanh} /></>;
   } else if (tab === "doanh-thu") {
     const gom = kieuGom(sp.gom);
-    const [{ data }, cs, { data: dataVi }] = await Promise.all([db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string }), layDoanhThuChiSo(db, tu, den, cn), db.rpc("bc_doanh_thu_ngay_vi", { p_tu: tu, p_den: den, p_cn: cn as string })]);
+    const [{ data }, cs, { data: dataVi }, kc] = await Promise.all([db.rpc("bc_doanh_thu_ngay", { p_tu: tu, p_den: den, p_cn: cn as string }), layDoanhThuChiSo(db, tu, den, cn), db.rpc("bc_doanh_thu_ngay_vi", { p_tu: tu, p_den: den, p_cn: cn as string }), layTongKhoanChi(db, tu, den, cn)]);
     // Cột ví như báo cáo theo ngày của SalonHero: Momo, VNPay, Shopee Pay, GrabPay, Ví điện tử khác (migration 0199). Ship COD không có cột ở SalonHero, chỉ hiện khi có số.
     const viNgay = new Map((dataVi ?? []).map((r) => [r.ngay, r]));
     const ngayRows = (data ?? []).map((r) => ({ ngay: r.ngay, so_don: Number(r.so_don), doanh_thu: Number(r.doanh_thu), thu_don_moi: Number(r.thu_don_moi), thu_no_cu: Number(r.thu_no_cu), thuc_thu: Number(r.thuc_thu), tien_mat: Number(r.tien_mat), chuyen_khoan: Number(r.chuyen_khoan), quet_the: Number(r.quet_the), tru_the_tien: Number(r.tru_the_tien), momo: Number(viNgay.get(r.ngay)?.momo ?? 0), vnpay: Number(viNgay.get(r.ngay)?.vnpay ?? 0), shopee: Number(viNgay.get(r.ngay)?.shopee ?? 0), grab: Number(viNgay.get(r.ngay)?.grab ?? 0), vi_khac: Number(viNgay.get(r.ngay)?.vi_khac ?? 0), ship_cod: Number(viNgay.get(r.ngay)?.ship_cod ?? 0), no_moi: Number(r.no_moi), so_buoi: Number(r.so_buoi), doanh_thu_buoi: Number(r.doanh_thu_buoi) }));
@@ -182,7 +182,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
           { nhan: `Trừ voucher (số lượng: ${cs.soVoucher})`, so: tienVN(cs.truVoucher) },
           { nhan: "Tổng tiền tip", so: tienVN(cs.tip) },
           { nhan: "Tổng thuế (VAT)", so: tienVN(cs.vat) },
-          { nhan: "Tổng khoản chi", so: tienVN(0), ghiChu: "app chưa ghi khoản chi gắn với đơn" },
+          { nhan: "Tổng khoản chi", so: tienVN(kc.tong), ghiChu: `Phiếu chi ở Sổ quỹ · tiền mặt ${tienVN(kc.tienMat)} · ngân hàng ${tienVN(kc.nganHang)}` },
           { nhan: "Doanh thu buổi đã làm", so: tienVN(tongDtBuoi), ghiChu: `${soVN(tongBuoi)} buổi (phần thêm của AMIA OS)` },
         ]} />
         <nav aria-label="Gom số liệu theo" className="mb-3 mt-6 flex gap-2 overflow-x-auto pb-1">

@@ -11921,6 +11921,10 @@ export type Database = {
           vat: number
         }[]
       }
+      bc_tong_khoan_chi: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: { ngan_hang: number; tien_mat: number; tong: number }[]
+      }
       quy_ngan_hang_tach: {
         Args: { p_cn: string[]; p_den: string; p_tu: string }
         Returns: {

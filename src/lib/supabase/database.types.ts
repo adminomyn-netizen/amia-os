@@ -11742,11 +11742,13 @@ export type Database = {
           tong_chi_phi: number
           tong_dong: number
         }[]
+          so_phieu: number
       }
       bc_chi_phi_dich_vu_ct: {
         Args: {
           p_cn: string
           p_den: string
+          thu_luc: string | null
           p_dv?: string
           p_nv?: string
           p_sp: string

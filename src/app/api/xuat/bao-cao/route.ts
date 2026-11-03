@@ -128,9 +128,9 @@ export async function GET(req: Request) {
   } else if (tab === "no" && u.searchParams.get("nt") === "tra") {
     const xemSdt = coQuyen(nd, "khach.sdt");
     const { rows } = await layCacLanTraNo(db, { tu, den, cn, q: u.searchParams.get("q") || undefined }, true);
-    bangs.push({ ten: "Các lần trả nợ", dong: rows.map((r) => ({ ...r, ngay: ngay(r.ngay), dienThoai: xemSdt ? r.dienThoai : "" })), cot: [
+    bangs.push({ ten: "Các lần trả nợ", dong: rows.map((r) => ({ ...r, ngay: ngay(r.ngay), dienThoai: xemSdt ? r.dienThoai : "", gioThu: r.thuLuc ? ngayGioVN(r.thuLuc) : "" })), cot: [
       { nhan: "Ngày trả nợ", khoa: "ngay", rong: 14 }, { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Điện thoại", khoa: "dienThoai", rong: 14 }, { nhan: "Mã đơn hàng", khoa: "maHd", rong: 14 }, { nhan: "Chi nhánh", khoa: "chiNhanh", rong: 18 },
-      { nhan: "Tổng số tiền hóa đơn", khoa: "tongHd", tien: true }, { nhan: "Số tiền trả", khoa: "soTien", tien: true }, { nhan: "Loại thanh toán", khoa: "phuongThuc", rong: 16 }, { nhan: "Người thu", khoa: "nguoiThu", rong: 24 }] });
+      { nhan: "Tổng số tiền hóa đơn", khoa: "tongHd", tien: true }, { nhan: "Số tiền trả", khoa: "soTien", tien: true }, { nhan: "Loại thanh toán", khoa: "phuongThuc", rong: 16 }, { nhan: "Người thu", khoa: "nguoiThu", rong: 24 }, { nhan: "Mã phiếu thu", khoa: "maPhieu", rong: 12 }, { nhan: "Giờ thu", khoa: "gioThu", rong: 18 }] });
   } else if (tab === "no") {
     // Cùng bộ lọc với màn hình: chỉ lọc ngày lập hoá đơn khi người dùng chọn (ntu / nden), tìm theo tên khách / SĐT / mã hoá đơn (q).
     const xemSdt = coQuyen(nd, "khach.sdt");

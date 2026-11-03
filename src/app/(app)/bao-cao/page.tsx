@@ -4,7 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
-import { boDau, congNgay, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
+import { boDau, congNgay, gioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { Tab } from "@/components/ui/Tab";
@@ -275,6 +275,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
     const so = 20, trang = soTrang(sp.trang);
     const { rows, tong } = await layCacLanTraNo(db, { tu, den, cn, q: sp.q || undefined, trang, so });
     const xemSdt = coQuyen(nd, "khach.sdt");
+    const inPhieu = coQuyen(nd, "no.thu");
     const goc = { tab: "no", nt: "tra", tu, den, cn: sp.cn, q: sp.q };
     noiDung = (
       <>
@@ -283,20 +284,22 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
         <form method="get" action="/bao-cao" className="mb-5 flex gap-2">
           <input type="hidden" name="tab" value="no" /><input type="hidden" name="nt" value="tra" /><input type="hidden" name="tu" value={tu} /><input type="hidden" name="den" value={den} />
           {sp.cn && <input type="hidden" name="cn" value={sp.cn} />}
-          <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm theo mã đơn hàng, tên khách hàng, SĐT" aria-label="Tìm theo mã đơn hàng, tên khách hàng, SĐT" className={O_NHAP} />
+          <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm theo mã đơn hàng, mã phiếu thu, tên khách hàng, SĐT" aria-label="Tìm theo mã đơn hàng, mã phiếu thu, tên khách hàng, SĐT" className={O_NHAP} />
           <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
         </form>
         <HangChiSo muc={[{ nhan: "Tổng tiền đã trả nợ", so: tienVN(tong.tien), ghiChu: `${soVN(tong.dong)} lần trả` }]} />
         <div className="mt-6"><Bang duLieu={rows} khoa={(r) => r.id} trong="Không tìm thấy kết quả nào"
           cot={[
-            { nhan: "Ngày trả nợ", hienThi: (r) => ngayVN(r.ngay) },
+            { nhan: "Mã phiếu thu", hienThi: (r) => <span className="tabular-nums">{r.maPhieu}</span> },
+            { nhan: "Ngày trả nợ", hienThi: (r) => <span className="block tabular-nums">{ngayVN(r.ngay)}{r.thuLuc ? <span className="block text-[12px] text-muc-3">{gioVN(r.thuLuc)}</span> : null}</span> },
             { nhan: "Khách hàng", chinh: true, hienThi: (r) => <span className="block">{r.khachId ? <Link href={`/khach-hang/${r.khachId}`} className="text-muc hover:underline">{r.khach}</Link> : <span className="text-muc">{r.khach}</span>}<span className="block text-[12px] text-muc-3">{xemSdt ? r.dienThoai : r.dienThoai ? "•••" : ""}</span></span> },
             { nhan: "Mã đơn hàng", hienThi: (r) => <Link href={`/hoa-don/${r.hoaDonId}`} className="font-medium text-nhan-dam hover:underline">{r.maHd}</Link> },
             { nhan: "Chi nhánh", hienThi: (r) => r.chiNhanh }, { nhan: "Tổng số tiền hóa đơn", hienThi: (r) => tienVN(r.tongHd), phai: true },
             { nhan: "Số tiền trả", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.soTien)}</span>, phai: true }, { nhan: "Loại thanh toán", hienThi: (r) => r.phuongThuc }, { nhan: "Người thu", hienThi: (r) => r.nguoiThu },
+            { nhan: "", hienThi: (r) => (inPhieu && r.soTien > 0 ? <Link href={`/in/phieu-thu/${r.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Chi tiết</Link> : <Link href={`/hoa-don/${r.hoaDonId}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Chi tiết</Link>) },
           ]} /></div>
         <ThanhTrang trang={trang} tong={tong.dong} moi={so} gan={(t) => `/bao-cao?${new URLSearchParams(Object.entries({ ...goc, trang: t ? String(t) : undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`} />
-        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Một dòng = một lần khách trả nợ (tiền mặt, chuyển khoản, quẹt thẻ thu sau ngày lập đơn) trong khoảng ngày đã chọn. Giờ thu và mã phiếu thu của SalonHero chưa được chuyển sang; nút Trả nợ để thu nợ ở trang chi tiết hoá đơn.</p>
+        <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Một dòng = một lần khách trả nợ (tiền mặt, chuyển khoản, quẹt thẻ thu sau ngày lập đơn) trong khoảng ngày đã chọn. Mã phiếu thu do AMIA tự đánh số (PT + số thứ tự) cho mọi lần thu, kể cả lần thu chuyển từ SalonHero (SalonHero không có mã riêng cho tiền khách trả). Giờ thu của lần thu từ SalonHero lấy theo giờ ghi ở sổ quỹ SalonHero. Chi tiết = phiếu thu in được; nút Trả nợ để thu nợ ở trang chi tiết hoá đơn.</p>
       </>
     );
   } else if (tab === "no") {

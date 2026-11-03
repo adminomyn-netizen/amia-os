@@ -484,3 +484,14 @@ body {
 .lich-dat .rbc-event.rbc-selected { background: var(--espresso-sau); }
 .lich-dat .rbc-event:focus, .lich-dat .rbc-day-slot .rbc-selected-cell { outline: 2px solid var(--dat); }
 .lich-dat .rbc-selected-cell { background: color-mix(in srgb, var(--nhan) 30%, transparent); }
+
+/* Tiêu đề đầu thẻ: vạch nhấn xanh → vàng bên trái, đồng bộ mọi khối trong app (bỏ qua tiêu đề đã tự dàn flex). */
+.the-noi > h2:first-child:not(.flex):not(.sr-only),
+.the-noi > h3:first-child:not(.flex):not(.sr-only) {
+  display: flex; align-items: center; gap: 10px;
+}
+.the-noi > h2:first-child:not(.flex):not(.sr-only)::before,
+.the-noi > h3:first-child:not(.flex):not(.sr-only)::before {
+  content: ""; flex-shrink: 0; width: 4px; height: 1.05em; border-radius: 2px;
+  background: linear-gradient(180deg, var(--nhan) 0%, var(--dat) 100%);
+}

@@ -5,7 +5,7 @@ import { apLocHoaDon, docLocHoaDon, tongToanKy } from "@/lib/loc-hoa-don";
 function gia() {
   const ghi: string[] = [];
   const b: Record<string, (...a: unknown[]) => unknown> = {};
-  for (const ten of ["gte", "lte", "eq", "gt", "or", "is", "not", "ilike", "contains"]) b[ten] = (...a: unknown[]) => { ghi.push(`${ten}(${a.map((x) => JSON.stringify(x)).join(",")})`); return b; };
+  for (const ten of ["gte", "lte", "eq", "gt", "or", "is", "not", "ilike", "contains", "in"]) b[ten] = (...a: unknown[]) => { ghi.push(`${ten}(${a.map((x) => JSON.stringify(x)).join(",")})`); return b; };
   return { b, ghi };
 }
 const UUID = "9dd502fa-b6e1-4892-ab22-3b00de4e417f";
@@ -32,6 +32,18 @@ describe("apLocHoaDon", () => {
     const { b, ghi } = gia();
     apLocHoaDon(b as never, docLocHoaDon({ tra: "no", tien_tu: "1000000", tien_den: "5000000", the: "dung_tien", vc: "co", ht: "chuyen_khoan", nv: UUID, vai: "tu_van", pp: "co", tip: "khong" }), null, { khachIds: [], lapIds: [] });
     for (const x of ['gt("con_no",0)', 'gte("tong_phai_thu",1000000)', 'lte("tong_phai_thu",5000000)', 'gt("tien_tru_the",0)', 'gt("giam_voucher",0)', 'contains("hinh_thuc",["chuyen_khoan"])', `contains("nv_tu_van",["${UUID}"])`, 'gt("phu_phi",0)', 'eq("tip",0)']) expect(ghi).toContain(x);
+  });
+  it("Mã HD: tìm chính xác khớp trọn mã AMIA hoặc SalonHero, không tick thì có chứa; chọn nhiều thì lọc theo id", () => {
+    const a = gia();
+    apLocHoaDon(a.b as never, docLocHoaDon({ mhd: " HD000123 ", cx: "1" }), null, { khachIds: [], lapIds: [] });
+    expect(a.ghi).toContain('or("ma.eq.HD000123,sh_ma.eq.HD000123")');
+    const c = gia();
+    apLocHoaDon(c.b as never, docLocHoaDon({ mhd: "HD%0,1(" }), null, { khachIds: [], lapIds: [] });
+    expect(c.ghi).toContain('or("ma.ilike.%HD01%,sh_ma.ilike.%HD01%")');
+    const d = gia();
+    apLocHoaDon(d.b as never, docLocHoaDon({ ids: `${UUID},sai,${UUID}` }), null, { khachIds: [], lapIds: [] });
+    expect(d.ghi).toContain(`in("id",["${UUID}"])`);
+    expect(docLocHoaDon({}).ids).toEqual([]);
   });
   it("không chọn vai thì tìm nhân viên ở cả ba vai", () => {
     const { b, ghi } = gia();

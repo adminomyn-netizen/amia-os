@@ -3,10 +3,10 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { gioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
-import { apLocHoaDon, docLocHoaDon, GIOI_HAN_TONG, TRANG_THAI_HD, tongToanKy, traCuuLoc } from "@/lib/loc-hoa-don";
+import { apLocHoaDon, docLocHoaDon, GIOI_HAN_TONG, tongToanKy, traCuuLoc } from "@/lib/loc-hoa-don";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
-import { Bang } from "@/components/ui/Table";
-import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { BangHoaDon, type DongHoaDon } from "@/components/hoa-don/BangHoaDon";
+import { huyHoaDon, moLaiHoaDon } from "./actions";
 import { ChonCoTrang, LocHoaDon } from "@/components/hoa-don/LocHoaDon";
 
 export default async function TrangHoaDon({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
@@ -20,7 +20,7 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
   const toanCoSo = coQuyen(nd, "ban.toan_co_so");
   const tra = await traCuuLoc(db, loc);
   const moiTrang = loc.n;
-  const COT = "id, ma, sh_ma, ngay_hd, tao_luc, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, thu_ngan_ten, la_lich_su, chi_nhanh_id, vat_hd_luc, vat_hd_so";
+  const COT = "id, ma, sh_ma, ngay_hd, tao_luc, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, thu_ngan_ten, la_lich_su, la_so_du_dau, chi_nhanh_id, vat_hd_luc, vat_hd_so";
   const goiHan = <Q extends { eq(c: string, v: string): Q }>(x: Q) => (toanCoSo ? x : x.eq("nguoi_lap_id", nd.nhanVienId ?? ""));
   const q = goiHan(apLocHoaDon(db.from("v_hoa_don_loc").select(COT, { count: "exact" }), loc, nd.chiNhanhId, tra)).order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).order("id").range((trang - 1) * moiTrang, trang * moiTrang - 1);
   const { data: ds, count } = await q;
@@ -41,6 +41,14 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
   const lienKet = (t: number) => { const u = new URLSearchParams(Object.entries(sp).filter(([kk, v]) => v && kk !== "trang") as [string, string][]); u.set("trang", String(t)); return `/hoa-don?${u}`; };
   const thamSo = new URLSearchParams(Object.entries(sp).filter(([kk, v]) => v && kk !== "trang") as [string, string][]);
   thamSo.set("tu", tu); thamSo.set("den", den);
+  thamSo.delete("ids");
+  const dongBang: DongHoaDon[] = (ds ?? []).map((r) => ({
+    id: r.id ?? "", ma: r.ma ?? "", khach: r.khach_id ? tenK.get(r.khach_id)?.ho_ten ?? "" : "Khách lẻ", ngay: ngayVN(r.ngay_hd), gio: r.tao_luc ? gioVN(r.tao_luc) : "",
+    nguoiLap: (r.la_lich_su ? r.thu_ngan_ten ?? "" : tenNv.get(r.nguoi_lap_id ?? "") ?? ""), phaiThu: tienVN(r.tong_phai_thu), daThu: tienVN(r.da_thu),
+    conNo: r.trang_thai === "hoan_thanh" && Number(r.con_no) > 0 ? tienVN(r.con_no) : "", trangThai: (r.trang_thai ?? "nhap") as DongHoaDon["trangThai"],
+    vat: r.trang_thai !== "hoan_thanh" ? "" : r.vat_hd_luc ? "co" : "chua", vatSo: r.vat_hd_so ?? "",
+    laLichSu: !!r.la_lich_su, coHddt: !!(r.vat_hd_so || r.vat_hd_luc), laSoDuDau: !!r.la_so_du_dau,
+  }));
 
   return (
     <>
@@ -54,16 +62,7 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
         ) : (count ?? 0) > GIOI_HAN_TONG ? <p className="text-muc-3">Quá {GIOI_HAN_TONG.toLocaleString("vi-VN")} hoá đơn, chọn khoảng ngày ngắn hơn để xem tổng.</p> : <span />}
         <ChonCoTrang n={moiTrang} />
       </div>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id ?? ""} trong="Không có hoá đơn trong khoảng này."
-        cot={[
-          { nhan: "Mã", hienThi: (r) => <Link href={`/hoa-don/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
-          { chinh: true, nhan: "Khách hàng", hienThi: (r) => (r.khach_id ? tenK.get(r.khach_id)?.ho_ten ?? "" : "Khách lẻ") }, { nhan: "Ngày", hienThi: (r) => <span className="whitespace-nowrap">{ngayVN(r.ngay_hd)}{r.tao_luc ? <span className="text-muc-3"> {gioVN(r.tao_luc)}</span> : null}</span> },
-          { nhan: "Người lập", hienThi: (r) => (r.la_lich_su ? r.thu_ngan_ten ?? "" : tenNv.get(r.nguoi_lap_id ?? "") ?? "") },
-          { nhan: "Phải thu", hienThi: (r) => tienVN(r.tong_phai_thu), phai: true }, { nhan: "Đã thu", hienThi: (r) => tienVN(r.da_thu), phai: true },
-          { nhan: "Còn nợ", hienThi: (r) => (r.trang_thai === "hoan_thanh" && Number(r.con_no) > 0 ? <span className="font-medium text-canh-bao">{tienVN(r.con_no)}</span> : ""), phai: true },
-          { nhan: "HĐ VAT", hienThi: (r) => (r.trang_thai !== "hoan_thanh" ? "" : r.vat_hd_luc ? <span className="text-nhan-dam" title={r.vat_hd_so ? `Số ${r.vat_hd_so}` : undefined}>Đã có hoá đơn</span> : <span className="text-muc-3">Chưa có hoá đơn</span>) },
-          { nhan: "Trạng thái", hienThi: (r) => { const t = TRANG_THAI_HD[r.trang_thai as keyof typeof TRANG_THAI_HD]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
-        ]} />
+      <BangHoaDon dong={dongBang} thamSo={thamSo.toString()} choSua={coQuyen(nd, "ban.sua")} choHuy={coQuyen(nd, "ban.huy")} suaAction={moLaiHoaDon} huyAction={huyHoaDon} />
       {soTrang > 1 && (
         <nav className="mt-5 flex items-center justify-between text-[14px]" aria-label="Phân trang"><span className="text-muc-3">Trang {trang} / {soTrang}</span>
           <span className="flex gap-4">{trang > 1 && <Link href={lienKet(trang - 1)} className="font-medium text-nhan-dam hover:underline">Trang trước</Link>}{trang < soTrang && <Link href={lienKet(trang + 1)} className="font-medium text-nhan-dam hover:underline">Trang sau</Link>}</span></nav>

@@ -37,6 +37,8 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
     h.nguoi_gioi_thieu_id ? db.from("khach_hang").select("id, ma, ho_ten").eq("id", h.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
     db.from("chi_nhanh").select("ten").eq("id", h.chi_nhanh_id).maybeSingle(),
   ]);
+  // "Chỉnh sửa lần cuối" như SalonHero: thao tác ghi gần nhất trên hoá đơn (nhật ký; bỏ lượt xuất Excel vì không sửa gì), so với lúc chốt / huỷ, lấy mốc muộn nhất.
+  const { data: nkCuoi } = await db.from("nhat_ky_truy_cap").select("nguoi_id, hanh_dong, luc").eq("doi_tuong", "hoa_don").eq("doi_tuong_id", id).neq("hanh_dong", "xuat_excel").order("luc", { ascending: false }).limit(1).maybeSingle();
   // Lịch sử nợ (như hộp "Nợ của khách" SalonHero): các lần trả nợ sau khi chốt đơn và các lần xoá nợ; chỉ dòng cuối còn hiệu lực được huỷ.
   const { data: lsNo } = h.trang_thai === "hoan_thanh" ? await db.rpc("lich_su_no_hoa_don", { p_id: id }) : { data: [] };
   const idsDong = (dong ?? []).map((d) => d.id);
@@ -57,6 +59,16 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   const diemCong = (diem ?? []).filter((x) => x.loai === "cong_hoa_don").reduce((s, x) => s + x.so_diem, 0);
   const diemTru = (diem ?? []).filter((x) => x.loai === "hoan_hoa_don").reduce((s, x) => s + x.so_diem, 0);
   const t = TRANG_THAI_HD[h.trang_thai as keyof typeof TRANG_THAI_HD];
+  // Mốc sửa cuối: nhật ký (ai, lúc) / huỷ / chốt. Đơn SalonHero không có nhật ký AMIA → lúc chốt + tên thu ngân.
+  const mocSua = ([
+    nkCuoi ? { luc: nkCuoi.luc, ai: tenNv.get(nkCuoi.nguoi_id ?? "") ?? "" } : null,
+    h.huy_luc ? { luc: h.huy_luc, ai: h.la_lich_su ? h.thu_ngan_ten ?? "" : "" } : null,
+    h.chot_luc ? { luc: h.chot_luc, ai: nguoiLap } : null,
+  ].filter(Boolean) as { luc: string; ai: string }[]).sort((a, b) => b.luc.localeCompare(a.luc))[0];
+  // Tiền khách đưa / trả lại khách (lưu lúc thanh toán ở Thu ngân, migration 0213): trả lại = khách đưa − phần thu tiền mặt của đơn.
+  const tienMatThu = (tt ?? []).filter((x) => x.phuong_thuc === "tien_mat").reduce((s, x) => s + (x.loai === "thu" ? Number(x.so_tien) : -Number(x.so_tien)), 0);
+  const khachDua = h.khach_dua == null ? null : Number(h.khach_dua);
+  const KHOA_SH = "Đơn chuyển từ SalonHero: sửa ở SalonHero tới 15/11 (đồng bộ đêm ghi đè).";
   type Muc = [string, React.ReactNode];
   const thongTin = ([
     ["Chi nhánh", cn?.ten],
@@ -65,6 +77,11 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
     h.chot_luc ? ["Hoàn thành lúc", ngayGioVN(h.chot_luc)] : null,
     h.chot_luc && nguoiLap ? ["Hoàn thành bởi", nguoiLap] : null,
     h.huy_luc ? ["Huỷ lúc", ngayGioVN(h.huy_luc)] : null,
+    ["Giờ vào", h.gio_vao ? gioVN(h.gio_vao) : gioVN(h.tao_luc)],
+    h.gio_ra || h.chot_luc ? ["Giờ ra", gioVN((h.gio_ra ?? h.chot_luc) as string)] : null,
+    mocSua ? ["Chỉnh sửa lần cuối", `${ngayGioVN(mocSua.luc)}${mocSua.ai ? ` · ${mocSua.ai}` : ""}`] : null,
+    khachDua != null ? ["Tiền khách đưa", tienVN(khachDua)] : null,
+    khachDua != null ? ["Trả lại khách", tienVN(Math.max(khachDua - tienMatThu, 0))] : null,
     lich?.ma_dat_lich ? ["Lịch hẹn", lich.ma_dat_lich] : null,
     lich?.phong ? ["Vị trí / chỗ", lich.phong] : null,
     nguoiGt ? ["Người giới thiệu", <Link key="gt" href={`/khach-hang/${nguoiGt.id}`} className="font-medium text-nhan-dam hover:underline">{nguoiGt.ho_ten} · {nguoiGt.ma}</Link>] : null,
@@ -82,10 +99,12 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
             truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC_TIEN, batBuoc: true }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
         )}
+        {coNo && h.la_lich_su && coQuyen(nd, "no.xoa") && <button type="button" disabled title={KHOA_SH} className="h-10 cursor-not-allowed rounded-nho border border-vien px-4 text-[14px] font-medium text-muc-3">Điều chỉnh nợ (khoá)</button>}
         {coNo && !h.la_lich_su && coQuyen(nd, "no.xoa") && (
           <NutHop kieu="phu" nhan="Điều chỉnh nợ" tieuDe="Điều chỉnh nợ (xoá nợ)" moTa={`Nợ hiện tại ${tienVN(h.con_no)}. Nhập số nợ mới (nhỏ hơn nợ hiện tại; 0 = xoá hết). Phần chênh ghi là "Xoá nợ", không vào sổ quỹ.`} an={{ hoa_don_id: id }} giaTri={{ no_moi: 0 }} nhanLuu="Lưu điều chỉnh"
             truong={[{ ten: "no_moi", nhan: "Số nợ mới", loai: "tien", batBuoc: true }, { ten: "ly_do", nhan: "Lý do điều chỉnh nợ", loai: "nhieu_dong", batBuoc: true }]} action={dieuChinhNo} />
         )}
+        {h.trang_thai === "hoan_thanh" && h.la_lich_su && !h.la_so_du_dau && coQuyen(nd, "ban.sua") && <button type="button" disabled title={KHOA_SH} className="h-10 cursor-not-allowed rounded-nho border border-vien px-4 text-[14px] font-medium text-muc-3">Sửa hoá đơn (khoá)</button>}
         {h.trang_thai === "hoan_thanh" && !h.la_lich_su && !h.la_so_du_dau && coQuyen(nd, "ban.sua") && (h.vat_hd_so || h.vat_hd_luc) && (
           <span className="self-center text-[13px] text-muc-3">Không sửa được: đã xuất hoá đơn điện tử{h.vat_hd_so ? ` số ${h.vat_hd_so}` : ""}. Xử lý hoá đơn điện tử (điều chỉnh/thay thế) và xoá số ở mục Hoá đơn VAT trước.</span>
         )}
@@ -101,6 +120,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
             truong={[{ ten: "ly_do", nhan: "Lý do huỷ", loai: "nhieu_dong", batBuoc: true }]} action={huyHoaDon} />
         )}
       </TieuDeTrang>
+      {h.la_lich_su && h.trang_thai === "hoan_thanh" && (coQuyen(nd, "ban.sua") || coQuyen(nd, "no.xoa") || coQuyen(nd, "no.thu")) && <p className="mb-5 rounded-nho bg-giay-tram px-3 py-2.5 text-[13px] text-muc-2">{KHOA_SH} Sửa hoá đơn, điều chỉnh nợ và huỷ lần trả nợ của đơn này làm ở SalonHero; từ 15/11 làm ngay tại đây.</p>}
       {moi === "1" && <p role="status" className="mb-5 rounded-nho bg-nhan-nhat px-3 py-2.5 text-[14px] text-nhan-dam">Đã chốt đơn {h.ma}.</p>}
       {h.trang_thai === "huy" && <p className="mb-5 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Đã huỷ ngày {ngayGioVN(h.huy_luc)}. Lý do: {h.ly_do_huy}</p>}
       <HangChiSo muc={[{ nhan: "Tiền hàng", so: tienVN(h.tong_hang) }, { nhan: "Phải thu", so: tienVN(h.tong_phai_thu) }, { nhan: "Đã thu", so: tienVN(h.da_thu) }, { nhan: "Còn nợ", so: tienVN(h.trang_thai === "huy" ? 0 : h.con_no) }]} />
@@ -144,6 +164,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
               { nhan: "", hienThi: (r) => (
                 <span className="flex flex-wrap justify-end gap-2">
                   {r.loai === "tra_no" && !r.da_huy && coQuyen(nd, "no.thu") && <Link href={`/in/phieu-thu/${r.ref}`} target="_blank" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu thu</Link>}
+                  {r.la_cuoi && h.la_lich_su && coQuyen(nd, "no.thu") && <span className="text-[12px] text-muc-3" title={KHOA_SH}>Huỷ: khoá tới 15/11</span>}
                   {r.la_cuoi && !h.la_lich_su && coQuyen(nd, "no.thu") && (
                     <NutHop kieu="chu" nguy nhan="Huỷ" tieuDe={r.loai === "xoa_no" ? "Huỷ lần xoá nợ" : "Huỷ lần trả nợ"} an={{ hoa_don_id: id, ref: r.ref }} nhanLuu="Huỷ dòng này"
                       moTa={r.loai === "xoa_no" ? `Nợ ${tienVN(r.so_tien)} được tính lại cho khách.` : `Ghi dòng hoàn ${tienVN(r.so_tien)} cùng ngày ${ngayVN(r.ngay)}, cùng hình thức để sổ quỹ và báo cáo về như chưa thu. Dòng gốc vẫn còn trong sổ.`}
@@ -193,9 +214,9 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
             </div>
           </MucTrang>
         )}
-        {(h.gio_vao || h.gio_ra || h.so_khach > 1) && (
-          <MucTrang tieuDe="Giờ khách và số khách">
-            <p className="text-[14px] text-muc-2">{h.gio_vao ? `Vào ${gioVN(h.gio_vao)}` : ""}{h.gio_vao && h.gio_ra ? " · " : ""}{h.gio_ra ? `Ra ${gioVN(h.gio_ra)}` : ""}{(h.gio_vao || h.gio_ra) && h.so_khach > 1 ? " · " : ""}{h.so_khach > 1 ? `${h.so_khach} khách` : ""}</p>
+        {h.so_khach > 1 && (
+          <MucTrang tieuDe="Số khách">
+            <p className="text-[14px] text-muc-2">{h.so_khach} khách</p>
           </MucTrang>
         )}
         {h.ghi_chu && <MucTrang tieuDe="Ghi chú"><p className="whitespace-pre-line text-[14px] text-muc-2">{h.ghi_chu}</p></MucTrang>}

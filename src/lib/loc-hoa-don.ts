@@ -40,10 +40,18 @@ export type LocHoaDon = {
   ht: "" | (typeof LOC_HINH_THUC)[number]["gia_tri"];
   /** Cỡ trang (chỉ màn hình, không đổi tệp Excel). */
   n: number;
+  /** Ô "Mã HD" như SalonHero (khớp mã AMIA hoặc mã SalonHero) + tick "Tìm chính xác" (khớp trọn mã, không chứa). */
+  mhd: string; cx: boolean;
+  /** Chỉ các hoá đơn đã chọn (ô chọn nhiều ở danh sách → in / xuất Excel các đơn đã chọn). Tối đa TOI_DA_CHON. */
+  ids: string[];
 };
+/** Số hoá đơn chọn cùng lúc tối đa (một trang lớn nhất là 100). */
+export const TOI_DA_CHON = 100;
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const trong = (v: string | undefined, ds: readonly string[]) => (ds.includes(v ?? "") ? (v as string) : "");
+/** Danh sách id cách nhau bằng dấu phẩy: chỉ giữ UUID hợp lệ, bỏ trùng, tối đa TOI_DA_CHON. */
+export const docIds = (v: string | undefined) => [...new Set((v ?? "").split(",").map((x) => x.trim()).filter((x) => UUID.test(x)))].slice(0, TOI_DA_CHON);
 const so = (v: string | undefined) => { const s = (v ?? "").replace(/\D/g, "").slice(0, 12); return s; };
 
 export function docLocHoaDon(sp: Record<string, string | undefined>): LocHoaDon {
@@ -69,6 +77,9 @@ export function docLocHoaDon(sp: Record<string, string | undefined>): LocHoaDon 
     pp: sp.pp === "co" || sp.pp === "khong" ? sp.pp : "", tip: sp.tip === "co" || sp.tip === "khong" ? sp.tip : "",
     ht: trong(sp.ht, LOC_HINH_THUC.map((x) => x.gia_tri)) as LocHoaDon["ht"],
     n: (CO_TRANG as readonly number[]).includes(n) ? n : CO_TRANG_MAC_DINH,
+    mhd: (sp.mhd ?? "").replace(/[%,()*"\\\s]/g, "").slice(0, 40),
+    cx: sp.cx === "1",
+    ids: docIds(sp.ids),
   };
 }
 
@@ -76,7 +87,7 @@ export function docLocHoaDon(sp: Record<string, string | undefined>): LocHoaDon 
 interface BoLoc<T> {
   gte(cot: string, v: string | number): T; lte(cot: string, v: string | number): T; eq(cot: string, v: string | number | boolean): T; gt(cot: string, v: number): T;
   or(dk: string): T; is(cot: string, v: null): T; not(cot: string, op: string, v: null): T;
-  ilike(cot: string, mau: string): T; contains(cot: string, v: string[]): T;
+  ilike(cot: string, mau: string): T; contains(cot: string, v: string[]): T; in(cot: string, v: string[]): T;
 }
 
 /** Kết quả tra trước các điều kiện không viết thẳng được vào truy vấn (tên khách, người lập). Dùng chung màn hình và Excel. */
@@ -138,6 +149,8 @@ export function apLocHoaDon<T extends BoLoc<T>>(q: T, loc: LocHoaDon, chiNhanhId
   if (loc.lap) {
     r = r.or([tra.lapIds.length ? `and(la_lich_su.eq.false,nguoi_lap_id.in.(${tra.lapIds.join(",")}))` : "", `thu_ngan_ten.ilike.%${loc.lap.replace(/[%_]/g, " ")}%`].filter(Boolean).join(","));
   }
+  if (loc.mhd) r = loc.cx ? r.or(`ma.eq.${loc.mhd},sh_ma.eq.${loc.mhd}`) : r.or(`ma.ilike.%${loc.mhd}%,sh_ma.ilike.%${loc.mhd}%`);
+  if (loc.ids.length) r = r.in("id", loc.ids);
   if (loc.q) r = r.or([`ma.ilike.%${loc.q.replace(/[%,()]/g, " ")}%`, `sh_ma.ilike.%${loc.q.replace(/[%,()]/g, " ")}%`, tra.khachIds.length ? `khach_id.in.(${tra.khachIds.join(",")})` : ""].filter(Boolean).join(","));
   return r;
 }

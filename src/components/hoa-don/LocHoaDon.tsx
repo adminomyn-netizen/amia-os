@@ -20,7 +20,7 @@ const dauThang = (d: string) => d.slice(0, 8) + "01";
 const cuoiThang = (d: string) => { const [y, m] = d.split("-").map(Number); return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10); };
 
 /** Tham số bộ lọc nâng cao: có cái nào đang bật thì mở sẵn khung "Lọc thêm". */
-const THAM_SO_NANG_CAO = ["cn", "lap", "nv", "vai", "tra", "tien_tu", "tien_den", "gc", "the", "vc", "ht", "pp", "tip"];
+const THAM_SO_NANG_CAO = ["cn", "lap", "nv", "vai", "tra", "tien_tu", "tien_den", "gc", "the", "vc", "ht", "pp", "tip", "mhd", "cx"];
 
 function useDoiUrl() {
   const router = useRouter();
@@ -99,6 +99,12 @@ export function LocHoaDon({ tu, den, chiNhanh, nhanVien }: { tu: string; den: st
       {mo && (
         <div className="grid gap-3 rounded-nho border border-vien p-3 sm:grid-cols-2 lg:grid-cols-4" role="group" aria-label="Lọc thêm">
           {chiNhanh && <Chon ariaLabel="Chi nhánh" giaTri={sp.get("cn") ?? ""} onDoi={(v) => doi({ cn: v })} luaChon={[{ gia_tri: "", nhan: "Tất cả chi nhánh" }, ...chiNhanh]} />}
+          {/* SalonHero: ô "Mã HD" + tick "Tìm chính xác" (khớp trọn mã AMIA hoặc mã SalonHero, không phải "có chứa"). */}
+          <div className="flex items-center gap-2">
+            <OGo tham="mhd" nhan="Mã HD" ariaLabel="Mã hoá đơn" />
+            <label className="flex shrink-0 items-center gap-1.5 text-[13px] text-muc-2">
+              <input type="checkbox" className="h-4 w-4 cursor-pointer accent-[var(--nhan)]" checked={sp.get("cx") === "1"} onChange={(e) => doi({ cx: e.target.checked ? "1" : "" })} />Tìm chính xác</label>
+          </div>
           <OGo tham="lap" nhan="Người lập (gõ tên)" ariaLabel="Lọc theo người lập" />
           <Chon ariaLabel="Nhân viên phục vụ" giaTri={sp.get("nv") ?? ""} onDoi={(v) => doi({ nv: v })} luaChon={[{ gia_tri: "", nhan: "Nhân viên: tất cả" }, ...nhanVien]} />
           <Chon ariaLabel="Vai của nhân viên" giaTri={sp.get("vai") ?? ""} onDoi={(v) => doi({ vai: v })} luaChon={[{ gia_tri: "", nhan: "Vai: tất cả" }, ...LOC_VAI.map((x) => ({ gia_tri: x.gia_tri, nhan: x.nhan }))]} />

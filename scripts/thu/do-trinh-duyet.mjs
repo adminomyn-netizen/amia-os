@@ -15,8 +15,8 @@ const ngu = (ms) => new Promise((r) => setTimeout(r, ms));
 try {
   let ws; for (let i = 0; i < 40 && !ws; i++) { await ngu(250); try { const l = await (await fetch("http://127.0.0.1:9333/json/list")).json(); const p = l.find((x) => x.type === "page"); if (p) ws = p.webSocketDebuggerUrl; } catch {} }
   const s = new WebSocket(ws); await new Promise((r) => (s.onopen = r));
-  let id = 0; const cho = new Map(); const su = [];
-  s.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && cho.has(m.id)) { cho.get(m.id)(m); cho.delete(m.id); } else if (m.method) su.push(m); };
+  let id = 0; const cho = new Map(); const su = [], tat = [], tatLog = []; // tat: mọi sự kiện mạng từ đầu (để soi yêu cầu còn treo)
+  s.onmessage = (e) => { const m = JSON.parse(e.data); if (m.id && cho.has(m.id)) { cho.get(m.id)(m); cho.delete(m.id); } else if (m.method) { su.push(m); if (m.method.startsWith("Network.")) tat.push(m); if (m.method === "Runtime.exceptionThrown") tatLog.push("EXC " + (m.params.exceptionDetails.exception?.description ?? m.params.exceptionDetails.text).slice(0, 200)); if (m.method === "Runtime.consoleAPICalled" && ["error", "warning"].includes(m.params.type)) tatLog.push(m.params.type + " " + m.params.args.map((a) => a.value ?? a.description ?? "").join(" ").slice(0, 200)); } };
   const g = (method, params = {}) => new Promise((r) => { const i = ++id; cho.set(i, r); s.send(JSON.stringify({ id: i, method, params })); });
   const pw = "Th-" + Math.random().toString(36).slice(2) + "A9!", email = `thu-kiem-${Date.now()}@amia-os.invalid`;
   uid = (await db.auth.admin.createUser({ email, password: pw, email_confirm: true })).data.user.id;
@@ -30,10 +30,22 @@ try {
   // KHONG_SW=1: bỏ qua service worker (so có/không SW).
   if (process.env.KHONG_SW) await g("Network.setBypassServiceWorker", { bypass: true });
   const doc = async (expr) => (await g("Runtime.evaluate", { expression: expr, returnByValue: true })).result?.result?.value;
+  // PREFETCH=1: mở từng trang, chờ 8 s, đếm các yêu cầu RSC trình duyệt tự bắn (prefetch link) — mỗi yêu cầu là một lượt máy chủ dựng khung + hỏi CSDL.
+  if (process.env.PREFETCH) {
+    for (const p of process.argv.slice(2)) {
+      su.length = 0; await g("Page.navigate", { url: BASE + p }); await ngu(8000);
+      const yc = su.filter((m) => m.method === "Network.requestWillBeSent" && m.params.request.url.includes("_rsc="));
+      const nhom = new Map(); for (const m of yc) { const h = m.params.request.headers; const k = `${new URL(m.params.request.url).pathname.replace(/[0-9a-f-]{36}/, ":id")} [${h["Next-Router-Segment-Prefetch"] ?? h["next-router-segment-prefetch"] ?? (h["Next-Router-Prefetch"] ?? h["next-router-prefetch"] ? "prefetch" : "đầy đủ")}]`; nhom.set(k, (nhom.get(k) ?? 0) + 1); }
+      console.log(`${p}: ${yc.length} yêu cầu RSC trong 8 s (tổng ${su.filter((m) => m.method === "Network.requestWillBeSent").length} yêu cầu)`, su.filter((m) => m.method === "Network.requestWillBeSent").slice(-6).map((m) => m.params.request.url.slice(-70))); for (const [k, n] of [...nhom].sort((a, b) => b[1] - a[1]).slice(0, 25)) console.log(`   ${String(n).padStart(3)} × ${k}`);
+    }
+    s.close(); process.exit(0);
+  }
   // BAM=1: mở trang đầu tiên rồi BẤM link menu sang từng trang còn lại (chuyển trang trong app), đo từ lúc bấm tới khi URL đổi + hết khung xương.
   if (process.env.BAM) {
     const [dau, ...con] = process.argv.slice(2);
-    const choXong = async (t0, path) => { for (let i = 0; i < 300; i++) { const v = await doc(`location.pathname + location.search === ${JSON.stringify(path)} && document.querySelector('main') && [...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).length === 0`); if (v) return Date.now() - t0; await ngu(20); } return null; };
+    const choXong = async (t0, path) => { for (let i = 0; i < 300; i++) { const v = await doc(`location.pathname + location.search === ${JSON.stringify(path)} && document.querySelector('main') && [...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).length === 0`); if (v) return Date.now() - t0; await ngu(20); } console.log("  lỗi/console:", tatLog.slice(-6));
+    console.log("  RSC còn treo:", [...new Map(tat.filter((m) => m.method === "Network.requestWillBeSent" && !/\/_next\/static\//.test(m.params.request.url)).map((m) => [m.params.requestId, m])).values()].filter((m) => !tat.some((x) => (x.method === "Network.loadingFinished" || x.method === "Network.loadingFailed") && x.params.requestId === m.params.requestId)).map((m) => { const h = m.params.request.headers; const r = tat.find((x) => x.method === "Network.responseReceived" && x.params.requestId === m.params.requestId); return `${new URL(m.params.request.url).pathname}${new URL(m.params.request.url).search.slice(0, 20)}${h["Next-Router-Prefetch"] || h["next-router-prefetch"] ? " [prefetch]" : ""} gửi ${Math.round((Date.now() / 1000 - m.params.wallTime))}s trước, ${r ? "đã có byte đầu" : "chưa có byte đầu"}`; }));
+    console.log("  chưa xong sau 6 s:", await doc(`JSON.stringify({ url: location.pathname + location.search, main: !!document.querySelector('main'), ban: [...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).map((e) => (e.getAttribute('aria-label') || e.tagName).slice(0, 50)) })`)); return null; };
     for (let vong = 0; vong < 2; vong++) {
       await g("Page.navigate", { url: BASE + dau }); await choXong(Date.now(), dau); await ngu(1500); // để link menu kịp prefetch như người dùng thật
       for (const p of con) {

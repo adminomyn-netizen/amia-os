@@ -9416,6 +9416,10 @@ export type Database = {
           noi_dung: string
           phieu_goc_id: string | null
           quy_id: string
+          sh_cap_nhat: string | null
+          sh_id: number | null
+          sh_ma: string | null
+          sh_nguoi_tao: string | null
           so_tien: number
           tao_luc: string
         }
@@ -9432,6 +9436,10 @@ export type Database = {
           noi_dung: string
           phieu_goc_id?: string | null
           quy_id: string
+          sh_cap_nhat?: string | null
+          sh_id?: number | null
+          sh_ma?: string | null
+          sh_nguoi_tao?: string | null
           so_tien: number
           tao_luc?: string
         }
@@ -9448,6 +9456,10 @@ export type Database = {
           noi_dung?: string
           phieu_goc_id?: string | null
           quy_id?: string
+          sh_cap_nhat?: string | null
+          sh_id?: number | null
+          sh_ma?: string | null
+          sh_nguoi_tao?: string | null
           so_tien?: number
           tao_luc?: string
         }
@@ -11276,10 +11288,12 @@ export type Database = {
           ma: string | null
           ngay: string | null
           nguoi_id: string | null
+          nguoi_ten: string | null
           nguon: string | null
           noi_dung: string | null
           phieu_goc_id: string | null
           quy_id: string | null
+          sh_id: number | null
           so_tien: number | null
           sua_duoc: boolean | null
           tao_luc: string | null
@@ -12386,6 +12400,11 @@ export type Database = {
       }
       so_du_phep: { Args: { p_nam: number; p_nv: string }; Returns: number }
       so_lieu_khach: { Args: never; Returns: Json }
+      so_quy_dao_sh: {
+        Args: { p_ly_do: string; p_nguoi: string; p_sh_ids: number[] }
+        Returns: number
+      }
+      so_quy_nhap_sh: { Args: { p_dong: Json; p_nguoi: string }; Returns: number }
       so_quy_tong: {
         Args: { p_den: string; p_quy: string[]; p_tu: string }
         Returns: {

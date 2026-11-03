@@ -3950,6 +3950,13 @@ export type Database = {
       }
       hoa_don_dau_vao: {
         Row: {
+          cap_nhat_luc: string
+          chi_nhanh_id: string | null
+          link_tra_cuu: string | null
+          ma_tra_cuu: string | null
+          tep_duong_dan: string | null
+          tep_ten: string | null
+          thue_suat: string | null
           doi_chieu_boi: string | null
           doi_chieu_luc: string | null
           don_mua_id: string | null
@@ -3971,6 +3978,13 @@ export type Database = {
           trang_thai: string
         }
         Insert: {
+          cap_nhat_luc?: string
+          chi_nhanh_id?: string | null
+          link_tra_cuu?: string | null
+          ma_tra_cuu?: string | null
+          tep_duong_dan?: string | null
+          tep_ten?: string | null
+          thue_suat?: string | null
           doi_chieu_boi?: string | null
           doi_chieu_luc?: string | null
           don_mua_id?: string | null
@@ -3992,6 +4006,13 @@ export type Database = {
           trang_thai?: string
         }
         Update: {
+          cap_nhat_luc?: string
+          chi_nhanh_id?: string | null
+          link_tra_cuu?: string | null
+          ma_tra_cuu?: string | null
+          tep_duong_dan?: string | null
+          tep_ten?: string | null
+          thue_suat?: string | null
           doi_chieu_boi?: string | null
           doi_chieu_luc?: string | null
           don_mua_id?: string | null

@@ -7,6 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
@@ -246,9 +247,9 @@ export async function taiAnh(fd: FormData): Promise<KQ> {
   return { ok: true };
 }
 
-export type KetQuaNhap = { ok?: boolean; loi?: string; hopLe?: number; tongDong?: number; daCo?: number; daNhap?: number; nhom?: string; dongLoi?: { dong: number; viec: string }[] };
+export type KetQuaNhap = { ok?: boolean; loi?: string; hopLe?: number; tongDong?: number; daCo?: number; daNhap?: number; ghiDe?: boolean; daGhiDe?: number; trungNhieu?: number; nhom?: string; dongLoi?: { dong: number; viec: string }[] };
 
-/** Nhập khách từ Excel. che_do=xem chỉ kiểm tra (không ghi). Khách có SĐT đã tồn tại thì bỏ qua (không ghi đè). Nguồn/người phụ trách/chi nhánh áp chung cho cả file. */
+/** Nhập khách từ Excel. che_do=xem chỉ kiểm tra (không ghi). Khách có SĐT đã tồn tại: mặc định bỏ qua; bật ghi_de=1 (như SalonHero "Ghi đè nếu trùng") thì cập nhật hồ sơ đó bằng các ô CÓ dữ liệu trong file (ô trống giữ nguyên, không đổi mã/nguồn/phụ trách/chi nhánh). SĐT trùng nhiều hồ sơ thì không ghi đè, chỉ báo. Nguồn/người phụ trách/chi nhánh áp chung cho khách mới. */
 export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
   const nd = await kiemQuyen("khach.nhap");
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -268,13 +269,43 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
   let doc;
   try { doc = await docKhachTuExcel(await tep.arrayBuffer()); } catch { return { loi: "Không đọc được file. Dùng file .xlsx (không phải .xls hoặc .csv)." }; }
   if (doc.cotThieu.length) return { loi: `File thiếu cột bắt buộc: ${doc.cotThieu.join(", ")}.` };
+  const ghiDe = chuoi(fd, "ghi_de") === "1";
+  if (ghiDe && !coQuyen(nd, "khach.sua")) return { loi: "Ghi đè khách trùng cần quyền sửa khách hàng." };
   const db = sb();
   const sdts = doc.khach.map((k) => k.dien_thoai);
-  const daCo = new Set<string>();
-  for (let i = 0; i < sdts.length; i += 300) { const { data } = await db.from("khach_hang").select("dien_thoai").in("dien_thoai", sdts.slice(i, i + 300)); (data ?? []).forEach((x) => daCo.add(x.dien_thoai)); }
+  const idTheoSdt = new Map<string, string[]>();
+  for (let i = 0; i < sdts.length; i += 300) { const { data } = await db.from("khach_hang").select("id, dien_thoai").in("dien_thoai", sdts.slice(i, i + 300)); (data ?? []).forEach((x) => idTheoSdt.set(x.dien_thoai, [...(idTheoSdt.get(x.dien_thoai) ?? []), x.id])); }
+  const daCo = new Set(idTheoSdt.keys());
   const moi = doc.khach.filter((k) => !daCo.has(k.dien_thoai));
-  const kq: KetQuaNhap = { ok: true, tongDong: doc.tongDong, hopLe: doc.khach.length, daCo: daCo.size, dongLoi: doc.loi.slice(0, 30) };
+  // Ghi đè: chỉ khi SĐT khớp đúng 1 hồ sơ; dòng cuối cùng trong file thắng nếu file lặp SĐT.
+  const COT_GHI_DE = ["ho_ten", "zalo", "email", "ngay_sinh", "gioi_tinh", "dia_chi", "ghi_chu"] as const;
+  const canGhi = new Map<string, Partial<Record<(typeof COT_GHI_DE)[number], string>>>();
+  let trungNhieu = 0;
+  for (const k of doc.khach) {
+    const ids = idTheoSdt.get(k.dien_thoai);
+    if (!ids) continue;
+    if (ids.length > 1) { trungNhieu++; continue; }
+    const doi: Partial<Record<(typeof COT_GHI_DE)[number], string>> = {};
+    for (const c of COT_GHI_DE) { const v = k[c]; if (v) doi[c] = v; }
+    canGhi.set(ids[0], doi);
+  }
+  const kq: KetQuaNhap = { ok: true, tongDong: doc.tongDong, hopLe: doc.khach.length, daCo: daCo.size, ghiDe, trungNhieu: ghiDe ? trungNhieu : undefined, dongLoi: doc.loi.slice(0, 30) };
   if (chuoi(fd, "che_do") !== "nhap") return kq;
+  let daGhiDe = 0;
+  if (ghiDe) {
+    const ds = [...canGhi];
+    for (let i = 0; i < ds.length; i += 10) {
+      const kqLo = await Promise.all(ds.slice(i, i + 10).map(([id, doi]) => db.from("khach_hang").update(doi).eq("id", id)));
+      const loi = kqLo.find((r) => r.error)?.error;
+      daGhiDe += kqLo.filter((r) => !r.error).length;
+      if (loi) return { ...kq, ok: false, loi: `Dừng khi ghi đè (đã ghi đè ${daGhiDe} khách, chưa nhập khách mới): ${thongBaoLoi(loi)}`, daGhiDe };
+    }
+    if (nhomId && canGhi.size) {
+      const ids = [...canGhi.keys()];
+      for (let i = 0; i < ids.length; i += 200) await db.from("khach_nhom").upsert(ids.slice(i, i + 200).map((id) => ({ khach_id: id, nhom_id: nhomId })), { onConflict: "khach_id,nhom_id", ignoreDuplicates: true });
+    }
+    if (daGhiDe) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "nhap_khach_ghi_de", doi_tuong: "khach_hang", doi_tuong_id: null, chi_tiet: { so_khach: daGhiDe, ten_tep: tep.name } });
+  }
   let nhap = 0;
   for (let i = 0; i < moi.length; i += 200) {
     const lo = moi.slice(i, i + 200);
@@ -283,7 +314,7 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
     for (let j = 1; j < lo.length; j++) await db.rpc("so_tiep_theo", { p_khoa: "khach" });
     const rows = lo.map((k, j) => ({ ma: "KH" + String(base + j).padStart(6, "0"), ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo, email: k.email, ngay_sinh: k.ngay_sinh, gioi_tinh: k.gioi_tinh, dia_chi: k.dia_chi, ghi_chu: k.ghi_chu, chi_nhanh_id: cn, nguon, nguoi_phu_trach_id: phuTrach, tao_boi: nd.nhanVienId }));
     const { data: moiIds, error } = await db.from("khach_hang").insert(rows).select("id");
-    if (error) return { ...kq, ok: false, loi: `Dừng ở lô thứ ${i / 200 + 1} (đã nhập ${nhap} khách): ${thongBaoLoi(error)}`, daNhap: nhap };
+    if (error) return { ...kq, ok: false, loi: `Dừng ở lô thứ ${i / 200 + 1} (đã nhập ${nhap} khách): ${thongBaoLoi(error)}`, daNhap: nhap, daGhiDe };
     nhap += rows.length;
     if (nhomId && moiIds?.length) {
       const { error: loiNhom } = await db.from("khach_nhom").insert(moiIds.map((x) => ({ khach_id: x.id, nhom_id: nhomId })));
@@ -292,5 +323,5 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
   }
   if (nhomId && nhap) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "nhap_khach_vao_nhom", doi_tuong: "nhom_khach", doi_tuong_id: nhomId, chi_tiet: { so_khach: nhap } });
   revalidatePath("/khach-hang");
-  return { ...kq, daNhap: nhap, nhom: nhomTen || undefined };
+  return { ...kq, daNhap: nhap, daGhiDe: ghiDe ? daGhiDe : undefined, nhom: nhomTen || undefined };
 }

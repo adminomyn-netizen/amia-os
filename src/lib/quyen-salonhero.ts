@@ -37,6 +37,7 @@ export const QUYEN_TU_SH: Partial<Record<Quyen, string[]>> = {
   "baocao.tien": ["reportFinancial.read", "reportOperator.commission.read"],
   "quy.xem": ["reportFinancial.cost.read", "reportFinancial.costAndBalance.read"],
   "quy.ghi": ["reportFinancial.cost.create", "reportFinancial.cost.update", "reportFinancial.expenseInvoice.create"],
+  "quy.dao": ["reportFinancial.cost.delete"],  // Đảo phiếu = xoá phiếu SalonHero: chỉ Kế toán (và Chủ) có
   "luong.xem": ["reportOperator.salary.read"],
   "cong.xem": ["reportOperator.timeSheet.read"],
   "cong.sua": ["settingOperator.timeSheet.update", "settingOperator.timeSheet.create"],

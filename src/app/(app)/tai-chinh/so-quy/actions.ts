@@ -68,7 +68,7 @@ export async function chuyenQuy(fd: FormData): Promise<KQ> {
 
 /** Đảo phiếu: không sửa/xoá dòng cũ (sổ cái), ghi thêm dòng ngược chiều trỏ về phiếu gốc; chuyển quỹ đảo cả hai dòng. */
 export async function daoPhieu(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("quy.ghi");
+  const nd = await kiemQuyen("quy.dao"); // như SalonHero cost.delete: chỉ Kế toán và Chủ
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const db = sb();
   const { data: goc } = await db.from("so_quy").select("*").eq("id", chuoi(fd, "id")).maybeSingle();

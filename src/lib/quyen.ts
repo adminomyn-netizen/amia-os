@@ -34,7 +34,7 @@ export type Quyen =
   | "kho.xem" | "kho.nhap" | "kho.duyet" | "ky.khoa" | "ky.mo_lai"
   | "phieu.xem" | "phieu.chidinh" | "phieu.cap" | "phieu.nhan" | "phieu.doichieu"
   | "baocao.xem" | "baocao.tien"
-  | "quy.xem" | "quy.ghi"
+  | "quy.xem" | "quy.ghi" | "quy.dao"
   | "mua.xem" | "mua.tao" | "mua.duyet"
   | "viec.tatca" | "dexuat.duyet" | "wiki.sua"
   | "noibo.dung"
@@ -50,13 +50,14 @@ export type Quyen =
 const TAT_CA: Quyen[] = [
   "khach.xem", "khach.sua", "khach.nhap", "khach.xuat", "khach.sdt", "khach.email", "lich.xuat", "ban.giamgia", "ban.sua_khoa", "ban.toan_co_so", "ban.tip", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
   "ban.xem", "ban.tao", "ban.huy", "ban.sua", "no.thu", "hd.vat", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
-  "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "hr.hoso", "qt.sua", "kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly", "tongquan.xem", "quy.xem", "quy.ghi", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
+  "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "hr.hoso", "qt.sua", "kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly", "tongquan.xem", "quy.xem", "quy.ghi", "quy.dao", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
   "cong.xem", "cong.sua", "nghi.duyet", "nghi.duyet_bgd", "luong.xem", "luong.sua", "luong.duyet", "noibo.dung",
   "mkt.xem", "mkt.sua", "mkt.duyet", "lead.xu_ly", "vb.xem", "vb.soan", "vb.duyet",
 ];
 
 const MAC_DINH_CU: Record<VaiTro, Quyen[]> = {
   // "no.xoa" = Xoá nợ / điều chỉnh nợ: SalonHero reportCustomer.customerDebt.delete chỉ Chủ có (câu 3, 03/11/2026). Không nằm trong TAT_CA nên Quản lý và quyền riêng không cấp được.
+  // "quy.dao" = Đảo (xoá) phiếu sổ quỹ: SalonHero reportFinancial.cost.delete chỉ Kế toán + Chủ (nối đợt 2, 03/11/2026). Có trong TAT_CA (Kỹ thuật cấp riêng được) nhưng vai có bản SalonHero lấy theo ma trận → Quản lý, Thu ngân… không có, Kế toán có.
   chu: [...TAT_CA, "hethong.phanquyen", "no.xoa"],
   ky_thuat: [...TAT_CA, "hethong.phanquyen", "no.xoa"],
   quan_ly: TAT_CA,
@@ -104,6 +105,6 @@ export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] 
   { nhom: "Khiếu nại & biến chứng", muc: [{ ma: "kn.ghi", nhan: "Ghi nhận và xử lý khiếu nại, ghi làm lại bảo hành" }, { ma: "kn.duyet", nhan: "Duyệt phương án khiếu nại có chi phí, xem mọi vụ việc" }, { ma: "bc.bao", nhan: "Báo dấu hiệu bất thường / biến chứng" }, { ma: "bc.xu_ly", nhan: "Bác sĩ: khám, chẩn đoán, biên bản biến chứng" }] },
   { nhom: "Marketing", muc: [{ ma: "mkt.xem", nhan: "Xem chiến dịch, quảng cáo, nội dung, báo cáo marketing" }, { ma: "mkt.sua", nhan: "Tạo/sửa chiến dịch, quảng cáo, nội dung, link, đối tác" }, { ma: "mkt.duyet", nhan: "Duyệt chiến dịch và nội dung" }, { ma: "lead.xu_ly", nhan: "Nhận và xử lý lead (liên hệ, chuyển thành khách)" }] },
   { nhom: "Văn bản & Hợp đồng", muc: [{ ma: "vb.xem", nhan: "Xem sổ văn bản, hợp đồng, đồng ý dùng ảnh" }, { ma: "vb.soan", nhan: "Soạn, nộp duyệt, ghi nhận đã ký, lưu bản điện tử" }, { ma: "vb.duyet", nhan: "Duyệt văn bản (vượt ngưỡng chi nhánh thì cần người không gắn chi nhánh)" }] },
-  { nhom: "Sổ quỹ", muc: [{ ma: "quy.xem", nhan: "Xem sổ quỹ thu/chi" }, { ma: "quy.ghi", nhan: "Ghi thu/chi, chuyển quỹ, đảo phiếu" }, { ma: "ky.khoa", nhan: "Khoá kỳ kế toán theo tháng" }, { ma: "ky.mo_lai", nhan: "Mở lại kỳ đã khoá (phải ghi lý do)" }] },
+  { nhom: "Sổ quỹ", muc: [{ ma: "quy.xem", nhan: "Xem sổ quỹ thu/chi" }, { ma: "quy.ghi", nhan: "Ghi thu/chi, nạp/rút, chuyển quỹ" }, { ma: "quy.dao", nhan: "Đảo (xoá) phiếu thu/chi — như SalonHero chỉ Kế toán và Chủ" }, { ma: "ky.khoa", nhan: "Khoá kỳ kế toán theo tháng" }, { ma: "ky.mo_lai", nhan: "Mở lại kỳ đã khoá (phải ghi lý do)" }] },
   { nhom: "Danh mục & báo cáo", muc: [{ ma: "danhmuc.xem", nhan: "Xem danh mục" }, { ma: "danhmuc.sua", nhan: "Sửa danh mục" }, { ma: "baocao.xem", nhan: "Xem báo cáo" }, { ma: "baocao.tien", nhan: "Xem số tiền (doanh thu, hoa hồng)" }, { ma: "nhanvien.quanly", nhan: "Sửa chi nhánh" }] },
 ];

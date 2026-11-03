@@ -25,6 +25,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
   const sp = await searchParams;
   const tab = TAB.some((t) => t.ma === sp.tab) ? sp.tab! : "tien-mat";
   const ghi = coQuyen(nd, "quy.ghi");
+  const dao = coQuyen(nd, "quy.dao");
   const db = sb();
   const { tu, den, homNay } = khoangNgay(sp.tu, sp.den);
   const [{ data: dsCn }, { data: loaiTC }] = await Promise.all([db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("loai_thu_chi").select("*").order("huong", { ascending: false }).order("thu_tu")]);
@@ -120,7 +121,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
               { nhan: "Người thu / chi", hienThi: (r) => (r.nguon === "ban_hang" ? <span className="text-muc-3">—</span> : r.nguoi_ten ?? tenNguoi.get(r.nguoi_id ?? "") ?? "") },
               { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={Number(r.bien_dong) < 0 ? "text-loi" : "text-nhan-dam"}>{Number(r.bien_dong) < 0 ? "−" : "+"}{soVN(r.so_tien)}</span> },
               { nhan: "Số dư", phai: true, hienThi: (r) => soVN(r.du) },
-              { nhan: "", hienThi: (r) => (ghi && r.sua_duoc && r.sh_id == null && !r.da_dao && r.nguon !== "dao_phieu" ? <NutHop kieu="chu" nguy nhan="Đảo phiếu" tieuDe="Đảo phiếu" xacNhan={`Ghi dòng ngược chiều để huỷ ${r.ma}. Phiếu gốc vẫn còn trong sổ.`} truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={daoPhieu} an={{ id: r.id ?? "" }} nhanLuu="Đảo phiếu" /> : null) },
+              { nhan: "", hienThi: (r) => (dao && r.sua_duoc && r.sh_id == null && !r.da_dao && r.nguon !== "dao_phieu" ? <NutHop kieu="chu" nguy nhan="Đảo phiếu" tieuDe="Đảo phiếu" xacNhan={`Ghi dòng ngược chiều để huỷ ${r.ma}. Phiếu gốc vẫn còn trong sổ.`} truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={daoPhieu} an={{ id: r.id ?? "" }} nhanLuu="Đảo phiếu" /> : null) },
             ]} />
         </div>
         {ds.length === 0 ? null : <p className="mt-3 text-[12px] text-muc-3">Số dư chạy tính từ tồn đầu kỳ {tienVN(dau)}. Tiền khách trả (tiền mặt vào quỹ tiền mặt; chuyển khoản, quẹt thẻ, ví điện tử vào quỹ ngân hàng; trừ thẻ tiền và Ship COD không tính) tự vào sổ quỹ.</p>}

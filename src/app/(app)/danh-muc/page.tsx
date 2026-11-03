@@ -155,6 +155,19 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
     const dvLoc = tatDv.filter((r) => (!nhomChon || r.nhom_id === nhomChon) && coCn(r.chi_nhanh_ids) && (!hienChon || r.noi_hien_thi === hienChon) && (!khoaTim || boDau(`${r.ten} ${r.ma} ${r.ten_en ?? ""}`).includes(khoaTim)));
     const nhomDv = (nhom.data ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten, dem: tatDv.filter((r) => r.nhom_id === n.id).length })).filter((n) => n.dem > 0);
     const pt = catTrang(dvLoc, trangXin, moi);
+    // Ô "Chuyển nhóm" dựng MỘT lần cho mỗi nhóm và dùng lại cho mọi dòng cùng nhóm (cùng tham chiếu → trang chỉ gửi danh sách một lần).
+    const daDung = new Map<string, Truong[]>();
+    const truongChuyenNhom = (nhomId: string) => {
+      let t = daDung.get(nhomId);
+      if (!t) {
+        t = [
+          { ten: "nhom_id", nhan: "Chuyển sang nhóm", loai: "chon", luaChon: nhomLC.filter((n) => n.gia_tri !== nhomId), batBuoc: true, rong: true },
+          { ten: "dich_vu_ids", nhan: "Dịch vụ cần chuyển", loai: "nhieu", luaChon: tatDv.filter((x) => x.nhom_id === nhomId).map((x) => ({ gia_tri: x.id, nhan: `${x.ma} · ${x.ten}` })) },
+        ];
+        daDung.set(nhomId, t);
+      }
+      return t;
+    };
     noiDung = (
       <>
       <LocThemDanhMuc ten="cn" aria="Lọc chi nhánh" nhanTatCa="Tất cả các chi nhánh" muc={(cnDv ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))} chon={cnChon} thamSo={{ tab: "dich-vu", nhom: nhomChon, q: tuKhoa, n: giuN, hien: hienChon }} />
@@ -171,10 +184,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
               <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truong} giaTri={giaTriDv(r)} action={luuDichVu} />
               <NutTuyChonGia dichVuId={r.id} tenDv={r.ten} giaGoc={Number(r.gia)} ds={tcgTheoDv.get(r.id) ?? []} nhanVien={nvLC} sua={sua} action={luuTuyChonGia} />
               <NutHop kieu="chu" nhan="Nhân bản" tieuDe={`Nhân bản: ${r.ten}`} moTa="Tạo dịch vụ mới có cùng thông tin. Đổi mã và tên trước khi lưu; ảnh và định mức không được sao chép." truong={truong} giaTri={{ ...giaTriDv(r), id: undefined, ma: `${r.ma}-2`, ten: `${r.ten} (bản sao)` }} action={luuDichVu} />
-              <NutHop kieu="chu" nhan="Chuyển nhóm" tieuDe={`Chuyển nhóm: ${r.ten}`} moTa="Chọn nhóm đích và các dịch vụ (cùng nhóm hiện tại) cần chuyển." truong={[
-                { ten: "nhom_id", nhan: "Chuyển sang nhóm", loai: "chon", luaChon: nhomLC.filter((n) => n.gia_tri !== r.nhom_id), batBuoc: true, rong: true },
-                { ten: "dich_vu_ids", nhan: "Dịch vụ cần chuyển", loai: "nhieu", luaChon: tatDv.filter((x) => x.nhom_id === r.nhom_id).map((x) => ({ gia_tri: x.id, nhan: `${x.ma} · ${x.ten}` })) },
-              ]} giaTri={{ nhom_id: "", dich_vu_ids: [r.id] }} action={chuyenNhomDichVu} />
+              <NutHop kieu="chu" nhan="Chuyển nhóm" tieuDe={`Chuyển nhóm: ${r.ten}`} moTa="Chọn nhóm đích và các dịch vụ (cùng nhóm hiện tại) cần chuyển." truong={truongChuyenNhom(r.nhom_id)} giaTri={{ nhom_id: "", dich_vu_ids: [r.id] }} action={chuyenNhomDichVu} />
               <NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${r.ten}`} xacNhan="Xoá hẳn mục này? Không hoàn lại được. Nếu đã có hoá đơn, thẻ hay kho liên quan thì hệ thống sẽ từ chối." an={{ id: r.id }} nhanLuu="Xoá" action={xoaDichVu} />
             </span>
           ) }] : []),

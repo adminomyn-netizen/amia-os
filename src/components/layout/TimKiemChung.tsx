@@ -34,7 +34,7 @@ export function TimKiemChung({ toi = false, rong = "w-44 xl:w-64" }: { toi?: boo
       <input id="tim-chung" type="search" value={tu} onChange={(e) => doi(e.target.value)} onFocus={() => setMo(true)} autoComplete="off" aria-label="Tìm khách hàng, lịch hẹn, hoá đơn, chức năng"
         placeholder="Tìm khách hàng, hoá đơn…" className={`h-10 w-full rounded-nho border pl-9 pr-3 text-[14px] outline-none focus-visible:ring-2 focus-visible:ring-nhan ${toi ? "border-menu-vien bg-menu-hover text-menu-sang placeholder:text-menu-chu-phu" : "border-vien bg-giay-sang text-muc placeholder:text-muc-3"}`} />
       {mo && tu.trim().length >= 2 && (
-        <div className="the-noi the-noi-thap vao absolute right-0 top-full z-50 mt-2 max-h-[70vh] w-[min(420px,calc(100vw-24px))] overflow-y-auto p-2">
+        <div style={{ position: "absolute" }} className="the-noi the-noi-thap vao absolute left-0 top-full z-50 mt-2 max-h-[70vh] w-[min(420px,calc(100vw-24px))] overflow-y-auto p-2">
           {kq === null ? <p className="px-3 py-3 text-[13.5px] text-muc-3">Đang tìm…</p> : kq.length === 0 ? <p className="px-3 py-3 text-[13.5px] text-muc-3">Không thấy kết quả nào cho “{tu.trim()}”.</p> : kq.map((g) => (
             <section key={g.nhom} className="py-1">
               <h3 className="nhan-muc px-3 pb-1 pt-2">{g.nhom}</h3>

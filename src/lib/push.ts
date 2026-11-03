@@ -3,7 +3,7 @@ import webpush from "web-push";
 import { sb } from "@/lib/db";
 import { quyenHieuLuc, laVaiTro, type Quyen } from "@/lib/quyen";
 
-export type Tin = { tieuDe: string; noiDung: string; url: string; tag?: string };
+export type Tin = { tieuDe: string; noiDung: string; url: string; tag?: string; /** true = gửi im lặng cho mọi người nhận (VD Web đặt lịch tắt "thông báo bằng âm thanh"). */ imLang?: boolean };
 export type KetQuaGui = { thietBi: number; thanhCong: number; daGo: number };
 
 let daCauHinh: boolean | null = null;
@@ -30,7 +30,7 @@ export async function guiChoNhanVien(nhanVienIds: string[], tin: Tin): Promise<K
     // Người đã bấm "Tắt tiếng" ở chuông: thông báo vẫn tới thiết bị của họ nhưng không kêu/không rung (chỉ áp cho chính họ).
     const tatTieng = new Set((imLang ?? []).map((n) => n.id));
     const goiTin = (im: boolean) => JSON.stringify({ tieuDe: tin.tieuDe.slice(0, 80), noiDung: tin.noiDung.slice(0, 420), url: tin.url, tag: tin.tag, ...(im ? { imLang: true } : {}) });
-    const goi = goiTin(false), goiIm = goiTin(true);
+    const goi = goiTin(!!tin.imLang), goiIm = goiTin(true);
     const hong: string[] = [], tot: string[] = [];
     await Promise.all((ds ?? []).map(async (d) => {
       try {

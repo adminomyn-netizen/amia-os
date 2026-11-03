@@ -11120,6 +11120,9 @@ export type Database = {
           chi_nhanh_id: string
           dich_vu_ids: string[]
           dien_thoai: string
+          gioi_tinh: string | null
+          nhan_vien_id: string | null
+          so_khach: number | null
           ghi_chu: string | null
           ho_ten: string
           id: string
@@ -11137,6 +11140,9 @@ export type Database = {
           chi_nhanh_id: string
           dich_vu_ids: string[]
           dien_thoai: string
+          gioi_tinh?: string | null
+          nhan_vien_id?: string | null
+          so_khach?: number | null
           ghi_chu?: string | null
           ho_ten: string
           id?: string
@@ -11154,6 +11160,9 @@ export type Database = {
           chi_nhanh_id?: string
           dich_vu_ids?: string[]
           dien_thoai?: string
+          gioi_tinh?: string | null
+          nhan_vien_id?: string | null
+          so_khach?: number | null
           ghi_chu?: string | null
           ho_ten?: string
           id?: string
@@ -12511,6 +12520,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      dat_lich_online: {
+        Args: {
+          p_bat_dau: string
+          p_cn: string
+          p_dv: string[]
+          p_ghi_chu: string
+          p_gioi_tinh: string
+          p_ho_ten: string
+          p_ip_bam: string
+          p_nv: string | null
+          p_sdt: string
+          p_so_khach: number
+        }
+        Returns: Json
+      }
       con_cho_online: {
         Args: { p_bd: string; p_cn: string; p_kt: string }
         Returns: boolean
@@ -12675,6 +12699,10 @@ export type Database = {
           r_khieu_nai_id: string
           r_khieu_nai_moi: boolean
         }[]
+      }
+      khung_gio_online: {
+        Args: { p_cn: string; p_ngay: string; p_nv?: string; p_phut: number; p_so_khach?: number }
+        Returns: { con_cho: boolean; gio: string }[]
       }
       gio_trong_online: {
         Args: { p_cn: string; p_ngay: string; p_phut: number }

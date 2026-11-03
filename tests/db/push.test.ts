@@ -5,18 +5,21 @@ const gui = vi.fn();
 vi.mock("web-push", () => ({ default: { setVapidDetails: vi.fn(), sendNotification: (...a: unknown[]) => gui(...a) } }));
 
 const xoa: string[][] = [], capNhat: string[][] = [];
-let subs: { id: string; endpoint: string; p256dh: string; auth: string }[] = [];
+let subs: { id: string; endpoint: string; p256dh: string; auth: string; nhan_vien_id?: string }[] = [];
+let imLang: { id: string }[] = [];
 vi.mock("@/lib/db", () => ({
   sb: () => ({
-    from: () => ({
-      select: () => ({ in: async () => ({ data: subs }), eq: async () => ({ data: [] }) }),
+    from: (bang: string) => ({
+      select: () => bang === "nhan_vien"
+        ? { in: () => ({ eq: async () => ({ data: imLang }) }) }
+        : { in: async () => ({ data: subs }), eq: async () => ({ data: [] }) },
       delete: () => ({ in: async (_c: string, ids: string[]) => { xoa.push(ids); return {}; } }),
       update: () => ({ in: async (_c: string, ids: string[]) => { capNhat.push(ids); return {}; } }),
     }),
   }),
 }));
 
-beforeEach(() => { gui.mockReset(); xoa.length = 0; capNhat.length = 0; subs = []; vi.resetModules(); });
+beforeEach(() => { gui.mockReset(); xoa.length = 0; capNhat.length = 0; subs = []; imLang = []; vi.resetModules(); });
 const nap = async (khoa = true) => {
   process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY = khoa ? "pub" : ""; process.env.VAPID_PRIVATE_KEY = khoa ? "pri" : "";
   return import("../../src/lib/push");
@@ -47,5 +50,14 @@ describe("gửi thông báo đẩy", () => {
     const m = await nap();
     expect(await m.guiChoNhanVien([], { tieuDe: "t", noiDung: "n", url: "/" })).toEqual({ thietBi: 0, thanhCong: 0, daGo: 0 });
     expect(gui).not.toHaveBeenCalled();
+  });
+  it("người bật Tắt tiếng: thiết bị của họ nhận tin im lặng, người khác vẫn có tiếng", async () => {
+    subs = [{ id: "a", endpoint: "https://x/1", p256dh: "k", auth: "t", nhan_vien_id: "n1" }, { id: "b", endpoint: "https://x/2", p256dh: "k", auth: "t", nhan_vien_id: "n2" }];
+    imLang = [{ id: "n1" }];
+    gui.mockResolvedValue({});
+    const { guiChoNhanVien } = await nap();
+    await guiChoNhanVien(["n1", "n2"], { tieuDe: "T", noiDung: "N", url: "/" });
+    const theoMay = Object.fromEntries(gui.mock.calls.map((c) => [(c[0] as { endpoint: string }).endpoint, JSON.parse(c[1] as string).imLang ?? false]));
+    expect(theoMay).toEqual({ "https://x/1": true, "https://x/2": false });
   });
 });

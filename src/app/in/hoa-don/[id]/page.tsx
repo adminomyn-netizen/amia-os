@@ -20,6 +20,7 @@ export default async function InHoaDon({ params }: { params: Promise<{ id: strin
     db.from("thanh_toan").select("loai, phuong_thuc, loai_vi, so_tien, ngay").eq("hoa_don_id", id).order("tao_luc"),
     db.from("chi_nhanh").select("ten, dia_chi, dien_thoai").eq("id", h.chi_nhanh_id).maybeSingle(),
     h.khach_id ? db.from("khach_hang").select("ho_ten, dien_thoai, ma, gioi_tinh, ngay_sinh, diem_so_du").eq("id", h.khach_id).maybeSingle() : Promise.resolve({ data: null }),
+    // Đơn chuyển từ SalonHero: người lập là tài khoản hệ thống "Dữ liệu SalonHero" → in tên thu ngân thật (thu_ngan_ten), như danh sách và trang chi tiết.
     db.from("nhan_vien").select("ho_ten").eq("id", h.nguoi_lap_id).maybeSingle(),
     db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "in.hoa_don.%"),
   ]);
@@ -40,7 +41,7 @@ export default async function InHoaDon({ params }: { params: Promise<{ id: strin
     if (noiDung) qrAnh = await QRCode.toDataURL(noiDung, { margin: 1, width: 240 });
   }
   const d: DuLieuIn = {
-    loai: "hoa_don", cuaHang: { ten: cn?.ten ?? "AMIA", diaChi: cn?.dia_chi, dienThoai: cn?.dien_thoai }, tieuDe: "Hoá đơn", ma: h.ma, ngay: h.ngay_hd, trangThai: h.trang_thai, thuNgan: nl?.ho_ten, ghiChu: h.ghi_chu,
+    loai: "hoa_don", cuaHang: { ten: cn?.ten ?? "AMIA", diaChi: cn?.dia_chi, dienThoai: cn?.dien_thoai }, tieuDe: "Hoá đơn", ma: h.ma, ngay: h.ngay_hd, trangThai: h.trang_thai, thuNgan: h.la_lich_su ? h.thu_ngan_ten : nl?.ho_ten, ghiChu: h.ghi_chu,
     khach: k ? { ten: k.ho_ten, sdt: k.dien_thoai, gioiTinh: k.gioi_tinh, namSinh: k.ngay_sinh?.slice(0, 4) ?? null, diem: Number(k.diem_so_du) } : null,
     dong: (dong ?? []).map((x) => ({ ten: x.ten, soLuong: Number(x.so_luong), donGia: Number(x.don_gia), giamGia: Number(x.giam_gia), thanhTien: Number(x.thanh_tien ?? 0), gioPhucVu: x.loai === "dich_vu" && x.dich_vu_id && dvCoGio.has(x.dich_vu_id) && gioPhucVu ? gioPhucVu : undefined })),
     tongHang: Number(h.tong_hang), giamDon: Number(h.giam_gia_don), vatPct: Number(h.vat_pct), vatTien: Number(h.vat_tien), phuPhi: Number(h.phu_phi), tip: Number(h.tip), phaiThu: Number(h.tong_phai_thu),

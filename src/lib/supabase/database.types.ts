@@ -3742,8 +3742,11 @@ export type Database = {
           giam_diem: number
           giam_gia_don: number
           giam_voucher: number
+          gio_ra: string | null
+          gio_vao: string | null
           huy_luc: string | null
           id: string
+          khach_dua: number | null
           khach_id: string | null
           khach_moi: boolean | null
           la_lich_su: boolean
@@ -3761,6 +3764,7 @@ export type Database = {
           sh_id: number | null
           sh_ma: string | null
           sh_trang_thai: string | null
+          so_khach: number
           tao_luc: string
           thu_ngan_sh_id: number | null
           thu_ngan_ten: string | null
@@ -3778,9 +3782,6 @@ export type Database = {
           vat_hd_tra_cuu: string | null
           vat_pct: number
           vat_tien: number
-          gio_ra: string | null
-          gio_vao: string | null
-          so_khach: number
         }
         Insert: {
           chi_nhanh_id: string
@@ -3791,8 +3792,11 @@ export type Database = {
           giam_diem?: number
           giam_gia_don?: number
           giam_voucher?: number
+          gio_ra?: string | null
+          gio_vao?: string | null
           huy_luc?: string | null
           id?: string
+          khach_dua?: number | null
           khach_id?: string | null
           khach_moi?: boolean | null
           la_lich_su?: boolean
@@ -3809,6 +3813,7 @@ export type Database = {
           sh_id?: number | null
           sh_ma?: string | null
           sh_trang_thai?: string | null
+          so_khach?: number
           tao_luc?: string
           thu_ngan_sh_id?: number | null
           thu_ngan_ten?: string | null
@@ -3826,9 +3831,6 @@ export type Database = {
           vat_hd_tra_cuu?: string | null
           vat_pct?: number
           vat_tien?: number
-          gio_ra?: string | null
-          gio_vao?: string | null
-          so_khach?: number
         }
         Update: {
           chi_nhanh_id?: string
@@ -3839,8 +3841,11 @@ export type Database = {
           giam_diem?: number
           giam_gia_don?: number
           giam_voucher?: number
+          gio_ra?: string | null
+          gio_vao?: string | null
           huy_luc?: string | null
           id?: string
+          khach_dua?: number | null
           khach_id?: string | null
           khach_moi?: boolean | null
           la_lich_su?: boolean
@@ -3858,6 +3863,7 @@ export type Database = {
           sh_id?: number | null
           sh_ma?: string | null
           sh_trang_thai?: string | null
+          so_khach?: number
           tao_luc?: string
           thu_ngan_sh_id?: number | null
           thu_ngan_ten?: string | null
@@ -3875,9 +3881,6 @@ export type Database = {
           vat_hd_tra_cuu?: string | null
           vat_pct?: number
           vat_tien?: number
-          gio_ra?: string | null
-          gio_vao?: string | null
-          so_khach?: number
         }
         Relationships: [
           {
@@ -4088,14 +4091,19 @@ export type Database = {
         Row: {
           dich_vu_id: string | null
           don_gia: number
+          ghi_chu: string | null
           giam_gia: number
           goi_id: string | null
+          gt_doi_tac_id: string | null
+          gt_gia_tri: number | null
+          gt_kieu: string | null
           hoa_don_id: string
           id: string
           la_lich_su: boolean
           loai: string
           loai_goc: string | null
           nhap_dot: string | null
+          no_dong: number | null
           san_pham_id: string | null
           sh_id: number | null
           so_luong: number
@@ -4107,14 +4115,19 @@ export type Database = {
         Insert: {
           dich_vu_id?: string | null
           don_gia: number
+          ghi_chu?: string | null
           giam_gia?: number
           goi_id?: string | null
+          gt_doi_tac_id?: string | null
+          gt_gia_tri?: number | null
+          gt_kieu?: string | null
           hoa_don_id: string
           id?: string
           la_lich_su?: boolean
           loai: string
           loai_goc?: string | null
           nhap_dot?: string | null
+          no_dong?: number | null
           san_pham_id?: string | null
           sh_id?: number | null
           so_luong?: number
@@ -4126,14 +4139,19 @@ export type Database = {
         Update: {
           dich_vu_id?: string | null
           don_gia?: number
+          ghi_chu?: string | null
           giam_gia?: number
           goi_id?: string | null
+          gt_doi_tac_id?: string | null
+          gt_gia_tri?: number | null
+          gt_kieu?: string | null
           hoa_don_id?: string
           id?: string
           la_lich_su?: boolean
           loai?: string
           loai_goc?: string | null
           nhap_dot?: string | null
+          no_dong?: number | null
           san_pham_id?: string | null
           sh_id?: number | null
           so_luong?: number

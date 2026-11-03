@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
-import { BarChart3, CalendarClock, CreditCard, History, MessagesSquare, PhoneCall, Tags, TicketX } from "lucide-react";
+import { AlarmClock, BarChart3, CalendarClock, CreditCard, History, MessagesSquare, PhoneCall, Tags, TicketX } from "lucide-react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -47,6 +47,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
           <Link href="/khach-hang/tu-van" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><MessagesSquare aria-hidden strokeWidth={1.7} className="h-4 w-4" />Tư vấn</Link>
           <Link href="/khach-hang/nhom" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><Tags aria-hidden strokeWidth={1.7} className="h-4 w-4" />Quản lý nhóm</Link>
           <Link href="/khach-hang/cham-soc" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><PhoneCall aria-hidden strokeWidth={1.7} className="h-4 w-4" />Chăm sóc khách</Link>
+          <Link href="/khach-hang/nhac-nho" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><AlarmClock aria-hidden strokeWidth={1.7} className="h-4 w-4" />Lịch nhắc chăm sóc</Link>
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/tai-kham" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CalendarClock aria-hidden strokeWidth={1.7} className="h-4 w-4" />Nhắc tái khám</Link>}
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/dung-the" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CreditCard aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách dùng thẻ</Link>}
           {coQuyen(nd, "the.xem") && <Link href="/khach-hang/the-sap-het" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><TicketX aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thẻ sắp hết</Link>}

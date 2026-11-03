@@ -4,8 +4,9 @@ import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
 import { chuoi, chuoiHoacNull, so } from "@/lib/form";
-import { chuanSdt, homNayHCM, ngayVN } from "@/lib/dinh-dang";
+import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import type { NguoiDung } from "@/lib/auth";
+import { timKhachMaSdt } from "@/lib/tim-khach-ma-sdt";
 
 type KQ = { ok?: true; loi?: string; canhBao?: string };
 const lamMoi = (id?: string) => { revalidatePath("/the"); if (id) revalidatePath(`/the/${id}`); };
@@ -122,19 +123,6 @@ export async function doiTrangThaiThe(fd: FormData): Promise<KQ> {
   const { error: eSc } = await db.from("the_so_cai").insert({ the_id: theId, loai: tt === "khoa" ? "khoa" : "mo_khoa", so_buoi: 0, so_tien: 0, ghi_chu: lyDo, nguoi_id: nd.nhanVienId });
   lamMoi(theId);
   return eSc ? { loi: thongBaoLoi(eSc) } : { ok: true };
-}
-
-/** Tìm đúng MỘT khách theo mã hoặc số điện thoại (bỏ ký tự làm hỏng điều kiện lọc). Trùng số nhiều khách thì bắt nhập mã. */
-async function timKhachMaSdt(nhap: string): Promise<{ k?: { id: string; chi_nhanh_id: string | null; ho_ten: string; ma: string }; loi?: string }> {
-  const ma = nhap.trim().toUpperCase().replace(/[^A-Z0-9._-]/g, ""), sdt = chuanSdt(nhap);
-  const dk = [ma ? `ma.eq.${ma}` : "", sdt.length >= 9 ? `dien_thoai.eq.${sdt}` : ""].filter(Boolean);
-  if (!dk.length) return { loi: "Nhập mã khách hoặc số điện thoại." };
-  const { data } = await sb().from("khach_hang").select("id, chi_nhanh_id, ho_ten, ma").or(dk.join(",")).limit(3);
-  const ds = data ?? [];
-  const dungMa = ds.filter((x) => x.ma?.toUpperCase() === ma);
-  if (dungMa.length === 1) return { k: dungMa[0] };
-  if (ds.length > 1) return { loi: "Có nhiều khách trùng số điện thoại này. Nhập mã khách." };
-  return ds.length ? { k: ds[0] } : { loi: "Không tìm thấy khách theo mã hoặc số điện thoại đó." };
 }
 
 /** Sửa thẻ (SalonHero "Sửa thẻ", quyền memberCards.update → the.dieuchinh): hạn dùng, chủ thẻ, giá 1 buổi làm dịch vụ, ghi chú.

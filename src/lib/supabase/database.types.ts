@@ -6078,6 +6078,12 @@ export type Database = {
           so_lan_lap: number | null
           tao_luc: string
           trang_thai: string
+          dich_vu_id: string | null
+          nguoi_phu_trach_id: string | null
+          nguoi_tao_id: string | null
+          lap_khoang: number | null
+          xu_ly_boi: string | null
+          xu_ly_luc: string | null
         }
         Insert: {
           cac_ngay_nhac?: Json | null
@@ -6100,6 +6106,12 @@ export type Database = {
           so_lan_lap?: number | null
           tao_luc?: string
           trang_thai?: string
+          dich_vu_id?: string | null
+          nguoi_phu_trach_id?: string | null
+          nguoi_tao_id?: string | null
+          lap_khoang?: number | null
+          xu_ly_boi?: string | null
+          xu_ly_luc?: string | null
         }
         Update: {
           cac_ngay_nhac?: Json | null
@@ -6122,6 +6134,12 @@ export type Database = {
           so_lan_lap?: number | null
           tao_luc?: string
           trang_thai?: string
+          dich_vu_id?: string | null
+          nguoi_phu_trach_id?: string | null
+          nguoi_tao_id?: string | null
+          lap_khoang?: number | null
+          xu_ly_boi?: string | null
+          xu_ly_luc?: string | null
         }
         Relationships: [
           {
@@ -12646,6 +12664,10 @@ export type Database = {
       khach_gan_den_tong: { Args: { p_cn?: string }; Returns: number }
       khach_gan_den_het: { Args: { p_cn?: string }; Returns: { hd_ma: string; khach_id: string; ngay: string; tien: number }[] }
       thong_ke_khach_ngay: { Args: { p_so_ngay?: number }; Returns: Json }
+      nhac_cham_soc_loc: {
+        Args: { p_cn?: string; p_den?: string; p_lim?: number; p_off?: number; p_phu_trach?: string; p_tt?: string; p_tu?: string }
+        Returns: { id: string; khach_id: string; ngay: string; so_lan: number; tong: number }[]
+      }
       sua_the: {
         Args: {
           p_doi_chu?: boolean

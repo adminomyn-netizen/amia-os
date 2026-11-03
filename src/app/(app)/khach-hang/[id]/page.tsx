@@ -30,6 +30,11 @@ import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-di
 import { nhanHang, nhanTrangThaiGoi } from "@/lib/cham-soc-hang-doi";
 import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
+import { moTaLapNhac } from "@/lib/nhac-cham-soc";
+import { dichVuChoNhac } from "@/lib/nhac-cham-soc-may-chu";
+import { HopTaoNhac } from "@/components/khach/HopTaoNhac";
+import { NutTrangThaiNhac } from "@/components/khach/NutTrangThaiNhac";
+import { taoNhacTay } from "../nhac-nho/actions";
 
 /** Nhãn trạng thái của lịch hẹn sắp tới (chỉ 3 trạng thái chưa diễn ra). */
 const NHAN_TT_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ" };
@@ -296,12 +301,12 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   } else if (tab === "nhac-nho") {
     // Nhắc nhở chuyển từ SalonHero (60 nghìn dòng): đang nhắc lên trước, rồi theo ngày nhắc mới nhất.
     const trang = Math.max(1, Math.min(10_000, Number(trangDiem) || 1));
-    const { data: ds, count } = await db.from("khach_nhac").select("id, ngay_nhac, noi_dung, ghi_chu, trang_thai, dich_vu_ten, kieu_lap, so_lan_lap, hoan_thanh_luc, nguoi_tao_ten, nguoi_phu_trach_ten", { count: "exact" })
+    const { data: ds, count } = await db.from("khach_nhac").select("id, ngay_nhac, noi_dung, ghi_chu, trang_thai, dich_vu_ten, kieu_lap, lap_khoang, so_lan_lap, cac_ngay_nhac, hoan_thanh_luc, nguoi_tao_ten, nguoi_phu_trach_ten", { count: "exact" })
       .eq("khach_id", id).order("trang_thai", { ascending: true }).order("ngay_nhac", { ascending: false, nullsFirst: false }).range((trang - 1) * DIEM_MOI_TRANG, trang * DIEM_MOI_TRANG - 1);
     const soTrang = Math.max(1, Math.ceil((count ?? 0) / DIEM_MOI_TRANG));
     const lk = (n: number) => `/khach-hang/${id}?tab=nhac-nho&trang=${n}`;
     const NHAN_NHAC: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = { dang_nhac: { nhan: "Chưa thực hiện", kieu: "cho" }, da_xong: { nhan: "Đã xong", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "tram" } };
-    const KIEU_LAP: Record<string, string> = { DAY: "Hằng ngày", WEEK: "Hằng tuần", MONTH: "Hằng tháng" };
+    const dvNhac = sua0 ? await dichVuChoNhac() : [];
     // Lịch sử gọi chăm sóc (ghi từ trang Chăm sóc khách): 20 lần gần nhất.
     const { data: goiRaw } = await db.from("cham_soc_cuoc_goi").select("id, loai, ngay_goc, trang_thai, chi_tiet, noi_dung, ngay_goi_lai, khong_can_goi_lai, nguoi_id, tao_luc").eq("khach_id", id).order("tao_luc", { ascending: false }).limit(20);
     const nguoiGoi = new Map<string, string>();
@@ -321,15 +326,17 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             ]} />
           </section>
         )}
-        <p className="mb-4 text-[13px] text-muc-3">{soVN(count ?? 0)} nhắc nhở (chưa thực hiện xếp trước).</p>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><p className="text-[13px] text-muc-3">{soVN(count ?? 0)} nhắc nhở (chưa thực hiện xếp trước). <Link href="/khach-hang/nhac-nho" className="underline underline-offset-2">Lịch nhắc chăm sóc</Link></p>
+          {sua0 && <HopTaoNhac kieu="phu" khach={{ id, ten: k.ho_ten ?? "" }} dichVu={dvNhac} nhanVien={luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"))} phuTrachMacDinh={k.nguoi_phu_trach_id ?? nd.nhanVienId} homNay={homNayHCM()} action={taoNhacTay} />}</div>
         <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Khách chưa có nhắc nhở nào." cot={[
           { nhan: "Ngày nhắc", chinh: true, hienThi: (r) => (r.ngay_nhac ? ngayGioVN(r.ngay_nhac) : "") },
           { nhan: "Trạng thái", hienThi: (r) => { const n = NHAN_NHAC[r.trang_thai] ?? NHAN_NHAC.dang_nhac; return <NhanTrangThai kieu={n.kieu}>{n.nhan}</NhanTrangThai>; } },
           { nhan: "Nội dung", hienThi: (r) => <span className="line-clamp-3 whitespace-pre-line text-[13px]">{r.noi_dung ?? ""}{r.ghi_chu ? ` — ${r.ghi_chu}` : ""}</span> },
           { nhan: "Dịch vụ", hienThi: (r) => r.dich_vu_ten ?? "" },
-          { nhan: "Lặp", hienThi: (r) => (r.kieu_lap && r.kieu_lap !== "SINGLE" ? `${KIEU_LAP[r.kieu_lap] ?? r.kieu_lap}${r.so_lan_lap ? ` · ${r.so_lan_lap} lần` : ""}` : "") },
+          { nhan: "Lặp", hienThi: (r) => moTaLapNhac(r) },
           { nhan: "Người tạo", hienThi: (r) => r.nguoi_tao_ten ?? "" },
           { nhan: "Phụ trách", hienThi: (r) => r.nguoi_phu_trach_ten ?? "" },
+          ...(sua0 ? [{ nhan: "", hienThi: (r: { id: string; trang_thai: string }) => <NutTrangThaiNhac id={r.id} tt={r.trang_thai} /> }] : []),
         ]} />
         {soTrang > 1 && (
           <nav aria-label="Trang nhắc nhở" className="mt-4 flex items-center justify-between gap-3 text-[13px]">

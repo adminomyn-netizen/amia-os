@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { fetchAuthCoHan } from "@/lib/supabase/khoa-jwt";
 import { cookies } from "next/headers";
 
 export async function createClient() {
@@ -8,6 +9,7 @@ export async function createClient() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: { fetch: fetchAuthCoHan },
       cookies: {
         getAll() {
           return cookieStore.getAll();

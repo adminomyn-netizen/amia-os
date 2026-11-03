@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { fetchAuthCoHan, KHOA_JWT } from "@/lib/supabase/khoa-jwt";
 import { NextResponse, type NextRequest } from "next/server";
 
 // /api/cron/* và /api/mkt/so-lieu-ngay (luồng AnyCross đọc số liệu MKT) tự kiểm CRON_SECRET trong từng route (Vercel Cron không có phiên đăng nhập); /api/chat-agent/cong-cu tự kiểm mã thông hành của từng tin chat.
@@ -12,6 +13,7 @@ export async function capNhatPhien(request: NextRequest) {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
+      global: { fetch: fetchAuthCoHan },
       cookies: {
         getAll() {
           return request.cookies.getAll();
@@ -27,9 +29,9 @@ export async function capNhatPhien(request: NextRequest) {
     },
   );
 
-  // getClaims() kiểm chữ ký JWT ngay tại máy chủ (không gọi mạng) nên cổng chặn gần như tức thì.
+  // getClaims() kiểm chữ ký JWT ngay tại máy chủ bằng khoá công khai nhúng sẵn (KHOA_JWT, không gọi mạng) nên cổng chặn gần như tức thì.
   // Quyền thật (vai trò, còn hoạt động) do hàm bảo vệ trong từng trang/hành động quyết định, hỏi DB mỗi yêu cầu.
-  const { data: dataClaims, error: loiClaims } = await supabase.auth.getClaims();
+  const { data: dataClaims, error: loiClaims } = await supabase.auth.getClaims(undefined, KHOA_JWT);
   const coPhien = !!dataClaims?.claims;
   // Auth chậm/quá tải khi làm mới token (504, mất kết nối) không phải hết phiên: giữ nguyên, để trang tự báo "đang chậm" thay vì đá ra đăng nhập.
   const authLoiTamThoi = !!loiClaims && (loiClaims.name === "AuthRetryableFetchError" || ((loiClaims as { status?: number }).status ?? 0) >= 500);

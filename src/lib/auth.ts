@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { KHOA_JWT } from "@/lib/supabase/khoa-jwt";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { cookies } from "next/headers";
 import { coQuyen, laVaiTro, type Quyen, type VaiTro } from "@/lib/quyen";
@@ -16,7 +17,7 @@ export type NguoiDung = { userId: string; nhanVienId: string; hoTen: string; ema
 export const layNguoiDungHienTai = cache(async (): Promise<NguoiDung | null> => {
   const supabase = await createClient();
   // getClaims kiểm chữ ký JWT ngay tại máy chủ (không gọi mạng Auth) → bớt một vòng đi về ở MỌI trang. Người bị khoá/xoá vẫn bị chặn vì hồ sơ nhân viên (hoat_dong) hỏi DB mỗi yêu cầu bên dưới.
-  const { data: dataClaims, error: loiAuth } = await supabase.auth.getClaims();
+  const { data: dataClaims, error: loiAuth } = await supabase.auth.getClaims(undefined, KHOA_JWT); // khoá công khai nhúng sẵn → không gọi JWKS qua mạng
   if (!dataClaims?.claims && loiAuth && (loiAuth.name === "AuthRetryableFetchError" || ((loiAuth as { status?: number }).status ?? 0) >= 500)) throw new Error("Hệ thống đang chậm, chưa kiểm được phiên đăng nhập. Tải lại trang sau vài giây.");
   const cl = dataClaims?.claims;
   if (!cl?.sub) return null;

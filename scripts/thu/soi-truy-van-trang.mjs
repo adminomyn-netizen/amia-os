@@ -29,7 +29,9 @@ try {
     for (const x of d.slice(0, 8)) console.log(`  ${Math.round(x.dt).toString().padStart(5)}ms ×${x.dc} ${x.q.replace(/^WITH pgrst_source AS \( ?/, "").slice(0, 200)}`);
   }
 } finally {
-  if (nvId) await sbA.from("nhan_vien").delete().eq("id", nvId);
+  // Xoá nhân viên tạm (thử lại vì lúc CSDL bận có thể hết giờ); không xoá được thì khoá lại và báo, để không sót tài khoản Chủ còn mở.
+  if (nvId) { let r; for (let k = 0; k < 3; k++) { r = await sbA.from("nhan_vien").delete().eq("id", nvId); if (!r.error) break; await new Promise((x) => setTimeout(x, 2000)); }
+    if (r.error) { await sbA.from("nhan_vien").update({ hoat_dong: false }).eq("id", nvId); console.error("CẢNH BÁO: chưa xoá được nhân viên tạm", nvId, r.error.message, "→ đã khoá (hoat_dong=false)"); } }
   if (uid) await sbA.auth.admin.deleteUser(uid);
   await pg.end();
 }

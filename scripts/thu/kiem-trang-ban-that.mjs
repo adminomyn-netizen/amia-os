@@ -34,6 +34,8 @@ try {
     console.log(`${r.status} ttfb ${String(tot.ttfb).padStart(5)}ms  trọn ${String(tot.xong).padStart(5)}ms ${String(Math.round(html.length / 1024)).padStart(5)} KB ${p}${r.headers.get("location") ? " → " + r.headers.get("location") : ""}${loi ? "  LỖI: " + loi : ""}`);
   }
 } finally {
-  if (nvId) await db.from("nhan_vien").delete().eq("id", nvId);
+  // Xoá nhân viên tạm (thử lại vì lúc CSDL bận có thể hết giờ); không xoá được thì khoá lại và báo, để không sót tài khoản Chủ còn mở.
+  if (nvId) { let r; for (let k = 0; k < 3; k++) { r = await db.from("nhan_vien").delete().eq("id", nvId); if (!r.error) break; await new Promise((x) => setTimeout(x, 2000)); }
+    if (r.error) { await db.from("nhan_vien").update({ hoat_dong: false }).eq("id", nvId); console.error("CẢNH BÁO: chưa xoá được nhân viên tạm", nvId, r.error.message, "→ đã khoá (hoat_dong=false)"); } }
   if (uid) await db.auth.admin.deleteUser(uid);
 }

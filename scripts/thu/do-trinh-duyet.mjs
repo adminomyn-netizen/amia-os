@@ -59,7 +59,7 @@ try {
       const t0 = Date.now(); await g("Page.navigate", { url: BASE + p });
       for (let i = 0; i < 300 && !su.some((m) => m.method === "Page.loadEventFired"); i++) await ngu(50);
       // chờ hết khung xương (aria-busy) tối đa 15 s
-      let xong = null; for (let i = 0; i < 300; i++) { const b = await doc(`[...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).length`); if (b === 0) { xong = Date.now() - t0; break; } await ngu(50); }
+      let xong = null; for (let i = 0; i < 300; i++) { if (process.env.BUSY && i === 60) console.log("  sau 3 s còn bận:", await doc(`JSON.stringify({ url: location.pathname + location.search, ban: [...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).map((e) => (e.getAttribute("aria-label") || e.tagName).slice(0, 60)), rsc: performance.getEntriesByType("resource").filter((r) => r.name.includes("_rsc")).map((r) => r.name.replace(location.origin, "").slice(0, 60) + " " + Math.round(r.duration)) })`)); const b = await doc(`[...document.querySelectorAll('[aria-busy="true"]')].filter((e) => e.checkVisibility()).length`); if (b === 0) { xong = Date.now() - t0; break; } await ngu(50); }
       const nav = await doc(`JSON.stringify((() => { const n = performance.getEntriesByType("navigation")[0]; const r = (x) => Math.round(x); return { ttfb: r(n.responseStart), dcl: r(n.domContentLoadedEventEnd), load: r(n.loadEventEnd), ws: r(n.workerStart), fs: r(n.fetchStart), ce: r(n.connectEnd), rq: r(n.requestStart), sw: !!navigator.serviceWorker.controller }; })())`);
       kq = { ...JSON.parse(nav ?? "{}"), hien_xong: xong };
     }
@@ -68,6 +68,8 @@ try {
   s.close();
 } finally {
   chrome.kill();
-  if (nvId) await db.from("nhan_vien").delete().eq("id", nvId);
+  // Xoá nhân viên tạm (thử lại vì lúc CSDL bận có thể hết giờ); không xoá được thì khoá lại và báo, để không sót tài khoản Chủ còn mở.
+  if (nvId) { let r; for (let k = 0; k < 3; k++) { r = await db.from("nhan_vien").delete().eq("id", nvId); if (!r.error) break; await new Promise((x) => setTimeout(x, 2000)); }
+    if (r.error) { await db.from("nhan_vien").update({ hoat_dong: false }).eq("id", nvId); console.error("CẢNH BÁO: chưa xoá được nhân viên tạm", nvId, r.error.message, "→ đã khoá (hoat_dong=false)"); } }
   if (uid) await db.auth.admin.deleteUser(uid);
 }

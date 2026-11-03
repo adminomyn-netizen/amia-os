@@ -24,11 +24,16 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   const db = sb();
   const { data: h } = await db.from("hoa_don").select("*").eq("id", id).maybeSingle();
   if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) notFound();
-  const [{ data: dong }, { data: tt }, { data: nv }, { data: k }] = await Promise.all([
+  const [{ data: dong }, { data: tt }, { data: nv }, { data: k }, { data: diem }, { data: lich }, { data: nguoiGt }, { data: cn }] = await Promise.all([
     db.from("hoa_don_dong").select("*").eq("hoa_don_id", id).order("tao_luc"),
     db.from("thanh_toan").select("*").eq("hoa_don_id", id).order("tao_luc"),
     db.from("nhan_vien").select("id, ho_ten"),
     h.khach_id ? db.from("khach_hang").select("id, ma, ho_ten, dien_thoai").eq("id", h.khach_id).maybeSingle() : Promise.resolve({ data: null }),
+    // Điểm thưởng ghi cho hoá đơn này (đơn nhập từ SalonHero: sổ điểm tra theo mã đơn SalonHero).
+    h.sh_id ? db.from("khach_diem_so").select("loai, so_diem").eq("hoa_don_sh_id", h.sh_id) : Promise.resolve({ data: [] }),
+    h.lich_hen_id ? db.from("lich_hen").select("phong, ma_dat_lich").eq("id", h.lich_hen_id).maybeSingle() : Promise.resolve({ data: null }),
+    h.nguoi_gioi_thieu_id ? db.from("khach_hang").select("id, ma, ho_ten").eq("id", h.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
+    db.from("chi_nhanh").select("ten").eq("id", h.chi_nhanh_id).maybeSingle(),
   ]);
   const idsDong = (dong ?? []).map((d) => d.id);
   const { data: chia } = idsDong.length ? await db.from("dong_nhan_vien").select("*").in("dong_id", idsDong) : { data: [] };
@@ -43,12 +48,30 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   const { data: dgSdt } = h.trang_thai === "hoan_thanh" && h.khach_id && coDichVu && !h.la_so_du_dau ? await db.from("danh_gia_sau_dieu_tri").select("*").eq("hoa_don_id", id).maybeSingle() : { data: null };
   const hienSdt = h.trang_thai === "hoan_thanh" && !!h.khach_id && coDichVu && !h.la_so_du_dau;
   const { data: lichDg } = hienSdt && !dgSdt && h.lich_hen_id ? await db.from("danh_gia_sau_dieu_tri").select("id").eq("lich_hen_id", h.lich_hen_id).maybeSingle() : { data: null };
+  // Đơn nhập từ SalonHero: người lập là tài khoản hệ thống, người làm thật nằm ở tên thu ngân đã hoàn tất đơn. Đơn tạo ở AMIA: chốt ngay khi lập nên người hoàn thành là người lập.
+  const nguoiLap = (h.la_lich_su ? h.thu_ngan_ten : tenNv.get(h.nguoi_lap_id)) ?? "";
+  const diemCong = (diem ?? []).filter((x) => x.loai === "cong_hoa_don").reduce((s, x) => s + x.so_diem, 0);
+  const diemTru = (diem ?? []).filter((x) => x.loai === "hoan_hoa_don").reduce((s, x) => s + x.so_diem, 0);
   const t = TRANG_THAI_HD[h.trang_thai as keyof typeof TRANG_THAI_HD];
+  type Muc = [string, React.ReactNode];
+  const thongTin = ([
+    ["Chi nhánh", cn?.ten],
+    ["Tạo lúc", ngayGioVN(h.tao_luc)],
+    h.chot_luc ? ["Hoàn thành lúc", ngayGioVN(h.chot_luc)] : null,
+    h.chot_luc && nguoiLap ? ["Hoàn thành bởi", nguoiLap] : null,
+    h.huy_luc ? ["Huỷ lúc", ngayGioVN(h.huy_luc)] : null,
+    lich?.ma_dat_lich ? ["Lịch hẹn", lich.ma_dat_lich] : null,
+    lich?.phong ? ["Vị trí / chỗ", lich.phong] : null,
+    nguoiGt ? ["Người giới thiệu", <Link key="gt" href={`/khach-hang/${nguoiGt.id}`} className="font-medium text-nhan-dam hover:underline">{nguoiGt.ho_ten} · {nguoiGt.ma}</Link>] : null,
+    diemCong || diemTru ? ["Điểm thưởng", `${diemCong > 0 ? `+${diemCong.toLocaleString("vi-VN")} điểm` : ""}${diemCong && diemTru ? " · " : ""}${diemTru ? `${diemTru.toLocaleString("vi-VN")} điểm (hoàn)` : ""}`] : null,
+    Number(h.giam_diem) > 0 ? ["Đổi điểm", `giảm ${tienVN(h.giam_diem)}`] : null,
+    Number(h.giam_voucher) > 0 ? ["Voucher", `giảm ${tienVN(h.giam_voucher)}`] : null,
+  ] as (Muc | null)[]).filter((x): x is Muc => !!x && x[1] !== undefined && x[1] !== null && x[1] !== "");
   const coNo = h.trang_thai === "hoan_thanh" && Number(h.con_no) > 0;
 
   return (
     <>
-      <TieuDeTrang tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)} · lập bởi {tenNv.get(h.nguoi_lap_id)}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
+      <TieuDeTrang tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)}{h.tao_luc ? ` ${gioVN(h.tao_luc)}` : ""} · lập bởi {nguoiLap}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
         <Link href={`/in/hoa-don/${id}`} target="_blank" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In hoá đơn</Link>
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
@@ -63,10 +86,16 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
       {h.trang_thai === "huy" && <p className="mb-5 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Đã huỷ ngày {ngayGioVN(h.huy_luc)}. Lý do: {h.ly_do_huy}</p>}
       <HangChiSo muc={[{ nhan: "Tiền hàng", so: tienVN(h.tong_hang) }, { nhan: "Phải thu", so: tienVN(h.tong_phai_thu) }, { nhan: "Đã thu", so: tienVN(h.da_thu) }, { nhan: "Còn nợ", so: tienVN(h.trang_thai === "huy" ? 0 : h.con_no) }]} />
       <div className="mt-8 space-y-8">
+        <MucTrang tieuDe="Thông tin hoá đơn">
+          <dl className="grid gap-x-8 gap-y-2 text-[14px] sm:grid-cols-2 lg:grid-cols-3">
+            {thongTin.map(([n, v]) => <div key={n} className="flex min-w-0 gap-2"><dt className="shrink-0 text-muc-3">{n}:</dt><dd className="min-w-0 break-words font-medium text-muc">{v}</dd></div>)}
+          </dl>
+        </MucTrang>
         <MucTrang tieuDe="Dòng hàng">
           <Bang duLieu={dong ?? []} khoa={(r) => r.id} cot={[
             { nhan: "Mục", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "SL", hienThi: (r) => r.so_luong, phai: true }, { nhan: "Đơn giá", hienThi: (r) => tienVN(r.don_gia), phai: true },
-            { nhan: "Giảm", hienThi: (r) => (r.giam_gia ? tienVN(r.giam_gia) : ""), phai: true }, { nhan: "Thành tiền", hienThi: (r) => tienVN(r.thanh_tien), phai: true },
+            { nhan: "Giảm", hienThi: (r) => (r.giam_gia ? tienVN(r.giam_gia) : ""), phai: true },
+            { nhan: "% giảm", hienThi: (r) => (r.giam_gia && r.don_gia * r.so_luong > 0 ? `${Math.round((r.giam_gia * 10000) / (r.don_gia * r.so_luong)) / 100}%` : ""), phai: true }, { nhan: "Thành tiền", hienThi: (r) => tienVN(r.thanh_tien), phai: true },
             { nhan: "Người hưởng", hienThi: (r) => VAI.map((v) => { const ds = (chia ?? []).filter((c) => c.dong_id === r.id && c.vai === v.ma); return ds.length ? `${v.ten}: ${ds.map((c) => `${tenNv.get(c.nhan_vien_id)} ${Number(c.ti_le)}%`).join(", ")}` : null; }).filter(Boolean).join(" · ") },
           ]} />
           <dl className="ml-auto mt-3 w-full max-w-xs space-y-1 text-[14px]">
@@ -79,7 +108,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         <MucTrang tieuDe="Sổ thu tiền">
           <Bang duLieu={tt ?? []} khoa={(r) => r.id} trong="Chưa thu khoản nào." cot={[
             { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => NHAN_PHUONG_THUC[r.phuong_thuc] },
-            { nhan: "Người thu", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
+            { nhan: "Ngân hàng nhận", hienThi: (r) => r.ngan_hang ?? "" }, { nhan: "Người thu", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
             { nhan: "Số tiền", hienThi: (r) => <span className={r.loai === "hoan" ? "text-loi" : ""}>{r.loai === "hoan" ? "− " : ""}{tienVN(r.so_tien)}</span>, phai: true },
           ]} />
         </MucTrang>

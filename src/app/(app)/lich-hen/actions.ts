@@ -81,7 +81,10 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
   let ids: string[];
   if (id) {
-    const { error } = await db.from("lich_hen").update({ ...row, bat_dau: buoi[0].bd.toISOString(), ket_thuc: buoi[0].kt.toISOString(), cap_nhat_luc: new Date().toISOString() }).eq("id", id).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]);
+    // Lịch nhóm chuyển từ SalonHero chỉ có so_khach, chưa có dòng khách đi cùng: đổi lịch không có khách đi cùng thì giữ nguyên so_khach.
+    const giuSoKhach = diCung.length === 0 && !(await db.from("lich_hen_khach").select("id").eq("lich_id", id).limit(1)).data?.length;
+    const { so_khach: _sk, ...rowGiu } = row; void _sk;
+    const { error } = await db.from("lich_hen").update({ ...(giuSoKhach ? rowGiu : row), bat_dau: buoi[0].bd.toISOString(), ket_thuc: buoi[0].kt.toISOString(), cap_nhat_luc: new Date().toISOString() }).eq("id", id).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]);
     if (error) return { loi: thongBaoLoi(error) };
     ids = [id];
   } else {

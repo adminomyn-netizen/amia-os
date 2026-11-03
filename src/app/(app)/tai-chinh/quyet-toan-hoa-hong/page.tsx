@@ -3,6 +3,7 @@ import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
+import { bcNhanVienNho } from "@/lib/bao-cao-nho-dem";
 import { congNgay, homNayHCM, tienVN } from "@/lib/dinh-dang";
 import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
 import { Bang } from "@/components/ui/Table";
@@ -23,7 +24,8 @@ export default async function TrangQuyetToanHoaHong({ searchParams }: { searchPa
   const dau = `${thang}-01`, cuoi = congNgay(m === 12 ? `${y + 1}-01-01` : `${y}-${String(m + 1).padStart(2, "0")}-01`, -1);
   const db = sb();
   const [{ data: live }, { data: nv }, { data: ky }] = await Promise.all([
-    db.rpc("bc_nhan_vien", { p_tu: dau, p_den: cuoi, p_cn: nd.chiNhanhId ?? undefined }), db.from("nhan_vien").select("id, ho_ten, ma_nv"), db.from("ky_luong").select("id, trang_thai").eq("nam", y).eq("thang", m).maybeSingle(),
+    // Số tạm tính để đối chiếu (chỉ xem): dùng chung bản đệm 45 giây với trang chủ — tháng đã qua gần như không đổi, đỡ tính lại cả tháng mỗi lần mở.
+    bcNhanVienNho(dau, cuoi, nd.chiNhanhId ?? null).then((data) => ({ data })), db.from("nhan_vien").select("id, ho_ten, ma_nv"), db.from("ky_luong").select("id, trang_thai").eq("nam", y).eq("thang", m).maybeSingle(),
   ]);
   const { data: chot } = ky ? await db.from("bang_luong_dong").select("nhan_vien_id, hoa_hong").eq("ky_id", ky.id) : { data: [] as { nhan_vien_id: string; hoa_hong: number }[] };
   const ten = new Map((nv ?? []).map((n) => [n.id, `${n.ho_ten}${n.ma_nv ? ` (${n.ma_nv})` : ""}`]));

@@ -34,6 +34,8 @@ beforeAll(async () => {
   KHGT = (await q<{ id: string }>(`insert into khach_hang (ma, ho_ten, dien_thoai, chi_nhanh_id, nguon, nguoi_phu_trach_id) values ('KH2','Chị Giới Thiệu','0900000002',$1,'mkt',$2) returning id`, [CN, NV.thuNgan]))[0].id;
   const nhom = (await q<{ id: string }>(`select id from dich_vu_nhom limit 1`))[0].id;
   DV = (await q<{ id: string }>(`insert into dich_vu (ma, nhom_id, ten, gia) values ('PEEL',$1,'Peel da',1000000) returning id`, [nhom]))[0].id;
+  // 0205: các ca ở đây kiểm công thức chia theo tỉ lệ chia người = chế độ "Chia đều". Mặc định SalonHero (dịch vụ "Giữ nguyên") kiểm ở hoa-hong-the-cai-dat.test.ts.
+  await q(`update hoa_hong_cai_dat set chia_deu_dich_vu = true`);
 });
 
 describe("hoa hồng theo thực thu", () => {

@@ -26,6 +26,8 @@ beforeAll(async () => {
   const nhom = (await q<{ id: string }>(`select id from dich_vu_nhom limit 1`))[0].id;
   DV = (await q<{ id: string }>(`insert into dich_vu (ma, nhom_id, ten, gia) values ('A',$1,'Peel',1000000) returning id`, [nhom]))[0].id;
   DV2 = (await q<{ id: string }>(`insert into dich_vu (ma, nhom_id, ten, gia) values ('B',$1,'Laser',2000000) returning id`, [nhom]))[0].id;
+  // 0205: các ca ở đây kiểm công thức chia theo tỉ lệ chia người = chế độ "Chia đều". Mặc định SalonHero (dịch vụ "Giữ nguyên") kiểm ở hoa-hong-the-cai-dat.test.ts.
+  await q(`update hoa_hong_cai_dat set chia_deu_dich_vu = true`);
   await don("H1", "2026-10-05", [{ dv: DV, gia: 1000000, nv: [[NV.an, 100]] }, { dv: DV2, gia: 2000000, sl: 2, nv: [[NV.binh, 50], [NV.chi, 50]] }]);
 });
 

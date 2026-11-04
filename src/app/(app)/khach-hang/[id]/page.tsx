@@ -148,7 +148,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
           ))}
         </div>
         <h3 className="mb-3 mt-8 text-[14px] font-medium text-muc">Thẻ của khách</h3>
-        <Bang duLieu={the ?? []} khoa={(r) => r.id ?? ""} trong="Khách chưa có thẻ nào."
+        <Bang noi duLieu={the ?? []} khoa={(r) => r.id ?? ""} trong="Khách chưa có thẻ nào."
           cot={[
             { nhan: "Mã thẻ", chinh: true, hienThi: (r) => <Link className="font-medium text-nhan-dam underline underline-offset-2" href={`/the/${r.id}`}>{r.ma}</Link> }, { nhan: "Loại", hienThi: (r) => (r.loai === "lan" ? "Liệu trình" : "Thẻ tiền") },
             { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
@@ -186,7 +186,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     noiDung = (
       <>
         {sua && <div className="mb-5"><NutHop nhan="Thêm người thân" tieuDe="Thêm người thân" truong={tr} an={{ khach_id: id }} action={luuNguoiThan} /></div>}
-        <Bang duLieu={nt ?? []} khoa={(r) => r.id} trong="Chưa có người thân nào." cot={[
+        <Bang noi duLieu={nt ?? []} khoa={(r) => r.id} trong="Chưa có người thân nào." cot={[
           { nhan: "Họ tên", hienThi: (r) => <span className="text-muc">{r.ho_ten}</span> }, { nhan: "Quan hệ", hienThi: (r) => r.quan_he ?? "" }, { nhan: "Điện thoại", hienThi: (r) => r.dien_thoai ?? "" },
           ...(sua ? [{ nhan: "", hienThi: (r: NonNullable<typeof nt>[number]) => (
             <span className="flex gap-4">
@@ -244,7 +244,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
       <>
         <h3 className="mb-1 text-[14px] font-medium text-muc">Khách hài lòng sau điều trị</h3>
         <p className="mb-4 text-[13px] text-muc-3">Cảm nhận của khách về cả lần điều trị (khác với đánh giá sao từng nhân viên ở hoá đơn). Không hài lòng sẽ tự tạo khiếu nại. Mỗi lần điều trị một đánh giá.</p>
-        <Bang duLieu={dong} khoa={(r) => r.khoa} trong="Khách chưa có lần điều trị nào hoàn thành." cot={[
+        <Bang noi duLieu={dong} khoa={(r) => r.khoa} trong="Khách chưa có lần điều trị nào hoàn thành." cot={[
           { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Hoá đơn / lịch", chinh: true, hienThi: (r) => r.nhan }, { nhan: "Dịch vụ", hienThi: (r) => <span className="text-[13px]">{r.dv}</span> },
           { nhan: "Khách cảm thấy", hienThi: (r) => { const d = dgCua.get(r.khoa); return d ? <div><NhanTrangThai kieu={KET_QUA_DG[d.ket_qua].kieu}>{KET_QUA_DG[d.ket_qua].ten}</NhanTrangThai>{d.ly_do && <div className="mt-0.5 text-[12px] text-muc-3">{LY_DO_KHONG_HAI_LONG[d.ly_do]}</div>}{d.khieu_nai_id && <Link href={`/khieu-nai/${d.khieu_nai_id}`} className="text-[12px] font-medium text-nhan-dam hover:underline">Xem khiếu nại</Link>}</div> : <span className="text-muc-3">Chưa ghi</span>; } },
           ...(duocGhi ? [{ nhan: "", hienThi: (r: DongSdt) => { const d = dgCua.get(r.khoa); return <NutHop kieu="chu" nhan={d ? "Sửa" : "Ghi đánh giá"} tieuDe="Khách hài lòng sau điều trị" moTa="Sửa được (có nhật ký). Không hài lòng sẽ tự tạo khiếu nại." an={r.an} giaTri={{ ket_qua: d?.ket_qua ?? "hai_long", ly_do: d?.ly_do ?? "", ghi_chu: d?.ghi_chu ?? "" }} truong={truongSauDieuTri()} action={luuDanhGiaSauDieuTri} />; } }] : []),
@@ -276,26 +276,26 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         </div>
         <section><h3 className="mb-1 text-[15px] font-semibold text-muc">Bảo hành theo dịch vụ</h3>
           <p className="mb-3 text-[13px] text-muc-3">Tính từ buổi cuối của từng dịch vụ (Khung nghiệp vụ 4.4.2). Chỉ bấm “Ghi làm lại” khi khách thật sự được làm lại theo bảo hành.</p>
-          <Bang duLieu={dongBh} khoa={(r) => r.dvId} trong="Khách chưa có buổi nào đã làm nên chưa có mốc bảo hành." cot={[
+          <Bang noi duLieu={dongBh} khoa={(r) => r.dvId} trong="Khách chưa có buổi nào đã làm nên chưa có mốc bảo hành." cot={[
             { nhan: "Dịch vụ", chinh: true, hienThi: (r) => dvMap.get(r.dvId)?.ten ?? "" },
             { nhan: "Buổi cuối", hienThi: (r) => <div className="text-[13px]">{ngayVN(r.ngay)}<div className="text-muc-3">cách {r.thang} tháng</div></div> },
             { nhan: "Mốc hiện tại", hienThi: (r) => <div className="text-[13px]"><span className="font-medium text-muc">{r.kq.nhan}</span><div className="text-muc-3">{r.kq.chiTiet}</div></div> },
             ...(coQuyen(nd, "kn.ghi") ? [{ nhan: "", hienThi: (r: (typeof dongBh)[number]) => <NutHop kieu="chu" nhan="Ghi làm lại" tieuDe={`Làm lại theo bảo hành: ${dvMap.get(r.dvId)?.ten ?? ""}`} moTa={`${r.kq.nhan}: ${r.kq.chiTiet} Mốc và % ưu đãi do hệ thống tính, lưu lại như lúc này.`} action={ghiBaoHanh} an={{ khach_id: id, dich_vu_id: r.dvId }} truong={[{ ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong", rong: true }]} nhanLuu="Ghi nhận" /> }] : []),
           ]} /></section>
         {xemKn && <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Khiếu nại</h3>
-          <Bang duLieu={kns ?? []} khoa={(r) => r.id} trong="Khách chưa có khiếu nại nào." cot={[
+          <Bang noi duLieu={kns ?? []} khoa={(r) => r.id} trong="Khách chưa có khiếu nại nào." cot={[
             { nhan: "Mã", chinh: true, hienThi: (r) => <Link className="font-medium text-nhan-dam hover:underline" href={`/khieu-nai/${r.id}`}>{r.ma}</Link> },
             { nhan: "Loại", hienThi: (r) => LOAI_KN[r.loai]?.replace(" (chuyển biến chứng)", "") }, { nhan: "Nội dung", hienThi: (r) => <span className="line-clamp-2 text-[13px]">{r.noi_dung}</span> },
             { nhan: "Ngày", hienThi: (r) => ngayGioVN(r.tiep_nhan_luc) }, { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_KN[r.trang_thai].kieu}>{TT_KN[r.trang_thai].ten}</NhanTrangThai> },
           ]} /></section>}
         <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Biến chứng</h3>
-          <Bang duLieu={bcs ?? []} khoa={(r) => r.id} trong="Khách chưa có ca biến chứng nào." cot={[
+          <Bang noi duLieu={bcs ?? []} khoa={(r) => r.id} trong="Khách chưa có ca biến chứng nào." cot={[
             { nhan: "Mã", chinh: true, hienThi: (r) => <Link className="font-medium text-nhan-dam hover:underline" href={`/khieu-nai/bien-chung/${r.id}`}>{r.ma}</Link> },
             { nhan: "Dấu hiệu", hienThi: (r) => <span className="line-clamp-2 text-[13px]">{r.dau_hieu}</span> }, { nhan: "Báo lúc", hienThi: (r) => ngayGioVN(r.bao_luc) },
             { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_BC[r.trang_thai].kieu}>{TT_BC[r.trang_thai].ten}</NhanTrangThai> },
           ]} /></section>
         {xemKn && (bhs ?? []).length > 0 && <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Đã làm lại theo bảo hành</h3>
-          <Bang duLieu={bhs ?? []} khoa={(r) => r.id} trong="" cot={[
+          <Bang noi duLieu={bhs ?? []} khoa={(r) => r.id} trong="" cot={[
             { nhan: "Dịch vụ", chinh: true, hienThi: (r) => dvMap.get(r.dich_vu_id)?.ten ?? "" }, { nhan: "Ngày làm lại", hienThi: (r) => ngayVN(r.ngay_lam_lai) },
             { nhan: "Mốc", hienThi: (r) => `${MOC[r.moc]}${r.ty_le_giam != null ? ` · ưu đãi ${Number(r.ty_le_giam)}%` : ""}` },
           ]} /></section>}
@@ -320,7 +320,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         {(goiRaw ?? []).length > 0 && (
           <section className="mb-6">
             <h3 className="mb-2 text-[15px] font-semibold text-muc">Lịch sử chăm sóc (gọi điện)</h3>
-            <Bang duLieu={goiRaw ?? []} khoa={(r) => r.id} trong="" cot={[
+            <Bang noi duLieu={goiRaw ?? []} khoa={(r) => r.id} trong="" cot={[
               { nhan: "Lúc gọi", chinh: true, hienThi: (r) => ngayGioVN(r.tao_luc) },
               { nhan: "Lý do gọi", hienThi: (r) => <span className="text-[13px]">{nhanHang(r.loai)} · {ngayVN(r.ngay_goc)}</span> },
               { nhan: "Kết quả", hienThi: (r) => { const t = nhanTrangThaiGoi(r.trang_thai); return <div className="text-[13px]">{t && <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>}{r.ngay_goi_lai && <div className="text-muc-3">Gọi lại {ngayVN(r.ngay_goi_lai)}</div>}{r.khong_can_goi_lai && <div className="text-muc-3">Không cần gọi lại</div>}</div>; } },
@@ -331,7 +331,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         )}
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3"><p className="text-[13px] text-muc-3">{soVN(count ?? 0)} nhắc nhở (chưa thực hiện xếp trước). <Link href="/khach-hang/nhac-nho" className="underline underline-offset-2">Lịch nhắc chăm sóc</Link></p>
           {sua0 && <HopTaoNhac kieu="phu" khach={{ id, ten: k.ho_ten ?? "" }} dichVu={dvNhac} nhanVien={luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"))} phuTrachMacDinh={k.nguoi_phu_trach_id ?? nd.nhanVienId} homNay={homNayHCM()} action={taoNhacTay} />}</div>
-        <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Khách chưa có nhắc nhở nào." cot={[
+        <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Khách chưa có nhắc nhở nào." cot={[
           { nhan: "Ngày nhắc", chinh: true, hienThi: (r) => (r.ngay_nhac ? ngayGioVN(r.ngay_nhac) : "") },
           { nhan: "Trạng thái", hienThi: (r) => { const n = NHAN_NHAC[r.trang_thai] ?? NHAN_NHAC.dang_nhac; return <NhanTrangThai kieu={n.kieu}>{n.nhan}</NhanTrangThai>; } },
           { nhan: "Nội dung", hienThi: (r) => <span className="line-clamp-3 whitespace-pre-line text-[13px]">{r.noi_dung ?? ""}{r.ghi_chu ? ` — ${r.ghi_chu}` : ""}</span> },
@@ -373,7 +373,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
               className={`rounded-md border px-3 py-1 font-medium ${loaiDiemLoc === ma ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{nhan}</Link>
           ))}
         </nav>
-        <Bang duLieu={ds ?? []} khoa={(r) => String(r.id)} trong={loaiDiemLoc ? "Không có dòng điểm nào thuộc loại này." : "Khách chưa có lịch sử điểm thưởng."} cot={[
+        <Bang noi duLieu={ds ?? []} khoa={(r) => String(r.id)} trong={loaiDiemLoc ? "Không có dòng điểm nào thuộc loại này." : "Khách chưa có lịch sử điểm thưởng."} cot={[
           { nhan: "Thời gian", chinh: true, hienThi: (r) => ngayGioVN(r.tao_luc) },
           { nhan: "Loại", hienThi: (r) => LOAI_DIEM[r.loai] ?? r.loai },
           { nhan: "Điểm", phai: true, hienThi: (r) => <span className={`tabular-nums font-medium ${r.so_diem < 0 ? "text-loi" : "text-muc"}`}>{r.so_diem > 0 ? "+" : ""}{soVN(r.so_diem)}</span> },
@@ -432,7 +432,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   return (
     <>
       <Link href="/khach-hang" className="mb-3 inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div className="rounded-the border border-vien bg-giay-sang p-4">
+      <div className="the-noi p-4 pt-5 sm:p-5 sm:pt-6">
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0">
             <h1 className="chu-tieu-de text-[20px] font-bold uppercase leading-tight text-muc [overflow-wrap:anywhere]">{k.ho_ten}</h1>
@@ -466,8 +466,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
           </dl>
         )}
       </div>
-      <section aria-label="Lịch hẹn sắp tới" className="mt-4 rounded-the border border-vien bg-giay-sang px-4 py-3">
-        <h2 className="text-[14px] font-medium text-muc">Lịch hẹn sắp tới</h2>
+      <section aria-label="Lịch hẹn sắp tới" className="the-noi the-noi-thap mt-4 px-4 pb-3 pt-4">
+        <h2 className="text-[14px] font-semibold text-muc">Lịch hẹn sắp tới</h2>
         {(lichSap ?? []).length === 0 ? <p className="mt-1 text-[13px] text-muc-3">Khách chưa có lịch hẹn sắp tới.</p> : (
           <ul className="mt-2 divide-y divide-vien">
             {(lichSap ?? []).map((l) => {

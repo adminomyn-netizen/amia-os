@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { MessagesSquare } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -33,15 +35,10 @@ export default async function SoTuVan({ searchParams }: { searchParams: Promise<
     className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${kq === k ? "bg-nhan text-white" : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{t}</Link>;
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="chu-tieu-de text-[22px] text-muc">Tư vấn khách hàng</h1>
-          <p className="text-[13px] text-muc-3">Mỗi lần tư vấn là một phiếu: đặt vấn đề → phân tích → chứng minh → kết quả. Phiếu chỉ sửa, không xoá; mọi sửa đều có nhật ký.</p>
-        </div>
+      <TieuDeNoi gon tieuDe="Tư vấn khách hàng" icon={MessagesSquare} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Mỗi lần tư vấn là một phiếu: đặt vấn đề → phân tích → chứng minh → kết quả. Phiếu chỉ sửa, không xoá; mọi sửa đều có nhật ký.</>}>
         {sua && <NutHop nhan="Ghi phiếu tư vấn" tieuDe="Ghi phiếu tư vấn" rong action={luuPhieuTuVan} truong={truongPhieuTuVan(nvLc, dvLc, true)}
           giaTri={{ tu_van_vien_id: nd.nhanVienId, ngay_tu_van: homNayHCM(), ket_qua: "cho_chot" }} />}
-      </div>
+      </TieuDeNoi>
       <nav aria-label="Lọc theo kết quả" className="flex gap-2 overflow-x-auto pb-1">
         {nut("", "Tất cả")}{Object.entries(KET_QUA_TV).map(([k, v]) => nut(k, v.ten))}
       </nav>

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { History } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { unstable_cache } from "next/cache";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
@@ -55,11 +57,9 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
   };
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="chu-tieu-de text-[22px] text-muc">Khách gần đây</h1>
+      <TieuDeNoi gon tieuDe="Khách gần đây" icon={History} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai>
         {coQuyen(nd, "khach.xuat") && <NutXuatExcel loai="khach-gan-day" ten="khách gần đây" tham={{ cn: cn ?? undefined }} />}
-      </div>
+      </TieuDeNoi>
       <form method="get" className="flex flex-wrap items-end gap-3 text-[13px]">
         {!khoa && (
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>

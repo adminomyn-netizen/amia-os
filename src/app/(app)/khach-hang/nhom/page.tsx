@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Tags } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { docNhomQuanLy, docThamSo, khoaCnKhach, nhomTrungTen } from "@/lib/khach-danh-sach";
@@ -57,14 +58,9 @@ export default async function NhomKhach({ searchParams }: { searchParams: Promis
 
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="chu-tieu-de text-[22px] text-muc">Quản lý nhóm</h1>
-          <p className="text-[13px] text-muc-3">{dangDungTatCa.length} nhóm đang dùng{daAn.length ? ` · ${daAn.length} nhóm đã ẩn` : ""}. Một khách có thể thuộc nhiều nhóm.</p>
-        </div>
+      <TieuDeNoi gon tieuDe="Quản lý nhóm" icon={Tags} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>{dangDungTatCa.length} nhóm đang dùng{daAn.length ? ` · ${daAn.length} nhóm đã ẩn` : ""}. Một khách có thể thuộc nhiều nhóm.</>}>
         {sua && <NutHop nhan="Tạo mới" tieuDe="Quản lý nhóm" nhanLuu="Lưu thay đổi" truong={TRUONG} giaTri={{ mau: "#03a9f4" }} action={luuNhom} />}
-      </div>
+      </TieuDeNoi>
 
       {trung.length > 0 && (
         <div role="note" className="flex gap-2.5 rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[13px] text-canh-bao">

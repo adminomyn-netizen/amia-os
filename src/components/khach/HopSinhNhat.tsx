@@ -54,9 +54,9 @@ export function HopSinhNhat({ nhan, so, tab: tabDau, hang }: { nhan: string; so:
   return (
     <>
       {/* Nằm trong <dl> chỉ số: giữ cặp dt/dd, nút phủ cả ô (after:inset-0) để bấm đâu trên ô cũng mở hộp. */}
-      <div className="relative rounded-nho border border-vien bg-giay-sang px-3 py-2 hover:border-nhan">
-        <dt><button type="button" aria-haspopup="dialog" onClick={() => { setTab(tabDau); setMo(true); }} className="text-left text-muc-3 after:absolute after:inset-0 after:content-['']">{nhan}</button></dt>
-        <dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{so.toLocaleString("vi-VN")}</dd>
+      <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5 hover:border-nhan">
+        <dt><button type="button" aria-haspopup="dialog" onClick={() => { setTab(tabDau); setMo(true); }} className="text-left text-[12.5px] text-muc-3 after:absolute after:inset-0 after:content-['']">{nhan}</button></dt>
+        <dd className="mt-0.5 text-[22px] font-semibold leading-tight tabular-nums text-sac-hong">{so.toLocaleString("vi-VN")}</dd>
       </div>
       <Hop mo={mo} dong={() => setMo(false)} tieuDe="Khách hàng sinh nhật" rong="rong">
         <div role="tablist" className="mb-4 flex gap-1 overflow-x-auto border-b border-vien">

@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CalendarClock } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -45,11 +47,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div>
-        <h1 className="chu-tieu-de text-[22px] text-muc">Nhắc tái khám</h1>
-        <p className="text-[13px] text-muc-3">Khách có thẻ liệu trình còn buổi, đã tới ngày hẹn buổi kế tiếp mà chưa đặt lịch. Hẹn tái khám = lần làm gần nhất + khoảng cách giữa 2 buổi của gói (mặc định {ng.macDinhNgay} ngày).</p>
-      </div>
+      <TieuDeNoi gon tieuDe="Nhắc tái khám" icon={CalendarClock} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Khách có thẻ liệu trình còn buổi, đã tới ngày hẹn buổi kế tiếp mà chưa đặt lịch. Hẹn tái khám = lần làm gần nhất + khoảng cách giữa 2 buổi của gói (mặc định {ng.macDinhNgay} ngày).</>} />
 
       <form method="get" className="flex flex-wrap items-end gap-3 text-[13px]">
         {!khoa && (
@@ -73,7 +71,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
         <section>
           <h2 className="mb-1 text-[15px] font-semibold text-muc">Đã hẹn buổi kế tiếp ({hen.length})</h2>
           <p className="mb-2 text-[13px] text-muc-3">Ghi lúc trừ buổi thẻ hoặc ở hồ sơ thẻ; đã tự tạo nhắc trong hồ sơ khách. Hiện các hẹn từ 14 ngày trước trở đi.</p>
-          <Bang duLieu={hen} khoa={(r) => r.id} cot={[
+          <Bang noi duLieu={hen} khoa={(r) => r.id} cot={[
             { chinh: true, nhan: "Khách hàng", hienThi: (r) => <div><Link href={`/khach-hang/${r.khach_id}`} className="font-medium text-muc hover:underline">{r.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{r.dien_thoai} · {r.ma}</div></div> },
             { nhan: "Đã hẹn buổi kế tiếp ngày", hienThi: (r) => <div className="text-[13px] tabular-nums">{ngayVN(r.ngay_hen)}<div className="text-muc-3">{r.noi_dung ?? ""}</div></div> },
             { nhan: "Thẻ", hienThi: (r) => <Link href={`/the/${r.the_id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">{r.ma_the}</Link> },
@@ -83,7 +81,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
         </section>
       )}
 
-      <Bang duLieu={ds} khoa={(r) => r.khach_id} trong="Không có khách nào cần nhắc tái khám với điều kiện này."
+      <Bang noi duLieu={ds} khoa={(r) => r.khach_id} trong="Không có khách nào cần nhắc tái khám với điều kiện này."
         cot={[
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => <div><Link href={`/khach-hang/${r.khach_id}`} className="font-medium text-muc hover:underline">{r.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{r.dien_thoai} · {r.ma}</div></div> },
           { nhan: "Thẻ liệu trình", hienThi: (r) => <div className="text-[13px]"><Link href={`/the/${r.the_id}`} className="font-medium text-nhan-dam hover:underline">{r.ma_the}</Link> · {r.ten_goi}{r.so_the > 1 && <span className="nhan-nho ml-1">+{r.so_the - 1} thẻ</span>}<div className="text-muc-3">{r.khong_gioi_han ? "Không giới hạn buổi" : `Còn ${r.so_buoi_con} buổi`}{r.han_dung && r.han_dung >= "2000-01-01" ? ` · hạn ${ngayVN(r.han_dung)}` : ""}</div></div> },

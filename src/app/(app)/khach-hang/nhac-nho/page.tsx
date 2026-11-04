@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { AlarmClock } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -62,14 +64,9 @@ export default async function LichNhacChamSoc({ searchParams }: { searchParams: 
 
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="chu-tieu-de text-[22px] text-muc">Lịch nhắc chăm sóc</h1>
-          <p className="text-[13px] text-muc-3">Nhắc tạo tay (có lặp, người phụ trách) và nhắc chuyển từ SalonHero. Nhắc lặp hiện khi một lần nhắc rơi vào khoảng ngày đang xem. Danh sách gọi tự tính ở <Link href="/khach-hang/cham-soc" className="underline underline-offset-2">Chăm sóc khách</Link>.</p>
-        </div>
+      <TieuDeNoi gon tieuDe="Lịch nhắc chăm sóc" icon={AlarmClock} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Nhắc tạo tay (có lặp, người phụ trách) và nhắc chuyển từ SalonHero. Nhắc lặp hiện khi một lần nhắc rơi vào khoảng ngày đang xem. Danh sách gọi tự tính ở <Link href="/khach-hang/cham-soc" className="underline underline-offset-2">Chăm sóc khách</Link>.</>}>
         {sua && <HopTaoNhac dichVu={dv} nhanVien={nvLC} phuTrachMacDinh={nd.nhanVienId} homNay={hom} action={taoNhacTay} />}
-      </div>
+      </TieuDeNoi>
 
       <form method="get" className="flex flex-wrap items-end gap-x-3 gap-y-3 text-[13px]">
         {!khoa && (
@@ -89,7 +86,7 @@ export default async function LichNhacChamSoc({ searchParams }: { searchParams: 
 
       {error && <p role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Chưa tải được lịch nhắc (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
       <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> nhắc{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Không có nhắc nào trong khoảng ngày này."
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Không có nhắc nào trong khoảng ngày này."
         cot={[
           { chinh: true, nhan: "Ngày nhắc", hienThi: (r) => <span className="whitespace-nowrap tabular-nums">{ngayGioVN(r.ngay)}</span> },
           { nhan: "Khách hàng", hienThi: (r) => { const k = khach.get(r.khach_id); return k ? <div><Link href={`/khach-hang/${k.id}?tab=nhac-nho`} className="font-medium text-muc hover:underline">{k.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{xemSdt && k.dien_thoai ? `${k.dien_thoai} · ` : ""}{k.ma}</div></div> : ""; } },

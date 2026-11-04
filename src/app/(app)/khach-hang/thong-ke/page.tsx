@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { BarChart3 } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { unstable_cache } from "next/cache";
 import { yeuCauQuyen } from "@/lib/auth";
@@ -73,12 +75,9 @@ export default async function ThongKeKhach({ searchParams }: { searchParams: Pro
   const the = [{ nhan: "Có thẻ đang dùng", so: t.co_the, lk: "/khach-hang?the=co" }, { nhan: "Đang nợ", so: t.dang_no, lk: "/khach-hang?no=co" }, { nhan: "Có điểm thưởng", so: t.co_diem, lk: "/khach-hang?diem_tu=1" }];
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h1 className="chu-tieu-de text-[22px] text-muc">Thống kê khách</h1>
+      <TieuDeNoi gon tieuDe="Thống kê khách" icon={BarChart3} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>{t0 ? `${so(t.tong)} khách · tổng ${so(t.tong_diem)} điểm thưởng · ` : ""}số liệu làm mới mỗi 5 phút</>}>
         <NutXuatExcel loai="thong-ke-khach" ten="thống kê khách" />
-        <p className="text-[13px] text-muc-3">{t0 ? `${so(t.tong)} khách · tổng ${so(t.tong_diem)} điểm thưởng · ` : ""}số liệu làm mới mỗi 5 phút</p>
-      </div>
+      </TieuDeNoi>
       <dl className="grid grid-cols-2 gap-2">
         <div className="rounded-nho border border-vien bg-giay-sang px-3 py-2"><dt className="text-[12px] text-muc-3">Tổng số khách hàng</dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{t0 ? so(t.tong) : "—"}</dd></div>
         <div className="rounded-nho border border-vien bg-giay-sang px-3 py-2"><dt className="text-[12px] text-muc-3">Khách mới trong tuần <span className="text-muc-3">(hồ sơ tạo 7 ngày gần nhất)</span></dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{so(ngay?.moi_tuan ?? 0)}</dd></div>

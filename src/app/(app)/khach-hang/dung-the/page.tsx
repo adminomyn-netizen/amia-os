@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { CreditCard } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -62,13 +64,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="chu-tieu-de text-[22px] text-muc">Danh sách khách dùng thẻ</h1>
-          <p className="text-[13px] text-muc-3">Thẻ liệu trình và thẻ tiền của khách. Mặc định chỉ thẻ đang dùng (gồm thẻ đang khoá); chọn “Tất cả” hoặc một tình trạng để xem thẻ đã hết, hết hạn, thu hồi.</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <TieuDeNoi gon tieuDe="Danh sách khách dùng thẻ" icon={CreditCard} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Thẻ liệu trình và thẻ tiền của khách. Mặc định chỉ thẻ đang dùng (gồm thẻ đang khoá); chọn “Tất cả” hoặc một tình trạng để xem thẻ đã hết, hết hạn, thu hồi.</>}>
           {choCap && (
             <NutHop kieu="chinh" nhan="Cấp thẻ mới" tieuDe="Cấp thẻ mới" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Thẻ cấp tay không tính doanh thu; muốn bán thẻ có thu tiền thì dùng Thu ngân." rong
               truong={[{ ten: "khach", nhan: "Khách (mã hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true }, { ten: "goi_id", nhan: "Gói thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: (goi ?? []).map((g) => ({ gia_tri: g.id, nhan: `${g.ten} (${g.loai === "lan" ? `${g.so_buoi} buổi` : "thẻ tiền"})` })) },
@@ -76,8 +72,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
           )}
           {coQuyen(nd, "ban.tao") && <Link href="/ban-hang" className="flex h-10 items-center rounded-nho border border-vien-dam px-4 text-[14px] font-medium text-muc-2 hover:bg-giay-tram">Bán thẻ ở Thu ngân</Link>}
           <NutXuatExcel loai="khach-dung-the" ten="khách dùng thẻ" tham={{ cn: cn ?? undefined, ...thamSoDiaChi(f) }} />
-        </div>
-      </div>
+      </TieuDeNoi>
 
       {hienTong && (
         <dl className="grid grid-cols-[repeat(auto-fit,minmax(11.5rem,1fr))] gap-3">
@@ -119,7 +114,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
 
       {loiDs && <p role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Chưa tải được danh sách (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
       <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ{ttHienTai && f.tt ? ` · ${ttHienTai}` : " đang dùng"}{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}{f.nhom ? ` · nhóm ${tenNhom.get(f.nhom) ?? ""}` : ""}</p>
-      <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Không có thẻ nào với điều kiện này."
+      <Bang noi duLieu={ds} khoa={(r) => r.id ?? ""} trong="Không có thẻ nào với điều kiện này."
         cot={[
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => { const k = khach.get(r.khach_id ?? ""); return k ? <div><Link href={`/khach-hang/${k.id}`} className="font-medium text-muc hover:underline">{k.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{k.dien_thoai} · {k.ma}</div></div> : ""; } },
           { nhan: "Tên thẻ", hienThi: (r) => <div className="text-[13px]"><Link href={`/the/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> <span className="text-muc-3">· {r.loai === "tien" ? "Thẻ tiền" : "Thẻ lần"}</span><div className="text-muc-3">{tenGoi.get(r.goi_id ?? "") ?? ""}</div></div> },

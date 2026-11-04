@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { TicketX } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
@@ -37,11 +39,7 @@ export default async function TheSapHet({ searchParams }: { searchParams: Promis
 
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div>
-        <h1 className="chu-tieu-de text-[22px] text-muc">Thẻ sắp hết</h1>
-        <p className="text-[13px] text-muc-3">Thẻ liệu trình còn ≤ {buoi} buổi hoặc thẻ còn hạn ≤ {ngay} ngày. Thẻ không giới hạn buổi và thẻ đã hết/thu hồi/khoá không tính.</p>
-      </div>
+      <TieuDeNoi gon tieuDe="Thẻ sắp hết" icon={TicketX} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Thẻ liệu trình còn ≤ {buoi} buổi hoặc thẻ còn hạn ≤ {ngay} ngày. Thẻ không giới hạn buổi và thẻ đã hết/thu hồi/khoá không tính.</>} />
       <form method="get" className="flex flex-wrap items-end gap-3 text-[13px]">
         {!khoa && (
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>
@@ -56,7 +54,7 @@ export default async function TheSapHet({ searchParams }: { searchParams: Promis
         <button type="submit" className={NUT_PHU}>Lọc</button>
       </form>
       <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ sắp hết{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}</p>
-      <Bang duLieu={ds} khoa={(r) => r.the_id} trong="Không có thẻ nào sắp hết với điều kiện này."
+      <Bang noi duLieu={ds} khoa={(r) => r.the_id} trong="Không có thẻ nào sắp hết với điều kiện này."
         cot={[
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => <div><Link href={`/khach-hang/${r.khach_id}`} className="font-medium text-muc hover:underline">{r.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{r.dien_thoai} · {r.ma}</div></div> },
           { nhan: "Tên thẻ", hienThi: (r) => <div className="text-[13px]"><Link href={`/the/${r.the_id}`} className="font-medium text-nhan-dam hover:underline">{r.ma_the}</Link><div className="text-muc-3">{r.ten_goi}</div></div> },

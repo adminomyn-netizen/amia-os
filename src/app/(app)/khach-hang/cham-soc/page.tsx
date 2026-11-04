@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PhoneCall } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { gioVN, ngayGioVN, ngayVN, soVN } from "@/lib/dinh-dang";
@@ -48,11 +50,7 @@ export default async function ChamSocKhach({ searchParams }: { searchParams: Pro
 
   return (
     <div className="space-y-4">
-      <Link href="/khach-hang" className="inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
-      <div>
-        <h1 className="chu-tieu-de text-[22px] text-muc">Chăm sóc khách hàng</h1>
-        <p className="text-[13px] text-muc-3">Danh sách gọi/nhắn tự tính từ lịch hẹn, hoá đơn và ngày sinh. Gọi xong bấm Ghi kết quả: khách đã xử lý hôm nay tự ẩn, khách hẹn gọi lại tự hiện lại đúng ngày.</p>
-      </div>
+      <TieuDeNoi gon tieuDe="Chăm sóc khách hàng" icon={PhoneCall} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Danh sách gọi/nhắn tự tính từ lịch hẹn, hoá đơn và ngày sinh. Gọi xong bấm Ghi kết quả: khách đã xử lý hôm nay tự ẩn, khách hẹn gọi lại tự hiện lại đúng ngày.</>} />
 
       <nav aria-label="Loại chăm sóc" className="-mx-1 flex gap-1.5 overflow-x-auto px-1 pb-1">
         {HANG.map((h) => (
@@ -83,7 +81,7 @@ export default async function ChamSocKhach({ searchParams }: { searchParams: Pro
       <p className="text-[13px] text-muc-3">{mota}</p>
       <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> khách ở hàng «{nhanHang(loai)}»{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}{loai === "sau_dieu_tri" ? ` · ${sauDt} ngày sau điều trị` : ""}</p>
 
-      <Bang duLieu={ds} khoa={(r) => `${r.khach_id}-${r.loai}-${r.ngay_goc}`} trong="Hàng này đang trống: chưa có khách cần gọi."
+      <Bang noi duLieu={ds} khoa={(r) => `${r.khach_id}-${r.loai}-${r.ngay_goc}`} trong="Hàng này đang trống: chưa có khách cần gọi."
         cot={[
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => <div><Link href={`/khach-hang/${r.khach_id}?tab=nhac-nho`} className="font-medium text-muc hover:underline">{r.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{sdtHienThi(r.dien_thoai, xemSdt)} · {r.ma}</div></div> },
           { nhan: "Lý do gọi", hienThi: (r) => <div className="text-[13px]">

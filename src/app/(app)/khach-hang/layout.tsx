@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
-import { AlarmClock, BarChart3, CalendarClock, CreditCard, History, MessagesSquare, PhoneCall, Tags, TicketX } from "lucide-react";
+import { AlarmClock, BarChart3, CalendarClock, CreditCard, History, MessagesSquare, PhoneCall, Tags, TicketX, Users } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -39,32 +40,40 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
   ];
   const hangLC = (hang ?? []).map((h) => ({ gia_tri: h.ten, nhan: h.ten }));
 
+  // Lối tắt các màn con: ô biểu tượng nhiều màu, cuộn ngang trong khung trên điện thoại (không đẩy cả trang).
+  const loiTat = [
+    { href: "/khach-hang/thong-ke", nhan: "Thống kê khách hàng", Icon: BarChart3, mau: "bg-sac-xanh-nen text-sac-xanh", hien: true },
+    { href: "/khach-hang/gan-day", nhan: "Khách hàng gần đây", Icon: History, mau: "bg-sac-luc-nen text-sac-luc", hien: true },
+    { href: "/khach-hang/tu-van", nhan: "Tư vấn", Icon: MessagesSquare, mau: "bg-sac-tim-nen text-sac-tim", hien: true },
+    { href: "/khach-hang/nhom", nhan: "Quản lý nhóm", Icon: Tags, mau: "bg-sac-cam-nen text-sac-cam", hien: true },
+    { href: "/khach-hang/cham-soc", nhan: "Chăm sóc khách", Icon: PhoneCall, mau: "bg-sac-hong-nen text-sac-hong", hien: true },
+    { href: "/khach-hang/nhac-nho", nhan: "Lịch nhắc chăm sóc", Icon: AlarmClock, mau: "bg-sac-xanh-nen text-sac-xanh", hien: true },
+    { href: "/khach-hang/tai-kham", nhan: "Nhắc tái khám", Icon: CalendarClock, mau: "bg-sac-luc-nen text-sac-luc", hien: coQuyen(nd, "the.xem") },
+    { href: "/khach-hang/dung-the", nhan: "Khách dùng thẻ", Icon: CreditCard, mau: "bg-sac-tim-nen text-sac-tim", hien: coQuyen(nd, "the.xem") },
+    { href: "/khach-hang/the-sap-het", nhan: "Thẻ sắp hết", Icon: TicketX, mau: "bg-sac-hong-nen text-sac-hong", hien: coQuyen(nd, "the.xem") },
+  ].filter((m) => m.hien);
+
   const dau = (
     <div className="pb-4">
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pb-3">
-        <h1 className="chu-tieu-de text-[24px] text-muc lg:text-[28px]">Khách hàng</h1>
-        <div className="flex flex-wrap items-center gap-2.5">
-          <Link href="/khach-hang/thong-ke" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><BarChart3 aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thống kê khách hàng</Link>
-          <Link href="/khach-hang/gan-day" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><History aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách hàng gần đây</Link>
-          <Link href="/khach-hang/tu-van" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><MessagesSquare aria-hidden strokeWidth={1.7} className="h-4 w-4" />Tư vấn</Link>
-          <Link href="/khach-hang/nhom" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><Tags aria-hidden strokeWidth={1.7} className="h-4 w-4" />Quản lý nhóm</Link>
-          <Link href="/khach-hang/cham-soc" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><PhoneCall aria-hidden strokeWidth={1.7} className="h-4 w-4" />Chăm sóc khách</Link>
-          <Link href="/khach-hang/nhac-nho" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><AlarmClock aria-hidden strokeWidth={1.7} className="h-4 w-4" />Lịch nhắc chăm sóc</Link>
-          {coQuyen(nd, "the.xem") && <Link href="/khach-hang/tai-kham" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CalendarClock aria-hidden strokeWidth={1.7} className="h-4 w-4" />Nhắc tái khám</Link>}
-          {coQuyen(nd, "the.xem") && <Link href="/khach-hang/dung-the" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><CreditCard aria-hidden strokeWidth={1.7} className="h-4 w-4" />Khách dùng thẻ</Link>}
-          {coQuyen(nd, "the.xem") && <Link href="/khach-hang/the-sap-het" className="flex h-9 items-center gap-1.5 rounded-nho border border-vien-dam px-3 text-[13px] font-medium text-muc-2 hover:border-nhan"><TicketX aria-hidden strokeWidth={1.7} className="h-4 w-4" />Thẻ sắp hết</Link>}
-          {coQuyen(nd, "khach.nhap") && <NhapExcelKhach nguon={NGUON} nhanVien={nvLC} chiNhanh={cnLC} nhom={(nhomNhap ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }))} action={nhapKhachExcel} macDinh={{ nguoi: nd.nhanVienId, cn: nd.chiNhanhId ?? cn?.[0]?.id ?? "" }} />}
-          {coQuyen(nd, "khach.sua") && (
-            <NutHop nhan="Thêm mới" tieuDe="Thêm khách hàng mới" moTa="Nguồn khách và người phụ trách là bắt buộc để tính hoa hồng và đánh giá quảng cáo." rong truong={truong}
-              giaTri={{ chi_nhanh_id: nd.chiNhanhId ?? (cn?.[0]?.id ?? ""), nguoi_phu_trach_id: nd.nhanVienId, quan_tam: [] }} action={luuKhach} />
-          )}
-        </div>
-      </div>
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      <TieuDeNoi tieuDe="Khách hàng" icon={Users} so={`${so.tong.toLocaleString("vi-VN")} khách`} phu="Hồ sơ, lịch sử dịch vụ, thẻ, điểm thưởng và chăm sóc của từng khách ở một chỗ.">
+        {coQuyen(nd, "khach.nhap") && <NhapExcelKhach nguon={NGUON} nhanVien={nvLC} chiNhanh={cnLC} nhom={(nhomNhap ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }))} action={nhapKhachExcel} macDinh={{ nguoi: nd.nhanVienId, cn: nd.chiNhanhId ?? cn?.[0]?.id ?? "" }} />}
+        {coQuyen(nd, "khach.sua") && (
+          <NutHop nhan="Thêm mới" tieuDe="Thêm khách hàng mới" moTa="Nguồn khách và người phụ trách là bắt buộc để tính hoa hồng và đánh giá quảng cáo." rong truong={truong}
+            giaTri={{ chi_nhanh_id: nd.chiNhanhId ?? (cn?.[0]?.id ?? ""), nguoi_phu_trach_id: nd.nhanVienId, quan_tam: [] }} action={luuKhach} />
+        )}
+      </TieuDeNoi>
+      <nav aria-label="Các màn khách hàng" className="-mx-1 mb-4 flex gap-2 overflow-x-auto px-1 pb-1 lg:flex-wrap lg:overflow-visible">
+        {loiTat.map(({ href, nhan, Icon, mau }) => (
+          <Link key={href} href={href} className="group flex h-10 shrink-0 items-center gap-2 rounded-the border border-vien bg-giay-sang py-1 pl-1 pr-3.5 text-[13px] font-medium text-muc-2 shadow-[0_1px_2px_rgb(10_43_38/0.06)] transition-[border-color,box-shadow,transform] hover:-translate-y-px hover:border-nhan hover:text-muc hover:shadow-[0_6px_14px_-4px_rgb(10_43_38/0.16)]">
+            <span className={`flex h-8 w-8 items-center justify-center rounded-nho ${mau}`}><Icon aria-hidden strokeWidth={1.8} className="h-4 w-4" /></span>{nhan}
+          </Link>
+        ))}
+      </nav>
+      <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {chiSo.map((c) => c.tab ? <HopSinhNhat key={c.nhan} nhan={c.nhan} so={c.so} tab={c.tab} hang={hangLC} /> : (
-          <div key={c.nhan} className="rounded-nho border border-vien bg-giay-sang px-3 py-2">
-            <dt className="text-muc-3">{c.nhan}</dt>
-            <dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{c.so.toLocaleString("vi-VN")}</dd>
+          <div key={c.nhan} className="the-noi the-noi-thap px-4 pb-3 pt-3.5">
+            <dt className="text-[12.5px] text-muc-3">{c.nhan}</dt>
+            <dd className="mt-0.5 text-[22px] font-semibold leading-tight tabular-nums text-muc">{c.so.toLocaleString("vi-VN")}</dd>
           </div>
         ))}
       </dl>

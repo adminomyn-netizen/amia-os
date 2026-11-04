@@ -35,10 +35,10 @@ create table public.cs_hh_danh_muc (
 insert into public.cs_hh_danh_muc (thu_tu, ten, gia_khuyen_mai, goi_id, dich_vu_id) values
   (1, 'Gói Haru (Hạnh phúc)', 80000000, (select id from public.goi_the where ma = 'SH159834'), (select id from public.dich_vu where ten = 'Gói Haru (Hạnh phúc)' and hoat_dong limit 1)),
   (2, 'Gói Yume (Thăng hoa) - Nhau thai cuống rốn UPA', 150000000, (select id from public.goi_the where ma = 'SH159836'), (select id from public.dich_vu where ten = 'Gói Yume (Thăng hoa)' and hoat_dong limit 1)),
-  (3, 'Miyabi Collagen Therapy - Căng chỉ Collagen sợi tơ tằm UPA toàn mặt', 35000000, null, null),
+  (3, 'Miyabi Collagen Therapy - Căng chỉ Collagen sợi tơ tằm UPA toàn mặt', 35000000, (select id from public.goi_the where ma = 'AM-MIYABI-TM'), null),
   (4, 'Ichi Lift Therapy - Nâng cơ bán phần độc quyền Amia', 50000000, (select id from public.goi_the where ma = 'SH62629'), (select id from public.dich_vu where ten = 'Ichi Lift Therapy Nâng cơ độc quyền Amia' and hoat_dong limit 1)),
   (5, 'Amia Ichi Lift Therapy - Nâng cơ độc quyền Amia VIP', 60000000, (select id from public.goi_the where ma = 'SH114384'), (select id from public.dich_vu where ten = 'Amia Ichi Lift Therapy - Nâng cơ độc quyền Amia VIP' and hoat_dong limit 1)),
-  (6, 'Amia Ichi Lift Therapy luxury - Nâng cơ toàn diện, sợi dưỡng RH collagen', 120000000, null, null),
+  (6, 'Amia Ichi Lift Therapy luxury - Nâng cơ toàn diện, sợi dưỡng RH collagen', 120000000, (select id from public.goi_the where ma = 'AM-ICHI-LUX'), null),
   (7, 'Thẻ Amia Gold', 100000000, (select id from public.goi_the where ma = 'SH82961'), null),
   (8, 'Thẻ Amia Diamond', 200000000, (select id from public.goi_the where ma = 'SH102596'), null),
   (9, 'Thẻ Amia Limited', 300000000, (select id from public.goi_the where ma = 'SH114386'), null);

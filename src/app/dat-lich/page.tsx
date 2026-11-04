@@ -59,7 +59,7 @@ export default async function TrangDatLich({ searchParams }: { searchParams: Pro
   });
   const tenNhom = new Map((nhomKq.data ?? []).map((n) => [n.id, n.ten]));
   const dichVu: DvDat[] = (dvKq.data ?? []).map((d) => ({ id: d.id, ten: d.ten, phut: d.thoi_luong_phut, nhom: tenNhom.get(d.nhom_id) ?? "Dịch vụ", cn: d.chi_nhanh_ids, ...(web.hienGia ? { gia: Number(d.gia) } : {}) }));
-  const nhanVien: NvDat[] = (nvKq.data ?? []).map((n) => ({ id: n.id, ten: n.ho_ten.replace(/^MSC[.\-A-Z0-9]*?\d\.\s*/, "").trim() || n.ho_ten, chucDanh: n.chuc_danh ?? "", cn: n.chi_nhanh_id }));
+  const nhanVien: NvDat[] = (nvKq.data ?? []).map((n) => ({ id: n.id, ten: n.ho_ten.replace(/^MSC[.\-A-Z0-9]*\.\s*/, "").trim() || n.ho_ten, chucDanh: n.chuc_danh ?? "", cn: n.chi_nhanh_id }));
   const mo = !web.khoaTrang && chiNhanh.some((c) => c.datDuoc);
   const sdt = ch?.dien_thoai || chiNhanh.map((c) => c.dienThoai).find(Boolean) || "";
   const tenCuaHang = ch?.ten_thuong_hieu || "AMIA Beauty Center";

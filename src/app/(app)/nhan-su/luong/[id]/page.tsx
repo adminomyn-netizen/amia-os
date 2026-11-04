@@ -60,7 +60,7 @@ export default async function TrangKyLuong({ params }: { params: Promise<{ id: s
       </TieuDeNoi>
       <HangChiSo muc={[{ nhan: "Nhân viên", so: String(ds.length) }, { nhan: "Tổng thu nhập", so: tienVN(tong("gross")) }, { nhan: "BHXH + thuế", so: tienVN(tong("bhxh_nld") + tong("thue_tncn")) }, { nhan: "Tổng thực trả", so: tienVN(tong("thuc_tra")) }]} />
       <div className="mt-6" />
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Kỳ lương chưa có dòng nào. Cài điều kiện lương cho nhân viên rồi bấm Tính lại."
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Kỳ lương chưa có dòng nào. Cài điều kiện lương cho nhân viên rồi bấm Tính lại."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div><span className="text-muc">{ten.get(r.nhan_vien_id)?.ho_ten}</span><div className="text-[12.5px] text-muc-3">{TINH_TRANG_LUONG[r.tinh_trang]} · {soVN(r.cong_tinh)}/{soVN(r.cong_chuan)} công</div></div> },
           { nhan: "Lương theo công", phai: true, hienThi: (r) => tienVN(r.luong_cong) }, { nhan: "OT", phai: true, hienThi: (r) => (r.luong_ot ? tienVN(r.luong_ot) : "") },
@@ -73,7 +73,7 @@ export default async function TrangKyLuong({ params }: { params: Promise<{ id: s
       {(khoan ?? []).length > 0 && (
         <>
           <h2 className="nhan-muc mb-2 mt-9">Khoản cộng/trừ của kỳ</h2>
-          <Bang duLieu={khoan ?? []} khoa={(r) => r.id}
+          <Bang noi duLieu={khoan ?? []} khoa={(r) => r.id}
             cot={[
               { nhan: "Nhân viên", chinh: true, hienThi: (r) => ten.get(r.nhan_vien_id)?.ho_ten }, { nhan: "Loại", hienThi: (r) => LOAI_KHOAN[r.loai] }, { nhan: "Nội dung", hienThi: (r) => r.tieu_de },
               { nhan: "Số tiền", phai: true, hienThi: (r) => tienVN(r.so_tien) },

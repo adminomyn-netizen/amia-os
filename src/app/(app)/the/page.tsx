@@ -84,7 +84,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
         <form className="flex-1" action="/the"><input type="hidden" name="tab" value={tab} /><input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm mã thẻ, tên, SĐT khách (Enter)" aria-label="Tìm thẻ" className="h-11 w-full max-w-md rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] outline-none focus:border-nhan" /></form>
         <Link href={`/the?tab=${tab}${sp.het === "1" ? "" : "&het=1"}`} className="font-medium text-nhan-dam hover:underline">{sp.het === "1" ? "Chỉ thẻ còn dùng" : "Hiện cả thẻ đã hết/hết hạn/thu hồi"}</Link>
       </div>
-      <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có thẻ nào."
+      <Bang noi duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có thẻ nào."
         cot={[
           { nhan: "Mã thẻ", hienThi: (r) => <Link href={`/the/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
           { chinh: true, nhan: "Khách", hienThi: (r) => { const k = tenK.get(r.khach_id ?? ""); return k ? <Link href={`/khach-hang/${k.id}`} className="text-muc hover:underline">{k.ho_ten}</Link> : ""; } },

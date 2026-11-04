@@ -64,7 +64,7 @@ export default async function TrangDanhSachVb({ searchParams }: { searchParams: 
         {soan && <NutHop nhan="Soạn văn bản" tieuDe="Soạn văn bản" truong={truong} action={luuVanBan} giaTri={{ loai_id: "", ncc_id: "", chi_nhanh_id: "" }} rong />}
       </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/van-ban/danh-sach" />
-      <Bang duLieu={ds} khoa={(r) => r.id} trong={tab === "can-xu-ly" ? "Không có văn bản nào cần xử lý." : "Chưa có văn bản."}
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong={tab === "can-xu-ly" ? "Không có văn bản nào cần xử lý." : "Chưa có văn bản."}
         cot={[
           { nhan: "Văn bản", chinh: true, hienThi: (r) => <div>{r.ma}{r.phien_ban > 1 && ` · bản ${r.phien_ban}`} · {r.tieu_de}<div className="text-[12.5px] text-muc-3">{tenLoai.get(r.loai_id)?.ten}</div></div> },
           { nhan: "Đối tượng", hienThi: (r) => <div>{r.khach_id ? tenKhach.get(r.khach_id) : r.ncc_id ? tenNcc.get(r.ncc_id) : ""}{r.gia_tri != null && <div className="text-[12.5px] text-muc-3">{tienVN(r.gia_tri)}</div>}</div> },

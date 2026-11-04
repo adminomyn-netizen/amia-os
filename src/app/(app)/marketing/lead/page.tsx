@@ -50,7 +50,7 @@ export default async function TrangLead({ searchParams }: { searchParams: Promis
         <NutHop nhan="Thêm lead" tieuDe="Thêm lead" truong={truongTao} action={taoLead} giaTri={{ nguon_id: "", chien_dich_id: "", doi_tac_id: "", nhan_ngay: true }} rong />
       </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/marketing/lead" />
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có lead."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có lead."
         cot={[
           { nhan: "Lead", chinh: true, hienThi: (r) => <div>{r.ma} · {r.ho_ten}<div className="text-[12.5px] text-muc-3">{r.sdt}{!nd.chiNhanhId && ` · ${tenCn.get(r.chi_nhanh_id) ?? ""}`}</div></div> },
           { nhan: "Nguồn", hienThi: (r) => <div>{tenNguon.get(r.nguon_id)}<div className="text-[12.5px] text-muc-3">{r.dich_vu_quan_tam ?? ""}</div></div> },

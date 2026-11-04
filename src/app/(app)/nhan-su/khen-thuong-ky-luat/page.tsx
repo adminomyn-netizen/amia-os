@@ -29,7 +29,7 @@ export default async function TrangKhenKyLuat() {
       <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Khen thưởng và kỷ luật" phu={`Tổng thưởng đã ghi ${tienVN(thuong)}, tổng phạt thu ${tienVN(phat)} (cả bản ghi chuyển từ Lark).`}>
         <NutHop nhan="Ghi nhận" tieuDe="Ghi khen thưởng hoặc kỷ luật" truong={truong} action={luuKhenKyLuat} giaTri={{ loai: "thuong", ngay_lap: homNayHCM() }} />
       </TieuDeNoi>
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có bản ghi nào."
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa có bản ghi nào."
         cot={[
           { nhan: "Ngày", hienThi: (r) => (r.ngay_lap ? ngayVN(r.ngay_lap) : `${r.thang ?? ""}/${r.nam ?? ""}`) },
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => (r.nhan_vien_id ? ten.get(r.nhan_vien_id) ?? "Đã nghỉ" : "—") },

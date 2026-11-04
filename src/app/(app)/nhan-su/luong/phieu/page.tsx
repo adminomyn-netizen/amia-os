@@ -98,20 +98,20 @@ export default async function TrangPhieuLuong({ searchParams }: { searchParams: 
       ]} />
 
       <h2 className="nhan-muc mb-3 mt-9">Công trong tháng</h2>
-      <Bang duLieu={congTH} khoa={(r) => r.nhan} trong="Chưa có số liệu công."
+      <Bang noi duLieu={congTH} khoa={(r) => r.nhan} trong="Chưa có số liệu công."
         cot={[{ nhan: "Loại công", chinh: true, hienThi: (r) => r.nhan }, { nhan: "Ghi chú", hienThi: (r) => <span className="text-muc-3">{r.ghiChu ?? ""}</span> }, { nhan: "Công", phai: true, hienThi: (r) => r.cong }]} />
       <p className="mt-2 text-[12px] text-muc-3">Phần công này tính từ dữ liệu hiện tại của tháng; số liệu trên phiếu (công tính lương, tiền) là bản chụp lúc tính lương và không đổi sau khi duyệt.</p>
 
       <h2 className="nhan-muc mb-3 mt-9">Thu nhập</h2>
-      <Bang duLieu={thuNhap} khoa={(r) => r.nhan} cot={cotTien} />
+      <Bang noi duLieu={thuNhap} khoa={(r) => r.nhan} cot={cotTien} />
       <h2 className="nhan-muc mb-3 mt-9">Khấu trừ</h2>
-      <Bang duLieu={khauTru} khoa={(r) => r.nhan} cot={cotTien} />
+      <Bang noi duLieu={khauTru} khoa={(r) => r.nhan} cot={cotTien} />
       <p className="mt-2 text-[12px] text-muc-3">Thực nhận = Tổng thu nhập − Tổng khấu trừ{tong("cong") + tong("tru") > 0 ? " (đã gồm các khoản cộng/trừ khác do nhân sự nhập)" : ""}, làm tròn xuống theo bảng lương.</p>
 
       {(ph ?? []).length > 0 && (
         <>
           <h2 className="nhan-muc mb-3 mt-9">Phiếu đã duyệt trong tháng</h2>
-          <Bang duLieu={ph ?? []} khoa={(r) => r.ma} cot={[
+          <Bang noi duLieu={ph ?? []} khoa={(r) => r.ma} cot={[
             { nhan: "Mã", chinh: true, hienThi: (r) => r.ma }, { nhan: "Loại", hienThi: (r) => `${LOAI_PHIEU[r.loai]}${r.loai_nghi ? ` · ${LOAI_NGHI[r.loai_nghi]}` : ""}` },
             { nhan: "Từ ngày", hienThi: (r) => ngayVN(r.tu_ngay) }, { nhan: "Đến ngày", hienThi: (r) => ngayVN(r.den_ngay) },
             { nhan: "Số ngày / giờ", phai: true, hienThi: (r) => (r.so_gio ? `${soVN(r.so_gio)} giờ` : `${soVN(r.so_ngay)} ngày`) },
@@ -120,7 +120,7 @@ export default async function TrangPhieuLuong({ searchParams }: { searchParams: 
       )}
 
       <h2 className="nhan-muc mb-3 mt-9">Chấm công từng ngày</h2>
-      <Bang duLieu={cc ?? []} khoa={(r) => r.id} trong="Không có ngày chấm công nào trong tháng."
+      <Bang noi duLieu={cc ?? []} khoa={(r) => r.id} trong="Không có ngày chấm công nào trong tháng."
         cot={[
           { nhan: "Ngày", chinh: true, hienThi: (r) => `${THU[thuCuaNgay(r.ngay)]} ${ngayVN(r.ngay)}` }, { nhan: "Vào", hienThi: (r) => gioVN(r.vao) }, { nhan: "Ra", hienThi: (r) => gioVN(r.ra) },
           { nhan: "Công", phai: true, hienThi: (r) => soVN(r.cong) }, { nhan: "Trễ (phút)", phai: true, hienThi: (r) => (r.tre_phut ? <span className="text-canh-bao">{r.tre_phut}</span> : "") },

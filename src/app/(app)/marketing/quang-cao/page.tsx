@@ -39,14 +39,14 @@ export default async function TrangQuangCao() {
       </TieuDeNoi>
       <h2 className="mb-2 mt-4 text-[14px] font-medium">Tổng theo ngày (21 ngày gần nhất)</h2>
       <p className="mb-2 text-[12px] text-muc-3">Chi phí: cộng các chiến dịch Meta. Tin nhắn và lead: số đếm thực ở Pancake (hội thoại inbox mới; lead = có số điện thoại), không phải số Meta tự báo.</p>
-      <Bang duLieu={tong} khoa={(r) => r.ngay} trong="Chưa có số liệu."
+      <Bang noi duLieu={tong} khoa={(r) => r.ngay} trong="Chưa có số liệu."
         cot={[
           { nhan: "Ngày", chinh: true, hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Chi phí", phai: true, hienThi: (r) => tienVN(r.chi) },
           { nhan: "Tin nhắn (Pancake)", phai: true, hienThi: (r) => soVN(r.tin) }, { nhan: "Giá / tin nhắn", phai: true, hienThi: (r) => (r.tin > 0 ? tienVN(Math.round(r.chi / r.tin)) : "—") },
           { nhan: "Lead (có SĐT)", phai: true, hienThi: (r) => soVN(r.lead) },
         ]} />
       <h2 className="mb-2 mt-6 text-[14px] font-medium">Chi tiết theo chiến dịch</h2>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có số liệu."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có số liệu."
         cot={[
           { nhan: "Ngày", chinh: true, hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Chiến dịch", hienThi: (r) => ten.get(r.chien_dich_id) ?? "" },
           { nhan: "Chi phí", phai: true, hienThi: (r) => tienVN(r.chi_phi) }, { nhan: "Hiển thị", phai: true, hienThi: (r) => soVN(r.hien_thi) },

@@ -38,7 +38,7 @@ export default async function TrangBlog({ searchParams }: { searchParams: Promis
     const soBai = new Map<string, number>();
     for (const r of dem ?? []) soBai.set(r.chuyen_muc_id, (soBai.get(r.chuyen_muc_id) ?? 0) + 1);
     noiDung = (
-      <Bang duLieu={cms ?? []} khoa={(r) => r.id} trong="Chưa có chuyên mục nào."
+      <Bang noi duLieu={cms ?? []} khoa={(r) => r.id} trong="Chưa có chuyên mục nào."
         cot={[
           { nhan: "Chuyên mục", chinh: true, hienThi: (r) => <span className="text-muc">{r.tieu_de}</span> },
           { nhan: "Mô tả", hienThi: (r) => r.mo_ta ?? "" },
@@ -87,7 +87,7 @@ export default async function TrangBlog({ searchParams }: { searchParams: Promis
           <Link href={link({ cm: undefined })} className={chip(!sp.cm)}>Mọi chuyên mục</Link>
           {(cms ?? []).map((c) => <Link key={c.id} href={link({ cm: c.id })} className={chip(sp.cm === c.id)}>{c.tieu_de}</Link>)}
         </div>
-        <Bang duLieu={bai ?? []} khoa={(r) => r.id} trong="Chưa có bài viết nào."
+        <Bang noi duLieu={bai ?? []} khoa={(r) => r.id} trong="Chưa có bài viết nào."
           cot={[
             { nhan: "Tiêu đề", chinh: true, hienThi: (r) => <span className="text-muc">{r.tieu_bieu ? "Tiêu biểu · " : ""}{r.tieu_de}</span> },
             { nhan: "Chuyên mục", hienThi: (r) => tenCm.get(r.chuyen_muc_id) ?? "" },

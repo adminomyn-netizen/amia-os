@@ -44,7 +44,7 @@ export default async function TrangNganHang({ searchParams }: { searchParams: Pr
         <input id="tim-nh" name="q" defaultValue={q} aria-label="Tìm kiếm" className={O_NHAP} autoComplete="off" />
         <button type="submit" className={NUT_PHU}>Tìm</button>
       </form>
-      <Bang duLieu={hien} khoa={(r) => r.id} trong="Không có dữ liệu."
+      <Bang noi duLieu={hien} khoa={(r) => r.id} trong="Không có dữ liệu."
         cot={[
           { nhan: "Số tài khoản", chinh: true, hienThi: (r) => <span className="flex flex-wrap items-center gap-2"><span className="tabular-nums text-muc">{che(r.so_tai_khoan)}</span>{r.mac_dinh && <NhanTrangThai kieu="tot">Mặc định</NhanTrangThai>}{!r.hoat_dong && <NhanTrangThai kieu="cho">Đang ẩn</NhanTrangThai>}</span> },
           { nhan: "Ngân hàng", hienThi: (r) => <div>{r.ngan_hang}{r.ghi_chu && <div className="text-[12.5px] text-muc-3">{r.ghi_chu}</div>}</div> }, { nhan: "Chủ tài khoản", hienThi: (r) => r.chu_tai_khoan },

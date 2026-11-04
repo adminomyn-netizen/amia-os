@@ -43,7 +43,7 @@ export default async function TrangChienDich() {
       <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Chiến dịch" phu="Mỗi chiến dịch chỉ một mục tiêu: Branding, Slogan, Khuyến mãi hoặc Thông điệp. Cần người có quyền duyệt trước khi chạy.">
         {sua && <NutHop nhan="Tạo chiến dịch" tieuDe="Tạo chiến dịch" truong={truong} action={luuChienDich} giaTri={{ muc_tieu: "thong_diep", nguon_id: "", chi_nhanh_id: "", owner_id: nd.nhanVienId }} rong />}
       </TieuDeNoi>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có chiến dịch."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có chiến dịch."
         cot={[
           { nhan: "Chiến dịch", chinh: true, hienThi: (r) => <div>{r.ma} · {r.ten}<div className="text-[12.5px] text-muc-3">{MUC_TIEU[r.muc_tieu]}{r.kenh && ` · ${r.kenh}`}</div></div> },
           { nhan: "Thời gian", hienThi: (r) => (r.bat_dau || r.ket_thuc ? `${ngayVN(r.bat_dau)} – ${ngayVN(r.ket_thuc)}` : "") },

@@ -111,7 +111,7 @@ export default async function TrangDanhSachHoSo({ searchParams }: { searchParams
         <div className="flex gap-2"><button type="submit" className={NUT_CHINH}>Lọc</button><Link href="/nhan-su/ho-so" className={`${NUT_PHU} inline-flex items-center`}>Bỏ lọc</Link></div>
       </form>
 
-      <Bang duLieu={hien} khoa={(r) => r.id} trong="Không có nhân viên nào khớp bộ lọc."
+      <Bang noi duLieu={hien} khoa={(r) => r.id} trong="Không có nhân viên nào khớp bộ lọc."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <Link href={`/nhan-su/ho-so/${r.id}`} className="block"><span className="text-muc hover:underline">{r.ho_ten}</span><div className="text-[12.5px] text-muc-3">{r.ma_nv}</div></Link> },
           { nhan: "Liên hệ", hienThi: (r) => <div className="text-[13px]">{r.dien_thoai ?? "—"}<div className="text-muc-3">{r.email ?? "Chưa có tài khoản"}</div></div> },

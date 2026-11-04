@@ -42,7 +42,7 @@ export default async function TrangNganSach({ searchParams }: { searchParams: Pr
       </TieuDeNoi>
       <HangChiSo muc={[{ nhan: "Tổng ngân sách", so: tienVN(tongNs) }, { nhan: "Đã chi", so: tienVN(tongChi), ghiChu: tongNs > 0 ? `${Math.round((tongChi / tongNs) * 100)}% ngân sách` : "" }, { nhan: "Còn lại", so: tienVN(tongNs - tongChi) }, { nhan: "Khoản vượt", so: String(vuot.length), ghiChu: vuot.length ? "cần giải trình" : "không có" }]} />
       <div className="mt-6" />
-      <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa đặt ngân sách cho tháng này."
+      <Bang noi duLieu={dong} khoa={(r) => r.id} trong="Chưa đặt ngân sách cho tháng này."
         cot={[
           { nhan: "Phân loại chi", chinh: true, hienThi: (r) => <div>{tenLoai.get(r.loai_thu_chi_id)}<div className="text-[12.5px] text-muc-3">{r.chi_nhanh_id ? tenCn.get(r.chi_nhanh_id) : "Toàn công ty"}{r.ghi_chu && ` · ${r.ghi_chu}`}</div></div> },
           { nhan: "Ngân sách", phai: true, hienThi: (r) => tienVN(r.so_tien) }, { nhan: "Đã chi", phai: true, hienThi: (r) => tienVN(r.chi) },

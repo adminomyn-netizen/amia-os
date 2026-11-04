@@ -53,7 +53,7 @@ export default async function TrangTaiKhoanDangNhap({ searchParams }: { searchPa
         <div><label className={NHAN_O} htmlFor="tk-q">Tìm kiếm:</label><input id="tk-q" name="q" defaultValue={q} placeholder="Tên, email, số điện thoại..." className={O_NHAP} autoComplete="off" /></div>
         <div><button type="submit" className={NUT_CHINH}>Lọc</button></div>
       </form>
-      <Bang duLieu={hien} khoa={(r) => r.id} trong="Không có dữ liệu."
+      <Bang noi duLieu={hien} khoa={(r) => r.id} trong="Không có dữ liệu."
         cot={[
           { nhan: "Ảnh", hienThi: (r) => <span aria-hidden className="flex h-9 w-9 items-center justify-center rounded-nho bg-giay-tram text-[13px] font-medium text-muc-2">{(r.ho_ten.trim().split(/\s+/).pop() ?? "?").charAt(0).toUpperCase()}</span> },
           { nhan: "Tên tài khoản", chinh: true, hienThi: (r) => <span className="text-muc">{r.ho_ten}</span> }, { nhan: "Tài khoản đăng nhập", hienThi: (r) => <span className="break-all">{r.email ?? ""}</span> },

@@ -40,7 +40,7 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
     noiDung = (
       <>
         <div className="mb-4"><Link href={`/kho?cn=${cn}${sp.thieu === "1" ? "" : "&thieu=1"}`} className="text-[14px] font-medium text-nhan-dam hover:underline">{sp.thieu === "1" ? "Hiện tất cả" : "Chỉ hiện hàng dưới mức tối thiểu"}</Link></div>
-        <Bang duLieu={ds} khoa={(r) => r.id} trong="Không có mặt hàng nào."
+        <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Không có mặt hàng nào."
           cot={[
             { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Vật tư / sản phẩm", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => r.nhom_cap ?? "" },
             { nhan: "Tồn", hienThi: (r) => <span className={r.ton < Number(r.ton_toi_thieu) ? "font-medium text-canh-bao" : ""}>{soVN(r.ton)} {r.don_vi}</span>, phai: true },
@@ -59,7 +59,7 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
     noiDung = (
       <>
         <p className="mb-3 text-[13px] text-muc-3">Tồn theo lô tính theo FEFO: hàng hết hạn sớm coi như xuất trước. Chỉ hiện lô còn hàng và hết hạn trong {MOC_HAN[MOC_HAN.length - 1]} ngày tới (hoặc đã quá hạn). Hàng đã quá hạn không được bán hay dùng, cần lập phiếu <Link href="/kho/xu-ly" className="text-nhan-dam hover:underline">xử lý vật tư</Link>.</p>
-        <Bang duLieu={ds} khoa={(r) => `${r.san_pham_id}${r.so_lo}${r.han_dung}`} trong="Không có lô nào sắp hết hạn."
+        <Bang noi duLieu={ds} khoa={(r) => `${r.san_pham_id}${r.so_lo}${r.han_dung}`} trong="Không có lô nào sắp hết hạn."
           cot={[
             { nhan: "Vật tư", chinh: true, hienThi: (r) => tenSp.get(r.san_pham_id!)?.ten ?? "" }, { nhan: "Lô", hienThi: (r) => r.so_lo }, { nhan: "Hạn dùng", hienThi: (r) => ngayVN(r.han_dung) },
             { nhan: "Còn lại", phai: true, hienThi: (r) => `${soVN(r.con_lai)} ${tenSp.get(r.san_pham_id!)?.don_vi ?? ""}` },
@@ -73,7 +73,7 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
     const { data: nv } = await db.from("nhan_vien").select("id, ho_ten");
     const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
     noiDung = (
-      <Bang duLieu={so ?? []} khoa={(r) => String(r.id)} trong="Sổ kho còn trống." cot={[
+      <Bang noi duLieu={so ?? []} khoa={(r) => String(r.id)} trong="Sổ kho còn trống." cot={[
         { nhan: "Lúc", hienThi: (r) => ngayGioVN(r.tao_luc) }, { nhan: "Việc", hienThi: (r) => NHAN_LOAI_KHO[r.loai] ?? r.loai }, { nhan: "Vật tư", hienThi: (r) => tenSp.get(r.san_pham_id)?.ten ?? "" },
         { nhan: "Lô / hạn", hienThi: (r) => [r.so_lo, r.han_dung ? ngayVN(r.han_dung) : ""].filter(Boolean).join(" · ") }, { nhan: "Người ghi", hienThi: (r) => tenNv.get(r.nguoi_id ?? "") ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
         { nhan: "Số lượng", hienThi: (r) => <span className={Number(r.so_luong) < 0 ? "text-loi" : "text-nhan-dam"}>{Number(r.so_luong) > 0 ? "+" : ""}{soVN(r.so_luong)}</span>, phai: true },

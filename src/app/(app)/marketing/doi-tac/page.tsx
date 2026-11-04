@@ -28,7 +28,7 @@ export default async function TrangDoiTac() {
       <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Nguồn giới thiệu & cộng tác viên" phu="Mỗi đối tác có mã giới thiệu riêng và một mức hoa hồng mặc định (theo phần trăm, theo tiền hoặc theo điểm) như SalonHero. Hoa hồng giới thiệu tự tính ở Hoa hồng › Nguồn giới thiệu.">
         {sua && <NutHop nhan="Thêm đối tác" tieuDe="Thêm đối tác" truong={truong} action={luuDoiTac} giaTri={{ loai: "ctv", hoat_dong: "1", hh_kieu: "phan_tram", hh_gia_tri: 0 }} />}
       </TieuDeNoi>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có đối tác."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có đối tác."
         cot={[
           { nhan: "Đối tác", chinh: true, hienThi: (r) => <div>{r.ma} · {r.ten}<div className="text-[12.5px] text-muc-3">{LOAI_DOI_TAC[r.loai]}{r.dien_thoai && ` · ${r.dien_thoai}`}</div></div> },
           { nhan: "Mã giới thiệu", hienThi: (r) => <code>{r.ma_gioi_thieu}</code> },
@@ -40,7 +40,7 @@ export default async function TrangDoiTac() {
       <h2 className="mb-2 mt-8 text-[15px] font-semibold">Nguồn lead</h2>
       <p className="mb-3 text-[13px] text-muc-3">Danh sách nguồn dùng khi nhập lead và làm báo cáo. Nguồn đã có lead thì chỉ ngừng dùng, không xoá.</p>
       <div className="mb-3">{sua && <NutHop kieu="phu" nhan="Thêm nguồn" tieuDe="Thêm nguồn lead" truong={truongNguon} action={luuNguonLead} giaTri={{ hoat_dong: "1" }} />}</div>
-      <Bang duLieu={nguon ?? []} khoa={(r) => r.id} trong="Chưa có nguồn."
+      <Bang noi duLieu={nguon ?? []} khoa={(r) => r.id} trong="Chưa có nguồn."
         cot={[
           { nhan: "Nguồn", chinh: true, hienThi: (r) => r.ten }, { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={r.hoat_dong ? "tot" : "tram"}>{r.hoat_dong ? "Đang dùng" : "Ngừng"}</NhanTrangThai> },
           { nhan: "", hienThi: (r) => (sua ? <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa nguồn" truong={truongNguon} action={luuNguonLead} giaTri={{ id: r.id, ten: r.ten, hoat_dong: r.hoat_dong ? "1" : "0" }} /> : null) },

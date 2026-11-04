@@ -73,7 +73,7 @@ export default async function TrangKhoHangBan({ searchParams }: { searchParams: 
             ))}
           </div>
           <div className="mb-5"><div className={`text-[26px] font-semibold tabular-nums ${tong < 0 ? "text-loi" : "text-muc"}`}>{tienVN(tong)}</div><div className="nhan-muc mt-1">Tổng giá trị kho (theo giá nhập TB)</div></div>
-          <Bang duLieu={hien} khoa={(r) => r.id} trong="Không có sản phẩm nào."
+          <Bang noi duLieu={hien} khoa={(r) => r.id} trong="Không có sản phẩm nào."
             cot={[
               { nhan: "Ảnh", hienThi: (r) => <AnhSanPham anh={r.anh} ten={r.ten} /> },
               { nhan: "Tên sản phẩm", chinh: true, hienThi: (r) => <span><span className="text-muc">{r.ten}</span><span className="block text-[12.5px] text-muc-3">{r.ma}</span></span> },

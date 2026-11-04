@@ -30,7 +30,7 @@ export default async function TrangNoiDung() {
       <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Nội dung" phu="Mỗi nội dung có người làm và hạn. Nộp duyệt → người duyệt chốt; duyệt hoàn thành cần có link bài hoặc ngày đăng.">
         {sua && <NutHop nhan="Thêm nội dung" tieuDe="Thêm nội dung" truong={truong} action={luuNoiDung} giaTri={{ loai: "bai_viet", han: hom, nguoi_phu_trach_id: nd.nhanVienId, chien_dich_id: "" }} rong />}
       </TieuDeNoi>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có nội dung."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có nội dung."
         cot={[
           { nhan: "Nội dung", chinh: true, hienThi: (r) => <div>{r.ma} · {r.tieu_de}<div className="text-[12.5px] text-muc-3">{LOAI_NOI_DUNG[r.loai]}{r.kenh && ` · ${r.kenh}`}{r.chien_dich_id && ` · ${tenCd.get(r.chien_dich_id)}`}</div></div> },
           { nhan: "Người làm", hienThi: (r) => tenNv.get(r.nguoi_phu_trach_id) ?? "" },

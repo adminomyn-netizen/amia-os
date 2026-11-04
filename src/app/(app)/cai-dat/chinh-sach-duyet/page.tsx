@@ -20,7 +20,7 @@ export default async function TrangChinhSachDuyet() {
     <div>
       <TieuDeNoi icon={ClipboardCheck} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Chính sách phê duyệt" phu="Ngưỡng tiền theo quy trình tài chính MSC và hạn mức duyệt của từng người. Người duyệt phải có hạn mức từ số tiền đề xuất trở lên; người gửi không tự duyệt; người duyệt không tự chi cùng đề xuất (trừ Kỹ thuật)." />
       <h2 className="nhan-muc mb-2">Ngưỡng tiền</h2>
-      <Bang duLieu={qt ?? []} khoa={(r) => r.id}
+      <Bang noi duLieu={qt ?? []} khoa={(r) => r.id}
         cot={[
           { nhan: "Quy tắc", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ten}</span><div className="mt-0.5 text-[13px] text-muc-3">{r.mo_ta}</div></div> },
           { nhan: "Ngưỡng", phai: true, hienThi: (r) => tienVN(r.nguong_tien) },
@@ -29,7 +29,7 @@ export default async function TrangChinhSachDuyet() {
         ]} />
       <h2 className="nhan-muc mb-2 mt-9">Người được duyệt chi</h2>
       <p className="mb-3 text-[13px] text-muc-3">Đặt hạn mức và chức danh tài chính ở mục Nhân viên (nút Sửa). Chưa đặt: Kỹ thuật và Quản lý không giới hạn, vai trò khác không duyệt tiền.</p>
-      <Bang duLieu={duyet} khoa={(r) => r.id} trong="Chưa có ai được duyệt chi."
+      <Bang noi duLieu={duyet} khoa={(r) => r.id} trong="Chưa có ai được duyệt chi."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="text-muc">{r.ho_ten}</span> },
           { nhan: "Vai trò", hienThi: (r) => (laVaiTro(r.vai_tro) ? NHAN_VAI_TRO[r.vai_tro] : r.vai_tro) }, { nhan: "Chức danh tài chính", hienThi: (r) => (r.chuc_danh_tai_chinh ? CHUC_DANH_TC[r.chuc_danh_tai_chinh] : "") },

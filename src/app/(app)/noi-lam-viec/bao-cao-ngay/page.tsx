@@ -33,7 +33,7 @@ export default async function TrangBaoCaoNgay({ searchParams }: { searchParams: 
         <NutHop nhan={toi ? "Sửa báo cáo hôm nay" : "Nộp báo cáo hôm nay"} tieuDe="Báo cáo ngày" truong={truong} action={nopBaoCaoNgay} giaTri={{ ngay: hom, da_lam: toi?.da_lam ?? "", vuong: toi?.vuong ?? "", ke_hoach: toi?.ke_hoach ?? "" }} rong nhanLuu="Nộp báo cáo" />
       </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/noi-lam-viec/bao-cao-ngay" />
-      <Bang duLieu={bc ?? []} khoa={(r) => r.id} trong="Chưa có báo cáo nào."
+      <Bang noi duLieu={bc ?? []} khoa={(r) => r.id} trong="Chưa có báo cáo nào."
         cot={[
           { nhan: "Ngày", chinh: true, hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Nhân viên", hienThi: (r) => ten.get(r.nhan_vien_id) ?? "" },
           { nhan: "Đã làm", hienThi: (r) => <span className="whitespace-pre-line">{r.da_lam}</span> },

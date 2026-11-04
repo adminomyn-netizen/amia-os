@@ -27,7 +27,7 @@ export default async function TrangMotQuyTrinh({ params }: { params: Promise<{ m
       <dl className="the-noi the-noi-thap mb-6 grid gap-x-8 gap-y-3 p-4 sm:grid-cols-2 sm:p-5">
         {thong.map(([k, v]) => v ? <div key={k} className={k === "Mục đích" || k === "Phạm vi áp dụng" ? "sm:col-span-2" : ""}><dt className="text-[12px] text-muc-3">{k}</dt><dd className="mt-0.5 text-[14px] text-muc">{v}</dd></div> : null)}
       </dl>
-      <Bang duLieu={buoc ?? []} khoa={(r) => r.buoc} cot={[
+      <Bang noi duLieu={buoc ?? []} khoa={(r) => r.buoc} cot={[
         { nhan: "Bước", chinh: true, hienThi: (r) => <span className="font-medium text-muc">{r.buoc}</span> },
         { nhan: "Người thực hiện", hienThi: (r) => r.nguoi },
         { nhan: "Hành động chi tiết", hienThi: (r) => <span className="text-[13.5px] leading-snug">{r.hanh_dong}</span> },

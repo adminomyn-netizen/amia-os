@@ -31,7 +31,7 @@ export default async function TrangDieuKienLuong() {
       <TieuDeNoi quayLai={{ href: "/nhan-su/luong", nhan: "Bảng lương" }} tieuDe="Cài đặt lương cơ bản" phu="Điều kiện lương theo ngày hiệu lực: kỳ lương lấy dòng có hiệu lực mới nhất không sau cuối tháng. Chỉ người có quyền lương thấy mục này.">
         {sua && <NutHop nhan="Thêm điều kiện lương" tieuDe="Thêm điều kiện lương" truong={truong} action={luuDieuKienLuong} giaTri={{ hieu_luc_tu: hom, tinh_trang: "chinh_thuc", ty_le_thu_viec: 85, so_npt: 0, dong_bh: false }} rong />}
       </TieuDeNoi>
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Không có nhân viên."
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Không có nhân viên."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ho_ten}</span><div className="text-[12.5px] text-muc-3">{r.ma_nv}</div></div> },
           { nhan: "Hiệu lực từ", hienThi: (r) => { const d = moiNhat.get(r.id); return d ? ngayVN(d.hieu_luc_tu) : <span className="text-canh-bao">Chưa cài</span>; } },

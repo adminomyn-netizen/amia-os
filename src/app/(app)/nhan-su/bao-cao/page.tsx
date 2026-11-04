@@ -72,7 +72,7 @@ export default async function TrangBaoCaoNhanSu({ searchParams }: { searchParams
         </div>
         <section>
           <h2 className="nhan-muc mb-3">Quân số theo phòng</h2>
-          <Bang duLieu={[...theoPhong].sort((a, b) => b[1] - a[1])} khoa={(r) => r[0]} trong="Chưa có nhân sự." cot={[
+          <Bang noi duLieu={[...theoPhong].sort((a, b) => b[1] - a[1])} khoa={(r) => r[0]} trong="Chưa có nhân sự." cot={[
             { nhan: "Phòng", chinh: true, hienThi: (r) => r[0] }, { nhan: "Số người", phai: true, hienThi: (r) => r[1] },
             { nhan: "Tỉ trọng", phai: true, hienThi: (r) => `${tiLe(r[1], dangLam.length)}%` },
           ]} />
@@ -98,14 +98,14 @@ export default async function TrangBaoCaoNhanSu({ searchParams }: { searchParams
         </div>
         <section>
           <h2 className="nhan-muc mb-3">Sắp hết hạn thử việc (45 ngày tới)</h2>
-          <Bang duLieu={tt.sapHetHan} khoa={(r) => r.id} trong="Không ai sắp hết hạn thử việc." cot={[
+          <Bang noi duLieu={tt.sapHetHan} khoa={(r) => r.id} trong="Không ai sắp hết hạn thử việc." cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{nhanVien.get(r.id)?.ho_ten}<div className="text-[12.5px] text-muc-3">{nhanVien.get(r.id)?.ma_nv}</div></div> },
             { nhan: "Hạn thử việc", hienThi: (r) => ngayVN(r.han) }, { nhan: "", hienThi: (r) => <NhanTrangThai kieu={r.conLai < 0 ? "loi" : r.conLai <= 7 ? "cho" : "tram"}>{r.conLai < 0 ? `Quá ${-r.conLai} ngày` : `Còn ${r.conLai} ngày`}</NhanTrangThai> },
           ]} />
         </section>
         <section>
           <h2 className="nhan-muc mb-3">Tiến độ lộ trình, người vào làm 90 ngày gần đây</h2>
-          <Bang duLieu={moi} khoa={(r) => r.n.id} trong="Không có nhân viên mới trong 90 ngày gần đây." cot={[
+          <Bang noi duLieu={moi} khoa={(r) => r.n.id} trong="Không có nhân viên mới trong 90 ngày gần đây." cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{r.n.ho_ten}<div className="text-[12.5px] text-muc-3">{r.n.ma_nv} · vào làm {ngayVN(r.n.ngay_vao_lam)}</div></div> },
             { nhan: "Mốc xong", phai: true, hienThi: (r) => `${r.td.xong}/${r.td.tong}` },
             { nhan: "Quá hạn", phai: true, hienThi: (r) => (r.td.quaHan ? <span className="font-medium text-canh-bao">{r.td.quaHan}</span> : "0") },
@@ -126,14 +126,14 @@ export default async function TrangBaoCaoNhanSu({ searchParams }: { searchParams
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           <So nhan="Số người có lương" giaTri={tong.n} /><So nhan="Tổng thực trả" giaTri={tienVN(tong.thucTra)} /><So nhan="Hoa hồng" giaTri={tienVN(tong.hoaHong)} /><So nhan="BHXH người lao động" giaTri={tienVN(tong.bhxh)} />
         </div>
-        <Bang duLieu={theoPhong} khoa={(r) => r.phong} trong="Kỳ này chưa có dòng lương." cot={[
+        <Bang noi duLieu={theoPhong} khoa={(r) => r.phong} trong="Kỳ này chưa có dòng lương." cot={[
           { nhan: "Phòng", chinh: true, hienThi: (r) => r.phong }, { nhan: "Số người", phai: true, hienThi: (r) => r.soNguoi },
           { nhan: "Tổng thu nhập", phai: true, hienThi: (r) => tienVN(r.gross) }, { nhan: "Hoa hồng", phai: true, hienThi: (r) => tienVN(r.hoaHong) },
           { nhan: "Thực trả", phai: true, hienThi: (r) => tienVN(r.thucTra) },
         ]} />
         <section>
           <h2 className="nhan-muc mb-3">Các kỳ gần đây</h2>
-          <Bang duLieu={ky ?? []} khoa={(r) => r.id} cot={[
+          <Bang noi duLieu={ky ?? []} khoa={(r) => r.id} cot={[
             { nhan: "Kỳ", chinh: true, hienThi: (r) => <Link href={`/nhan-su/luong/${r.id}`} className="text-nhan-dam hover:underline">Tháng {String(r.thang).padStart(2, "0")}/{r.nam}</Link> },
             { nhan: "Trạng thái", hienThi: (r) => r.trang_thai },
           ]} />

@@ -39,7 +39,7 @@ export default async function TrangHopDong() {
       <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Hợp đồng lao động" phu={<>Chuỗi: thử việc (60 ngày) → HĐLĐ lần 1 → lần 2 → không xác định thời hạn. Nhắc trước {truoc} ngày khi sắp hết hạn. Người sắp hết hạn hoặc chưa có hợp đồng đứng đầu danh sách.</>}>
         {sua && <NutHop nhan="Thêm hợp đồng" tieuDe="Thêm hợp đồng lao động" truong={truong("", "")} action={luuHdld} giaTri={{ nhan_vien_id: "", giai_doan: "thu_viec", tu_ngay: hom }} rong />}
       </TieuDeNoi>
-      <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa có nhân viên."
+      <Bang noi duLieu={dong} khoa={(r) => r.id} trong="Chưa có nhân viên."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{r.ho_ten}<div className="text-[12.5px] text-muc-3">{r.ma_nv}</div></div> },
           { nhan: "Chuỗi hợp đồng", hienThi: (r) => (r.ds.length ? <div className="space-y-0.5 text-[13px]">{r.ds.map((h) => <div key={h.id}>{GIAI_DOAN_HD[h.giai_doan]}: {ngayVN(h.tu_ngay)}{h.den_ngay ? ` – ${ngayVN(h.den_ngay)}` : ""}{h.so_hd && ` · ${h.so_hd}`}{h.link_ban_dien_tu && <> · <a href={h.link_ban_dien_tu} target="_blank" rel="noreferrer noopener" className="text-nhan-dam hover:underline">bản điện tử</a></>}</div>)}</div> : <span className="text-muc-3">Chưa có hợp đồng</span>) },

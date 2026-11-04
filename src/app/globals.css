@@ -496,3 +496,16 @@ body {
   content: ""; flex-shrink: 0; width: 4px; height: 1.05em; border-radius: 2px;
   background: linear-gradient(180deg, var(--nhan) 0%, var(--dat) 100%);
 }
+
+/* Bảng trong thẻ nổi (Bang noi): từ 768px là thẻ sáng có chiều sâu, đầu bảng nền nhạt; điện thoại để trống vì mỗi hàng đã là một thẻ. */
+@media (min-width: 768px) {
+  .khung-bang {
+    background: linear-gradient(180deg, var(--the-1) 0%, var(--the-2) 100%);
+    border: 1px solid var(--vien);
+    border-radius: var(--radius-hop);
+    box-shadow: var(--sang-vien), var(--bong-1);
+    padding: 0 20px 4px;
+  }
+  .khung-bang thead th { padding-top: 14px; padding-bottom: 12px; }
+  .khung-bang tbody tr:last-child { border-bottom: 0; }
+}

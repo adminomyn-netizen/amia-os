@@ -53,7 +53,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
           { nhan: "Thao tác con người", so: String(tatCa.filter((x) => x.tt === "ngoai").length), ghiChu: "lời nói, kỹ năng, tác phong" },
         ]} />
         <div className="mt-6" />
-        <Bang duLieu={ds ?? []} khoa={(r) => r.ma} cot={[
+        <Bang noi duLieu={ds ?? []} khoa={(r) => r.ma} cot={[
           { nhan: "Quy trình", chinh: true, hienThi: (r) => <Link href={`/quy-trinh/${r.ma}`} className="block hover:underline"><span className="text-muc">{r.ma} · {r.ten}</span><div className="text-[12.5px] text-muc-3">{r.cum}</div></Link> },
           { nhan: "Chủ trì", hienThi: (r) => <Dai>{r.chu_tri}</Dai> },
           { nhan: "Biểu mẫu chính", hienThi: (r) => <Dai>{r.bieu_mau_chinh}</Dai> },
@@ -70,7 +70,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
         {nhom.map(([n, ten]) => (
           <section key={n}>
             <h2 className="mb-3 text-[16px] font-semibold text-muc">{n}. {ten}</h2>
-            <Bang duLieu={(ds ?? []).filter((x) => x.nhom === n)} khoa={(r) => r.ma} cot={[
+            <Bang noi duLieu={(ds ?? []).filter((x) => x.nhom === n)} khoa={(r) => r.ma} cot={[
               { nhan: "Thao tác", chinh: true, hienThi: (r) => <span className="text-muc">{r.ma} · {r.thao_tac}</span> }, { nhan: "Làm gì / nói gì", hienThi: (r) => <Dai>{r.lam_gi}</Dai> },
               { nhan: "Tiêu chuẩn & lưu ý", hienThi: (r) => <Dai>{r.tieu_chuan}</Dai> }, { nhan: "Công cụ / biểu mẫu", hienThi: (r) => <Dai>{r.cong_cu}</Dai> },
             ]} />
@@ -85,7 +85,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
       <>
         <HangChiSo muc={[{ nhan: "Đã có", so: String(dem("co")) }, { nhan: "Có một phần", so: String(dem("mot_phan")) }, { nhan: "Chưa có", so: String(dem("thieu")), ghiChu: "đang xây theo thứ tự ưu tiên" }]} />
         <div className="mt-6" />
-        <Bang duLieu={ds ?? []} khoa={(r) => r.ma} cot={[
+        <Bang noi duLieu={ds ?? []} khoa={(r) => r.ma} cot={[
           { nhan: "Biểu mẫu", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ma} · {r.ten}</span><div className="text-[12.5px] text-muc-3">{r.muc_dich}</div></div> },
           { nhan: "Trường thông tin chính", hienThi: (r) => <Dai>{r.truong}</Dai> }, { nhan: "Người dùng", hienThi: (r) => <Dai>{r.nguoi_dung}</Dai> },
           { nhan: "Trên hệ thống", hienThi: (r) => { const p = PHU_BM[r.ma]; return p ? <div><Phu tt={p.tt} /><div className="mt-1 text-[12.5px] text-muc-3">{p.ghi}</div>{p.link && <Link href={p.link} className="mt-1 inline-block text-[13px] text-nhan-dam hover:underline">Mở →</Link>}</div> : null; } },
@@ -116,7 +116,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
         {(Object.keys(NHOM) as (keyof typeof NHOM)[]).map((n) => (
           <section key={n}>
             <h2 className="mb-3 text-[16px] font-semibold text-muc">{n} · {NHOM[n]}</h2>
-            <Bang duLieu={(ds ?? []).filter((x) => x.nhom === n)} khoa={(r) => r.id} cot={[
+            <Bang noi duLieu={(ds ?? []).filter((x) => x.nhom === n)} khoa={(r) => r.id} cot={[
               { nhan: "Chỉ số", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Công thức", hienThi: (r) => <Dai>{r.cong_thuc}</Dai> }, { nhan: "Chỉ tiêu mẫu", hienThi: (r) => r.chi_tieu },
               { nhan: "Tần suất", hienThi: (r) => r.tan_suat }, { nhan: "Nguồn dữ liệu", hienThi: (r) => r.nguon }, { nhan: "Chủ trì", hienThi: (r) => r.chu_tri },
             ]} />
@@ -129,7 +129,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
     noiDung = (
       <>
         <p className="mb-4 text-[13.5px] text-muc-3">Khung quản trị rủi ro nội bộ, không thay thế tư vấn pháp lý. Mục pháp lý, hành nghề, quảng cáo cần luật sư rà soát theo quy định hiện hành.</p>
-        <Bang duLieu={ds ?? []} khoa={(r) => r.ma} cot={[
+        <Bang noi duLieu={ds ?? []} khoa={(r) => r.ma} cot={[
           { nhan: "Rủi ro", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ma} · {r.ten}</span><div className="text-[12.5px] text-muc-3">{r.nhom}</div></div> },
           { nhan: "Mức", hienThi: (r) => <NhanTrangThai kieu={r.muc === "Cao" ? "loi" : "cho"}>{r.muc}</NhanTrangThai> },
           { nhan: "Tình huống", hienThi: (r) => <Dai>{r.mo_ta}</Dai> }, { nhan: "Phòng ngừa và xử lý", hienThi: (r) => <Dai>{r.bien_phap}</Dai> }, { nhan: "Trách nhiệm", hienThi: (r) => <Dai>{r.trach_nhiem}</Dai> },
@@ -139,7 +139,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
   } else if (tab === "nhip") {
     const { data: ds } = await db.from("kd_nhip").select("*").order("thu_tu");
     const bang = (nhom: string) => (
-      <Bang duLieu={(ds ?? []).filter((x) => x.nhom === nhom)} khoa={(r) => r.id} cot={[
+      <Bang noi duLieu={(ds ?? []).filter((x) => x.nhom === nhom)} khoa={(r) => r.id} cot={[
         { nhan: "Chu kỳ", chinh: true, hienThi: (r) => <span className="text-muc">{r.chu_ky}</span> }, { nhan: "Hoạt động", hienThi: (r) => r.hoat_dong },
         { nhan: "Nội dung", hienThi: (r) => <Dai>{r.noi_dung}</Dai> }, { nhan: "Đầu ra", hienThi: (r) => <Dai>{r.dau_ra}</Dai> }, { nhan: "Chủ trì", hienThi: (r) => r.chu_tri },
       ]} />
@@ -189,7 +189,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
             <section key={h.ma} className="mb-8">
               <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"><h3 className="text-[15px] font-semibold text-muc">{h.ma} {h.ten}</h3><TienDo xong={viec.filter((d) => d.trang_thai === "xong").length} tong={viec.length} /></div>
               <p className="mb-2 text-[12.5px] text-muc-3">{h.muc_tieu}</p>
-              <Bang duLieu={viec} khoa={(r) => r.ma} cot={[
+              <Bang noi duLieu={viec} khoa={(r) => r.ma} cot={[
                 { nhan: "Đầu việc", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ma}</span> <Dai>{r.mo_ta}</Dai><div className="mt-1 text-[12.5px] text-muc-3">Đầu ra: {r.san_pham}</div><div className="text-[12.5px] text-muc-3">Hoàn thành khi: {r.dod}</div></div> },
                 { nhan: "Chủ trì / phối hợp", hienThi: (r) => <div className="text-[13px]">{r.chu_tri}<div className="text-muc-3">{r.phoi_hop}</div></div> },
                 { nhan: "Giai đoạn", hienThi: (r) => <span className="text-[13px]" title={GD[r.giai_doan]}>GĐ {r.giai_doan}</span> },

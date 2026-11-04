@@ -45,7 +45,7 @@ export default async function TrangCaKip({ searchParams }: { searchParams: Promi
         {sua && <NutHop kieu="phu" nhan="Tạo ca mới" tieuDe="Tạo ca mới" truong={truongCa} action={luuCa} giaTri={{ nghi_phut: 0, dung_sai_phut: 0, gio_chuan: 8, hoat_dong: true }} />}
       </TieuDeNoi>
       <h2 className="nhan-muc mb-2">Danh sách ca</h2>
-      <Bang duLieu={ca ?? []} khoa={(r) => r.id}
+      <Bang noi duLieu={ca ?? []} khoa={(r) => r.id}
         cot={[
           { nhan: "Ca", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ten}</span><div className="text-[12.5px] text-muc-3">{r.ma}</div></div> },
           { nhan: "Giờ làm", hienThi: (r) => `${r.gio_vao.slice(0, 5)} – ${r.gio_ra.slice(0, 5)}` }, { nhan: "Nghỉ giữa ca", phai: true, hienThi: (r) => `${r.nghi_phut} phút` },
@@ -60,7 +60,7 @@ export default async function TrangCaKip({ searchParams }: { searchParams: Promi
             <Link href={`/nhan-su/ca-kip?tuan=${ngayCongThem(dau, -7)}`} className="text-[14px] text-muc-3 hover:text-muc">← Tuần trước</Link>
             <Link href={`/nhan-su/ca-kip?tuan=${ngayCongThem(dau, 7)}`} className="text-[14px] text-muc-3 hover:text-muc">Tuần sau →</Link>
           </div>
-          <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có nhân viên cần chấm công."
+          <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa có nhân viên cần chấm công."
             cot={[
               { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ho_ten}</span><div className="text-[12.5px] text-muc-3">{r.ma_nv}</div></div> },
               ...ngay.map((d) => ({ nhan: `${THU[new Date(`${d}T00:00:00Z`).getUTCDay()]} ${d.slice(8)}`, hienThi: (r: (typeof ds)[number]) => { const v = lich.get(`${r.id}|${d}`); return v === "Nghỉ" ? <span className="text-muc-3">Nghỉ</span> : v ?? ""; } })),
@@ -71,7 +71,7 @@ export default async function TrangCaKip({ searchParams }: { searchParams: Promi
         <h2 className="nhan-muc">Ngày lễ (tính trọn công cho người chấm công)</h2>
         {sua && <NutHop kieu="chu" nhan="Thêm ngày lễ" tieuDe="Thêm ngày lễ" truong={truongLe} action={luuNgayLe} />}
       </div>
-      <Bang duLieu={le ?? []} khoa={(r) => r.ngay} trong="Chưa khai báo ngày lễ nào."
+      <Bang noi duLieu={le ?? []} khoa={(r) => r.ngay} trong="Chưa khai báo ngày lễ nào."
         cot={[{ nhan: "Ngày", chinh: true, hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Tên", hienThi: (r) => r.ten }, { nhan: "", hienThi: (r) => (sua ? <NutHop kieu="chu" nguy nhan="Xoá" tieuDe="Xoá ngày lễ" xacNhan={`Xoá ${r.ten} (${ngayVN(r.ngay)})?`} action={xoaNgayLe} an={{ ngay: r.ngay }} nhanLuu="Xoá" /> : null) }]} />
     </div>
   );

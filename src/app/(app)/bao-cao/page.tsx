@@ -116,7 +116,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
           <input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm kiếm theo mã / tên sản phẩm" aria-label="Tìm kiếm theo mã hoặc tên sản phẩm" className={O_NHAP} />
           <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
         </form>
-        <Bang duLieu={hien} khoa={(r) => r.khoa} trong="Không tìm thấy kết quả nào"
+        <Bang noi duLieu={hien} khoa={(r) => r.khoa} trong="Không tìm thấy kết quả nào"
           cot={[
             { nhan: "Mã sản phẩm", hienThi: (r) => r.ma },
             { nhan: "Phân loại", hienThi: (r) => (r.phanLoai === "ban" ? "Bán thẻ / liệu trình" : "Sử dụng thẻ / liệu trình") },
@@ -193,7 +193,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
         <TieuDeMuc>Thực thu theo {KIEU_GOM.find((k) => k.ma === gom)?.ten.toLowerCase()}</TieuDeMuc>
         <CotTheoKy duLieu={dsBieuDo} ten="Thực thu theo kỳ" />
         <div className="mb-3 mt-6 flex flex-wrap items-center justify-between gap-3"><h2 className="text-[15px] font-medium text-muc">Bảng số liệu chi tiết</h2><ChonSoDong so={soDong} /></div>
-        <Bang duLieu={dsHien} khoa={(r) => r.nhan} trong="Không có phát sinh trong khoảng này."
+        <Bang noi duLieu={dsHien} khoa={(r) => r.nhan} trong="Không có phát sinh trong khoảng này."
           cot={[
             { nhan: "Thời gian", hienThi: (r) => r.nhan }, { nhan: "Đơn mới", hienThi: (r) => r.so_don, phai: true }, { nhan: "Doanh thu", hienThi: (r) => tienVN(r.doanh_thu), phai: true },
             { nhan: "Thu đơn mới", hienThi: (r) => tienVN(r.thu_don_moi), phai: true }, { nhan: "Thu nợ cũ", hienThi: (r) => tienVN(r.thu_no_cu), phai: true }, { nhan: "Thực thu", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.thuc_thu)}</span>, phai: true },
@@ -215,7 +215,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
         <TieuDeMuc>Biểu đồ doanh thu từng nhân viên</TieuDeMuc>
         <CotNgang duLieu={ds.slice(0, 15).map((r) => ({ nhan: r.ten, gia_tri: r.tong }))} dinhDang={(n) => tienVN(n)} trong="Chưa có đơn nào có gán người hưởng trong khoảng này." />
         <TieuDeMuc>Bảng số liệu chi tiết</TieuDeMuc>
-        <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có đơn nào có gán người hưởng trong khoảng này."
+        <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa có đơn nào có gán người hưởng trong khoảng này."
           cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
             { nhan: "Số lần phục vụ", hienThi: (r) => soVN(r.soPhucVu), phai: true }, { nhan: "Doanh số dịch vụ", hienThi: (r) => tienVN(r.dsDichVu), phai: true },
@@ -260,7 +260,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
           <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
           <ChonSoDong so={soDong} />
         </form>
-        <Bang duLieu={dsHien} khoa={(r) => `${r.loai}-${r.ten}`} trong="Chưa bán gì trong khoảng này."
+        <Bang noi duLieu={dsHien} khoa={(r) => `${r.loai}-${r.ten}`} trong="Chưa bán gì trong khoảng này."
           cot={[
             { nhan: "Tên dịch vụ", chinh: true, hienThi: (r) => <span className="block"><span className="text-muc">{r.ten}</span><span className="block text-[12px] text-muc-3">{r.ma}</span></span> },
             { nhan: "Số lượng", hienThi: (r) => soVN(r.soLuong), phai: true }, { nhan: "Trước giảm giá", hienThi: (r) => tienVN(r.truoc), phai: true }, { nhan: "Sau giảm giá", hienThi: (r) => tienVN(r.sau), phai: true },

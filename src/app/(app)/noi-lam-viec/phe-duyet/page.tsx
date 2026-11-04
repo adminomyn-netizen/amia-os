@@ -83,7 +83,7 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
       <HangChiSo muc={[{ nhan: "Chờ tôi duyệt", so: String(dem("cho-duyet")) }, { nhan: "Chờ thực hiện", so: String(dem("cho-thuc-hien")) }, { nhan: "Tôi đã gửi", so: String(dem("toi-gui")) }, { nhan: "Bị từ chối", so: String(dem("tu-choi")) }]} />
       <div className="mt-6" />
       <Tab muc={TAB.map((x) => ({ ma: x.ma, ten: `${x.ten} (${dem(x.ma)})` }))} dang={tab} goc="/noi-lam-viec/phe-duyet" />
-      <Bang duLieu={hienThi} khoa={(r) => r.khoa} trong="Không có mục nào."
+      <Bang noi duLieu={hienThi} khoa={(r) => r.khoa} trong="Không có mục nào."
         cot={[
           { nhan: "Loại", chinh: true, hienThi: (r) => <div><div className="text-muc">{r.loai}</div><div className="text-[12.5px] text-muc-3">{r.ma}</div></div> },
           { nhan: "Nội dung", hienThi: (r) => <div><span className="text-muc">{r.tieuDe}</span>{r.ly && <div className="mt-0.5 text-[13px] text-loi">{r.ly}</div>}</div> },

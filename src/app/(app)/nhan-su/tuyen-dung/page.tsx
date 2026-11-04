@@ -71,7 +71,7 @@ export default async function TrangTuyenDung({ searchParams }: { searchParams: P
       <>
         <HangChiSo muc={[{ nhan: "Mới nộp", so: String(soDem("Mới nộp")) }, { nhan: "Đang phỏng vấn / vòng", so: String(soDem("Hẹn phỏng vấn") + soDem("Vòng 1") + soDem("Vòng 2")) }, { nhan: "Đề nghị", so: String(soDem("Đề nghị")) }, { nhan: "Đã nhận việc", so: String(soDem("Nhận việc")) }]} />
         <div className="mt-6" />
-        <Bang duLieu={uv} khoa={(r) => r.id} trong={luaTin.length ? "Chưa có ứng viên nào." : "Chưa có tin tuyển dụng. Tạo tin ở tab Tin tuyển dụng rồi thêm ứng viên."}
+        <Bang noi duLieu={uv} khoa={(r) => r.id} trong={luaTin.length ? "Chưa có ứng viên nào." : "Chưa có tin tuyển dụng. Tạo tin ở tab Tin tuyển dụng rồi thêm ứng viên."}
           cot={[
             { nhan: "Ứng viên", chinh: true, hienThi: (r) => <span className="text-muc">{r.ho_ten}<span className="block text-[12px] text-muc-3">{[r.dien_thoai, r.email].filter(Boolean).join(" · ")}</span></span> },
             { nhan: "Vị trí", hienThi: (r) => tenTin.get(r.tin_id) ?? "" }, { nhan: "Nguồn", hienThi: (r) => r.nguon ?? "" }, { nhan: "Ngày nộp", hienThi: (r) => ngayVN(r.ngay_nhan_ho_so) },
@@ -85,7 +85,7 @@ export default async function TrangTuyenDung({ searchParams }: { searchParams: P
     nutThem = sua && <NutHop nhan="Tạo tin tuyển dụng" tieuDe="Tạo tin tuyển dụng" rong truong={truongTin} giaTri={{ so_luong_can: 1, trang_thai: "Đang tuyển", chi_nhanh_id: nd.chiNhanhId ?? "" }} action={luuTinTuyen} />;
     noiDung = (
       <>
-        <Bang duLieu={tins} khoa={(r) => r.id} trong="Chưa có tin tuyển dụng."
+        <Bang noi duLieu={tins} khoa={(r) => r.id} trong="Chưa có tin tuyển dụng."
           cot={[
             { nhan: "Vị trí", chinh: true, hienThi: (r) => <span className="text-muc">{r.vi_tri}<span className="block text-[12px] text-muc-3">{r.chi_nhanh_id ? tenCn.get(r.chi_nhanh_id) : "Mọi cơ sở"}</span></span> },
             { nhan: "Cần / đã nhận", phai: true, hienThi: (r) => `${r.so_luong_can} / ${uv.filter((u) => u.tin_id === r.id && u.trang_thai === "Nhận việc").length}` }, { nhan: "Ứng viên", phai: true, hienThi: (r) => String(uv.filter((u) => u.tin_id === r.id).length) },
@@ -96,7 +96,7 @@ export default async function TrangTuyenDung({ searchParams }: { searchParams: P
         {kenh.length > 0 && (
           <>
             <h2 className="nhan-muc mb-3 mt-9">Bài đã đăng theo kênh</h2>
-            <Bang duLieu={kenh} khoa={(r) => r.id} cot={[
+            <Bang noi duLieu={kenh} khoa={(r) => r.id} cot={[
               { nhan: "Tin", chinh: true, hienThi: (r) => tenTin.get(r.tin_id) ?? "" }, { nhan: "Kênh", hienThi: (r) => r.kenh }, { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_dang) },
               { nhan: "Link", hienThi: (r) => (r.link_bai ? <a href={r.link_bai} target="_blank" rel="noopener noreferrer" className="text-nhan-dam hover:underline">Mở bài</a> : "") }, { nhan: "Chi phí", phai: true, hienThi: (r) => (Number(r.chi_phi) ? tienVN(r.chi_phi) : "") },
               { nhan: "Trạng thái", hienThi: (r) => r.trang_thai },
@@ -109,7 +109,7 @@ export default async function TrangTuyenDung({ searchParams }: { searchParams: P
   } else if (tab === "yeu-cau") {
     nutThem = <NutHop nhan="Gửi yêu cầu tuyển" tieuDe="Gửi yêu cầu tuyển dụng" moTa="Bộ phận Hành chính nhân sự sẽ tiếp nhận rồi đăng tin." rong truong={truongYc} giaTri={{ so_luong: 1, loai_tuyen: "Trong định biên", chi_nhanh_id: nd.chiNhanhId ?? "" }} action={guiYeuCauTuyen} />;
     noiDung = (
-      <Bang duLieu={yeuCau} khoa={(r) => r.id} trong="Chưa có yêu cầu tuyển dụng."
+      <Bang noi duLieu={yeuCau} khoa={(r) => r.id} trong="Chưa có yêu cầu tuyển dụng."
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Vị trí", chinh: true, hienThi: (r) => <span className="text-muc">{r.vi_tri}<span className="block text-[12px] text-muc-3">{r.loai_tuyen}{r.thay_the_cho ? ` · thay ${r.thay_the_cho}` : ""}</span></span> },
           { nhan: "Cơ sở", hienThi: (r) => (r.chi_nhanh_id ? tenCn.get(r.chi_nhanh_id) : "Mọi cơ sở") ?? "" }, { nhan: "SL", phai: true, hienThi: (r) => String(r.so_luong) },
@@ -126,13 +126,13 @@ export default async function TrangTuyenDung({ searchParams }: { searchParams: P
       <>
         <HangChiSo muc={[{ nhan: "Ứng viên", so: String(uv.length) }, { nhan: "Đã nhận việc", so: String(bc.soNhanViec) }, { nhan: "Tổng chi phí đăng tin", so: tienVN(bc.tongChiPhi) }, { nhan: "Chi phí mỗi người nhận việc", so: bc.chiPhiMoiNguoi == null ? "—" : tienVN(bc.chiPhiMoiNguoi), ghiChu: bc.ngayLapDayTb == null ? undefined : `TB ${soVN(bc.ngayLapDayTb)} ngày từ yêu cầu đến nhận việc` }]} />
         <h2 className="nhan-muc mb-3 mt-9">Phễu tuyển dụng</h2>
-        <Bang duLieu={bc.phau} khoa={(r) => r.buoc} cot={[{ nhan: "Bước", chinh: true, hienThi: (r) => r.buoc }, { nhan: "Số ứng viên", phai: true, hienThi: (r) => String(r.so) }]} />
+        <Bang noi duLieu={bc.phau} khoa={(r) => r.buoc} cot={[{ nhan: "Bước", chinh: true, hienThi: (r) => r.buoc }, { nhan: "Số ứng viên", phai: true, hienThi: (r) => String(r.so) }]} />
         <h2 className="nhan-muc mb-3 mt-9">Nguồn ứng viên</h2>
-        <Bang duLieu={bc.theoNguon} khoa={(r) => r.nguon} trong="Chưa có ứng viên." cot={[{ nhan: "Nguồn", chinh: true, hienThi: (r) => r.nguon }, { nhan: "Ứng viên", phai: true, hienThi: (r) => String(r.so) }, { nhan: "Nhận việc", phai: true, hienThi: (r) => String(r.nhanViec) }]} />
+        <Bang noi duLieu={bc.theoNguon} khoa={(r) => r.nguon} trong="Chưa có ứng viên." cot={[{ nhan: "Nguồn", chinh: true, hienThi: (r) => r.nguon }, { nhan: "Ứng viên", phai: true, hienThi: (r) => String(r.so) }, { nhan: "Nhận việc", phai: true, hienThi: (r) => String(r.nhanViec) }]} />
         <h2 className="nhan-muc mb-3 mt-9">Theo tin tuyển dụng</h2>
-        <Bang duLieu={bc.theoTin} khoa={(r) => r.id} trong="Chưa có tin." cot={[{ nhan: "Vị trí", chinh: true, hienThi: (r) => r.viTri }, { nhan: "Cần", phai: true, hienThi: (r) => String(r.canTuyen) }, { nhan: "Ứng viên", phai: true, hienThi: (r) => String(r.ungVien) }, { nhan: "Nhận việc", phai: true, hienThi: (r) => String(r.nhanViec) }, { nhan: "Còn thiếu", phai: true, hienThi: (r) => String(r.conThieu) }, { nhan: "Chi phí", phai: true, hienThi: (r) => (r.chiPhi ? tienVN(r.chiPhi) : "") }]} />
+        <Bang noi duLieu={bc.theoTin} khoa={(r) => r.id} trong="Chưa có tin." cot={[{ nhan: "Vị trí", chinh: true, hienThi: (r) => r.viTri }, { nhan: "Cần", phai: true, hienThi: (r) => String(r.canTuyen) }, { nhan: "Ứng viên", phai: true, hienThi: (r) => String(r.ungVien) }, { nhan: "Nhận việc", phai: true, hienThi: (r) => String(r.nhanViec) }, { nhan: "Còn thiếu", phai: true, hienThi: (r) => String(r.conThieu) }, { nhan: "Chi phí", phai: true, hienThi: (r) => (r.chiPhi ? tienVN(r.chiPhi) : "") }]} />
         <h2 className="nhan-muc mb-3 mt-9">Theo kênh đăng</h2>
-        <Bang duLieu={bc.theoKenh} khoa={(r) => r.kenh} trong="Chưa ghi bài đăng nào." cot={[{ nhan: "Kênh", chinh: true, hienThi: (r) => r.kenh }, { nhan: "Số bài", phai: true, hienThi: (r) => String(r.soBai) }, { nhan: "Chi phí", phai: true, hienThi: (r) => (r.chiPhi ? tienVN(r.chiPhi) : "") }]} />
+        <Bang noi duLieu={bc.theoKenh} khoa={(r) => r.kenh} trong="Chưa ghi bài đăng nào." cot={[{ nhan: "Kênh", chinh: true, hienThi: (r) => r.kenh }, { nhan: "Số bài", phai: true, hienThi: (r) => String(r.soBai) }, { nhan: "Chi phí", phai: true, hienThi: (r) => (r.chiPhi ? tienVN(r.chiPhi) : "") }]} />
       </>
     );
   }

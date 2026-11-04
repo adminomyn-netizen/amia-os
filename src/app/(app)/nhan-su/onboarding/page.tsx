@@ -55,7 +55,7 @@ export default async function TrangOnboarding() {
           <h2 className="nhan-muc">Các mốc onboarding</h2>
           {sua && <NutHop nhan="Thêm mốc" tieuDe="Thêm mốc onboarding" truong={truongMoc} action={luuMocOnboarding} giaTri={{ sau_ngay: "0" }} />}
         </div>
-        <Bang duLieu={dsMoc} khoa={(m) => m.id} trong="Chưa có mốc nào."
+        <Bang noi duLieu={dsMoc} khoa={(m) => m.id} trong="Chưa có mốc nào."
           cot={[
             { nhan: "Mốc", chinh: true, hienThi: (m) => <span className={m.hoat_dong ? "" : "text-muc-3 line-through"}>{m.ten}</span> },
             { nhan: "Sau ngày vào làm", phai: true, hienThi: (m) => `${m.sau_ngay} ngày` },

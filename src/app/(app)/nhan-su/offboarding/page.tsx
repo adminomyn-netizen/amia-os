@@ -64,7 +64,7 @@ export default async function TrangOffboarding({ searchParams }: { searchParams:
       { ten: "bhxh_chot_den", nhan: "Đóng BHXH đến ngày", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong", rong: true }, { ten: "chot", nhan: "Chốt luôn (chốt xong không sửa nữa)", loai: "gat" },
     ];
     noiDung = (
-      <Bang duLieu={don} khoa={(r) => r.id} trong="Chưa có đơn nghỉ việc nào."
+      <Bang noi duLieu={don} khoa={(r) => r.id} trong="Chưa có đơn nghỉ việc nào."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{ten.get(r.nhan_vien_id)?.ho_ten}<div className="text-[12.5px] text-muc-3">làm đến {ngayVN(r.ngay_lam_cuoi)}</div></div> },
           { nhan: "Công đến", hienThi: (r) => { const c = theo.get(r.id); return c?.cong_den_ngay ? ngayVN(c.cong_den_ngay) : "—"; } },
@@ -84,7 +84,7 @@ export default async function TrangOffboarding({ searchParams }: { searchParams:
       { ten: "dieu_chua_hai_long", nhan: "Điều chưa hài lòng", loai: "nhieu_dong", rong: true }, { ten: "de_xuat", nhan: "Đề xuất với công ty", loai: "nhieu_dong", rong: true },
     ];
     noiDung = (
-      <Bang duLieu={don} khoa={(r) => r.id} trong="Chưa có đơn nghỉ việc nào."
+      <Bang noi duLieu={don} khoa={(r) => r.id} trong="Chưa có đơn nghỉ việc nào."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{ten.get(r.nhan_vien_id)?.ho_ten}<div className="text-[12.5px] text-muc-3">làm đến {ngayVN(r.ngay_lam_cuoi)}</div></div> },
           { nhan: "Phỏng vấn", hienThi: (r) => { const p = theo.get(r.id); return p ? <div className="text-[13px]">{ngayVN(p.ngay_pv)}<div className="text-muc-3">{p.ly_do_chinh ?? ""}</div></div> : <NhanTrangThai kieu="cho">Chưa phỏng vấn</NhanTrangThai>; } },

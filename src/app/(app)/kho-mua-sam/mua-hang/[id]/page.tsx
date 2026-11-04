@@ -52,7 +52,7 @@ export default async function ChiTietDonMua({ params }: { params: Promise<{ id: 
       </div>
       {don.ly_do && <p className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">{don.trang_thai === "huy" ? "Lý do huỷ: " : ""}{don.ly_do}</p>}
       <HangChiSo muc={[{ nhan: "Giá trị đơn", so: tienVN(tong) }, { nhan: "Đã nhận hàng (giá trị)", so: tienVN(daNhanGt), ghiChu: `Còn ${tienVN(tong - daNhanGt)}` }, { nhan: "Ngày đặt", so: ngayVN(don.ngay_dat), ghiChu: don.ngay_du_kien ? `Dự kiến nhận ${ngayVN(don.ngay_du_kien)}` : undefined }]} />
-      <Bang duLieu={dong ?? []} khoa={(r) => r.id} trong="Đơn chưa có dòng hàng nào."
+      <Bang noi duLieu={dong ?? []} khoa={(r) => r.id} trong="Đơn chưa có dòng hàng nào."
         cot={[
           { nhan: "Sản phẩm", chinh: true, hienThi: (r) => <span className="text-muc">{tenSp.get(r.san_pham_id)?.ten ?? ""}</span> },
           { nhan: "Số lượng", phai: true, hienThi: (r) => `${soVN(r.so_luong)} ${tenSp.get(r.san_pham_id)?.don_vi ?? ""}` },
@@ -70,7 +70,7 @@ export default async function ChiTietDonMua({ params }: { params: Promise<{ id: 
           </div>
         </div>
         <p className="mb-2 text-[12.5px] text-muc-3">Đơn từ 20 triệu cần ít nhất 2 báo giá, từ 30 triệu cần 3 (ngưỡng ở Chính sách phê duyệt).{don.ly_do_ngoai_le_bao_gia && <> Ngoại lệ: <b>{don.ly_do_ngoai_le_bao_gia}</b>.</>}</p>
-        <Bang duLieu={bg ?? []} khoa={(r) => r.id} trong="Chưa có báo giá."
+        <Bang noi duLieu={bg ?? []} khoa={(r) => r.id} trong="Chưa có báo giá."
           cot={[
             { nhan: "Nhà cung cấp", chinh: true, hienThi: (r) => <div>{tenNccBg.get(r.ncc_id)}{r.ghi_chu && <div className="text-[12.5px] text-muc-3">{r.ghi_chu}</div>}</div> },
             { nhan: "Tổng tiền", phai: true, hienThi: (r) => tienVN(r.tong_tien) },

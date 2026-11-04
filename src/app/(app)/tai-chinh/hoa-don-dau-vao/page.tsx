@@ -85,7 +85,7 @@ export default async function TrangHoaDonDauVao({ searchParams }: { searchParams
           <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
         </form>
       </div>
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Không tìm thấy kết quả nào."
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Không tìm thấy kết quả nào."
         cot={[
           { nhan: "Ngày hoá đơn", hienThi: (r) => (r.ngay_hd ? ngayVN(r.ngay_hd) : <span className="text-muc-3">Chưa về</span>) },
           { nhan: "Nhà cung cấp", chinh: true, hienThi: (r) => <div className="text-muc">{r.ten_ncc}<div className="text-[12.5px] text-muc-3">{r.ma}{r.chi_nhanh_id && !cn && ` · ${tenCn.get(r.chi_nhanh_id) ?? ""}`}{r.don_mua_id && ` · ${maDon.get(r.don_mua_id) ?? "đơn mua"}`}</div></div> },

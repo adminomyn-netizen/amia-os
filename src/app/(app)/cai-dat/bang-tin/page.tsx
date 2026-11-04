@@ -30,7 +30,7 @@ export default async function TrangBangTin() {
       <TieuDeNoi icon={Megaphone} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Bảng tin công ty" phu="Thông báo hiển thị cho toàn công ty ở Trang chủ, đăng và hẹn lịch hiển thị.">
         {sua && <NutHop nhan="Đăng tin" tieuDe="Đăng tin mới" truong={truong} action={luuBangTin} giaTri={{ hoat_dong: true, hien_tu: nay, ghim: false }} />}
       </TieuDeNoi>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có tin nào."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có tin nào."
         cot={[
           { nhan: "Tiêu đề", chinh: true, hienThi: (r) => <span className="text-muc">{r.ghim ? "Ghim · " : ""}{r.tieu_de}</span> },
           { nhan: "Hiển thị", hienThi: (r) => `${ngayVN(r.hien_tu)}${r.hien_den ? ` – ${ngayVN(r.hien_den)}` : ""}` },

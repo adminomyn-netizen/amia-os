@@ -66,7 +66,7 @@ export default async function TrangViec({ searchParams }: { searchParams: Promis
         <NutHop nhan="Giao việc" tieuDe="Giao việc" truong={truong} action={giaoViec} giaTri={{ nguoi_nhan_id: nd.nhanVienId, uu_tien: "thuong", han: hom, han_gio: "17:00" }} />
       </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/noi-lam-viec/viec" />
-      <Bang duLieu={dsHien} khoa={(r) => r.id} trong="Không có việc nào."
+      <Bang noi duLieu={dsHien} khoa={(r) => r.id} trong="Không có việc nào."
         cot={[
           { nhan: "Công việc", chinh: true, hienThi: (r) => (
             <div>

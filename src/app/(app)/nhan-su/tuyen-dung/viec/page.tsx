@@ -33,7 +33,7 @@ export default async function TrangViecTuyenDung() {
   return (
     <div>
       <TieuDeNoi quayLai={{ href: "/nhan-su/tuyen-dung", nhan: "Tuyển dụng" }} tieuDe="Công việc tuyển dụng" phu={`${ds.length} việc cần làm, ${qua} việc đã quá hạn. Danh sách tự cập nhật theo bước của ứng viên, không cần nhập tay.`} />
-      <Bang duLieu={ds} khoa={(r) => r.khoa} trong="Không có việc nào đang chờ."
+      <Bang noi duLieu={ds} khoa={(r) => r.khoa} trong="Không có việc nào đang chờ."
         cot={[
           { nhan: "Việc", chinh: true, hienThi: (r) => r.viec }, { nhan: "Đối tượng", hienThi: (r) => r.doiTuong }, { nhan: "Ai làm", hienThi: (r) => r.ai },
           { nhan: "Hạn", hienThi: (r) => ngayVN(r.han) },

@@ -37,7 +37,7 @@ export default async function TrangLink() {
       <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Link & mã QR theo dõi" phu="Mỗi link đếm số lượt bấm trước khi chuyển tới địa chỉ đích. In mã QR lên ấn phẩm để biết khách đến từ đâu.">
         {sua && <NutHop nhan="Tạo link" tieuDe="Tạo link theo dõi" truong={truong} action={luuLink} giaTri={{ nguon_id: "", chien_dich_id: "", doi_tac_id: "", hoat_dong: "1" }} rong />}
       </TieuDeNoi>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có link."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có link."
         cot={[
           { nhan: "Link", chinh: true, hienThi: (r) => <div>{r.ten}<div className="break-all text-[12.5px] text-muc-3">{goc}/l/{r.ma}</div><div className="break-all text-[12.5px] text-muc-3">→ {r.dich_den}</div></div> },
           { nhan: "Nguồn", hienThi: (r) => (r.nguon_id ? tenNguon.get(r.nguon_id) : "") },

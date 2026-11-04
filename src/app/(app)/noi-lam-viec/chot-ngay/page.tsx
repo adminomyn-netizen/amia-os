@@ -70,7 +70,7 @@ export default async function TrangChotNgay({ searchParams }: { searchParams: Pr
         { nhan: "Đang kẹt", so: soVN(dem((c) => c.ket)) },
       ]} />
       <h2 className="mb-2 mt-6 text-[15px] font-medium">Theo người làm</h2>
-      <Bang duLieu={bangNguoi} khoa={(r) => r.id} trong="Chưa có việc nào đến hạn tới mốc này."
+      <Bang noi duLieu={bangNguoi} khoa={(r) => r.id} trong="Chưa có việc nào đến hạn tới mốc này."
         cot={[
           { nhan: "Người làm", chinh: true, hienThi: (r) => ten.get(r.id) ?? "" },
           { nhan: "Đến hạn", phai: true, hienThi: (r) => soVN(r.den) }, { nhan: "Đã nộp", phai: true, hienThi: (r) => soVN(r.nop) }, { nhan: "Đạt", phai: true, hienThi: (r) => soVN(r.dat) },
@@ -78,7 +78,7 @@ export default async function TrangChotNgay({ searchParams }: { searchParams: Pr
           { nhan: "Kẹt ở ai", hienThi: (r) => [...new Set(r.ket)].join(", ") },
         ]} />
       <h2 className="mb-2 mt-6 text-[15px] font-medium">Từng việc</h2>
-      <Bang duLieu={chiTiet} khoa={(r) => r.v.id} trong="Không có việc nào."
+      <Bang noi duLieu={chiTiet} khoa={(r) => r.v.id} trong="Không có việc nào."
         cot={[
           { nhan: "Công việc", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.v.tieu_de}</span>{r.v.san_pham && r.c.daNop && <div className="text-[12.5px] text-muc-3">Sản phẩm: {r.v.san_pham}</div>}</div> },
           { nhan: "Người làm", hienThi: (r) => ten.get(r.v.nguoi_nhan_id) ?? "" },

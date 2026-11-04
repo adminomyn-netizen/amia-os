@@ -49,7 +49,7 @@ export default async function TrangCongNoKhach() {
       <HangChiSo muc={NHOM.map((n) => ({ nhan: n.ten, so: tienVN(tongTheo(n.ma)), ghiChu: n.chu }))} />
       {tranhChap.length > 0 && <p className="mt-3 text-[13.5px] text-canh-bao">{tranhChap.length} hoá đơn đang tranh chấp, tổng {tienVN(tranhChap.reduce((s, d) => s + Number(d.con_no), 0))} (không tính vào các nhóm trên).</p>}
       <div className="mt-6" />
-      <Bang duLieu={dong} khoa={(r) => r.id} trong="Không có hoá đơn nào còn nợ."
+      <Bang noi duLieu={dong} khoa={(r) => r.id} trong="Không có hoá đơn nào còn nợ."
         cot={[
           { nhan: "Hoá đơn", chinh: true, hienThi: (r) => <div><Link href={`/hoa-don/${r.id}`} className="text-nhan-dam hover:underline">{r.ma}</Link><div className="text-[12.5px] text-muc-3">{ngayVN(r.ngay_hd)}</div></div> },
           { nhan: "Khách", hienThi: (r) => (r.khach_id ? <Link href={`/khach-hang/${r.khach_id}`} className="text-nhan-dam hover:underline">{tenKhach.get(r.khach_id)?.ho_ten}</Link> : "Khách lẻ") },

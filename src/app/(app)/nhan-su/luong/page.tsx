@@ -26,7 +26,7 @@ export default async function TrangLuong() {
         <Link href="/nhan-su/luong/dieu-kien" className="text-[14px] text-nhan-dam hover:underline">Cài đặt lương cơ bản</Link>
         {sua && <NutHop nhan="Tạo bảng lương" tieuDe="Tạo bảng lương" moTa="Lấy công từ bảng chấm công và phiếu đã duyệt, điều kiện lương hiện hành, hoa hồng trong tháng." truong={truong} action={taoKyLuong} giaTri={{ nam: Number(hom.slice(0, 4)), thang: Number(hom.slice(5, 7)), cong_chuan: 26 }} />}
       </TieuDeNoi>
-      <Bang duLieu={ky ?? []} khoa={(r) => r.id} trong="Chưa có kỳ lương nào."
+      <Bang noi duLieu={ky ?? []} khoa={(r) => r.id} trong="Chưa có kỳ lương nào."
         cot={[
           { nhan: "Kỳ lương", chinh: true, hienThi: (r) => <Link href={`/nhan-su/luong/${r.id}`} className="font-medium text-nhan-dam hover:underline">Tháng {String(r.thang).padStart(2, "0")}/{r.nam}</Link> },
           { nhan: "Số nhân viên", phai: true, hienThi: (r) => tong.get(r.id)?.n ?? 0 }, { nhan: "Tổng thực trả", phai: true, hienThi: (r) => tienVN(tong.get(r.id)?.tien ?? 0) },

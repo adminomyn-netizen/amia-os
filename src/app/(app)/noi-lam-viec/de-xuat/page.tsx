@@ -63,7 +63,7 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
           <Link href={`/noi-lam-viec/de-xuat?tab=${tab}&pham=tat-ca`} className={tatCa ? "font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}>Tất cả</Link>
         </div>
       )}
-      <Bang duLieu={dx ?? []} khoa={(r) => r.id} trong="Chưa có đề xuất nào."
+      <Bang noi duLieu={dx ?? []} khoa={(r) => r.id} trong="Chưa có đề xuất nào."
         cot={[
           { nhan: "Mã", chinh: true, hienThi: (r) => r.ma }, { nhan: "Nội dung", hienThi: (r) => <div><span className="text-muc">{r.tieu_de}</span>{r.noi_dung && <div className="mt-0.5 text-[13px] text-muc-3">{r.noi_dung}</div>}{r.ly_do && <div className="mt-0.5 text-[13px] text-loi">Lý do từ chối: {r.ly_do}</div>}</div> },
           { nhan: "Người gửi", hienThi: (r) => ten.get(r.nguoi_gui_id) ?? "" }, { nhan: "Ngày gửi", hienThi: (r) => ngayVN(ngayCuaIso(r.tao_luc)) },

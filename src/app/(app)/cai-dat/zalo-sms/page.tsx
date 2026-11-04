@@ -46,7 +46,7 @@ export default async function TrangZaloSms({ searchParams }: { searchParams: Pro
     noiDung = (
       <>
         <p className="mb-4 text-[14px] text-muc-3">Mẫu mới cài đều đang tắt. Hiện chưa có việc nào tự xếp tin, nên bật mẫu chưa làm tin nào được gửi đi.</p>
-        <Bang duLieu={mau ?? []} khoa={(r) => r.ma} trong="Chưa có mẫu tin."
+        <Bang noi duLieu={mau ?? []} khoa={(r) => r.ma} trong="Chưa có mẫu tin."
           cot={[
             { nhan: "Mẫu", chinh: true, hienThi: (r) => <div>{r.ten}<div className="max-w-[560px] text-[12.5px] text-muc-3">{r.noi_dung}</div></div> },
             { nhan: "Kênh", hienThi: (r) => tenKenh(r.kenh) },
@@ -65,7 +65,7 @@ export default async function TrangZaloSms({ searchParams }: { searchParams: Pro
     noiDung = (
       <>
         <p className="mb-4 text-[14px] text-muc-3">Chỉ để xem và huỷ. Chưa có bộ gửi tự động, nên tin xếp vào đây sẽ chờ cho tới khi kênh được nối và bật gửi.</p>
-        <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có tin nào trong hàng đợi."
+        <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa có tin nào trong hàng đợi."
           cot={[
             { nhan: "Lúc", hienThi: (r) => ngayGioVN(r.tao_luc) },
             { nhan: "Gửi tới", chinh: true, hienThi: (r) => <div>{r.khach_id ? ten.get(r.khach_id) ?? "Khách" : "Số lẻ"}<div className="text-[12.5px] text-muc-3">{tenKenh(r.kenh)} · {xemSdt ? r.den_so_dien_thoai : cheSdt(r.den_so_dien_thoai)}</div></div> },

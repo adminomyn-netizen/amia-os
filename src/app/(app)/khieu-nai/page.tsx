@@ -62,7 +62,7 @@ export default async function TrangKhieuNai({ searchParams }: { searchParams: Pr
       <div className="mt-6" />
       <Tab muc={tabHopLe.map((x) => (x.ma === "dang-xu-ly" ? { ...x, ten: `Đang xử lý (${dangXuLy.length})` } : x.ma === "bien-chung" ? { ...x, ten: `Biến chứng (${bcMo.length})` } : x))} dang={tab} goc="/khieu-nai" />
       {tab === "bien-chung" ? (
-        <Bang duLieu={bc ?? []} khoa={(r) => r.id} trong="Chưa có ca biến chứng nào."
+        <Bang noi duLieu={bc ?? []} khoa={(r) => r.id} trong="Chưa có ca biến chứng nào."
           cot={[
             { nhan: "Mã", chinh: true, hienThi: (r) => <Link href={`/khieu-nai/bien-chung/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
             { nhan: "Khách", hienThi: (r) => <KhachCell id={r.khach_id} /> },
@@ -72,7 +72,7 @@ export default async function TrangKhieuNai({ searchParams }: { searchParams: Pr
             { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_BC[r.trang_thai].kieu}>{TT_BC[r.trang_thai].ten}</NhanTrangThai> },
           ]} />
       ) : tab === "bao-hanh" ? (
-        <Bang duLieu={bh ?? []} khoa={(r) => r.id} trong="Chưa ghi lần làm lại bảo hành nào."
+        <Bang noi duLieu={bh ?? []} khoa={(r) => r.id} trong="Chưa ghi lần làm lại bảo hành nào."
           cot={[
             { nhan: "Khách", chinh: true, hienThi: (r) => <KhachCell id={r.khach_id} /> },
             { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
@@ -82,7 +82,7 @@ export default async function TrangKhieuNai({ searchParams }: { searchParams: Pr
             { nhan: "Người ghi", hienThi: (r) => tenNv.get(r.nguoi_ghi_id) ?? "" },
           ]} />
       ) : (
-        <Bang duLieu={tab === "dang-xu-ly" ? dangXuLy : lichSu} khoa={(r) => r.id} trong={tab === "dang-xu-ly" ? "Không có khiếu nại nào đang xử lý." : "Chưa có khiếu nại nào."}
+        <Bang noi duLieu={tab === "dang-xu-ly" ? dangXuLy : lichSu} khoa={(r) => r.id} trong={tab === "dang-xu-ly" ? "Không có khiếu nại nào đang xử lý." : "Chưa có khiếu nại nào."}
           cot={[
             { nhan: "Mã", chinh: true, hienThi: (r) => <Link href={`/khieu-nai/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
             { nhan: "Khách", hienThi: (r) => <KhachCell id={r.khach_id} /> },

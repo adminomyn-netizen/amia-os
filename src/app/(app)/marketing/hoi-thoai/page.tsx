@@ -61,7 +61,7 @@ export default async function TrangHoiThoaiMkt({ searchParams }: { searchParams:
         return (
           <section key={n.loai} className="mt-6">
             <h2 className="mb-2 text-[15px] font-medium">{n.tieuDe}</h2>
-            <Bang duLieu={dong} khoa={(r) => r.khoa} trong="Chưa có số liệu trong khoảng này."
+            <Bang noi duLieu={dong} khoa={(r) => r.khoa} trong="Chưa có số liệu trong khoảng này."
               cot={[
                 { nhan: n.cot, chinh: true, hienThi: (r) => r.khoa },
                 { nhan: "Hội thoại", phai: true, hienThi: (r) => soVN(r.hoi_thoai) },

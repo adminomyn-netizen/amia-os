@@ -75,7 +75,7 @@ export default async function TrangDinhMuc({ searchParams }: { searchParams: Pro
                 </div>
               )}
               {canhBao.length > 0 && <ul className="mb-3 space-y-1 text-[13px] text-canh-bao">{canhBao.map((c) => <li key={c.ma}>{c.nhan}</li>)}</ul>}
-              <Bang duLieu={dm} khoa={(r) => r.id} trong="Dịch vụ này chưa có định mức. Cài đặt số lượng sử dụng và tính toán chi phí khấu hao cho sản phẩm kèm theo dịch vụ."
+              <Bang noi duLieu={dm} khoa={(r) => r.id} trong="Dịch vụ này chưa có định mức. Cài đặt số lượng sử dụng và tính toán chi phí khấu hao cho sản phẩm kèm theo dịch vụ."
                 cot={[
                   { nhan: "Sản phẩm", hienThi: (r) => <span className="text-muc">{spMap.get(r.san_pham_id)?.ten}</span> }, { nhan: "Nhóm cấp", hienThi: (r) => spMap.get(r.san_pham_id)?.nhom_cap ?? "" },
                   { nhan: "Dung tích", phai: true, hienThi: (r) => { const p = spMap.get(r.san_pham_id); return p?.dung_tich == null ? <span className="text-muc-3">chưa nhập</span> : `${soVN(Number(p.dung_tich))} ${p.dung_tich_dv ?? ""}`.trim(); } },

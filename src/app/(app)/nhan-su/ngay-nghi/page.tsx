@@ -56,7 +56,7 @@ export default async function TrangNgayNghi({ searchParams }: { searchParams: Pr
       <HangChiSo muc={[{ nhan: `Phép năm ${nam} còn lại`, so: soVN(du), ghiChu: "ngày (1 ngày/tháng từ ngày vào chính thức)" }]} />
       <div className="mt-6" />
       <Tab muc={TAB} dang={tab} goc="/nhan-su/ngay-nghi" />
-      <Bang duLieu={ngoai} khoa={(r) => r.id} trong="Chưa có phiếu nào."
+      <Bang noi duLieu={ngoai} khoa={(r) => r.id} trong="Chưa có phiếu nào."
         cot={[
           { nhan: "Mã", chinh: true, hienThi: (r) => r.ma }, { nhan: "Nhân viên", hienThi: (r) => ten.get(r.nhan_vien_id) ?? "" },
           { nhan: "Loại", hienThi: (r) => <div>{LOAI_PHIEU[r.loai]}{r.loai_nghi && <div className="text-[12.5px] text-muc-3">{LOAI_NGHI[r.loai_nghi]}</div>}</div> },

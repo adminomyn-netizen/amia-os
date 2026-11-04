@@ -27,7 +27,7 @@ export default async function TrangDanhMucNhanSu() {
       <div className="grid gap-8 xl:grid-cols-2">
         <section>
           <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-[17px] font-semibold text-muc">Phòng ban</h2><NutHop nhan="Thêm phòng ban" tieuDe="Thêm phòng ban" truong={truongPb(false)} action={luuPhongBan} /></div>
-          <Bang duLieu={pb ?? []} khoa={(r) => r.id} trong="Chưa có phòng ban."
+          <Bang noi duLieu={pb ?? []} khoa={(r) => r.id} trong="Chưa có phòng ban."
             cot={[
               { nhan: "Phòng ban", chinh: true, hienThi: (r) => <div>{r.ten}<div className="text-[12.5px] text-muc-3">{r.truong_phong_id ? `Trưởng phòng: ${tenNv.get(r.truong_phong_id) ?? ""}` : "Chưa có trưởng phòng"}</div></div> },
               { nhan: "Nhân viên", phai: true, hienThi: (r) => demPb.get(r.id) ?? 0 }, { nhan: "", hienThi: (r) => (r.hoat_dong ? "" : <NhanTrangThai kieu="tram">Đã ngừng</NhanTrangThai>) },
@@ -36,7 +36,7 @@ export default async function TrangDanhMucNhanSu() {
         </section>
         <section>
           <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-[17px] font-semibold text-muc">Chức danh</h2><NutHop nhan="Thêm chức danh" tieuDe="Thêm chức danh" truong={truongCd(false)} action={luuChucDanh} /></div>
-          <Bang duLieu={cd ?? []} khoa={(r) => r.id} trong="Chưa có chức danh."
+          <Bang noi duLieu={cd ?? []} khoa={(r) => r.id} trong="Chưa có chức danh."
             cot={[
               { nhan: "Chức danh", chinh: true, hienThi: (r) => r.ten }, { nhan: "Nhân viên", phai: true, hienThi: (r) => demCd.get(r.ten) ?? 0 }, { nhan: "", hienThi: (r) => (r.hoat_dong ? "" : <NhanTrangThai kieu="tram">Đã ngừng</NhanTrangThai>) },
               { nhan: "", hienThi: (r) => <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa: ${r.ten}`} truong={truongCd(true)} action={luuChucDanh} an={{ id: r.id }} giaTri={{ ten: r.ten, hoat_dong: r.hoat_dong }} /> },

@@ -41,7 +41,7 @@ export default async function TrangChiPhiNhanSu() {
   return (
     <div>
       <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Chi phí nhân sự" phu={`6 tháng gần nhất. Tổng lương thực trả, thưởng chi và chi phí tuyển dụng: ${tienVN(tong)}. Tháng chưa lập kỳ lương thì cột lương để "—".`} />
-      <Bang duLieu={hang} khoa={(r) => r.ky} cot={[
+      <Bang noi duLieu={hang} khoa={(r) => r.ky} cot={[
         { nhan: "Tháng", chinh: true, hienThi: (r) => r.ky }, { nhan: "Lương thực trả", phai: true, hienThi: (r) => (r.coKy ? tienVN(r.luong) : "—") },
         { nhan: "BHXH người lao động", phai: true, hienThi: (r) => (r.coKy ? tienVN(r.bhxh) : "—") }, { nhan: "Thưởng chi", phai: true, hienThi: (r) => tienVN(r.thuong) },
         { nhan: "Phạt thu", phai: true, hienThi: (r) => tienVN(r.phat) }, { nhan: "Chi phí tuyển dụng", phai: true, hienThi: (r) => tienVN(r.tuyen) },

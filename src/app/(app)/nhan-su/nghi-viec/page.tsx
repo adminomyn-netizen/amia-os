@@ -53,7 +53,7 @@ export default async function TrangNghiViec({ searchParams }: { searchParams: Pr
       {tab === "ly-do" ? (
         lyDo.length === 0 ? <p className="text-[14px] text-muc-3">Năm {nam} chưa có ai hoàn tất nghỉ việc nên chưa có thống kê lý do.</p> : <div className="max-w-xl"><ThanhTyLe dong={lyDo} donVi="người" /></div>
       ) : (
-        <Bang duLieu={dong} khoa={(r) => r.id} trong={tab === "dang-chay" ? "Không có phiếu nào đang xử lý." : "Chưa có phiếu nào."}
+        <Bang noi duLieu={dong} khoa={(r) => r.id} trong={tab === "dang-chay" ? "Không có phiếu nào đang xử lý." : "Chưa có phiếu nào."}
           cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => <Link href={`/nhan-su/ho-so/${r.nhan_vien_id}?tab=nghi-viec`} className="hover:underline">{ten.get(r.nhan_vien_id)?.ho_ten ?? ""}<div className="text-[12.5px] text-muc-3">{ten.get(r.nhan_vien_id)?.ma_nv}</div></Link> },
             { nhan: "Loại / lý do", hienThi: (r) => <div className="text-[13px]">{LOAI_NGHI_VIEC[r.loai]}<div className="text-muc-3">{NHOM_LY_DO_NGHI[r.nhom_ly_do]}</div></div> },

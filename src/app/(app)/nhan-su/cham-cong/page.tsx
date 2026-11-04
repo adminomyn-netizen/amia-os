@@ -60,7 +60,7 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
         <HangChiSo muc={[{ nhan: "Công tháng này", so: soVN(tongCong) }, { nhan: "Ngày đi trễ", so: String((cc ?? []).filter((c) => c.tre_phut > 0).length) }, { nhan: "Phép năm còn lại", so: soVN(du), ghiChu: "ngày" }]} />
         <div className="mt-6" />
         {dieuHuong}
-        <Bang duLieu={cc ?? []} khoa={(r) => r.id} trong="Chưa có chấm công trong tháng này."
+        <Bang noi duLieu={cc ?? []} khoa={(r) => r.id} trong="Chưa có chấm công trong tháng này."
           cot={[
             { nhan: "Ngày", chinh: true, hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Vào", hienThi: (r) => gioVN(r.vao) }, { nhan: "Ra", hienThi: (r) => gioVN(r.ra) },
             { nhan: "Công", phai: true, hienThi: (r) => soVN(r.cong) }, { nhan: "Trễ (phút)", phai: true, hienThi: (r) => (r.tre_phut ? <span className="text-canh-bao">{r.tre_phut}</span> : "") },
@@ -80,7 +80,7 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
     noiDung = (
       <>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">{dieuHuong}{sua && !dangKhoa && <NutHop nhan="Nhập công thủ công" tieuDe="Nhập công thủ công" moTa="Ghi đè bản ghi chấm công của ngày đó. Tháng đã khoá thì không nhập được." truong={truong} action={nhapCongThuCong} giaTri={{ ngay: hom }} />}</div>
-        <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có chấm công trong tháng này."
+        <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa có chấm công trong tháng này."
           cot={[
             { nhan: "Ngày", chinh: true, hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Nhân viên", hienThi: (r) => <span className="text-muc">{ten.get(r.nhan_vien_id)?.ho_ten}</span> },
             { nhan: "Vào", hienThi: (r) => gioVN(r.vao) }, { nhan: "Ra", hienThi: (r) => gioVN(r.ra) }, { nhan: "Công", phai: true, hienThi: (r) => soVN(r.cong) },
@@ -105,7 +105,7 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
           {dieuHuong}
           {sua && <NutHop kieu={dangKhoa ? "phu" : "chinh"} nhan={dangKhoa ? "Mở khoá tháng" : "Khoá tháng"} tieuDe={dangKhoa ? "Mở khoá công tháng" : "Khoá công tháng"} xacNhan={dangKhoa ? `Mở khoá công tháng ${th}/${nam}?` : `Khoá công tháng ${th}/${nam}? Sau khi khoá, không ai sửa được chấm công của tháng này.`} action={khoaThangCong} an={{ nam: String(nam), thang: String(th), khoa: dangKhoa ? "0" : "1" }} nhanLuu={dangKhoa ? "Mở khoá" : "Khoá tháng"} />}
         </div>
-        <Bang duLieu={ds} khoa={(r) => r.nhan_vien_id} trong="Không có nhân viên nào."
+        <Bang noi duLieu={ds} khoa={(r) => r.nhan_vien_id} trong="Không có nhân viên nào."
           cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="text-muc">{ten.get(r.nhan_vien_id)?.ho_ten}</span> },
             { nhan: "Công chuẩn", phai: true, hienThi: (r) => soVN(r.cong_chuan) }, { nhan: "Đi làm", phai: true, hienThi: (r) => soVN(r.cong_di_lam) },

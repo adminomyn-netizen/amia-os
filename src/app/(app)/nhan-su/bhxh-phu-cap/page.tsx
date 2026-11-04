@@ -31,7 +31,7 @@ export default async function TrangBhxhPhuCap() {
       <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="BHXH và phụ cấp" phu={`${dongBh.length} người đang đóng BHXH, phần người lao động ${pct}% khoảng ${tienVN(tongBh)} mỗi tháng. Phụ cấp đồng phục và nhà ở cộng lại ${tienVN(tongPc)} mỗi tháng.`}>
         {coQuyen(nd, "luong.sua") && <Link href="/nhan-su/luong/dieu-kien" className="text-[14px] text-nhan-dam hover:underline">Sửa ở Cài đặt lương cơ bản</Link>}
       </TieuDeNoi>
-      <Bang duLieu={dong} khoa={(r) => r.n.id} trong="Chưa có điều kiện lương nào."
+      <Bang noi duLieu={dong} khoa={(r) => r.n.id} trong="Chưa có điều kiện lương nào."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{r.n.ho_ten}<div className="text-[12.5px] text-muc-3">{r.n.ma_nv}</div></div> },
           { nhan: "BHXH", hienThi: (r) => (r.d!.dong_bh ? <NhanTrangThai kieu="tot">Đóng</NhanTrangThai> : <NhanTrangThai kieu="tram">Không đóng</NhanTrangThai>) },

@@ -92,11 +92,11 @@ export default async function TrangChuanHoaKho({ searchParams }: { searchParams:
         {tonAm.length > 0 && <p className="mb-4 text-[13.5px] text-loi">{tonAm.length} mặt hàng đang tồn âm tại chi nhánh này: {tonAm.slice(0, 5).map((s) => s.ten).join("; ")}{tonAm.length > 5 ? "…" : ""}</p>}
         <h2 className="mb-2 text-[15px] font-semibold text-muc">Vật tư dùng trong ca chưa có tồn ({thieuTonDau.length})</h2>
         <p className="mb-3 max-w-3xl text-[13px] text-muc-3">Phiếu cấp vật tư bị chặn &quot;Kho không đủ&quot; khi tồn bằng 0. Các vật tư này chưa có dòng tồn nào trong sổ kho; cần kiểm kê tồn đầu hoặc nhập kho.</p>
-        <Bang duLieu={thieuTonDau.slice(0, 60)} khoa={(r) => r.id} trong="Mọi vật tư tiêu hao đều đã có tồn."
+        <Bang noi duLieu={thieuTonDau.slice(0, 60)} khoa={(r) => r.id} trong="Mọi vật tư tiêu hao đều đã có tồn."
           cot={[{ chinh: true, nhan: "Vật tư", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Đơn vị", hienThi: (r) => r.don_vi }, { nhan: "Tồn sổ", phai: true, hienThi: (r) => soVN(tonMap.get(r.id) ?? 0) }, { nhan: "Có dòng sổ", hienThi: (r) => (coSo.has(r.id) ? "Có" : "Chưa") }]} />
         <h2 className="mb-2 mt-10 text-[15px] font-semibold text-muc">Chênh lệch với SalonHero ({lech.length})</h2>
         {(ref ?? []).length === 0 ? <p className="text-[13.5px] text-muc-3">Chưa nạp tồn SalonHero cho chi nhánh này (chạy scripts/kho/nap-ton-salonhero.mjs).</p> : (
-          <Bang duLieu={lech.slice(0, 200)} khoa={(r) => r.id} trong="Không có chênh lệch."
+          <Bang noi duLieu={lech.slice(0, 200)} khoa={(r) => r.id} trong="Không có chênh lệch."
             cot={[{ chinh: true, nhan: "Mặt hàng", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "SalonHero", phai: true, hienThi: (r) => soVN(r.sh) }, { nhan: "AMIA", phai: true, hienThi: (r) => `${soVN(r.amia)} ${r.don_vi}` }, { nhan: "Chênh", phai: true, hienThi: (r) => soVN(r.chenh) }, { nhan: "Ghi chú", hienThi: (r) => NHAN_LECH[r.loai] }]} />
         )}
         {chiAmia.length > 0 && <p className="mt-4 text-[13px] text-muc-3">{chiAmia.length} mặt hàng có tồn ở AMIA nhưng SalonHero không có: {chiAmia.slice(0, 5).map((s) => s.ten).join("; ")}{chiAmia.length > 5 ? "…" : ""}</p>}

@@ -30,7 +30,7 @@ export default async function TrangKiemKe() {
       <TieuDeNoi quayLai={{ href: "/kho", nhan: "Kho" }} tieuDe="Kiểm kê kho" phu="Chụp tồn sổ → hai người đếm thực tế → gửi duyệt → người khác duyệt thì chênh lệch mới ghi vào sổ kho. Mỗi chi nhánh chỉ một phiếu mở một lúc.">
         {nhap && <NutHop nhan="Tạo phiếu kiểm kê" tieuDe="Tạo phiếu kiểm kê" moTa="Hệ thống chụp tồn sổ của mọi mặt hàng theo dõi kho tại thời điểm tạo. Nên tạm dừng nhập/xuất trong lúc đếm." truong={truong} action={taoKiemKe} giaTri={{ ngay: homNayHCM(), loai: "thang", chi_nhanh_id: "", nguoi_dem_2_id: "" }} rong />}
       </TieuDeNoi>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu kiểm kê."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu kiểm kê."
         cot={[
           { nhan: "Phiếu", chinh: true, hienThi: (r) => <Link href={`/kho/kiem-ke/${r.id}`} className="text-nhan-dam hover:underline">{r.ma}</Link> },
           { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id) ?? "" }, { nhan: "Ngày", hienThi: (r) => <div>{ngayVN(r.ngay)}<div className="text-[12.5px] text-muc-3">{r.loai === "thang" ? "Hằng tháng" : r.loai === "ton_dau" ? "Tồn đầu" : "Đột xuất"}</div></div> },

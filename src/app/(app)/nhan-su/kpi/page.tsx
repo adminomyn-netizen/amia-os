@@ -83,7 +83,7 @@ export default async function TrangKpi({ searchParams }: { searchParams: Promise
             return (
               <div key={p.id}>
                 <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2"><h3 className="font-medium">{p.ten}</h3><span className="text-[13px] text-muc-3">{hangPhong ? `Hạng ${hangPhong.hang} giữa các phòng, ${hangPhong.diem} điểm` : "Chưa có điểm trong kỳ"}</span></div>
-                <Bang duLieu={trong} khoa={(r) => r.id} trong="Chưa ai trong phòng có điểm."
+                <Bang noi duLieu={trong} khoa={(r) => r.id} trong="Chưa ai trong phòng có điểm."
                   cot={[
                     { nhan: "Hạng", phai: true, hienThi: (r) => r.hang }, { nhan: "Nhân viên", chinh: true, hienThi: (r) => r.ten },
                     { nhan: "Điểm", phai: true, hienThi: (r) => r.diem }, { nhan: "Thưởng", phai: true, hienThi: (r) => { const t = tienThuong(thuongBang, ky, "ca_nhan_phong", r.hang); return t ? tienVN(t) : "—"; } },
@@ -97,7 +97,7 @@ export default async function TrangKpi({ searchParams }: { searchParams: Promise
         <section className="mt-8">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3"><h2 className="nhan-muc">Mức thưởng thi đua</h2>
             {!nd.chiNhanhId && <NutHop nhan="Đặt mức thưởng" tieuDe="Đặt mức thưởng" truong={truongThuong} action={luuThuongKpi} giaTri={{ ky: "thang", doi_tuong: "phong", hang: "1" }} />}</div>
-          <Bang duLieu={[...thuongBang].sort((a, b) => a.ky.localeCompare(b.ky) || a.doi_tuong.localeCompare(b.doi_tuong) || a.hang - b.hang)} khoa={(r) => `${r.ky}${r.doi_tuong}${r.hang}`} trong="Chưa đặt mức thưởng nào."
+          <Bang noi duLieu={[...thuongBang].sort((a, b) => a.ky.localeCompare(b.ky) || a.doi_tuong.localeCompare(b.doi_tuong) || a.hang - b.hang)} khoa={(r) => `${r.ky}${r.doi_tuong}${r.hang}`} trong="Chưa đặt mức thưởng nào."
             cot={[
               { nhan: "Kỳ", hienThi: (r) => (r.ky === "quy" ? "Quý" : "Tháng") }, { nhan: "Đối tượng", hienThi: (r) => ({ phong: "Phòng", ca_nhan_phong: "Cá nhân trong phòng", cong_ty: "Cá nhân toàn công ty" })[r.doi_tuong] },
               { nhan: "Hạng", hienThi: (r) => HANG_NHAN[r.hang] }, { nhan: "Tiền thưởng", phai: true, hienThi: (r) => tienVN(r.so_tien) },

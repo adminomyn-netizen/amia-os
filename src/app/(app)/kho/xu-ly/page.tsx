@@ -40,7 +40,7 @@ export default async function TrangXuLy({ searchParams }: { searchParams: Promis
     ];
     if (nhap) nut = <NutHop nhan="Lập phiếu xử lý" tieuDe="Lập phiếu xử lý vật tư" moTa="Chỉ ghi vào sổ kho sau khi người khác duyệt. Huỷ hàng cần ghi rõ lý do và nên chụp ảnh lưu lại." truong={truong} action={taoXuLyVatTu} giaTri={{ loai: "huy", san_pham_id: "", ncc_id: "", chi_nhanh_id: "" }} rong />;
     noiDung = (
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu xử lý."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu xử lý."
         cot={[
           { nhan: "Phiếu", chinh: true, hienThi: (r) => <div>{r.ma}<div className="text-[12.5px] text-muc-3">{ngayGioVN(r.tao_luc)} · {tenNv.get(r.nguoi_lap_id)}{!nd.chiNhanhId && ` · ${tenCn.get(r.chi_nhanh_id)}`}</div></div> },
           { nhan: "Loại", hienThi: (r) => LOAI_XU_LY[r.loai] }, { nhan: "Vật tư", hienThi: (r) => <div>{tenSp.get(r.san_pham_id)?.ten}<div className="text-[12.5px] text-muc-3">{[r.so_lo, r.han_dung ? ngayVN(r.han_dung) : ""].filter(Boolean).join(" · ")}</div></div> },
@@ -69,7 +69,7 @@ export default async function TrangXuLy({ searchParams }: { searchParams: Promis
     ];
     if (nhap) nut = <NutHop nhan="Lập phiếu xuất khẩn" tieuDe="Xuất khẩn cấp" moTa="Chỉ cho cấp cứu y tế thực sự. Hàng ra khỏi kho ngay; kế toán/quản lý phải hậu kiểm trong 24 giờ. Không dùng cho nhu cầu gấp thông thường." truong={truong} action={xuatKhanCap} giaTri={{ san_pham_id: "", nguoi_quyet_dinh_id: "", chi_nhanh_id: "" }} rong />;
     noiDung = (
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu xuất khẩn cấp."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu xuất khẩn cấp."
         cot={[
           { nhan: "Phiếu", chinh: true, hienThi: (r) => <div>{r.ma}<div className="text-[12.5px] text-muc-3">{ngayGioVN(r.xuat_luc)}{!nd.chiNhanhId && ` · ${tenCn.get(r.chi_nhanh_id)}`}</div></div> },
           { nhan: "Vật tư", hienThi: (r) => <div>{tenSp.get(r.san_pham_id)?.ten}<div className="text-[12.5px] text-muc-3">{soVN(r.so_luong)} {tenSp.get(r.san_pham_id)?.don_vi}</div></div> },

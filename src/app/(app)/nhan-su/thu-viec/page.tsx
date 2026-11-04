@@ -41,7 +41,7 @@ export default async function TrangThuViec({ searchParams }: { searchParams: Pro
     noiDung = (
       <>
         <div className="mb-3 flex justify-end"><NutHop nhan="Thêm mục tiêu" tieuDe="Thêm mục tiêu thử việc" truong={truong} action={luuMucTieuThuViec} giaTri={{ moc: "30", ket_qua: "chua" }} /></div>
-        <Bang duLieu={mt ?? []} khoa={(r) => r.id} trong="Chưa có mục tiêu thử việc nào."
+        <Bang noi duLieu={mt ?? []} khoa={(r) => r.id} trong="Chưa có mục tiêu thử việc nào."
           cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => ten.get(r.nhan_vien_id)?.ho_ten },
             { nhan: "Mốc", hienThi: (r) => `${r.moc} ngày` },
@@ -67,7 +67,7 @@ export default async function TrangThuViec({ searchParams }: { searchParams: Pro
       <>
         <p className="mb-3 text-[13px] text-muc-3">Mentor, quản lý, nhân sự mỗi người đánh giá ở mốc 30 và 60 ngày. Quyết định lên chính thức xong thì thêm HĐLĐ lần 1 ở trang Hợp đồng để ghi ngày chính thức.</p>
         <div className="mb-3 flex justify-end"><NutHop nhan="Đánh giá" tieuDe="Đánh giá thử việc" truong={truong} action={luuDanhGiaThuViec} giaTri={{ moc: "30", vai: "quan_ly", diem: "3" }} /></div>
-        <Bang duLieu={dong} khoa={(r) => `${r.n.id}-${r.moc}`} trong="Không có ai đang thử việc."
+        <Bang noi duLieu={dong} khoa={(r) => `${r.n.id}-${r.moc}`} trong="Không có ai đang thử việc."
           cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{r.n.ho_ten}<div className="text-[12.5px] text-muc-3">Vào làm {ngayVN(r.n.ngay_vao_lam)}</div></div> },
             { nhan: "Mốc", hienThi: (r) => `${r.moc} ngày` },

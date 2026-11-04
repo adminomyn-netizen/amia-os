@@ -33,7 +33,7 @@ export default async function TrangCongNo({ searchParams }: { searchParams: Prom
       </TieuDeNoi>
       <HangChiSo muc={[{ nhan: "Tổng phải trả", so: tienVN(tong) }, { nhan: "Nhà cung cấp còn nợ", so: String(co.length) }]} />
       <div className="mt-5">
-        <Bang duLieu={co} khoa={(r) => r.ncc_id ?? ""} trong="Hiện không còn khoản nợ nhà cung cấp nào."
+        <Bang noi duLieu={co} khoa={(r) => r.ncc_id ?? ""} trong="Hiện không còn khoản nợ nhà cung cấp nào."
           cot={[
             { nhan: "Nhà cung cấp", chinh: true, hienThi: (r) => <Link href={`/kho-mua-sam/cong-no?ncc=${r.ncc_id}`} className="font-medium text-nhan-dam hover:underline">{r.ten}</Link> },
             { nhan: "Hạn thanh toán", hienThi: (r) => `${r.so_ngay_no} ngày` }, { nhan: "Thanh toán gần nhất", hienThi: (r) => (r.thanh_toan_cuoi ? ngayVN(r.thanh_toan_cuoi) : "Chưa có") },
@@ -50,7 +50,7 @@ export default async function TrangCongNo({ searchParams }: { searchParams: Prom
                 giaTri={{ ngay: homNayHCM(), so_tien: Number(dangXem.con_no), quy_id: quy?.[0]?.id ?? "" }} />
             )}
           </div>
-          <Bang duLieu={so ?? []} khoa={(r) => String(r.id)} trong="Chưa có giao dịch."
+          <Bang noi duLieu={so ?? []} khoa={(r) => String(r.id)} trong="Chưa có giao dịch."
             cot={[{ nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Loại", hienThi: (r) => NHAN_LOAI[r.loai] }, { nhan: "Ghi chú", chinh: true, hienThi: (r) => r.ghi_chu ?? "" }, { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={Number(r.so_tien) < 0 ? "text-nhan-dam" : "text-canh-bao"}>{Number(r.so_tien) < 0 ? "−" : "+"}{tienVN(Math.abs(Number(r.so_tien)))}</span> }]} />
         </section>
       )}

@@ -45,7 +45,7 @@ export default async function TrangChuyenKho({ searchParams }: { searchParams: P
         <div><label className={NHAN_O}>Người tạo</label><Chon ten="nguoi" giaTriMacDinh={loc.nguoi ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả người tạo" }, ...(nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))]} /></div>
         <div className="flex items-end gap-2"><button type="submit" className={NUT_CHINH}>Lọc</button><a href={`/api/xuat/chuyen-kho?${thamSo}`} download className={`${NUT_PHU} inline-flex items-center`}>Xuất Excel</a></div>
       </form>
-      <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu chuyển."
+      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu chuyển."
         cot={[
           { nhan: "Phiếu", chinh: true, hienThi: (r) => <div>{r.ma}<div className="text-[12.5px] text-muc-3">{ngayGioVN(r.gui_luc)} · {tenNv.get(r.nguoi_gui_id)}</div></div> },
           { nhan: "Từ → đến", hienThi: (r) => `${tenCn.get(r.tu_chi_nhanh_id)} → ${tenCn.get(r.den_chi_nhanh_id)}` },

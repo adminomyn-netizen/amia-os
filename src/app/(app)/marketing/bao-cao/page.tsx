@@ -44,7 +44,7 @@ export default async function TrangBaoCaoMkt({ searchParams }: { searchParams: P
         { nhan: "Thực thu từ lead", so: tienVN(tong("thuc_thu")), ghiChu: tongChi > 0 ? `${(tong("thuc_thu") / tongChi).toFixed(1)} lần chi phí` : "" },
       ]} />
       <div className="mt-6" />
-      <Bang duLieu={dong} khoa={(r) => r.nguon_id} trong="Chưa có lead trong khoảng này."
+      <Bang noi duLieu={dong} khoa={(r) => r.nguon_id} trong="Chưa có lead trong khoảng này."
         cot={[
           { nhan: "Nguồn", chinh: true, hienThi: (r) => ten.get(r.nguon_id) ?? "" }, { nhan: "Lead", phai: true, hienThi: (r) => soVN(r.so_lead) }, { nhan: "Hợp lệ", phai: true, hienThi: (r) => soVN(r.hop_le) },
           { nhan: "Đã liên hệ", phai: true, hienThi: (r) => <>{soVN(r.da_lien_he)} <span className="text-muc-3">({ti(r.da_lien_he, r.hop_le)})</span></> },

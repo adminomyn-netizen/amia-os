@@ -53,7 +53,7 @@ export default async function TrangEmailTuyenDung() {
       </section>
       <section className="mb-8">
         <h2 className="nhan-muc mb-3">Hàng đợi thư</h2>
-        <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có thư nào. Thư xuất hiện khi ứng viên (có email) sang một bước có mẫu thư."
+        <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa có thư nào. Thư xuất hiện khi ứng viên (có email) sang một bước có mẫu thư."
           cot={[
             { nhan: "Lúc", hienThi: (r) => ngayVN(r.tao_luc) }, { nhan: "Mẫu", hienThi: (r) => tenMau.get(r.mau_ma) ?? r.mau_ma },
             { nhan: "Gửi tới", chinh: true, hienThi: (r) => <div className="text-[13px]">{r.den_email}<div className="text-muc-3">{r.tieu_de}</div></div> },
@@ -63,7 +63,7 @@ export default async function TrangEmailTuyenDung() {
       </section>
       <section>
         <h2 className="nhan-muc mb-3">Mẫu thư theo bước</h2>
-        <Bang duLieu={mau ?? []} khoa={(r) => r.ma} cot={[
+        <Bang noi duLieu={mau ?? []} khoa={(r) => r.ma} cot={[
           { nhan: "Bước", hienThi: (r) => r.buoc }, { nhan: "Mẫu", chinh: true, hienThi: (r) => <div>{r.ten}<div className="text-[12.5px] text-muc-3">{r.tieu_de}</div></div> },
           { nhan: "Tự gửi", hienThi: (r) => (r.tu_gui ? <NhanTrangThai kieu="tot">Bật</NhanTrangThai> : <NhanTrangThai kieu="tram">Tắt</NhanTrangThai>) },
           { nhan: "", hienThi: (r) => (toanCty ? <NutHop kieu="chu" nhan="Sửa" tieuDe={`Sửa mẫu: ${r.ten}`} truong={truongMau} action={luuMauThu} an={{ ma: r.ma }} giaTri={{ tieu_de: r.tieu_de, noi_dung: r.noi_dung, tu_gui: r.tu_gui ? "1" : "", hoat_dong: r.hoat_dong ? "1" : "" }} /> : null) },

@@ -63,7 +63,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
     noiDung = (
       <>
         {ghi && <div className="mb-4"><NutHop nhan="Thêm phân loại" tieuDe="Thêm phân loại thu/chi" truong={truong} action={luuLoaiThuChi} giaTri={{ huong: "chi", hoat_dong: true }} /></div>}
-        <Bang duLieu={loaiTC ?? []} khoa={(r) => r.id} trong="Chưa có phân loại."
+        <Bang noi duLieu={loaiTC ?? []} khoa={(r) => r.id} trong="Chưa có phân loại."
           cot={[
             { nhan: "Phân loại", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
             { nhan: "Loại", hienThi: (r) => <NhanTrangThai kieu={r.huong === "thu" ? "tot" : "loi"}>{r.huong === "thu" ? "Thu vào" : "Chi ra"}</NhanTrangThai> },
@@ -110,7 +110,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
           <a href={`/api/xuat/so-quy?quy=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>
         </div>
         <div className="mt-3">
-          <Bang duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có giao dịch nào trong bộ lọc này."
+          <Bang noi duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có giao dịch nào trong bộ lọc này."
             cot={[
               { nhan: "Ngày tạo", hienThi: (r) => ngayVN(r.ngay) },
               { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id ?? "") ?? "" },

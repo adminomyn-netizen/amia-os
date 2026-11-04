@@ -32,7 +32,7 @@ export default async function TrangDongYAnh() {
       <TieuDeNoi quayLai={{ href: "/van-ban", nhan: "Văn bản & Hợp đồng" }} tieuDe="Đồng ý dùng ảnh" phu="Đồng ý chụp ảnh để theo dõi điều trị khác với đồng ý dùng ảnh cho truyền thông. Truyền thông là tự nguyện, ký riêng, có hạn và phạm vi kênh, khách rút lại lúc nào cũng được; hết hạn hoặc rút thì phải gỡ ảnh.">
         {soan && <NutHop nhan="Ghi nhận đồng ý" tieuDe="Ghi nhận đồng ý" truong={truong} action={luuConsent} giaTri={{ loai: "truyen_thong", ngay_ky: hom }} rong />}
       </TieuDeNoi>
-      <Bang duLieu={(ds ?? []).filter((c) => khachDuocXem.has(c.khach_id))} khoa={(r) => r.id} trong="Chưa có ghi nhận nào."
+      <Bang noi duLieu={(ds ?? []).filter((c) => khachDuocXem.has(c.khach_id))} khoa={(r) => r.id} trong="Chưa có ghi nhận nào."
         cot={[
           { nhan: "Khách", chinh: true, hienThi: (r) => <Link href={`/khach-hang/${r.khach_id}`} className="text-nhan-dam hover:underline">{ten.get(r.khach_id) ?? ""}</Link> },
           { nhan: "Loại", hienThi: (r) => LOAI_CONSENT[r.loai] }, { nhan: "Phạm vi kênh", hienThi: (r) => r.pham_vi_kenh ?? "" },

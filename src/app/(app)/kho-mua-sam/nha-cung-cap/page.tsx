@@ -34,7 +34,7 @@ export default async function TrangNhaCungCap({ searchParams }: { searchParams: 
         <button type="submit" className={NUT_PHU}>Tìm</button>
       </form>
       {khoa && <p className="-mt-2 mb-3 text-[12.5px] text-muc-3">Đang hiện {dsLoc.length}/{(ncc ?? []).length} nhà cung cấp. <Link href="/kho-mua-sam/nha-cung-cap" className="font-medium text-nhan-dam hover:underline">Bỏ tìm</Link></p>}
-      <Bang duLieu={dsLoc} khoa={(r) => r.id} trong={khoa ? "Không có nhà cung cấp nào khớp." : "Chưa có nhà cung cấp nào."}
+      <Bang noi duLieu={dsLoc} khoa={(r) => r.id} trong={khoa ? "Không có nhà cung cấp nào khớp." : "Chưa có nhà cung cấp nào."}
         cot={[
           { nhan: "Mã", hienThi: (r) => r.ma }, { nhan: "Nhà cung cấp", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
           { nhan: "Liên hệ", hienThi: (r) => [r.nguoi_lien_he, r.dien_thoai].filter(Boolean).join(" · ") },

@@ -92,7 +92,7 @@ export default async function TrangVoucher({ searchParams }: { searchParams: Pro
             className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${(sp.tt ?? "") === t.ma ? NUT_CHINH : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{t.ten} ({dem(t.ma)})</Link>
         ))}
       </nav>
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Không tìm thấy kết quả nào"
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Không tìm thấy kết quả nào"
         cot={[
           { nhan: "Tên voucher", chinh: true, hienThi: (r) => <span className="font-medium text-muc">{r.ten}</span> },
           { nhan: "Bắt đầu", hienThi: (r) => ngayVN(r.tu_ngay) },

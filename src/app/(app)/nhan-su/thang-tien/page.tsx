@@ -31,7 +31,7 @@ export default async function TrangThangTien({ searchParams }: { searchParams: P
     noiDung = (
       <>
         {sua && <div className="mb-3 flex justify-end"><NutHop nhan="Thêm cấp bậc" tieuDe="Thêm cấp bậc" truong={truong.filter((t) => t.ten !== "hoat_dong")} action={luuCapBac} giaTri={{ bac: String((dsCb.at(-1)?.bac ?? 0) + 1) }} /></div>}
-        <Bang duLieu={dsCb} khoa={(r) => r.id} trong="Chưa có cấp bậc nào."
+        <Bang noi duLieu={dsCb} khoa={(r) => r.id} trong="Chưa có cấp bậc nào."
           cot={[
             { nhan: "Bậc", phai: true, hienThi: (r) => r.bac }, { nhan: "Mã", hienThi: (r) => r.ma },
             { nhan: "Cấp bậc", chinh: true, hienThi: (r) => <span className={r.hoat_dong ? "" : "text-muc-3 line-through"}>{r.ten}</span> },
@@ -56,7 +56,7 @@ export default async function TrangThangTien({ searchParams }: { searchParams: P
     noiDung = (
       <>
         <div className="mb-3 flex justify-end"><NutHop nhan="Ghi thay đổi" tieuDe="Ghi thăng chức, điều chuyển" truong={truong} action={luuThangChuc} giaTri={{ loai: "thang_chuc", hieu_luc_tu: homNayHCM(), cap_nhat_ho_so: "1" }} /></div>
-        <Bang duLieu={ls ?? []} khoa={(r) => r.id} trong="Chưa có thay đổi nào."
+        <Bang noi duLieu={ls ?? []} khoa={(r) => r.id} trong="Chưa có thay đổi nào."
           cot={[
             { nhan: "Hiệu lực", hienThi: (r) => ngayVN(r.hieu_luc_tu) }, { nhan: "Nhân viên", chinh: true, hienThi: (r) => ten.get(r.nhan_vien_id) ?? "Đã nghỉ" },
             { nhan: "Loại", hienThi: (r) => <NhanTrangThai kieu={r.loai === "ha_bac" ? "cho" : "tot"}>{LOAI[r.loai as keyof typeof LOAI]}</NhanTrangThai> },

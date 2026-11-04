@@ -59,7 +59,7 @@ export default async function TrangNhanVienPhucVu({ searchParams }: { searchPara
         <div className="col-span-2 md:col-span-1"><label htmlFor="tim-pv" className={NHAN_O}>Tìm kiếm</label><input id="tim-pv" name="q" defaultValue={sp.q ?? ""} className={O_NHAP} autoComplete="off" /></div>
         <div><button type="submit" className={NUT_CHINH}>Tìm kiếm</button></div>
       </form>
-      <Bang duLieu={hien} khoa={(r) => r.id} trong="Không có dữ liệu."
+      <Bang noi duLieu={hien} khoa={(r) => r.id} trong="Không có dữ liệu."
         cot={[
           { nhan: "Ảnh", hienThi: (r) => <NutDoiAnh id={r.id} anh={r.anh_dai_dien} ten={r.ho_ten} sua={quanLy} canh={256} action={datAnhNhanVienPhucVu} /> },
           { nhan: "Mã", hienThi: (r) => r.ma_nv ?? "" }, { nhan: "Họ tên", chinh: true, hienThi: (r) => <span className="text-muc">{r.ho_ten}</span> }, { nhan: "Chức danh", hienThi: (r) => r.chuc_danh ?? "" },

@@ -42,7 +42,7 @@ export default async function TrangMuaHang({ searchParams }: { searchParams: Pro
         {coQuyen(nd, "mua.tao") && <NutHop nhan="Tạo đơn mua" tieuDe="Tạo đơn mua" moTa="Tạo xong, bấm vào mã đơn để thêm hàng." truong={truong} action={taoDonMua} giaTri={{}} />}
       </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/kho-mua-sam/mua-hang" />
-      <Bang duLieu={don ?? []} khoa={(r) => r.id} trong="Chưa có đơn mua nào."
+      <Bang noi duLieu={don ?? []} khoa={(r) => r.id} trong="Chưa có đơn mua nào."
         cot={[
           { nhan: "Mã đơn", chinh: true, hienThi: (r) => <Link href={`/kho-mua-sam/mua-hang/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
           { nhan: "Nhà cung cấp", hienThi: (r) => tenNcc.get(r.ncc_id) ?? "" }, { nhan: "Chi nhánh", hienThi: (r) => tenCn.get(r.chi_nhanh_id) ?? "" },

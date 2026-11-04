@@ -113,7 +113,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
             </ul>
           </section>
         )}
-        <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu cấp nào trong ngày."
+        <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu cấp nào trong ngày."
           cot={[
             { nhan: "Mã phiếu", hienThi: (r) => <Link href={`/phieu-cap/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> }, { nhan: "Giờ", hienThi: (r) => gioVN(r.tao_luc) },
             { chinh: true, nhan: "Khách", hienThi: (r) => tenK.get(r.khach_id) ?? "" }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
@@ -141,7 +141,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
     noiDung = (
       <>
         <p className="mb-4 text-[14px] text-muc-2">Tổng hợp các ca đã làm xong trong ngày. Lệch quá {ng}% so với định mức được tô màu để quản lý ca hỏi lý do.</p>
-        <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa có ca nào làm xong trong ngày."
+        <Bang noi duLieu={dong} khoa={(r) => r.id} trong="Chưa có ca nào làm xong trong ngày."
           cot={[
             { nhan: "Vật tư", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "Định mức", hienThi: (r) => soVN(r.dinhMuc), phai: true }, { nhan: "Đã cấp", hienThi: (r) => soVN(r.cap), phai: true },
             { nhan: "Đã trả", hienThi: (r) => soVN(r.tra), phai: true }, { nhan: "Dùng thật", hienThi: (r) => soVN(r.dung), phai: true },
@@ -149,7 +149,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
           ]} />
         {lechNang.length > 0 && (<>
           <h3 className="mb-2 mt-8 text-[15px] font-semibold text-muc">Ca lệch quá {ng}%</h3>
-          <Bang duLieu={lechNang} khoa={(r) => r.dong_id ?? ""} cot={[
+          <Bang noi duLieu={lechNang} khoa={(r) => r.dong_id ?? ""} cot={[
             { nhan: "Phiếu", hienThi: (r) => <Link href={`/phieu-cap/${r.phieu_id}`} className="font-medium text-nhan-dam hover:underline">{r.ma_phieu}</Link> }, { nhan: "Vật tư", hienThi: (r) => r.ten_vat_tu },
             { nhan: "Định mức", hienThi: (r) => soVN(r.dinh_muc), phai: true }, { nhan: "Dùng thật", hienThi: (r) => soVN(r.dung_that), phai: true }, { nhan: "Lệch", hienThi: (r) => `${Number(r.lech_pct) > 0 ? "+" : ""}${r.lech_pct}%`, phai: true }, { nhan: "Lý do", hienThi: (r) => r.ly_do_vuot ?? "Chưa có" },
           ]} /></>)}

@@ -78,7 +78,7 @@ export default async function TrangKhoNoiBo({ searchParams }: { searchParams: Pr
             <div className="flex items-end"><button type="submit" className={NUT_CHINH}>Lọc</button></div>
           </form>
           {(tu || den) && <p className="mb-3 text-[12.5px] text-muc-3">Đang lọc theo ngày: chỉ hiện mặt hàng có nhập / xuất trong khoảng đã chọn; số tồn vẫn là tồn hiện tại.</p>}
-          <Bang duLieu={hien} khoa={(r) => r.khoa} trong="Chưa có vật tư nào có tồn trong kho nội bộ."
+          <Bang noi duLieu={hien} khoa={(r) => r.khoa} trong="Chưa có vật tư nào có tồn trong kho nội bộ."
             cot={[
               { nhan: "Ảnh", hienThi: (r) => <AnhSanPham anh={r.sp.anh} ten={r.sp.ten} /> },
               { nhan: "Tên sản phẩm", chinh: true, hienThi: (r) => <span><span className="text-muc">{r.sp.ten}</span><span className="block text-[12.5px] text-muc-3">{r.sp.ma}{r.nguon === "tu_hang_ban" ? " · nhập từ kho hàng bán" : ""}</span></span> },

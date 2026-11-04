@@ -14,14 +14,17 @@ export function Bang<T>({
   duLieu,
   khoa,
   trong = "Chưa có dữ liệu.",
+  noi = false,
 }: {
   cot: Cot<T>[];
   duLieu: T[];
   khoa: (dong: T) => string;
   trong?: string;
+  /** Đặt bảng trong thẻ nổi có chiều sâu (máy tính / iPad); điện thoại vẫn là các thẻ từng hàng như cũ. */
+  noi?: boolean;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <div className={noi ? "khung-bang overflow-x-auto" : "overflow-x-auto"}>
       <table className="bang-the w-full min-w-[560px] text-left text-[14px]">
         <thead>
           <tr className="nhan-muc border-b border-vien">

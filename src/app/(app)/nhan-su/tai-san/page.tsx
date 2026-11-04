@@ -31,7 +31,7 @@ export default async function TrangTaiSan() {
       <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Tài sản cấp phát" phu={`${dangGiu} tài sản đang giao, ${ds.length - dangGiu} đã thu hồi. Thu hồi khi nhân viên nghỉ việc nằm trong checklist bàn giao.`}>
         <NutHop nhan="Cấp tài sản" tieuDe="Cấp tài sản" truong={truong} action={luuTaiSan} giaTri={{ so_luong: "1", ngay_cap: homNayHCM() }} />
       </TieuDeNoi>
-      <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa cấp tài sản nào."
+      <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa cấp tài sản nào."
         cot={[
           { nhan: "Tài sản", chinh: true, hienThi: (r) => <div>{r.ten_tai_san}<div className="text-[12.5px] text-muc-3">{[r.loai, r.hang_model].filter(Boolean).join(" · ")}</div></div> },
           { nhan: "Số lượng", phai: true, hienThi: (r) => `${Number(r.so_luong ?? 1)} ${r.don_vi_tinh ?? ""}`.trim() },

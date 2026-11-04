@@ -31,7 +31,7 @@ export default async function TrangDaoTao({ searchParams }: { searchParams: Prom
     noiDung = (
       <>
         <div className="mb-3 flex justify-end"><NutHop nhan="Thêm khoá học" tieuDe="Thêm khoá học" truong={truongKhoa} action={luuKhoaDaoTao} giaTri={{ bat_buoc: "1", hoat_dong: "1", thu_tu: "1", so_gio: "1" }} /></div>
-        <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có khoá học nào."
+        <Bang noi duLieu={ds} khoa={(r) => r.id} trong="Chưa có khoá học nào."
           cot={[
             { nhan: "Vị trí", hienThi: (r) => r.chuc_danh ?? "Mọi vị trí" }, { nhan: "Thứ tự", phai: true, hienThi: (r) => r.thu_tu },
             { nhan: "Khoá học", chinh: true, hienThi: (r) => <span className={r.hoat_dong ? "" : "text-muc-3 line-through"}>{r.ten}</span> },
@@ -52,7 +52,7 @@ export default async function TrangDaoTao({ searchParams }: { searchParams: Prom
     noiDung = (
       <>
         <div className="mb-3 flex justify-end"><NutHop nhan="Ghi kết quả" tieuDe="Ghi kết quả học" truong={truong} action={luuKetQuaDaoTao} giaTri={{ trang_thai: "dat" }} /></div>
-        <Bang duLieu={kq ?? []} khoa={(r) => r.id} trong="Chưa có kết quả học nào."
+        <Bang noi duLieu={kq ?? []} khoa={(r) => r.id} trong="Chưa có kết quả học nào."
           cot={[
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => ten.get(r.nhan_vien_id)?.ho_ten ?? "Đã nghỉ" }, { nhan: "Khoá học", hienThi: (r) => tenKhoa.get(r.khoa_id) },
             { nhan: "Ngày học", hienThi: (r) => (r.ngay_hoc ? ngayVN(r.ngay_hoc) : "—") }, { nhan: "Điểm", phai: true, hienThi: (r) => (r.diem == null ? "—" : Number(r.diem)) },

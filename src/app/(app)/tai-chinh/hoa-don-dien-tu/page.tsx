@@ -111,7 +111,7 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
               })} />
           </>
         ) : (
-          <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa có hoá đơn điện tử nào được ghi số trong khoảng này."
+          <Bang noi duLieu={dong} khoa={(r) => r.id} trong="Chưa có hoá đơn điện tử nào được ghi số trong khoảng này."
             cot={[
               ...cotChung,
               { nhan: "Hoá đơn điện tử", hienThi: (r) => (

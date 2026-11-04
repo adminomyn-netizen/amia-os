@@ -48,7 +48,7 @@ export default async function TrangKhoaKy() {
         {viec.length === 0 ? <div className="text-muc-3">Không có việc nào đang treo. Vẫn nên đối chiếu quỹ, ngân hàng và công nợ với người xác nhận độc lập.</div> : <ul className="list-disc pl-5 text-muc-2">{viec.map((v) => <li key={v.nhan}><Link href={v.href} className="text-nhan-dam hover:underline">{v.so} {v.nhan}</Link></li>)}</ul>}
         <div className="mt-2 text-muc-3">Mốc của kỳ này: kiểm kê và khoá kho ngày cuối tháng; đối soát doanh thu, quỹ, ngân hàng trước ngày làm việc thứ 2; chốt công nợ và lương trước thứ 5; khoá kỳ cuối ngày làm việc thứ 6 (khoảng {hanBaoCao.split("-").reverse().join("/")} cho tháng này).</div>
       </div>
-      <Bang duLieu={dong} khoa={(r) => r.thang} trong=""
+      <Bang noi duLieu={dong} khoa={(r) => r.thang} trong=""
         cot={[
           { nhan: "Tháng", chinh: true, hienThi: (r) => nhanThang(r.thang) },
           { nhan: "Trạng thái", hienThi: (r) => (r.ky?.trang_thai === "da_khoa" ? <NhanTrangThai kieu="tot">Đã khoá</NhanTrangThai> : r.ky ? <NhanTrangThai kieu="cho">Đang mở lại</NhanTrangThai> : <NhanTrangThai kieu="tram">Chưa khoá</NhanTrangThai>) },
@@ -61,7 +61,7 @@ export default async function TrangKhoaKy() {
           ) },
         ]} />
       <h2 className="mb-2 mt-8 text-[15px] font-semibold">Nhật ký khoá / mở kỳ</h2>
-      <Bang duLieu={nk ?? []} khoa={(r) => String(r.id)} trong="Chưa có thao tác nào."
+      <Bang noi duLieu={nk ?? []} khoa={(r) => String(r.id)} trong="Chưa có thao tác nào."
         cot={[
           { nhan: "Lúc", hienThi: (r) => ngayGioVN(r.luc) }, { nhan: "Tháng", hienThi: (r) => nhanThang(r.thang) },
           { nhan: "Việc", hienThi: (r) => ({ khoa: "Khoá kỳ", mo_lai: "Mở lại kỳ", khoa_lai: "Khoá lại" } as Record<string, string>)[r.hanh_dong] },

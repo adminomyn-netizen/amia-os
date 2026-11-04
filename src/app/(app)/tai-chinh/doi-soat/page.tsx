@@ -33,7 +33,7 @@ export default async function TrangDoiSoat({ searchParams }: { searchParams: Pro
         { nhan: "Mặt hàng lệch kho", so: soVN(lech.length), ghiChu: lech.length ? "cần soát" : "khớp" },
       ]} />
       <div className="mt-6" />
-      <Bang duLieu={ds} khoa={(r) => r.san_pham_id} trong="Không có sản phẩm nào được bán trong khoảng này."
+      <Bang noi duLieu={ds} khoa={(r) => r.san_pham_id} trong="Không có sản phẩm nào được bán trong khoảng này."
         cot={[
           { nhan: "Sản phẩm", chinh: true, hienThi: (r) => <div>{r.ten}<div className="text-[12.5px] text-muc-3">{r.ma}</div></div> },
           { nhan: "Bán", phai: true, hienThi: (r) => `${soVN(r.sl_ban)} ${r.don_vi}` }, { nhan: "Doanh thu", phai: true, hienThi: (r) => tienVN(r.doanh_thu) },

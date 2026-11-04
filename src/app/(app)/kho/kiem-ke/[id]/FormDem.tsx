@@ -30,7 +30,7 @@ export function FormDem({ id, dong, sua, tonDau = false }: { id: string; dong: D
   };
   return (
     <div>
-      <div className="overflow-x-auto rounded-the border border-vien">
+      <div className="overflow-x-auto rounded-hop border border-vien bg-giay-sang shadow-[inset_0_1px_0_rgb(255_255_255/0.95),0_1px_2px_rgb(10_43_38/0.06),0_8px_18px_-4px_rgb(10_43_38/0.11)]">
         <table className="w-full text-[14px]">
           <thead className="bg-nen-2 text-left text-[12.5px] text-muc-3"><tr><th className="px-3 py-2">Vật tư</th><th className="px-3 py-2 text-right">Tồn sổ</th><th className="px-3 py-2 text-right">Đếm thực tế</th>{tonDau && <><th className="px-3 py-2">Số lô</th><th className="px-3 py-2">Hạn dùng (năm-tháng-ngày)</th></>}<th className="px-3 py-2 text-right">Chênh lệch</th></tr></thead>
           <tbody>

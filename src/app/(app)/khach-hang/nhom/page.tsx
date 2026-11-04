@@ -81,7 +81,7 @@ export default async function NhomKhach({ searchParams }: { searchParams: Promis
         <button type="submit" className={NUT_PHU}>Tìm</button>
       </form>
 
-      <section className="rounded-the border border-vien bg-giay-sang px-4">
+      <section className="the-noi px-4 pt-1">
         <div className="flex justify-between border-b border-vien py-2 text-[12px] font-medium uppercase tracking-wide text-muc-3"><span>Tên nhóm</span><span>Số lượng khách</span></div>
         <ul>{dangDung.map(dong)}</ul>
         {dangDung.length === 0 && <p className="py-8 text-center text-muc-3">Chưa có nhóm nào.</p>}

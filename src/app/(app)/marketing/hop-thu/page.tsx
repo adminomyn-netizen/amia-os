@@ -30,7 +30,7 @@ export default async function TrangHopThu({ searchParams }: { searchParams: Prom
       <div>
         <TieuDeNoi tieuDe="Hộp thư" phu="Trả lời khách nhắn qua Zalo OA và Messenger ở một chỗ." />
         {daNoi.size === 0 ? (
-          <section className="max-w-[560px] rounded-the border border-vien p-5">
+          <section className="the-noi max-w-[560px] p-5 pt-6">
             <h2 className="nhan-muc">Bắt đầu trong 3 bước</h2>
             <ol className="mt-3 list-decimal space-y-2 pl-5 text-[14px] text-muc-2">{BUOC.map((b) => <li key={b}>{b}</li>)}</ol>
             <Link href="/cai-dat/zalo-sms?tab=ket-noi" className="nut-vang mt-5 inline-flex h-10 items-center rounded-nho px-4 text-[14px]">Tới phần kết nối</Link>

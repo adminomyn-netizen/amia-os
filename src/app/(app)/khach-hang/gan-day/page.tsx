@@ -72,7 +72,7 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
         <button type="submit" className={NUT_PHU}>Lọc</button>
       </form>
       <div className="grid gap-4 xl:grid-cols-2">
-        <section className="rounded-the border border-vien bg-giay-sang">
+        <section className="the-noi overflow-hidden">
           <h2 className="border-b border-vien px-4 py-3 text-[15px] font-semibold text-muc">Vừa đến (theo hoá đơn) {tong != null && <span className="font-normal text-muc-3">· {soVN(tong)} khách</span>}</h2>
           <ul>
             {ds.map((d) => {
@@ -97,7 +97,7 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
             )}
           </div>
         </section>
-        <section className="rounded-the border border-vien bg-giay-sang">
+        <section className="the-noi overflow-hidden">
           <h2 className="border-b border-vien px-4 py-3 text-[15px] font-semibold text-muc">Vừa tạo hồ sơ <span className="font-normal text-muc-3">· {MOI_TRANG} khách mới nhất</span></h2>
           <ul>
             {(moi ?? []).map((k) => (

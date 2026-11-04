@@ -66,7 +66,7 @@ export function KhungNgay({ tieuDe, tong, children }: { tieuDe: string; tong: st
   const [gon, setGon] = useState(false);
   return (
     <section aria-label={tieuDe}>
-      <div className="flex items-center justify-between gap-2 rounded-nho bg-sac-xanh px-3 py-2 text-[13px] font-medium text-white">
+      <div className="nen-toi flex items-center justify-between gap-2 rounded-the px-3.5 py-2.5 text-[13px] font-medium text-white shadow-[0_4px_14px_rgb(10_43_38/0.18)]">
         <span className="min-w-0 truncate">{tieuDe}</span>
         <span className="flex shrink-0 items-center gap-2"><span className="tabular-nums">{tong}</span>
           <button type="button" onClick={() => setGon(!gon)} aria-expanded={!gon} aria-label={gon ? "Mở danh sách lịch" : "Thu gọn danh sách lịch"} className="flex h-6 w-6 items-center justify-center rounded-nho hover:bg-white/15">

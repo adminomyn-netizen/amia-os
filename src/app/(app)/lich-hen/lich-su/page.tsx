@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
@@ -98,20 +99,16 @@ export default async function TrangLichSuLichHen({ searchParams }: { searchParam
 
   return (
     <>
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pb-4">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3">
-          <h1 className="chu-tieu-de text-[28px] leading-[1.15] text-muc lg:text-[34px]">Lịch sử lịch hẹn</h1>
-          <Link href={`/lich-hen?cn=${cnId}`} className="text-[14px] font-medium text-nhan-dam hover:underline">← Về lưới lịch hẹn</Link>
-        </div>
+      <TieuDeNoi tieuDe="Lịch sử lịch hẹn" quayLai={{ href: `/lich-hen?cn=${cnId}`, nhan: "Lưới lịch hẹn" }}>
         {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && (
           <div className="flex flex-wrap items-center gap-2 text-[13px]">{(dsCn ?? []).map((c) => <Link key={c.id} href={url({ cn: c.id, trang: "" })} className={`rounded-nho px-3 py-1.5 ${c.id === cnId ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}</div>
         )}
-      </div>
+      </TieuDeNoi>
       <BoLocLichSu q={q} tt={tt} nguon={nguon} tao={tao} km={km} tu={tu} den={den} moi={String(moi)}
         luaChonTt={[{ gia_tri: "", nhan: "Tất cả trạng thái" }, ...Object.entries(NHAN_TRANG_THAI).map(([gia_tri, nhan]) => ({ gia_tri, nhan }))]}
         luaChonNguon={[{ gia_tri: "", nhan: "Mọi nguồn đặt" }, ...LUA_CHON_NGUON]} />
       {error && <p role="alert" className="mb-3 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Không tải được lịch sử lịch hẹn. Thử lại sau ít phút.</p>}
-      <div className="rounded-the border border-vien bg-giay-sang px-4 pb-2 pt-1">
+      <div className="the-noi px-4 pb-2 pt-2">
         <Bang cot={cot} duLieu={lich} khoa={(l) => l.id} trong={q || tt || nguon || tao || km ? "Không có lịch hẹn nào khớp bộ lọc." : "Chưa có lịch hẹn nào trong khoảng ngày này."} />
       </div>
       <ThanhTrang trang={trang} tong={tong} moi={moi} don="dữ liệu" luonHien gan={(t) => url({ trang: t ? String(t) : "" })} />

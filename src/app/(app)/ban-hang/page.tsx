@@ -3,6 +3,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import { ShoppingBag } from "lucide-react";
 import { Pos } from "@/components/ban-hang/Pos";
 import { hienThuNgan, nhomNguonGt, type DongDon, type MucBan, type NguonGt, type SuaHoaDon, type TaiKhoanNhan } from "@/lib/ban-hang";
 import { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap } from "./actions";
@@ -108,7 +109,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   const chiNhanhId = nd.chiNhanhId ?? cnLich ?? khach?.chi_nhanh_id ?? "";
   return (
     <>
-      <TieuDeNoi tieuDe="Bán hàng" phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
+      <TieuDeNoi tieuDe="Bán hàng" icon={ShoppingBag} phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." />
       <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} soKhachLich={suaHd ? undefined : soKhachLich} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
         tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} dsCho={dsDonCho} nguonGt={nguonGt} taoMoi={coQuyen(nd, "danhmuc.sua")} xoaNhap={xoaDonNhap} nhapBanDau={nhapBanDau} suaHd={suaHd} />
     </>

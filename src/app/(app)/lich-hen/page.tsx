@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { CalendarDays, ChevronDown, Gem, Info, Medal, Trophy } from "lucide-react";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -230,12 +231,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   return (
     <>
       {/* Dòng đầu: tiêu đề + liên kết trang đặt lịch online; bên phải kiểu xem, sơ đồ chỗ, lịch sử, khoảng ngày, đặt lịch */}
-      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 pb-4">
-        <div className="flex min-w-0 flex-wrap items-baseline gap-x-3">
-          <h1 className="chu-tieu-de text-[28px] leading-[1.15] text-muc lg:text-[34px]">Lịch hẹn</h1>
-          <a href="/dat-lich" target="_blank" rel="noopener" className="text-[14px] font-medium text-nhan-dam hover:underline">(Web đặt lịch online)</a>
-        </div>
-        <div className="flex flex-wrap items-center gap-2.5">
+      <TieuDeNoi tieuDe="Lịch hẹn" icon={CalendarDays} phu={<a href="/dat-lich" target="_blank" rel="noopener" className="font-medium text-nhan-dam hover:underline">Mở web đặt lịch online</a>}>
           <div className="flex overflow-hidden rounded-nho border border-vien-dam" role="group" aria-label="Kiểu xem lịch">
             {KIEU_XEM.map((k) => <Link key={k.ma} href={url({ kieu: k.ma })} aria-current={k.ma === kieu ? "true" : undefined} className={nutKieu(k.ma === kieu)}>{k.nhan}</Link>)}
           </div>
@@ -243,9 +239,8 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
           <Link href={`/lich-hen/lich-su?cn=${cnId}`} className={nutPhu}>Lịch sử</Link>
           <ChonKhoang tu={tu} den={den} />
           {sua && <FormLichHen nhan="Đặt lịch" cho={choDm} khungGio={khungGioTrong} ttKhach={thongTinKhachDatLich} taoKhach={taoKhachDuoc ? { action: luuKhach, macDinhNv: nd.nhanVienId, nhom: (nhomKh ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten })), ganNhom: ganNhomKhachMoi } : undefined} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} ban={{ khach: khachMoi, chiNhanhId: cnId }} mo={moFormMoi} homNay={ngay} />}
-        </div>
-      </div>
-      <div className="mb-4 flex flex-wrap items-center gap-3 text-[13px] text-muc-3">
+      </TieuDeNoi>
+      <div className="the-noi the-noi-thap mb-4 flex flex-wrap items-center gap-3 px-4 py-3 text-[13px] text-muc-3">
         {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && (dsCn ?? []).map((c) => <Link key={c.id} href={url({ cn: c.id })} className={`rounded-nho px-3 py-1.5 ${c.id === cnId ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}
         <span className="flex items-center gap-2"><span>Nhân viên</span><span className="w-[190px]"><LocNhieuNhanVien giaTri={nvLoc.join(",")} luaChon={nvLocLC} /></span></span>
         <span className="flex items-center gap-2"><span>Chỗ</span><span className="w-[140px]"><LocCho giaTri={sp.cho ?? ""} luaChon={[...new Set([...choCn.map((c) => c.ten), ...lich.map((l) => (l.phong ?? "").trim()).filter(Boolean)])].map((t) => ({ gia_tri: t, nhan: t }))} /></span></span>
@@ -260,11 +255,11 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       </div>
 
       {(sua || coQuyen(nd, "lich.xem")) && (yeuCau ?? []).length > 0 && (
-        <section aria-label="Yêu cầu đặt lịch online chờ duyệt" className="mb-4 rounded-the border border-canh-bao bg-canh-bao-nen p-3">
+        <section aria-label="Yêu cầu đặt lịch online chờ duyệt" className="mb-4 rounded-hop border border-canh-bao bg-canh-bao-nen p-4">
           <h2 className="mb-2 text-[14px] font-semibold text-canh-bao">Yêu cầu đặt lịch online chờ duyệt ({(yeuCau ?? []).length})</h2>
           <ul className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
             {(yeuCau ?? []).map((y) => (
-              <li key={y.id} className="rounded-nho border border-vien bg-giay-sang p-2.5 text-[13px]">
+              <li key={y.id} className="rounded-the border border-vien bg-giay-sang p-3 text-[13px] shadow-[0_1px_2px_rgb(10_43_38/0.07),0_4px_10px_-2px_rgb(10_43_38/0.07)]">
                 <div className="font-semibold text-muc">{ngayVN(ngayCuaIso(y.bat_dau))} {gioVN(y.bat_dau)} · {y.thoi_luong_phut} phút</div>
                 <div className="text-muc-2">{y.ho_ten} · <a href={`tel:${y.dien_thoai}`} className="text-nhan-dam hover:underline">{y.dien_thoai}</a></div>
                 <div className="text-muc-3">{tenYeuCau(y.dich_vu_ids)}</div>
@@ -277,7 +272,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       )}
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
         {/* ───────── Lưới bên trái ───────── */}
-        <div className="min-w-0 overflow-x-auto rounded-the border border-vien bg-giay-sang" tabIndex={0} aria-label="Lưới lịch hẹn, cuộn ngang để xem các ngày">
+        <div className="min-w-0 overflow-x-auto rounded-hop border border-vien bg-giay-sang shadow-[inset_0_1px_0_rgb(255_255_255/0.95),0_1px_2px_rgb(10_43_38/0.06),0_8px_18px_-4px_rgb(10_43_38/0.11)]" tabIndex={0} aria-label="Lưới lịch hẹn, cuộn ngang để xem các ngày">
           <div className="grid min-w-max" style={{ gridTemplateColumns: cotLuoi }}>
             <div className="sticky left-0 z-10 flex items-center border-b border-r border-vien bg-giay-sang px-3 py-2">
               {kieu === "nv" ? <div className="w-full"><LocNhieuNhanVien giaTri={nvLoc.join(",")} luaChon={nvLocLC} /></div>
@@ -338,7 +333,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
                             ["Dịch vụ", dvIds.map((d) => tenDv.get(d)).filter(Boolean).join(", ")], ["Người thực hiện", l.nhan_vien_id ? (tenNv.get(l.nhan_vien_id) ?? "") : ""], ["Chỗ", l.phong ?? ""], ...nhomCua(l.id).map((x): [string, string] => [x.ten, [(x.dich_vu_ids ?? []).map((d) => tenDv.get(d)).filter(Boolean).join(", "), x.nhan_vien_id ? tenNv.get(x.nhan_vien_id) ?? "" : "", x.phong ?? ""].filter(Boolean).join(" · ")]), ["Nguồn đặt lịch", nhanNguon(l.nguon)], ["Ghi chú", l.ghi_chu ?? ""],
                             ["Tạo bởi", `${nguoiTao ? `${nguoiTao} · ` : ""}${gioVN(l.tao_luc)} ${ngayVN(ngayCuaIso(l.tao_luc))}`], ["Sửa lần cuối", `${gioVN(l.cap_nhat_luc)} ${ngayVN(ngayCuaIso(l.cap_nhat_luc))}`]];
               return (
-                <article key={l.id} className={`rounded-the border border-vien border-l-[3px] bg-giay-sang p-3 ${MAU_TRANG_THAI[l.trang_thai]?.the.split(" ")[0] ?? ""} ${l.trang_thai === "huy" ? "opacity-70" : ""}`}>
+                <article key={l.id} className={`rounded-the border border-vien border-l-[3px] bg-giay-sang p-3 shadow-[0_1px_2px_rgb(10_43_38/0.07),0_4px_10px_-2px_rgb(10_43_38/0.07)] transition-shadow hover:shadow-[0_2px_4px_rgb(10_43_38/0.08),0_10px_22px_-6px_rgb(10_43_38/0.14)] ${MAU_TRANG_THAI[l.trang_thai]?.the.split(" ")[0] ?? ""} ${l.trang_thai === "huy" ? "opacity-70" : ""}`}>
                   <div className="flex gap-3">
                     <div className="flex shrink-0 flex-col items-center gap-1">
                       <span className="flex h-12 w-12 items-center justify-center rounded-[50%] border-2 border-nhan text-[13px] font-semibold tabular-nums text-nhan-dam">{gioDen}</span>

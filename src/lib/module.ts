@@ -21,6 +21,10 @@ export const MODULE: Module[] = [
         { ten: "Bảng chốt 12h và 17h", moTa: "Việc đến hạn, đã nộp, đạt, trễ (cờ đỏ từ 30 phút) và kẹt ở ai.", duongDan: "/noi-lam-viec/chot-ngay", trangThai: "san_sang" },
         { ten: "Báo cáo ngày", moTa: "Nhân viên nộp báo cáo công việc cuối ngày.", duongDan: "/noi-lam-viec/bao-cao-ngay", trangThai: "san_sang" },
       ] },
+      { nhan: "Thu nhập & hoa hồng", the: [
+        { ten: "Thu nhập tạm tính của tôi", moTa: "Dự thảo lương theo công + hoa hồng, thưởng, phí trị liệu của tháng này, cập nhật hằng ngày.", duongDan: "/thu-nhap-cua-toi", trangThai: "san_sang" },
+        { ten: "Chính sách hoa hồng & phí trị liệu", moTa: "Toàn văn PL05, PL06, Quy định phí trị liệu và đơn giá PL01, PL02 áp dụng từ 01/11/2026.", duongDan: "/hoa-hong/chinh-sach", trangThai: "san_sang" },
+      ] },
       { nhan: "Kiến thức nội bộ", the: [
         { ten: "Wiki công ty", moTa: "Quy định, quy trình và tài liệu đã ban hành.", duongDan: "/noi-lam-viec/wiki", trangThai: "san_sang" },
         { ten: "Quy trình & khung vận hành", moTa: "14 quy trình kinh doanh, checklist thao tác, kịch bản mẫu, biểu mẫu, KPI và kế hoạch triển khai.", duongDan: "/quy-trinh", trangThai: "san_sang" },
@@ -54,6 +58,7 @@ export const MODULE: Module[] = [
         { ten: "Hoá đơn điện tử", moTa: "Chọn đơn cần xuất, ghi số hoá đơn điện tử bằng tay, xuất Excel.", duongDan: "/tai-chinh/hoa-don-dien-tu", trangThai: "san_sang", quyen: ["ban.xem"] },
       ] },
       { nhan: "Quyết toán & kế toán", the: [
+        { ten: "Bảng tính hoa hồng tháng", moTa: "Chính sách từ 11/2026: tính thử từng người, số Kế toán chốt, ca không tính phí, chốt vào bảng lương.", duongDan: "/hoa-hong/thang", trangThai: "san_sang", quyen: ["luong.xem"] },
         { ten: "Quyết toán hoa hồng", moTa: "Hoa hồng theo tháng, so số hiện tại với số đã chốt trong bảng lương.", duongDan: "/tai-chinh/quyet-toan-hoa-hong", trangThai: "san_sang", quyen: ["luong.xem"] },
         { ten: "Đối soát bán hàng", moTa: "Sản phẩm bán so với xuất kho, giá vốn và doanh thu sau huỷ.", duongDan: "/tai-chinh/doi-soat", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "Khoá kỳ kế toán", moTa: "Khoá/mở kỳ theo tháng, chặn ghi thêm sổ quỹ và công nợ của tháng đã chốt.", duongDan: "/tai-chinh/khoa-ky", trangThai: "san_sang", quyen: ["ky.khoa", "ky.mo_lai"] },
@@ -150,7 +155,8 @@ export const MODULE: Module[] = [
         { ten: "Tài khoản đăng nhập", moTa: "Danh sách tài khoản theo vai trò và chi nhánh; thiết lập quyền.", duongDan: "/cai-dat/tai-khoan-dang-nhap", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Tài khoản & phân quyền", moTa: "Tài khoản đăng nhập, vai trò, quyền riêng từng người.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Vai trò & quyền", moTa: "Bảng mỗi vai trò mặc định làm được những gì.", duongDan: "/cai-dat/vai-tro", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
-        { ten: "Cấu hình hoa hồng", moTa: "Tỉ lệ hoa hồng theo loại và vai.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },
+        { ten: "Chính sách hoa hồng từ 11/2026", moTa: "Tỉ lệ PL05, PL06, danh mục gói thẻ, nhóm hưởng từng người, đơn giá phí trị liệu, giá khuyến mại.", duongDan: "/hoa-hong/chinh-sach/cai-dat", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
+        { ten: "Cấu hình hoa hồng (đến 10/2026)", moTa: "Tỉ lệ hoa hồng theo loại và vai, kiểu SalonHero — dùng cho các tháng trước 11/2026.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "Chính sách phê duyệt", moTa: "Thao tác nào cần duyệt, ai duyệt, ngưỡng tiền.", duongDan: "/cai-dat/chinh-sach-duyet", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
       ] },
       { nhan: "Khách hàng & đặt lịch", the: [

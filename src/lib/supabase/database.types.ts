@@ -2121,6 +2121,219 @@ export type Database = {
         }
         Relationships: []
       }
+      cs_hoa_hong: {
+        Row: {
+          cau_hinh: Json
+          hieu_luc_tu: string
+          id: string
+          sua_boi: string | null
+          sua_luc: string
+          ten: string
+        }
+        Insert: {
+          cau_hinh: Json
+          hieu_luc_tu: string
+          id?: string
+          sua_boi?: string | null
+          sua_luc?: string
+          ten: string
+        }
+        Update: {
+          cau_hinh?: Json
+          hieu_luc_tu?: string
+          id?: string
+          sua_boi?: string | null
+          sua_luc?: string
+          ten?: string
+        }
+        Relationships: []
+      }
+      cs_hh_danh_muc: {
+        Row: {
+          dich_vu_id: string | null
+          gia_khuyen_mai: number
+          goi_id: string | null
+          id: string
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          dich_vu_id?: string | null
+          gia_khuyen_mai: number
+          goi_id?: string | null
+          id?: string
+          ten: string
+          thu_tu?: number
+        }
+        Update: {
+          dich_vu_id?: string | null
+          gia_khuyen_mai?: number
+          goi_id?: string | null
+          id?: string
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      cs_hh_thang_cn: {
+        Row: {
+          chi_nhanh_id: string
+          chi_phi_qc: number | null
+          doanh_so_chot: number | null
+          doanh_so_dv_chot: number | null
+          ghi_chu: string | null
+          nam: number
+          sua_boi: string | null
+          sua_luc: string
+          thang: number
+        }
+        Insert: {
+          chi_nhanh_id: string
+          chi_phi_qc?: number | null
+          doanh_so_chot?: number | null
+          doanh_so_dv_chot?: number | null
+          ghi_chu?: string | null
+          nam: number
+          sua_boi?: string | null
+          sua_luc?: string
+          thang: number
+        }
+        Update: {
+          chi_nhanh_id?: string
+          chi_phi_qc?: number | null
+          doanh_so_chot?: number | null
+          doanh_so_dv_chot?: number | null
+          ghi_chu?: string | null
+          nam?: number
+          sua_boi?: string | null
+          sua_luc?: string
+          thang?: number
+        }
+        Relationships: []
+      }
+      cs_hh_thang_nv: {
+        Row: {
+          chi_tieu: number | null
+          dat_dieu_kien: boolean
+          ghi_chu: string | null
+          nam: number
+          nhan_vien_id: string
+          sua_boi: string | null
+          sua_luc: string
+          thang: number
+        }
+        Insert: {
+          chi_tieu?: number | null
+          dat_dieu_kien?: boolean
+          ghi_chu?: string | null
+          nam: number
+          nhan_vien_id: string
+          sua_boi?: string | null
+          sua_luc?: string
+          thang: number
+        }
+        Update: {
+          chi_tieu?: number | null
+          dat_dieu_kien?: boolean
+          ghi_chu?: string | null
+          nam?: number
+          nhan_vien_id?: string
+          sua_boi?: string | null
+          sua_luc?: string
+          thang?: number
+        }
+        Relationships: []
+      }
+      cs_hh_chot: {
+        Row: {
+          chi_tiet: Json | null
+          chot_luc: string
+          khoan: string
+          nam: number
+          nguoi_id: string | null
+          nhan_vien_id: string
+          so_tien: number
+          thang: number
+        }
+        Insert: {
+          chi_tiet?: Json | null
+          chot_luc?: string
+          khoan: string
+          nam: number
+          nguoi_id?: string | null
+          nhan_vien_id: string
+          so_tien: number
+          thang: number
+        }
+        Update: {
+          chi_tiet?: Json | null
+          chot_luc?: string
+          khoan?: string
+          nam?: number
+          nguoi_id?: string | null
+          nhan_vien_id?: string
+          so_tien?: number
+          thang?: number
+        }
+        Relationships: []
+      }
+      phi_tl_don_gia: {
+        Row: {
+          dich_vu_ids: string[]
+          doi_tuong: string
+          don_gia: number
+          dvt: string
+          id: string
+          nhom: string
+          stt: number
+          ten: string
+          ten_ghep: string[]
+        }
+        Insert: {
+          dich_vu_ids?: string[]
+          doi_tuong: string
+          don_gia?: number
+          dvt: string
+          id?: string
+          nhom: string
+          stt: number
+          ten: string
+          ten_ghep?: string[]
+        }
+        Update: {
+          dich_vu_ids?: string[]
+          doi_tuong?: string
+          don_gia?: number
+          dvt?: string
+          id?: string
+          nhom?: string
+          stt?: number
+          ten?: string
+          ten_ghep?: string[]
+        }
+        Relationships: []
+      }
+      phi_tl_loai_tru: {
+        Row: {
+          dong_id: string
+          ly_do: string
+          nguoi_id: string | null
+          tao_luc: string
+        }
+        Insert: {
+          dong_id: string
+          ly_do: string
+          nguoi_id?: string | null
+          tao_luc?: string
+        }
+        Update: {
+          dong_id?: string
+          ly_do?: string
+          nguoi_id?: string | null
+          tao_luc?: string
+        }
+        Relationships: []
+      }
       chi_phi_qc_ngay: {
         Row: {
           chi_phi: number
@@ -3017,6 +3230,8 @@ export type Database = {
       }
       dich_vu: {
         Row: {
+          gia_khuyen_mai: number | null
+          gia_toi_thieu: number | null
           ten_en: string | null
           mo_ta: string | null
           anh: string | null
@@ -3041,6 +3256,8 @@ export type Database = {
           vat_pct: number
         }
         Insert: {
+          gia_khuyen_mai?: number | null
+          gia_toi_thieu?: number | null
           ten_en?: string | null
           mo_ta?: string | null
           anh?: string | null
@@ -3065,6 +3282,8 @@ export type Database = {
           vat_pct?: number
         }
         Update: {
+          gia_khuyen_mai?: number | null
+          gia_toi_thieu?: number | null
           ten_en?: string | null
           mo_ta?: string | null
           anh?: string | null
@@ -3694,6 +3913,8 @@ export type Database = {
       }
       goi_the: {
         Row: {
+          gia_khuyen_mai: number | null
+          gia_toi_thieu: number | null
           ten_en: string | null
           mo_ta: string | null
           mau_the: string | null
@@ -3722,6 +3943,8 @@ export type Database = {
           ten: string
         }
         Insert: {
+          gia_khuyen_mai?: number | null
+          gia_toi_thieu?: number | null
           ten_en?: string | null
           mo_ta?: string | null
           mau_the?: string | null
@@ -3750,6 +3973,8 @@ export type Database = {
           ten: string
         }
         Update: {
+          gia_khuyen_mai?: number | null
+          gia_toi_thieu?: number | null
           ten_en?: string | null
           mo_ta?: string | null
           mau_the?: string | null
@@ -8096,6 +8321,7 @@ export type Database = {
       }
       nhan_vien: {
         Row: {
+          nhom_hh: string | null
           anh_dai_dien: string | null
           chi_nhanh_id: string | null
           chuc_danh: string | null
@@ -8131,6 +8357,7 @@ export type Database = {
           vai_tro_chuyen_mon: string[]
         }
         Insert: {
+          nhom_hh?: string | null
           anh_dai_dien?: string | null
           chi_nhanh_id?: string | null
           chuc_danh?: string | null
@@ -8166,6 +8393,7 @@ export type Database = {
           vai_tro_chuyen_mon?: string[]
         }
         Update: {
+          nhom_hh?: string | null
           anh_dai_dien?: string | null
           chi_nhanh_id?: string | null
           chuc_danh?: string | null
@@ -12278,6 +12506,43 @@ export type Database = {
           luot_the: number
           luot_tien: number
           nhan: string
+        }[]
+      }
+      bc_cs_hh_dong: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          chi_nhanh_id: string
+          dich_vu_id: string | null
+          dong_id: string
+          gia_rong: number | null
+          goi_id: string | null
+          hoa_don_id: string
+          khach_id: string | null
+          khach_moi: boolean
+          khach_nguon: string | null
+          loai: string
+          ngay_hd: string
+          nguoi: Json
+          san_pham_id: string | null
+          so_luong: number
+          tt: number
+        }[]
+      }
+      bc_phi_tl_ca: {
+        Args: { p_cn?: string; p_den: string; p_tu: string }
+        Returns: {
+          chi_nhanh_id: string
+          dich_vu_id: string | null
+          dong_id: string
+          hoa_don_id: string
+          khach: string | null
+          loai_tru: string | null
+          ma_hd: string
+          ngay_hd: string
+          nguoi: Json
+          so_luong: number
+          ten: string
+          thanh_tien: number
         }[]
       }
       bc_hoa_hong_doi_chieu: {

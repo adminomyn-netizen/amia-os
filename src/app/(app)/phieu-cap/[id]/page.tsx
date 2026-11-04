@@ -4,7 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
@@ -39,7 +39,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <TieuDeTrang tieuDe={p.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><span>{dv?.ten}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
+      <TieuDeNoi tieuDe={p.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><span>{dv?.ten}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
         {p.trang_thai === "cho_cap" && coQuyen(nd, "phieu.cap") && <NutNhanh chinh nhan="Kho cấp vật tư" action={capPhieu} du={{ id }} />}
         {p.trang_thai === "da_cap" && coQuyen(nd, "phieu.nhan") && (
           <NutHop nhan="Chuyên viên trị liệu nhận vật tư" tieuDe="Xác nhận đã nhận vật tư" moTa="Kiểm đủ số lượng trên phiếu. Chưa nhận thì không mở ca được." an={{ id }} nhanLuu="Đã nhận đủ" truong={[{ ten: "dem_truoc", nhan: "Số đếm máy TRƯỚC ca (nếu máy có bộ đếm)", loai: "so", rong: true }]} action={nhanPhieu} />
@@ -53,7 +53,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
         )}
         {p.trang_thai === "da_lam" && coQuyen(nd, "phieu.doichieu") && <NutNhanh chinh nhan="Đã đối chiếu" action={doiChieuPhieu} du={{ id }} />}
         {["cho_cap", "da_cap", "da_nhan"].includes(p.trang_thai) && coQuyen(nd, "phieu.cap") && <NutHop kieu="phu" nhan="Huỷ phiếu" tieuDe="Huỷ phiếu cấp" moTa="Vật tư đã cấp sẽ được hoàn lại kho." an={{ id }} nhanLuu="Huỷ phiếu" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={huyPhieu} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       {p.trang_thai === "cho_cap" && coQuyen(nd, "phieu.cap") && <p className="mb-4 text-[13px] text-muc-3">Kho báo &quot;Kho không đủ&quot; khi tồn của vật tư bằng 0: vào <Link href="/kho/chuan-hoa?tab=ton-dau" className="font-medium text-nhan-dam hover:underline">Chuẩn hoá vật tư, tồn đầu</Link> để chốt tồn đầu hoặc nhập kho trước.</p>}
       <HangChiSo muc={[{ nhan: "Bác sĩ chỉ định", so: tenNv.get(p.bac_si_id) ?? "" }, { nhan: "Chuyên viên trị liệu nhận", so: tenNv.get(p.ktv_id ?? "") ?? "Chưa" }, { nhan: "Giá trị đã cấp", so: tienVN(Math.round(tongCap)) }, { nhan: "Giá trị dùng thật", so: lamXong ? tienVN(Math.round(tongDung)) : "Chưa làm xong" }]} />
       <div className="mt-8 space-y-8">

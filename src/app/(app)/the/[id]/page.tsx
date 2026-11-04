@@ -4,7 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
@@ -41,7 +41,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
 
   return (
     <>
-      <TieuDeTrang tieuDe={t.ma ?? ""} phu={<span className="flex flex-wrap items-center gap-2"><span>{g?.ten}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{t.cap_tay && <NhanTrangThai kieu="cho">Cấp tay, không tính doanh thu</NhanTrangThai>}</span>}>
+      <TieuDeNoi tieuDe={t.ma ?? ""} phu={<span className="flex flex-wrap items-center gap-2"><span>{g?.ten}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{t.cap_tay && <NhanTrangThai kieu="cho">Cấp tay, không tính doanh thu</NhanTrangThai>}</span>}>
         {t.loai === "lan" && coQuyen(nd, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutBuoi theId={id} nhanVien={nvLC} bacSi={bsLC} dichVu={dvLC} action={thucHienBuoi} nhan="Thực hiện buổi" />}
         {t.loai === "lan" && coQuyen(nd, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutHop kieu="phu" nhan="Hẹn buổi kế tiếp" tieuDe="Hẹn buổi kế tiếp" moTa="Ghi ngày + nội dung buổi sau và tạo nhắc ở hồ sơ khách. Không trừ buổi, không đổi tiền." an={{ the_id: id }} truong={[{ ten: "ke_tiep_ngay", nhan: "Ngày hẹn", loai: "ngay", batBuoc: true }, { ten: "ke_tiep_noi_dung", nhan: "Nội dung buổi kế tiếp", loai: "nhieu_dong", goiY: "Vd: làm vùng cổ, kiểm tra sau 2 tuần" }]} action={henBuoiKeTiep} />}
         {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="phu" nhan="Sửa thẻ" tieuDe={`Sửa thẻ ${t.ma ?? ""}`} rong
@@ -55,7 +55,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
         {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="chu" nguy nhan="Thu hồi thẻ" tieuDe={`Thu hồi thẻ ${t.ma ?? ""}`}
           moTa="Thẻ đã thu hồi KHÔNG cấp lại được, chỉ có thể cấp thẻ mới. Thu hồi không hoàn tiền và không đụng tới hoá đơn, sổ quỹ: nếu trả tiền cho khách thì ghi một phiếu chi ở Sổ quỹ."
           an={{ the_id: id }} truong={[{ ten: "ly_do", nhan: "Lý do thu hồi", loai: "nhieu_dong", batBuoc: true, goiY: "Vd: khách chuyển nhượng, cấp nhầm thẻ" }]} nhanLuu="Thu hồi thẻ" action={thuHoiThe} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       {t.trang_thai === "thu_hoi" && (() => { const k0 = (so ?? []).find((r) => r.loai === "thu_hoi"); return <p className="mb-4 rounded-nho border border-vien bg-loi-nen px-4 py-3 text-[14px] text-loi">Thẻ đã thu hồi{k0 ? <>: {k0.ghi_chu} <span className="text-muc-3">({ngayGioVN(k0.tao_luc)}{tenNv.get(k0.nguoi_id ?? "") ? `, ${tenNv.get(k0.nguoi_id ?? "")}` : ""})</span></> : " (chuyển từ SalonHero)."}</p>; })()}
       {t.trang_thai === "khoa" && (() => { const k0 = (so ?? []).find((r) => r.loai === "khoa"); return k0 ? <p className="mb-4 rounded-nho border border-vien bg-dat-nen px-4 py-3 text-[14px] text-muc-2">Thẻ đang khoá: {k0.ghi_chu} <span className="text-muc-3">({ngayGioVN(k0.tao_luc)}{tenNv.get(k0.nguoi_id ?? "") ? `, ${tenNv.get(k0.nguoi_id ?? "")}` : ""})</span></p> : null; })()}
       <HangChiSo muc={t.loai === "lan"

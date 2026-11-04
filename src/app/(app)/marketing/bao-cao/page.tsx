@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -29,15 +28,14 @@ export default async function TrangBaoCaoMkt({ searchParams }: { searchParams: P
   const tongChi = [...chiTheoNguon.values()].reduce((a, b) => a + b, 0) + chiChung;
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Báo cáo marketing" phu="Phễu từ lead tới thực thu. Khách đến và doanh thu lấy từ lịch hẹn, hoá đơn và thanh toán, không phải số nhập tay.">
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Báo cáo marketing" phu="Phễu từ lead tới thực thu. Khách đến và doanh thu lấy từ lịch hẹn, hoá đơn và thanh toán, không phải số nhập tay.">
         <form className="flex flex-wrap items-end gap-2" action="/marketing/bao-cao">
           <label className="text-[12.5px] text-muc-3">Từ<NgayChon ten="tu" giaTriMacDinh={tu} tuNam={2024} denNam={2035} ariaLabel="Từ ngày" /></label>
           <label className="text-[12.5px] text-muc-3">Đến<NgayChon ten="den" giaTriMacDinh={den} tuNam={2024} denNam={2035} ariaLabel="Đến ngày" /></label>
           <button className="rounded bg-nhan px-3 py-1.5 text-[14px] text-white">Xem</button>
           <NutXuatExcel loai="marketing" ten="báo cáo marketing theo khoảng ngày đang chọn" tham={{ tu, den }} />
         </form>
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[
         { nhan: "Lead", so: soVN(tong("so_lead")), ghiChu: `${soVN(tong("hop_le"))} hợp lệ` },
         { nhan: "Đã liên hệ", so: soVN(tong("da_lien_he")), ghiChu: ti(tong("da_lien_he"), tong("hop_le")) },

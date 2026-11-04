@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { gioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { apLocHoaDon, docLocHoaDon, GIOI_HAN_TONG, tongToanKy, traCuuLoc } from "@/lib/loc-hoa-don";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { BangHoaDon, type DongHoaDon } from "@/components/hoa-don/BangHoaDon";
 import { huyHoaDon, moLaiHoaDon } from "./actions";
 import { ChonCoTrang, LocHoaDon } from "@/components/hoa-don/LocHoaDon";
@@ -52,9 +52,9 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <TieuDeTrang tieuDe="Hoá đơn" phu={`${(count ?? 0).toLocaleString("vi-VN")} hoá đơn từ ${ngayVN(tu)} đến ${ngayVN(den)}`}>
+      <TieuDeNoi tieuDe="Hoá đơn" phu={`${(count ?? 0).toLocaleString("vi-VN")} hoá đơn từ ${ngayVN(tu)} đến ${ngayVN(den)}`}>
         {(count ?? 0) > 0 && <a href={`/api/xuat/hoa-don?${thamSo}`} download className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram" aria-label={`Xuất Excel ${(count ?? 0).toLocaleString("vi-VN")} hoá đơn đang lọc`}>Xuất Excel</a>}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <LocHoaDon tu={tu} den={den} chiNhanh={dsCn} nhanVien={dsNv} />
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2 text-[13px] text-muc-2">
         {tongKy ? (

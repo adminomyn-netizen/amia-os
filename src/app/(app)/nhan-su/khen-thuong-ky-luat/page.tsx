@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { dsNvTrongPham, luaChonNv } from "@/lib/hr-pham-vi";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -27,10 +26,9 @@ export default async function TrangKhenKyLuat() {
   ];
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Khen thưởng và kỷ luật" phu={`Tổng thưởng đã ghi ${tienVN(thuong)}, tổng phạt thu ${tienVN(phat)} (cả bản ghi chuyển từ Lark).`}>
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Khen thưởng và kỷ luật" phu={`Tổng thưởng đã ghi ${tienVN(thuong)}, tổng phạt thu ${tienVN(phat)} (cả bản ghi chuyển từ Lark).`}>
         <NutHop nhan="Ghi nhận" tieuDe="Ghi khen thưởng hoặc kỷ luật" truong={truong} action={luuKhenKyLuat} giaTri={{ loai: "thuong", ngay_lap: homNayHCM() }} />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có bản ghi nào."
         cot={[
           { nhan: "Ngày", hienThi: (r) => (r.ngay_lap ? ngayVN(r.ngay_lap) : `${r.thang ?? ""}/${r.nam ?? ""}`) },

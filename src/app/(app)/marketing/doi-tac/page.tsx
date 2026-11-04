@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { KIEU_HH_GIOI_THIEU, LOAI_DOI_TAC, nhanMucHoaHong } from "@/lib/marketing";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -26,10 +25,9 @@ export default async function TrangDoiTac() {
   const truongNguon: Truong[] = [{ ten: "ten", nhan: "Tên nguồn", loai: "chu", batBuoc: true, rong: true }, { ten: "hoat_dong", nhan: "Trạng thái", loai: "chon", luaChon: [{ gia_tri: "1", nhan: "Đang dùng" }, { gia_tri: "0", nhan: "Ngừng" }] }];
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Nguồn giới thiệu & cộng tác viên" phu="Mỗi đối tác có mã giới thiệu riêng và một mức hoa hồng mặc định (theo phần trăm, theo tiền hoặc theo điểm) như SalonHero. Hoa hồng giới thiệu tự tính ở Hoa hồng › Nguồn giới thiệu.">
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Nguồn giới thiệu & cộng tác viên" phu="Mỗi đối tác có mã giới thiệu riêng và một mức hoa hồng mặc định (theo phần trăm, theo tiền hoặc theo điểm) như SalonHero. Hoa hồng giới thiệu tự tính ở Hoa hồng › Nguồn giới thiệu.">
         {sua && <NutHop nhan="Thêm đối tác" tieuDe="Thêm đối tác" truong={truong} action={luuDoiTac} giaTri={{ loai: "ctv", hoat_dong: "1", hh_kieu: "phan_tram", hh_gia_tri: 0 }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có đối tác."
         cot={[
           { nhan: "Đối tác", chinh: true, hienThi: (r) => <div>{r.ma} · {r.ten}<div className="text-[12.5px] text-muc-3">{LOAI_DOI_TAC[r.loai]}{r.dien_thoai && ` · ${r.dien_thoai}`}</div></div> },

@@ -2,7 +2,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { NHAN_VAI_TRO, VAI_TRO, laVaiTro, quyenHieuLuc } from "@/lib/quyen";
 import { NutPhanQuyen } from "@/components/nhan-vien/NutPhanQuyen";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -42,10 +42,10 @@ export default async function TrangNhanVien() {
 
   return (
     <>
-      <TieuDeTrang tieuDe="Nhân viên" phu="Tài khoản, vai trò, phân quyền từng người và chi nhánh. Chỉ Kỹ thuật thấy mục này. Người tự đăng ký có sẵn vai trò Nhân viên: vào Sửa để đổi vai trò, vị trí, chi nhánh cho họ. Người không cần đăng nhập (VD kỹ thuật viên) vẫn tạo hồ sơ để gán vào hoá đơn và hoa hồng.">
+      <TieuDeNoi tieuDe="Nhân viên" phu="Tài khoản, vai trò, phân quyền từng người và chi nhánh. Chỉ Kỹ thuật thấy mục này. Người tự đăng ký có sẵn vai trò Nhân viên: vào Sửa để đổi vai trò, vị trí, chi nhánh cho họ. Người không cần đăng nhập (VD kỹ thuật viên) vẫn tạo hồ sơ để gán vào hoá đơn và hoa hồng.">
         <NutHop kieu="phu" nhan={dangKyMo ? "Đăng ký tự do: đang bật" : "Đăng ký tự do: đang tắt"} tieuDe="Đăng ký tự do" xacNhan={dangKyMo ? "Tắt đăng ký tự do? Người chưa có tài khoản sẽ không đăng ký được nữa." : "Bật đăng ký tự do? Ai vào /dang-ky cũng tạo được tài khoản vai trò Nhân viên, dùng được ngay."} action={datDangKyTuDo} an={{ mo: dangKyMo ? "0" : "1" }} nhanLuu={dangKyMo ? "Tắt" : "Bật"} />
         <NutHop nhan="Thêm nhân viên" tieuDe="Thêm nhân viên" truong={truongTao} giaTri={{ vai_tro: "le_tan", chi_nhanh_id: "" }} action={taoNhanVien} />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} cot={[
         { nhan: "Họ tên", hienThi: (r) => <div><span className="text-muc">{r.ho_ten}</span><div className="text-[12.5px] text-muc-3">{r.ma_nv}{r.ngay_vao_lam ? ` · từ ${ngayVN(r.ngay_vao_lam)}` : ""}</div></div> }, { nhan: "Vai trò", hienThi: (r) => NHAN_VAI_TRO[r.vai_tro as keyof typeof NHAN_VAI_TRO] ?? r.vai_tro },
         { nhan: "Chi nhánh", hienThi: (r) => (r.chi_nhanh_id ? <span className="flex flex-col"><span>{tenCn.get(r.chi_nhanh_id) ?? ""}</span>{r.vai_tro !== "chu" && r.vai_tro !== "ky_thuat" && r.them.filter((g) => g.chi_nhanh_id !== r.chi_nhanh_id).map((g) => <span key={g.chi_nhanh_id} className="text-[12.5px] text-muc-3">+ {tenCn.get(g.chi_nhanh_id) ?? "Chi nhánh"}: {NHAN_VAI_TRO[g.vai_tro as keyof typeof NHAN_VAI_TRO] ?? g.vai_tro}</span>)}</span> : "Mọi chi nhánh") }, { nhan: "Email", hienThi: (r) => r.email ?? "Không có tài khoản" },

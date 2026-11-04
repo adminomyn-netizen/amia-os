@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, soVN } from "@/lib/dinh-dang";
 import { LOAI_XU_LY, TT_XU_LY, TT_XUAT_KHAN } from "@/lib/kho";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -85,8 +84,7 @@ export default async function TrangXuLy({ searchParams }: { searchParams: Promis
   }
   return (
     <div>
-      <Link href="/kho" className="text-[13px] text-muc-3 hover:text-muc">← Kho</Link>
-      <TieuDeTrang tieuDe="Xử lý vật tư & xuất khẩn cấp" phu="Huỷ, hao hụt, trả nhà cung cấp và điều chỉnh tồn chỉ ghi sổ sau khi người khác duyệt. Xuất khẩn cấp ghi sổ ngay rồi hậu kiểm trong 24 giờ.">{nut}</TieuDeTrang>
+      <TieuDeNoi quayLai={{ href: "/kho", nhan: "Kho" }} tieuDe="Xử lý vật tư & xuất khẩn cấp" phu="Huỷ, hao hụt, trả nhà cung cấp và điều chỉnh tồn chỉ ghi sổ sau khi người khác duyệt. Xuất khẩn cấp ghi sổ ngay rồi hậu kiểm trong 24 giờ.">{nut}</TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/kho/xu-ly" />
       {noiDung}
     </div>

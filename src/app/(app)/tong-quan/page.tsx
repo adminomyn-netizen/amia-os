@@ -5,7 +5,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, gioVN, homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { locMenu } from "@/lib/nav";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -98,7 +98,7 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
   const bang = tab === "doanh-thu" ? <BangDoanhThu cn={cn} /> : tab === "khach" ? <BangKhach cn={cn} /> : tab === "the-no" ? <BangTheNo cn={cn} xemTien={coTien} /> : tab === "kho" ? <BangKho cn={cn} /> : tab === "he-thong" ? <><TongQuanKyThuat /><BangHeThong /></> : null;
   return (
     <>
-      <TieuDeTrang tieuDe={`Xin chào, ${nd.hoTen}`} phu={`${TIEU_DE_VAI_TRO[nd.vaiTro] ?? "Tổng quan"} · hôm nay ${ngayVN(homNay)}${cn ? "" : " · mọi chi nhánh"}`} />
+      <TieuDeNoi tieuDe={`Xin chào, ${nd.hoTen}`} phu={`${TIEU_DE_VAI_TRO[nd.vaiTro] ?? "Tổng quan"} · hôm nay ${ngayVN(homNay)}${cn ? "" : " · mọi chi nhánh"}`} />
       {banner}
       {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" />}
       {bang ?? (

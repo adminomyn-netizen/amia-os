@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN } from "@/lib/dinh-dang";
 import { tenKenh } from "@/lib/tin-nhan";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { OTraLoi } from "@/components/hop-thu/OTraLoi";
 import { danhDauDaDoc, traLoiKhach } from "./actions";
@@ -28,7 +28,7 @@ export default async function TrangHopThu({ searchParams }: { searchParams: Prom
   if (ds.length === 0) {
     return (
       <div>
-        <TieuDeTrang tieuDe="Hộp thư" phu="Trả lời khách nhắn qua Zalo OA và Messenger ở một chỗ." />
+        <TieuDeNoi tieuDe="Hộp thư" phu="Trả lời khách nhắn qua Zalo OA và Messenger ở một chỗ." />
         {daNoi.size === 0 ? (
           <section className="max-w-[560px] rounded-the border border-vien p-5">
             <h2 className="nhan-muc">Bắt đầu trong 3 bước</h2>
@@ -47,7 +47,7 @@ export default async function TrangHopThu({ searchParams }: { searchParams: Prom
   }
   return (
     <div>
-      <TieuDeTrang tieuDe="Hộp thư" phu="Trả lời khách nhắn qua Zalo OA và Messenger ở một chỗ." />
+      <TieuDeNoi tieuDe="Hộp thư" phu="Trả lời khách nhắn qua Zalo OA và Messenger ở một chỗ." />
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         <nav aria-label="Danh sách hội thoại" className={`${dang ? "hidden lg:block" : ""} max-h-[70vh] overflow-y-auto border-vien lg:border-r lg:pr-4`}>
           <ul className="divide-y divide-vien">

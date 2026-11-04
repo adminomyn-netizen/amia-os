@@ -6,7 +6,7 @@ import { homNayHCM, ngayCuaIso, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { LOAI_DX, TT_DX } from "@/lib/de-xuat";
 import { LOAI_PHIEU, LOAI_NGHI, TT_PHIEU } from "@/lib/nhan-su";
 import { TT_DON } from "@/app/(app)/kho-mua-sam/mua-hang/page";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -79,8 +79,7 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
 
   return (
     <div>
-      <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
-      <TieuDeTrang tieuDe="Trung tâm phê duyệt" phu="Một nơi duy nhất duyệt đề xuất mua sắm, thanh toán, tạm ứng và đơn mua hàng. Duyệt xong thì thực hiện ngay tại đây: chi từ sổ quỹ hoặc lập đơn mua." />
+      <TieuDeNoi quayLai={{ href: "/noi-lam-viec", nhan: "Nơi làm việc" }} tieuDe="Trung tâm phê duyệt" phu="Một nơi duy nhất duyệt đề xuất mua sắm, thanh toán, tạm ứng và đơn mua hàng. Duyệt xong thì thực hiện ngay tại đây: chi từ sổ quỹ hoặc lập đơn mua." />
       <HangChiSo muc={[{ nhan: "Chờ tôi duyệt", so: String(dem("cho-duyet")) }, { nhan: "Chờ thực hiện", so: String(dem("cho-thuc-hien")) }, { nhan: "Tôi đã gửi", so: String(dem("toi-gui")) }, { nhan: "Bị từ chối", so: String(dem("tu-choi")) }]} />
       <div className="mt-6" />
       <Tab muc={TAB.map((x) => ({ ma: x.ma, ten: `${x.ten} (${dem(x.ma)})` }))} dang={tab} goc="/noi-lam-viec/phe-duyet" />

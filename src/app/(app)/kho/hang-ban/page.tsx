@@ -7,7 +7,7 @@ import { boDau, soVN, tienVN } from "@/lib/dinh-dang";
 import { AnhSanPham } from "@/components/kho/AnhSanPham";
 import { ThanhKhoHangBan } from "@/components/kho/ThanhKhoHangBan";
 import { demTinhTrang, khopTinhTrang, laTinhTrang, tongGiaTriKho, TINH_TRANG_KHO } from "@/lib/kho-hang-ban";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -43,11 +43,10 @@ export default async function TrangKhoHangBan({ searchParams }: { searchParams: 
   const tenCn = new Map((dsCn ?? []).map((c) => [c.id, c.ten]));
   return (
     <div>
-      <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho & Mua sắm</Link>
-      <TieuDeTrang tieuDe="Quản lý kho hàng bán" phu="Sản phẩm bán lẻ. Số tồn là tổng sổ kho; nhập, xuất, chuyển kho làm ở các mục bên dưới.">
+      <TieuDeNoi quayLai={{ href: "/kho-mua-sam", nhan: "Kho & Mua sắm" }} tieuDe="Quản lý kho hàng bán" phu="Sản phẩm bán lẻ. Số tồn là tổng sổ kho; nhập, xuất, chuyển kho làm ở các mục bên dưới.">
         <a href={`/api/xuat/kho-hang-ban?${new URLSearchParams(Object.entries({ cn: cn || undefined, nhom: nhom || undefined, tt: tt === "tat_ca" ? undefined : tt, nh: nh || undefined, q: q || undefined }).filter((e): e is [string, string] => !!e[1])).toString()}`} download aria-label="Xuất Excel số lượng sản phẩm trong kho theo bộ lọc đang chọn" className={`${NUT_PHU} inline-flex items-center`}>Xuất Excel</a>
         <Link href="/bao-cao" className={`${NUT_PHU} inline-flex items-center`}>Báo Cáo Kho</Link>
-      </TieuDeTrang>
+      </TieuDeNoi>
       <ThanhKhoHangBan dang="ton" />
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
         <aside aria-label="Phân nhóm sản phẩm" className="text-[14px]">

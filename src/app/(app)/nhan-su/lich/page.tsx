@@ -6,7 +6,7 @@ import { congNgay, homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { LOAI_NGHI } from "@/lib/nhan-su";
 import { GIAI_DOAN_HD, THU_TU_HD, tinhHieuLuc } from "@/lib/van-ban";
 import { kyDanhGiaSapToi, sinhNhatTiep, soNgayGiua, tuoiSapToi } from "@/lib/lich-hr";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 
@@ -91,8 +91,7 @@ export default async function TrangLichNhanSu({ searchParams }: { searchParams: 
 
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Lịch nhân sự" phu="Những ngày cần để ý: hợp đồng sắp hết hạn, sinh nhật, người nghỉ phép, hết thử việc và kỳ đánh giá." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Lịch nhân sự" phu="Những ngày cần để ý: hợp đồng sắp hết hạn, sinh nhật, người nghỉ phép, hết thử việc và kỳ đánh giá." />
       <nav aria-label="Các lịch" className="mb-5 flex flex-wrap gap-2">
         {TAB.map((t) => (
           <Link key={t.ma} href={`/nhan-su/lich?tab=${t.ma}`} aria-current={t.ma === tab ? "page" : undefined}

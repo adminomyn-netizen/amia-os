@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
 import { boDau, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -132,8 +132,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
   }
   return (
     <div>
-      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính - Kế toán</Link>
-      <TieuDeTrang tieuDe="Sổ quỹ thu/chi" phu="Tiền mặt và ngân hàng: thu, chi, nạp, rút, chuyển quỹ. Tồn quỹ cộng dồn từ ngày đầu dùng (như SalonHero, không có số dư đầu). Dòng đã ghi chỉ đảo được, không sửa hay xoá.">{nutGhi}</TieuDeTrang>
+      <TieuDeNoi quayLai={{ href: "/tai-chinh", nhan: "Tài chính - Kế toán" }} tieuDe="Sổ quỹ thu/chi" phu="Tiền mặt và ngân hàng: thu, chi, nạp, rút, chuyển quỹ. Tồn quỹ cộng dồn từ ngày đầu dùng (như SalonHero, không có số dư đầu). Dòng đã ghi chỉ đảo được, không sửa hay xoá.">{nutGhi}</TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc={goc} them={them} />
       {noiDung}
     </div>

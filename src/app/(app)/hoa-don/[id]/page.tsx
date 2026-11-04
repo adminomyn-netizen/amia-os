@@ -6,7 +6,7 @@ import { sb } from "@/lib/db";
 import { gioVN, homNayHCM, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { NUT_CHINH } from "@/components/ui/dinh-dang";
 import { LOAI_VI, nhanKhoanThu, PHUONG_THUC_TIEN, VAI } from "@/lib/ban-hang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
@@ -93,7 +93,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
 
   return (
     <>
-      <TieuDeTrang tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)}{h.tao_luc ? ` ${gioVN(h.tao_luc)}` : ""} · lập bởi {nguoiLap}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
+      <TieuDeNoi tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)}{h.tao_luc ? ` ${gioVN(h.tao_luc)}` : ""} · lập bởi {nguoiLap}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
         <Link href={`/in/hoa-don/${id}`} target="_blank" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In hoá đơn</Link>
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
@@ -119,7 +119,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           <NutHop kieu="phu" nhan="Huỷ hoá đơn" tieuDe="Huỷ hoá đơn" moTa="Huỷ sẽ hoàn lại các khoản đã thu (kể cả thẻ tiền), thu hồi thẻ đã bán và trả kho. Không huỷ được nếu thẻ đã được dùng." an={{ hoa_don_id: id }} nhanLuu="Huỷ hoá đơn"
             truong={[{ ten: "ly_do", nhan: "Lý do huỷ", loai: "nhieu_dong", batBuoc: true }]} action={huyHoaDon} />
         )}
-      </TieuDeTrang>
+      </TieuDeNoi>
       {h.la_lich_su && h.trang_thai === "hoan_thanh" && (coQuyen(nd, "ban.sua") || coQuyen(nd, "no.xoa") || coQuyen(nd, "no.thu")) && <p className="mb-5 rounded-nho bg-giay-tram px-3 py-2.5 text-[13px] text-muc-2">{KHOA_SH} Sửa hoá đơn, điều chỉnh nợ và huỷ lần trả nợ của đơn này làm ở SalonHero; từ 15/11 làm ngay tại đây.</p>}
       {moi === "1" && <p role="status" className="mb-5 rounded-nho bg-nhan-nhat px-3 py-2.5 text-[14px] text-nhan-dam">Đã chốt đơn {h.ma}.</p>}
       {h.trang_thai === "huy" && <p className="mb-5 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Đã huỷ ngày {ngayGioVN(h.huy_luc)}. Lý do: {h.ly_do_huy}</p>}

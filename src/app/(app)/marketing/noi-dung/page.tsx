@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { LOAI_NOI_DUNG, TT_DUYET_ND } from "@/lib/marketing";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -28,10 +27,9 @@ export default async function TrangNoiDung() {
   ];
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Nội dung" phu="Mỗi nội dung có người làm và hạn. Nộp duyệt → người duyệt chốt; duyệt hoàn thành cần có link bài hoặc ngày đăng.">
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Nội dung" phu="Mỗi nội dung có người làm và hạn. Nộp duyệt → người duyệt chốt; duyệt hoàn thành cần có link bài hoặc ngày đăng.">
         {sua && <NutHop nhan="Thêm nội dung" tieuDe="Thêm nội dung" truong={truong} action={luuNoiDung} giaTri={{ loai: "bai_viet", han: hom, nguoi_phu_trach_id: nd.nhanVienId, chien_dich_id: "" }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có nội dung."
         cot={[
           { nhan: "Nội dung", chinh: true, hienThi: (r) => <div>{r.ma} · {r.tieu_de}<div className="text-[12.5px] text-muc-3">{LOAI_NOI_DUNG[r.loai]}{r.kenh && ` · ${r.kenh}`}{r.chien_dich_id && ` · ${tenCd.get(r.chien_dich_id)}`}</div></div> },

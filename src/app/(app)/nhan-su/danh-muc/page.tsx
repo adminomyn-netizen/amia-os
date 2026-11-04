@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
@@ -24,8 +23,7 @@ export default async function TrangDanhMucNhanSu() {
   const truongCd = (a: boolean) => [{ ten: "ten", nhan: "Tên chức danh", loai: "chu" as const, batBuoc: true, rong: true }, ...(a ? [{ ten: "hoat_dong", nhan: "Đang sử dụng", loai: "gat" as const }] : [])];
   return (
     <div>
-      <Link href="/nhan-su/ho-so" className="text-[13px] text-muc-3 hover:text-muc">← Hồ sơ nhân sự</Link>
-      <TieuDeTrang tieuDe="Phòng ban & chức danh" phu="Danh mục dùng khi lập hồ sơ và ghi lộ trình thăng tiến. Không xoá, chỉ ngừng sử dụng để giữ lịch sử." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su/ho-so", nhan: "Hồ sơ nhân sự" }} tieuDe="Phòng ban & chức danh" phu="Danh mục dùng khi lập hồ sơ và ghi lộ trình thăng tiến. Không xoá, chỉ ngừng sử dụng để giữ lịch sử." />
       <div className="grid gap-8 xl:grid-cols-2">
         <section>
           <div className="mb-3 flex items-center justify-between gap-3"><h2 className="text-[17px] font-semibold text-muc">Phòng ban</h2><NutHop nhan="Thêm phòng ban" tieuDe="Thêm phòng ban" truong={truongPb(false)} action={luuPhongBan} /></div>

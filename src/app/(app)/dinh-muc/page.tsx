@@ -2,7 +2,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -43,10 +43,10 @@ export default async function TrangDinhMuc({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <TieuDeTrang tieuDe="Công thức chi phí" phu="Định mức vật tư của từng dịch vụ. Vật tư 'bác sĩ chọn theo ca' (đầu tip MFU, filler...) chỉ là phương án; số thật do bác sĩ chỉ định khi ra phiếu cấp.">
+      <TieuDeNoi tieuDe="Công thức chi phí" phu="Định mức vật tư của từng dịch vụ. Vật tư 'bác sĩ chọn theo ca' (đầu tip MFU, filler...) chỉ là phương án; số thật do bác sĩ chỉ định khi ra phiếu cấp.">
         {sua && <NutHop kieu="phu" nhan="Dán từ bảng tính" tieuDe="Nhập định mức hàng loạt" rong moTa="Mỗi dòng: Mã (hoặc tên) dịch vụ, Mã (hoặc tên) vật tư, Số lượng, Bác sĩ chọn theo ca (1 hoặc 0), cách nhau bằng Tab (dán từ Excel/Google Sheet). Nên bật Chỉ kiểm tra trước để xem dòng nào lỗi." nhanLuu="Chạy"
           truong={[{ ten: "van_ban", nhan: "Dữ liệu dán vào", loai: "nhieu_dong", batBuoc: true, rong: true, goiY: "CSDCNC.30\tVT-FD41E4F4\t300\t1" }, { ten: "chi_kiem", nhan: "Chỉ kiểm tra, chưa lưu", loai: "gat" }]} giaTri={{ chi_kiem: true }} action={nhapDinhMuc} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <div className="grid gap-5 lg:grid-cols-[320px_minmax(0,1fr)]">
         <DanhSachDichVu nhom={nhomHienThi} chon={chon?.id ?? ""} chiChuaCo={chua === "1"} />
         <div className="min-w-0">

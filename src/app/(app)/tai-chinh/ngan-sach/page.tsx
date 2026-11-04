@@ -3,7 +3,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -36,11 +36,10 @@ export default async function TrangNganSach({ searchParams }: { searchParams: Pr
   ];
   return (
     <div>
-      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe={`Ngân sách ${String(m).padStart(2, "0")}/${y}`} phu="Ngân sách theo phân loại chi và chi nhánh. Đã chi lấy từ sổ quỹ. Chỉ cảnh báo khi đã chi vượt ngân sách, không cảnh báo mốc 80%.">
+      <TieuDeNoi quayLai={{ href: "/tai-chinh", nhan: "Tài chính" }} tieuDe={`Ngân sách ${String(m).padStart(2, "0")}/${y}`} phu="Ngân sách theo phân loại chi và chi nhánh. Đã chi lấy từ sổ quỹ. Chỉ cảnh báo khi đã chi vượt ngân sách, không cảnh báo mốc 80%.">
         <div className="flex items-center gap-3 text-[14px]"><Link href={`/tai-chinh/ngan-sach?thang=${truoc}`} className="text-nhan-dam hover:underline">← Tháng trước</Link><Link href={`/tai-chinh/ngan-sach?thang=${sau}`} className="text-nhan-dam hover:underline">Tháng sau →</Link></div>
         {sua && <NutHop nhan="Đặt ngân sách" tieuDe="Đặt ngân sách" moTa="Đặt lại cho cùng phân loại và chi nhánh sẽ ghi đè số cũ." truong={truong} action={luuNganSach} an={{ thang }} giaTri={{ loai_thu_chi_id: "", chi_nhanh_id: "" }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[{ nhan: "Tổng ngân sách", so: tienVN(tongNs) }, { nhan: "Đã chi", so: tienVN(tongChi), ghiChu: tongNs > 0 ? `${Math.round((tongChi / tongNs) * 100)}% ngân sách` : "" }, { nhan: "Còn lại", so: tienVN(tongNs - tongChi) }, { nhan: "Khoản vượt", so: String(vuot.length), ghiChu: vuot.length ? "cần giải trình" : "không có" }]} />
       <div className="mt-6" />
       <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa đặt ngân sách cho tháng này."

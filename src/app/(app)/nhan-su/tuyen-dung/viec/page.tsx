@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { soNgayGiua } from "@/lib/lich-hr";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 
@@ -33,8 +32,7 @@ export default async function TrangViecTuyenDung() {
   const qua = ds.filter((d) => d.han < hom).length;
   return (
     <div>
-      <Link href="/nhan-su/tuyen-dung" className="text-[13px] text-muc-3 hover:text-muc">← Tuyển dụng</Link>
-      <TieuDeTrang tieuDe="Công việc tuyển dụng" phu={`${ds.length} việc cần làm, ${qua} việc đã quá hạn. Danh sách tự cập nhật theo bước của ứng viên, không cần nhập tay.`} />
+      <TieuDeNoi quayLai={{ href: "/nhan-su/tuyen-dung", nhan: "Tuyển dụng" }} tieuDe="Công việc tuyển dụng" phu={`${ds.length} việc cần làm, ${qua} việc đã quá hạn. Danh sách tự cập nhật theo bước của ứng viên, không cần nhập tay.`} />
       <Bang duLieu={ds} khoa={(r) => r.khoa} trong="Không có việc nào đang chờ."
         cot={[
           { nhan: "Việc", chinh: true, hienThi: (r) => r.viec }, { nhan: "Đối tượng", hienThi: (r) => r.doiTuong }, { nhan: "Ai làm", hienThi: (r) => r.ai },

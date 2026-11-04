@@ -2,7 +2,7 @@ import Link from "next/link";
 import { layNguoiDungDangNhap } from "@/lib/auth";
 import { coMotQuyen, locMenu } from "@/lib/nav";
 import { NHAN_VAI_TRO, type Quyen } from "@/lib/quyen";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { MucTrang } from "@/components/ui/MucTrang";
 
 type Bai = { href: string; ten: string; quyen: Quyen[] | null; moTa: string; buoc: string[] };
@@ -29,7 +29,7 @@ export default async function HuongDan() {
   const ds = BAI.filter((b) => (b.quyen === null || coMotQuyen(nd, b.quyen) || thay.has(b.href)));
   return (
     <div className="space-y-6">
-      <TieuDeTrang tieuDe="Hướng dẫn sử dụng" phu={`Những việc thường làm của vai trò ${NHAN_VAI_TRO[nd.vaiTro]}, từng bước ngắn gọn.`} />
+      <TieuDeNoi tieuDe="Hướng dẫn sử dụng" phu={`Những việc thường làm của vai trò ${NHAN_VAI_TRO[nd.vaiTro]}, từng bước ngắn gọn.`} />
       <nav aria-label="Mục lục" className="flex flex-wrap gap-2">
         {ds.map((b) => <a key={b.href} href={`#${b.href.replace(/\W+/g, "-")}`} className="rounded-nho border border-vien px-3 py-1.5 text-[13.5px] text-muc-2 hover:bg-giay-tram">{b.ten}</a>)}
       </nav>

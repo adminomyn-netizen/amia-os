@@ -5,7 +5,7 @@ import { coQuyen } from "@/lib/quyen";
 import { ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { HINH_THUC_TT, LOAI_NGUOI_MUA, soHienThi, THUE_SUAT, thieuNguoiBan } from "@/lib/hoa-don-gtgt";
 import { layDuLieuGtgt } from "@/lib/hoa-don-gtgt-may-chu";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { MauHoaDonGtgt } from "@/components/hoa-don/MauHoaDonGtgt";
@@ -41,13 +41,12 @@ export default async function LapHoaDonGtgt({ params }: { params: Promise<{ id: 
   const trangThai = x ? "da_xuat" : "nhap";
   return (
     <div>
-      <Link href="/tai-chinh/hoa-don-dien-tu" className="text-[13px] text-muc-3 hover:text-muc">← Hoá đơn điện tử</Link>
-      <TieuDeTrang tieuDe={`Hoá đơn GTGT · ${d.hd.ma}`} phu={`${d.tenChiNhanh} · Hoá đơn bán ngày ${ngayVN(d.hd.ngay_hd)} · Khách phải trả ${tienVN(Number(d.hd.tong_phai_thu))}`}>
+      <TieuDeNoi quayLai={{ href: "/tai-chinh/hoa-don-dien-tu", nhan: "Hoá đơn điện tử" }} tieuDe={`Hoá đơn GTGT · ${d.hd.ma}`} phu={`${d.tenChiNhanh} · Hoá đơn bán ngày ${ngayVN(d.hd.ngay_hd)} · Khách phải trả ${tienVN(Number(d.hd.tong_phai_thu))}`}>
         <span className="flex flex-wrap items-center gap-2">
           <a href={`/in/hoa-don-gtgt/${d.hd.id}`} target="_blank" rel="noopener" className={NUT}>In / Lưu PDF</a>
           {x?.xml && <a href={`/api/xuat/hoa-don-gtgt/${x.id}`} download className={NUT}>Tải XML</a>}
         </span>
-      </TieuDeTrang>
+      </TieuDeNoi>
 
       <section className="mb-5 flex flex-wrap items-center gap-3 text-[14px]">
         {x ? <NhanTrangThai kieu="tot">Đã xuất · số {soHienThi(x.so)} · ký hiệu {x.mau_so}{x.ky_hieu} · {ngayGioVN(x.xuat_luc)}</NhanTrangThai>

@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, homNayHCM } from "@/lib/dinh-dang";
 import { TT_VIEC, UU_TIEN } from "@/lib/de-xuat";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -61,11 +61,10 @@ export default async function TrangViec({ searchParams }: { searchParams: Promis
   };
   return (
     <div>
-      <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
-      <TieuDeTrang tieuDe="Việc cần hoàn thành" phu="Việc giao cho tôi, việc tôi giao và việc quá hạn. Phê duyệt tiền không đi qua đây — xem Trung tâm phê duyệt.">
+      <TieuDeNoi quayLai={{ href: "/noi-lam-viec", nhan: "Nơi làm việc" }} tieuDe="Việc cần hoàn thành" phu="Việc giao cho tôi, việc tôi giao và việc quá hạn. Phê duyệt tiền không đi qua đây — xem Trung tâm phê duyệt.">
         <Link href="/noi-lam-viec/chot-ngay" className="text-[14px] font-medium text-nhan-dam hover:underline">Bảng chốt 12h / 17h</Link>
         <NutHop nhan="Giao việc" tieuDe="Giao việc" truong={truong} action={giaoViec} giaTri={{ nguoi_nhan_id: nd.nhanVienId, uu_tien: "thuong", han: hom, han_gio: "17:00" }} />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/noi-lam-viec/viec" />
       <Bang duLieu={dsHien} khoa={(r) => r.id} trong="Không có việc nào."
         cot={[

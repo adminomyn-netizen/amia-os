@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, tienVN } from "@/lib/dinh-dang";
 import { dsNvTrongPham } from "@/lib/hr-pham-vi";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 
@@ -28,10 +28,9 @@ export default async function TrangBhxhPhuCap() {
   const tongPc = dong.reduce((s, r) => s + Number(r.d!.dong_phuc_cap) + Number(r.d!.nha_o_cap), 0);
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="BHXH và phụ cấp" phu={`${dongBh.length} người đang đóng BHXH, phần người lao động ${pct}% khoảng ${tienVN(tongBh)} mỗi tháng. Phụ cấp đồng phục và nhà ở cộng lại ${tienVN(tongPc)} mỗi tháng.`}>
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="BHXH và phụ cấp" phu={`${dongBh.length} người đang đóng BHXH, phần người lao động ${pct}% khoảng ${tienVN(tongBh)} mỗi tháng. Phụ cấp đồng phục và nhà ở cộng lại ${tienVN(tongPc)} mỗi tháng.`}>
         {coQuyen(nd, "luong.sua") && <Link href="/nhan-su/luong/dieu-kien" className="text-[14px] text-nhan-dam hover:underline">Sửa ở Cài đặt lương cơ bản</Link>}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={dong} khoa={(r) => r.n.id} trong="Chưa có điều kiện lương nào."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{r.n.ho_ten}<div className="text-[12.5px] text-muc-3">{r.n.ma_nv}</div></div> },

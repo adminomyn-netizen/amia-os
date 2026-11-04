@@ -5,7 +5,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, tienVN } from "@/lib/dinh-dang";
 import { quyCuaThang, tienThuong, xepHangCaNhan, xepHangPhong, xepHangTrongPhong, type KyKpi } from "@/lib/kpi-thi-dua";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { BangXepHangDep, type DongXepHang } from "@/components/trang-chu/BangXepHangDep";
@@ -58,10 +58,9 @@ export default async function TrangKpi({ searchParams }: { searchParams: Promise
   const suaDiem = toanCty && coQuyen(nd, "hr.hoso") || truongPhong.length > 0;
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="KPI và thi đua" phu={`${nhanKy}. Điểm KPI từng người đổ về mỗi tháng; xếp hạng phòng, cá nhân trong phòng và toàn công ty để thi đua, thưởng theo tháng, quý.`}>
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="KPI và thi đua" phu={`${nhanKy}. Điểm KPI từng người đổ về mỗi tháng; xếp hạng phòng, cá nhân trong phòng và toàn công ty để thi đua, thưởng theo tháng, quý.`}>
         {suaDiem && <NutHop nhan="Nhập điểm KPI" tieuDe="Nhập điểm KPI tháng" truong={truongDiem} action={luuDiemKpi} giaTri={{ nam: String(nam), thang: String(ky === "thang" ? moc : thangNay) }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <nav aria-label="Kỳ xem" className="mb-5 flex flex-wrap items-center gap-2 text-[14px]">
         {(["thang", "quy"] as const).map((k) => <Link key={k} href={lienKet(k, nam, k === "quy" ? quyCuaThang(thangNay) : thangNay)} aria-current={ky === k ? "page" : undefined} className={`rounded-nho border px-3.5 py-2 ${ky === k ? "border-transparent bg-nhan-nhat font-medium text-nhan-dam" : "border-vien text-muc-2 hover:bg-giay-tram"}`}>{k === "thang" ? "Theo tháng" : "Theo quý"}</Link>)}
         <span className="mx-1 text-muc-3">|</span>

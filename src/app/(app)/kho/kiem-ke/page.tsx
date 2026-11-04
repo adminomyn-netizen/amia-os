@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { TT_KIEM_KE } from "@/lib/kho";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -27,10 +27,9 @@ export default async function TrangKiemKe() {
   ];
   return (
     <div>
-      <Link href="/kho" className="text-[13px] text-muc-3 hover:text-muc">← Kho</Link>
-      <TieuDeTrang tieuDe="Kiểm kê kho" phu="Chụp tồn sổ → hai người đếm thực tế → gửi duyệt → người khác duyệt thì chênh lệch mới ghi vào sổ kho. Mỗi chi nhánh chỉ một phiếu mở một lúc.">
+      <TieuDeNoi quayLai={{ href: "/kho", nhan: "Kho" }} tieuDe="Kiểm kê kho" phu="Chụp tồn sổ → hai người đếm thực tế → gửi duyệt → người khác duyệt thì chênh lệch mới ghi vào sổ kho. Mỗi chi nhánh chỉ một phiếu mở một lúc.">
         {nhap && <NutHop nhan="Tạo phiếu kiểm kê" tieuDe="Tạo phiếu kiểm kê" moTa="Hệ thống chụp tồn sổ của mọi mặt hàng theo dõi kho tại thời điểm tạo. Nên tạm dừng nhập/xuất trong lúc đếm." truong={truong} action={taoKiemKe} giaTri={{ ngay: homNayHCM(), loai: "thang", chi_nhanh_id: "", nguoi_dem_2_id: "" }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu kiểm kê."
         cot={[
           { nhan: "Phiếu", chinh: true, hienThi: (r) => <Link href={`/kho/kiem-ke/${r.id}`} className="text-nhan-dam hover:underline">{r.ma}</Link> },

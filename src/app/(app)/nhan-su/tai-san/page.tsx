@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { dsNvTrongPham, luaChonNv } from "@/lib/hr-pham-vi";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -29,10 +28,9 @@ export default async function TrangTaiSan() {
   ];
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Tài sản cấp phát" phu={`${dangGiu} tài sản đang giao, ${ds.length - dangGiu} đã thu hồi. Thu hồi khi nhân viên nghỉ việc nằm trong checklist bàn giao.`}>
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Tài sản cấp phát" phu={`${dangGiu} tài sản đang giao, ${ds.length - dangGiu} đã thu hồi. Thu hồi khi nhân viên nghỉ việc nằm trong checklist bàn giao.`}>
         <NutHop nhan="Cấp tài sản" tieuDe="Cấp tài sản" truong={truong} action={luuTaiSan} giaTri={{ so_luong: "1", ngay_cap: homNayHCM() }} />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa cấp tài sản nào."
         cot={[
           { nhan: "Tài sản", chinh: true, hienThi: (r) => <div>{r.ten_tai_san}<div className="text-[12.5px] text-muc-3">{[r.loai, r.hang_model].filter(Boolean).join(" · ")}</div></div> },

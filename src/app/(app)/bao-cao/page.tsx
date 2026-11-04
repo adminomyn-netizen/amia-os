@@ -5,7 +5,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { khoangNgay } from "@/lib/bao-cao";
 import { boDau, congNgay, gioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { Tab } from "@/components/ui/Tab";
 import { CotNgang } from "@/components/bieu-do/CotNgang";
@@ -332,9 +332,9 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
 
   return (
     <>
-      <TieuDeTrang tieuDe="Báo cáo" phu={tien ? "Số liệu tính trực tiếp từ sổ hoá đơn, sổ thu tiền, sổ thẻ và sổ kho" : "Báo cáo vận hành"}>
+      <TieuDeNoi tieuDe="Báo cáo" phu={tien ? "Số liệu tính trực tiếp từ sổ hoá đơn, sổ thu tiền, sổ thẻ và sổ kho" : "Báo cáo vận hành"}>
         {(tien || tab === "dat-lich" || tab === "danh-gia" || tab === "ti-le-chot" || tab === "ton-lo") && <a href={xuat} download aria-label={`Xuất Excel báo cáo ${tabs.find((t) => t.ma === tab)?.ten ?? ""} theo bộ lọc đang chọn`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={tabs} dang={tab} goc="/bao-cao" them={them} />
       {noiDung}
     </>

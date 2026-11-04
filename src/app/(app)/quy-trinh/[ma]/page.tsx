@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { NHAN_PHU, PHU_BUOC, type TrangThaiPhu } from "@/lib/khung-kd-phu";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 
@@ -23,8 +23,7 @@ export default async function TrangMotQuyTrinh({ params }: { params: Promise<{ m
   const thong: [string, string | null][] = [["Mục đích", qt.muc_dich], ["Phạm vi áp dụng", qt.pham_vi], ["Đầu vào", qt.dau_vao], ["Đầu ra", qt.dau_ra], ["Người liên quan", qt.nguoi_lien_quan], ["Biểu mẫu / tài liệu", qt.bieu_mau], ["KPI kiểm soát", qt.kpi], ["Tham chiếu khung", qt.tham_chieu]];
   return (
     <div>
-      <Link href="/quy-trinh" className="text-[13px] text-muc-3 hover:text-muc">← 14 quy trình</Link>
-      <TieuDeTrang tieuDe={`${qt.ma} · ${qt.ten}`} phu={`Chủ trì: ${qt.chu_tri ?? ""}`} />
+      <TieuDeNoi quayLai={{ href: "/quy-trinh", nhan: "14 quy trình" }} tieuDe={`${qt.ma} · ${qt.ten}`} phu={`Chủ trì: ${qt.chu_tri ?? ""}`} />
       <dl className="the-noi the-noi-thap mb-6 grid gap-x-8 gap-y-3 p-4 sm:grid-cols-2 sm:p-5">
         {thong.map(([k, v]) => v ? <div key={k} className={k === "Mục đích" || k === "Phạm vi áp dụng" ? "sm:col-span-2" : ""}><dt className="text-[12px] text-muc-3">{k}</dt><dd className="mt-0.5 text-[14px] text-muc">{v}</dd></div> : null)}
       </dl>

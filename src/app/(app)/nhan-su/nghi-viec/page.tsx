@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN } from "@/lib/dinh-dang";
 import { LOAI_NGHI_VIEC, NHOM_LY_DO_NGHI, TT_NGHI_VIEC } from "@/lib/ho-so";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -36,8 +36,7 @@ export default async function TrangNghiViec({ searchParams }: { searchParams: Pr
   const dong = tab === "dang-chay" ? dangChay : lichSu;
   return (
     <div>
-      <Link href="/nhan-su/ho-so" className="text-[13px] text-muc-3 hover:text-muc">← Hồ sơ nhân sự</Link>
-      <TieuDeTrang tieuDe="Nghỉ việc" phu="Đơn xin nghỉ → Ban Giám đốc duyệt → bàn giao, ký biên bản thoả thuận và cam kết bảo mật → hoàn tất (khoá tài khoản, giữ hồ sơ). Người lập hoặc chính chủ không tự duyệt.">
+      <TieuDeNoi quayLai={{ href: "/nhan-su/ho-so", nhan: "Hồ sơ nhân sự" }} tieuDe="Nghỉ việc" phu="Đơn xin nghỉ → Ban Giám đốc duyệt → bàn giao, ký biên bản thoả thuận và cam kết bảo mật → hoàn tất (khoá tài khoản, giữ hồ sơ). Người lập hoặc chính chủ không tự duyệt.">
         <NutHop nhan="Lập phiếu hộ nhân viên" tieuDe="Lập phiếu nghỉ việc" action={guiNghiViec} giaTri={{ loai: "dung_han", nhom_ly_do: "khac" }} rong
           truong={[
             { ten: "nhan_vien_id", nhan: "Nhân viên", loai: "chon", batBuoc: true, rong: true, luaChon: (nv ?? []).filter((n) => n.hoat_dong && (!nd.chiNhanhId || n.chi_nhanh_id === nd.chiNhanhId) && !["ky_thuat", "chu"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: `${n.ho_ten} (${n.ma_nv})` })) },
@@ -47,7 +46,7 @@ export default async function TrangNghiViec({ searchParams }: { searchParams: Pr
             { ten: "nguoi_nhan_ban_giao_id", nhan: "Người nhận bàn giao", loai: "chon", rong: true, luaChon: [{ gia_tri: "", nhan: "Chưa chọn" }, ...(nv ?? []).filter((n) => n.hoat_dong).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))] },
             { ten: "ly_do", nhan: "Ghi chú", loai: "nhieu_dong", rong: true },
           ]} />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[{ nhan: "Đang xử lý", so: String(dangChay.length), ghiChu: `${dangChay.filter((p) => p.trang_thai === "cho_duyet").length} chờ duyệt` }, { nhan: `Đã nghỉ việc ${nam}`, so: String(hoanTatNam.length) }]} />
       <div className="mt-6" />
       <Tab muc={TAB.map((x) => (x.ma === "dang-chay" ? { ...x, ten: `Đang xử lý (${dangChay.length})` } : x))} dang={tab} goc="/nhan-su/nghi-viec" />

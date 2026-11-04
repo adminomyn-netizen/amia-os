@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NgayChon } from "@/components/ui/NgayChon";
@@ -20,15 +19,14 @@ export default async function TrangDoiSoat({ searchParams }: { searchParams: Pro
   const lech = ds.filter((r) => Number(r.chenh_lech) !== 0);
   return (
     <div>
-      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe="Đối soát bán hàng" phu="Số sản phẩm bán trên hoá đơn so với số xuất kho theo hoá đơn, kèm giá vốn và doanh thu sau giảm giá. Hoá đơn huỷ được hoàn kho nên không tính vào số bán. Giá vốn tính theo giá nhập gần nhất của sản phẩm.">
+      <TieuDeNoi quayLai={{ href: "/tai-chinh", nhan: "Tài chính" }} tieuDe="Đối soát bán hàng" phu="Số sản phẩm bán trên hoá đơn so với số xuất kho theo hoá đơn, kèm giá vốn và doanh thu sau giảm giá. Hoá đơn huỷ được hoàn kho nên không tính vào số bán. Giá vốn tính theo giá nhập gần nhất của sản phẩm.">
         <form className="flex flex-wrap items-end gap-2" action="/tai-chinh/doi-soat">
           <label className="text-[12.5px] text-muc-3">Từ<NgayChon ten="tu" giaTriMacDinh={tu} tuNam={2024} denNam={2035} ariaLabel="Từ ngày" /></label>
           <label className="text-[12.5px] text-muc-3">Đến<NgayChon ten="den" giaTriMacDinh={den} tuNam={2024} denNam={2035} ariaLabel="Đến ngày" /></label>
           <button className="rounded bg-nhan px-3 py-1.5 text-[14px] text-white">Xem</button>
           <NutXuatExcel loai="doi-soat" ten="đối soát bán hàng theo khoảng ngày đang chọn" tham={{ tu, den }} />
         </form>
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[
         { nhan: "Số sản phẩm đã bán", so: soVN(tong("sl_ban")) }, { nhan: "Doanh thu sản phẩm", so: tienVN(tong("doanh_thu")) },
         { nhan: "Giá vốn ước tính", so: tienVN(tong("gia_von")), ghiChu: tong("doanh_thu") > 0 ? `Lãi gộp ${tienVN(tong("doanh_thu") - tong("gia_von"))}` : "" },

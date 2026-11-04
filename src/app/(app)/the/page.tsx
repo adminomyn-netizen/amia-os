@@ -3,7 +3,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { boDau, ngayVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -71,14 +71,14 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <TieuDeTrang tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Thực hiện buổi để trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
+      <TieuDeNoi tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Thực hiện buổi để trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
         {coQuyen(nd, "the.dieuchinh") && (
           <NutHop kieu="phu" nhan="Cấp thẻ tay" tieuDe="Cấp thẻ tay" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Cấp thẻ tại màn hình này không tính vào doanh thu của chi nhánh; muốn tính doanh thu thì bán thẻ ở Thu ngân." rong
             thongTin={{ theoDoi: ["goi_id", "ngay_cap", "han_dung"], lay: duKienHanThe }}
             truong={[{ ten: "khach", nhan: "Khách (mã hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true }, { ten: "goi_id", nhan: "Gói thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: (goi ?? []).map((g) => ({ gia_tri: g.id, nhan: `${g.ten} (${g.loai === "lan" ? `${g.so_buoi} buổi` : "thẻ tiền"})` })) },
               ...truongCapThe((cnCap ?? []).filter((c) => !nd.chiNhanhId || c.id === nd.chiNhanhId))]} action={capTheTay} />
         )}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/the" />
       <div className="mb-4 flex flex-wrap items-center gap-4 text-[14px]">
         <form className="flex-1" action="/the"><input type="hidden" name="tab" value={tab} /><input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm mã thẻ, tên, SĐT khách (Enter)" aria-label="Tìm thẻ" className="h-11 w-full max-w-md rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] outline-none focus:border-nhan" /></form>

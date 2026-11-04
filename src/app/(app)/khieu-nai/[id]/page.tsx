@@ -6,7 +6,7 @@ import { sb } from "@/lib/db";
 import { ngayGioVN, tienVN } from "@/lib/dinh-dang";
 import { BUOC_KN, CACH_XAC_NHAN, KENH_KN, LOAI_KN, TT_KN, gioTroi, soDuongHoacNull } from "@/lib/khieu-nai";
 import { truongDeXuat, truongDong } from "@/lib/khieu-nai-form";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { TienDo } from "@/components/khieu-nai/TienDo";
@@ -35,8 +35,7 @@ export default async function ChiTietKhieuNai({ params }: { params: Promise<{ id
   const duyetDuoc = coQuyen(nd, "kn.duyet") && k.nguoi_tiep_nhan_id !== nd.nhanVienId && k.nguoi_de_xuat_id !== nd.nhanVienId;
   return (
     <div>
-      <Link href="/khieu-nai" className="text-[13px] text-muc-3 hover:text-muc">← Khiếu nại & biến chứng</Link>
-      <TieuDeTrang tieuDe={`Khiếu nại ${k.ma}`} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai>{k.trang_thai === "moi" && <span>đã {gio} giờ{sla ? ` (hạn tiếp nhận ${sla} giờ)` : ""}</span>}</span>}>
+      <TieuDeNoi quayLai={{ href: "/khieu-nai", nhan: "Khiếu nại & biến chứng" }} tieuDe={`Khiếu nại ${k.ma}`} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai>{k.trang_thai === "moi" && <span>đã {gio} giờ{sla ? ` (hạn tiếp nhận ${sla} giờ)` : ""}</span>}</span>}>
         {lamDuoc && k.trang_thai === "moi" && <NutHop nhan="Đề xuất phương án" tieuDe="Xác minh và đề xuất phương án" moTa="Phân loại lại nếu cần, ghi nguyên nhân đã xác minh và phương án. Có chi phí thì chờ Quản lý duyệt." action={deXuatPhuongAn} an={{ id: k.id }} giaTri={{ loai: k.loai, nguyen_nhan: k.nguyen_nhan ?? "", phuong_an: k.phuong_an ?? "", co_chi_phi: k.co_chi_phi, chi_phi: k.chi_phi || "" }} rong truong={truongDeXuat()} />}
         {k.trang_thai === "cho_duyet" && duyetDuoc && (
           <>
@@ -45,7 +44,7 @@ export default async function ChiTietKhieuNai({ params }: { params: Promise<{ id
           </>
         )}
         {k.trang_thai === "da_duyet" && lamDuoc && <NutHop nhan="Khách xác nhận, đóng" tieuDe="Đóng khiếu nại" moTa="Chỉ đóng khi khách đã đồng ý với cách xử lý. Ghi nguyên nhân gốc để phòng ngừa." action={dongKhieuNai} an={{ id: k.id }} giaTri={{ cach_xac_nhan: "goi" }} rong truong={truongDong()} nhanLuu="Đóng" />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       {k.trang_thai === "cho_duyet" && !duyetDuoc && <p role="status" className="mb-4 rounded-nho border border-vien bg-giay-tram px-4 py-3 text-[14px] text-muc-2">{coQuyen(nd, "kn.duyet") ? "Bạn là người ghi nhận hoặc đề xuất nên không tự duyệt. Nhờ một Quản lý khác." : "Đang chờ Quản lý duyệt phương án."}</p>}
       {k.ly_do_tra_lai && k.trang_thai === "moi" && <p role="status" className="mb-4 rounded-nho border border-loi/30 bg-loi-nen px-4 py-3 text-[14px] text-loi">Quản lý trả lại: {k.ly_do_tra_lai}</p>}
       {k.trang_thai === "chuyen_bc" && k.bien_chung_id && <p role="status" className="mb-4 rounded-nho border border-vien bg-giay-tram px-4 py-3 text-[14px] text-muc-2">Khiếu nại y khoa đã chuyển cho bác sĩ. <Link href={`/khieu-nai/bien-chung/${k.bien_chung_id}`} className="font-medium text-nhan-dam underline">Mở ca biến chứng</Link></p>}

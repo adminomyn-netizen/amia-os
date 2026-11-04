@@ -3,7 +3,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayGioVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
@@ -42,8 +42,7 @@ export default async function TrangKhoaKy() {
   const hanBaoCao = congNgay(`${nt === 12 ? ny + 1 : ny}-${String(nt === 12 ? 1 : nt + 1).padStart(2, "0")}-01`, 6);
   return (
     <div>
-      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe="Khoá kỳ kế toán" phu="Khoá một tháng đã kết thúc thì không ghi thêm được sổ quỹ và công nợ nhà cung cấp của tháng đó. Chứng từ đến muộn: ghi vào kỳ sau, hoặc mở lại kỳ có lý do (để lại dấu vết)." />
+      <TieuDeNoi quayLai={{ href: "/tai-chinh", nhan: "Tài chính" }} tieuDe="Khoá kỳ kế toán" phu="Khoá một tháng đã kết thúc thì không ghi thêm được sổ quỹ và công nợ nhà cung cấp của tháng đó. Chứng từ đến muộn: ghi vào kỳ sau, hoặc mở lại kỳ có lý do (để lại dấu vết)." />
       <div className="mb-5 rounded-the border border-vien bg-nen-2 px-4 py-3 text-[13.5px]">
         <div className="mb-1 font-medium text-muc">Rà trước khi khoá</div>
         {viec.length === 0 ? <div className="text-muc-3">Không có việc nào đang treo. Vẫn nên đối chiếu quỹ, ngân hàng và công nợ với người xác nhận độc lập.</div> : <ul className="list-disc pl-5 text-muc-2">{viec.map((v) => <li key={v.nhan}><Link href={v.href} className="text-nhan-dam hover:underline">{v.so} {v.nhan}</Link></li>)}</ul>}

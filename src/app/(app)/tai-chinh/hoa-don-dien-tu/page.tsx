@@ -7,7 +7,7 @@ import { docLocHddt, hienKhoa, NHA_CUNG_CAP, tenNhaCungCap } from "@/lib/hoa-don
 import { docKetNoiHienThi } from "@/lib/hoa-don-dien-tu-ket-noi";
 import { layDaSuaTen, layHoaDonHddt, layTaiKhoanNhan } from "@/lib/hoa-don-dien-tu-truy-van";
 import { chuThu } from "@/lib/hoa-don-dien-tu-ngan-hang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -143,10 +143,9 @@ export default async function TrangHoaDonDienTu({ searchParams }: { searchParams
   }
   return (
     <div>
-      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe="Hoá đơn điện tử" phu="Lập hoá đơn GTGT ngay trong app (mẫu chuẩn, cấp số theo ký hiệu, in/PDF, XML để đẩy lên nhà cung cấp sau), hoặc xuất Excel rồi làm ở phần mềm nhà cung cấp và ghi số vào đây.">
+      <TieuDeNoi quayLai={{ href: "/tai-chinh", nhan: "Tài chính" }} tieuDe="Hoá đơn điện tử" phu="Lập hoá đơn GTGT ngay trong app (mẫu chuẩn, cấp số theo ký hiệu, in/PDF, XML để đẩy lên nhà cung cấp sau), hoặc xuất Excel rồi làm ở phần mềm nhà cung cấp và ghi số vào đây.">
         {nutXuat}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={tabCoThe} dang={tab} goc="/tai-chinh/hoa-don-dien-tu" />
       {noiDung}
     </div>

@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { dsNvTrongPham } from "@/lib/hr-pham-vi";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -95,8 +95,7 @@ export default async function TrangOffboarding({ searchParams }: { searchParams:
   }
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Offboarding" phu="Bàn giao, chốt công lương BHXH và phỏng vấn thôi việc cho người đã gửi đơn nghỉ. Đơn nghỉ việc xử lý ở trang Nghỉ việc." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Offboarding" phu="Bàn giao, chốt công lương BHXH và phỏng vấn thôi việc cho người đã gửi đơn nghỉ. Đơn nghỉ việc xử lý ở trang Nghỉ việc." />
       <nav aria-label="Offboarding" className="mb-5 flex flex-wrap gap-2">
         {duoc.map((t) => <Link key={t.ma} href={`/nhan-su/offboarding?tab=${t.ma}`} aria-current={t.ma === tab ? "page" : undefined} className={`rounded-nho border px-3.5 py-2 text-[14px] ${t.ma === tab ? "border-transparent bg-nhan-nhat font-medium text-nhan-dam" : "border-vien text-muc-2 hover:bg-giay-tram"}`}>{t.ten}</Link>)}
       </nav>

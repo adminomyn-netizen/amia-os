@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -23,8 +22,7 @@ export default async function TrangOnboarding() {
   const xong = new Set((td ?? []).map((t) => `${t.nhan_vien_id}|${t.muc_id}`));
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Onboarding thử việc" phu="Nhân viên vào làm trong 90 ngày gần đây. Các mốc tính từ ngày vào làm; mốc quá hạn chưa xong hiện màu cảnh báo. Đánh giá 60 ngày xong thì thêm HĐLĐ lần 1 ở trang Hợp đồng lao động." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Onboarding thử việc" phu="Nhân viên vào làm trong 90 ngày gần đây. Các mốc tính từ ngày vào làm; mốc quá hạn chưa xong hiện màu cảnh báo. Đánh giá 60 ngày xong thì thêm HĐLĐ lần 1 ở trang Hợp đồng lao động." />
       {(nv ?? []).length === 0 && <p className="text-[14px] text-muc-3">Không có nhân viên mới trong 90 ngày gần đây.</p>}
       <div className="space-y-4">
         {(nv ?? []).map((n) => {

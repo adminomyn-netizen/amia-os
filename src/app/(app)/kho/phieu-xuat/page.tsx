@@ -3,7 +3,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NUT_PHU } from "@/components/ui/dinh-dang";
 import { ThanhKhoHangBan } from "@/components/kho/ThanhKhoHangBan";
@@ -32,8 +32,7 @@ export default async function TrangPhieuXuat({ searchParams }: { searchParams: P
   }
   return (
     <div>
-      <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho & Mua sắm</Link>
-      <TieuDeTrang tieuDe="Phiếu xuất" phu="Xuất tiêu hao, sang kho nội bộ, trả nhà cung cấp, huỷ, khẩn cấp. Huỷ / hao hụt / trả NCC chỉ ghi sổ sau khi người khác duyệt." />
+      <TieuDeNoi quayLai={{ href: "/kho-mua-sam", nhan: "Kho & Mua sắm" }} tieuDe="Phiếu xuất" phu="Xuất tiêu hao, sang kho nội bộ, trả nhà cung cấp, huỷ, khẩn cấp. Huỷ / hao hụt / trả NCC chỉ ghi sổ sau khi người khác duyệt." />
       <ThanhKhoHangBan dang="xuat" />
       <DanhSachPhieuKho nd={nd} huong="xuat" sp={sp} nut={nut} />
     </div>

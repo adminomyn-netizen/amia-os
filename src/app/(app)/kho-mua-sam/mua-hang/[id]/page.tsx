@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -42,15 +41,14 @@ export default async function ChiTietDonMua({ params }: { params: Promise<{ id: 
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/kho-mua-sam/mua-hang" className="text-[13px] text-muc-3 hover:text-muc">← Mua hàng</Link>
-        <TieuDeTrang tieuDe={`Đơn mua ${don.ma}`} phu={<span className="inline-flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai><span>{ncc?.ten} · nhận tại {cn?.ten}</span></span>}>
+        <TieuDeNoi quayLai={{ href: "/kho-mua-sam/mua-hang", nhan: "Mua hàng" }} tieuDe={`Đơn mua ${don.ma}`} phu={<span className="inline-flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai><span>{ncc?.ten} · nhận tại {cn?.ten}</span></span>}>
           {tao && don.trang_thai === "nhap" && <NutHop nhan="Thêm hàng" tieuDe="Thêm hàng vào đơn" moTa="Thêm lại sản phẩm đã có thì cập nhật số lượng và giá." truong={truongDong} action={themDongDonMua} an={{ don_id: id }} giaTri={{ so_luong: 1, don_gia: 0 }} />}
           {tao && don.trang_thai === "nhap" && (dong?.length ?? 0) > 0 && <NutNhanh chinh nhan="Gửi duyệt" action={guiDuyetDonMua} du={{ don_id: id }} />}
           {duyet && don.trang_thai === "cho_duyet" && <NutNhanh chinh nhan="Duyệt đơn" action={duyetDonMua} du={{ don_id: id }} />}
           {duyet && don.trang_thai === "cho_duyet" && <NutHop kieu="phu" nhan="Từ chối" tieuDe="Từ chối đơn mua" truong={lyDo("Lý do từ chối")} action={tuChoiDonMua} an={{ don_id: id }} nhanLuu="Từ chối" />}
           {duocNhan && <NhanHangForm donId={id} action={nhanHangDonMua} dong={(dong ?? []).filter((d) => Number(d.da_nhan) < Number(d.so_luong)).map((d) => ({ id: d.id, ten: tenSp.get(d.san_pham_id)?.ten ?? "", don_vi: tenSp.get(d.san_pham_id)?.don_vi ?? "", con: Number(d.so_luong) - Number(d.da_nhan) }))} />}
           {tao && ["nhap", "cho_duyet", "da_duyet"].includes(don.trang_thai) && <NutHop kieu="chu" nguy nhan="Huỷ đơn" tieuDe="Huỷ đơn mua" truong={lyDo("Lý do huỷ")} action={huyDonMua} an={{ don_id: id }} nhanLuu="Huỷ đơn" />}
-        </TieuDeTrang>
+        </TieuDeNoi>
       </div>
       {don.ly_do && <p className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">{don.trang_thai === "huy" ? "Lý do huỷ: " : ""}{don.ly_do}</p>}
       <HangChiSo muc={[{ nhan: "Giá trị đơn", so: tienVN(tong) }, { nhan: "Đã nhận hàng (giá trị)", so: tienVN(daNhanGt), ghiChu: `Còn ${tienVN(tong - daNhanGt)}` }, { nhan: "Ngày đặt", so: ngayVN(don.ngay_dat), ghiChu: don.ngay_du_kien ? `Dự kiến nhận ${ngayVN(don.ngay_du_kien)}` : undefined }]} />

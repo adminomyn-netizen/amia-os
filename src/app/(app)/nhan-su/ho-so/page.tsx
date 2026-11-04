@@ -6,7 +6,7 @@ import { layTomTatHoSo } from "@/lib/data-ho-so";
 import { THU_TU_HD, tinhHieuLuc } from "@/lib/van-ban";
 import { THU_TU_THAM_NIEN, THU_TU_TUOI, VAI_TRO_CHUYEN_MON, nhomThamNien, nhomTuoi, ngayToiSinhNhat, thamNien, tuoi } from "@/lib/ho-so";
 import { TT_LAM } from "@/lib/nhan-su";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -73,11 +73,10 @@ export default async function TrangDanhSachHoSo({ searchParams }: { searchParams
 
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Hồ sơ nhân sự" phu="Một nơi xem hồ sơ từng người: thông tin cá nhân, giấy tờ, hợp đồng, lộ trình, công phép, nghỉ việc. Mỗi lần mở giấy tờ đều được ghi lại.">
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Hồ sơ nhân sự" phu="Một nơi xem hồ sơ từng người: thông tin cá nhân, giấy tờ, hợp đồng, lộ trình, công phép, nghỉ việc. Mỗi lần mở giấy tờ đều được ghi lại.">
         <Link href="/nhan-su/nghi-viec" className={`${NUT_PHU} inline-flex items-center`}>Nghỉ việc{(nghiCho ?? []).length ? ` (${(nghiCho ?? []).length})` : ""}</Link>
         <Link href="/nhan-su/danh-muc" className={`${NUT_PHU} inline-flex items-center`}>Phòng ban & chức danh</Link>
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[
         { nhan: "Đang làm việc", so: String(dangLam.length), ghiChu: `Đầu năm ${dauKy} · cuối năm ${cuoiKy}` },
         { nhan: `Vào làm ${nam}`, so: String(moi), ghiChu: `Nghỉ việc ${nghi}` },

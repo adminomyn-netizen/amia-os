@@ -6,7 +6,7 @@ import { sb } from "@/lib/db";
 import { soVN } from "@/lib/dinh-dang";
 import { AnhSanPham } from "@/components/kho/AnhSanPham";
 import { docKhoNoiBo } from "@/lib/kho-noi-bo";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { Chon } from "@/components/ui/Chon";
@@ -53,13 +53,12 @@ export default async function TrangKhoNoiBo({ searchParams }: { searchParams: Pr
   }
   return (
     <div>
-      <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho & Mua sắm</Link>
-      <TieuDeTrang tieuDe="Quản lý kho nội bộ" phu="Vật tư tiêu hao dùng trong phòng khám và sản phẩm bán lẻ đã đưa sang dùng nội bộ. Vật tư tiêu hao cấp theo ca ở Phiếu cấp.">
+      <TieuDeNoi quayLai={{ href: "/kho-mua-sam", nhan: "Kho & Mua sắm" }} tieuDe="Quản lý kho nội bộ" phu="Vật tư tiêu hao dùng trong phòng khám và sản phẩm bán lẻ đã đưa sang dùng nội bộ. Vật tư tiêu hao cấp theo ca ở Phiếu cấp.">
         {nutNhap}
         <Link href="/phieu-cap" className={`${NUT_PHU} inline-flex items-center`}>Xuất tiêu dùng kho nội bộ</Link>
         <Link href="/bao-cao?tab=xuat-kho" className={`${NUT_PHU} inline-flex items-center`}>Báo cáo tiêu dùng kho nội bộ</Link>
         <a href={`/api/xuat/kho-noi-bo?${thamSo({})}`} download className={`${NUT_PHU} inline-flex items-center`}>Xuất Excel</a>
-      </TieuDeTrang>
+      </TieuDeNoi>
       <div className="grid gap-5 lg:grid-cols-[220px_1fr]">
         <aside aria-label="Phân nhóm sản phẩm" className="text-[14px]">
           <h2 className="mb-2 text-[13px] font-medium text-muc-2">Phân nhóm sản phẩm</h2>

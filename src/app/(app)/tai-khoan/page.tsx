@@ -1,6 +1,6 @@
 import { layNguoiDungDangNhap } from "@/lib/auth";
 import { NHAN_VAI_TRO } from "@/lib/quyen";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NutHop } from "@/components/ui/BieuMau";
 import { AnhDaiDien } from "@/components/layout/AnhDaiDien";
 import { DoiAnhDaiDien } from "@/components/tai-khoan/DoiAnhDaiDien";
@@ -11,7 +11,7 @@ export default async function TrangTaiKhoan({ searchParams }: { searchParams: Pr
   const sp = await searchParams;
   return (
     <>
-      <TieuDeTrang tieuDe="Tài khoản của tôi" phu={`${nd.hoTen} · ${NHAN_VAI_TRO[nd.vaiTro]}`} />
+      <TieuDeNoi tieuDe="Tài khoản của tôi" phu={`${nd.hoTen} · ${NHAN_VAI_TRO[nd.vaiTro]}`} />
       {nd.phaiDoiMatKhau && (
         <p role="alert" className="the-noi-thap mb-6 max-w-2xl rounded-nho bg-canh-bao-nen px-4 py-3 text-[14px] text-canh-bao">
           {sp["doi-mat-khau"] ? "Tài khoản đang dùng mật khẩu do người khác đặt. Hãy đổi mật khẩu của riêng bạn trước khi dùng phần mềm." : "Bạn cần đổi mật khẩu mặc định."}

@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { BUOC_UNG_VIEN, KENH_DANG, LOAI_TUYEN, LY_DO_KHONG_DAT, NGUON_UNG_VIEN, TRANG_THAI_TIN, buocTiepTheoYeuCau, soanBaiDang, tinhBaoCaoTuyenDung } from "@/lib/tuyen-dung";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -139,8 +138,7 @@ export default async function TrangTuyenDung({ searchParams }: { searchParams: P
   }
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Tuyển dụng" phu="Yêu cầu tuyển, tin tuyển dụng, ứng viên theo bước, bài đăng theo kênh và báo cáo chi phí.">{nutThem}</TieuDeTrang>
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Tuyển dụng" phu="Yêu cầu tuyển, tin tuyển dụng, ứng viên theo bước, bài đăng theo kênh và báo cáo chi phí.">{nutThem}</TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/nhan-su/tuyen-dung" />
       {noiDung}
     </div>

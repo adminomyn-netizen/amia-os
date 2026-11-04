@@ -3,7 +3,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -158,11 +158,11 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
   }
   return (
     <>
-      <TieuDeTrang tieuDe="Phiếu cấp vật tư" phu={`Ngày ${ngayVN(ngay)}. Vật tư nhóm A cấp trước ca: có phiếu, kho cấp, Chuyên viên trị liệu nhận rồi mới được mở ca.`}>
+      <TieuDeNoi tieuDe="Phiếu cấp vật tư" phu={`Ngày ${ngayVN(ngay)}. Vật tư nhóm A cấp trước ca: có phiếu, kho cấp, Chuyên viên trị liệu nhận rồi mới được mở ca.`}>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${congNgay(ngay, -1)}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm trước</Link>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${homNayHCM()}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm nay</Link>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${congNgay(ngay, 1)}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm sau</Link>
-      </TieuDeTrang>
+      </TieuDeNoi>
       {phanTao}
       <Tab muc={TAB.map((t) => ({ ...t, ma: t.ma }))} dang={tab} goc="/phieu-cap" />
       {noiDung}

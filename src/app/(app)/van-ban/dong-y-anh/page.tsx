@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { LOAI_CONSENT, tinhHieuLuc } from "@/lib/van-ban";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -29,10 +29,9 @@ export default async function TrangDongYAnh() {
   ];
   return (
     <div>
-      <Link href="/van-ban" className="text-[13px] text-muc-3 hover:text-muc">← Văn bản & Hợp đồng</Link>
-      <TieuDeTrang tieuDe="Đồng ý dùng ảnh" phu="Đồng ý chụp ảnh để theo dõi điều trị khác với đồng ý dùng ảnh cho truyền thông. Truyền thông là tự nguyện, ký riêng, có hạn và phạm vi kênh, khách rút lại lúc nào cũng được; hết hạn hoặc rút thì phải gỡ ảnh.">
+      <TieuDeNoi quayLai={{ href: "/van-ban", nhan: "Văn bản & Hợp đồng" }} tieuDe="Đồng ý dùng ảnh" phu="Đồng ý chụp ảnh để theo dõi điều trị khác với đồng ý dùng ảnh cho truyền thông. Truyền thông là tự nguyện, ký riêng, có hạn và phạm vi kênh, khách rút lại lúc nào cũng được; hết hạn hoặc rút thì phải gỡ ảnh.">
         {soan && <NutHop nhan="Ghi nhận đồng ý" tieuDe="Ghi nhận đồng ý" truong={truong} action={luuConsent} giaTri={{ loai: "truyen_thong", ngay_ky: hom }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={(ds ?? []).filter((c) => khachDuocXem.has(c.khach_id))} khoa={(r) => r.id} trong="Chưa có ghi nhận nào."
         cot={[
           { nhan: "Khách", chinh: true, hienThi: (r) => <Link href={`/khach-hang/${r.khach_id}`} className="text-nhan-dam hover:underline">{ten.get(r.khach_id) ?? ""}</Link> },

@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { boDau, tienVN } from "@/lib/dinh-dang";
 import { O_NHAP, NUT_PHU } from "@/components/ui/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -25,10 +25,9 @@ export default async function TrangNhaCungCap({ searchParams }: { searchParams: 
   ];
   return (
     <div>
-      <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho &amp; Mua sắm</Link>
-      <TieuDeTrang tieuDe="Nhà cung cấp" phu="Danh mục nhà cung cấp, hạn thanh toán và công nợ hiện tại.">
+      <TieuDeNoi quayLai={{ href: "/kho-mua-sam", nhan: "Kho & Mua sắm" }} tieuDe="Nhà cung cấp" phu="Danh mục nhà cung cấp, hạn thanh toán và công nợ hiện tại.">
         {sua && <NutHop nhan="Thêm nhà cung cấp" tieuDe="Thêm nhà cung cấp" truong={truong} action={luuNhaCungCap} giaTri={{ so_ngay_no: 30, hoat_dong: true }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       {/* Ô tìm như SalonHero: tìm theo mã, tên, người liên hệ, điện thoại, email, mã số thuế (không dấu). */}
       <form method="get" action="/kho-mua-sam/nha-cung-cap" role="search" className="mb-4 flex max-w-md gap-2">
         <input name="q" defaultValue={tuKhoa} placeholder="Tìm mã, tên, người liên hệ, điện thoại..." aria-label="Tìm nhà cung cấp" className={O_NHAP} autoComplete="off" />

@@ -12,7 +12,7 @@ import {
 import { GIAI_DOAN_HD, THU_TU_HD, tinhHieuLuc } from "@/lib/van-ban";
 import { congNgay } from "@/lib/dinh-dang";
 import { KHUNG_LAM, LOAI_NGHI, LOAI_PHIEU, TINH_TRANG_LUONG, TT_LAM, TT_PHIEU } from "@/lib/nhan-su";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -101,12 +101,11 @@ export default async function TrangHoSoNhanSu({ params, searchParams }: { params
 
   return (
     <div>
-      <Link href={q.chinhChu && !coQuyen(nd, "hr.hoso") ? "/trang-chu" : "/nhan-su/ho-so"} className="text-[13px] text-muc-3 hover:text-muc">← {coQuyen(nd, "hr.hoso") ? "Hồ sơ nhân sự" : "Trang chủ"}</Link>
-      <TieuDeTrang tieuDe={nv.ho_ten} phu={<>{[nv.ma_nv, nv.chuc_danh, nv.phong_ban_id ? tenPb.get(nv.phong_ban_id) : null, nv.chi_nhanh_id ? tenCn.get(nv.chi_nhanh_id) : "Mọi chi nhánh"].filter(Boolean).join(" · ")}{" "}
+      <TieuDeNoi quayLai={{ href: q.chinhChu && !coQuyen(nd, "hr.hoso") ? "/trang-chu" : "/nhan-su/ho-so", nhan: coQuyen(nd, "hr.hoso") ? "Hồ sơ nhân sự" : "Trang chủ" }} tieuDe={nv.ho_ten} phu={<>{[nv.ma_nv, nv.chuc_danh, nv.phong_ban_id ? tenPb.get(nv.phong_ban_id) : null, nv.chi_nhanh_id ? tenCn.get(nv.chi_nhanh_id) : "Mọi chi nhánh"].filter(Boolean).join(" · ")}{" "}
         <NhanTrangThai kieu={nv.trang_thai_lam === "dang_lam" ? "tot" : nv.trang_thai_lam === "tam_nghi" ? "cho" : "tram"}>{tt}</NhanTrangThai></>}>
         {quanTri && <NutHop kieu="phu" nhan="Sửa thông tin công việc" tieuDe={`Thông tin công việc: ${nv.ho_ten}`} truong={truongCongViec()} action={luuThongTinCongViec} rong
           giaTri={{ nhan_vien_id: nv.id, chuc_danh: nv.chuc_danh ?? "", phong_ban_id: nv.phong_ban_id ?? "", chi_nhanh_id: nv.chi_nhanh_id ?? "", dien_thoai: nv.dien_thoai ?? "", ngay_vao_lam: nv.ngay_vao_lam ?? "", ngay_vao_chinh_thuc: nv.ngay_vao_chinh_thuc ?? "", khung_lam_viec: nv.khung_lam_viec, vai_tro_chuyen_mon: nv.vai_tro_chuyen_mon ?? [] }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc={goc} />
 
       {tab === "tong-quan" && (

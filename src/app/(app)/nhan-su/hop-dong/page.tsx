@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { GIAI_DOAN_HD, THU_TU_HD, tinhHieuLuc } from "@/lib/van-ban";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -37,10 +36,9 @@ export default async function TrangHopDong() {
   ];
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Hợp đồng lao động" phu={<>Chuỗi: thử việc (60 ngày) → HĐLĐ lần 1 → lần 2 → không xác định thời hạn. Nhắc trước {truoc} ngày khi sắp hết hạn. Người sắp hết hạn hoặc chưa có hợp đồng đứng đầu danh sách.</>}>
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Hợp đồng lao động" phu={<>Chuỗi: thử việc (60 ngày) → HĐLĐ lần 1 → lần 2 → không xác định thời hạn. Nhắc trước {truoc} ngày khi sắp hết hạn. Người sắp hết hạn hoặc chưa có hợp đồng đứng đầu danh sách.</>}>
         {sua && <NutHop nhan="Thêm hợp đồng" tieuDe="Thêm hợp đồng lao động" truong={truong("", "")} action={luuHdld} giaTri={{ nhan_vien_id: "", giai_doan: "thu_viec", tu_ngay: hom }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={dong} khoa={(r) => r.id} trong="Chưa có nhân viên."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div>{r.ho_ten}<div className="text-[12.5px] text-muc-3">{r.ma_nv}</div></div> },

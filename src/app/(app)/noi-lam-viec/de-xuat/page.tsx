@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN, tienVN, ngayCuaIso } from "@/lib/dinh-dang";
 import { LOAI_DX, TT_DX } from "@/lib/de-xuat";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -53,10 +53,9 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
   ];
   return (
     <div>
-      <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
-      <TieuDeTrang tieuDe="Đề xuất" phu={<>{MO_TA[loai]} Duyệt và xử lý ở <Link href="/noi-lam-viec/phe-duyet" className="text-nhan-dam hover:underline">Trung tâm phê duyệt</Link>.</>}>
+      <TieuDeNoi quayLai={{ href: "/noi-lam-viec", nhan: "Nơi làm việc" }} tieuDe="Đề xuất" phu={<>{MO_TA[loai]} Duyệt và xử lý ở <Link href="/noi-lam-viec/phe-duyet" className="text-nhan-dam hover:underline">Trung tâm phê duyệt</Link>.</>}>
         <NutHop nhan="Tạo đề xuất" tieuDe={`Đề xuất ${LOAI_DX[loai].toLowerCase()}`} truong={truong} action={guiDeXuat} an={{ loai }} giaTri={{ loai_tam_ung: "luong" }} />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/noi-lam-viec/de-xuat" them={tatCa ? "&pham=tat-ca" : ""} />
       {xemHet && (
         <div className="mb-4 flex gap-3 text-[14px]">

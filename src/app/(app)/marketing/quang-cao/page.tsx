@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { luuQuangCao } from "../actions";
@@ -35,10 +34,9 @@ export default async function TrangQuangCao() {
   ];
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Quảng cáo theo ngày" phu="Nhập số liệu từng ngày theo chiến dịch. Nhập lại cùng ngày và chiến dịch sẽ ghi đè số cũ. Chiến dịch có mã meta-… được hệ thống tự kéo từ Meta lúc 5:30 mỗi sáng (3 ngày gần nhất), không nhập tay.">
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Quảng cáo theo ngày" phu="Nhập số liệu từng ngày theo chiến dịch. Nhập lại cùng ngày và chiến dịch sẽ ghi đè số cũ. Chiến dịch có mã meta-… được hệ thống tự kéo từ Meta lúc 5:30 mỗi sáng (3 ngày gần nhất), không nhập tay.">
         {sua && <NutHop nhan="Nhập số liệu" tieuDe="Nhập số liệu quảng cáo" truong={truong} action={luuQuangCao} giaTri={{ ngay: homNayHCM(), chien_dich_id: "" }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <h2 className="mb-2 mt-4 text-[14px] font-medium">Tổng theo ngày (21 ngày gần nhất)</h2>
       <p className="mb-2 text-[12px] text-muc-3">Chi phí: cộng các chiến dịch Meta. Tin nhắn và lead: số đếm thực ở Pancake (hội thoại inbox mới; lead = có số điện thoại), không phải số Meta tự báo.</p>
       <Bang duLieu={tong} khoa={(r) => r.ngay} trong="Chưa có số liệu."

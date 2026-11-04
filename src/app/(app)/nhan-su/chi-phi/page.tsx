@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, tienVN } from "@/lib/dinh-dang";
 import { dsNvTrongPham } from "@/lib/hr-pham-vi";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 
 /** Chi phí nhân sự 6 tháng gần nhất: lương thực trả, BHXH người lao động, thưởng chi, phạt thu, chi phí đăng tin tuyển dụng. Lấy từ bảng lương, sổ khen thưởng–kỷ luật và kênh đăng tin; khoá theo chi nhánh. */
@@ -41,8 +40,7 @@ export default async function TrangChiPhiNhanSu() {
   const tong = hang.reduce((s, h) => s + h.luong + h.thuong + h.tuyen, 0);
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Chi phí nhân sự" phu={`6 tháng gần nhất. Tổng lương thực trả, thưởng chi và chi phí tuyển dụng: ${tienVN(tong)}. Tháng chưa lập kỳ lương thì cột lương để "—".`} />
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Chi phí nhân sự" phu={`6 tháng gần nhất. Tổng lương thực trả, thưởng chi và chi phí tuyển dụng: ${tienVN(tong)}. Tháng chưa lập kỳ lương thì cột lương để "—".`} />
       <Bang duLieu={hang} khoa={(r) => r.ky} cot={[
         { nhan: "Tháng", chinh: true, hienThi: (r) => r.ky }, { nhan: "Lương thực trả", phai: true, hienThi: (r) => (r.coKy ? tienVN(r.luong) : "—") },
         { nhan: "BHXH người lao động", phai: true, hienThi: (r) => (r.coKy ? tienVN(r.bhxh) : "—") }, { nhan: "Thưởng chi", phai: true, hienThi: (r) => tienVN(r.thuong) },

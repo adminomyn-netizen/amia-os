@@ -3,7 +3,7 @@ import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
@@ -82,11 +82,11 @@ export default async function TrangKho({ searchParams }: { searchParams: Promise
   }
   return (
     <>
-      <TieuDeTrang tieuDe="Kho" phu="Tồn kho là tổng sổ kho (nhập, cấp theo phiếu, trả, bán lẻ, kiểm kê). Không sửa số trực tiếp.">
+      <TieuDeNoi tieuDe="Kho" phu="Tồn kho là tổng sổ kho (nhập, cấp theo phiếu, trả, bán lẻ, kiểm kê). Không sửa số trực tiếp.">
         {sua && <NutHop nhan="Nhập kho" tieuDe="Nhập kho" rong an={{ chi_nhanh_id: cn }} truong={[
           { ten: "san_pham_id", nhan: "Vật tư / sản phẩm", loai: "chon", batBuoc: true, rong: true, luaChon: spLC }, { ten: "so_luong", nhan: "Số lượng (theo đơn vị DÙNG)", loai: "so", batBuoc: true },
           { ten: "tong_tien", nhan: "Tổng tiền nhập (để tính giá vốn, không bắt buộc)", loai: "tien" }, { ten: "so_lo", nhan: "Số lô", loai: "chu" }, { ten: "han_dung", nhan: "Hạn dùng", loai: "ngay" }, { ten: "ngoai_le", nhan: "Ngoại lệ hạn dùng (hàng còn dưới 90 ngày, đã được đồng ý; ghi lý do vào ghi chú)", loai: "gat", rong: true }, { ten: "ghi_chu", nhan: "Ghi chú (nhà cung cấp, số phiếu...)", loai: "chu", rong: true }]} action={nhapKho} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       {!nd.chiNhanhId && (dsCn?.length ?? 0) > 1 && <div className="mb-4 flex gap-2 text-[14px]">{(dsCn ?? []).map((c) => <Link key={c.id} href={`/kho?tab=${tab}&cn=${c.id}`} className={`rounded-nho px-3 py-2 ${c.id === cn ? "bg-nhan-nhat font-medium text-nhan-dam" : "text-muc-3 hover:text-muc"}`}>{c.ten}</Link>)}</div>}
       <div className="mb-3 flex flex-wrap gap-4 text-[14px]"><Link href="/kho/chuyen-kho" className="font-medium text-nhan-dam hover:underline">Chuyển kho</Link><Link href="/kho/kiem-ke" className="font-medium text-nhan-dam hover:underline">Kiểm kê</Link><Link href="/kho/chuan-hoa" className="font-medium text-nhan-dam hover:underline">Chuẩn hoá vật tư</Link><Link href="/kho/xu-ly" className="font-medium text-nhan-dam hover:underline">Xử lý vật tư &amp; xuất khẩn cấp</Link></div>
       <Tab muc={TAB} dang={tab} goc="/kho" them={`&cn=${cn}`} />

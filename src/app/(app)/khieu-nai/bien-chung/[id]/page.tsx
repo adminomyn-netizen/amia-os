@@ -6,7 +6,7 @@ import { sb } from "@/lib/db";
 import { ngayGioVN } from "@/lib/dinh-dang";
 import { BUOC_BC, TT_BC } from "@/lib/khieu-nai";
 import { truongCamKet, truongDongBc, truongKham } from "@/lib/khieu-nai-form";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { TienDo } from "@/components/khieu-nai/TienDo";
@@ -34,12 +34,11 @@ export default async function ChiTietBienChung({ params }: { params: Promise<{ i
   const tt = TT_BC[b.trang_thai], bacSi = coQuyen(nd, "bc.xu_ly");
   return (
     <div>
-      <Link href="/khieu-nai?tab=bien-chung" className="text-[13px] text-muc-3 hover:text-muc">← Khiếu nại & biến chứng</Link>
-      <TieuDeTrang tieuDe={`Biến chứng ${b.ma}`} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai><span>ưu tiên cao nhất: y tế trước, thương mại sau</span></span>}>
+      <TieuDeNoi quayLai={{ href: "/khieu-nai?tab=bien-chung", nhan: "Khiếu nại & biến chứng" }} tieuDe={`Biến chứng ${b.ma}`} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai><span>ưu tiên cao nhất: y tế trước, thương mại sau</span></span>}>
         {bacSi && ["moi", "dang_xu_ly"].includes(b.trang_thai) && <NutHop nhan={b.trang_thai === "moi" ? "Khám & lập phương án" : "Sửa phần khám"} tieuDe="Khám, chẩn đoán, phương án (BM18)" action={khamBienChung} an={{ id: b.id }} giaTri={{ chan_doan: b.chan_doan ?? "", phuong_an: b.phuong_an ?? "" }} rong truong={truongKham()} />}
         {bacSi && b.trang_thai === "dang_xu_ly" && <NutHop kieu="phu" nhan="Cam kết với khách" tieuDe="Cam kết mức khắc phục" action={camKetBienChung} an={{ id: b.id }} rong truong={truongCamKet()} />}
         {bacSi && b.trang_thai === "da_cam_ket" && <NutHop nhan="Đóng ca" tieuDe="Đóng ca biến chứng" moTa="Ghi nguyên nhân gốc và hành động phòng ngừa để không lặp lại." action={dongBienChung} an={{ id: b.id }} rong truong={truongDongBc()} nhanLuu="Đóng" />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       {b.trang_thai === "moi" && !bacSi && <p role="status" className="mb-4 rounded-nho border border-loi/30 bg-loi-nen px-4 py-3 text-[14px] text-loi">Đã báo bác sĩ và lãnh đạo lúc {ngayGioVN(b.bao_lanh_dao_luc)}. Đưa khách đến bác sĩ ngay, không tự xử lý.</p>}
       <TienDo buoc={BUOC_BC} hienTai={tt.buoc} />
       <div className="max-w-3xl">

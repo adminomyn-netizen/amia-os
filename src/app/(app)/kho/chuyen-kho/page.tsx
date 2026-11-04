@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -8,7 +7,7 @@ import { locPhieuChuyen, type LocChuyen } from "@/lib/kho-chuyen";
 import { Chon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { NHAN_O, NUT_CHINH, NUT_PHU } from "@/components/ui/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -36,10 +35,9 @@ export default async function TrangChuyenKho({ searchParams }: { searchParams: P
   ];
   return (
     <div>
-      <Link href="/kho" className="text-[13px] text-muc-3 hover:text-muc">← Kho</Link>
-      <TieuDeTrang tieuDe="Chuyển kho" phu="Kho đi trừ ngay khi gửi. Kho nhận đếm và xác nhận trong 24 giờ thì mới được cộng vào tồn; nhận lệch phải ghi lý do và chờ xử lý, không tự đóng.">
+      <TieuDeNoi quayLai={{ href: "/kho", nhan: "Kho" }} tieuDe="Chuyển kho" phu="Kho đi trừ ngay khi gửi. Kho nhận đếm và xác nhận trong 24 giờ thì mới được cộng vào tồn; nhận lệch phải ghi lý do và chờ xử lý, không tự đóng.">
         {nhap && <NutHop nhan="Tạo phiếu chuyển" tieuDe="Tạo phiếu chuyển kho" truong={truong} action={guiChuyenKho} giaTri={{ tu_chi_nhanh_id: "", den_chi_nhanh_id: "", san_pham_id: "" }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <form method="get" action="/kho/chuyen-kho" className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div><label htmlFor="ck-tu" className={NHAN_O}>Từ ngày</label><NgayChon id="ck-tu" ten="tu" giaTriMacDinh={tu} tuNam={2018} /></div>
         <div><label htmlFor="ck-den" className={NHAN_O}>Đến ngày</label><NgayChon id="ck-den" ten="den" giaTriMacDinh={den} tuNam={2018} /></div>

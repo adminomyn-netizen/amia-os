@@ -5,7 +5,7 @@ import { sb } from "@/lib/db";
 import { ngayGioVN } from "@/lib/dinh-dang";
 import { KN_DANG_XU_LY, LOAI_KN, TT_BC, TT_KN, gioTroi, soDuongHoacNull } from "@/lib/khieu-nai";
 import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -50,10 +50,10 @@ export default async function TrangKhieuNai({ searchParams }: { searchParams: Pr
   const KhachCell = ({ id }: { id: string }) => <Link href={`/khach-hang/${id}?tab=khieu-nai`} className="font-medium hover:underline">{tenK.get(id)?.ho_ten ?? ""}<div className="text-[12.5px] font-normal text-muc-3">{tenK.get(id)?.ma}</div></Link>;
   return (
     <div>
-      <TieuDeTrang tieuDe="Khiếu nại & biến chứng" phu="Tiếp nhận → phân loại → phương án → duyệt → khách xác nhận mới đóng. Dấu hiệu y khoa luôn chuyển bác sĩ trước, thương mại sau.">
+      <TieuDeNoi tieuDe="Khiếu nại & biến chứng" phu="Tiếp nhận → phân loại → phương án → duyệt → khách xác nhận mới đóng. Dấu hiệu y khoa luôn chuyển bác sĩ trước, thương mại sau.">
         {coQuyen(nd, "kn.ghi") && <NutHop nhan="Ghi khiếu nại" tieuDe="Ghi nhận khiếu nại (BM17)" action={ghiKhieuNai} giaTri={{ kenh: "truc_tiep", loai: "dich_vu" }} rong truong={truongKhieuNai(dvLc, true)} nhanLuu="Ghi nhận" />}
         {(coQuyen(nd, "bc.bao") || coQuyen(nd, "kn.ghi")) && <NutHop kieu="phu" nhan="Báo dấu hiệu bất thường" tieuDe="Báo dấu hiệu bất thường (QT-12)" moTa="Ngừng thao tác gây rủi ro, đưa khách đến bác sĩ rồi mới ghi. Bác sĩ và lãnh đạo nhận thông báo ngay." action={baoBienChung} rong truong={truongBaoBatThuong(dvLc, true)} nhanLuu="Báo ngay" />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[
         ...(xemKn ? [{ nhan: "Khiếu nại đang xử lý", so: String(dangXuLy.length), ghiChu: `${dangXuLy.filter((x) => x.trang_thai === "cho_duyet").length} chờ duyệt` }] : []),
         { nhan: "Biến chứng chưa đóng", so: String(bcMo.length), ghiChu: bcMo.filter((x) => x.trang_thai === "moi").length ? `${bcMo.filter((x) => x.trang_thai === "moi").length} chờ bác sĩ` : "bác sĩ đã nhận hết" },

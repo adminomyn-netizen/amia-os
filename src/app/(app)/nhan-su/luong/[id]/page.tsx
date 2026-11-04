@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, soVN, tienVN } from "@/lib/dinh-dang";
 import { TINH_TRANG_LUONG, TT_KY_LUONG } from "@/lib/nhan-su";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -38,8 +37,7 @@ export default async function TrangKyLuong({ params }: { params: Promise<{ id: s
   ];
   return (
     <div>
-      <Link href="/nhan-su/luong" className="text-[13px] text-muc-3 hover:text-muc">← Bảng lương</Link>
-      <TieuDeTrang tieuDe={`Lương tháng ${String(ky.thang).padStart(2, "0")}/${ky.nam}`} phu={<><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai> <span className="ml-2">Công chuẩn {soVN(ky.cong_chuan)} · người lập: {ten.get(ky.nguoi_lap_id)?.ho_ten}{ky.nguoi_duyet_id && ` · người duyệt: ${ten.get(ky.nguoi_duyet_id)?.ho_ten}`}</span></>}>
+      <TieuDeNoi quayLai={{ href: "/nhan-su/luong", nhan: "Bảng lương" }} tieuDe={`Lương tháng ${String(ky.thang).padStart(2, "0")}/${ky.nam}`} phu={<><NhanTrangThai kieu={tt.kieu}>{tt.ten}</NhanTrangThai> <span className="ml-2">Công chuẩn {soVN(ky.cong_chuan)} · người lập: {ten.get(ky.nguoi_lap_id)?.ho_ten}{ky.nguoi_duyet_id && ` · người duyệt: ${ten.get(ky.nguoi_duyet_id)?.ho_ten}`}</span></>}>
         <a href={`/api/xuat/luong?id=${ky.id}`} className="text-[14px] text-nhan-dam hover:underline">Xuất Excel</a>
         {sua && ky.trang_thai === "nhap" && (
           <>
@@ -59,7 +57,7 @@ export default async function TrangKyLuong({ params }: { params: Promise<{ id: s
           <NutHop nhan="Chi lương" tieuDe="Chi lương" moTa={`Ghi một dòng chi ${tienVN(tong("thuc_tra"))} vào sổ quỹ. Người duyệt không tự chi cùng kỳ (trừ Kỹ thuật).`} action={chiKyLuong} an={{ id: ky.id }} giaTri={{ ngay: homNayHCM() }} nhanLuu="Chi lương"
             truong={[{ ten: "quy_id", nhan: "Chi từ quỹ", loai: "chon", batBuoc: true, luaChon: (quy ?? []).map((q) => ({ gia_tri: q.id, nhan: q.ten })) }, { ten: "ngay", nhan: "Ngày chi", loai: "ngay" }]} />
         )}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[{ nhan: "Nhân viên", so: String(ds.length) }, { nhan: "Tổng thu nhập", so: tienVN(tong("gross")) }, { nhan: "BHXH + thuế", so: tienVN(tong("bhxh_nld") + tong("thue_tncn")) }, { nhan: "Tổng thực trả", so: tienVN(tong("thuc_tra")) }]} />
       <div className="mt-6" />
       <Bang duLieu={ds} khoa={(r) => r.id} trong="Kỳ lương chưa có dòng nào. Cài điều kiện lương cho nhân viên rồi bấm Tính lại."

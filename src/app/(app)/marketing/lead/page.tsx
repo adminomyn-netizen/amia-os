@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN } from "@/lib/dinh-dang";
 import { KENH_LIEN_HE, KET_QUA_LIEN_HE, PHUT_XAC_NHAN, TT_LIEN_HE, TT_PHAN_BO } from "@/lib/marketing";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -47,10 +46,9 @@ export default async function TrangLead({ searchParams }: { searchParams: Promis
   ];
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Lead & phễu khách" phu={<>Mọi lead đều ghi lại, <b>không xoá</b>. Người phụ trách xác nhận trong {PHUT_XAC_NHAN} phút; số đã là khách thì không tạo lead mới.</>}>
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Lead & phễu khách" phu={<>Mọi lead đều ghi lại, <b>không xoá</b>. Người phụ trách xác nhận trong {PHUT_XAC_NHAN} phút; số đã là khách thì không tạo lead mới.</>}>
         <NutHop nhan="Thêm lead" tieuDe="Thêm lead" truong={truongTao} action={taoLead} giaTri={{ nguon_id: "", chien_dich_id: "", doi_tac_id: "", nhan_ngay: true }} rong />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/marketing/lead" />
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có lead."
         cot={[

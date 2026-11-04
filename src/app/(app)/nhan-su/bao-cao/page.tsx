@@ -5,7 +5,7 @@ import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { cuoiThang } from "@/lib/lich-hr";
 import { bienDongQuanSo, gopLuongTheoPhong, tienDoOnboarding, tomTatThuViec, tiLe } from "@/lib/bao-cao-hr";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 
@@ -144,8 +144,7 @@ export default async function TrangBaoCaoNhanSu({ searchParams }: { searchParams
 
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Báo cáo nhân sự" phu="Quân số, thử việc, onboarding và công lương tính thẳng từ hồ sơ và bảng lương. Báo cáo tuyển dụng ở trang Tuyển dụng." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Báo cáo nhân sự" phu="Quân số, thử việc, onboarding và công lương tính thẳng từ hồ sơ và bảng lương. Báo cáo tuyển dụng ở trang Tuyển dụng." />
       <nav aria-label="Các báo cáo" className="mb-5 flex flex-wrap gap-2">
         {duoc.map((t) => (
           <Link key={t.ma} href={`/nhan-su/bao-cao?tab=${t.ma}`} aria-current={t.ma === tab ? "page" : undefined}

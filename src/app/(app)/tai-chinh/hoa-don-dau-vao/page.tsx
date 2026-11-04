@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { khoangNgay } from "@/lib/bao-cao";
 import { locHddv, nhanThueSuat, THUE_SUAT, tongHddv } from "@/lib/hoa-don-dau-vao";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -71,11 +70,10 @@ export default async function TrangHoaDonDauVao({ searchParams }: { searchParams
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}`;
   return (
     <div>
-      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe="Hoá đơn đầu vào" phu="Hoá đơn mua vào của nhà cung cấp: mã số thuế, ký hiệu/số, mã tra cứu, thuế suất, tệp PDF/XML/Zip. Khoản trả trước mà hoá đơn chưa về phải có hạn nhận; hoá đơn về thì người khác đối chiếu với đơn mua.">
+      <TieuDeNoi quayLai={{ href: "/tai-chinh", nhan: "Tài chính" }} tieuDe="Hoá đơn đầu vào" phu="Hoá đơn mua vào của nhà cung cấp: mã số thuế, ký hiệu/số, mã tra cứu, thuế suất, tệp PDF/XML/Zip. Khoản trả trước mà hoá đơn chưa về phải có hạn nhận; hoá đơn về thì người khác đối chiếu với đơn mua.">
         {ghi && <NutHop nhan="Thêm hoá đơn" tieuDe="Thông tin hoá đơn" truong={truongHd(false)} action={ghiHoaDonDauVao} giaTri={{ ncc_id: "", don_mua_id: "", ngay_hd: hom, chi_nhanh_id: cn ?? luaCn[0]?.gia_tri ?? "", thue_suat: "8" }} nhanLuu="Lưu thông tin" rong />}
         {ghi && <NutHop kieu="phu" nhan="Khoản chờ hoá đơn" tieuDe="Khoản chờ hoá đơn" truong={truongCho} action={taoKhoanChoHoaDon} giaTri={{ ncc_id: "", don_mua_id: "", chi_nhanh_id: cn ?? luaCn[0]?.gia_tri ?? "" }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc={goc} them={them} />
       <HangChiSo muc={[{ nhan: "Tổng tiền thuế VAT", so: tienVN(tong.vat) }, { nhan: "Tổng tiền hoá đơn", so: tienVN(tong.tong) }]} />
       <div className="mt-5">

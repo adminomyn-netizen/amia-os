@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayGioVN, ngayVN, soVN } from "@/lib/dinh-dang";
 import { chotViec, doDai, mocChot, thoiDiemHan } from "@/lib/cong-viec-han";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -54,14 +53,13 @@ export default async function TrangChotNgay({ searchParams }: { searchParams: Pr
 
   return (
     <div>
-      <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
-      <TieuDeTrang tieuDe="Bảng chốt 12h và 17h" phu="Mỗi việc đến hạn tới mốc chốt: đã nộp chưa, đạt chưa, trễ bao lâu, kẹt ở ai. Trễ từ 30 phút trở lên hiện cờ đỏ.">
+      <TieuDeNoi quayLai={{ href: "/noi-lam-viec", nhan: "Nơi làm việc" }} tieuDe="Bảng chốt 12h và 17h" phu="Mỗi việc đến hạn tới mốc chốt: đã nộp chưa, đạt chưa, trễ bao lâu, kẹt ở ai. Trễ từ 30 phút trở lên hiện cờ đỏ.">
         <form className="flex flex-wrap items-end gap-2" action="/noi-lam-viec/chot-ngay">
           <input type="hidden" name="tab" value={tab} />
           <label className="text-[12.5px] text-muc-3">Ngày<NgayChon ten="ngay" giaTriMacDinh={ngay} tuNam={2024} denNam={2035} ariaLabel="Ngày chốt" /></label>
           <button className="rounded bg-nhan px-3 py-1.5 text-[14px] text-white">Xem</button>
         </form>
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={MOC} dang={tab} goc="/noi-lam-viec/chot-ngay" them={`&ngay=${ngay}`} />
       {moc > bay && <p className="mb-3 text-[13px] text-muc-3">Chưa tới {tab}h: số tạm tính đến {ngayGioVN(bay.toISOString())}.</p>}
       <HangChiSo muc={[

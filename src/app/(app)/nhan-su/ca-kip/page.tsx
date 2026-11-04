@@ -5,7 +5,7 @@ import { sb } from "@/lib/db";
 import { ngayVN, soVN } from "@/lib/dinh-dang";
 import { THU, dauTuan, ngayCongThem } from "@/lib/nhan-su";
 import { homNayHCM } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -40,11 +40,10 @@ export default async function TrangCaKip({ searchParams }: { searchParams: Promi
   const truongLe: Truong[] = [{ ten: "ngay", nhan: "Ngày", loai: "ngay", batBuoc: true }, { ten: "ten", nhan: "Tên ngày lễ", loai: "chu", batBuoc: true }];
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Quản lý ca kíp" phu="Ca làm, lịch tuần và ngày lễ. Khối văn phòng 08:00–17:00 (nghỉ CN và hai thứ Bảy mỗi tháng); khối chi nhánh 08:00–18:30, làm cả tuần, nghỉ một ngày.">
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Quản lý ca kíp" phu="Ca làm, lịch tuần và ngày lễ. Khối văn phòng 08:00–17:00 (nghỉ CN và hai thứ Bảy mỗi tháng); khối chi nhánh 08:00–18:30, làm cả tuần, nghỉ một ngày.">
         {sua && <NutHop nhan="Phân ca nhân viên" tieuDe="Phân ca nhân viên" moTa="Ghi đè lịch cũ trong khoảng ngày đã chọn." truong={truongPhan} action={phanCa} giaTri={{ nghi_thu: "", nhan_vien_id: [] }} rong />}
         {sua && <NutHop kieu="phu" nhan="Tạo ca mới" tieuDe="Tạo ca mới" truong={truongCa} action={luuCa} giaTri={{ nghi_phut: 0, dung_sai_phut: 0, gio_chuan: 8, hoat_dong: true }} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <h2 className="nhan-muc mb-2">Danh sách ca</h2>
       <Bang duLieu={ca ?? []} khoa={(r) => r.id}
         cot={[

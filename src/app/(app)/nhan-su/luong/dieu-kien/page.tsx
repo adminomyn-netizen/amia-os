@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { TINH_TRANG_LUONG } from "@/lib/nhan-su";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { luuDieuKienLuong } from "../../actions";
@@ -29,10 +28,9 @@ export default async function TrangDieuKienLuong() {
   const hom = homNayHCM();
   return (
     <div>
-      <Link href="/nhan-su/luong" className="text-[13px] text-muc-3 hover:text-muc">← Bảng lương</Link>
-      <TieuDeTrang tieuDe="Cài đặt lương cơ bản" phu="Điều kiện lương theo ngày hiệu lực: kỳ lương lấy dòng có hiệu lực mới nhất không sau cuối tháng. Chỉ người có quyền lương thấy mục này.">
+      <TieuDeNoi quayLai={{ href: "/nhan-su/luong", nhan: "Bảng lương" }} tieuDe="Cài đặt lương cơ bản" phu="Điều kiện lương theo ngày hiệu lực: kỳ lương lấy dòng có hiệu lực mới nhất không sau cuối tháng. Chỉ người có quyền lương thấy mục này.">
         {sua && <NutHop nhan="Thêm điều kiện lương" tieuDe="Thêm điều kiện lương" truong={truong} action={luuDieuKienLuong} giaTri={{ hieu_luc_tu: hom, tinh_trang: "chinh_thuc", ty_le_thu_viec: 85, so_npt: 0, dong_bh: false }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds} khoa={(r) => r.id} trong="Không có nhân viên."
         cot={[
           { nhan: "Nhân viên", chinh: true, hienThi: (r) => <div><span className="text-muc">{r.ho_ten}</span><div className="text-[12.5px] text-muc-3">{r.ma_nv}</div></div> },

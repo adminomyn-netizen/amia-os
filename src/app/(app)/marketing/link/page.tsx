@@ -1,11 +1,10 @@
-import Link from "next/link";
 import { headers } from "next/headers";
 import QRCode from "qrcode";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { soVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -35,10 +34,9 @@ export default async function TrangLink() {
   ];
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Link & mã QR theo dõi" phu="Mỗi link đếm số lượt bấm trước khi chuyển tới địa chỉ đích. In mã QR lên ấn phẩm để biết khách đến từ đâu.">
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Link & mã QR theo dõi" phu="Mỗi link đếm số lượt bấm trước khi chuyển tới địa chỉ đích. In mã QR lên ấn phẩm để biết khách đến từ đâu.">
         {sua && <NutHop nhan="Tạo link" tieuDe="Tạo link theo dõi" truong={truong} action={luuLink} giaTri={{ nguon_id: "", chien_dich_id: "", doi_tac_id: "", hoat_dong: "1" }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có link."
         cot={[
           { nhan: "Link", chinh: true, hienThi: (r) => <div>{r.ten}<div className="break-all text-[12.5px] text-muc-3">{goc}/l/{r.ma}</div><div className="break-all text-[12.5px] text-muc-3">→ {r.dich_den}</div></div> },

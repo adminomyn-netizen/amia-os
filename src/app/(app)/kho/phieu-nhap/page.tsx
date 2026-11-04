@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { ThanhKhoHangBan } from "@/components/kho/ThanhKhoHangBan";
 import { DanhSachPhieuKho, type SpPhieu } from "@/components/kho/DanhSachPhieuKho";
@@ -28,8 +27,7 @@ export default async function TrangPhieuNhap({ searchParams }: { searchParams: P
   }
   return (
     <div>
-      <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho & Mua sắm</Link>
-      <TieuDeTrang tieuDe="Phiếu nhập" phu="Các lần nhập hàng vào kho. Phiếu đã ghi sổ kho thì không sửa; nhập sai thì lập phiếu xử lý điều chỉnh." />
+      <TieuDeNoi quayLai={{ href: "/kho-mua-sam", nhan: "Kho & Mua sắm" }} tieuDe="Phiếu nhập" phu="Các lần nhập hàng vào kho. Phiếu đã ghi sổ kho thì không sửa; nhập sai thì lập phiếu xử lý điều chỉnh." />
       <ThanhKhoHangBan dang="nhap" />
       <DanhSachPhieuKho nd={nd} huong="nhap" sp={sp} nut={nut} />
     </div>

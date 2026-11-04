@@ -3,7 +3,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { gioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { LOAI_PHIEU, LOAI_NGHI, THU, TINH_TRANG_LUONG, thuCuaNgay } from "@/lib/nhan-su";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -23,8 +23,7 @@ export default async function TrangPhieuLuong({ searchParams }: { searchParams: 
   const ky = (dsKy ?? []).find((k) => k.id === sp.ky) ?? (dsKy ?? [])[0];
   const khung = (noiDung: React.ReactNode) => (
     <div>
-      <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
-      <TieuDeTrang tieuDe="Phiếu lương của tôi" phu="Chỉ hiện các kỳ lương đã được duyệt. Có thắc mắc, báo bộ phận nhân sự trong 1 ngày làm việc kể từ khi nhận." />
+      <TieuDeNoi quayLai={{ href: "/noi-lam-viec", nhan: "Nơi làm việc" }} tieuDe="Phiếu lương của tôi" phu="Chỉ hiện các kỳ lương đã được duyệt. Có thắc mắc, báo bộ phận nhân sự trong 1 ngày làm việc kể từ khi nhận." />
       {noiDung}
     </div>
   );

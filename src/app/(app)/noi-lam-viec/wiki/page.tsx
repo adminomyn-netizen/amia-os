@@ -3,7 +3,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayCuaIso, ngayVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { luuWiki, xoaWiki } from "../actions";
@@ -26,10 +26,9 @@ export default async function TrangWiki({ searchParams }: { searchParams: Promis
   ];
   return (
     <div>
-      <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
-      <TieuDeTrang tieuDe="Wiki công ty" phu="Quy định, quy trình và tài liệu nội bộ. Chỉ đọc; người có quyền mới viết và sửa bài.">
+      <TieuDeNoi quayLai={{ href: "/noi-lam-viec", nhan: "Nơi làm việc" }} tieuDe="Wiki công ty" phu="Quy định, quy trình và tài liệu nội bộ. Chỉ đọc; người có quyền mới viết và sửa bài.">
         {sua && <NutHop nhan="Viết bài" tieuDe="Viết bài mới" truong={truong} action={luuWiki} giaTri={{ nhom: "Chung", cong_khai: true }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <form className="mb-6 flex gap-2.5" action="/noi-lam-viec/wiki">
         <input name="q" defaultValue={tuKhoa} placeholder="Tìm theo tiêu đề, nhóm hoặc nội dung" className="h-11 w-full max-w-md rounded-nho border border-vien-dam bg-giay-sang px-3 text-[14px] outline-none focus:border-nhan" />
         <button className="h-11 rounded-nho border border-vien-dam px-4 text-[14px] text-muc-2 hover:bg-giay-tram">Tìm</button>

@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN } from "@/lib/dinh-dang";
 import { NHAN_PHU, PHU_BM, PHU_BUOC, type TrangThaiPhu } from "@/lib/khung-kd-phu";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -206,7 +206,7 @@ export default async function TrangQuyTrinh({ searchParams }: { searchParams: Pr
 
   return (
     <div>
-      <TieuDeTrang tieuDe="Quy trình & khung vận hành" phu="Bộ quy trình và khung nghiệp vụ Kinh doanh của MSC/AMIA: ai làm gì, theo chuẩn nào, làm ở màn hình nào của hệ thống." />
+      <TieuDeNoi tieuDe="Quy trình & khung vận hành" phu="Bộ quy trình và khung nghiệp vụ Kinh doanh của MSC/AMIA: ai làm gì, theo chuẩn nào, làm ở màn hình nào của hệ thống." />
       <Tab muc={TAB} dang={tab} goc="/quy-trinh" />
       {noiDung}
     </div>

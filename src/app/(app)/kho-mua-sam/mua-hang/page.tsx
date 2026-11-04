@@ -3,7 +3,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -38,10 +38,9 @@ export default async function TrangMuaHang({ searchParams }: { searchParams: Pro
   ];
   return (
     <div>
-      <Link href="/kho-mua-sam" className="text-[13px] text-muc-3 hover:text-muc">← Kho &amp; Mua sắm</Link>
-      <TieuDeTrang tieuDe="Mua hàng" phu="Lập đơn mua → gửi duyệt → nhận hàng vào kho. Nhận hàng tự ghi sổ kho và công nợ nhà cung cấp.">
+      <TieuDeNoi quayLai={{ href: "/kho-mua-sam", nhan: "Kho & Mua sắm" }} tieuDe="Mua hàng" phu="Lập đơn mua → gửi duyệt → nhận hàng vào kho. Nhận hàng tự ghi sổ kho và công nợ nhà cung cấp.">
         {coQuyen(nd, "mua.tao") && <NutHop nhan="Tạo đơn mua" tieuDe="Tạo đơn mua" moTa="Tạo xong, bấm vào mã đơn để thêm hàng." truong={truong} action={taoDonMua} giaTri={{}} />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/kho-mua-sam/mua-hang" />
       <Bang duLieu={don ?? []} khoa={(r) => r.id} trong="Chưa có đơn mua nào."
         cot={[

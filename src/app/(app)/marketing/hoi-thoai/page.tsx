@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, soVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -45,14 +44,13 @@ export default async function TrangHoiThoaiMkt({ searchParams }: { searchParams:
 
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Hội thoại theo ngày" phu="Số hội thoại mới trong hộp thư Pancake, chia theo dịch vụ, nguồn, giai đoạn và nhân viên. Chỉ đếm, không có số điện thoại.">
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Hội thoại theo ngày" phu="Số hội thoại mới trong hộp thư Pancake, chia theo dịch vụ, nguồn, giai đoạn và nhân viên. Chỉ đếm, không có số điện thoại.">
         <form className="flex flex-wrap items-end gap-2" action="/marketing/hoi-thoai">
           <label className="text-[12.5px] text-muc-3">Từ<NgayChon ten="tu" giaTriMacDinh={tu} tuNam={2024} denNam={2035} ariaLabel="Từ ngày" /></label>
           <label className="text-[12.5px] text-muc-3">Đến<NgayChon ten="den" giaTriMacDinh={den} tuNam={2024} denNam={2035} ariaLabel="Đến ngày" /></label>
           <button className="rounded bg-nhan px-3 py-1.5 text-[14px] text-white">Xem</button>
         </form>
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={[
         { nhan: "Hội thoại mới", so: soVN(tongHT), ghiChu: "trong khoảng đã chọn" },
         { nhan: "Có số điện thoại", so: soVN(tongSdt), ghiChu: ti(tongSdt, tongHT) },

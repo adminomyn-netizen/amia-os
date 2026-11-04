@@ -4,7 +4,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -43,10 +43,9 @@ export default async function TrangCongNoKhach() {
   ];
   return (
     <div>
-      <Link href="/tai-chinh" className="text-[13px] text-muc-3 hover:text-muc">← Tài chính</Link>
-      <TieuDeTrang tieuDe="Công nợ khách hàng" phu={<>Hạn tất toán {han} ngày kể từ ngày hoá đơn (đang chờ xác nhận). Tuổi nợ tính từ ngày kế tiếp ngày đến hạn. Khách khiếu nại thì chuyển “tranh chấp”, không tự xoá hay giảm nợ.</>}>
+      <TieuDeNoi quayLai={{ href: "/tai-chinh", nhan: "Tài chính" }} tieuDe="Công nợ khách hàng" phu={<>Hạn tất toán {han} ngày kể từ ngày hoá đơn (đang chờ xác nhận). Tuổi nợ tính từ ngày kế tiếp ngày đến hạn. Khách khiếu nại thì chuyển “tranh chấp”, không tự xoá hay giảm nợ.</>}>
         <NutXuatExcel loai="cong-no-khach" ten="công nợ khách hàng" />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <HangChiSo muc={NHOM.map((n) => ({ nhan: n.ten, so: tienVN(tongTheo(n.ma)), ghiChu: n.chu }))} />
       {tranhChap.length > 0 && <p className="mt-3 text-[13.5px] text-canh-bao">{tranhChap.length} hoá đơn đang tranh chấp, tổng {tienVN(tranhChap.reduce((s, d) => s + Number(d.con_no), 0))} (không tính vào các nhóm trên).</p>}
       <div className="mt-6" />

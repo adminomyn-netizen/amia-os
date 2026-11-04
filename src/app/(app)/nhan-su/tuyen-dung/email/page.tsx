@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN } from "@/lib/dinh-dang";
 import { BIEN_MAU } from "@/lib/email-tuyen-dung";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -43,8 +42,7 @@ export default async function TrangEmailTuyenDung() {
   ];
   return (
     <div>
-      <Link href="/nhan-su/tuyen-dung" className="text-[13px] text-muc-3 hover:text-muc">← Tuyển dụng</Link>
-      <TieuDeTrang tieuDe="Email tuyển dụng tự động" phu="Mỗi bước của ứng viên (nhận hồ sơ, mời phỏng vấn, đề nghị, nhận việc, cảm ơn) có một mẫu thư. Thư xếp vào hàng đợi; bật tự gửi thì gửi ngay qua Gmail đã kết nối." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su/tuyen-dung", nhan: "Tuyển dụng" }} tieuDe="Email tuyển dụng tự động" phu="Mỗi bước của ứng viên (nhận hồ sơ, mời phỏng vấn, đề nghị, nhận việc, cảm ơn) có một mẫu thư. Thư xếp vào hàng đợi; bật tự gửi thì gửi ngay qua Gmail đã kết nối." />
       <section className="mb-8 rounded-the border border-vien p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h2 className="nhan-muc">Kết nối Gmail</h2>

@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
 import { MUC_TIEU, TT_CHIEN_DICH } from "@/lib/marketing";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -41,10 +40,9 @@ export default async function TrangChienDich() {
   ];
   return (
     <div>
-      <Link href="/marketing" className="text-[13px] text-muc-3 hover:text-muc">← Marketing</Link>
-      <TieuDeTrang tieuDe="Chiến dịch" phu="Mỗi chiến dịch chỉ một mục tiêu: Branding, Slogan, Khuyến mãi hoặc Thông điệp. Cần người có quyền duyệt trước khi chạy.">
+      <TieuDeNoi quayLai={{ href: "/marketing", nhan: "Marketing" }} tieuDe="Chiến dịch" phu="Mỗi chiến dịch chỉ một mục tiêu: Branding, Slogan, Khuyến mãi hoặc Thông điệp. Cần người có quyền duyệt trước khi chạy.">
         {sua && <NutHop nhan="Tạo chiến dịch" tieuDe="Tạo chiến dịch" truong={truong} action={luuChienDich} giaTri={{ muc_tieu: "thong_diep", nguon_id: "", chi_nhanh_id: "", owner_id: nd.nhanVienId }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Bang duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có chiến dịch."
         cot={[
           { nhan: "Chiến dịch", chinh: true, hienThi: (r) => <div>{r.ma} · {r.ten}<div className="text-[12.5px] text-muc-3">{MUC_TIEU[r.muc_tieu]}{r.kenh && ` · ${r.kenh}`}</div></div> },

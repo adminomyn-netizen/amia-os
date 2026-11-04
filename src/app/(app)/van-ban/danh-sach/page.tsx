@@ -1,10 +1,9 @@
-import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { NHOM_VB, TT_VB, tinhHieuLuc } from "@/lib/van-ban";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -61,10 +60,9 @@ export default async function TrangDanhSachVb({ searchParams }: { searchParams: 
   ];
   return (
     <div>
-      <Link href="/van-ban" className="text-[13px] text-muc-3 hover:text-muc">← Văn bản & Hợp đồng</Link>
-      <TieuDeTrang tieuDe="Sổ văn bản" phu={<>Soạn → duyệt (người khác người soạn) → ký. Giá trị trên {tienVN(nguong)} do Ban Giám đốc duyệt (mức này đang chờ xác nhận). Văn bản đã ký không sửa, muốn đổi thì tạo phiên bản mới.</>}>
+      <TieuDeNoi quayLai={{ href: "/van-ban", nhan: "Văn bản & Hợp đồng" }} tieuDe="Sổ văn bản" phu={<>Soạn → duyệt (người khác người soạn) → ký. Giá trị trên {tienVN(nguong)} do Ban Giám đốc duyệt (mức này đang chờ xác nhận). Văn bản đã ký không sửa, muốn đổi thì tạo phiên bản mới.</>}>
         {soan && <NutHop nhan="Soạn văn bản" tieuDe="Soạn văn bản" truong={truong} action={luuVanBan} giaTri={{ loai_id: "", ncc_id: "", chi_nhanh_id: "" }} rong />}
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/van-ban/danh-sach" />
       <Bang duLieu={ds} khoa={(r) => r.id} trong={tab === "can-xu-ly" ? "Không có văn bản nào cần xử lý." : "Chưa có văn bản."}
         cot={[

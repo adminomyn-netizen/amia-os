@@ -5,7 +5,7 @@ import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
 import { soVN } from "@/lib/dinh-dang";
 import { NHAN_LECH, NHAN_VAN_DE_KHO, VAN_DE_NANG, phanLoaiLech, tinhBoiCanh, vanDeVatTu, type VatTuKho } from "@/lib/chuan-hoa-kho";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
@@ -105,8 +105,7 @@ export default async function TrangChuanHoaKho({ searchParams }: { searchParams:
   }
   return (
     <div>
-      <Link href="/kho" className="text-[13px] text-muc-3 hover:text-muc">← Kho</Link>
-      <TieuDeTrang tieuDe="Chuẩn hoá vật tư" phu="Đơn vị, đơn vị mua, giá nhập, nhóm cấp, trùng tên và tồn đầu. Làm xong bước này mới đặt định mức và cấp vật tư trước ca." />
+      <TieuDeNoi quayLai={{ href: "/kho", nhan: "Kho" }} tieuDe="Chuẩn hoá vật tư" phu="Đơn vị, đơn vị mua, giá nhập, nhóm cấp, trùng tên và tồn đầu. Làm xong bước này mới đặt định mức và cấp vật tư trước ca." />
       <Tab muc={TAB} dang={tab} goc="/kho/chuan-hoa" them={cn ? `&cn=${cn}` : ""} />
       {noiDung}
     </div>

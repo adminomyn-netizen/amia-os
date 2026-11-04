@@ -1,9 +1,8 @@
-import Link from "next/link";
 import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN, homNayHCM } from "@/lib/dinh-dang";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -30,10 +29,9 @@ export default async function TrangBaoCaoNgay({ searchParams }: { searchParams: 
   ];
   return (
     <div>
-      <Link href="/noi-lam-viec" className="text-[13px] text-muc-3 hover:text-muc">← Nơi làm việc</Link>
-      <TieuDeTrang tieuDe="Báo cáo ngày" phu="Nộp báo cáo công việc cuối ngày: đã làm, vướng mắc, kế hoạch hôm sau. Mỗi người một báo cáo mỗi ngày — nộp lại cùng ngày sẽ cập nhật bản cũ.">
+      <TieuDeNoi quayLai={{ href: "/noi-lam-viec", nhan: "Nơi làm việc" }} tieuDe="Báo cáo ngày" phu="Nộp báo cáo công việc cuối ngày: đã làm, vướng mắc, kế hoạch hôm sau. Mỗi người một báo cáo mỗi ngày — nộp lại cùng ngày sẽ cập nhật bản cũ.">
         <NutHop nhan={toi ? "Sửa báo cáo hôm nay" : "Nộp báo cáo hôm nay"} tieuDe="Báo cáo ngày" truong={truong} action={nopBaoCaoNgay} giaTri={{ ngay: hom, da_lam: toi?.da_lam ?? "", vuong: toi?.vuong ?? "", ke_hoach: toi?.ke_hoach ?? "" }} rong nhanLuu="Nộp báo cáo" />
-      </TieuDeTrang>
+      </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/noi-lam-viec/bao-cao-ngay" />
       <Bang duLieu={bc ?? []} khoa={(r) => r.id} trong="Chưa có báo cáo nào."
         cot={[

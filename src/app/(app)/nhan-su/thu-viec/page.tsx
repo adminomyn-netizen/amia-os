@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN } from "@/lib/dinh-dang";
 import { luaChonNv } from "@/lib/hr-pham-vi";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
@@ -79,8 +79,7 @@ export default async function TrangThuViec({ searchParams }: { searchParams: Pro
   }
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Thử việc" phu="Mục tiêu 30 và 60 ngày thống nhất với quản lý; đánh giá của mentor, quản lý, nhân sự ở từng mốc." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Thử việc" phu="Mục tiêu 30 và 60 ngày thống nhất với quản lý; đánh giá của mentor, quản lý, nhân sự ở từng mốc." />
       <nav aria-label="Thử việc" className="mb-5 flex flex-wrap gap-2">
         {TAB.map((t) => <Link key={t.ma} href={`/nhan-su/thu-viec?tab=${t.ma}`} aria-current={t.ma === tab ? "page" : undefined} className={`rounded-nho border px-3.5 py-2 text-[14px] ${t.ma === tab ? "border-transparent bg-nhan-nhat font-medium text-nhan-dam" : "border-vien text-muc-2 hover:bg-giay-tram"}`}>{t.ten}</Link>)}
       </nav>

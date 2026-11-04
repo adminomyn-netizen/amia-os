@@ -4,7 +4,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { gioVN, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { LOI_CC } from "@/lib/nhan-su";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -121,8 +121,7 @@ export default async function TrangChamCong({ searchParams }: { searchParams: Pr
   }
   return (
     <div>
-      <Link href="/nhan-su" className="text-[13px] text-muc-3 hover:text-muc">← Nhân sự</Link>
-      <TieuDeTrang tieuDe="Chấm công" phu="Chấm công vào/ra bằng giờ hiện tại, xem bảng công và tổng hợp tháng. Quên chấm công hoặc đi trễ có lý do: tạo phiếu Điều chỉnh công ở Quản lý ngày nghỉ." />
+      <TieuDeNoi quayLai={{ href: "/nhan-su", nhan: "Nhân sự" }} tieuDe="Chấm công" phu="Chấm công vào/ra bằng giờ hiện tại, xem bảng công và tổng hợp tháng. Quên chấm công hoặc đi trễ có lý do: tạo phiếu Điều chỉnh công ở Quản lý ngày nghỉ." />
       <Tab muc={TAB} dang={tab} goc="/nhan-su/cham-cong" them={`&thang=${thang}`} />
       {noiDung}
     </div>

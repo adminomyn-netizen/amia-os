@@ -4,7 +4,7 @@ import Link from "next/link";
 import { sb } from "@/lib/db";
 import { tienVN, soVN, homNayHCM, boDau } from "@/lib/dinh-dang";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
-import { TieuDeTrang } from "@/components/ui/TieuDeTrang";
+import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
@@ -399,7 +399,7 @@ export default async function TrangDanhMuc({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <TieuDeTrang tieuDe="Danh mục" phu="Dịch vụ, gói thẻ, sản phẩm và vật tư, chi nhánh"><div className="flex flex-wrap items-center gap-2"><NutXuatExcel loai="danh-muc" ten="danh mục" />{nutThem}</div></TieuDeTrang>
+      <TieuDeNoi tieuDe="Danh mục" phu="Dịch vụ, gói thẻ, sản phẩm và vật tư, chi nhánh"><div className="flex flex-wrap items-center gap-2"><NutXuatExcel loai="danh-muc" ten="danh mục" />{nutThem}</div></TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/danh-muc" />
       {noiDung}
     </>

@@ -35,7 +35,7 @@ export default async function TrangOffboarding({ searchParams }: { searchParams:
         {don.map((d) => {
           const so = (muc ?? []).filter((m) => xong.has(`${d.id}|${m.id}`)).length;
           return (
-            <section key={d.id} className="rounded-the border border-vien p-4">
+            <section key={d.id} className="the-noi the-noi-thap p-4 pt-5">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div><span className="font-medium">{ten.get(d.nhan_vien_id)?.ho_ten}</span> <span className="text-[12.5px] text-muc-3">làm đến {ngayVN(d.ngay_lam_cuoi)}{d.ngay_lam_cuoi < hom && so < (muc ?? []).length ? " · đã quá ngày mà chưa bàn giao xong" : ""}</span></div>
                 <NhanTrangThai kieu={so === (muc ?? []).length ? "tot" : "cho"}>{so}/{(muc ?? []).length} mục</NhanTrangThai>

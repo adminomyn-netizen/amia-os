@@ -18,7 +18,7 @@ const KHONG_AI = ["00000000-0000-0000-0000-000000000000"];
 
 function So({ nhan, giaTri, phu }: { nhan: string; giaTri: string | number; phu?: string }) {
   return (
-    <div className="rounded-nho border border-vien px-4 py-3">
+    <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5">
       <div className="text-[12.5px] text-muc-3">{nhan}</div>
       <div className="mt-0.5 text-[22px] font-semibold tabular-nums text-muc">{giaTri}</div>
       {phu && <div className="text-[12.5px] text-muc-3">{phu}</div>}

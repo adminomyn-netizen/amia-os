@@ -40,7 +40,7 @@ export default async function TheSapHet({ searchParams }: { searchParams: Promis
   return (
     <div className="space-y-4">
       <TieuDeNoi gon tieuDe="Thẻ sắp hết" icon={TicketX} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Thẻ liệu trình còn ≤ {buoi} buổi hoặc thẻ còn hạn ≤ {ngay} ngày. Thẻ không giới hạn buổi và thẻ đã hết/thu hồi/khoá không tính.</>} />
-      <form method="get" className="flex flex-wrap items-end gap-3 text-[13px]">
+      <form method="get" className="the-noi the-noi-thap flex flex-wrap items-end gap-3 px-4 pb-3.5 pt-4 text-[13px]">
         {!khoa && (
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>
             <div className="w-56"><Chon ten="cn" ariaLabel="Chi nhánh" giaTriMacDinh={cn ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả các chi nhánh" }, ...dsCn.map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div></label>

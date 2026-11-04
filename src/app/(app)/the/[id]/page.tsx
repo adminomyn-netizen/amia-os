@@ -63,7 +63,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
         : [{ nhan: "Số dư", so: tienVN(t.so_du_tien) }, { nhan: "Đã nạp", so: tienVN(t.tong_tien) }, { nhan: "Ngày cấp", so: ngayVN(t.ngay_cap) }, { nhan: "Hạn dùng", so: ngayVN(t.han_dung) || "Không hạn" }]} />
       <div className="mt-8 space-y-8">
         {t.loai === "lan" && (
-          <MucTrang tieuDe="Các buổi đã làm">
+          <MucTrang noi tieuDe="Các buổi đã làm">
             <Bang duLieu={buoi ?? []} khoa={(r) => r.id} trong="Chưa làm buổi nào." cot={[
               { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_lam) }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" }, { nhan: "Người làm", hienThi: (r) => tenNv.get(r.nv_thuc_hien_id) ?? "" },
               { nhan: "Tham số", hienThi: (r) => Object.entries((r.tham_so ?? {}) as Record<string, unknown>).map(([a, b]) => `${a}: ${b}`).join(", ") },
@@ -73,14 +73,14 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
           </MucTrang>
         )}
         {t.loai === "lan" && (heKt ?? []).length > 0 && (
-          <MucTrang tieuDe="Hẹn buổi kế tiếp">
+          <MucTrang noi tieuDe="Hẹn buổi kế tiếp">
             <Bang duLieu={heKt ?? []} khoa={(r) => r.id} cot={[
               { nhan: "Ngày hẹn", chinh: true, hienThi: (r) => ngayVN(r.ngay_hen) }, { nhan: "Nội dung", hienThi: (r) => r.noi_dung ?? "" },
               { nhan: "Người ghi", hienThi: (r) => tenNv.get(r.nguoi_id ?? "") ?? "" }, { nhan: "Ghi lúc", hienThi: (r) => ngayGioVN(r.tao_luc) },
             ]} />
           </MucTrang>
         )}
-        <MucTrang tieuDe="Lịch sử thẻ (sổ cái, chỉ thêm)">
+        <MucTrang noi tieuDe="Lịch sử thẻ (sổ cái, chỉ thêm)">
           <Bang duLieu={so ?? []} khoa={(r) => String(r.id)} cot={[
             { nhan: "Lúc", hienThi: (r) => ngayGioVN(r.tao_luc) }, { nhan: "Việc", hienThi: (r) => NHAN_LOAI[r.loai] ?? r.loai }, { nhan: "Người ghi", hienThi: (r) => tenNv.get(r.nguoi_id ?? "") ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
             { nhan: t.loai === "lan" ? "Buổi" : "Tiền", hienThi: (r) => (t.loai === "lan" ? (r.so_buoi > 0 ? `+${r.so_buoi}` : r.so_buoi) : (Number(r.so_tien) > 0 ? "+" : "") + tienVN(r.so_tien)), phai: true },

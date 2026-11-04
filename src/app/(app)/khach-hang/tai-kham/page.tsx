@@ -49,7 +49,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
     <div className="space-y-4">
       <TieuDeNoi gon tieuDe="Nhắc tái khám" icon={CalendarClock} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Khách có thẻ liệu trình còn buổi, đã tới ngày hẹn buổi kế tiếp mà chưa đặt lịch. Hẹn tái khám = lần làm gần nhất + khoảng cách giữa 2 buổi của gói (mặc định {ng.macDinhNgay} ngày).</>} />
 
-      <form method="get" className="flex flex-wrap items-end gap-3 text-[13px]">
+      <form method="get" className="the-noi the-noi-thap flex flex-wrap items-end gap-3 px-4 pb-3.5 pt-4 text-[13px]">
         {!khoa && (
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>
             <div className="w-52"><Chon ten="cn" ariaLabel="Chi nhánh" giaTriMacDinh={cn ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả chi nhánh" }, ...dsCn.map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div></label>
@@ -98,7 +98,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
       <ThanhTrang trang={trang} tong={Math.min(tong, 2000)} moi={MOI_TRANG} gan={gan} don="khách" />
 
       {dat.length > 0 && (
-        <details className="rounded-the border border-vien bg-giay-sang px-4 py-3 text-[13px]">
+        <details className="the-noi the-noi-thap px-4 py-3 text-[13px]">
           <summary className="cursor-pointer font-medium text-muc-2">Gói đã đặt khoảng cách riêng ({dat.length})</summary>
           <ul className="mt-2 columns-1 gap-6 sm:columns-2">{dat.map((g) => <li key={g.id} className="flex justify-between gap-3 border-b border-vien py-1"><span>{g.ten}</span><span className="tabular-nums text-muc-3">{g.khoang_cach_ngay} ngày</span></li>)}</ul>
         </details>

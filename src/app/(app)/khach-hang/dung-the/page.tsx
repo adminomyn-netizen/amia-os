@@ -76,9 +76,9 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
 
       {hienTong && (
         <dl className="grid grid-cols-[repeat(auto-fit,minmax(11.5rem,1fr))] gap-3">
-          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Số khách hàng dùng thẻ</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{soVN(hienTong.so_khach)}</dd></div>
-          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ tiền</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_tien))}</dd></div>
-          <div className="rounded-nho border border-vien px-4 py-3"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ lần (không tính thẻ không giới hạn)</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_lan))}</dd></div>
+          <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Số khách hàng dùng thẻ</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{soVN(hienTong.so_khach)}</dd></div>
+          <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ tiền</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_tien))}</dd></div>
+          <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Tổng giá trị trong thẻ lần (không tính thẻ không giới hạn)</dt><dd className="mt-1 whitespace-nowrap text-[19px] font-medium tabular-nums text-muc">{tienVN(Number(hienTong.tong_lan))}</dd></div>
         </dl>
       )}
 
@@ -91,7 +91,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
         </p>
       )}
 
-      <form method="get" className="flex flex-wrap items-end gap-x-3 gap-y-3 text-[13px]">
+      <form method="get" className="the-noi the-noi-thap flex flex-wrap items-end gap-x-3 gap-y-3 px-4 pb-3.5 pt-4 text-[13px]">
         {!khoa && (
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>
             <div className="w-56"><Chon ten="cn" ariaLabel="Chi nhánh" giaTriMacDinh={cn ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả các chi nhánh" }, ...dsCn.map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div></label>

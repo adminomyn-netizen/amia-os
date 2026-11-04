@@ -68,7 +68,7 @@ export default async function LichNhacChamSoc({ searchParams }: { searchParams: 
         {sua && <HopTaoNhac dichVu={dv} nhanVien={nvLC} phuTrachMacDinh={nd.nhanVienId} homNay={hom} action={taoNhacTay} />}
       </TieuDeNoi>
 
-      <form method="get" className="flex flex-wrap items-end gap-x-3 gap-y-3 text-[13px]">
+      <form method="get" className="the-noi the-noi-thap flex flex-wrap items-end gap-x-3 gap-y-3 px-4 pb-3.5 pt-4 text-[13px]">
         {!khoa && (
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>
             <div className="w-52"><Chon ten="cn" ariaLabel="Chi nhánh" giaTriMacDinh={cn ?? ""} luaChon={[{ gia_tri: "", nhan: "Tất cả chi nhánh" }, ...dsCn.map((c) => ({ gia_tri: c.id, nhan: c.ten }))]} /></div></label>

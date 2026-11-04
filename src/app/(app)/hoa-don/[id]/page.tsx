@@ -124,13 +124,13 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
       {moi === "1" && <p role="status" className="mb-5 rounded-nho bg-nhan-nhat px-3 py-2.5 text-[14px] text-nhan-dam">Đã chốt đơn {h.ma}.</p>}
       {h.trang_thai === "huy" && <p className="mb-5 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Đã huỷ ngày {ngayGioVN(h.huy_luc)}. Lý do: {h.ly_do_huy}</p>}
       <HangChiSo muc={[{ nhan: "Tiền hàng", so: tienVN(h.tong_hang) }, { nhan: "Phải thu", so: tienVN(h.tong_phai_thu) }, { nhan: "Đã thu", so: tienVN(h.da_thu) }, { nhan: "Còn nợ", so: tienVN(h.trang_thai === "huy" ? 0 : h.con_no) }]} />
-      <div className="mt-8 space-y-8">
-        <MucTrang tieuDe="Thông tin hoá đơn">
+      <div className="mt-6 space-y-5">
+        <MucTrang noi tieuDe="Thông tin hoá đơn">
           <dl className="grid gap-x-8 gap-y-2 text-[14px] sm:grid-cols-2 lg:grid-cols-3">
             {thongTin.map(([n, v]) => <div key={n} className="flex min-w-0 gap-2"><dt className="shrink-0 text-muc-3">{n}:</dt><dd className="min-w-0 break-words font-medium text-muc">{v}</dd></div>)}
           </dl>
         </MucTrang>
-        <MucTrang tieuDe="Dòng hàng">
+        <MucTrang noi tieuDe="Dòng hàng">
           <Bang duLieu={dong ?? []} khoa={(r) => r.id} cot={[
             { nhan: "Mục", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "SL", hienThi: (r) => r.so_luong, phai: true }, { nhan: "Đơn giá", hienThi: (r) => tienVN(r.don_gia), phai: true },
             { nhan: "Giảm", hienThi: (r) => (r.giam_gia ? tienVN(r.giam_gia) : ""), phai: true },
@@ -144,7 +144,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
             {Number(h.tip) > 0 && <div className="flex justify-between"><dt className="text-muc-3">Tip</dt><dd className="tabular-nums">{tienVN(h.tip)}</dd></div>}
           </dl>
         </MucTrang>
-        <MucTrang tieuDe="Sổ thu tiền">
+        <MucTrang noi tieuDe="Sổ thu tiền">
           <Bang duLieu={tt ?? []} khoa={(r) => r.id} trong="Chưa thu khoản nào." cot={[
             { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Số phiếu", hienThi: (r) => <span className="tabular-nums">{maPhieuThu(r.so_phieu)}</span> }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : r.dao_cua_id ? "Huỷ trả nợ" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => nhanKhoanThu(r.phuong_thuc, r.loai_vi) },
             { nhan: "Ngân hàng nhận", hienThi: (r) => r.ngan_hang ?? "" }, { nhan: "Người thu", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
@@ -152,7 +152,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           ]} />
         </MucTrang>
         {(lsNo ?? []).length > 0 && (
-          <MucTrang tieuDe="Lịch sử nợ">
+          <MucTrang noi tieuDe="Lịch sử nợ">
             <Bang duLieu={lsNo ?? []} khoa={(r) => r.ref} cot={[
               { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) },
               { nhan: "Loại", hienThi: (r) => <span className={r.da_huy ? "text-muc-3 line-through" : "text-muc"}>{r.loai === "xoa_no" ? "Xoá nợ" : "Trả nợ"}</span> },
@@ -177,12 +177,12 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           </MucTrang>
         )}
         {h.trang_thai === "hoan_thanh" && dongDg.length > 0 && (
-          <MucTrang tieuDe="Đánh giá nhân viên">
+          <MucTrang noi tieuDe="Đánh giá nhân viên">
             <DanhGiaNhanVien key={dongDg.map((x) => `${x.nhanVienId}${x.diem}${x.yKien}`).join("|")} hoaDonId={id} dong={dongDg} duocGhi={duocGhiDg} luu={luuDanhGia} />
           </MucTrang>
         )}
         {hienSdt && (
-          <MucTrang tieuDe="Khách hài lòng sau điều trị">
+          <MucTrang noi tieuDe="Khách hài lòng sau điều trị">
             <div className="flex flex-wrap items-center justify-between gap-3 text-[14px]">
               <div className="min-w-0">
                 {dgSdt ? (
@@ -202,7 +202,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           </MucTrang>
         )}
         {h.trang_thai === "hoan_thanh" && (
-          <MucTrang tieuDe="Hoá đơn VAT">
+          <MucTrang noi tieuDe="Hoá đơn VAT">
             <div className="flex flex-wrap items-center justify-between gap-3 text-[14px]">
               <p className={h.vat_hd_luc ? "text-nhan-dam" : "text-muc-3"}>
                 {h.vat_hd_luc ? `Đã có hoá đơn${h.vat_hd_so ? ` số ${h.vat_hd_so}` : ""}${h.vat_hd_ky_hieu ? `, ký hiệu ${h.vat_hd_ky_hieu}` : ""} · ghi nhận ${ngayGioVN(h.vat_hd_luc)}${h.vat_hd_nguoi_id ? ` bởi ${tenNv.get(h.vat_hd_nguoi_id) ?? ""}` : ""}` : "Chưa có hoá đơn VAT."}
@@ -215,11 +215,11 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
           </MucTrang>
         )}
         {h.so_khach > 1 && (
-          <MucTrang tieuDe="Số khách">
+          <MucTrang noi tieuDe="Số khách">
             <p className="text-[14px] text-muc-2">{h.so_khach} khách</p>
           </MucTrang>
         )}
-        {h.ghi_chu && <MucTrang tieuDe="Ghi chú"><p className="whitespace-pre-line text-[14px] text-muc-2">{h.ghi_chu}</p></MucTrang>}
+        {h.ghi_chu && <MucTrang noi tieuDe="Ghi chú"><p className="whitespace-pre-line text-[14px] text-muc-2">{h.ghi_chu}</p></MucTrang>}
       </div>
     </>
   );

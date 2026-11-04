@@ -43,7 +43,7 @@ export default async function TrangEmailTuyenDung() {
   return (
     <div>
       <TieuDeNoi quayLai={{ href: "/nhan-su/tuyen-dung", nhan: "Tuyển dụng" }} tieuDe="Email tuyển dụng tự động" phu="Mỗi bước của ứng viên (nhận hồ sơ, mời phỏng vấn, đề nghị, nhận việc, cảm ơn) có một mẫu thư. Thư xếp vào hàng đợi; bật tự gửi thì gửi ngay qua Gmail đã kết nối." />
-      <section className="mb-8 rounded-the border border-vien p-4">
+      <section className="the-noi the-noi-thap mb-8 p-4 pt-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div><h2 className="nhan-muc">Kết nối Gmail</h2>
             <p className="mt-1 text-[14px]">{kn ? <>Đang gửi bằng <span className="font-medium">{kn.email}</span> <span className="text-muc-3">(nối lúc {ngayVN(kn.sua_luc)})</span></> : <span className="text-muc-3">Chưa kết nối. Chưa kết nối thì thư chỉ nằm trong hàng đợi.</span>}</p></div>

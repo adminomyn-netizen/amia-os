@@ -28,7 +28,7 @@ export default async function TrangOnboarding() {
         {(nv ?? []).map((n) => {
           const so = mocDung.filter((m) => xong.has(`${n.id}|${m.id}`)).length;
           return (
-            <section key={n.id} className="rounded-the border border-vien p-4">
+            <section key={n.id} className="the-noi the-noi-thap p-4 pt-5">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                 <div><span className="font-medium">{n.ho_ten}</span> <span className="text-[12.5px] text-muc-3">{n.ma_nv} · vào làm {ngayVN(n.ngay_vao_lam)}{n.ngay_vao_chinh_thuc && ` · chính thức ${ngayVN(n.ngay_vao_chinh_thuc)}`}</span></div>
                 <NhanTrangThai kieu={so === mocDung.length ? "tot" : "cho"}>{so}/{mocDung.length} mốc</NhanTrangThai>

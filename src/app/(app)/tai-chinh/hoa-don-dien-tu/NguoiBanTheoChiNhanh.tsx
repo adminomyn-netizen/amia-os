@@ -35,7 +35,7 @@ export async function NguoiBanTheoChiNhanh({ nd }: { nd: NguoiDung }) {
         const dong: [string, string][] = [["Tên đơn vị", b?.ten_don_vi ?? ""], ["Mã số thuế", b?.ma_so_thue ?? ""], ["Địa chỉ", b?.dia_chi ?? ""], ["Điện thoại", b?.dien_thoai ?? ""], ["Email", b?.email ?? ""],
           ["Tài khoản", [b?.so_tai_khoan, b?.ngan_hang].filter(Boolean).join(" · ")], ["Mẫu số · Ký hiệu", b?.ky_hieu ? `${b.mau_so} · ${b.mau_so}${b.ky_hieu}` : ""], ["Thuế suất mặc định", nhanThueSuat(b?.thue_suat ?? "10")]];
         return (
-          <div key={c.id} className="rounded-the border border-vien px-4 py-4">
+          <div key={c.id} className="the-noi the-noi-thap px-4 pb-4 pt-5">
             <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-[15px] font-medium text-muc">{c.ten}</h2>
               <span className="flex flex-wrap items-center gap-3">

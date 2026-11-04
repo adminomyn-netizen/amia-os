@@ -93,7 +93,7 @@ function KhoiKenh({ kenh, t, sua }: { kenh: KenhNoi; t: Awaited<ReturnType<typeo
   }));
   const truongThu: Truong[] = [{ ten: "den", nhan: tt.nhanGuiThu, loai: "chu", batBuoc: true, rong: true }];
   return (
-    <section className="rounded-the border border-vien p-4">
+    <section className="the-noi the-noi-thap p-4 pt-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex items-center gap-2"><h2 className="nhan-muc">{tt.ten}</h2>{t.daNoi ? <NhanTrangThai kieu="tot">Đã nối</NhanTrangThai> : <NhanTrangThai kieu="tram">Chưa nối</NhanTrangThai>}</div>

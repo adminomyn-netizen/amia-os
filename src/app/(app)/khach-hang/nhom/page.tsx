@@ -90,7 +90,7 @@ export default async function NhomKhach({ searchParams }: { searchParams: Promis
       {hangLoat && <GanNhomHangLoat nhomMacDinh={dangDungTatCa.some((n) => n.id === dich) ? dich : ""} nhom={dangDungTatCa.map((n) => ({ gia_tri: n.id, nhan: `${n.ten} (${n.so.toLocaleString("vi-VN")})` }))} boLoc={boLoc.toString()} soDieuKien={soDieuKien} action={ganHangLoat} />}
 
       {daAn.length > 0 && (
-        <details className="rounded-the border border-vien bg-giay-sang px-4 py-3">
+        <details className="the-noi the-noi-thap px-4 py-3">
           <summary className="cursor-pointer text-[14px] font-medium text-muc-2">Nhóm đã ẩn ({daAn.length})</summary>
           <ul className="mt-2">{daAn.map(dong)}</ul>
         </details>

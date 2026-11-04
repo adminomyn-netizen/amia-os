@@ -40,7 +40,7 @@ const so = (n: number) => n.toLocaleString("vi-VN");
 function Khoi({ tieuDe, dong, tong, ghiChu }: { tieuDe: string; dong: { nhan: string; so: number; lk?: string }[]; tong: number; ghiChu?: string }) {
   const max = Math.max(1, ...dong.map((d) => d.so));
   return (
-    <section className="rounded-the border border-vien bg-giay-sang p-4">
+    <section className="the-noi p-4 pt-5">
       <h2 className="mb-3 text-[15px] font-semibold text-muc">{tieuDe}</h2>
       <ul className="space-y-2">
         {dong.map((d) => (
@@ -79,10 +79,10 @@ export default async function ThongKeKhach({ searchParams }: { searchParams: Pro
         <NutXuatExcel loai="thong-ke-khach" ten="thống kê khách" />
       </TieuDeNoi>
       <dl className="grid grid-cols-2 gap-2">
-        <div className="rounded-nho border border-vien bg-giay-sang px-3 py-2"><dt className="text-[12px] text-muc-3">Tổng số khách hàng</dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{t0 ? so(t.tong) : "—"}</dd></div>
-        <div className="rounded-nho border border-vien bg-giay-sang px-3 py-2"><dt className="text-[12px] text-muc-3">Khách mới trong tuần <span className="text-muc-3">(hồ sơ tạo 7 ngày gần nhất)</span></dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{so(ngay?.moi_tuan ?? 0)}</dd></div>
+        <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Tổng số khách hàng</dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{t0 ? so(t.tong) : "—"}</dd></div>
+        <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Khách mới trong tuần <span className="text-muc-3">(hồ sơ tạo 7 ngày gần nhất)</span></dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{so(ngay?.moi_tuan ?? 0)}</dd></div>
       </dl>
-      <section className="rounded-the border border-vien bg-giay-sang p-4">
+      <section className="the-noi p-4 pt-5">
         <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
           <h2 className="text-[15px] font-semibold text-muc">Lượng khách hàng ngày <span className="font-normal text-muc-3">· {macDinh ? "30 ngày gần đây" : `${ngayVN(tu)} – ${ngayVN(den)}`}, tính theo hoá đơn hoàn thành{ngay?.moi_khoang != null ? ` · ${so(ngay.moi_khoang)} hồ sơ mới trong khoảng` : ""}</span></h2>
           <form method="get" className="flex flex-wrap items-end gap-2 text-[13px]" aria-label="Chọn khoảng ngày">

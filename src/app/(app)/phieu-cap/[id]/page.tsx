@@ -57,7 +57,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
       {p.trang_thai === "cho_cap" && coQuyen(nd, "phieu.cap") && <p className="mb-4 text-[13px] text-muc-3">Kho báo &quot;Kho không đủ&quot; khi tồn của vật tư bằng 0: vào <Link href="/kho/chuan-hoa?tab=ton-dau" className="font-medium text-nhan-dam hover:underline">Chuẩn hoá vật tư, tồn đầu</Link> để chốt tồn đầu hoặc nhập kho trước.</p>}
       <HangChiSo muc={[{ nhan: "Bác sĩ chỉ định", so: tenNv.get(p.bac_si_id) ?? "" }, { nhan: "Chuyên viên trị liệu nhận", so: tenNv.get(p.ktv_id ?? "") ?? "Chưa" }, { nhan: "Giá trị đã cấp", so: tienVN(Math.round(tongCap)) }, { nhan: "Giá trị dùng thật", so: lamXong ? tienVN(Math.round(tongDung)) : "Chưa làm xong" }]} />
       <div className="mt-8 space-y-8">
-        <MucTrang tieuDe="Vật tư trên phiếu">
+        <MucTrang noi tieuDe="Vật tư trên phiếu">
           <Bang duLieu={dong ?? []} khoa={(r) => r.id} cot={[
             { nhan: "Vật tư", hienThi: (r) => <span className="text-muc">{sp.get(r.san_pham_id)?.ten}{r.cap_them ? <span className="ml-2 text-[12px] text-dat-dam">cấp thêm</span> : null}</span> }, { nhan: "Nhóm", hienThi: (r) => r.nhom_cap ?? "" },
             { nhan: "Định mức", hienThi: (r) => (Number(r.dinh_muc) > 0 ? soVN(r.dinh_muc) : "—"), phai: true }, { nhan: "Đã cấp", hienThi: (r) => soVN(r.so_cap), phai: true },
@@ -66,7 +66,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
             { nhan: "Lý do vượt", hienThi: (r) => (r.ly_do_vuot ? `${r.ly_do_vuot} (BS ${tenNv.get(r.bac_si_xac_nhan_id ?? "") ?? ""})` : "") },
           ]} />
         </MucTrang>
-        <MucTrang tieuDe="Các bước">
+        <MucTrang noi tieuDe="Các bước">
           <ol className="space-y-1.5 text-[14px] text-muc-2">
             <li>Ra phiếu: {ngayGioVN(p.tao_luc)} · {tenNv.get(p.tao_boi ?? "") ?? ""}</li>
             {p.cap_luc && <li>Kho cấp: {ngayGioVN(p.cap_luc)} · {tenNv.get(p.cap_boi ?? "") ?? ""}</li>}

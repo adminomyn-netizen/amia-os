@@ -61,7 +61,7 @@ export default async function ChamSocKhach({ searchParams }: { searchParams: Pro
         ))}
       </nav>
 
-      <form method="get" className="flex flex-wrap items-end gap-3 text-[13px]">
+      <form method="get" className="the-noi the-noi-thap flex flex-wrap items-end gap-3 px-4 pb-3.5 pt-4 text-[13px]">
         <input type="hidden" name="loai" value={loai} />
         {!khoa && (
           <label className="block"><span className="mb-1 block font-medium text-muc-2">Chi nhánh</span>

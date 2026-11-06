@@ -179,7 +179,16 @@ console.log(`Nguồn (${D.split("/").pop()}): khách ${dsKhach.length} (chi ti�
 const db = await ketNoi(); const q = async (sql, p) => (await db.query(sql, p)).rows;
 const mapIds = async (bangTen, ids) => new Map((await q(`select sh_id, id from public.${bangTen} where sh_id = any($1::bigint[])`, [[...new Set(ids.map(Number))]])).map((r) => [Number(r.sh_id), r.id]));
 const t0 = Date.now(); const tik = (m) => console.log(`  [${Math.round((Date.now() - t0) / 1000)}s] ${m}`);
-const tom = { dot, that, tu: tuNgay, den: denNgay, moc: mocIso, loi_xuat: loiXuat.length };
+// Thẻ AMIA còn số dư mà SalonHero đã xoá (vd thẻ "Tiền đặt cọc" 3270634 bị xoá rồi cấp lại 3273616, 4/11/2026): hỏi theo id lần nào cũng lỗi
+// và không còn trong danh sách thẻ của khách → KHÔNG chặn cả đợt, chỉ liệt kê để người xem tay. Lỗi xuất khác vẫn chặn như cũ.
+const theDaXoaSh = await (async () => {
+  const ung = loiXuat.filter((x) => x[0] === "the_chi_tiet" && !theSh.has(Number(x[1]))).map((x) => Number(x[1]));
+  if (!ung.length) return [];
+  return (await q(`select sh_id, ma from public.the_khach where sh_id = any($1::bigint[])`, [ung])).map((r) => ({ sh_id: Number(r.sh_id), ma: r.ma }));
+})();
+const loiChan = loiXuat.filter((x) => !(x[0] === "the_chi_tiet" && theDaXoaSh.some((t) => t.sh_id === Number(x[1]))));
+if (theDaXoaSh.length) console.log(`  thẻ không còn trên SalonHero (có thể đã xoá, không chặn, cần xem tay): ${JSON.stringify(theDaXoaSh)}`);
+const tom = { dot, that, tu: tuNgay, den: denNgay, moc: mocIso, loi_xuat: loiChan.length, the_khong_con_tren_sh: theDaXoaSh };
 const xungDot = { khach: [], the: [], hoa_don: [], lich: [], nhac: [], khach_trung_app: [], hoa_don_trung_app: [] };
 try {
   await db.query("begin");
@@ -686,7 +695,8 @@ try {
   them("Thẻ MỚI (tạo sau mốc) thiếu gói/khách ở AMIA — cần bổ sung danh mục", 0, baoT.khong_nap_moi, JSON.stringify(baoT.mau_khong_nap_moi.slice(0, 5)));
   console.log(`  (thẻ cũ thiếu gói/khách = ngoại lệ đã biết, không chặn: ${baoT.khong_nap_cu})`);
   them("Khách còn thiếu chi tiết (khách mới)", 0, baoK.thieu_chi_tiet_moi);
-  them("Mục xuất lỗi từ SalonHero", 0, loiXuat.length);
+  them("Mục xuất lỗi từ SalonHero", 0, loiChan.length);
+  them("Thẻ AMIA không còn trên SalonHero (có thể đã xoá — xem tay, không chặn)", theDaXoaSh.length, theDaXoaSh.length, JSON.stringify(theDaXoaSh.slice(0, 8)));
   const soXungDot = Object.values(xungDot).reduce((s, a) => s + a.length, 0);
   // --bo-qua-xung-dot (chạy tự động hằng đêm): xung đột chỉ bị BỎ QUA + liệt kê trong báo cáo/nhật ký, không chặn --that; người xử lý đọc danh sách sáng hôm sau.
   them("Xung đột với dữ liệu tạo trong app (bỏ qua, không ghi đè)", co("--bo-qua-xung-dot") ? soXungDot : 0, soXungDot, Object.entries(xungDot).filter(([, a]) => a.length).map(([k, a]) => `${k}:${a.length}`).join(" "));

@@ -119,6 +119,11 @@ if (!D) {
     const hdAm = new Map((await qT(`select sh_id, sh_trang_thai from public.hoa_don where sh_id is not null and ngay_hd >= $1::date - 2`, [tuDon])).map((r) => [Number(r.sh_id), r.sh_trang_thai]));
     const sauMoc = (r) => String(r.updated_at ?? r.updatedAt ?? "") >= mocIso || String(r.created_at ?? r.createdAt ?? "") >= mocIso;
     const donIds = dsDon.filter((l) => l.status !== "DRAFT" && (!hdAm.has(Number(l.id)) || sauMoc(l) || hdAm.get(Number(l.id)) !== l.status)).map((l) => Number(l.id));
+    // khách trả nợ hoá đơn cũ (ngoài cửa sổ 35 ngày) sau mốc: lấy thêm chi tiết đúng các hoá đơn đó để ghi lần thu (vụ SH-26090170 ngày 06/11)
+    const trongDsDon = new Set(dsDon.map((l) => Number(l.id)));
+    const donNoCu = [...new Set((await docMang(`${D}/gio_thu.ndjson`)).filter((x) => x.order_id && String(x.createdAt ?? "") >= mocIso && !trongDsDon.has(Number(x.order_id))).map((x) => Number(x.order_id)))];
+    donIds.push(...donNoCu);
+    if (donNoCu.length) console.log(`  thêm ${donNoCu.length} hoá đơn cũ có lần trả nợ sau mốc: ${donNoCu.join(", ")}`);
     const khachList = await docMang(`${D}/khach.ndjson`);
     const kAm = new Map((await qT(`select sh_id, ho_ten, diem_goc, hang_goc from public.khach_hang where sh_id is not null`)).map((r) => [Number(r.sh_id), r]));
     const chamDen = new Set(); // khách dính hoá đơn/lịch/thẻ đổi

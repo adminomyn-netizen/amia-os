@@ -4,6 +4,8 @@
 # Thứ tự: cập nhật mã → 1 sao lưu toàn DB (đúng luật 1 bản/đêm 23h-5h) → chạy thử → nếu đối chiếu sạch thì ghi thật (xung đột chỉ liệt kê) → ghi báo cáo sáng.
 # Báo cáo: sao-luu/dong-bo-bao-cao-<ngày>.md (đọc 07:30). Không in mật khẩu.
 set -u
+# chạy từ BẢN SAO: bước git reset bên dưới thay chính tệp này, bash đang đọc dở sẽ hỏng (6/11/2026 lượt kéo bù dừng câm)
+if [ -z "${DB_BAN_SAO:-}" ]; then BS="${TMPDIR:-/tmp}/dong-bo-hang-dem.$$.sh"; cp "$0" "$BS"; DB_BAN_SAO=1 exec /bin/bash "$BS" "$@"; fi
 export PATH="/Users/phamtunglam/.local/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
 cd /Users/phamtunglam/project___1140/amia-os/.claude/worktrees/tula-dongbo || exit 1
 git fetch -q origin && git reset -q --hard origin/main

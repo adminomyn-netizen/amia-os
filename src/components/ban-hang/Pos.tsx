@@ -17,7 +17,7 @@ import { HopVoucher } from "./HopVoucher";
 import { CHU_IN, PHUONG_THUC_EN, type DuLieuIn, type NgonNguIn } from "@/components/cai-dat/BanInHoaDon";
 import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, DonNhapRut } from "@/app/(app)/ban-hang/actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
-import { NutBuoi } from "@/components/the/NutBuoi";
+import { BaoPhieuBuoi, NutBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
 
 type Nv = { id: string; ten: string; vaiTro: string };
@@ -333,6 +333,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   const [moVc, setMoVc] = useState(false);
   const [moHh, setMoHh] = useState(false);
   const [taiLaiThe, setTaiLaiThe] = useState(0);
+  const [phieuBuoi, setPhieuBuoi] = useState<{ kq: KetQuaBuoi; khachId: string } | null>(null);
   const [theKh, setTheKh] = useState<{ khachId: string; hang: string; the: TheKh[] } | null>(null);
   const [vc, setVc] = useState<VoucherTim | null>(null);
   const [suaGt, setSuaGt] = useState<number | null>(null);
@@ -370,7 +371,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
       if (!buoi || t.buoiCon <= 0) return null;
       const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
       return <NutBuoi theId={t.id} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan="Dùng buổi"
-        action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
+        onXong={(r) => setPhieuBuoi(r.phieuId && khach ? { kq: r, khachId: khach.id } : null)} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
     }
     if (t.soDu <= 0) return null;
     const daCo = thu.some((x) => x.phuong_thuc === "the_tien" && x.the_id === t.id);
@@ -485,6 +486,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         {sua && <p role="status" className="mt-2 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Đang sửa hoá đơn <b>{sua.ma}</b> (đã mở lại về nháp). Chốt đơn sẽ ghi lại vào chính hoá đơn này, giữ mã và ngày {ngayVN(sua.ngayHd)}.</p>}
         <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />
         {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} nut={nutThe} dvDon={dvDon} />}
+        {khach && phieuBuoi?.khachId === khach.id && <p className="mt-1.5"><BaoPhieuBuoi phieu={phieuBuoi.kq} /></p>}
         {diemKhach && (
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>
             {diemKhach.bat ? ` · 1 điểm = ${tienVN(diemKhach.tienMoiDiem)}` : " · đổi điểm đang tắt"}</p>

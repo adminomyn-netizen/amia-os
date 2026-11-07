@@ -8,20 +8,23 @@ import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { FormPhieu, type DichVuPhieu } from "@/components/phieu-cap/FormPhieu";
-import { tinhCaCanPhieu } from "@/lib/phieu-cap";
-import { taoPhieu } from "./actions";
+import { NutHop } from "@/components/ui/BieuMau";
+import { nhanPhieuBuoi, tinhCaCanPhieu } from "@/lib/phieu-cap";
+import { chotPhieuNgay, taoPhieu } from "./actions";
 
 export const TT_PHIEU: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
   cho_cap: { nhan: "Chờ cấp", kieu: "cho" }, da_cap: { nhan: "Đã cấp", kieu: "cho" }, da_nhan: { nhan: "Chuyên viên trị liệu đã nhận", kieu: "tot" },
   da_lam: { nhan: "Đã làm, chờ đối chiếu", kieu: "cho" }, da_doi_chieu: { nhan: "Đã đối chiếu", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "loi" },
 };
 const TAB = [{ ma: "phieu", ten: "Phiếu trong ngày" }, { ma: "doi-chieu", ten: "Đối chiếu ngày" }];
+const TAB_CHOT = { ma: "chot", ten: "Phiếu theo buổi, chốt cuối ngày" };
 
 export default async function TrangPhieuCap({ searchParams }: { searchParams: Promise<{ tab?: string; ngay?: string; lich?: string; tt?: string }> }) {
   const nd = await yeuCauQuyen("phieu.xem");
   const sp = await searchParams;
   const ngay = /^\d{4}-\d{2}-\d{2}$/.test(sp.ngay ?? "") ? sp.ngay! : homNayHCM();
-  const tab = sp.tab === "doi-chieu" ? "doi-chieu" : "phieu";
+  const choChot = coQuyen(nd, "phieu.cap") || coQuyen(nd, "phieu.doichieu");
+  const tab = sp.tab === "doi-chieu" ? "doi-chieu" : sp.tab === "chot" ? "chot" : "phieu";
   const db = sb();
   const tu = new Date(`${ngay}T00:00:00+07:00`).toISOString();
   const den = new Date(`${congNgay(ngay, 1)}T00:00:00+07:00`).toISOString();
@@ -117,9 +120,48 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
           cot={[
             { nhan: "Mã phiếu", hienThi: (r) => <Link href={`/phieu-cap/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> }, { nhan: "Giờ", hienThi: (r) => gioVN(r.tao_luc) },
             { chinh: true, nhan: "Khách", hienThi: (r) => tenK.get(r.khach_id) ?? "" }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
-            { nhan: "Bác sĩ", hienThi: (r) => tenNv.get(r.bac_si_id) ?? "" }, { nhan: "Chuyên viên trị liệu", hienThi: (r) => tenNv.get(r.ktv_id ?? "") ?? "" },
+            { nhan: "Bác sĩ", hienThi: (r) => (r.bac_si_id ? tenNv.get(r.bac_si_id) ?? "" : r.buoi_id ? <span className="text-muc-3">Phiếu theo buổi</span> : "") }, { nhan: "Chuyên viên trị liệu", hienThi: (r) => tenNv.get(r.ktv_id ?? "") ?? "" },
             { nhan: "Giá trị cấp", hienThi: (r) => tienVN((dong ?? []).filter((d) => d.phieu_id === r.id).reduce((s, d) => s + Number(d.so_cap) * Number(d.don_gia ?? 0), 0)), phai: true },
-            { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_PHIEU[r.trang_thai].kieu}>{TT_PHIEU[r.trang_thai].nhan}</NhanTrangThai> },
+            { nhan: "Trạng thái", hienThi: (r) => { const t = nhanPhieuBuoi(r) ?? TT_PHIEU[r.trang_thai]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
+          ]} />
+      </>
+    );
+  } else if (tab === "chot") {
+    // Phiếu vật tư theo buổi của NGÀY LÀM buổi (buổi có thể ghi lùi ngày). Chưa xác nhận tô đỏ: chốt ngày bỏ qua, phiếu còn mở.
+    let qb = db.from("buoi_thuc_hien").select("id").eq("ngay_lam", ngay).eq("trang_thai", "da_lam");
+    if (nd.chiNhanhId) qb = qb.eq("chi_nhanh_id", nd.chiNhanhId);
+    const idsBuoi = ((await qb).data ?? []).map((b) => b.id);
+    const { data: ds } = idsBuoi.length ? await db.from("phieu_cap").select("*").in("buoi_id", idsBuoi).neq("trang_thai", "huy").order("tao_luc") : { data: [] };
+    const idsK = [...new Set((ds ?? []).map((p) => p.khach_id))];
+    const [{ data: ks }, { data: dv }, { data: nv }, { data: dong }, { data: cn }] = await Promise.all([
+      idsK.length ? db.from("khach_hang").select("id, ho_ten").in("id", idsK) : Promise.resolve({ data: [] }), db.from("dich_vu").select("id, ten"), db.from("nhan_vien").select("id, ho_ten"),
+      (ds ?? []).length ? db.from("phieu_cap_dong").select("phieu_id").in("phieu_id", (ds ?? []).map((p) => p.id)) : Promise.resolve({ data: [] }),
+      nd.chiNhanhId ? Promise.resolve({ data: [] }) : db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu"),
+    ]);
+    const tenK = new Map((ks ?? []).map((k) => [k.id, k.ho_ten])), tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
+    const chuaXn = (ds ?? []).filter((p) => p.trang_thai === "cho_cap" && !p.xac_nhan_luc).length;
+    const choChotSo = (ds ?? []).filter((p) => p.trang_thai === "cho_cap" && p.xac_nhan_luc).length;
+    const daChot = (ds ?? []).length - chuaXn - choChotSo;
+    noiDung = (
+      <>
+        <p className="mb-4 text-[14px] text-muc-2">Mỗi buổi thẻ được ghi sẽ ra một phiếu vật tư theo định mức của dịch vụ. Chuyên viên trị liệu kiểm, sửa số lượng rồi bấm &quot;Xác nhận đã kiểm&quot;. Chốt cuối ngày chỉ xuất kho các phiếu đã xác nhận; phiếu chưa xác nhận (tô đỏ) vẫn để mở.</p>
+        <div className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-[14px]">
+          <span className={chuaXn > 0 ? "font-medium text-loi" : "text-muc-2"}>Chưa xác nhận: {chuaXn}</span>
+          <span className="text-muc-2">Đã xác nhận, chờ chốt: {choChotSo}</span>
+          <span className="text-muc-2">Đã chốt: {daChot}</span>
+          {choChot && choChotSo > 0 && (
+            <NutHop nhan="Chốt cuối ngày" tieuDe={`Chốt phiếu vật tư ngày ${ngayVN(ngay)}`} nhanLuu="Chốt và xuất kho" an={{ ngay, ...(nd.chiNhanhId ? { chi_nhanh_id: nd.chiNhanhId } : {}) }}
+              xacNhan={`Xuất kho ${choChotSo} phiếu đã được chuyên viên trị liệu xác nhận.${chuaXn ? ` ${chuaXn} phiếu chưa xác nhận sẽ KHÔNG được chốt, vẫn để mở.` : ""}`}
+              truong={nd.chiNhanhId ? [] : [{ ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon", batBuoc: true, rong: true, luaChon: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) }]} action={chotPhieuNgay} />
+          )}
+        </div>
+        <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu vật tư theo buổi nào trong ngày."
+          cot={[
+            { nhan: "Mã phiếu", hienThi: (r) => <Link href={`/phieu-cap/${r.id}`} className={`font-medium hover:underline ${r.trang_thai === "cho_cap" && !r.xac_nhan_luc ? "text-loi" : "text-nhan-dam"}`}>{r.ma}</Link> },
+            { chinh: true, nhan: "Khách", hienThi: (r) => tenK.get(r.khach_id) ?? "" }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
+            { nhan: "Chuyên viên trị liệu", hienThi: (r) => tenNv.get(r.ktv_id ?? "") ?? "" }, { nhan: "Số vật tư", hienThi: (r) => (dong ?? []).filter((d) => d.phieu_id === r.id).length, phai: true },
+            { nhan: "Xác nhận", hienThi: (r) => (r.xac_nhan_luc ? `${tenNv.get(r.xac_nhan_boi ?? "") ?? ""} · ${gioVN(r.xac_nhan_luc)}` : "") },
+            { nhan: "Trạng thái", hienThi: (r) => { const t = nhanPhieuBuoi(r) ?? TT_PHIEU[r.trang_thai]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
           ]} />
       </>
     );
@@ -164,7 +206,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
         <Link href={`/phieu-cap?tab=${tab}&ngay=${congNgay(ngay, 1)}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm sau</Link>
       </TieuDeNoi>
       {phanTao}
-      <Tab muc={TAB.map((t) => ({ ...t, ma: t.ma }))} dang={tab} goc="/phieu-cap" />
+      <Tab muc={[...TAB, ...(choChot || coQuyen(nd, "phieu.nhan") ? [TAB_CHOT] : [])]} dang={tab} goc="/phieu-cap" them={`&ngay=${ngay}`} />
       {noiDung}
     </>
   );

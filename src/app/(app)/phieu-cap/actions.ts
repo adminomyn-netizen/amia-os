@@ -3,11 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { guiChoNhanVien, nguoiCoQuyen } from "@/lib/push";
-import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
+import { kiemQuyen, KHONG_DU_QUYEN, type NguoiDung } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
 
-type KQ = { ok?: true; loi?: string; id?: string };
+type KQ = { ok?: true; loi?: string; id?: string; canhBao?: string };
 const lamMoi = (id?: string) => { revalidatePath("/phieu-cap"); if (id) revalidatePath(`/phieu-cap/${id}`); revalidatePath("/lich-hen"); };
 
 export async function taoPhieu(fd: FormData): Promise<KQ> {
@@ -96,4 +97,84 @@ export async function huyPhieu(fd: FormData): Promise<KQ> {
   const { error } = await sb().rpc("huy_phieu", { p_id: chuoi(fd, "id"), p_ly_do: chuoi(fd, "ly_do"), p_nguoi: nd.nhanVienId });
   lamMoi(chuoi(fd, "id"));
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+// ───────── PHIẾU VẬT TƯ THEO BUỔI (migration 0310) ─────────
+// Chuyên viên trị liệu (phieu.nhan) hoặc chính người thực hiện buổi (ktv_id của phiếu) được sửa dòng + xác nhận; kho (phieu.cap) chỉ sửa dòng.
+
+/** Người dùng được sửa / xác nhận phiếu theo buổi này không (đúng chi nhánh, đúng loại phiếu, đúng quyền). */
+async function quyenPhieuBuoi(id: string, xacNhan = false): Promise<{ nd: NguoiDung } | { loi: string }> {
+  const nd = await kiemQuyen("phieu.xem");
+  if (!nd || !id) return { loi: KHONG_DU_QUYEN };
+  const { data: p } = await sb().from("phieu_cap").select("chi_nhanh_id, ktv_id, buoi_id").eq("id", id).maybeSingle();
+  if (!p || (nd.chiNhanhId && p.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy phiếu." };
+  if (!p.buoi_id) return { loi: "Phiếu này do bác sĩ chỉ định, không sửa ở đây." };
+  // Xác nhận là việc của chuyên viên trị liệu (phieu.nhan hoặc chính người làm buổi); kho (phieu.cap) chỉ được sửa dòng.
+  if (!(coQuyen(nd, "phieu.nhan") || (!xacNhan && coQuyen(nd, "phieu.cap")) || p.ktv_id === nd.nhanVienId)) return { loi: KHONG_DU_QUYEN };
+  return { nd };
+}
+
+/** Dòng phải thuộc đúng phiếu (không cho sửa dòng của phiếu khác qua id phiếu này). */
+async function dongThuocPhieu(dong: string, phieu: string) {
+  const { data } = await sb().from("phieu_cap_dong").select("phieu_id").eq("id", dong).maybeSingle();
+  return !!data && data.phieu_id === phieu;
+}
+
+export async function suaDongPhieuBuoi(fd: FormData): Promise<KQ> {
+  const id = chuoi(fd, "id"), dong = chuoi(fd, "dong_id");
+  const q = await quyenPhieuBuoi(id);
+  if ("loi" in q) return { loi: q.loi };
+  if (!(await dongThuocPhieu(dong, id))) return { loi: "Dòng vật tư không thuộc phiếu này." };
+  const { error } = await sb().rpc("sua_dong_phieu_buoi", { p_dong: dong, p_so_luong: so(fd, "so_luong"), p_nguoi: q.nd.nhanVienId });
+  lamMoi(id);
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+export async function themDongPhieuBuoi(fd: FormData): Promise<KQ> {
+  const id = chuoi(fd, "id");
+  const q = await quyenPhieuBuoi(id);
+  if ("loi" in q) return { loi: q.loi };
+  if (!chuoi(fd, "san_pham_id")) return { loi: "Chọn vật tư." };
+  const { error } = await sb().rpc("them_dong_phieu_buoi", { p_phieu: id, p_san_pham: chuoi(fd, "san_pham_id"), p_so_luong: so(fd, "so_luong"), p_nguoi: q.nd.nhanVienId });
+  lamMoi(id);
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+export async function xoaDongPhieuBuoi(fd: FormData): Promise<KQ> {
+  const id = chuoi(fd, "id"), dong = chuoi(fd, "dong_id");
+  const q = await quyenPhieuBuoi(id);
+  if ("loi" in q) return { loi: q.loi };
+  if (!(await dongThuocPhieu(dong, id))) return { loi: "Dòng vật tư không thuộc phiếu này." };
+  const { error } = await sb().rpc("xoa_dong_phieu_buoi", { p_dong: dong, p_nguoi: q.nd.nhanVienId });
+  lamMoi(id);
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+export async function xacNhanPhieuBuoi(fd: FormData): Promise<KQ> {
+  const id = chuoi(fd, "id");
+  const q = await quyenPhieuBuoi(id, true);
+  if ("loi" in q) return { loi: q.loi };
+  const { error } = await sb().rpc("xac_nhan_phieu_buoi", { p_id: id, p_nguoi: q.nd.nhanVienId });
+  lamMoi(id);
+  return error ? { loi: thongBaoLoi(error) } : { ok: true };
+}
+
+/** Chốt cuối ngày: xuất kho mọi phiếu theo buổi ĐÃ xác nhận của chi nhánh trong ngày làm đó. Phiếu chưa xác nhận / thiếu tồn giữ nguyên và được báo lại. */
+export async function chotPhieuNgay(fd: FormData): Promise<KQ> {
+  const nd = (await kiemQuyen("phieu.cap")) ?? (await kiemQuyen("phieu.doichieu"));
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const ngay = chuoi(fd, "ngay");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) return { loi: "Ngày chốt không hợp lệ." };
+  const cn = nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id");
+  if (!cn) return { loi: "Chọn chi nhánh cần chốt." };
+  const { data, error } = await sb().rpc("chot_phieu_ngay", { p_chi_nhanh: cn, p_ngay: ngay, p_nguoi: nd.nhanVienId });
+  lamMoi();
+  if (error) return { loi: thongBaoLoi(error) };
+  const kq = (data ?? {}) as { da_chot?: number; chua_xac_nhan?: { ma: string }[]; loi?: { ma: string; loi: string }[] };
+  const chua = kq.chua_xac_nhan ?? [], hong = kq.loi ?? [];
+  if (!chua.length && !hong.length) return { ok: true, canhBao: `Đã chốt ${kq.da_chot ?? 0} phiếu, vật tư đã xuất kho.` };
+  const phan = [`Đã chốt ${kq.da_chot ?? 0} phiếu.`];
+  if (chua.length) phan.push(`${chua.length} phiếu CHƯA được chuyên viên trị liệu xác nhận, còn mở: ${chua.map((x) => x.ma).join(", ")}.`);
+  if (hong.length) phan.push(`${hong.length} phiếu chưa chốt được: ${hong.map((x) => `${x.ma} (${x.loi})`).join("; ")}.`);
+  return { ok: true, canhBao: phan.join(" ") };
 }

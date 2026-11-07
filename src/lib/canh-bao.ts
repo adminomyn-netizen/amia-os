@@ -5,7 +5,7 @@ import { coQuyen, type CoQuyen } from "@/lib/quyen";
 import { layNhacCong } from "@/lib/nhac-cong";
 
 /** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
-export type CanhBao = { ma: "lich" | "phieu" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin" | "knai" | "bchung"; nhan: string; href: string };
+export type CanhBao = { ma: "lich" | "phieu" | "phieu-buoi" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin" | "knai" | "bchung"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
 /** Cảnh báo nhân sự (hợp đồng lao động...) đã chuyển sang MSC Group OS: bỏ mọi mục trỏ vào /nhan-su. */
@@ -23,15 +23,18 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
   type Dem = { the_sap_het?: number; kho_duoi_muc?: number; kho_ton_am?: number };
   const pDem: Promise<Dem | null> = coQuyen(nd, "the.xem") || coQuyen(nd, "kho.xem")
     ? Promise.resolve(db.rpc("dem_canh_bao_nhanh", cn ? { p_cn: cn } : {})).then((r) => (r.data ?? {}) as Dem) : Promise.resolve(null);
-  const [[lich, phieu, dem, no], nangCao, khieuNai, nhacCong] = await Promise.all([Promise.all([
+  const [[lich, phieu, dem, no, phieuBuoi], nangCao, khieuNai, nhacCong] = await Promise.all([Promise.all([
     coQuyen(nd, "lich.xem") ? loc(db.from("lich_hen").select("id", { count: "exact", head: true }).gte("bat_dau", tu).lt("bat_dau", den).eq("trang_thai", "chua_xac_nhan")) : null,
-    coQuyen(nd, "phieu.xem") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"])) : null,
+    coQuyen(nd, "phieu.xem") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"]).is("buoi_id", null)) : null,
     pDem,
     coQuyen(nd, "baocao.tien") ? loc(db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0)) : null,
+    // Phiếu vật tư theo buổi (0310) chưa được chuyên viên trị liệu xác nhận: chốt cuối ngày sẽ bỏ qua.
+    coQuyen(nd, "phieu.nhan") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).eq("trang_thai", "cho_cap").not("buoi_id", "is", null).is("xac_nhan_luc", null)) : null,
   ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay)]);
   const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
   if ((lich?.count ?? 0) > 0) ra.push({ ma: "lich", nhan: `${lich!.count} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
   if ((phieu?.count ?? 0) > 0) ra.push({ ma: "phieu", nhan: `${phieu!.count} phiếu cấp vật tư đang chờ kho cấp hoặc Chuyên viên trị liệu nhận`, href: "/phieu-cap" });
+  if ((phieuBuoi?.count ?? 0) > 0) ra.push({ ma: "phieu-buoi", nhan: `${phieuBuoi!.count} phiếu vật tư theo buổi chờ Chuyên viên trị liệu kiểm và xác nhận`, href: "/phieu-cap?tab=chot" });
   if ((the?.count ?? 0) > 0) ra.push({ ma: "the", nhan: `${the!.count} thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)`, href: "/the" });
   const dsNo = (no?.data ?? []) as { con_no: number }[];
   if (dsNo.length > 0) ra.push({ ma: "no", nhan: `${dsNo.length} hoá đơn còn nợ, tổng ${tienVN(dsNo.reduce((s, r) => s + Number(r.con_no), 0))}`, href: "/bao-cao?tab=no" });

@@ -9132,7 +9132,8 @@ export type Database = {
       }
       phieu_cap: {
         Row: {
-          bac_si_id: string
+          bac_si_id: string | null
+          buoi_id: string | null
           cap_boi: string | null
           cap_luc: string | null
           chi_nhanh_id: string
@@ -9151,12 +9152,17 @@ export type Database = {
           ma: string
           nhan_boi: string | null
           nhan_luc: string | null
+          sua_boi: string | null
+          sua_luc: string | null
           tao_boi: string | null
           tao_luc: string
           trang_thai: string
+          xac_nhan_boi: string | null
+          xac_nhan_luc: string | null
         }
         Insert: {
-          bac_si_id: string
+          bac_si_id?: string | null
+          buoi_id?: string | null
           cap_boi?: string | null
           cap_luc?: string | null
           chi_nhanh_id: string
@@ -9175,12 +9181,17 @@ export type Database = {
           ma: string
           nhan_boi?: string | null
           nhan_luc?: string | null
+          sua_boi?: string | null
+          sua_luc?: string | null
           tao_boi?: string | null
           tao_luc?: string
           trang_thai?: string
+          xac_nhan_boi?: string | null
+          xac_nhan_luc?: string | null
         }
         Update: {
-          bac_si_id?: string
+          bac_si_id?: string | null
+          buoi_id?: string | null
           cap_boi?: string | null
           cap_luc?: string | null
           chi_nhanh_id?: string
@@ -9199,9 +9210,13 @@ export type Database = {
           ma?: string
           nhan_boi?: string | null
           nhan_luc?: string | null
+          sua_boi?: string | null
+          sua_luc?: string | null
           tao_boi?: string | null
           tao_luc?: string
           trang_thai?: string
+          xac_nhan_boi?: string | null
+          xac_nhan_luc?: string | null
         }
         Relationships: [
           {
@@ -13423,6 +13438,12 @@ export type Database = {
       luu_tuy_chon_gia_dich_vu: { Args: { p_dich_vu: string; p_ds: Json }; Returns: number }
       tinh_han_the: { Args: { p_thang: number | null; p_ngay: number | null; p_tu: string }; Returns: string | null }
       so_tiep_theo: { Args: { p_khoa: string }; Returns: number }
+      tao_phieu_theo_buoi: { Args: { p_buoi: string; p_nguoi: string }; Returns: string }
+      sua_dong_phieu_buoi: { Args: { p_dong: string; p_so_luong: number; p_nguoi: string }; Returns: undefined }
+      them_dong_phieu_buoi: { Args: { p_phieu: string; p_san_pham: string; p_so_luong: number; p_nguoi: string }; Returns: string }
+      xoa_dong_phieu_buoi: { Args: { p_dong: string; p_nguoi: string }; Returns: undefined }
+      xac_nhan_phieu_buoi: { Args: { p_id: string; p_nguoi: string }; Returns: undefined }
+      chot_phieu_ngay: { Args: { p_chi_nhanh: string; p_ngay: string; p_nguoi: string }; Returns: Json }
       tao_phieu_cap: {
         Args: {
           p_bac_si: string

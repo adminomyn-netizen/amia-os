@@ -38,7 +38,7 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
   const den = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
   let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(60);
   if (cn) lq = lq.eq("chi_nhanh_id", cn);
-  let pq = db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"]);
+  let pq = db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"]).is("buoi_id", null);
   if (cn) pq = pq.eq("chi_nhanh_id", cn);
   const [{ data: lich }, { count: phieuCho }] = await Promise.all([lq, coQuyen(nd, "phieu.xem") ? pq : Promise.resolve({ count: 0 })]);
   const idsK = [...new Set((lich ?? []).map((l) => l.khach_id))];

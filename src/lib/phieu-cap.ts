@@ -17,3 +17,10 @@ export function tinhCaCanPhieu(
   }
   return ra;
 }
+
+/** Nhãn trạng thái riêng của phiếu vật tư THEO BUỔI khi chưa chốt (migration 0310): chờ chuyên viên trị liệu xác nhận / đã xác nhận, chờ chốt cuối ngày.
+ *  Phiếu bác sĩ chỉ định hoặc phiếu đã chốt/huỷ trả null → dùng nhãn chung theo trang_thai. */
+export function nhanPhieuBuoi(p: { trang_thai: string; buoi_id: string | null; xac_nhan_luc: string | null }): { nhan: string; kieu: "tot" | "cho" | "loi" } | null {
+  if (!p.buoi_id || p.trang_thai !== "cho_cap") return null;
+  return p.xac_nhan_luc ? { nhan: "Đã xác nhận, chờ chốt ngày", kieu: "tot" } : { nhan: "Chờ chuyên viên trị liệu xác nhận", kieu: "loi" };
+}

@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
+import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
 import { chuoi, chuoiHoacNull, so } from "@/lib/form";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
@@ -10,6 +11,8 @@ import { timKhachMaSdt } from "@/lib/tim-khach-ma-sdt";
 import { tinhHanThe } from "@/lib/danh-muc";
 
 type KQ = { ok?: true; loi?: string; canhBao?: string };
+/** Kết quả trừ buổi: kèm phiếu vật tư vừa tạo cho buổi (nếu có) để giao diện hiện "Mở phiếu vật tư". */
+export type KQBuoi = KQ & { phieuId?: string; phieuMa?: string; xemPhieu?: boolean };
 const lamMoi = (id?: string) => { revalidatePath("/the"); if (id) revalidatePath(`/the/${id}`); };
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -42,7 +45,7 @@ async function ghiHenKeTiep(nd: NguoiDung, theId: string, buoiId: string | null,
   return {};
 }
 
-export async function thucHienBuoi(fd: FormData): Promise<KQ> {
+export async function thucHienBuoi(fd: FormData): Promise<KQBuoi> {
   // Thu ngân (ban.tao) trừ buổi ngay ở màn Bán hàng như SalonHero (dùng thẻ khi lên đơn).
   const nd = (await kiemQuyen("the.thuchien")) ?? (await kiemQuyen("ban.tao"));
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -59,12 +62,25 @@ export async function thucHienBuoi(fd: FormData): Promise<KQ> {
   });
   lamMoi(theId); revalidatePath("/lich-hen");
   if (error) return { loi: thongBaoLoi(error) };
-  // Buổi đã trừ xong. Hẹn kế tiếp lỗi thì CHỈ cảnh báo (đừng báo lỗi: người dùng bấm lại sẽ trừ buổi lần nữa).
+  // Buổi đã trừ xong. Từ đây lỗi nào cũng CHỈ cảnh báo (đừng báo lỗi: người dùng bấm lại sẽ trừ buổi lần nữa).
+  const canhBao: string[] = [];
+  const buoi = typeof buoiId === "string" ? buoiId : null;
   if (hen.co) {
-    const r = await ghiHenKeTiep(nd, theId, typeof buoiId === "string" ? buoiId : null, hen.ngay, hen.noiDung);
-    if (r.loi) return { ok: true, canhBao: `Đã trừ buổi, nhưng CHƯA lưu được hẹn buổi kế tiếp (${r.loi}). Đừng làm lại buổi; vào hồ sơ thẻ bấm "Hẹn buổi kế tiếp" để ghi.` } as KQ;
+    const r = await ghiHenKeTiep(nd, theId, buoi, hen.ngay, hen.noiDung);
+    if (r.loi) canhBao.push(`CHƯA lưu được hẹn buổi kế tiếp (${r.loi}). Đừng làm lại buổi; vào hồ sơ thẻ bấm "Hẹn buổi kế tiếp" để ghi.`);
   }
-  return { ok: true };
+  // Phiếu vật tư của buổi (đủ dòng định mức của dịch vụ); chuyên viên trị liệu kiểm, xác nhận, cuối ngày chốt mới xuất kho.
+  let phieu: { phieuId: string; phieuMa: string } | null = null;
+  if (buoi) {
+    const { data: pid, error: e2 } = await sb().rpc("tao_phieu_theo_buoi", { p_buoi: buoi, p_nguoi: nd.nhanVienId });
+    if (e2 || typeof pid !== "string") canhBao.push(`CHƯA tạo được phiếu vật tư cho buổi này (${thongBaoLoi(e2) || "không rõ lỗi"}). Đừng làm lại buổi; báo kho / quản lý ra phiếu.`);
+    else {
+      const { data: pc } = await sb().from("phieu_cap").select("ma").eq("id", pid).maybeSingle();
+      phieu = { phieuId: pid, phieuMa: pc?.ma ?? "" };
+      revalidatePath("/phieu-cap");
+    }
+  }
+  return { ok: true, ...(phieu ? { ...phieu, xemPhieu: coQuyen(nd, "phieu.xem") } : {}), ...(canhBao.length ? { canhBao: `Đã trừ buổi, nhưng ${canhBao.join(" ")}` } : {}) };
 }
 
 /** Hẹn buổi kế tiếp ở hồ sơ thẻ (không trừ buổi). Dùng khi quên ghi lúc trừ buổi. */

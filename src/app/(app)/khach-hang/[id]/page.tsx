@@ -95,7 +95,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
 
   // Đầu hồ sơ như SalonHero: tổng đơn, tần suất đến trung bình, lịch hẹn sắp tới; tab Thông tin thêm dịch vụ & sản phẩm hay dùng.
   const [{ data: hdKh }, { data: lichSap }] = await Promise.all([
-    db.from("hoa_don").select("id, ngay_hd").eq("khach_id", id).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).limit(5000),
+    db.from("hoa_don").select("id, ngay_hd, tong_hang, giam_gia_don").eq("khach_id", id).eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).limit(5000),
     db.from("lich_hen").select("id, bat_dau, trang_thai, nhan_vien_id, chi_nhanh_id, dich_vu_ten").eq("khach_id", id).gte("bat_dau", new Date().toISOString()).in("trang_thai", ["chua_xac_nhan", "da_xac_nhan", "cho_phuc_vu"]).order("bat_dau").limit(5),
   ]);
   // Dịch vụ / sản phẩm yêu thích: lấy dòng theo mã các hoá đơn của khách (lọc qua bảng cha bằng !inner làm CSDL quét cả bảng dòng và hết giờ → trước đây luôn "Chưa có dữ liệu").
@@ -107,6 +107,9 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const { data: lichDv } = (lichSap ?? []).length ? await db.from("lich_hen_dich_vu").select("lich_id, dich_vu_id").in("lich_id", (lichSap ?? []).map((l) => l.id)) : { data: [] as { lich_id: string; dich_vu_id: string }[] };
   const tenDvLich = new Map((dv ?? []).map((d) => [d.id, d.ten]));
   const tongDon = (hdKh ?? []).length;
+  // Tổng chi từ trước tới nay: cộng mọi đơn hoàn thành, cùng công thức với "Chi 12 tháng" (tiền hàng − giảm giá đơn) cho hai số khớp nhau.
+  const chiDon = (h: { tong_hang: number | null; giam_gia_don: number | null }) => Math.max(Number(h.tong_hang ?? 0) - Number(h.giam_gia_don ?? 0), 0);
+  const tongChi = (hdKh ?? []).reduce((a, h) => a + chiDon(h), 0);
   const ngayDen = [...new Set((hdKh ?? []).map((h) => h.ngay_hd))].sort();
   // Tần suất đến trung bình = số ngày giữa lần đến đầu và lần đến cuối chia cho số khoảng giữa các ngày có hoá đơn; cần ít nhất 2 ngày khác nhau.
   const tanSuat = ngayDen.length >= 2 ? Math.round((Date.parse(ngayDen[ngayDen.length - 1]) - Date.parse(ngayDen[0])) / 86_400_000 / (ngayDen.length - 1)) : null;
@@ -463,7 +466,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
 
   const NUT_LIEN_KET = "flex h-9 items-center rounded-nho border border-vien-dam px-3.5 text-[13px] font-medium text-muc-2 hover:bg-giay-tram";
   const chiSo: [string, string][] = [
-    ["Chi 12 tháng gần nhất", tienVN(k.chi_12_thang)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
+    ["Tổng chi", tienVN(tongChi)], ["Chi 12 tháng gần nhất", tienVN(k.chi_12_thang)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
   ];
   // Như đầu hồ sơ SalonHero: ghé thăm lần cuối + 3 số đếm đặt / đến / huỷ (chỉ khách có số từ SalonHero; "đặt từ app" SalonHero không xuất nên không có).
   const soDem: [string, string][] = [

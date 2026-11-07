@@ -10,6 +10,13 @@ export const vnNgay = (iso) => (iso ? new Date(new Date(iso).getTime() + 7 * 360
 export const sdt = (s) => { let p = String(s ?? "").replace(/\D/g, ""); if (p.startsWith("84") && p.length >= 11) p = "0" + p.slice(2); return p; };
 export const sach = (s) => (typeof s === "string" ? s.replace(/\s+/g, " ").trim() : "");
 export const so = (v) => Math.round(Number(v) || 0);
+/** Như `sach` nhưng GIỮ xuống dòng: từng dòng gộp khoảng trắng + trim, bỏ dòng trống (ghi chú SalonHero có danh sách nhiều dòng, 07/11/2026). */
+export const sachDong = (s) => (typeof s === "string" ? s.replace(/\r\n?/g, "\n").split("\n").map((d) => d.replace(/[^\S\n]+/g, " ").trim()).filter(Boolean).join("\n") : "");
+/** Nội dung 1 ghi chú SalonHero → khach_ghi_chu.tinh_trang: content, content_1..6 (bỏ null/"None"/rỗng) nối "\n" + "\n— <người tạo> (SalonHero)". null nếu không có chữ. */
+export const vanBanGhiChuSh = (n) => {
+  const nd = [n.content, n.content_1, n.content_2, n.content_3, n.content_4, n.content_5, n.content_6].filter((x) => x && x !== "None").map(sachDong).filter(Boolean);
+  return nd.length ? nd.join("\n") + (n.creator_name ? `\n— ${sach(n.creator_name)} (SalonHero)` : "") : null;
+};
 
 export async function ketNoi() {
   if (!process.env.PW) throw new Error("Thiếu PW (mật khẩu DB lấy từ Keychain amia-os-db-password)");

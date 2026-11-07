@@ -35,6 +35,15 @@ if grep -q "CHẠY THỬ XONG" "$THU" && ! grep -q "CÓ LỆCH" "$THU"; then
   # giờ thu thật của các lần khách trả tiền (bảng tra sh_gio_thanh_toan, migration 0251) — chỉ ghi bảng tra
   XQ=$(ls -dt "$G"/sao-luu/dong-bo-$NGAY-*/gio_thu.ndjson 2>/dev/null | head -1)
   [ -n "$XQ" ] && node scripts/chuyen-salonhero/gio-thanh-toan-sh.mjs --tep "$XQ" 2>&1 | tail -1 | sed 's/^/- giờ thu: /' >> "$BC"
+  # chỉ lượt đêm, sau khi ghi thật thành công: làm mới TOÀN BỘ ghi chú khách SalonHero (bù ghi chú mới/sửa trên khách không đổi chi tiết; chỉ đọc SH, không xoá)
+  if [ "$LUOT" = "dem" ] && grep -q "ĐÃ GHI THẬT" "$THAT"; then
+    GC="$G/sao-luu/ghi-chu-sh-$NGAY.log"
+    node scripts/chuyen-salonhero/ghi-chu-sh.mjs --that > "$GC" 2>&1
+    DGC=$(sed 's/\x1b\[[0-9;]*m//g' "$GC" | grep -E "^- ghi chú SH:" | tail -1 | cut -c1-400)
+    echo "${DGC:-- ghi chú SH: không có dòng tóm tắt — xem $GC}" >> "$BC"
+    # bản xuất ghi chú ~50 MB/đêm: chỉ giữ 2 ngày gần nhất cho đỡ đầy ổ
+    find "$G/sao-luu" -maxdepth 1 -type d -name 'ghi-chu-sh-2*' -mtime +1 -exec rm -rf {} + 2>/dev/null
+  fi
 else
   echo "## KHÔNG GHI: chạy thử có lệch/lỗi — xem $THU" >> "$BC"
   sed 's/\x1b\[[0-9;]*m//g' "$THU" | grep -E "LỆCH|DỪNG|Error|lỗi" | head -10 >> "$BC"

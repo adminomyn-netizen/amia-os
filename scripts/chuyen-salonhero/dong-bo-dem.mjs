@@ -13,7 +13,7 @@
 //   --tu       ngày VN bắt đầu (mặc định: mốc lần đồng bộ trước trong sao-luu/dong-bo-moc.json, nếu chưa có thì 2026-10-28)
 //   --thu-muc  dùng lại bản xuất đã có (bỏ qua bước xuất từ SalonHero)
 //   --tu-kiem  TỰ KIỂM: trong giao dịch, giả lập "mất" vài khách/HĐ/lịch/thẻ và đổi vài dòng rồi cho đồng bộ vá lại; luôn rollback.
-import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, nganHangKhoan } from "./lib.mjs";
+import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, nganHangKhoan, vanBanGhiChuSh } from "./lib.mjs";
 import { chuanHoaSoQuySh, napSoQuySh, tonQuyAmia } from "./so-quy-sh.mjs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync, statSync } from "node:fs";
 import { spawnSync, execSync } from "node:child_process";
@@ -332,15 +332,18 @@ try {
   const ghiChu = [];
   for (const [shId, rt] of chiTiet) for (const n of rt.ghi_chu?.notes ?? []) {
     if (n.is_deleted || !khachId.has(shId)) continue;
-    const nd = [n.content, n.content_1, n.content_2, n.content_3, n.content_4, n.content_5, n.content_6].filter((x) => x && x !== "None").map(sach).filter(Boolean);
-    if (!nd.length) continue;
-    ghiChu.push({ sh_id: Number(n.id), khach_id: khachId.get(shId), noi_dung: nd.join("\n") + (n.creator_name ? `\n— ${sach(n.creator_name)} (SalonHero)` : ""), tao_luc: n.createdAt ?? null });
+    const noiDung = vanBanGhiChuSh(n); // giữ xuống dòng trong từng ô (07/11/2026)
+    if (!noiDung) continue;
+    ghiChu.push({ sh_id: Number(n.id), khach_id: khachId.get(shId), noi_dung: noiDung, tao_luc: n.createdAt ?? null });
   }
-  let nGhiChu = 0;
+  // ghi chú sửa trên SalonHero → cập nhật dòng SH-% (KHÔNG đè dòng sửa trong app: APP-SUA / không có nhap_dot SH-)
+  let nGhiChu = 0, nSuaGhiChu = 0;
   await theoLo(ghiChu, 1000, async (l) => {
-    nGhiChu += (await q(`insert into public.khach_ghi_chu (sh_id, khach_id, tinh_trang, tao_luc, loai, nhap_dot) select x.sh_id, x.khach_id, x.noi_dung, coalesce(x.tao_luc, now()), 'cskh', $2 from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, khach_id uuid, noi_dung text, tao_luc timestamptz) on conflict (sh_id) do nothing returning 1`, [JSON.stringify(l), dot])).length;
+    for (const r of await q(`insert into public.khach_ghi_chu as g (sh_id, khach_id, tinh_trang, tao_luc, loai, nhap_dot) select x.sh_id, x.khach_id, x.noi_dung, coalesce(x.tao_luc, now()), 'cskh', $2 from jsonb_to_recordset($1::jsonb) as x(sh_id bigint, khach_id uuid, noi_dung text, tao_luc timestamptz)
+         on conflict (sh_id) do update set tinh_trang = excluded.tinh_trang, nhap_dot = excluded.nhap_dot
+         where g.nhap_dot like 'SH-%' and g.tinh_trang is distinct from excluded.tinh_trang returning (xmax = 0) moi`, [JSON.stringify(l), dot])) r.moi ? nGhiChu++ : nSuaGhiChu++;
   });
-  tom.khach = { moi: nMoiK, cap_nhat: nCapNhatK, ghi_chu_moi: nGhiChu, ...baoK };
+  tom.khach = { moi: nMoiK, cap_nhat: nCapNhatK, ghi_chu_moi: nGhiChu, ghi_chu_sua: nSuaGhiChu, ...baoK };
 
   tik('khách xong');
   // ════ B. THẺ ════

@@ -20,15 +20,17 @@ export function BaoPhieuBuoi({ phieu }: { phieu: KetQuaBuoi | null }) {
 }
 
 /** Nút "Thực hiện buổi" dùng ở danh sách thẻ, hồ sơ thẻ và lịch hẹn. Trừ buổi xong hiện phiếu vật tư của buổi (nếu đã tạo được). */
-export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, lichId, nhan = "Thực hiện buổi", onXong }: {
+export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, lichId, nhan = "Thực hiện buổi", onXong, macDinh }: {
   theId: string; nhanVien: LuaChon[]; bacSi: LuaChon[]; dichVu: LuaChon[]; action: (fd: FormData) => Promise<KetQuaBuoi>; lichId?: string; nhan?: string;
+  /** Điền sẵn theo lần trước khách dùng thẻ (dịch vụ, người làm, bác sĩ). */ macDinh?: { dv?: string; nv?: string; bs?: string } | null;
   /** Nơi gọi tự hiện phiếu (vd màn Bán hàng, nút có thể biến mất khi thẻ hết buổi); có thì NutBuoi không tự hiện. */ onXong?: (kq: KetQuaBuoi) => void;
 }) {
   const [phieu, setPhieu] = useState<KetQuaBuoi | null>(null);
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
       <NutHop kieu="chu" nhan={nhan} tieuDe="Thực hiện buổi" moTa="Bấm Đã làm xong là trừ 1 buổi của thẻ, ghi doanh thu của buổi và ra phiếu vật tư theo định mức để chuyên viên trị liệu kiểm. Nhập nhầm thì huỷ buổi để hoàn lại." rong nhanLuu="Đã làm xong"
-        an={{ the_id: theId, ...(lichId ? { lich_id: lichId } : {}) }} giaTri={{ dich_vu_id: dichVu.length === 1 ? dichVu[0].gia_tri : "", ngay: homNayHCM() }}
+        an={{ the_id: theId, ...(lichId ? { lich_id: lichId } : {}) }} giaTri={{ dich_vu_id: dichVu.length === 1 ? dichVu[0].gia_tri : macDinh?.dv && dichVu.some((d) => d.gia_tri === macDinh.dv) ? macDinh.dv : "", ngay: homNayHCM(),
+          ...(macDinh?.nv && nhanVien.some((n) => n.gia_tri === macDinh.nv) ? { nv_id: macDinh.nv } : {}), ...(macDinh?.bs && bacSi.some((n) => n.gia_tri === macDinh.bs) ? { bac_si_id: macDinh.bs } : {}) }}
         truong={[
           { ten: "dich_vu_id", nhan: "Dịch vụ khách làm hôm nay", loai: "chon", luaChon: dichVu, batBuoc: true, rong: true, ghiChu: "Phiếu vật tư lấy định mức của dịch vụ này." }, { ten: "nv_id", nhan: "Người thực hiện", loai: "chon", luaChon: nhanVien, batBuoc: true },
           { ten: "bac_si_id", nhan: "Bác sĩ chỉ định", loai: "chon", luaChon: bacSi }, { ten: "ngay", nhan: "Ngày làm", loai: "ngay" }, { ten: "vung", nhan: "Vùng làm", loai: "chu", goiY: "Mặt, cổ, bụng..." },

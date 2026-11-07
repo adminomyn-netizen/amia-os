@@ -54,6 +54,25 @@ export async function layTheKhach(khachId: string) {
   const ten = new Map((goi ?? []).map((g) => [g.id as string, g.ten as string]));
   const dvGoi = new Map<string, string[]>();
   for (const l of lk ?? []) dvGoi.set(l.goi_id as string, [...(dvGoi.get(l.goi_id as string) ?? []), l.dich_vu_id as string]);
+  // "Dùng buổi" điền sẵn theo lần trước: buổi gần nhất của chính thẻ đó (dịch vụ + người làm + bác sĩ);
+  // thẻ chưa có buổi nào trong AMIA thì lấy dịch vụ khách làm gần nhất (dòng hoá đơn) thuộc các dịch vụ của thẻ.
+  const idsThe = (the ?? []).filter((t) => t.loai === "lan").map((t) => t.id as string);
+  const [{ data: buoi }, { data: hdGan }] = await Promise.all([
+    idsThe.length ? db.from("buoi_thuc_hien").select("the_id, dich_vu_id, nv_thuc_hien_id, bac_si_id").in("the_id", idsThe).is("huy_luc", null).order("tao_luc", { ascending: false }).limit(200) : Promise.resolve({ data: [] }),
+    db.from("hoa_don").select("id").eq("khach_id", khachId).eq("trang_thai", "hoan_thanh").order("ngay_hd", { ascending: false }).limit(40),
+  ]);
+  const buoiCuoi = new Map<string, { dv: string; nv: string; bs: string }>();
+  for (const b of buoi ?? []) if (b.the_id && !buoiCuoi.has(b.the_id)) buoiCuoi.set(b.the_id, { dv: b.dich_vu_id, nv: b.nv_thuc_hien_id, bs: b.bac_si_id ?? "" });
+  const idsHd = (hdGan ?? []).map((h) => h.id as string);
+  const { data: dongGan } = idsHd.length ? await db.from("hoa_don_dong").select("hoa_don_id, dich_vu_id").in("hoa_don_id", idsHd).not("dich_vu_id", "is", null) : { data: [] };
+  const thuTuHd = new Map(idsHd.map((id, i) => [id, i]));
+  const dvDaLam = [...(dongGan ?? [])].sort((a, b) => (thuTuHd.get(a.hoa_don_id) ?? 0) - (thuTuHd.get(b.hoa_don_id) ?? 0)).map((d) => d.dich_vu_id as string);
+  const lanTruoc = (theId: string, dvThe: string[]) => {
+    const b = buoiCuoi.get(theId);
+    if (b) return b;
+    const dv = dvThe.length ? dvDaLam.find((d) => dvThe.includes(d)) : dvDaLam[0];
+    return dv ? { dv, nv: "", bs: "" } : null;
+  };
   return {
     hang: (k.hang as string | null) ?? "",
     the: (the ?? []).map((t) => ({
@@ -61,6 +80,8 @@ export async function layTheKhach(khachId: string) {
       buoiCon: Number(t.so_buoi_con ?? 0), buoiTong: t.so_buoi_tong == null ? null : Number(t.so_buoi_tong), soDu: Number(t.so_du_tien ?? 0), han: (t.han_dung as string | null) ?? null,
       /** Dịch vụ của gói (nút "Dùng buổi" chọn sẵn); rỗng = gói không gắn dịch vụ, thu ngân chọn trong cả danh mục. */
       dichVu: dvGoi.get(t.goi_id as string) ?? [],
+      /** Lần trước khách dùng thẻ này (để "Dùng buổi" điền sẵn); null = chưa có. */
+      lanTruoc: t.loai === "lan" ? lanTruoc(t.id as string, dvGoi.get(t.goi_id as string) ?? []) : null,
     })),
   };
 }

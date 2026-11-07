@@ -21,7 +21,7 @@ import { BaoPhieuBuoi, NutBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
 
 type Nv = { id: string; ten: string; vaiTro: string };
-type TheKh = { id: string; ma: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; dichVu: string[] };
+type TheKh = { id: string; ma: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
 type TheTien = { id: string; ma: string; soDu: number };
 /** Màu theo nhóm hàng (ổn định theo tên nhóm) lấy từ bảng màu thương hiệu: nhìn là phân biệt được nhóm, không còn một màu trắng đơn điệu. Cả sáng lẫn tối. */
 const SAC = [
@@ -370,7 +370,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
     if (t.loai === "lan") {
       if (!buoi || t.buoiCon <= 0) return null;
       const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
-      return <NutBuoi theId={t.id} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan="Dùng buổi"
+      return <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan="Dùng buổi"
         onXong={(r) => setPhieuBuoi(r.phieuId && khach ? { kq: r, khachId: khach.id } : null)} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
     }
     if (t.soDu <= 0) return null;

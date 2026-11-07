@@ -24,7 +24,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   // Mọi truy vấn không phụ thuộc nhau chạy CÙNG LÚC (trước đây xếp hàng nối đuôi): đếm chờ thanh toán, danh mục, ngân hàng nhận, đơn nháp.
   let qTk = db.from("tai_khoan_ngan_hang").select("ngan_hang, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true);
   if (nd.chiNhanhId) qTk = qTk.or(`chi_nhanh_id.is.null,chi_nhanh_id.eq.${nd.chiNhanhId}`);
-  const [{ count: demNo }, { count: demSua }, { data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }, { data: dsTk }, nhapBanDau, { data: gt }] = await Promise.all([
+  const [{ count: demNo }, { count: demSua }, { data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }, { data: dsTk }, nhapBanDau, { data: gt }, { data: goiDv }] = await Promise.all([
     qNo, qSua,
     db.from("dich_vu").select("id, ma, ten, gia, nhom_id, vat_pct, tao_luc, noi_hien_thi, chi_nhanh_ids, cho_sua_gia").eq("hoat_dong", true).order("ten"),
     db.from("dich_vu_nhom").select("id, ten"),
@@ -35,7 +35,10 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     qTk,
     dsDonNhap(),
     db.from("doi_tac_gt").select("id, ma, ma_gioi_thieu, ten, loai, loai_sh, hh_kieu, hh_gia_tri").eq("hoat_dong", true).order("ten"),
+    db.from("goi_the_dich_vu").select("goi_id, dich_vu_id").limit(5000),
   ]);
+  const dvCuaGoi = new Map<string, string[]>();
+  for (const l of goiDv ?? []) dvCuaGoi.set(l.goi_id, [...(dvCuaGoi.get(l.goi_id) ?? []), l.dich_vu_id]);
   const choThanhToan = (demNo ?? 0) + (demSua ?? 0);
   // Nguồn giới thiệu cho ô "Người giới thiệu" từng dòng (mức hoa hồng mặc định theo nguồn; theo điểm không phải tiền nên mặc định 0%).
   const nguonGt: NguonGt[] = (gt ?? []).map((g) => ({ id: g.id, ten: g.ten, ma: g.ma_gioi_thieu ?? g.ma, nhom: nhomNguonGt(g.loai, g.loai_sh), kieu: g.hh_kieu === "tien" ? "tien" : "phan_tram", giaTri: g.hh_kieu === "diem" ? 0 : Number(g.hh_gia_tri) }));
@@ -44,7 +47,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   const anTN = (noi: string) => !hienThuNgan(noi);
   const muc: MucBan[] = [
     ...(dv ?? []).map((d) => ({ loai: "dich_vu" as const, id: d.id, ten: d.ten, gia: d.gia, nhom: tenNhom.get(d.nhom_id) ?? "Khác", tao: d.tao_luc, ma: d.ma, anThuNgan: anTN(d.noi_hien_thi), chiNhanhIds: d.chi_nhanh_ids, choSuaGia: d.cho_sua_gia })),
-    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma, anThuNgan: anTN(g.noi_hien_thi), choSuaGia: g.cho_sua_gia })),
+    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma, anThuNgan: anTN(g.noi_hien_thi), choSuaGia: g.cho_sua_gia, dichVu: dvCuaGoi.get(g.id) ?? [] })),
     ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm", tao: s.tao_luc, ma: s.ma, maVach: s.ma_vach ?? undefined, anThuNgan: anTN(s.noi_hien_thi), choSuaGia: s.cho_sua_gia })),
   ];
   type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string };

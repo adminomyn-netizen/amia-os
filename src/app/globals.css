@@ -509,3 +509,7 @@ body {
   .khung-bang thead th { padding-top: 14px; padding-bottom: 12px; }
   .khung-bang tbody tr:last-child { border-bottom: 0; }
 }
+
+/* Sidebar: vẫn cuộn được bằng chuột/cảm ứng nhưng không hiện thanh kéo (chị Lâm 7/11). */
+.khong-thanh-cuon { scrollbar-width: none; -ms-overflow-style: none; }
+.khong-thanh-cuon::-webkit-scrollbar { display: none; }

@@ -32,7 +32,8 @@ export const quyCuaPhuongThuc = (phuongThuc: string): "tien_mat" | "ngan_hang" |
 export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten: string; gia: number; nhom: string; vatPct?: number; tao?: string; /** Mã và mã vạch để thu ngân tìm nhanh (gõ không dấu cũng ra). */ ma?: string; maVach?: string;
   /** "Nơi hiển thị" = chỉ đặt lịch / ẩn: không hiện ở ô chọn mục của Thu ngân (dòng cũ vẫn dùng được). */ anThuNgan?: boolean;
   /** "Địa điểm cung cấp" của dịch vụ: null/không có = mọi chi nhánh. */ chiNhanhIds?: string[] | null;
-  /** "Sửa giá khi thanh toán": thu ngân được sửa đơn giá dòng (chỉ dịch vụ, sản phẩm). */ choSuaGia?: boolean };
+  /** "Sửa giá khi thanh toán": thu ngân được sửa đơn giá dòng (chỉ dịch vụ, sản phẩm). */ choSuaGia?: boolean;
+  /** Gói thẻ: các dịch vụ của gói (goi_the_dich_vu) để lọc hai chiều thẻ ↔ dịch vụ ở thu ngân. */ dichVu?: string[] };
 /** Cột noi_hien_thi (migration 0194): 'tat_ca' | 'thu_ngan' | 'dat_lich' | 'an'. Giá trị lạ coi như 'tat_ca' (giữ hành vi cũ). */
 export const hienThuNgan = (noi: string | null | undefined) => noi !== "dat_lich" && noi !== "an";
 export const hienDatLich = (noi: string | null | undefined) => noi !== "thu_ngan" && noi !== "an";

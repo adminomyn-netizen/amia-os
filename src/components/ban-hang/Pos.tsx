@@ -309,6 +309,8 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   const nhMacDinh = (pt: string) => nganHangChonSan(dsNh(pt), doc(pt));
   const [tab, setTab] = useState<MucBan["loai"]>("dich_vu");
   const [tu, setTu] = useState("");
+  // Lọc hai chiều như SalonHero: vừa chọn thẻ liệu trình → tab Dịch vụ chỉ còn dịch vụ của thẻ; vừa chọn dịch vụ → tab Thẻ chỉ còn thẻ có dịch vụ đó.
+  const [loc, setLoc] = useState<{ loai: "dich_vu" | "goi_the"; id: string; ten: string; dv: string[] } | null>(null);
   const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam" | "moi_nhat">("ten");
   const [dong, setDong] = useState<DongDon[]>(nhapDau ? nhapDau.dong : dauTien ? dongBanDau : []);
   const [giamDon, setGiamDon] = useState(sua?.giamDon ?? 0);
@@ -413,6 +415,8 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   }, [dangXem, onDonChoKhach, khach, dong, tuMuc, hang, giamDon, tienDiem, tienVoucher, vat, phuPhi, tip, phai, daThu, conNo]);
 
   const them = (m: MucBan) => {
+    if (m.loai === "goi_the" && m.dichVu?.length) setLoc({ loai: "goi_the", id: m.id, ten: m.ten, dv: m.dichVu });
+    else if (m.loai === "dich_vu") setLoc({ loai: "dich_vu", id: m.id, ten: m.ten, dv: [] });
     setDong((ds) => {
       const i = ds.findIndex((d) => khoaDong(d) === khoaDong({ loai: m.loai, ref: m.id }));
       if (i >= 0) return ds.map((d, j) => (j === i ? { ...d, sl: d.sl + 1 } : d));
@@ -432,7 +436,9 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   // Sắp xếp như SalonHero (Tên A-Z, giá thấp-cao, giá cao-thấp); xếp trong từng nhóm vì danh mục hiện theo nhóm.
   // Ô chọn mục chỉ hiện mục "Nơi hiển thị" có Thu ngân và cung cấp ở chi nhánh đang bán (dòng đã có trong đơn vẫn giữ).
   const mucHien = useMemo(() => muc.filter((m) => hienOThuNgan(m, cnId)), [muc, cnId]);
-  const dsMuc = mucHien.filter((m) => m.loai === tab && khopMuc(m, tu))
+  const locTab = loc && ((tab === "dich_vu" && loc.loai === "goi_the") || (tab === "goi_the" && loc.loai === "dich_vu")) ? loc : null;
+  const hopLoc = (m: MucBan) => !locTab || (locTab.loai === "goi_the" ? locTab.dv.includes(m.id) : !!m.dichVu?.includes(locTab.id));
+  const dsMuc = mucHien.filter((m) => m.loai === tab && hopLoc(m) && khopMuc(m, tu))
     .sort((a, b) => (sapXep === "gia_tang" ? a.gia - b.gia : sapXep === "gia_giam" ? b.gia - a.gia : sapXep === "moi_nhat" ? (b.tao ?? "").localeCompare(a.tao ?? "") : 0) || a.ten.localeCompare(b.ten, "vi"));
   const nhomMuc = [...new Set(dsMuc.map((m) => m.nhom))];
 
@@ -510,6 +516,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
           </div>
           <div className="w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }, { gia_tri: "moi_nhat", nhan: "Mới nhất" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
         </div>
+        {locTab && <p role="status" className="mt-3 flex flex-wrap items-center gap-2 rounded-nho bg-sac-xanh-nen px-3 py-2 text-[13px] text-sac-xanh">{locTab.loai === "goi_the" ? "Chỉ hiện dịch vụ của thẻ" : "Chỉ hiện thẻ có dịch vụ"} <b>{locTab.ten}</b><button type="button" className={`ml-auto ${NUT_CHU}`} onClick={() => setLoc(null)}>Hiện tất cả</button></p>}
         <div className="mt-4 space-y-5">
           {nhomMuc.map((n) => {
             const sac = sacCua(n), ds = dsMuc.filter((m) => m.nhom === n), Bt = BIEU_TUONG[tab];

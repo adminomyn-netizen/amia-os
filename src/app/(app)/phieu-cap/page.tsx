@@ -102,7 +102,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
         {caCan.length > 0 && coQuyen(nd, "phieu.chidinh") && (
           <section className="mb-6">
             <h2 className="mb-2 text-[15px] font-semibold text-muc">Ca cần ra phiếu cấp ({caCan.length})</h2>
-            <p className="mb-2 text-[13px] text-muc-3">Dịch vụ có vật tư nhóm A phải có phiếu cấp, kho cấp và chuyên viên nhận rồi mới mở ca được. Bấm &quot;Ra phiếu&quot; để chọn vật tư theo định mức.</p>
+            <p className="mb-2 text-[13px] text-muc-3">Ca cần bác sĩ chỉ định vật tư thì bấm &quot;Ra phiếu&quot;: đã có phiếu bác sĩ thì kho cấp và chuyên viên nhận rồi mới mở ca được. Không ra phiếu thì vẫn mở ca, vật tư đi theo phiếu theo buổi khi ghi buổi thẻ.</p>
             <ul>
               {caCan.map((c) => {
                 const l = lichMap.get(c.lichId)!;
@@ -201,7 +201,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
   }
   return (
     <>
-      <TieuDeNoi tieuDe="Phiếu cấp vật tư" phu={`Ngày ${ngayVN(ngay)}. Vật tư nhóm A cấp trước ca: có phiếu, kho cấp, Chuyên viên trị liệu nhận rồi mới được mở ca.`}>
+      <TieuDeNoi tieuDe="Phiếu cấp vật tư" phu={`Ngày ${ngayVN(ngay)}. Phiếu bác sĩ chỉ định: kho cấp, Chuyên viên trị liệu nhận rồi mới mở ca. Phiếu theo buổi: Chuyên viên trị liệu xác nhận, chốt cuối ngày mới xuất kho.`}>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${congNgay(ngay, -1)}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm trước</Link>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${homNayHCM()}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm nay</Link>
         <Link href={`/phieu-cap?tab=${tab}&ngay=${congNgay(ngay, 1)}`} className="rounded-nho border border-vien-dam px-3 py-2 text-[14px] hover:bg-giay-tram">Hôm sau</Link>

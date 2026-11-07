@@ -204,8 +204,10 @@ describe("kho + phiếu cấp vật tư trước ca", () => {
     LICH = (await one<{ id: string }>(`insert into lich_hen (khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id) values ($1,$2, now(), now() + interval '1 hour','cho_phuc_vu',$3) returning id`, [KH, CN, NV.ktv])).id;
     await q(`insert into lich_hen_dich_vu (lich_id, dich_vu_id) values ($1,$2)`, [LICH, DV_MFU]);
   });
-  it("không mở ca được khi chưa có phiếu cấp đã nhận", async () => {
-    expect(await loi(`update lich_hen set trang_thai='dang_phuc_vu' where id=$1`, [LICH])).toMatch(/phiếu cấp vật tư/);
+  it("chưa có phiếu bác sĩ chỉ định thì mở ca được (0310: vật tư đi theo phiếu theo buổi)", async () => {
+    const l = (await one<{ id: string }>(`insert into lich_hen (khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id) values ($1,$2, now(), now() + interval '1 hour','cho_phuc_vu',$3) returning id`, [KH, CN, NV.ktv])).id;
+    await q(`insert into lich_hen_dich_vu (lich_id, dich_vu_id) values ($1,$2)`, [l, DV_MFU]);
+    expect(await loi(`update lich_hen set trang_thai='dang_phuc_vu' where id=$1`, [l])).toBe("");
   });
   it("ra phiếu = định mức cố định + đầu tip bác sĩ chỉ định; nhóm C không vào phiếu; vật tư ngoài định mức bị chặn", async () => {
     expect(await loi(`select tao_phieu_cap($1,$2,$3,$4,$5,$6,$7::jsonb,$6)`, [CN, LICH, KH, DV_MFU, NV.bacSi, NV.ktv, JSON.stringify([{ san_pham_id: SP_BONG, so_luong: 3 }])])).toMatch(/không nằm trong phương án/);

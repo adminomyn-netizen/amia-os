@@ -196,5 +196,26 @@ drop trigger if exists buoi_huy_phieu on public.buoi_thuc_hien;
 create trigger buoi_huy_phieu after update on public.buoi_thuc_hien
   for each row execute function public.trg_buoi_huy_phieu();
 
+-- 6. MỞ CA (lịch → 'dang_phuc_vu'), chị Lâm chọn 07/11/2026: dịch vụ có vật tư nhóm A mà CHƯA có phiếu bác sĩ chỉ định (không huỷ) → cho mở ca,
+--    vật tư đi theo phiếu theo buổi (ra khi ghi buổi). Đã có phiếu bác sĩ chỉ định mà chưa "Đã nhận" → vẫn chặn như cũ.
+--    Thân hàm chép nguyên từ 0007, chỉ đổi điều kiện "not exists phiếu đã nhận" thành "có phiếu bác sĩ chưa huỷ và chưa nhận".
+create or replace function public.trg_lich_hen_khoa_ca() returns trigger language plpgsql as $$
+declare r record;
+begin
+  new.cap_nhat_luc := now();
+  if new.trang_thai = 'dang_phuc_vu' and old.trang_thai is distinct from 'dang_phuc_vu' then
+    for r in
+      select l.dich_vu_id, v.ten from public.lich_hen_dich_vu l join public.dich_vu v on v.id = l.dich_vu_id
+       where l.lich_id = new.id
+         and exists (select 1 from public.dinh_muc dm join public.san_pham s on s.id = dm.san_pham_id and s.nhom_cap = 'A' where dm.dich_vu_id = l.dich_vu_id)
+         and exists (select 1 from public.phieu_cap p where p.lich_hen_id = new.id and p.dich_vu_id = l.dich_vu_id and p.buoi_id is null and p.trang_thai <> 'huy')
+         and not exists (select 1 from public.phieu_cap p where p.lich_hen_id = new.id and p.dich_vu_id = l.dich_vu_id and p.trang_thai in ('da_nhan','da_lam','da_doi_chieu'))
+    loop
+      raise exception 'Chưa mở ca được: dịch vụ "%" cần phiếu cấp vật tư và KTV phải bấm "Đã nhận" trước', r.ten using errcode = 'P0001';
+    end loop;
+  end if;
+  return new;
+end $$;
+
 reset lock_timeout;
 select public.khoa_tat_ca_bang();

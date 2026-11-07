@@ -1,5 +1,5 @@
 /** Ca (lịch hẹn) có dịch vụ cần vật tư nhóm A cấp trước ca nhưng CHƯA có phiếu cấp (phiếu huỷ coi như chưa có). Hàm thuần, có test.
- *  Cùng tiêu chí với chốt chặn mở ca (trg_lich_hen_khoa_ca): dịch vụ có ít nhất một dòng định mức thuộc vật tư nhóm A. */
+ *  Tiêu chí: dịch vụ có ít nhất một dòng định mức thuộc vật tư nhóm A. Từ 0310, mở ca chỉ bị chặn khi ĐÃ có phiếu bác sĩ chưa nhận (trg_lich_hen_khoa_ca). */
 export type CaCanPhieu = { lichId: string; dichVuId: string };
 export function tinhCaCanPhieu(
   lichDichVu: { lich_id: string; dich_vu_id: string }[],

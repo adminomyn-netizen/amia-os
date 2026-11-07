@@ -152,10 +152,30 @@ describe("phiếu vật tư theo buổi", () => {
     const b2 = (await one<{ id: string }>(`select thuc_hien_buoi($1,$2,$3,null,$4,$5::date,'{}'::jsonb,null,$6) id`, [the, DV, NV.ktv, lich, NGAY, NV.thuNgan])).id;
     expect(await taoPhieu(b2)).toBe(pBs);
     expect(await tt(pBs)).toBe("cho_cap");
-    // chốt chặn cũ vẫn còn ở bước MỞ CA của lịch (lich_hen_khoa_ca), không ở bước ghi buổi
-    const lich2 = (await one<{ id: string }>(`insert into lich_hen (khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id) values ($1,$2, now(), now() + interval '1 hour','cho_phuc_vu',$3) returning id`, [KH, CN, NV.ktv])).id;
-    await q(`insert into lich_hen_dich_vu (lich_id, dich_vu_id) values ($1,$2)`, [lich2, DV]);
-    expect(await loi(`update lich_hen set trang_thai='dang_phuc_vu' where id=$1`, [lich2])).toMatch(/phiếu cấp vật tư/);
+  });
+  it("mở ca (lich_hen_khoa_ca, 0310): không phiếu bác sĩ → mở được; phiếu bác sĩ chờ cấp → chặn; phiếu bác sĩ đã nhận → mở được", async () => {
+    const taoLich = async () => {
+      const l = (await one<{ id: string }>(`insert into lich_hen (khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id) values ($1,$2, now(), now() + interval '1 hour','cho_phuc_vu',$3) returning id`, [KH, CN, NV.ktv])).id;
+      await q(`insert into lich_hen_dich_vu (lich_id, dich_vu_id) values ($1,$2)`, [l, DV]);
+      return l;
+    };
+    const moCa = (l: string) => loi(`update lich_hen set trang_thai='dang_phuc_vu' where id=$1`, [l]);
+    // (1) dịch vụ có vật tư nhóm A, chưa có phiếu bác sĩ
+    expect(await moCa(await taoLich())).toBe("");
+    // (2) phiếu bác sĩ còn chờ cấp
+    const l2 = await taoLich();
+    const p2 = (await one<{ id: string }>(`select tao_phieu_cap($1,$2,$3,$4,$5,$6,'[]'::jsonb,$5) id`, [CN, l2, KH, DV, NV.bacSi, NV.ktv])).id;
+    expect(await moCa(l2)).toMatch(/phiếu cấp vật tư/);
+    // phiếu bác sĩ bị huỷ thì coi như không có → mở được
+    await q(`select huy_phieu($1,'Đổi sang phiếu theo buổi',$2)`, [p2, NV.kho]);
+    expect(await moCa(l2)).toBe("");
+    // (3) phiếu bác sĩ đã nhận
+    const l3 = await taoLich();
+    const p3 = (await one<{ id: string }>(`select tao_phieu_cap($1,$2,$3,$4,$5,$6,'[]'::jsonb,$5) id`, [CN, l3, KH, DV, NV.bacSi, NV.ktv])).id;
+    await q(`select cap_phieu($1,$2)`, [p3, NV.kho]);
+    expect(await moCa(l3)).toMatch(/phiếu cấp vật tư/);
+    await q(`select nhan_phieu($1,$2,null)`, [p3, NV.ktv]);
+    expect(await moCa(l3)).toBe("");
   });
   it("p_cho_am = true: kho không đủ vẫn đóng phiếu, đánh dấu chưa trừ kho, không ghi sổ; mặc định vẫn giữ phiếu mở", async () => {
     const p = await taoPhieu(await taoBuoi(DV, "2026-11-05"));

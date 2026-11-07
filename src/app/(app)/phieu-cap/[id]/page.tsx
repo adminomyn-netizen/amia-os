@@ -45,7 +45,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
 
   return (
     <>
-      <TieuDeNoi tieuDe={p.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><span>{dv?.ten}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
+      <TieuDeNoi tieuDe={p.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai>{p.chua_tru_kho && <NhanTrangThai kieu="loi">Chưa trừ kho</NhanTrangThai>}<span>{dv?.ten}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
         {p.trang_thai === "cho_cap" && !laBuoi && coQuyen(nd, "phieu.cap") && <NutNhanh chinh nhan="Kho cấp vật tư" action={capPhieu} du={{ id }} />}
         {suaBuoi && !p.xac_nhan_luc && (coQuyen(nd, "phieu.nhan") || p.ktv_id === nd.nhanVienId) && <NutNhanh chinh nhan="Xác nhận đã kiểm" action={xacNhanPhieuBuoi} du={{ id }} />}
         {p.trang_thai === "da_cap" && coQuyen(nd, "phieu.nhan") && (

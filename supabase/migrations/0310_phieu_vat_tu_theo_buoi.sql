@@ -13,6 +13,8 @@ alter table public.phieu_cap add column if not exists xac_nhan_boi uuid referenc
 alter table public.phieu_cap add column if not exists xac_nhan_luc timestamptz;
 alter table public.phieu_cap add column if not exists sua_boi uuid references public.nhan_vien (id);  -- người sửa dòng gần nhất (định mức chưa chuẩn: biết ai đổi số)
 alter table public.phieu_cap add column if not exists sua_luc timestamptz;
+-- Chốt ngày với p_cho_am = true mà kho không đủ / hết hạn: phiếu vẫn đóng (da_lam) nhưng KHÔNG có dòng sổ kho; kế toán xử lý sau.
+alter table public.phieu_cap add column if not exists chua_tru_kho boolean not null default false;
 create unique index if not exists phieu_cap_buoi_uq on public.phieu_cap (buoi_id) where buoi_id is not null;
 -- Phiếu bác sĩ chỉ định (không gắn buổi) vẫn BẮT BUỘC có bác sĩ như trước.
 do $$ begin
@@ -128,9 +130,13 @@ end $$;
 --    Mỗi phiếu đã xác nhận: xuất kho y như cap_phieu bản mới nhất (0045: kiểm tồn, kiểm hàng hết hạn qua kiem_kho_xuat, khoá theo vật tư, dòng sổ 'cap_ca' âm), so_tra = 0 (dùng thật = số đã xác nhận),
 --    trạng thái 'da_lam' → hiện ở tab "Đối chiếu ngày" như ca thường, quản lý vẫn bấm "Đã đối chiếu" được.
 --    Mỗi phiếu chạy trong khối riêng: một phiếu thiếu tồn không làm hỏng cả ngày, phiếu đó giữ nguyên và báo lý do.
---    Trả về {da_chot, chua_xac_nhan:[{id,ma}], loi:[{id,ma,loi}]}.
-create or replace function public.chot_phieu_ngay(p_chi_nhanh uuid, p_ngay date, p_nguoi uuid) returns jsonb language plpgsql as $$
+--    p_cho_am = true (mặc định false): phiếu nào không xuất được (thiếu tồn, hàng hết hạn) vẫn đóng 'da_lam' nhưng KHÔNG ghi sổ kho
+--    (không xuất lẻ phần còn đủ), đánh dấu chua_tru_kho = true + ghi lý do vào ghi_chu để kế toán xử lý sau.
+--    Trả về {da_chot, chua_tru_kho:[{id,ma,loi}], chua_xac_nhan:[{id,ma}], loi:[{id,ma,loi}]}.
+drop function if exists public.chot_phieu_ngay(uuid, date, uuid);
+create or replace function public.chot_phieu_ngay(p_chi_nhanh uuid, p_ngay date, p_nguoi uuid, p_cho_am boolean default false) returns jsonb language plpgsql as $$
 declare p record; r record; v_ton numeric; v_dem int := 0; v_loi jsonb := '[]'::jsonb; v_chua jsonb; v_xong timestamptz;
+        v_chua_tru jsonb := '[]'::jsonb; v_ly text;
 begin
   if p_chi_nhanh is null or p_ngay is null then raise exception 'Chọn chi nhánh và ngày cần chốt' using errcode = 'P0001'; end if;
   -- Giờ "làm xong" nằm trong đúng ngày chốt để tab đối chiếu theo ngày không lệch khi chốt sau nửa đêm.
@@ -144,6 +150,8 @@ begin
     begin
       perform 1 from public.phieu_cap where id = p.id and trang_thai = 'cho_cap' and xac_nhan_luc is not null for update;
       if not found then continue; end if;
+      v_ly := null;
+      begin
       for r in select d.*, s.ten from public.phieu_cap_dong d join public.san_pham s on s.id = d.san_pham_id where d.phieu_id = p.id order by d.san_pham_id loop
         perform pg_advisory_xact_lock(hashtext(p_chi_nhanh::text || r.san_pham_id::text));
         v_ton := public.ton_kho(p_chi_nhanh, r.san_pham_id);
@@ -152,10 +160,17 @@ begin
         insert into public.kho_so_cai (chi_nhanh_id, san_pham_id, loai, so_luong, don_gia, phieu_cap_id, nguoi_id, ghi_chu)
         values (p_chi_nhanh, r.san_pham_id, 'cap_ca', -r.so_cap, r.don_gia, p.id, p_nguoi, 'Xuất theo phiếu buổi ' || p.ma || ' (chốt ngày)');
       end loop;
+      exception when others then
+        if not p_cho_am then raise; end if;
+        v_ly := sqlerrm;   -- khối con huỷ mọi dòng sổ kho đã ghi của phiếu này
+      end;
       update public.phieu_cap_dong set so_tra = 0 where phieu_id = p.id;
       update public.phieu_cap set trang_thai = 'da_lam', cap_boi = p_nguoi, cap_luc = now(),
-             nhan_boi = xac_nhan_boi, nhan_luc = xac_nhan_luc, lam_xong_luc = v_xong
+             nhan_boi = xac_nhan_boi, nhan_luc = xac_nhan_luc, lam_xong_luc = v_xong,
+             chua_tru_kho = (v_ly is not null),
+             ghi_chu = case when v_ly is null then ghi_chu else concat_ws(E'\n', ghi_chu, 'Chốt ngày CHƯA trừ kho: ' || v_ly) end
        where id = p.id;
+      if v_ly is not null then v_chua_tru := v_chua_tru || jsonb_build_array(jsonb_build_object('id', p.id, 'ma', p.ma, 'loi', v_ly)); end if;
       v_dem := v_dem + 1;
     exception when others then
       v_loi := v_loi || jsonb_build_array(jsonb_build_object('id', p.id, 'ma', p.ma, 'loi', sqlerrm));
@@ -165,7 +180,7 @@ begin
     from public.phieu_cap pc join public.buoi_thuc_hien b on b.id = pc.buoi_id
    where pc.chi_nhanh_id = p_chi_nhanh and b.ngay_lam = p_ngay and b.trang_thai = 'da_lam'
      and pc.trang_thai = 'cho_cap' and pc.xac_nhan_luc is null;
-  return jsonb_build_object('da_chot', v_dem, 'chua_xac_nhan', v_chua, 'loi', v_loi);
+  return jsonb_build_object('da_chot', v_dem, 'chua_tru_kho', v_chua_tru, 'chua_xac_nhan', v_chua, 'loi', v_loi);
 end $$;
 
 -- 5. Huỷ buổi → huỷ luôn phiếu theo buổi CHƯA chốt (chưa xuất kho nên không phải hoàn kho). Phiếu đã chốt giữ nguyên (vật tư đã xuất, quản lý tự điều chỉnh kho nếu cần).

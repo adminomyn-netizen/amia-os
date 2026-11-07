@@ -152,7 +152,8 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
           {choChot && choChotSo > 0 && (
             <NutHop nhan="Chốt cuối ngày" tieuDe={`Chốt phiếu vật tư ngày ${ngayVN(ngay)}`} nhanLuu="Chốt và xuất kho" an={{ ngay, ...(nd.chiNhanhId ? { chi_nhanh_id: nd.chiNhanhId } : {}) }}
               xacNhan={`Xuất kho ${choChotSo} phiếu đã được chuyên viên trị liệu xác nhận.${chuaXn ? ` ${chuaXn} phiếu chưa xác nhận sẽ KHÔNG được chốt, vẫn để mở.` : ""}`}
-              truong={nd.chiNhanhId ? [] : [{ ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon", batBuoc: true, rong: true, luaChon: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) }]} action={chotPhieuNgay} />
+              truong={[...(nd.chiNhanhId ? [] : [{ ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon" as const, batBuoc: true, rong: true, luaChon: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) }]),
+                { ten: "cho_am", nhan: "Kho không đủ vẫn đóng phiếu (ghi \"chưa trừ kho\" để kế toán xử lý sau, không ghi sổ kho)", loai: "gat" as const, rong: true }]} action={chotPhieuNgay} />
           )}
         </div>
         <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có phiếu vật tư theo buổi nào trong ngày."
@@ -161,7 +162,7 @@ export default async function TrangPhieuCap({ searchParams }: { searchParams: Pr
             { chinh: true, nhan: "Khách", hienThi: (r) => tenK.get(r.khach_id) ?? "" }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" },
             { nhan: "Chuyên viên trị liệu", hienThi: (r) => tenNv.get(r.ktv_id ?? "") ?? "" }, { nhan: "Số vật tư", hienThi: (r) => (dong ?? []).filter((d) => d.phieu_id === r.id).length, phai: true },
             { nhan: "Xác nhận", hienThi: (r) => (r.xac_nhan_luc ? `${tenNv.get(r.xac_nhan_boi ?? "") ?? ""} · ${gioVN(r.xac_nhan_luc)}` : "") },
-            { nhan: "Trạng thái", hienThi: (r) => { const t = nhanPhieuBuoi(r) ?? TT_PHIEU[r.trang_thai]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
+            { nhan: "Trạng thái", hienThi: (r) => { const t = nhanPhieuBuoi(r) ?? TT_PHIEU[r.trang_thai]; return <span className="flex flex-wrap gap-1.5"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>{r.chua_tru_kho && <NhanTrangThai kieu="loi">Chưa trừ kho</NhanTrangThai>}</span>; } },
           ]} />
       </>
     );

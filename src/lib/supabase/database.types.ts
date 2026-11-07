@@ -9137,6 +9137,7 @@ export type Database = {
           cap_boi: string | null
           cap_luc: string | null
           chi_nhanh_id: string
+          chua_tru_kho: boolean
           dem_may_sau: number | null
           dem_may_truoc: number | null
           dich_vu_id: string
@@ -9166,6 +9167,7 @@ export type Database = {
           cap_boi?: string | null
           cap_luc?: string | null
           chi_nhanh_id: string
+          chua_tru_kho?: boolean
           dem_may_sau?: number | null
           dem_may_truoc?: number | null
           dich_vu_id: string
@@ -9195,6 +9197,7 @@ export type Database = {
           cap_boi?: string | null
           cap_luc?: string | null
           chi_nhanh_id?: string
+          chua_tru_kho?: boolean
           dem_may_sau?: number | null
           dem_may_truoc?: number | null
           dich_vu_id?: string
@@ -13443,7 +13446,7 @@ export type Database = {
       them_dong_phieu_buoi: { Args: { p_phieu: string; p_san_pham: string; p_so_luong: number; p_nguoi: string }; Returns: string }
       xoa_dong_phieu_buoi: { Args: { p_dong: string; p_nguoi: string }; Returns: undefined }
       xac_nhan_phieu_buoi: { Args: { p_id: string; p_nguoi: string }; Returns: undefined }
-      chot_phieu_ngay: { Args: { p_chi_nhanh: string; p_ngay: string; p_nguoi: string }; Returns: Json }
+      chot_phieu_ngay: { Args: { p_chi_nhanh: string; p_ngay: string; p_nguoi: string; p_cho_am?: boolean }; Returns: Json }
       tao_phieu_cap: {
         Args: {
           p_bac_si: string

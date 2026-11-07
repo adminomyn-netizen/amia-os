@@ -136,6 +136,46 @@ describe("phiếu vật tư theo buổi", () => {
     const lich2 = (await one<{ id: string }>(`insert into lich_hen (khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id) values ($1,$2, now(), now() + interval '1 hour','cho_phuc_vu',$3) returning id`, [KH, CN, NV.ktv])).id;
     expect(await loi(`select tao_phieu_cap($1,$2,$3,$4,null,$5,$6::jsonb,$5)`, [CN, lich2, KH, DV, NV.ktv, JSON.stringify([{ san_pham_id: SP_TIP, so_luong: 100 }])])).toMatch(/phieu_cap_bac_si_hoac_buoi/);
   });
+  it("ghi buổi (thuc_hien_buoi) dịch vụ có vật tư nhóm A KHÔNG bị chặn: không có phiếu bác sĩ, hoặc có phiếu bác sĩ chưa nhận", async () => {
+    const goi = (await one<{ id: string }>(`insert into goi_the (ma, ten, loai, gia, so_buoi) values ('BUOI-LT','Liệu trình thử','lan',1000000,10) returning id`)).id;
+    await q(`insert into goi_the_dich_vu (goi_id, dich_vu_id) values ($1,$2)`, [goi, DV]);
+    const the = (await one<{ id: string }>(`insert into the_khach (ma, khach_id, goi_id, chi_nhanh_id, loai, so_buoi_tong, gia_tri_buoi) values ('T-BUOI',$1,$2,$3,'lan',10,100000) returning id`, [KH, goi, CN])).id;
+    await q(`insert into the_so_cai (the_id, loai, so_buoi) values ($1,'cap',10)`, [the]);
+    // 1) không lịch, không phiếu bác sĩ → ghi buổi được, phiếu theo buổi ra sau
+    const b1 = (await one<{ id: string }>(`select thuc_hien_buoi($1,$2,$3,null,null,$4::date,'{}'::jsonb,null,$5) id`, [the, DV, NV.ktv, NGAY, NV.thuNgan])).id;
+    const p1 = await taoPhieu(b1);
+    expect(await one(`select buoi_id, trang_thai from phieu_cap where id=$1`, [p1])).toMatchObject({ buoi_id: b1, trang_thai: "cho_cap" });
+    // 2) lịch có phiếu bác sĩ ĐANG chờ cấp (chưa nhận) → ghi buổi vẫn được; không ra phiếu thứ hai mà trả phiếu bác sĩ
+    const lich = (await one<{ id: string }>(`insert into lich_hen (khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id) values ($1,$2, now(), now() + interval '1 hour','cho_phuc_vu',$3) returning id`, [KH, CN, NV.ktv])).id;
+    await q(`insert into lich_hen_dich_vu (lich_id, dich_vu_id) values ($1,$2)`, [lich, DV]);
+    const pBs = (await one<{ id: string }>(`select tao_phieu_cap($1,$2,$3,$4,$5,$6,'[]'::jsonb,$5) id`, [CN, lich, KH, DV, NV.bacSi, NV.ktv])).id;
+    const b2 = (await one<{ id: string }>(`select thuc_hien_buoi($1,$2,$3,null,$4,$5::date,'{}'::jsonb,null,$6) id`, [the, DV, NV.ktv, lich, NGAY, NV.thuNgan])).id;
+    expect(await taoPhieu(b2)).toBe(pBs);
+    expect(await tt(pBs)).toBe("cho_cap");
+    // chốt chặn cũ vẫn còn ở bước MỞ CA của lịch (lich_hen_khoa_ca), không ở bước ghi buổi
+    const lich2 = (await one<{ id: string }>(`insert into lich_hen (khach_id, chi_nhanh_id, bat_dau, ket_thuc, trang_thai, nhan_vien_id) values ($1,$2, now(), now() + interval '1 hour','cho_phuc_vu',$3) returning id`, [KH, CN, NV.ktv])).id;
+    await q(`insert into lich_hen_dich_vu (lich_id, dich_vu_id) values ($1,$2)`, [lich2, DV]);
+    expect(await loi(`update lich_hen set trang_thai='dang_phuc_vu' where id=$1`, [lich2])).toMatch(/phiếu cấp vật tư/);
+  });
+  it("p_cho_am = true: kho không đủ vẫn đóng phiếu, đánh dấu chưa trừ kho, không ghi sổ; mặc định vẫn giữ phiếu mở", async () => {
+    const p = await taoPhieu(await taoBuoi(DV, "2026-11-05"));
+    const kem = (await one<{ id: string }>(`select id from phieu_cap_dong where phieu_id=$1 and san_pham_id=$2`, [p, SP_KEM])).id;
+    await q(`select sua_dong_phieu_buoi($1,99999,$2)`, [kem, NV.ktv]);
+    await q(`select xac_nhan_phieu_buoi($1,$2)`, [p, NV.ktv]);
+    const truocKem = await ton(SP_KEM), truocTip = await ton(SP_TIP);
+    let kq = await one<{ k: { da_chot: number; loi: { id: string }[] } }>(`select chot_phieu_ngay($1,'2026-11-05'::date,$2) k`, [CN, NV.kho]);
+    expect(kq.k.loi.map((x) => x.id)).toContain(p);
+    expect(await tt(p)).toBe("cho_cap");
+    const kq2 = await one<{ k: { da_chot: number; chua_tru_kho: { id: string; loi: string }[] } }>(`select chot_phieu_ngay($1,'2026-11-05'::date,$2,true) k`, [CN, NV.kho]);
+    expect(kq2.k.da_chot).toBe(1);
+    expect(kq2.k.chua_tru_kho.find((x) => x.id === p)?.loi).toMatch(/Kho không đủ/);
+    expect(await one(`select trang_thai, chua_tru_kho from phieu_cap where id=$1`, [p])).toMatchObject({ trang_thai: "da_lam", chua_tru_kho: true });
+    expect(await ton(SP_KEM)).toBe(truocKem);
+    expect(await ton(SP_TIP)).toBe(truocTip); // dòng còn đủ tồn cũng không bị xuất lẻ
+    expect((await one<{ n: number }>(`select count(*)::int n from kho_so_cai where phieu_cap_id=$1`, [p])).n).toBe(0);
+    kq = await one(`select chot_phieu_ngay($1,'2026-11-05'::date,$2) k`, [CN, NV.kho]);
+    expect(kq.k.da_chot).toBe(0);
+  });
   it("chạy lại migration 0310 lần nữa không lỗi (idempotent)", async () => {
     await db.exec(readFileSync(join(process.cwd(), "supabase", "migrations", "0310_phieu_vat_tu_theo_buoi.sql"), "utf8"));
     expect((await one<{ n: number }>(`select count(*)::int n from pg_trigger where tgname in ('phieu_buoi_trang_thai','buoi_huy_phieu')`)).n).toBe(2);

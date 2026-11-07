@@ -6,7 +6,7 @@ import { guiChoNhanVien, nguoiCoQuyen } from "@/lib/push";
 import { kiemQuyen, KHONG_DU_QUYEN, type NguoiDung } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
-import { chuoi, so } from "@/lib/form";
+import { bat, chuoi, so } from "@/lib/form";
 
 type KQ = { ok?: true; loi?: string; id?: string; canhBao?: string };
 const lamMoi = (id?: string) => { revalidatePath("/phieu-cap"); if (id) revalidatePath(`/phieu-cap/${id}`); revalidatePath("/lich-hen"); };
@@ -167,13 +167,14 @@ export async function chotPhieuNgay(fd: FormData): Promise<KQ> {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay)) return { loi: "Ngày chốt không hợp lệ." };
   const cn = nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id");
   if (!cn) return { loi: "Chọn chi nhánh cần chốt." };
-  const { data, error } = await sb().rpc("chot_phieu_ngay", { p_chi_nhanh: cn, p_ngay: ngay, p_nguoi: nd.nhanVienId });
+  const { data, error } = await sb().rpc("chot_phieu_ngay", { p_chi_nhanh: cn, p_ngay: ngay, p_nguoi: nd.nhanVienId, p_cho_am: bat(fd, "cho_am") });
   lamMoi();
   if (error) return { loi: thongBaoLoi(error) };
-  const kq = (data ?? {}) as { da_chot?: number; chua_xac_nhan?: { ma: string }[]; loi?: { ma: string; loi: string }[] };
-  const chua = kq.chua_xac_nhan ?? [], hong = kq.loi ?? [];
-  if (!chua.length && !hong.length) return { ok: true, canhBao: `Đã chốt ${kq.da_chot ?? 0} phiếu, vật tư đã xuất kho.` };
+  const kq = (data ?? {}) as { da_chot?: number; chua_tru_kho?: { ma: string; loi: string }[]; chua_xac_nhan?: { ma: string }[]; loi?: { ma: string; loi: string }[] };
+  const chua = kq.chua_xac_nhan ?? [], hong = kq.loi ?? [], chuaTru = kq.chua_tru_kho ?? [];
+  if (!chua.length && !hong.length && !chuaTru.length) return { ok: true, canhBao: `Đã chốt ${kq.da_chot ?? 0} phiếu, vật tư đã xuất kho.` };
   const phan = [`Đã chốt ${kq.da_chot ?? 0} phiếu.`];
+  if (chuaTru.length) phan.push(`${chuaTru.length} phiếu đã đóng nhưng CHƯA trừ kho (kế toán xử lý sau): ${chuaTru.map((x) => `${x.ma} (${x.loi})`).join("; ")}.`);
   if (chua.length) phan.push(`${chua.length} phiếu CHƯA được chuyên viên trị liệu xác nhận, còn mở: ${chua.map((x) => x.ma).join(", ")}.`);
   if (hong.length) phan.push(`${hong.length} phiếu chưa chốt được: ${hong.map((x) => `${x.ma} (${x.loi})`).join("; ")}.`);
   return { ok: true, canhBao: phan.join(" ") };

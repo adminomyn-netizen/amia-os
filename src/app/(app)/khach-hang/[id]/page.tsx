@@ -41,13 +41,13 @@ const NHAN_TT_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "the", ten: "Thẻ dịch vụ" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 /** Mỗi trang lịch sử điểm thưởng. */
 const DIEM_MOI_TRANG = 50;
 const LOAI_DIEM: Record<string, string> = { cong_hoa_don: "Cộng theo hoá đơn", hoan_hoa_don: "Trừ do huỷ/hoàn hoá đơn", sua_tay: "Sửa tay", dieu_chinh_dau: "Điều chỉnh đầu kỳ", dieu_chinh: "Điều chỉnh", doi_diem: "Đổi điểm" };
 
-export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; trang?: string; loai_diem?: string } & ThamSoLichSu> }) {
+export default async function HoSoKhach({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ tab?: string; trang?: string; loai_diem?: string; loc?: string } & ThamSoLichSu> }) {
   const nd = await yeuCauQuyen("khach.xem");
   const { id } = await params;
   const sp = await searchParams;
@@ -155,6 +155,46 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
             { nhan: "Tình trạng", hienThi: (r) => <NhanTrangThai kieu={r.tinh_trang === "hoat_dong" ? "tot" : r.tinh_trang === "sap_het" ? "cho" : "tram"}>{({ hoat_dong: "Đang dùng", sap_het: "Sắp hết", het_han: "Hết hạn", hoan_thanh: "Đã dùng hết", khoa: "Đang khoá", thu_hoi: "Đã thu hồi" } as Record<string, string>)[r.tinh_trang ?? ""]}</NhanTrangThai> },
           ]} />
+      </>
+    );
+  } else if (tab === "the") {
+    // Như tab "Thẻ dịch vụ" của SalonHero: lọc theo tình trạng, đếm số thẻ, mỗi thẻ hiện mã, tên gói, hạn và "Sử dụng đã dùng / tổng".
+    const LOC_THE = [["tat-ca", "Tất cả"], ["hoat_dong", "Sử dụng"], ["khoa", "Đã khoá"], ["thu_hoi", "Thu hồi"], ["het_han", "Hết hạn"], ["hoan_thanh", "Hoàn thành"]] as const;
+    const NHAN_TT: Record<string, string> = { hoat_dong: "Sử dụng", sap_het: "Sắp hết", het_han: "Hết hạn", hoan_thanh: "Hoàn thành", khoa: "Đã khoá", thu_hoi: "Thu hồi" };
+    const loc = LOC_THE.some(([m]) => m === sp.loc) ? sp.loc! : "tat-ca";
+    const dsThe = the ?? [];
+    const khopLoc = (tt: string | null, l: string) => l === "tat-ca" || tt === l || (l === "hoat_dong" && tt === "sap_het");
+    const idsGoi = [...new Set(dsThe.map((x) => x.goi_id).filter(Boolean))] as string[];
+    const { data: goiTen } = idsGoi.length ? await db.from("goi_the").select("id, ten").in("id", idsGoi) : { data: [] };
+    const tenGoi = new Map((goiTen ?? []).map((g) => [g.id as string, g.ten as string]));
+    const hien = dsThe.filter((x) => khopLoc(x.tinh_trang, loc));
+    noiDung = (
+      <>
+        <div className="mb-3 flex flex-wrap gap-2" aria-label="Lọc thẻ theo tình trạng">
+          {LOC_THE.map(([m, ten]) => {
+            const n = dsThe.filter((x) => khopLoc(x.tinh_trang, m)).length;
+            return <Link key={m} href={`/khach-hang/${id}?tab=the&loc=${m}`} scroll={false} aria-current={loc === m ? "true" : undefined}
+              className={`rounded-tag border px-3 py-1 text-[13px] ${loc === m ? "border-nhan bg-nhan-nhat font-medium text-nhan-dam" : "border-vien text-muc-2 hover:bg-giay-tram"}`}>{ten} <span className="tabular-nums text-muc-3">{n}</span></Link>;
+          })}
+        </div>
+        <p className="mb-2 text-[13px] text-muc-3">Tổng số thẻ: <span className="font-medium tabular-nums text-muc">{hien.length}</span></p>
+        {hien.length === 0 ? <p className="py-10 text-center text-[14px] text-muc-3">Không có thẻ nào.</p> : (
+          <ul className="divide-y divide-vien rounded-nho border border-vien">
+            {hien.map((x) => {
+              const tong = x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), con = Number(x.so_buoi_con ?? 0);
+              return (
+                <li key={x.id}><Link href={`/the/${x.id}`} className="flex items-start justify-between gap-3 px-3 py-2.5 hover:bg-giay-tram">
+                  <span className="min-w-0"><span className="font-medium text-nhan-dam">{x.ma}</span> <span className="text-muc">{tenGoi.get(x.goi_id ?? "") ?? (x.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình")}</span>
+                    <span className="block text-[12px] text-muc-3">{x.han_dung ? `Ngày hết hạn ${ngayVN(x.han_dung)}` : "Không hết hạn"}</span></span>
+                  <span className="flex shrink-0 flex-col items-end gap-1">
+                    <span className="text-[13px] font-medium tabular-nums text-muc">{x.loai === "lan" ? (tong == null ? `Còn ${con} buổi` : `${Math.max(tong - con, 0)}/${tong}`) : tienVN(x.so_du_tien)}</span>
+                    <NhanTrangThai kieu={x.tinh_trang === "hoat_dong" ? "tot" : x.tinh_trang === "sap_het" ? "cho" : "tram"}>{NHAN_TT[x.tinh_trang ?? ""] ?? x.tinh_trang}</NhanTrangThai>
+                  </span>
+                </Link></li>
+              );
+            })}
+          </ul>
+        )}
       </>
     );
   } else if (tab === "ghi-chu") {

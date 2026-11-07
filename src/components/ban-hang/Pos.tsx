@@ -260,7 +260,10 @@ function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu,
 }
 
 /** Hai danh sách thẻ như SalonHero: "Thẻ khách đang có" (liệu trình còn buổi, thẻ tiền còn số dư) và "Thẻ bán cho khách hàng" (thẻ đang nằm trong đơn này). */
-function TheCuaKhach({ the, theBan, nut }: { the: TheKh[] | null; theBan: { ten: string; sl: number }[]; nut?: (t: TheKh) => React.ReactNode }) {
+function TheCuaKhach({ the: dsThe, theBan, nut, dvDon }: { the: TheKh[] | null; theBan: { ten: string; sl: number }[]; nut?: (t: TheKh) => React.ReactNode; dvDon?: Map<string, string> }) {
+  // Dịch vụ đang có trong đơn mà thẻ liệu trình của khách trừ được: đưa thẻ đó lên đầu và ghi rõ (trừ buổi thay vì thu tiền).
+  const dungDuoc = (t: TheKh) => (t.loai === "lan" && dvDon ? t.dichVu.filter((d) => dvDon.has(d)).map((d) => dvDon.get(d)!) : []);
+  const the = dsThe && [...dsThe].sort((a, b) => Number(dungDuoc(b).length > 0) - Number(dungDuoc(a).length > 0));
   if (the === null && theBan.length === 0) return null;
   const han = (d: string) => new Date(d).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
   return (
@@ -270,7 +273,8 @@ function TheCuaKhach({ the, theBan, nut }: { the: TheKh[] | null; theBan: { ten:
         {the === null ? <p className="text-muc-3">Đang tải</p> : the.length === 0 ? <p className="text-muc-3">Khách chưa có thẻ nào còn dùng được.</p> : (
           <ul className="space-y-1.5">
             {the.map((t) => (
-              <li key={t.id} className="flex items-start justify-between gap-3"><span className="min-w-0 text-muc-2">{t.ten} <span className="text-muc-3">{t.ma}</span>{t.han && <span className="block text-[12px] text-muc-3">Hạn {han(t.han)}</span>}</span>
+              <li key={t.id} className="flex items-start justify-between gap-3"><span className="min-w-0 text-muc-2">{t.ten} <span className="text-muc-3">{t.ma}</span>{t.han && <span className="block text-[12px] text-muc-3">Hạn {han(t.han)}</span>}
+                {dungDuoc(t).length > 0 && <span className="mt-0.5 block rounded-tag bg-sac-xanh-nen px-2 py-0.5 text-[12px] font-medium text-sac-xanh">Trừ buổi được cho: {dungDuoc(t).join(", ")}</span>}</span>
                 <span className="flex shrink-0 flex-col items-end gap-0.5"><span className="font-medium tabular-nums text-muc">{t.loai === "lan" ? `${t.buoiCon}${t.buoiTong ? `/${t.buoiTong}` : ""} buổi` : tienVN(t.soDu)}</span>{nut?.(t)}</span></li>
             ))}
           </ul>
@@ -360,6 +364,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   const dvMuc = useMemo(() => muc.filter((m) => m.loai === "dich_vu").map((m) => ({ gia_tri: m.id, nhan: m.ten })), [muc]);
   const nvLC = useMemo(() => luaChonNhanVien(nhanVien.map((n) => ({ id: n.id, ho_ten: n.ten, vai_tro: n.vaiTro }))), [nhanVien]);
   const bacSiLC = useMemo(() => [{ gia_tri: "", nhan: "Không có" }, ...nhanVien.filter((n) => n.vaiTro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ten }))], [nhanVien]);
+  const dvDon = useMemo(() => new Map(dong.filter((d) => d.loai === "dich_vu").map((d) => [d.ref, tuMuc.get(khoaDong(d))?.ten ?? ""])), [dong, tuMuc]);
   const nutThe = (t: TheKh) => {
     if (t.loai === "lan") {
       if (!buoi || t.buoiCon <= 0) return null;
@@ -479,7 +484,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
         {sua && <p role="status" className="mt-2 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Đang sửa hoá đơn <b>{sua.ma}</b> (đã mở lại về nháp). Chốt đơn sẽ ghi lại vào chính hoá đơn này, giữ mã và ngày {ngayVN(sua.ngayHd)}.</p>}
         <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />
-        {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} nut={nutThe} />}
+        {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} nut={nutThe} dvDon={dvDon} />}
         {diemKhach && (
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>
             {diemKhach.bat ? ` · 1 điểm = ${tienVN(diemKhach.tienMoiDiem)}` : " · đổi điểm đang tắt"}</p>

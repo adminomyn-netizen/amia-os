@@ -43,7 +43,8 @@ async function ghiHenKeTiep(nd: NguoiDung, theId: string, buoiId: string | null,
 }
 
 export async function thucHienBuoi(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("the.thuchien");
+  // Thu ngân (ban.tao) trừ buổi ngay ở màn Bán hàng như SalonHero (dùng thẻ khi lên đơn).
+  const nd = (await kiemQuyen("the.thuchien")) ?? (await kiemQuyen("ban.tao"));
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const theId = chuoi(fd, "the_id");
   const thamSo: Record<string, number | string> = {};

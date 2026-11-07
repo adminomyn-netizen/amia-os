@@ -28,7 +28,7 @@ import { luuPhieuTuVan } from "../tu-van/actions";
 import { luuDanhGiaSauDieuTri } from "../../hoa-don/sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
 import { nhanHang, nhanTrangThaiGoi } from "@/lib/cham-soc-hang-doi";
-import { danhDauMat, luuGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
+import { danhDauMat, luuGhiChu, suaGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 import { moTaLapNhac } from "@/lib/nhac-cham-soc";
 import { dichVuChoNhac } from "@/lib/nhac-cham-soc-may-chu";
@@ -166,12 +166,14 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     noiDung = (
       <>
         <h3 className="mb-3 text-[14px] font-medium text-muc">Ghi chú điều trị</h3>
-        {coQuyen(nd, "hoso.sua") && <div className="mb-5"><NutHop nhan="Thêm ghi chú" tieuDe="Thêm ghi chú điều trị" moTa="Ghi chú chỉ thêm, không sửa hay xoá để giữ lịch sử hồ sơ." rong truong={tr} an={{ khach_id: id }} action={luuGhiChu} /></div>}
+        {coQuyen(nd, "hoso.sua") && <div className="mb-5"><NutHop nhan="Thêm ghi chú" tieuDe="Thêm ghi chú điều trị" moTa="Ghi chú điều trị, chăm sóc của khách. Ghi sai thì bấm Sửa ở ghi chú đó." rong truong={tr} an={{ khach_id: id }} action={luuGhiChu} /></div>}
         {(gc ?? []).length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ghi chú điều trị.</p>}
         <ol className="space-y-5">
           {(gc ?? []).map((g) => (
             <li key={g.id} className="border-l-2 border-dat pl-4">
-              <div className="text-[12px] text-muc-3">{ngayGioVN(g.tao_luc)} · {tenNv.get(g.tao_boi ?? "") ?? "—"}</div>
+              <div className="flex flex-wrap items-center gap-x-3 text-[12px] text-muc-3"><span>{ngayGioVN(g.tao_luc)} · {tenNv.get(g.tao_boi ?? "") ?? (g.sh_id ? "SalonHero" : "—")}{g.nhap_dot === "APP-SUA" ? " · đã sửa" : ""}</span>
+                {coQuyen(nd, "hoso.sua") && <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa ghi chú" rong truong={tr} an={{ id: g.id, khach_id: id }}
+                  giaTri={{ tinh_trang: g.tinh_trang ?? "", yeu_cau: g.yeu_cau ?? "", phuong_an: g.phuong_an ?? "", ket_qua: g.ket_qua ?? "" }} action={suaGhiChu} />}</div>
               <dl className="mt-1.5 grid gap-x-6 gap-y-2 sm:grid-cols-2 text-[14px]">
                 {([["Tình trạng", g.tinh_trang], ["Yêu cầu", g.yeu_cau], ["Phương án", g.phuong_an], ["Kết quả", g.ket_qua]] as const).map(([a, b]) => b && (<div key={a}><dt className="nhan-muc">{a}</dt><dd className="mt-0.5 whitespace-pre-line text-muc">{b}</dd></div>))}
               </dl>

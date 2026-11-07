@@ -152,6 +152,23 @@ export async function luuGhiChu(fd: FormData): Promise<KQ> {
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
 }
 
+/** Sửa một ghi chú (kể cả ghi chú lấy từ SalonHero). Ghi chú SalonHero đã sửa trong app đổi nhap_dot thành APP-SUA để đồng bộ hằng đêm không ghi đè. */
+export async function suaGhiChu(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("hoso.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), khachId = chuoi(fd, "khach_id");
+  const moi = { tinh_trang: chuoiHoacNull(fd, "tinh_trang"), yeu_cau: chuoiHoacNull(fd, "yeu_cau"), phuong_an: chuoiHoacNull(fd, "phuong_an"), ket_qua: chuoiHoacNull(fd, "ket_qua") };
+  if (!moi.tinh_trang && !moi.yeu_cau && !moi.phuong_an && !moi.ket_qua) return { loi: "Ghi chú không được để trống cả bốn mục." };
+  const db = sb();
+  const { data: cu } = await db.from("khach_ghi_chu").select("id, nhap_dot").eq("id", id).eq("khach_id", khachId).maybeSingle();
+  if (!cu) return { loi: "Không tìm thấy ghi chú." };
+  const { error } = await db.from("khach_ghi_chu").update({ ...moi, ...(String(cu.nhap_dot ?? "").startsWith("SH-") ? { nhap_dot: "APP-SUA" } : {}) }).eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_ghi_chu", doi_tuong: "khach_ghi_chu", doi_tuong_id: id });
+  revalidatePath(`/khach-hang/${khachId}`);
+  return { ok: true };
+}
+
 export async function luuNguoiThan(fd: FormData): Promise<KQ> {
   if (!(await kiemQuyen("khach.sua"))) return { loi: KHONG_DU_QUYEN };
   const row = { khach_id: chuoi(fd, "khach_id"), ho_ten: chuoi(fd, "ho_ten"), quan_he: chuoiHoacNull(fd, "quan_he"), dien_thoai: chuoiHoacNull(fd, "dien_thoai") };

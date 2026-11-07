@@ -25,7 +25,9 @@ export const MENU: MucMenu[] = [
 ];
 
 const duQuyen = (nd: CoQuyen, q: Quyen | Quyen[] | null) => q === null || (Array.isArray(q) ? q.some((x) => coQuyen(nd, x)) : coQuyen(nd, q));
-export const locMenu = (nd: CoQuyen) => MENU.filter((m) => duQuyen(nd, m.quyen));
+/** Tạm ẩn khỏi menu vì đã chuyển sang MSC Group OS (chị Lâm 7/11/2026). Trang vẫn mở được bằng link; cần lại thì xoá dòng khỏi đây. */
+const TAM_AN = new Set(["/noi-lam-viec", "/quy-trinh", "/marketing"]);
+export const locMenu = (nd: CoQuyen) => MENU.filter((m) => !TAM_AN.has(m.duong_dan) && duQuyen(nd, m.quyen));
 /** Trang đầu tiên người này vào được (không vòng lặp chuyển trang); không có mục nào thì về Tài khoản. */
 export const trangDau = (nd: CoQuyen, khongDuQuyen = false) => {
   const d = locMenu(nd)[0]?.duong_dan ?? "/tai-khoan";

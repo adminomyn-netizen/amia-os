@@ -106,6 +106,8 @@ const qT = async (s, p) => (await dbTruoc.query(s, p)).rows;
 if (!D) {
   const gio = new Date(Date.now() + 7 * 3600e3).toISOString();
   D = `${SAO_LUU}/dong-bo-${gio.slice(0, 10).replace(/-/g, "")}-${gio.slice(11, 16).replace(":", "")}`;
+  // chạy thử rồi ghi thật trong cùng một phút: không được xuất chồng vào thư mục cũ (ndjson ghi nối → nguồn nhân đôi)
+  if (existsSync(D)) { let i = 2; while (existsSync(`${D}-${i}`)) i++; D = `${D}-${i}`; }
   mkdirSync(D, { recursive: true });
   writeFileSync(`${D}/_meta.json`, JSON.stringify({ bat_dau_xuat: batDauXuat, moc: mocIso, tu: tuNgay, den: denNgay }));
   console.log(`XUẤT từ SalonHero: mốc ${mocIso} (VN ${tuNgay}) · hoá đơn ${tuDon} → <${denExcl} · lịch ${thangLich.length} tháng · thư mục ${D}`);

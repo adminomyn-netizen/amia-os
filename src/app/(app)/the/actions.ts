@@ -12,7 +12,7 @@ import { tinhHanThe } from "@/lib/danh-muc";
 
 type KQ = { ok?: true; loi?: string; canhBao?: string };
 /** Kết quả trừ buổi: kèm phiếu vật tư vừa tạo cho buổi (nếu có) để giao diện hiện "Mở phiếu vật tư". */
-export type KQBuoi = KQ & { phieuId?: string; phieuMa?: string; xemPhieu?: boolean };
+export type KQBuoi = KQ & { phieuId?: string; phieuMa?: string; xemPhieu?: boolean; /** Lịch đã có phiếu bác sĩ chỉ định nên không ra phiếu theo buổi. */ phieuBacSi?: boolean };
 const lamMoi = (id?: string) => { revalidatePath("/the"); if (id) revalidatePath(`/the/${id}`); };
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -70,13 +70,13 @@ export async function thucHienBuoi(fd: FormData): Promise<KQBuoi> {
     if (r.loi) canhBao.push(`CHƯA lưu được hẹn buổi kế tiếp (${r.loi}). Đừng làm lại buổi; vào hồ sơ thẻ bấm "Hẹn buổi kế tiếp" để ghi.`);
   }
   // Phiếu vật tư của buổi (đủ dòng định mức của dịch vụ); chuyên viên trị liệu kiểm, xác nhận, cuối ngày chốt mới xuất kho.
-  let phieu: { phieuId: string; phieuMa: string } | null = null;
+  let phieu: { phieuId: string; phieuMa: string; phieuBacSi: boolean } | null = null;
   if (buoi) {
     const { data: pid, error: e2 } = await sb().rpc("tao_phieu_theo_buoi", { p_buoi: buoi, p_nguoi: nd.nhanVienId });
     if (e2 || typeof pid !== "string") canhBao.push(`CHƯA tạo được phiếu vật tư cho buổi này (${thongBaoLoi(e2) || "không rõ lỗi"}). Đừng làm lại buổi; báo kho / quản lý ra phiếu.`);
     else {
-      const { data: pc } = await sb().from("phieu_cap").select("ma").eq("id", pid).maybeSingle();
-      phieu = { phieuId: pid, phieuMa: pc?.ma ?? "" };
+      const { data: pc } = await sb().from("phieu_cap").select("ma, buoi_id").eq("id", pid).maybeSingle();
+      phieu = { phieuId: pid, phieuMa: pc?.ma ?? "", phieuBacSi: !!pc && pc.buoi_id !== buoi };
       revalidatePath("/phieu-cap");
     }
   }

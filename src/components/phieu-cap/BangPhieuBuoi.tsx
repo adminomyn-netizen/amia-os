@@ -14,7 +14,8 @@ export type DongPhieuBuoi = { id: string; san_pham_id: string; ten: string; don_
 function DongSua({ phieuId, d, sua, xoa }: { phieuId: string; d: DongPhieuBuoi; sua: (fd: FormData) => Promise<KQ>; xoa: (fd: FormData) => Promise<KQ> }) {
   const router = useRouter();
   const [dang, bat] = useTransition();
-  const [sl, setSl] = useState(String(d.so_cap));
+  // Số kiểu Việt: dấu phẩy là thập phân (so() ở máy chủ bỏ dấu chấm vì coi là phân cách hàng nghìn).
+  const [sl, setSl] = useState(String(d.so_cap).replace(".", ","));
   const [loi, setLoi] = useState("");
   const doi = Number(sl.replace(",", ".")) !== d.so_cap;
   const chay = (action: (fd: FormData) => Promise<KQ>, them: Record<string, string>) => {
@@ -36,10 +37,10 @@ function DongSua({ phieuId, d, sua, xoa }: { phieuId: string; d: DongPhieuBuoi; 
         </div>
         <div className="flex items-center gap-2">
           <label className="sr-only" htmlFor={`sl-${d.id}`}>Số lượng {d.ten}</label>
-          <input id={`sl-${d.id}`} inputMode="decimal" {...CHON_HET} value={sl} onChange={(e) => setSl(e.target.value.replace(/[^\d.,]/g, ""))}
+          <input id={`sl-${d.id}`} inputMode="decimal" {...CHON_HET} value={sl} onChange={(e) => setSl(e.target.value.replace(/\./g, ",").replace(/[^\d,]/g, ""))}
             className="h-10 w-24 rounded-nho border border-vien-dam bg-giay-sang px-2 text-right tabular-nums outline-none focus:border-nhan" />
           <span className="w-12 text-[13px] text-muc-3">{d.don_vi}</span>
-          <button type="button" className={NUT_CHU} disabled={dang || !doi} onClick={() => chay(sua, { so_luong: sl.replace(",", ".") })}>{dang ? "Đang lưu" : "Lưu"}</button>
+          <button type="button" className={NUT_CHU} disabled={dang || !doi} onClick={() => chay(sua, { so_luong: sl })}>{dang ? "Đang lưu" : "Lưu"}</button>
           <button type="button" className={NUT_CHU_NGUY} disabled={dang} onClick={() => { if (window.confirm(`Bỏ "${d.ten}" khỏi phiếu?`)) chay(xoa, {}); }}>Bỏ</button>
         </div>
       </div>

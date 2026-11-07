@@ -6,14 +6,14 @@ import { NutHop } from "@/components/ui/BieuMau";
 import type { LuaChon } from "@/components/ui/Chon";
 import { homNayHCM } from "@/lib/dinh-dang";
 
-export type KetQuaBuoi = { ok?: boolean; loi?: string; canhBao?: string; phieuId?: string; phieuMa?: string; xemPhieu?: boolean };
+export type KetQuaBuoi = { ok?: boolean; loi?: string; canhBao?: string; phieuId?: string; phieuMa?: string; xemPhieu?: boolean; phieuBacSi?: boolean };
 
 /** Dòng báo phiếu vật tư vừa tạo cho buổi: có quyền xem phiếu thì là link "Mở phiếu vật tư", không thì chỉ báo mã phiếu. */
 export function BaoPhieuBuoi({ phieu }: { phieu: KetQuaBuoi | null }) {
   if (!phieu?.phieuId) return null;
   return (
     <span className="text-[12.5px] text-muc-3">
-      Phiếu vật tư {phieu.phieuMa} chờ chuyên viên trị liệu kiểm
+      {phieu.phieuBacSi ? `Ca này đã có phiếu bác sĩ chỉ định ${phieu.phieuMa}` : `Phiếu vật tư ${phieu.phieuMa} chờ chuyên viên trị liệu kiểm`}
       {phieu.xemPhieu && <> · <Link href={`/phieu-cap/${phieu.phieuId}`} target="_blank" className="font-medium text-nhan-dam hover:underline">Mở phiếu vật tư</Link></>}
     </span>
   );

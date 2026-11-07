@@ -125,7 +125,7 @@ begin
 end $$;
 
 -- 4. Chốt cuối ngày theo chi nhánh + NGÀY LÀM của buổi (buổi có thể ghi lùi ngày).
---    Mỗi phiếu đã xác nhận: xuất kho y như cap_phieu (kiểm tồn, khoá theo vật tư, dòng sổ 'cap_ca' âm), so_tra = 0 (dùng thật = số đã xác nhận),
+--    Mỗi phiếu đã xác nhận: xuất kho y như cap_phieu bản mới nhất (0045: kiểm tồn, kiểm hàng hết hạn qua kiem_kho_xuat, khoá theo vật tư, dòng sổ 'cap_ca' âm), so_tra = 0 (dùng thật = số đã xác nhận),
 --    trạng thái 'da_lam' → hiện ở tab "Đối chiếu ngày" như ca thường, quản lý vẫn bấm "Đã đối chiếu" được.
 --    Mỗi phiếu chạy trong khối riêng: một phiếu thiếu tồn không làm hỏng cả ngày, phiếu đó giữ nguyên và báo lý do.
 --    Trả về {da_chot, chua_xac_nhan:[{id,ma}], loi:[{id,ma,loi}]}.
@@ -148,6 +148,7 @@ begin
         perform pg_advisory_xact_lock(hashtext(p_chi_nhanh::text || r.san_pham_id::text));
         v_ton := public.ton_kho(p_chi_nhanh, r.san_pham_id);
         if v_ton < r.so_cap then raise exception 'Kho không đủ "%": còn %, cần xuất %', r.ten, trim_scale(v_ton), trim_scale(r.so_cap) using errcode = 'P0001'; end if;
+        perform public.kiem_kho_xuat(p_chi_nhanh, r.san_pham_id, r.so_cap, r.ten, false);
         insert into public.kho_so_cai (chi_nhanh_id, san_pham_id, loai, so_luong, don_gia, phieu_cap_id, nguoi_id, ghi_chu)
         values (p_chi_nhanh, r.san_pham_id, 'cap_ca', -r.so_cap, r.don_gia, p.id, p_nguoi, 'Xuất theo phiếu buổi ' || p.ma || ' (chốt ngày)');
       end loop;

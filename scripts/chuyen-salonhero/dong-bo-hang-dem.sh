@@ -6,6 +6,7 @@
 set -u
 # chạy từ BẢN SAO: bước git reset bên dưới thay chính tệp này, bash đang đọc dở sẽ hỏng (6/11/2026 lượt kéo bù dừng câm)
 if [ -z "${DB_BAN_SAO:-}" ]; then BS="${TMPDIR:-/tmp}/dong-bo-hang-dem.$$.sh"; cp "$0" "$BS"; DB_BAN_SAO=1 exec /bin/bash "$BS" "$@"; fi
+export LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8  # launchd không có locale → cut cắt vỡ chữ có dấu trong báo cáo
 export PATH="/Users/phamtunglam/.local/bin:/usr/local/bin:/opt/homebrew/bin:/usr/bin:/bin"
 cd /Users/phamtunglam/project___1140/amia-os/.claude/worktrees/tula-dongbo || exit 1
 git fetch -q origin && git reset -q --hard origin/main

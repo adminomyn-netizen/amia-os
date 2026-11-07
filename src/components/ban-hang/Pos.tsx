@@ -555,7 +555,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         </div>
       </section>
 
-      <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start">
+      <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:rounded-hop">
         <div className="overflow-hidden rounded-hop border border-vien bg-giay-sang shadow-md">
           <h2 className="flex items-center justify-between gap-3 bg-gradient-to-r from-espresso to-[#0d4a42] px-4 py-3.5 text-[15px] font-semibold text-white">
             <span className="flex items-center gap-2"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Đơn hàng</span>

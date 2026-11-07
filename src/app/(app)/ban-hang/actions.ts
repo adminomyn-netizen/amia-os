@@ -48,13 +48,19 @@ export async function layTheKhach(khachId: string) {
   ]);
   if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return null;
   const ids = [...new Set((the ?? []).map((t) => t.goi_id as string))];
-  const { data: goi } = ids.length ? await db.from("goi_the").select("id, ten").in("id", ids) : { data: [] };
+  const [{ data: goi }, { data: lk }] = ids.length
+    ? await Promise.all([db.from("goi_the").select("id, ten").in("id", ids), db.from("goi_the_dich_vu").select("goi_id, dich_vu_id").in("goi_id", ids)])
+    : [{ data: [] }, { data: [] }];
   const ten = new Map((goi ?? []).map((g) => [g.id as string, g.ten as string]));
+  const dvGoi = new Map<string, string[]>();
+  for (const l of lk ?? []) dvGoi.set(l.goi_id as string, [...(dvGoi.get(l.goi_id as string) ?? []), l.dich_vu_id as string]);
   return {
     hang: (k.hang as string | null) ?? "",
     the: (the ?? []).map((t) => ({
       id: t.id as string, ma: t.ma as string, loai: t.loai as "lan" | "tien", ten: ten.get(t.goi_id as string) ?? "Thẻ",
       buoiCon: Number(t.so_buoi_con ?? 0), buoiTong: t.so_buoi_tong == null ? null : Number(t.so_buoi_tong), soDu: Number(t.so_du_tien ?? 0), han: (t.han_dung as string | null) ?? null,
+      /** Dịch vụ của gói (nút "Dùng buổi" chọn sẵn); rỗng = gói không gắn dịch vụ, thu ngân chọn trong cả danh mục. */
+      dichVu: dvGoi.get(t.goi_id as string) ?? [],
     })),
   };
 }

@@ -17,9 +17,11 @@ import { HopVoucher } from "./HopVoucher";
 import { CHU_IN, PHUONG_THUC_EN, type DuLieuIn, type NgonNguIn } from "@/components/cai-dat/BanInHoaDon";
 import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, DonNhapRut } from "@/app/(app)/ban-hang/actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
+import { NutBuoi } from "@/components/the/NutBuoi";
+import type { thucHienBuoi } from "@/app/(app)/the/actions";
 
 type Nv = { id: string; ten: string; vaiTro: string };
-type TheKh = { id: string; ma: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null };
+type TheKh = { id: string; ma: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; dichVu: string[] };
 type TheTien = { id: string; ma: string; soDu: number };
 /** Màu theo nhóm hàng (ổn định theo tên nhóm) lấy từ bảng màu thương hiệu: nhìn là phân biệt được nhóm, không còn một màu trắng đơn điệu. Cả sáng lẫn tối. */
 const SAC = [
@@ -42,6 +44,7 @@ type PropsPos = {
   /** "Chờ thanh toán": đơn đang xử lý của chi nhánh. */ dsCho?: typeof dsDonCho;
   /** Có quyền sửa danh mục: hiện ô "Tạo thẻ / dịch vụ / sản phẩm mới" cuối lưới như SalonHero. */ taoMoi?: boolean;
   /** Nguồn giới thiệu cho người giới thiệu từng dòng. */ nguonGt?: NguonGt[];
+  /** Có quyền trừ buổi thẻ: hiện nút "Dùng buổi" ở "Thẻ khách đang có". */ buoi?: typeof thucHienBuoi;
 };
 type Tab = { k: number; ten: string; soDong: number; nhap?: DonNhapRut };
 const TOI_DA_DON = 8;
@@ -257,7 +260,7 @@ function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu,
 }
 
 /** Hai danh sách thẻ như SalonHero: "Thẻ khách đang có" (liệu trình còn buổi, thẻ tiền còn số dư) và "Thẻ bán cho khách hàng" (thẻ đang nằm trong đơn này). */
-function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: string; sl: number }[] }) {
+function TheCuaKhach({ the, theBan, nut }: { the: TheKh[] | null; theBan: { ten: string; sl: number }[]; nut?: (t: TheKh) => React.ReactNode }) {
   if (the === null && theBan.length === 0) return null;
   const han = (d: string) => new Date(d).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
   return (
@@ -268,7 +271,7 @@ function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: stri
           <ul className="space-y-1.5">
             {the.map((t) => (
               <li key={t.id} className="flex items-start justify-between gap-3"><span className="min-w-0 text-muc-2">{t.ten} <span className="text-muc-3">{t.ma}</span>{t.han && <span className="block text-[12px] text-muc-3">Hạn {han(t.han)}</span>}</span>
-                <span className="shrink-0 font-medium tabular-nums text-muc">{t.loai === "lan" ? `${t.buoiCon}${t.buoiTong ? `/${t.buoiTong}` : ""} buổi` : tienVN(t.soDu)}</span></li>
+                <span className="flex shrink-0 flex-col items-end gap-0.5"><span className="font-medium tabular-nums text-muc">{t.loai === "lan" ? `${t.buoiCon}${t.buoiTong ? `/${t.buoiTong}` : ""} buổi` : tienVN(t.soDu)}</span>{nut?.(t)}</span></li>
             ))}
           </ul>
         )}
@@ -283,7 +286,7 @@ function TheCuaKhach({ the, theBan }: { the: TheKh[] | null; theBan: { ten: stri
   );
 }
 
-function DonPos({ suaHd, nguonGt = [], muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: () => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
@@ -325,6 +328,7 @@ function DonPos({ suaHd, nguonGt = [], muc, nhanVien, khachBanDau, dongBanDau, c
   const [diemNhap, setDiemNhap] = useState("");
   const [moVc, setMoVc] = useState(false);
   const [moHh, setMoHh] = useState(false);
+  const [taiLaiThe, setTaiLaiThe] = useState(0);
   const [theKh, setTheKh] = useState<{ khachId: string; hang: string; the: TheKh[] } | null>(null);
   const [vc, setVc] = useState<VoucherTim | null>(null);
   const [suaGt, setSuaGt] = useState<number | null>(null);
@@ -346,11 +350,28 @@ function DonPos({ suaHd, nguonGt = [], muc, nhanVien, khachBanDau, dongBanDau, c
     layDiem(khach.id).then((r) => con && setDiemTai(r ? { khachId: khach.id, ...r } : null));
     layTheKh(khach.id).then((r) => con && setTheKh(r ? { khachId: khach.id, ...r } : null));
     return () => { con = false; };
-  }, [khach, layThe, layDiem, layTheKh]);
+  }, [khach, layThe, layDiem, layTheKh, taiLaiThe]);
   useEffect(() => { onDoi(k, khach?.ho_ten ?? "", dong.length); }, [k, khach, dong.length, onDoi]);
 
   const theTien = khach ? theTienTai : [];
   const theKhach = khach && theKh?.khachId === khach.id ? theKh : null;
+  // Bấm nhanh ở "Thẻ khách đang có": thẻ liệu trình → "Dùng buổi" chọn sẵn dịch vụ của gói (trừ 1 buổi ngay, không phải tìm lại dịch vụ);
+  // thẻ tiền → thêm khoản thu "Trừ thẻ tiền" đúng thẻ đó, số tiền = phần còn phải thu (không quá số dư).
+  const dvMuc = useMemo(() => muc.filter((m) => m.loai === "dich_vu").map((m) => ({ gia_tri: m.id, nhan: m.ten })), [muc]);
+  const nvLC = useMemo(() => luaChonNhanVien(nhanVien.map((n) => ({ id: n.id, ho_ten: n.ten, vai_tro: n.vaiTro }))), [nhanVien]);
+  const bacSiLC = useMemo(() => [{ gia_tri: "", nhan: "Không có" }, ...nhanVien.filter((n) => n.vaiTro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ten }))], [nhanVien]);
+  const nutThe = (t: TheKh) => {
+    if (t.loai === "lan") {
+      if (!buoi || t.buoiCon <= 0) return null;
+      const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
+      return <NutBuoi theId={t.id} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan="Dùng buổi"
+        action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
+    }
+    if (t.soDu <= 0) return null;
+    const daCo = thu.some((x) => x.phuong_thuc === "the_tien" && x.the_id === t.id);
+    return <button type="button" className={NUT_CHU} disabled={daCo || conNo <= 0}
+      onClick={() => setThu((x) => [...x, { phuong_thuc: "the_tien", the_id: t.id, so_tien: Math.min(t.soDu, Math.max(conNo, 0)) }])}>{daCo ? "Đã trừ thẻ" : "Trừ thẻ"}</button>;
+  };
   const theBan = dong.filter((d) => d.loai === "goi_the").map((d) => ({ ten: tuMuc.get(khoaDong(d))?.ten ?? "Thẻ", sl: d.sl }));
   const hang = dong.reduce((s, d) => s + giaDong(d, tuMuc.get(khoaDong(d))) * d.sl - d.giam, 0);
   // Voucher: tính lại theo dòng hàng hiện tại (đổi dòng thì tiền giảm đổi theo). Đơn chưa đủ điều kiện thì tiền giảm = 0 và báo lý do.
@@ -458,7 +479,7 @@ function DonPos({ suaHd, nguonGt = [], muc, nhanVien, khachBanDau, dongBanDau, c
         <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
         {sua && <p role="status" className="mt-2 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Đang sửa hoá đơn <b>{sua.ma}</b> (đã mở lại về nháp). Chốt đơn sẽ ghi lại vào chính hoá đơn này, giữ mã và ngày {ngayVN(sua.ngayHd)}.</p>}
         <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />
-        {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} />}
+        {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} nut={nutThe} />}
         {diemKhach && (
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>
             {diemKhach.bat ? ` · 1 điểm = ${tienVN(diemKhach.tienMoiDiem)}` : " · đổi điểm đang tắt"}</p>

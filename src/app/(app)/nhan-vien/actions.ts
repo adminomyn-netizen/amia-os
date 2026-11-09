@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
+import { kiemQuyen, KHONG_DU_QUYEN, xoaHoSoDem } from "@/lib/auth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
@@ -21,6 +21,7 @@ async function luuVaiTheoChiNhanh(nvId: string, cnChinh: string | null, vaiChinh
   const coO = [...fd.keys()].some((k) => k.startsWith(TIEN_TO_VAI_CN));
   if (!cnChinh || !vaiGanTheoChiNhanh(vaiChinh)) {
     const { error } = await db.from("nhan_vien_chi_nhanh").delete().eq("nhan_vien_id", nvId);
+    xoaHoSoDem();
     return error ? thongBaoLoi(error) : null;
   }
   if (!coO) return null;
@@ -29,9 +30,11 @@ async function luuVaiTheoChiNhanh(nvId: string, cnChinh: string | null, vaiChinh
   const bo = muon.filter((g) => !vaiGanTheoChiNhanh(g.vai_tro)).map((g) => g.chi_nhanh_id).concat(cnChinh);
   const giu = muon.filter((g) => vaiGanTheoChiNhanh(g.vai_tro));
   const { error: e1 } = await db.from("nhan_vien_chi_nhanh").delete().eq("nhan_vien_id", nvId).in("chi_nhanh_id", bo);
+  xoaHoSoDem();
   if (e1) return thongBaoLoi(e1);
   if (giu.length) {
     const { error: e2 } = await db.from("nhan_vien_chi_nhanh").upsert(giu.map((g) => ({ nhan_vien_id: nvId, chi_nhanh_id: g.chi_nhanh_id, vai_tro: g.vai_tro, nguoi_sua_id: nguoiSua, cap_nhat_luc: new Date().toISOString() })), { onConflict: "nhan_vien_id,chi_nhanh_id" });
+    xoaHoSoDem();
     if (e2) return thongBaoLoi(e2);
   }
   return null;
@@ -106,6 +109,7 @@ export async function datLaiMatKhau(fd: FormData): Promise<KQ> {
   const { error } = await createAdminClient().auth.admin.updateUserById(nv.user_id, { password: matKhau });
   if (error) return { loi: "Không đặt lại được mật khẩu." };
   await sb().from("nhan_vien").update({ phai_doi_mat_khau: true }).eq("id", chuoi(fd, "id"));
+  xoaHoSoDem();
   return xong();
 }
 
@@ -120,6 +124,7 @@ export async function datQuyen(fd: FormData): Promise<KQ> {
   const hopLe = new Set(NHOM_QUYEN.flatMap((g) => g.muc.map((m) => m.ma as string)));
   const chon = bat(fd, "mac_dinh") ? null : [...new Set(mang(fd, "quyen"))].filter((q) => hopLe.has(q));
   const { error } = await sb().from("nhan_vien").update({ quyen_rieng: chon }).eq("id", id);
+  xoaHoSoDem();
   return error ? { loi: thongBaoLoi(error) } : xong();
 }
 
@@ -134,6 +139,7 @@ export async function xoaNhanVien(fd: FormData): Promise<KQ> {
   if (!nv) return { loi: "Không tìm thấy nhân viên." };
   if (nv.vai_tro === "ky_thuat" || nv.vai_tro === "chu") return { loi: "Không xoá được tài khoản Chủ / Kỹ thuật." };
   const { error } = await db.from("nhan_vien").delete().eq("id", id);
+  xoaHoSoDem();
   if (error) {
     if (error.code === "23503") return { loi: "Nhân viên này đã có dữ liệu liên quan (hoá đơn, lịch hẹn, phiếu cấp, hoa hồng...) nên không xoá được. Hãy bấm Sửa rồi tắt \"Đang làm việc\" để khoá." };
     return { loi: thongBaoLoi(error) };

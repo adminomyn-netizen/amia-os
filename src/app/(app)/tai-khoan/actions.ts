@@ -1,6 +1,6 @@
 "use server";
 
-import { layNguoiDungHienTai } from "@/lib/auth";
+import { layNguoiDungHienTai, xoaHoSoDem } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
@@ -25,6 +25,7 @@ export async function doiMatKhau(fd: FormData): Promise<{ ok?: true; loi?: strin
   // Đổi mật khẩu thu hồi phiên cũ: đăng nhập lại bằng mật khẩu mới để người dùng không bị văng ra.
   await (await createClient()).auth.signInWithPassword({ email: nd.email, password: moi });
   await sb().from("nhan_vien").update({ phai_doi_mat_khau: false }).eq("id", nd.nhanVienId);
+  xoaHoSoDem();
   revalidatePath("/", "layout");
   return { ok: true };
 }
@@ -37,6 +38,7 @@ export async function datAnhDaiDien(fd: FormData): Promise<{ ok?: true; loi?: st
   if (anh !== null && !/^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(anh)) return { loi: "Ảnh không hợp lệ." };
   if (anh && anh.length > 100000) return { loi: "Ảnh quá lớn." };
   const { error } = await sb().from("nhan_vien").update({ anh_dai_dien: anh }).eq("id", nd.nhanVienId);
+  xoaHoSoDem();
   if (error) return { loi: "Không lưu được ảnh. Thử lại." };
   revalidatePath("/", "layout");
   return { ok: true };

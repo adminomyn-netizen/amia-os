@@ -13,6 +13,25 @@ import { trangDau } from "@/lib/nav";
  *  `dsCoSo` ≥ 2 phần tử thì đầu trang có nút đổi chi nhánh. */
 export type NguoiDung = { userId: string; nhanVienId: string; hoTen: string; email: string; vaiTro: VaiTro; chiNhanhId: string | null; chucDanh: string | null; quyen: Quyen[]; anhDaiDien: string | null; phaiDoiMatKhau: boolean; dsCoSo: CoSoDuocVao[] };
 
+const truyHoSo = (userId: string) => createAdminClient().from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id, chuc_danh, hoat_dong, quyen_rieng, anh_dai_dien, phai_doi_mat_khau, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").eq("user_id", userId).maybeSingle();
+type HoSo = NonNullable<Awaited<ReturnType<typeof truyHoSo>>["data"]>;
+// Hồ sơ nhân viên giữ trong bộ nhớ máy chủ 30 giây (app chạy liên tục trên hosting, DB ở Singapore ~90ms/lượt):
+// bỏ một lượt hỏi DB ở mọi trang và mọi nút bấm. Khoá/đổi vai trò có hiệu lực chậm nhất sau 30 giây.
+const HO_SO_TTL = 30_000;
+const hoSoDem = new Map<string, { luc: number; nv: HoSo | null }>();
+async function docHoSo(userId: string): Promise<HoSo | null> {
+  const c = hoSoDem.get(userId);
+  if (c && Date.now() - c.luc < HO_SO_TTL) return c.nv;
+  const { data, error } = await truyHoSo(userId);
+  if (error) throw new Error("Hệ thống đang chậm, chưa đọc được hồ sơ. Tải lại trang sau vài giây.");
+  if (hoSoDem.size > 500) hoSoDem.clear();
+  // Người còn phải đổi mật khẩu thì không giữ: đổi xong phải vào được ngay, kể cả khi lượt sau rơi vào tiến trình khác.
+  if (!data?.phai_doi_mat_khau) hoSoDem.set(userId, { luc: Date.now(), nv: data });
+  return data;
+}
+/** Gọi sau khi sửa hồ sơ/vai trò/quyền nhân viên để tiến trình này đọc lại ngay (tiến trình khác tự hết hạn sau 30 giây). */
+export function xoaHoSoDem() { hoSoDem.clear(); }
+
 /** Mỗi yêu cầu chỉ hỏi Supabase Auth + hồ sơ nhân viên MỘT lần (React cache). Không có hồ sơ đang hoạt động ⇒ null. */
 export const layNguoiDungHienTai = cache(async (): Promise<NguoiDung | null> => {
   const supabase = await createClient();
@@ -22,9 +41,8 @@ export const layNguoiDungHienTai = cache(async (): Promise<NguoiDung | null> => 
   const cl = dataClaims?.claims;
   if (!cl?.sub) return null;
   const user = { id: cl.sub, email: typeof cl.email === "string" ? cl.email : "" };
-  const { data: nv, error: loiNv } = await createAdminClient().from("nhan_vien").select("id, ho_ten, vai_tro, chi_nhanh_id, chuc_danh, hoat_dong, quyen_rieng, anh_dai_dien, phai_doi_mat_khau, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").eq("user_id", user.id).maybeSingle();
-  // Lỗi đọc DB (quá tải, hết giờ chờ) khác với "không có hồ sơ": không được coi là chưa đăng nhập.
-  if (loiNv) throw new Error("Hệ thống đang chậm, chưa đọc được hồ sơ. Tải lại trang sau vài giây.");
+  // Lỗi đọc DB (quá tải, hết giờ chờ) khác với "không có hồ sơ": docHoSo ném lỗi, không coi là chưa đăng nhập.
+  const nv = await docHoSo(user.id);
   if (!nv || !nv.hoat_dong || !laVaiTro(nv.vai_tro)) return null;
   // Chi nhánh đang làm việc lấy từ cookie nhưng KIỂM LẠI mỗi yêu cầu: không thuộc danh sách được vào thì về chi nhánh chính.
   const chon = (await cookies()).get(COOKIE_CHI_NHANH)?.value ?? null;

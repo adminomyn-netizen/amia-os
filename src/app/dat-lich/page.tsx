@@ -10,7 +10,7 @@ import { hoiDapDatLich, type NgonNgu } from "./chu";
 
 export const dynamic = "force-dynamic";
 
-const GOC = (process.env.NEXT_PUBLIC_SITE_URL || "https://amia-os-neon.vercel.app").replace(/\/$/, "");
+const GOC = (process.env.NEXT_PUBLIC_SITE_URL || "https://lammec.mscvn.com").replace(/\/$/, "");
 const GIAY_PHEP = "1233/NA-GPHĐ";
 const THU_JS: KhoaThu[] = ["cn", "t2", "t3", "t4", "t5", "t6", "t7"];
 const SCHEMA_THU: Record<KhoaThu, string> = { t2: "Monday", t3: "Tuesday", t4: "Wednesday", t5: "Thursday", t6: "Friday", t7: "Saturday", cn: "Sunday" };

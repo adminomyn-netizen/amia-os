@@ -27,9 +27,12 @@ if [ "$LUOT" = "sang" ]; then
 else
   node scripts/chuyen-salonhero/sao-luu-db.mjs truoc-dong-bo-$NGAY 2>&1 | tail -2 >> "$BC"
 fi
-node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot --ghi-de > "$THU" 2>&1
+# Từ khi nhân viên nhập trên AMIA (10/11/2026) thì KHÔNG ghi đè: có tệp cờ dưới đây là bỏ --ghi-de (dữ liệu sửa trong app được giữ, chỉ liệt kê xung đột).
+GHI_DE="--ghi-de"; [ -f "$HOME/.config/ags/tula-tools/hosting/salon-khong-ghi-de" ] && GHI_DE=""
+echo "- chế độ: ${GHI_DE:-không ghi đè}" >> "$BC"
+node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot $GHI_DE > "$THU" 2>&1
 if grep -q "CHẠY THỬ XONG" "$THU" && ! grep -q "CÓ LỆCH" "$THU"; then
-  node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot --ghi-de --that > "$THAT" 2>&1
+  node scripts/chuyen-salonhero/dong-bo-dem.mjs --bo-qua-xung-dot $GHI_DE --that > "$THAT" 2>&1
   echo "## Kết quả ghi thật" >> "$BC"; grep -E "ĐÃ GHI THẬT|DỪNG|HUỶ|LỆCH" "$THAT" | head -5 >> "$BC"
   echo '```' >> "$BC"; sed 's/\x1b\[[0-9;]*m//g' "$THAT" | grep -E "│ [0-9]+ +│" | cut -c1-200 >> "$BC"; echo '```' >> "$BC"
   # giờ thu thật của các lần khách trả tiền (bảng tra sh_gio_thanh_toan, migration 0251) — chỉ ghi bảng tra

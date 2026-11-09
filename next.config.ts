@@ -1,6 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Bản chạy trên hosting CloudFly (cPanel) build ở GitHub Actions dạng standalone; Vercel không đặt biến này nên không đổi.
+  output: process.env.BUILD_STANDALONE ? "standalone" : undefined,
   // Dữ liệu phòng khám phải luôn mới theo từng lượt xem: dùng render động cổ điển.
   experimental: { serverActions: { bodySizeLimit: "12mb" } },
   // Nhân sự (hồ sơ, chấm công, lương, tuyển dụng...) đã chuyển sang MSC Group OS (31/10/2026).

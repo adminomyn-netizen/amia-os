@@ -42,6 +42,15 @@ export async function capNhatPhien(request: NextRequest) {
     url.pathname = "/dang-nhap";
     return NextResponse.redirect(url);
   }
+  // Vai "Chỉ xem": chặn mọi yêu cầu GHI vào /api (lưới thứ hai; Server Action chặn ở auth.ts). Chỉ tra DB khi là yêu cầu ghi.
+  if (coPhien && !laTrangCongKhai && !["GET", "HEAD", "OPTIONS"].includes(request.method) && request.nextUrl.pathname.startsWith("/api/")) {
+    const sub = String(dataClaims?.claims?.sub ?? "").replace(/[^a-f0-9-]/gi, "");
+    try {
+      const r = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/rest/v1/nhan_vien?select=vai_tro&user_id=eq.${sub}&limit=1`, { headers: { apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!, Authorization: `Bearer ${process.env.SUPABASE_SERVICE_ROLE_KEY!}` }, cache: "no-store" });
+      const j = (await r.json()) as { vai_tro?: string }[];
+      if (j?.[0]?.vai_tro === "chi_xem") return NextResponse.json({ loi: "Tài khoản này chỉ được xem, không thao tác được." }, { status: 403 });
+    } catch { /* không tra được thì để route tự kiểm quyền như cũ */ }
+  }
   // Đã đăng nhập mà vào /dang-nhap: KHÔNG đẩy đi ở đây (JWT còn hạn chưa chắc phiên còn sống → dễ lặp chuyển trang).
   // dang-nhap/layout.tsx hỏi máy chủ Auth thật rồi mới đẩy.
 

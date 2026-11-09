@@ -4,7 +4,7 @@
 
 import { ganSalonHero } from "@/lib/quyen-salonhero";
 
-export const VAI_TRO = ["chu", "ky_thuat", "quan_ly", "nhan_su", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien"] as const;
+export const VAI_TRO = ["chu", "ky_thuat", "quan_ly", "nhan_su", "le_tan", "thu_ngan", "tu_van", "bac_si", "ktv", "thu_kho", "ke_toan", "marketing", "nha_dau_tu", "nhan_vien", "chi_xem"] as const;
 export type VaiTro = (typeof VAI_TRO)[number];
 
 export const NHAN_VAI_TRO: Record<VaiTro, string> = {
@@ -22,6 +22,7 @@ export const NHAN_VAI_TRO: Record<VaiTro, string> = {
   marketing: "Marketing",
   nha_dau_tu: "Nhà đầu tư",
   nhan_vien: "Nhân viên",
+  chi_xem: "Chỉ xem (giám sát)",
 };
 
 export type Quyen =
@@ -72,7 +73,12 @@ const MAC_DINH_CU: Record<VaiTro, Quyen[]> = {
   marketing: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "mkt.xem", "mkt.sua", "lead.xu_ly", "vb.xem", "vb.soan"], // SalonHero: Marketing CSKH thêm/sửa khách (customer create+update)
   nha_dau_tu: ["tongquan.xem", "baocao.xem", "baocao.tien"],
   nhan_vien: ["noibo.dung"],
+  // Chỉ xem (chị Lâm 9/11/2026, tài khoản anh Tú hcns@mscvn.com, giống vai "chi_xem" bên MSC OS): xem mọi màn, không ghi được gì.
+  // Chỉ có quyền XEM nên mọi hành động ghi (đòi quyền sửa) tự bị từ chối; thêm lưới ở auth.ts (kiemQuyen/kiemNoiBo) và middleware (API ghi). Không có lương, không quản trị.
+  chi_xem: ["tongquan.xem", "khach.xem", "khach.sdt", "khach.email", "hoso.xem", "anh.xem", "lich.xem", "ban.xem", "the.xem", "danhmuc.xem", "kho.xem", "phieu.xem", "baocao.xem", "baocao.tien", "quy.xem", "mua.xem", "noibo.dung", "viec.tatca", "mkt.xem", "vb.xem", "cong.xem"],
 };
+/** Quyền vai "Chỉ xem" còn được dùng TRONG Server Action (đọc, tìm kiếm). Quyền khác trong action đều bị chặn. */
+export const QUYEN_DOC: readonly Quyen[] = ["tongquan.xem", "khach.xem", "khach.sdt", "khach.email", "hoso.xem", "anh.xem", "lich.xem", "ban.xem", "the.xem", "danhmuc.xem", "kho.xem", "phieu.xem", "baocao.xem", "baocao.tien", "quy.xem", "mua.xem", "viec.tatca", "mkt.xem", "vb.xem", "cong.xem"];
 
 /** Chị Lâm 29/10: quyền các vai có bản SalonHero lấy THEO ma trận SalonHero (quyen-salonhero.ts); vai riêng của AMIA giữ mặc định. */
 export const QUYEN_THEO_VAI_TRO = Object.fromEntries((Object.keys(MAC_DINH_CU) as VaiTro[]).map((v) => [v, ganSalonHero(v, MAC_DINH_CU[v])])) as Record<VaiTro, Quyen[]>;

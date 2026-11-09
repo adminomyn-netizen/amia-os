@@ -4,8 +4,8 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { KHOA_JWT } from "@/lib/supabase/khoa-jwt";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { cookies } from "next/headers";
-import { coQuyen, laVaiTro, type Quyen, type VaiTro } from "@/lib/quyen";
+import { cookies, headers } from "next/headers";
+import { coQuyen, laVaiTro, QUYEN_DOC, type Quyen, type VaiTro } from "@/lib/quyen";
 import { COOKIE_CHI_NHANH, tinhVaiHieuLuc, type CoSoDuocVao } from "@/lib/vai-chi-nhanh";
 import { trangDau } from "@/lib/nav";
 
@@ -79,6 +79,7 @@ export async function layNguoiDungDangNhap(choDoiMatKhau = false) {
 /** Server Action: trả người dùng nếu có quyền, không thì null. Server Action là điểm POST công khai với ai đã đăng nhập — ẩn nút ở giao diện KHÔNG đủ. */
 export async function kiemQuyen(q: Quyen) {
   const nd = await layNguoiDungHienTai();
+  if (nd?.vaiTro === "chi_xem" && !QUYEN_DOC.includes(q) && (await headers()).has("next-action")) return null; // lưới thứ hai cho vai Chỉ xem
   return nd && coQuyen(nd, q) ? nd : null;
 }
 export const KHONG_DU_QUYEN = "Bạn không có quyền thực hiện thao tác này.";
@@ -93,5 +94,6 @@ export async function yeuCauNoiBo() {
 /** Server Action cho mọi nhân viên nội bộ. */
 export async function kiemNoiBo() {
   const nd = await layNguoiDungHienTai();
+  if (nd?.vaiTro === "chi_xem" && (await headers()).has("next-action")) return null; // Chỉ xem: không giao việc, báo cáo, đề xuất…
   return nd && nd.vaiTro !== "nha_dau_tu" ? nd : null;
 }

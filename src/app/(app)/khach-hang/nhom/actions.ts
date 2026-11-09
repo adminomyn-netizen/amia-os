@@ -18,7 +18,7 @@ function lamMoi() {
   revalidatePath("/khach-hang", "layout");
 }
 
-/** Tạo / sửa một nhóm (tên, màu, mô tả). Chỉ người sửa danh mục. Tên trùng chữ hoa/thường vẫn lưu được (chỉ cảnh báo ở màn hình, không tự gộp). */
+/** Tạo / sửa một nhóm (tên, màu, mô tả). Chỉ người sửa danh mục. Tên trùng nhóm khác (kể cả chỉ khác chữ hoa/thường, nhóm đã ẩn) bị chặn — DB có chỉ mục nhom_khach_ten_khong_trung (0311). */
 export async function luuNhom(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("danhmuc.sua");
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -30,13 +30,15 @@ export async function luuNhom(fd: FormData): Promise<KQ> {
   if (mau && !MAU.test(mau)) return { loi: "Màu phải có dạng #RRGGBB (ví dụ #03a9f4)." };
   if (id && !UUID.test(id)) return { loi: "Nhóm không hợp lệ." };
   const db = sb();
+  const { data: trungTen } = await db.from("nhom_khach").select("id, ten, hoat_dong").ilike("ten", ten.replace(/[\\%_]/g, "\\$&")).neq("id", id || "00000000-0000-0000-0000-000000000000").limit(1).maybeSingle();
+  if (trungTen) return { loi: `Đã có nhóm “${trungTen.ten}”${trungTen.hoat_dong ? "" : " (đang ẩn — khôi phục nhóm đó thay vì tạo mới)"}. Dùng nhóm đó, không tạo trùng.` };
   const row = { ten, mau: mau ? mau.toLowerCase() : null, mo_ta: chuoiHoacNull(fd, "mo_ta")?.slice(0, 300) ?? null };
   if (id) {
     const { error } = await db.from("nhom_khach").update(row).eq("id", id);
-    if (error) return { loi: thongBaoLoi(error) };
+    if (error) return { loi: error.code === "23505" ? "Tên nhóm đã có, chọn tên khác." : thongBaoLoi(error) };
   } else {
     const { data, error } = await db.from("nhom_khach").insert(row).select("id").single();
-    if (error || !data) return { loi: thongBaoLoi(error) };
+    if (error || !data) return { loi: error?.code === "23505" ? "Tên nhóm đã có, chọn tên khác." : thongBaoLoi(error) };
     await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "tao_nhom_khach", doi_tuong: "nhom_khach", doi_tuong_id: data.id, chi_tiet: { ten } });
     lamMoi();
     return { ok: true };

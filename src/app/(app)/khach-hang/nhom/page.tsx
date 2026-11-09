@@ -70,7 +70,7 @@ export default async function NhomKhach({ searchParams }: { searchParams: Promis
             <ul className="mt-1 list-inside list-disc">
               {trung.map((g) => <li key={g[0].id}>{g.map((n) => `${n.ten} (${(n as (typeof ds)[number]).so.toLocaleString("vi-VN")} khách)`).join(" và ")}</li>)}
             </ul>
-            <p className="mt-1">Hệ thống không tự gộp. Muốn gộp: lọc khách theo nhóm cần bỏ, thêm vào nhóm giữ lại bằng khung “Thêm khách vào nhóm theo bộ lọc” bên dưới, rồi ẩn nhóm thừa.</p>
+            <p className="mt-1">Hệ thống đã chặn tạo tên trùng từ 9/11. Báo kỹ thuật để gộp, không mất khách.</p>
           </div>
         </div>
       )}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Boxes, Briefcase, ChevronRight, FilePenLine, Landmark, Megaphone, Settings } from "lucide-react";
+import { Boxes, Briefcase, ChevronRight, FilePenLine, IdCard, Landmark, Megaphone, Settings, ShoppingBag, Users } from "lucide-react";
 import { layNguoiDungDangNhap } from "@/lib/auth";
 import { moduleTheoMa, NHAN_TRANG_THAI, type The, type TrangThaiThe } from "@/lib/module";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
@@ -8,7 +8,7 @@ import { BieuTuongChucNang } from "@/components/layout/bieu-tuong";
 import { redirect } from "next/navigation";
 import { coMotQuyen as coMot, trangDau } from "@/lib/nav";
 
-const ICON_MODULE: Record<string, typeof Settings> = { "noi-lam-viec": Briefcase, "tai-chinh": Landmark, "kho-mua-sam": Boxes, "van-ban": FilePenLine, marketing: Megaphone, "cai-dat": Settings };
+const ICON_MODULE: Record<string, typeof Settings> = { "noi-lam-viec": Briefcase, "tai-chinh": Landmark, "kho-mua-sam": Boxes, "van-ban": FilePenLine, marketing: Megaphone, "cai-dat": Settings, "khach-hang": Users, "ban-hang": ShoppingBag, "nhan-su": IdCard };
 const KIEU: Record<TrangThaiThe, "tot" | "cho" | "tram"> = { san_sang: "tot", dang_lam: "cho", sap_co: "tram" };
 
 /** Trang tổng quan của một mục lớn: các thẻ chức năng gom theo nhóm; thẻ đã làm bấm vào được, chưa làm thì mờ và có nhãn trạng thái (thẻ sẵn sàng không cần nhãn). */

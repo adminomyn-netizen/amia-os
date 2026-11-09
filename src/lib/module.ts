@@ -39,6 +39,52 @@ export const MODULE: Module[] = [
     ],
   },
   {
+    ma: "khach-hang", ten: "Khách hàng", duongDan: "/khach-hang", quyen: ["khach.xem"],
+    moTa: "Hồ sơ khách, thẻ liệu trình, nhóm khách, chăm sóc và nhắc tái khám.",
+    nhom: [
+      { nhan: "Khách hàng", the: [
+        { ten: "Danh sách khách hàng", moTa: "Tìm, lọc, hồ sơ, ghi chú điều trị, ảnh.", duongDan: "/khach-hang", trangThai: "san_sang", quyen: ["khach.xem"] },
+        { ten: "Thống kê khách hàng", moTa: "Khách mới, khách quay lại, theo nguồn và nhóm.", duongDan: "/khach-hang/thong-ke", trangThai: "san_sang", quyen: ["khach.xem"] },
+        { ten: "Khách hàng gần đây", moTa: "Khách vừa đến, vừa mua.", duongDan: "/khach-hang/gan-day", trangThai: "san_sang", quyen: ["khach.xem"] },
+        { ten: "Quản lý nhóm", moTa: "Nhóm khách, thêm khách vào nhóm theo bộ lọc.", duongDan: "/khach-hang/nhom", trangThai: "san_sang", quyen: ["khach.xem"] },
+        { ten: "Tư vấn", moTa: "Phiếu tư vấn của khách.", duongDan: "/khach-hang/tu-van", trangThai: "san_sang", quyen: ["khach.xem"] },
+      ] },
+      { nhan: "Thẻ & chăm sóc", the: [
+        { ten: "Thẻ liệu trình", moTa: "Thẻ lần, thẻ tiền, thực hiện buổi.", duongDan: "/the", trangThai: "san_sang", quyen: ["the.xem"] },
+        { ten: "Khách dùng thẻ", moTa: "Khách đang dùng thẻ, số buổi còn.", duongDan: "/khach-hang/dung-the", trangThai: "san_sang", quyen: ["the.xem"] },
+        { ten: "Thẻ sắp hết", moTa: "Thẻ còn ít buổi hoặc sắp hết hạn.", duongDan: "/khach-hang/the-sap-het", trangThai: "san_sang", quyen: ["the.xem"] },
+        { ten: "Chăm sóc khách", moTa: "Việc gọi, nhắn chăm sóc khách.", duongDan: "/khach-hang/cham-soc", trangThai: "san_sang", quyen: ["khach.xem"] },
+        { ten: "Lịch nhắc chăm sóc", moTa: "Nhắc chăm sóc theo ngày.", duongDan: "/khach-hang/nhac-nho", trangThai: "san_sang", quyen: ["khach.xem"] },
+        { ten: "Nhắc tái khám", moTa: "Khách đến hạn tái khám.", duongDan: "/khach-hang/tai-kham", trangThai: "san_sang", quyen: ["the.xem"] },
+      ] },
+    ],
+  },
+  {
+    ma: "ban-hang", ten: "POS / Bán hàng", duongDan: "/ban-hang", quyen: ["ban.tao", "ban.xem"],
+    moTa: "Bán dịch vụ, thẻ, sản phẩm tại quầy và danh sách hoá đơn.",
+    nhom: [
+      { nhan: "Bán hàng", the: [
+        { ten: "Bán hàng tại quầy", moTa: "Lên đơn, dùng buổi thẻ, gia hạn, thu tiền, in hoá đơn.", duongDan: "/ban-hang", trangThai: "san_sang", quyen: ["ban.tao"] },
+        { ten: "Danh sách hoá đơn", moTa: "Hoá đơn bán hàng, thu nợ, huỷ.", duongDan: "/hoa-don", trangThai: "san_sang", quyen: ["ban.xem"] },
+      ] },
+    ],
+  },
+  {
+    ma: "nhan-su", ten: "Nhân sự", duongDan: "/nhan-su", quyen: ["noibo.dung", "nhanvien.quanly", "hethong.phanquyen"],
+    moTa: "Thu nhập và tài khoản ở AMIA OS. Hồ sơ, chấm công, nghỉ phép, lương, tuyển dụng nằm ở MSC OS (noibo.mscvn.com).",
+    nhom: [
+      { nhan: "Ở AMIA OS", the: [
+        { ten: "Thu nhập tạm tính của tôi", moTa: "Dự thảo lương theo công + hoa hồng, thưởng, phí trị liệu tháng này.", duongDan: "/thu-nhap-cua-toi", trangThai: "san_sang", quyen: ["noibo.dung"] },
+        { ten: "Chính sách hoa hồng & phí trị liệu", moTa: "PL05, PL06, quy định phí trị liệu, đơn giá từ 01/11/2026.", duongDan: "/hoa-hong/chinh-sach", trangThai: "san_sang", quyen: ["noibo.dung"] },
+        { ten: "Nhân viên phục vụ", moTa: "Người làm dịch vụ: chức danh, nhóm, chi nhánh.", duongDan: "/cai-dat/nhan-vien-phuc-vu", trangThai: "san_sang", quyen: ["nhanvien.quanly"] },
+        { ten: "Tài khoản & phân quyền", moTa: "Tài khoản đăng nhập, vai trò, quyền từng người.", duongDan: "/nhan-vien", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
+      ] },
+      { nhan: "Ở MSC OS (noibo.mscvn.com)", the: [
+        { ten: "Hồ sơ, chấm công, nghỉ phép, lương", moTa: "Mở MSC OS: hồ sơ nhân sự, chấm công, nghỉ phép, bảng lương, tuyển dụng, đào tạo, KPI.", duongDan: "https://noibo.mscvn.com", trangThai: "san_sang", quyen: ["noibo.dung", "nhanvien.quanly"] },
+      ] },
+    ],
+  },
+  {
     ma: "tai-chinh", ten: "Tài chính - Kế toán", duongDan: "/tai-chinh", quyen: ["quy.xem", "baocao.tien", "no.thu", "ky.khoa"],
     moTa: "Sổ quỹ thu/chi, công nợ, hoá đơn và quyết toán.",
     nhom: [

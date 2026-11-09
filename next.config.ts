@@ -9,7 +9,6 @@ const nextConfig: NextConfig = {
   // Mã trang vẫn còn trong repo: muốn bật lại thì bỏ khối redirects này và thêm lại mục trong src/lib/module.ts + nav.tsx.
   async redirects() {
     return [
-      { source: "/nhan-su", destination: "/da-chuyen-msc", permanent: false },
       { source: "/nhan-su/:path*", destination: "/da-chuyen-msc", permanent: false },
     ];
   },

@@ -1,4 +1,4 @@
--- 0325 — Bảng xếp hạng Dashboard (chị Lâm 10/11/2026: "sản phẩm nào được gia hạn nhiều nhất").
+-- 0326 — Bảng xếp hạng Dashboard (chị Lâm 10/11/2026: "sản phẩm nào được gia hạn nhiều nhất").
 -- "Gia hạn" = như nút Gia hạn ở Bán hàng: khách mua lại ĐÚNG gói thẻ mình đã từng có. Đếm mỗi dòng bán gói thẻ (hoá đơn hoàn thành, không phải
 -- số dư đầu kỳ) trong kỳ — chỉ thẻ liệu trình (bỏ thẻ tiền / tiền cọc) — mà khách đó đã có một thẻ cùng gói được cấp TRƯỚC ngày hoá đơn. Chỉ THÊM hàm đọc, không đổi bảng/dữ liệu.
 create or replace function public.xh_the_gia_han(p_tu date, p_den date, p_cn uuid default null, p_so int default 10)

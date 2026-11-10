@@ -7,7 +7,7 @@ import { locKhach } from "@/lib/khach-danh-sach";
 // Bảng xếp hạng + sinh nhật của Dashboard (chị Lâm 10/11/2026). Mọi số TÍNH TRONG CSDL bằng đúng các hàm báo cáo đã có
 // (cùng số với Báo cáo › Theo nhân viên / Theo sản phẩm, dịch vụ / Theo khách hàng — cách SalonHero), không tự chế công thức:
 //   bc_nhan_vien_sh (0117: phục vụ / bán SP / bán thẻ / tư vấn, dịch vụ làm bằng thẻ lấy giá một buổi của thẻ, chia theo tỉ lệ người hưởng)
-//   bc_san_pham_dich_vu (0118) · bc_theo_khach_hang · bc_cham_diem_nv · xh_the_gia_han (0325, mua lại đúng gói thẻ đã có).
+//   bc_san_pham_dich_vu (0118) · bc_theo_khach_hang · bc_cham_diem_nv · xh_the_gia_han (0326, mua lại đúng gói thẻ đã có).
 // Giữ 2 phút dùng chung cho mọi người xem cùng chi nhánh/kỳ. Lỗi thì ném ra để KHÔNG bị lưu đệm.
 
 /** Chủ / Kỹ thuật không gắn chi nhánh: nếu chỉ còn MỘT chi nhánh đang hoạt động (Vinh; Đà Lạt đã đóng) thì xếp hạng + sinh nhật lấy theo chi nhánh đó. */

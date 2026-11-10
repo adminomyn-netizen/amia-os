@@ -12,6 +12,12 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { baoKetViec, chamViec, doiTrangThaiViec, giaoViec } from "../actions";
 import { doDai, thoiDiemHan, tinhTrangHan, type TinhTrangHan } from "@/lib/cong-viec-han";
 
+/** Đường dẫn nội bộ trong mô tả việc (vd "Mở lead: /marketing/lead/<id>" do Hộp Lead tạo) thành link bấm được. */
+const DUONG_NOI_BO = /(\/marketing\/lead\/[0-9a-f-]{36})/g;
+function moTaCoLink(t: string) {
+  return t.split(DUONG_NOI_BO).map((x, i) => (i % 2 === 1 ? <Link key={i} href={x} className="font-medium text-nhan-dam hover:underline">bấm để mở</Link> : x));
+}
+
 export default async function TrangViec({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauNoiBo();
   const xemHet = coQuyen(nd, "viec.tatca");
@@ -71,7 +77,7 @@ export default async function TrangViec({ searchParams }: { searchParams: Promis
           { nhan: "Công việc", chinh: true, hienThi: (r) => (
             <div>
               <span className="text-muc">{r.tieu_de}</span>
-              {r.mo_ta && <div className="mt-0.5 text-[13px] text-muc-3">{r.mo_ta}</div>}
+              {r.mo_ta && <div className="mt-0.5 whitespace-pre-line text-[13px] text-muc-3">{moTaCoLink(r.mo_ta)}</div>}
               {r.tieu_chi_xong && <div className="mt-0.5 whitespace-pre-line text-[13px] text-muc-2">Tiêu chí xong: {r.tieu_chi_xong}</div>}
               {r.trang_thai === "xong" && (
                 <div className="mt-0.5 text-[13px] text-nhan-dam">

@@ -22,15 +22,17 @@ function OSua({ id, truong, giaTri, sua, so, nhan }: { id: string; truong: strin
   const router = useRouter();
   const [dang, bat] = useTransition();
   const [loi, setLoi] = useState("");
-  const luu = (v: string) => {
+  const hienThi = so && giaTri !== "" ? Number(giaTri).toLocaleString("vi-VN") : giaTri;
+  const luu = (v: string, o: HTMLInputElement) => {
     if (v.trim() === giaTri) return;
     setLoi("");
-    bat(async () => { const fd = new FormData(); fd.set("id", id); fd.set("truong", truong); fd.set("gia_tri", v.trim()); const kq = await suaOLead(fd); if (kq.loi) setLoi(kq.loi); else router.refresh(); });
+    // Bị từ chối thì trả ô về giá trị đang lưu, kèm dòng lỗi (không để số sai nằm trong ô như đã lưu).
+    bat(async () => { const fd = new FormData(); fd.set("id", id); fd.set("truong", truong); fd.set("gia_tri", v.trim()); const kq = await suaOLead(fd); if (kq.loi) { setLoi(kq.loi); o.value = hienThi; } else router.refresh(); });
   };
   return (
     <div>
-      <input key={giaTri} defaultValue={so && giaTri !== "" ? Number(giaTri).toLocaleString("vi-VN") : giaTri} disabled={!sua || dang} aria-label={nhan} inputMode={so ? "numeric" : undefined}
-        onBlur={(e) => luu(so ? e.target.value.replace(/[^\d]/g, "") || "0" : e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+      <input key={giaTri} defaultValue={hienThi} disabled={!sua || dang} aria-label={nhan} inputMode={so ? "numeric" : undefined}
+        onBlur={(e) => luu(so ? e.target.value.replace(/[^\d]/g, "") || "0" : e.target.value, e.currentTarget)} onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
         className={`${O} ${so ? "text-right tabular-nums" : ""}`} />
       {loi && <p role="alert" className="px-2 text-[12px] leading-snug text-loi">{loi}</p>}
     </div>

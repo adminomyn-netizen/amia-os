@@ -27,7 +27,7 @@ export function KanbanLead({ cot, lyDoThua, ghi, them }: { cot: CotKanban[]; lyD
       <div className={`-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-3 sm:mx-0 sm:px-0 ${dang ? "opacity-70" : ""}`}>
         {cot.map((c) => (
           <section key={c.id} aria-label={`Cột ${c.ten}`}
-            className={`flex w-[78vw] max-w-[300px] shrink-0 snap-start flex-col rounded-the border bg-giay-tram/60 sm:w-[272px] ${tren === c.id ? "border-nhan ring-2 ring-nhan/25" : "border-vien"}`}
+            className={`flex w-[78vw] max-w-[300px] shrink-0 snap-start flex-col rounded-the border bg-giay-tram/60 sm:w-[272px] xl:w-auto xl:min-w-[176px] xl:max-w-none xl:flex-1 xl:shrink ${tren === c.id ? "border-nhan ring-2 ring-nhan/25" : "border-vien"}`}
             onDragOver={(e) => { if (ghi && keo && keo.tu !== c.id) { e.preventDefault(); setTren(c.id); } }}
             onDragLeave={() => setTren((t) => (t === c.id ? null : t))}
             onDrop={(e) => { e.preventDefault(); setTren(null); if (keo && keo.tu !== c.id) doi(keo.id, c.id); setKeo(null); }}>

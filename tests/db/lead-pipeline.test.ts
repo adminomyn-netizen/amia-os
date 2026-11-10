@@ -137,6 +137,21 @@ describe("Hộp Lead pipeline (0313)", () => {
     await q(`delete from lead_nguoi_ho_tro where lead_id=$1 and nhan_vien_id=$2`, [id, NV.b]);
   });
 
+  it("việc của tác vụ trên lead đã Thắng / Thua vẫn đóng, mở lại được (0315)", async () => {
+    const ldThua = (await one<{ id: string }>(`select id from lead_ly_do_thua where ma='gia'`)).id;
+    for (const [sdt, them] of [["0911000020", { giai_doan_id: await gd("thang") }], ["0911000021", { giai_doan_id: await gd("thua"), ly_do_thua_id: ldThua }]] as const) {
+      const id = await taoLead(sdt, { owner_id: NV.a });
+      const cv = (await one<{ id: string }>(`insert into cong_viec (tieu_de, nguoi_giao_id, nguoi_nhan_id) values ('Gọi',$1,$1) returning id`, [NV.a])).id;
+      const tv = (await one<{ id: string }>(`insert into lead_tac_vu (lead_id, ten, giao_cho_id, cong_viec_id) values ($1,'Gọi',$2,$3) returning id`, [id, NV.a, cv])).id;
+      await q(`update lead set giai_doan_id=$2, ly_do_thua_id=$3 where id=$1`, [id, them.giai_doan_id, "ly_do_thua_id" in them ? them.ly_do_thua_id : null]);
+      await q(`update cong_viec set trang_thai='xong' where id=$1`, [cv]);
+      await q(`update cong_viec set trang_thai='dang_lam' where id=$1`, [cv]);
+      await q(`update cong_viec set trang_thai='huy' where id=$1`, [cv]);
+      expect((await one<{ trang_thai: string }>(`select trang_thai from lead_tac_vu where id=$1`, [tv])).trang_thai).toBe("huy");
+      expect((await q(`select 1 from lead_hoat_dong where lead_id=$1 and noi_dung like '%(ở Việc cần làm)%'`, [id])).length).toBe(3);
+    }
+  });
+
   it("tệp tải tay tối đa 5", async () => {
     const id = await taoLead("0911000011");
     for (let i = 0; i < 5; i++) await q(`insert into lead_tep (lead_id, ten, duong_dan) values ($1,'a.jpg',$2)`, [id, `${id}/${i}.jpg`]);

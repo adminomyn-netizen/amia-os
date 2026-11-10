@@ -12,7 +12,7 @@ begin
       where cong_viec_id = new.id and trang_thai = 'mo' returning lead_id, ten
     loop
       insert into public.lead_hoat_dong (lead_id, loai, noi_dung, nguoi_id)
-      values (r.lead_id, 'tac_vu', case when new.trang_thai = 'xong' then 'Hoàn thành' else 'Hủy' end || ' tác vụ (ở Việc cần làm): ' || r.ten, new.nguoi_nhan_id);
+      values (r.lead_id, 'tac_vu', case when new.trang_thai = 'xong' then 'Hoàn thành' else 'Hủy' end || ' tác vụ (ở Việc cần làm): ' || r.ten, case when new.trang_thai = 'xong' then new.nguoi_nhan_id else new.nguoi_giao_id end); -- huỷ do người giao / quản lý
     end loop;
   elsif new.trang_thai is distinct from old.trang_thai and old.trang_thai in ('xong', 'huy') and new.trang_thai in ('moi', 'dang_lam') then
     for r in

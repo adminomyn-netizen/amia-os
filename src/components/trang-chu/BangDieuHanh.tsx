@@ -26,6 +26,7 @@ const NHOM: { nhan: string; ma: CanhBao["ma"][] }[] = [
   { nhan: "mục kho cần xem", ma: ["kho", "han", "tonam"] },
   { nhan: "thẻ sắp hết buổi", ma: ["the"] },
   { nhan: "khoản công nợ", ma: ["no"] },
+  { nhan: "việc lead (chưa nhận, nhắc)", ma: ["lead", "leadnhac"] },
   { nhan: "việc chấm công, lương", ma: ["ccvao", "ccra", "ccquen", "luong", "cckhoa", "ccnghi", "klhan", "hdld"] },
 ];
 export const MA_CHO_DUYET = NHOM[0].ma;

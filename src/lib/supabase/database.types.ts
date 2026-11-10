@@ -2080,6 +2080,7 @@ export type Database = {
           id: string
           ma: string
           mo_ta: string | null
+          phu_trach_lead_id: string | null
           phuong_quan: string | null
           quoc_gia: string
           tao_luc: string
@@ -2096,6 +2097,7 @@ export type Database = {
           id?: string
           ma: string
           mo_ta?: string | null
+          phu_trach_lead_id?: string | null
           phuong_quan?: string | null
           quoc_gia?: string
           tao_luc?: string
@@ -2112,6 +2114,7 @@ export type Database = {
           id?: string
           ma?: string
           mo_ta?: string | null
+          phu_trach_lead_id?: string | null
           phuong_quan?: string | null
           quoc_gia?: string
           tao_luc?: string
@@ -7264,17 +7267,25 @@ export type Database = {
           chien_dich_id: string | null
           dich_vu_quan_tam: string | null
           doi_tac_id: string | null
+          dong_luc: string | null
+          email: string | null
+          gia_tri_du_kien: number
+          giai_doan_id: string
+          giai_doan_luc: string
           ho_ten: string
           id: string
+          ket_qua: string
           khach_id: string | null
           link_id: string | null
           ly_do: string | null
+          ly_do_thua_id: string | null
           ma: string
           nguon_id: string
           nhu_cau: string | null
           owner_id: string | null
           owner_xac_nhan_luc: string | null
           sdt: string
+          sua_boi: string | null
           tao_boi: string | null
           tao_luc: string
           thoi_diem_phat_sinh: string
@@ -7287,17 +7298,25 @@ export type Database = {
           chien_dich_id?: string | null
           dich_vu_quan_tam?: string | null
           doi_tac_id?: string | null
+          dong_luc?: string | null
+          email?: string | null
+          gia_tri_du_kien?: number
+          giai_doan_id?: string
+          giai_doan_luc?: string
           ho_ten: string
           id?: string
+          ket_qua?: string
           khach_id?: string | null
           link_id?: string | null
           ly_do?: string | null
+          ly_do_thua_id?: string | null
           ma: string
           nguon_id: string
           nhu_cau?: string | null
           owner_id?: string | null
           owner_xac_nhan_luc?: string | null
           sdt: string
+          sua_boi?: string | null
           tao_boi?: string | null
           tao_luc?: string
           thoi_diem_phat_sinh?: string
@@ -7310,17 +7329,25 @@ export type Database = {
           chien_dich_id?: string | null
           dich_vu_quan_tam?: string | null
           doi_tac_id?: string | null
+          dong_luc?: string | null
+          email?: string | null
+          gia_tri_du_kien?: number
+          giai_doan_id?: string
+          giai_doan_luc?: string
           ho_ten?: string
           id?: string
+          ket_qua?: string
           khach_id?: string | null
           link_id?: string | null
           ly_do?: string | null
+          ly_do_thua_id?: string | null
           ma?: string
           nguon_id?: string
           nhu_cau?: string | null
           owner_id?: string | null
           owner_xac_nhan_luc?: string | null
           sdt?: string
+          sua_boi?: string | null
           tao_boi?: string | null
           tao_luc?: string
           thoi_diem_phat_sinh?: string
@@ -7392,6 +7419,246 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lead_giai_doan: {
+        Row: {
+          dang_dung: boolean
+          id: string
+          la_thang: boolean
+          la_thua: boolean
+          ma: string | null
+          mau: string
+          phien_ban: number
+          sla_phut: number | null
+          tao_luc: string
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          dang_dung?: boolean
+          id?: string
+          la_thang?: boolean
+          la_thua?: boolean
+          ma?: string | null
+          mau?: string
+          phien_ban?: number
+          sla_phut?: number | null
+          tao_luc?: string
+          ten: string
+          thu_tu?: number
+        }
+        Update: {
+          dang_dung?: boolean
+          id?: string
+          la_thang?: boolean
+          la_thua?: boolean
+          ma?: string | null
+          mau?: string
+          phien_ban?: number
+          sla_phut?: number | null
+          tao_luc?: string
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      lead_hoat_dong: {
+        Row: {
+          id: number
+          lead_id: string
+          loai: string
+          nguoi_id: string | null
+          noi_dung: string | null
+          tao_luc: string
+        }
+        Insert: {
+          id?: number
+          lead_id: string
+          loai: string
+          nguoi_id?: string | null
+          noi_dung?: string | null
+          tao_luc?: string
+        }
+        Update: {
+          id?: number
+          lead_id?: string
+          loai?: string
+          nguoi_id?: string | null
+          noi_dung?: string | null
+          tao_luc?: string
+        }
+        Relationships: []
+      }
+      lead_ly_do_thua: {
+        Row: {
+          dang_dung: boolean
+          id: string
+          ma: string | null
+          tao_luc: string
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          dang_dung?: boolean
+          id?: string
+          ma?: string | null
+          tao_luc?: string
+          ten: string
+          thu_tu?: number
+        }
+        Update: {
+          dang_dung?: boolean
+          id?: string
+          ma?: string | null
+          tao_luc?: string
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      lead_nguoi_ho_tro: {
+        Row: {
+          lead_id: string
+          nhan_vien_id: string
+          tao_luc: string
+          them_boi: string | null
+        }
+        Insert: {
+          lead_id: string
+          nhan_vien_id: string
+          tao_luc?: string
+          them_boi?: string | null
+        }
+        Update: {
+          lead_id?: string
+          nhan_vien_id?: string
+          tao_luc?: string
+          them_boi?: string | null
+        }
+        Relationships: []
+      }
+      lead_nhac: {
+        Row: {
+          da_bao_luc: string | null
+          dong_luc: string | null
+          id: string
+          lead_id: string
+          nhac_cho_id: string
+          nhac_luc: string
+          noi_dung: string
+          tao_boi: string | null
+          tao_luc: string
+          trang_thai: string
+        }
+        Insert: {
+          da_bao_luc?: string | null
+          dong_luc?: string | null
+          id?: string
+          lead_id: string
+          nhac_cho_id: string
+          nhac_luc: string
+          noi_dung: string
+          tao_boi?: string | null
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Update: {
+          da_bao_luc?: string | null
+          dong_luc?: string | null
+          id?: string
+          lead_id?: string
+          nhac_cho_id?: string
+          nhac_luc?: string
+          noi_dung?: string
+          tao_boi?: string | null
+          tao_luc?: string
+          trang_thai?: string
+        }
+        Relationships: []
+      }
+      lead_tac_vu: {
+        Row: {
+          cong_viec_id: string | null
+          dong_boi: string | null
+          dong_luc: string | null
+          giao_cho_id: string
+          han: string | null
+          id: string
+          lead_id: string
+          nguon: string
+          tao_boi: string | null
+          tao_luc: string
+          ten: string
+          trang_thai: string
+        }
+        Insert: {
+          cong_viec_id?: string | null
+          dong_boi?: string | null
+          dong_luc?: string | null
+          giao_cho_id: string
+          han?: string | null
+          id?: string
+          lead_id: string
+          nguon?: string
+          tao_boi?: string | null
+          tao_luc?: string
+          ten: string
+          trang_thai?: string
+        }
+        Update: {
+          cong_viec_id?: string | null
+          dong_boi?: string | null
+          dong_luc?: string | null
+          giao_cho_id?: string
+          han?: string | null
+          id?: string
+          lead_id?: string
+          nguon?: string
+          tao_boi?: string | null
+          tao_luc?: string
+          ten?: string
+          trang_thai?: string
+        }
+        Relationships: []
+      }
+      lead_tep: {
+        Row: {
+          duong_dan: string
+          id: string
+          kich_thuoc: number
+          lead_id: string
+          mime: string | null
+          nguon: string
+          nhan: string
+          tao_boi: string | null
+          tao_luc: string
+          ten: string
+        }
+        Insert: {
+          duong_dan: string
+          id?: string
+          kich_thuoc?: number
+          lead_id: string
+          mime?: string | null
+          nguon?: string
+          nhan?: string
+          tao_boi?: string | null
+          tao_luc?: string
+          ten: string
+        }
+        Update: {
+          duong_dan?: string
+          id?: string
+          kich_thuoc?: number
+          lead_id?: string
+          mime?: string | null
+          nguon?: string
+          nhan?: string
+          tao_boi?: string | null
+          tao_luc?: string
+          ten?: string
+        }
+        Relationships: []
       }
       lead_lien_he: {
         Row: {
@@ -8192,6 +8459,7 @@ export type Database = {
         Row: {
           hoat_dong: boolean
           id: string
+          loai: string
           ma: string
           nhom: string
           ten: string
@@ -8200,6 +8468,7 @@ export type Database = {
         Insert: {
           hoat_dong?: boolean
           id?: string
+          loai?: string
           ma: string
           nhom?: string
           ten: string
@@ -8208,6 +8477,7 @@ export type Database = {
         Update: {
           hoat_dong?: boolean
           id?: string
+          loai?: string
           ma?: string
           nhom?: string
           ten?: string
@@ -12239,6 +12509,45 @@ export type Database = {
           },
         ]
       }
+      v_lead_ds: {
+        Row: {
+          cap_nhat_luc: string | null
+          chi_nhanh_id: string | null
+          chien_dich_id: string | null
+          dich_vu_quan_tam: string | null
+          doi_tac_id: string | null
+          dong_luc: string | null
+          email: string | null
+          gia_tri_du_kien: number | null
+          giai_doan_id: string | null
+          giai_doan_luc: string | null
+          ho_ten: string | null
+          ho_tro_ids: string[] | null
+          id: string | null
+          ket_qua: string | null
+          khach_id: string | null
+          link_id: string | null
+          ly_do: string | null
+          ly_do_thua_id: string | null
+          ma: string | null
+          nguon_id: string | null
+          nhac_som_nhat: string | null
+          nhu_cau: string | null
+          owner_id: string | null
+          owner_xac_nhan_luc: string | null
+          sdt: string | null
+          so_nhac_cho: number | null
+          so_tac_vu_mo: number | null
+          so_tep: number | null
+          sua_boi: string | null
+          tao_boi: string | null
+          tao_luc: string | null
+          thoi_diem_phat_sinh: string | null
+          trang_thai_lien_he: string | null
+          trang_thai_phan_bo: string | null
+        }
+        Relationships: []
+      }
       v_ton_lo: {
         Row: {
           chi_nhanh_id: string | null
@@ -13441,6 +13750,7 @@ export type Database = {
       luu_tuy_chon_gia_dich_vu: { Args: { p_dich_vu: string; p_ds: Json }; Returns: number }
       tinh_han_the: { Args: { p_thang: number | null; p_ngay: number | null; p_tu: string }; Returns: string | null }
       so_tiep_theo: { Args: { p_khoa: string }; Returns: number }
+      lead_gd_cau_hinh: { Args: { p_phien_ban: number; p_thao_tac: string; p_id: string; p_ten: string; p_mau: string; p_sla: number }; Returns: number }
       tao_phieu_theo_buoi: { Args: { p_buoi: string; p_nguoi: string }; Returns: string }
       sua_dong_phieu_buoi: { Args: { p_dong: string; p_so_luong: number; p_nguoi: string }; Returns: undefined }
       them_dong_phieu_buoi: { Args: { p_phieu: string; p_san_pham: string; p_so_luong: number; p_nguoi: string }; Returns: string }

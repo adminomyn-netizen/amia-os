@@ -154,7 +154,7 @@ export const MODULE: Module[] = [
     moTa: "Khách tiềm năng, chiến dịch, nội dung, nguồn giới thiệu và báo cáo phễu.",
     nhom: [
       { nhan: "Khách tiềm năng", the: [
-        { ten: "Lead & phễu khách", moTa: "Nhận lead, ghi liên hệ, chuyển thành khách; không xoá lead.", duongDan: "/marketing/lead", trangThai: "san_sang", quyen: ["lead.xu_ly"] },
+        { ten: "Hộp Lead", moTa: "Kanban kéo thả theo giai đoạn, bảng nhập nhanh, tác vụ, nhắc việc, tệp; không xoá lead.", duongDan: "/marketing/lead", trangThai: "san_sang", quyen: ["lead.xu_ly", "mkt.xem"] },
         { ten: "Hộp thư đa kênh", moTa: "Trả lời khách qua Zalo OA, Messenger (gửi thật khi nối kênh).", duongDan: "/marketing/hop-thu", trangThai: "san_sang", quyen: ["mkt.xem"] },
       ] },
       { nhan: "Chiến dịch & nội dung", the: [

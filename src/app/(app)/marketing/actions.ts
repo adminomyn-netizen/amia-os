@@ -7,6 +7,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, so } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM } from "@/lib/dinh-dang";
 import { CAN_LY_DO, KET_QUA_LIEN_HE, docMucHoaHong } from "@/lib/marketing";
+import { layLeadChoXuLy } from "@/lib/lead-quyen";
 
 type KQ = { ok?: true; loi?: string };
 const lamMoi = () => { revalidatePath("/marketing", "layout"); };
@@ -15,17 +16,22 @@ const dem = async (k: string, tien: string, n = 6) => `${tien}${String(Number((a
 const tien = (fd: FormData, k: string) => Math.max(0, Math.round(so(fd, k)));
 
 // ─── Lead ───────────────────────────────────────────────────────────────────
+// Giai đoạn, kết quả open/won/lost và dòng thời gian do trigger 0313 lo; ở đây chỉ kiểm quyền + dữ liệu. Mọi lần sửa ghi sua_boi để dòng thời gian đúng người.
+// Phần pipeline (kéo thả, hỗ trợ, tác vụ, nhắc, tệp, cấu hình cột) ở ./lead/actions.ts.
+const SO_CON_MO = (db: ReturnType<typeof sb>, sdt: string) =>
+  db.from("lead").select("ma").eq("sdt", sdt).neq("ket_qua", "lost").not("trang_thai_phan_bo", "in", "(lead_trung,khong_hop_le)").limit(1).maybeSingle();
 export async function taoLead(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("lead.xu_ly");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const db = sb();
-  const hoTen = chuoi(fd, "ho_ten"), sdt = chuanSdt(chuoi(fd, "sdt")), nguon = chuoi(fd, "nguon_id");
+  const hoTen = chuoi(fd, "ho_ten"), sdt = chuanSdt(chuoi(fd, "sdt")), nguon = chuoi(fd, "nguon_id"), email = chuoiHoacNull(fd, "email")?.toLowerCase() ?? null;
   const cn = nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id");
   if (!hoTen || !nguon || !cn) return { loi: "Nhập họ tên, nguồn và chi nhánh." };
   if (!coSdtHopLe(sdt)) return { loi: "Số điện thoại chưa hợp lệ (bắt đầu bằng 0, 10–11 số)." };
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { loi: "Email chưa hợp lệ." };
   const [{ data: khach }, { data: dup }, { data: ng }] = await Promise.all([
     db.from("khach_hang").select("ma, ho_ten").eq("dien_thoai", sdt).maybeSingle(),
-    db.from("lead").select("ma").eq("sdt", sdt).not("trang_thai_phan_bo", "in", "(lead_trung,khong_hop_le)").not("trang_thai_lien_he", "in", "(da_ket_thuc,sai_sdt,khong_co_nhu_cau,khong_phu_hop,trung_lead)").maybeSingle(),
+    SO_CON_MO(db, sdt),
     db.from("nguon_lead").select("id").eq("id", nguon).eq("hoat_dong", true).maybeSingle(),
   ]);
   if (khach) return { loi: `Số này đã là khách ${khach.ho_ten} (${khach.ma}). Không tạo lead mới cho khách cũ.` };
@@ -33,8 +39,8 @@ export async function taoLead(fd: FormData): Promise<KQ> {
   if (!ng) return { loi: "Nguồn không hợp lệ hoặc đã ngừng." };
   const nhanNgay = bat(fd, "nhan_ngay");
   const { error } = await db.from("lead").insert({
-    ma: await dem("lead", "LD"), ho_ten: hoTen, sdt, nguon_id: nguon, chien_dich_id: chuoiHoacNull(fd, "chien_dich_id"), doi_tac_id: chuoiHoacNull(fd, "doi_tac_id"), chi_nhanh_id: cn,
-    dich_vu_quan_tam: chuoiHoacNull(fd, "dich_vu_quan_tam"), nhu_cau: chuoiHoacNull(fd, "nhu_cau"), tao_boi: nd.nhanVienId,
+    ma: await dem("lead", "LD"), ho_ten: hoTen, sdt, email, gia_tri_du_kien: tien(fd, "gia_tri_du_kien"), nguon_id: nguon, chien_dich_id: chuoiHoacNull(fd, "chien_dich_id"), doi_tac_id: chuoiHoacNull(fd, "doi_tac_id"), chi_nhanh_id: cn,
+    dich_vu_quan_tam: chuoiHoacNull(fd, "dich_vu_quan_tam"), nhu_cau: chuoiHoacNull(fd, "nhu_cau"), tao_boi: nd.nhanVienId, sua_boi: nd.nhanVienId,
     ...(nhanNgay ? { owner_id: nd.nhanVienId, owner_xac_nhan_luc: new Date().toISOString(), trang_thai_phan_bo: "da_xac_nhan" } : {}),
   });
   if (error) return { loi: error.code === "23505" ? "Số này đang có lead khác." : thongBaoLoi(error) };
@@ -46,37 +52,39 @@ export async function taoLead(fd: FormData): Promise<KQ> {
 export async function nhanLead(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("lead.xu_ly");
   if (!nd) return { loi: KHONG_DU_QUYEN };
-  const { data, error } = await sb().from("lead").update({ owner_id: nd.nhanVienId, owner_xac_nhan_luc: new Date().toISOString(), trang_thai_phan_bo: "da_xac_nhan", cap_nhat_luc: new Date().toISOString() }).eq("id", chuoi(fd, "id")).is("owner_id", null).select("id");
+  let q = sb().from("lead").update({ owner_id: nd.nhanVienId, owner_xac_nhan_luc: new Date().toISOString(), trang_thai_phan_bo: "da_xac_nhan", sua_boi: nd.nhanVienId }).eq("id", chuoi(fd, "id")).is("owner_id", null);
+  if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  const { data, error } = await q.select("id");
   if (error) return { loi: thongBaoLoi(error) };
   if (!data?.length) return { loi: "Lead đã có người phụ trách." };
+  await sb().from("lead_nguoi_ho_tro").delete().eq("lead_id", data[0].id).eq("nhan_vien_id", nd.nhanVienId);
   lamMoi();
   return { ok: true };
 }
 
-/** Chuyển/thu hồi owner phải do người có quyền duyệt (SOP: cần approval). */
+/** Chuyển/thu hồi owner phải do người có quyền duyệt (SOP: cần approval). Người được giao đang là người hỗ trợ thì bỏ khỏi danh sách hỗ trợ. */
 export async function giaoLead(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("mkt.duyet");
   if (!nd) return { loi: KHONG_DU_QUYEN };
-  const owner = chuoi(fd, "owner_id");
+  const owner = chuoi(fd, "owner_id"), id = chuoi(fd, "id");
   const { data: n } = await sb().from("nhan_vien").select("id").eq("id", owner).eq("hoat_dong", true).maybeSingle();
   if (!n) return { loi: "Chọn người phụ trách hợp lệ." };
-  const { error } = await sb().from("lead").update({ owner_id: owner, owner_xac_nhan_luc: null, trang_thai_phan_bo: "da_phan_bo", cap_nhat_luc: new Date().toISOString() }).eq("id", chuoi(fd, "id"));
+  let q = sb().from("lead").update({ owner_id: owner, owner_xac_nhan_luc: null, trang_thai_phan_bo: "da_phan_bo", sua_boi: nd.nhanVienId }).eq("id", id);
+  if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  const { data, error } = await q.select("id");
   if (error) return { loi: thongBaoLoi(error) };
+  if (!data?.length) return { loi: "Không tìm thấy lead." };
+  await sb().from("lead_nguoi_ho_tro").delete().eq("lead_id", id).eq("nhan_vien_id", owner);
   lamMoi();
   return { ok: true };
-}
-
-async function layLeadChoXuLy(id: string, nd: { nhanVienId: string; quyen: readonly string[] }) {
-  const { data } = await sb().from("lead").select("*").eq("id", id).maybeSingle();
-  if (!data) return null;
-  return data.owner_id === nd.nhanVienId || nd.quyen.includes("mkt.duyet") ? data : null;
 }
 
 export async function ghiLienHe(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("lead.xu_ly");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const lead = await layLeadChoXuLy(chuoi(fd, "id"), nd);
-  if (!lead) return { loi: "Chỉ người phụ trách (hoặc người duyệt) ghi liên hệ cho lead này." };
+  if (!lead) return { loi: "Chỉ người phụ trách, người hỗ trợ (hoặc người duyệt) ghi liên hệ cho lead này." };
+  if (lead.ket_qua !== "open") return { loi: "Lead đã đóng. Mở lại lead trước khi ghi liên hệ." };
   const kq = chuoi(fd, "ket_qua"), kenh = chuoi(fd, "kenh"), ghiChu = chuoiHoacNull(fd, "ghi_chu"), han = chuoiHoacNull(fd, "han_tiep");
   if (!(KET_QUA_LIEN_HE as readonly string[]).includes(kq) || !["goi", "zalo", "sms", "truc_tiep", "khac"].includes(kenh)) return { loi: "Chọn kênh và kết quả liên hệ." };
   if (CAN_LY_DO.includes(kq) && !ghiChu) return { loi: "Kết thúc lead cần ghi lý do (SOP không xoá lead)." };
@@ -84,13 +92,18 @@ export async function ghiLienHe(fd: FormData): Promise<KQ> {
   const db = sb();
   const { error } = await db.from("lead_lien_he").insert({ lead_id: lead.id, kenh, ket_qua: kq, ghi_chu: ghiChu, han_tiep: han, nguoi_id: nd.nhanVienId });
   if (error) return { loi: thongBaoLoi(error) };
-  const { error: e2 } = await db.from("lead").update({ trang_thai_lien_he: kq, ly_do: CAN_LY_DO.includes(kq) ? ghiChu : lead.ly_do, cap_nhat_luc: new Date().toISOString(), ...(lead.owner_xac_nhan_luc ? {} : { owner_id: lead.owner_id ?? nd.nhanVienId, owner_xac_nhan_luc: new Date().toISOString(), trang_thai_phan_bo: "da_xac_nhan" }) }).eq("id", lead.id);
+  // Giai đoạn tự tiến theo kết quả (trigger 0313): kết thúc → cột Thua kèm lý do.
+  const { error: e2 } = await db.from("lead").update({ trang_thai_lien_he: kq, ly_do: CAN_LY_DO.includes(kq) ? ghiChu : lead.ly_do, sua_boi: nd.nhanVienId, ...(lead.owner_xac_nhan_luc ? {} : { owner_id: lead.owner_id ?? nd.nhanVienId, owner_xac_nhan_luc: new Date().toISOString(), trang_thai_phan_bo: "da_xac_nhan" }) }).eq("id", lead.id);
   if (e2) return { loi: thongBaoLoi(e2) };
+  // Hẹn liên hệ tiếp = một nhắc việc 08:00 ngày đó cho người phụ trách (hiện ở chuông khi đến giờ).
+  if (han && !CAN_LY_DO.includes(kq)) {
+    await db.from("lead_nhac").insert({ lead_id: lead.id, noi_dung: "Liên hệ lại theo hẹn", nhac_luc: new Date(`${han}T08:00:00+07:00`).toISOString(), nhac_cho_id: lead.owner_id ?? nd.nhanVienId, tao_boi: nd.nhanVienId });
+  }
   lamMoi();
   return { ok: true };
 }
 
-/** Đánh dấu trùng / không hợp lệ: đổi trạng thái kèm lý do, không xoá. */
+/** Đánh dấu trùng / không hợp lệ: đổi trạng thái kèm lý do, không xoá (lead sang cột Thua). */
 export async function danhDauLead(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("lead.xu_ly");
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -98,7 +111,7 @@ export async function danhDauLead(fd: FormData): Promise<KQ> {
   if (!lead) return { loi: "Chỉ người phụ trách (hoặc người duyệt) đánh dấu lead này." };
   const loai = chuoi(fd, "loai"), ly = chuoi(fd, "ly_do");
   if (!["lead_trung", "khong_hop_le"].includes(loai) || !ly) return { loi: "Chọn loại và nhập lý do." };
-  const { error } = await sb().from("lead").update({ trang_thai_phan_bo: loai, trang_thai_lien_he: loai === "lead_trung" ? "trung_lead" : "da_ket_thuc", ly_do: ly, cap_nhat_luc: new Date().toISOString() }).eq("id", lead.id);
+  const { error } = await sb().from("lead").update({ trang_thai_phan_bo: loai, trang_thai_lien_he: loai === "lead_trung" ? "trung_lead" : "da_ket_thuc", ly_do: ly, sua_boi: nd.nhanVienId }).eq("id", lead.id);
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();
   return { ok: true };
@@ -116,11 +129,11 @@ export async function chuyenLeadThanhKhach(fd: FormData): Promise<KQ> {
   let khachId = cu?.id;
   if (!khachId) {
     const { data: ng } = await db.from("nguon_lead").select("ten").eq("id", lead.nguon_id).maybeSingle();
-    const { data: moi, error } = await db.from("khach_hang").insert({ ma: await dem("khach", "KH"), ho_ten: lead.ho_ten, dien_thoai: lead.sdt, chi_nhanh_id: lead.chi_nhanh_id, nguon: "mkt", nguon_chi_tiet: ng?.ten ?? null, nguoi_phu_trach_id: lead.owner_id ?? nd.nhanVienId, ghi_chu: lead.nhu_cau, tao_boi: nd.nhanVienId }).select("id").single();
+    const { data: moi, error } = await db.from("khach_hang").insert({ ma: await dem("khach", "KH"), ho_ten: lead.ho_ten, dien_thoai: lead.sdt, email: lead.email, chi_nhanh_id: lead.chi_nhanh_id, nguon: "mkt", nguon_chi_tiet: ng?.ten ?? null, nguoi_phu_trach_id: lead.owner_id ?? nd.nhanVienId, ghi_chu: lead.nhu_cau, tao_boi: nd.nhanVienId }).select("id").single();
     if (error || !moi) return { loi: thongBaoLoi(error) };
     khachId = moi.id;
   }
-  const { error: e2 } = await db.from("lead").update({ khach_id: khachId, cap_nhat_luc: new Date().toISOString() }).eq("id", lead.id);
+  const { error: e2 } = await db.from("lead").update({ khach_id: khachId, sua_boi: nd.nhanVienId }).eq("id", lead.id);
   if (e2) return { loi: thongBaoLoi(e2) };
   revalidatePath("/khach-hang");
   lamMoi();
@@ -249,10 +262,11 @@ export async function luuLink(fd: FormData): Promise<KQ> {
 export async function luuNguonLead(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("mkt.sua");
   if (!nd) return { loi: KHONG_DU_QUYEN };
-  const id = chuoi(fd, "id"), ten = chuoi(fd, "ten");
+  const id = chuoi(fd, "id"), ten = chuoi(fd, "ten"), loai = chuoi(fd, "loai") || "nguon_ngoai";
   if (!ten) return { loi: "Nhập tên nguồn." };
-  const { error } = id ? await sb().from("nguon_lead").update({ ten, hoat_dong: chuoi(fd, "hoat_dong") !== "0" }).eq("id", id)
-    : await sb().from("nguon_lead").insert({ ma: `n${Date.now().toString(36)}`, ten, nhom: "khac", thu_tu: 99 });
+  if (!["nguon_ngoai", "doi_tac"].includes(loai)) return { loi: "Chọn loại nguồn." };
+  const { error } = id ? await sb().from("nguon_lead").update({ ten, loai, hoat_dong: chuoi(fd, "hoat_dong") !== "0" }).eq("id", id)
+    : await sb().from("nguon_lead").insert({ ma: `n${Date.now().toString(36)}`, ten, loai, nhom: loai === "doi_tac" ? "gioi_thieu" : "khac", thu_tu: 99 });
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();
   return { ok: true };

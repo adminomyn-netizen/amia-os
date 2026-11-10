@@ -21,6 +21,7 @@ import { BaoCaoDatLich, BaoCaoDungDichVu, BaoCaoThuNgan } from "@/components/bao
 import { BaoCaoDanhGia } from "@/components/bao-cao/BaoCaoDanhGia";
 import { BaoCaoTiLeChot } from "@/components/bao-cao/BaoCaoTiLeChot";
 import { BaoCaoVoucher } from "@/components/bao-cao/BaoCaoVoucher";
+import { BaoCaoThoiGianDv } from "@/components/bao-cao/BaoCaoThoiGianDv";
 import { chonNhom, NHOM_KY } from "@/lib/bao-cao-du-lieu";
 import { BaoCaoLichSuDungThe, BaoCaoTheoChiNhanh, BaoCaoTheoKhachHang } from "@/components/bao-cao/BaoCaoGap";
 import { BaoCaoBanSanPham, BaoCaoChiPhiDichVu, BaoCaoNhapKho, BaoCaoNhapXuatKho, BaoCaoTonTheoLo, BaoCaoXuatKho } from "@/components/bao-cao/BaoCaoKho";
@@ -33,9 +34,9 @@ import { XemKhachMuc } from "@/components/bao-cao/XemKhachMuc";
 import { layDanhSachNo } from "@/lib/bao-cao-no";
 import { gomTheoKy, HANG_KHACH, KIEU_GOM, khoaKy, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, layTongKhoanChi, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
-const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "voucher", ten: "Hiệu quả voucher" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }, { ma: "nhap-xuat-kho", ten: "Nhập xuất kho hàng" }, { ma: "nhap-kho", ten: "Báo cáo nhập kho" }, { ma: "xuat-kho", ten: "Xuất kho bởi nhân viên" }, { ma: "ban-san-pham", ten: "Sản phẩm đã bán" }, { ma: "ton-lo", ten: "Báo cáo tồn theo lô hàng" }, { ma: "chi-phi-dv", ten: "Báo cáo chi phí dịch vụ" }];
+const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "voucher", ten: "Hiệu quả voucher" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "thoi-gian-dv", ten: "Thời gian dịch vụ" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }, { ma: "nhap-xuat-kho", ten: "Nhập xuất kho hàng" }, { ma: "nhap-kho", ten: "Báo cáo nhập kho" }, { ma: "xuat-kho", ten: "Xuất kho bởi nhân viên" }, { ma: "ban-san-pham", ten: "Sản phẩm đã bán" }, { ma: "ton-lo", ten: "Báo cáo tồn theo lô hàng" }, { ma: "chi-phi-dv", ten: "Báo cáo chi phí dịch vụ" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
-const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "danh-gia", "ti-le-chot", "ton-lo"]);
+const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "thoi-gian-dv", "danh-gia", "ti-le-chot", "ton-lo"]);
 /** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
 const TAB_NHOM: Record<string, "tong" | "thang"> = { "thu-ngan": "tong", "dat-lich": "thang", "dung-dich-vu": "thang" };
 const Chip = ({ href, dang, ten }: { href: string; dang: boolean; ten: string }) => <Link href={href} scroll={false} aria-current={dang ? "page" : undefined} className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${dang ? "bg-nhan text-white" : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{ten}</Link>;
@@ -46,7 +47,7 @@ const ChipNo = ({ nt, them }: { nt: "ds" | "tra"; them: string }) => (
 );
 const TieuDeMuc = ({ children }: { children: React.ReactNode }) => <h2 className="mb-3 mt-6 text-[15px] font-medium text-muc">{children}</h2>;
 
-export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; tu?: string; den?: string; cn?: string; nhom?: string; dc?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; loai?: string; lm?: string; nt?: string; hang?: string; tt?: string; lt?: string; so?: string; nhom_sp?: string; nguon?: string; ncc?: string; v?: string; dv?: string; nv?: string; ct?: string; han?: string }> }) {
+export default async function TrangBaoCao({ searchParams }: { searchParams: Promise<{ tab?: string; qg?: string; tu?: string; den?: string; cn?: string; nhom?: string; dc?: string; sao?: string; q?: string; trang?: string; vai?: string; the?: string; nk?: string; gom?: string; loai?: string; lm?: string; nt?: string; hang?: string; tt?: string; lt?: string; so?: string; nhom_sp?: string; nguon?: string; ncc?: string; v?: string; dv?: string; nv?: string; ct?: string; han?: string }> }) {
   const nd = await yeuCauQuyen("baocao.xem");
   const sp = await searchParams;
   const tien = coQuyen(nd, "baocao.tien");
@@ -72,7 +73,9 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   let noiDung: React.ReactNode;
 
   const dsChiNhanh = nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
-  if (tab === "nhap-xuat-kho") {
+  if (tab === "thoi-gian-dv") {
+    noiDung = <BaoCaoThoiGianDv tu={tu} den={den} cn={cn} chiNhanh={dsChiNhanh} nv={sp.nv || undefined} dv={sp.dv || undefined} q={sp.q || undefined} chiQua={sp.qg === "1"} trang={soTrang(sp.trang)} />;
+  } else if (tab === "nhap-xuat-kho") {
     noiDung = <BaoCaoNhapXuatKho l={lKho} nhom={sp.nhom_sp || undefined} so={soDongKho(sp.so)} />;
   } else if (tab === "nhap-kho") {
     noiDung = <BaoCaoNhapKho l={lKho} nguon={sp.nguon} ncc={sp.ncc || undefined} tq={sp.v === "tq"} />;
@@ -344,7 +347,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   return (
     <>
       <TieuDeNoi tieuDe="Báo cáo" phu={tien ? "Số liệu tính trực tiếp từ sổ hoá đơn, sổ thu tiền, sổ thẻ và sổ kho" : "Báo cáo vận hành"}>
-        {(tien || tab === "dat-lich" || tab === "danh-gia" || tab === "ti-le-chot" || tab === "ton-lo") && <a href={xuat} download aria-label={`Xuất Excel báo cáo ${tabs.find((t) => t.ma === tab)?.ten ?? ""} theo bộ lọc đang chọn`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
+        {tab !== "thoi-gian-dv" && (tien || tab === "dat-lich" || tab === "danh-gia" || tab === "ti-le-chot" || tab === "ton-lo") && <a href={xuat} download aria-label={`Xuất Excel báo cáo ${tabs.find((t) => t.ma === tab)?.ten ?? ""} theo bộ lọc đang chọn`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>}
       </TieuDeNoi>
       <Tab muc={tabs} dang={tab} goc="/bao-cao" them={them} />
       {noiDung}

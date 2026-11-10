@@ -12,6 +12,8 @@ import { DauTrang } from "@/components/layout/DauTrang";
 import { ThanhTabDuoi } from "@/components/layout/ThanhTabDuoi";
 import { CuonVeDau } from "@/components/layout/CuonVeDau";
 import { ChatNoi } from "@/components/chat/ChatNoi";
+import { CanhBaoQuaGio } from "@/components/layout/CanhBaoQuaGio";
+import { phamViQuaGio } from "@/lib/qua-gio";
 
 /** Thanh bên + chấm đỏ số lịch hẹn hôm nay (như SalonHero). Lỗi truy vấn thì thôi (không chấm), không làm hỏng khung trang. */
 async function ThanhBenCoDem({ muc, cn }: { muc: MucNgang[]; cn: string | undefined }) {
@@ -52,6 +54,7 @@ export default async function KhungUngDung({ children }: { children: React.React
           <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-10 lg:pb-16 lg:pt-6">{children}</main>
           <CuonVeDau />
           {muc.length > 0 && <ThanhTabDuoi muc={muc} />}
+          {!nd.phaiDoiMatKhau && phamViQuaGio(nd) !== "khong" && <CanhBaoQuaGio />}
           {!nd.phaiDoiMatKhau && <ChatNoi choPhepSua={nd.vaiTro === "chu" || nd.vaiTro === "ky_thuat"} hoTen={nd.hoTen} />}
         </div>
       </div>

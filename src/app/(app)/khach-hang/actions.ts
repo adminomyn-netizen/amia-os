@@ -12,6 +12,7 @@ import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
 import { docKhachTuExcel } from "@/lib/nhap-khach";
+import { cotDoi } from "@/lib/lich-su-sua-khach";
 
 type KQ = { ok?: true; loi?: string; id?: string };
 const NGUON_HOP_LE = ["mkt", "telesale", "tu_van", "khach_cu_gioi_thieu", "khac"];
@@ -34,7 +35,7 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   if (trung && trung.id !== id) return { loi: `Số này đã có khách: ${trung.ho_ten} (${trung.ma}).` };
 
   // Khi sửa: đọc bản ghi hiện tại để giữ người giới thiệu nếu người dùng không đổi (form hiện sẵn mã người giới thiệu cũ).
-  const { data: cu } = id ? await db.from("khach_hang").select("dong_y_dung_hinh, dong_y_dung_hinh_luc, nguon, nguoi_gioi_thieu_id").eq("id", id).maybeSingle() : { data: null };
+  const { data: cu } = id ? await db.from("khach_hang").select("*").eq("id", id).maybeSingle() : { data: null };
   let nguoiGt: string | null = cu?.nguoi_gioi_thieu_id ?? null;
   const gt = chuoi(fd, "nguoi_gioi_thieu");
   if (nguon === "khach_cu_gioi_thieu") {
@@ -70,6 +71,9 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
     const doiDongY = dongY !== !!cu?.dong_y_dung_hinh;
     const { error } = await db.from("khach_hang").update({ ...row, ...(doiDongY ? { dong_y_dung_hinh_luc: dongY ? new Date().toISOString() : null } : {}) }).eq("id", id);
     if (error) return { loi: thongBaoLoi(error) };
+    // Lịch sử sửa của nhân viên (mục 3): chỉ các cột thật sự đổi, hiện ở tab Thông tin của hồ sơ.
+    const doi = cotDoi(cu, row);
+    if (Object.keys(doi).length) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_khach", doi_tuong: "khach_hang", doi_tuong_id: id, chi_tiet: { doi } });
     if (doiDongY && !dongY) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "rut_dong_y_hinh", doi_tuong: "khach_hang", doi_tuong_id: id, chi_tiet: { moc_dong_y_cu: cu?.dong_y_dung_hinh_luc ?? null } });
   } else {
     const ma = "KH" + String(await soTiep("khach")).padStart(6, "0");
@@ -151,10 +155,12 @@ export async function suaGhiChuChung(fd: FormData): Promise<KQ> {
   const ghiChu = chuoi(fd, "ghi_chu").slice(0, 2000) || null;
   if (!id) return { loi: "Không tìm thấy khách." };
   const db = sb();
-  const { data: k } = await db.from("khach_hang").select("id, chi_nhanh_id").eq("id", id).maybeSingle();
+  const { data: k } = await db.from("khach_hang").select("id, chi_nhanh_id, ghi_chu").eq("id", id).maybeSingle();
   if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy khách." };
-  const { error } = await db.from("khach_hang").update({ ghi_chu: ghiChu }).eq("id", id);
+  if ((k.ghi_chu ?? null) === ghiChu) return { ok: true };
+  const { error } = await db.from("khach_hang").update({ ghi_chu: ghiChu, cap_nhat_luc: new Date().toISOString() }).eq("id", id);
   if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_khach", doi_tuong: "khach_hang", doi_tuong_id: id, chi_tiet: { doi: { ghi_chu: [k.ghi_chu ?? null, ghiChu] } } });
   revalidatePath(`/khach-hang/${id}`);
   return { ok: true };
 }

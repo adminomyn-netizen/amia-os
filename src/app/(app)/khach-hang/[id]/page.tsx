@@ -41,6 +41,7 @@ import { dichVuChoNhac } from "@/lib/nhac-cham-soc-may-chu";
 import { HopTaoNhac } from "@/components/khach/HopTaoNhac";
 import { NutTrangThaiNhac } from "@/components/khach/NutTrangThaiNhac";
 import { taoNhacTay } from "../nhac-nho/actions";
+import { moTaDoi } from "@/lib/lich-su-sua-khach";
 
 /** Nhãn trạng thái của lịch hẹn sắp tới (chỉ 3 trạng thái chưa diễn ra). */
 const NHAN_TT_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận", da_xac_nhan: "Đã xác nhận", cho_phuc_vu: "Chờ phục vụ" };
@@ -150,6 +151,13 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
       ["Nguồn khách", NHAN_NGUON[k.nguon ?? ""] ?? k.nguon], ["Chi tiết nguồn", k.nguon_chi_tiet ?? ""], ["Người giới thiệu", nguoiGt ? `${nguoiGt.ho_ten} (${nguoiGt.ma})` : k.nguon === "khach_cu_gioi_thieu" ? "Chưa nối người giới thiệu (dữ liệu SalonHero)" : ""], ["Người phụ trách", tenNv.get(k.nguoi_phu_trach_id ?? "") ?? ""],
       ["Đồng ý dùng hình ảnh", k.dong_y_dung_hinh ? `Có${k.dong_y_dung_hinh_luc ? ` (${ngayVN(k.dong_y_dung_hinh_luc)})` : ""}` : "Chưa"], ["Ghi chú chung", k.ghi_chu ?? ""],
     ];
+    // Lịch sử sửa hồ sơ của nhân viên (mục 3): 20 lần gần nhất, từ nhật ký "sua_khach".
+    const { data: nkSua } = await db.from("nhat_ky_truy_cap").select("id, nguoi_id, luc, chi_tiet").eq("doi_tuong", "khach_hang").eq("doi_tuong_id", id).eq("hanh_dong", "sua_khach").order("luc", { ascending: false }).limit(20);
+    const idThieu = [...new Set((nkSua ?? []).flatMap((r) => [r.nguoi_id, ...Object.entries(((r.chi_tiet as { doi?: Record<string, [unknown, unknown]> } | null)?.doi) ?? {}).filter(([c]) => c === "nguoi_phu_trach_id").flatMap(([, v]) => v)]).filter((x): x is string => typeof x === "string" && !tenNv.has(x)))];
+    if (idThieu.length) for (const n of (await db.from("nhan_vien").select("id, ho_ten").in("id", idThieu)).data ?? []) tenNv.set(n.id, n.ho_ten);
+    const tenCnSua = new Map((cn ?? []).map((c) => [c.id, c.ten]));
+    const dongSua = (nkSua ?? []).map((r) => ({ id: String(r.id), luc: r.luc, nguoi: tenNv.get(r.nguoi_id ?? "") ?? "—",
+      doi: moTaDoi(((r.chi_tiet as { doi?: Record<string, [string | number | boolean | null, string | number | boolean | null]> } | null)?.doi) ?? {}, { xemSdt: coQuyen(nd, "khach.sdt"), ten: (cot, v) => (cot === "chi_nhanh_id" ? tenCnSua.get(v) : cot === "nguoi_phu_trach_id" ? tenNv.get(v) : undefined) }) }));
     noiDung = (
       <>
         <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
@@ -174,6 +182,17 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
             { nhan: "Tình trạng", hienThi: (r) => <NhanTinhTrangThe tt={r.tinh_trang} /> },
           ]} />
+        <h3 className="mb-2 mt-8 text-[14px] font-medium text-muc">Lịch sử sửa thông tin</h3>
+        {dongSua.length === 0 ? <p className="text-[13px] text-muc-3">Chưa có lần sửa nào được ghi (ghi từ 10/11/2026).</p> : (
+          <ol className="space-y-2.5 text-[13px]">
+            {dongSua.map((r) => (
+              <li key={r.id} className="border-l-2 border-vien-dam pl-3">
+                <p className="text-[12px] text-muc-3">{ngayGioVN(r.luc)} · {r.nguoi}</p>
+                <ul className="mt-0.5 text-muc-2">{r.doi.map((x, i) => <li key={i} className="whitespace-pre-line [overflow-wrap:anywhere]">{x}</li>)}</ul>
+              </li>
+            ))}
+          </ol>
+        )}
       </>
     );
   } else if (tab === "the") {

@@ -116,7 +116,7 @@ export default async function TrangChiTietNguon({ params, searchParams }: { para
         </div>
         <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có yêu cầu chi trả."
           cot={[
-            { nhan: "Ngày gửi", hienThi: (r) => <span>{ngayVN(r.tao_luc.slice(0, 10))}<span className="block text-[12px] text-muc-3">{r.ma} · {tenNv.get(r.tao_boi) ?? ""}</span></span> },
+            { nhan: "Ngày gửi", hienThi: (r) => <span>{ngayVN(r.tao_luc.slice(0, 10))}<span className="block text-[12px] text-muc-3">{r.ma} · {r.tu_cong_ctv ? "CTV tự gửi từ cổng" : tenNv.get(r.tao_boi ?? "") ?? ""}</span></span> },
             { nhan: "Số tiền", phai: true, hienThi: (r) => <span className="tabular-nums font-medium">{tienVN(Number(r.so_tien))}</span> },
             { nhan: "Nhận qua", hienThi: (r) => HINH_THUC_RUT[r.hinh_thuc] },
             { nhan: "Trạng thái", chinh: true, hienThi: (r) => <span><NhanTrangThai kieu={TT_RUT[r.trang_thai].kieu}>{TT_RUT[r.trang_thai].ten}</NhanTrangThai>{r.ly_do_tu_choi && <span className="block text-[12px] text-loi">Lý do: {r.ly_do_tu_choi}</span>}</span> },

@@ -72,7 +72,7 @@ async function vePoster(cv: HTMLCanvasElement, mau: string, link: string, nguoi:
   }
 }
 
-export function LinkQrNguon({ link, tenHienThi, maRef }: { link: string; tenHienThi: string; maRef: string }) {
+export function LinkQrNguon({ link, tenHienThi, maRef, ghiChu }: { link: string; tenHienThi: string; maRef: string; ghiChu?: React.ReactNode }) {
   const [svg, setSvg] = useState("");
   const [daChep, setDaChep] = useState(false);
   const [mau, setMau] = useState(MAU[0].ma);
@@ -96,7 +96,7 @@ export function LinkQrNguon({ link, tenHienThi, maRef }: { link: string; tenHien
             <code className="break-all rounded-nho bg-giay-tram px-3 py-2 text-[13.5px]">{link}</code>
             <button type="button" onClick={chep} className={NUT_PHU}><Copy className="mr-1.5 inline h-4 w-4" aria-hidden />{daChep ? "Đã chép" : "Sao chép"}</button>
           </div>
-          <p className="mt-2 text-[13px] text-muc-3">Khách sẽ thấy ở ô người giới thiệu: <b className="text-muc">{tenHienThi}</b>. Đặt lịch qua link này: lịch hẹn và khách mới tự gắn nguồn, khách mới vào Hộp Lead.</p>
+          {ghiChu ?? <p className="mt-2 text-[13px] text-muc-3">Khách sẽ thấy ở ô người giới thiệu: <b className="text-muc">{tenHienThi}</b>. Đặt lịch qua link này: lịch hẹn và khách mới tự gắn nguồn, khách mới vào Hộp Lead.</p>}
         </div>
         <div className="flex flex-wrap items-center gap-4">
           <div className="h-[180px] w-[180px] rounded-nho border border-vien bg-white p-1" role="img" aria-label={`Mã QR đặt lịch REF ${maRef}`} dangerouslySetInnerHTML={{ __html: svg }} />

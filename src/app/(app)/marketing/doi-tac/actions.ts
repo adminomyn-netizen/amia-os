@@ -115,3 +115,32 @@ export async function luuCaiDatCtv(fd: FormData): Promise<KQ> {
   lamMoi();
   return { ok: true };
 }
+
+// ── Cổng CTV (M5, migration 0317) ─────────────────────────────────────────
+const LOAI_THU_BAT_TAT = ["ma_dang_nhap", "chao_mung", "da_dat_hen", "da_su_dung", "da_huy", "da_thanh_toan_hh", "cap_nhat_hh"];
+
+/** Bật/tắt trang đăng ký CTV + từng loại thư CTV (cau_hinh ctv.cong_mo, ctv.email.<loai>). Loại "giai đoạn sau" không cho bật. */
+export async function luuThongBaoCtv(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("mkt.duyet");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const dong = [{ khoa: "ctv.cong_mo", gia_tri: fd.get("cong_mo") === "1" ? "1" : "0" }, ...LOAI_THU_BAT_TAT.map((l) => ({ khoa: `ctv.email.${l}`, gia_tri: fd.get(l) === "1" ? "1" : "0" }))];
+  const { error } = await sb().from("cau_hinh").upsert(dong, { onConflict: "khoa" });
+  if (error) return { loi: thongBaoLoi(error) };
+  await sb().from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_thong_bao_ctv", doi_tuong: "cau_hinh", chi_tiet: Object.fromEntries(dong.map((d) => [d.khoa, d.gia_tri])) });
+  lamMoi();
+  revalidatePath("/ctv/dang-ky");
+  return { ok: true };
+}
+
+/** Xử lý khiếu nại đối soát của CTV: Đang xử lý / Đã xử lý / Từ chối (đóng thì bắt buộc phản hồi). */
+export async function xuLyKhieuNaiCtv(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("mkt.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), tt = chuoi(fd, "trang_thai");
+  if (!UUID.test(id)) return { loi: "Không tìm thấy khiếu nại." };
+  const { error } = await sb().rpc("ctv_khieu_nai_xu_ly", { p_id: id, p_nguoi: nd.nhanVienId, p_trang_thai: tt, p_phan_hoi: chuoi(fd, "phan_hoi").slice(0, 1000) });
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  revalidatePath("/ctv");
+  return { ok: true };
+}

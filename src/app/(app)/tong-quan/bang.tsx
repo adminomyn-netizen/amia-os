@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache";
 import Link from "next/link";
 import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
@@ -15,9 +16,17 @@ const cnArg = (cn: string | null) => (cn ?? undefined) as string;
 const DAY = (dl: { nhan: string; gia_tri: number }[]) => dl.sort((a, b) => b.gia_tri - a.gia_tri);
 
 type PhanBo = { nhom: string; nhan: string; so: number; tien: number };
-async function layPhanBo(cn: string | null) {
-  const { data } = await sb().rpc("bc_phan_bo", { p_cn: cnArg(cn) });
-  const ds = (data ?? []) as PhanBo[];
+/** Chỉ tính nhóm tab cần (0318): tab Thẻ/Kho không phải chờ quét v_khach_hang. */
+const docPhanBo = async (cn: string | null, dsNhom: string[]) => {
+  const { data, error } = await sb().rpc("bc_phan_bo_nhom", { p_cn: cnArg(cn), p_nhom: dsNhom });
+  if (error) throw new Error(`bc_phan_bo_nhom: ${error.code} ${error.message}`); // lỗi thì không nhớ lại
+  return (data ?? []) as PhanBo[];
+};
+// Nhóm số liệu khách chỉ là SỐ ĐẾM (không có tiền) nhưng phải quét v_khach_hang ~1,5s: nhớ 5 phút như Thống kê khách.
+const NHOM_KHACH = ["hang", "trang_thai", "nguon", "khach_moi", "phu_trach"];
+const docPhanBoKhach = unstable_cache((cn: string | null) => docPhanBo(cn, NHOM_KHACH), ["tq-phan-bo-khach"], { revalidate: 300 });
+async function layPhanBo(cn: string | null, dsNhom: string[]) {
+  const ds = dsNhom.every((n) => NHOM_KHACH.includes(n)) ? await docPhanBoKhach(cn) : await docPhanBo(cn, dsNhom);
   const nhom = (n: string) => ds.filter((r) => r.nhom === n);
   return { nhom, so: (n: string) => nhom(n).map((r) => ({ nhan: r.nhan, gia_tri: Number(r.so) })), tien: (n: string) => nhom(n).map((r) => ({ nhan: r.nhan, gia_tri: Number(r.tien) })) };
 }
@@ -77,7 +86,7 @@ export async function BangDoanhThu({ cn }: { cn: string | null }) {
 }
 
 export async function BangKhach({ cn }: { cn: string | null }) {
-  const pb = await layPhanBo(cn);
+  const pb = await layPhanBo(cn, NHOM_KHACH);
   const tong = pb.so("trang_thai").reduce((s, d) => s + d.gia_tri, 0);
   const g = (k: string) => pb.so("trang_thai").find((d) => d.nhan === k)?.gia_tri ?? 0;
   const homNay = homNayHCM();
@@ -104,7 +113,7 @@ export async function BangKhach({ cn }: { cn: string | null }) {
 export async function BangTheNo({ cn, xemTien }: { cn: string | null; xemTien: boolean }) {
   const db = sb();
   const [pb, { data: du }, { data: no }] = await Promise.all([
-    layPhanBo(cn),
+    layPhanBo(cn, ["no_tuoi", "the_lan", "the_tien"]),
     db.rpc("bc_the_con_du", { p_cn: cnArg(cn) }),
     xemTien ? (() => { let q = db.from("hoa_don").select("id, ma, khach_id, con_no, ngay_hd").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("con_no", { ascending: false }).limit(8); if (cn) q = q.eq("chi_nhanh_id", cn); return q; })() : Promise.resolve({ data: [] }),
   ]);
@@ -149,7 +158,7 @@ export async function BangKho({ cn }: { cn: string | null }) {
   const db = sb();
   let q = db.from("v_ton_kho").select("san_pham_id, ma, ten, ton, ton_toi_thieu, don_vi, duoi_muc_toi_thieu");
   if (cn) q = q.eq("chi_nhanh_id", cn);
-  const [pb, { data }] = await Promise.all([layPhanBo(cn), q]);
+  const [pb, { data }] = await Promise.all([layPhanBo(cn, ["phieu"]), q]);
   const ds = data ?? [];
   const thieu = ds.filter((r) => r.duoi_muc_toi_thieu);
   return (

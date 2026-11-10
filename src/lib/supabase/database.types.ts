@@ -13590,6 +13590,15 @@ export type Database = {
           tien: number
         }[]
       }
+      bc_phan_bo_nhom: {
+        Args: { p_cn?: string; p_nhom?: string[] }
+        Returns: {
+          nhan: string
+          nhom: string
+          so: number
+          tien: number
+        }[]
+      }
       bc_phieu_marketing: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {

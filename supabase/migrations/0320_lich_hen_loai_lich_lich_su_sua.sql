@@ -1,4 +1,4 @@
--- Lịch hẹn (chị Lâm 10/11/2026):
+-- 0320 (đổi số từ 0319 vì 0319 đã dùng cho mốc phục vụ). Lịch hẹn (chị Lâm 10/11/2026):
 -- (1) Loại lịch chọn lúc tạo: Tư vấn khách mới / Khách liệu trình / Làm dịch vụ lẻ / Tái khám / Bảo hành. Lịch cũ để NULL.
 -- (2) Lịch sử sửa lịch hẹn cho Quản lý / Leader, Kỹ thuật, Chủ xem: mỗi lần tạo / sửa / đổi lịch / đổi trạng thái / huỷ ghi 1 dòng (ai, lúc nào, trường nào từ gì sang gì).
 --     Ghi bằng trigger nên không sót đường nào. Người sửa: ứng dụng đặt cột `sua_boi` trong chính câu UPDATE/INSERT (máy chủ dùng service_role nên auth.uid() rỗng);
@@ -91,3 +91,10 @@ end $$;
 drop trigger if exists lich_hen_zz_lich_su on public.lich_hen;
 create trigger lich_hen_zz_lich_su before insert or update on public.lich_hen
   for each row execute function public.trg_lich_hen_zz_lich_su();
+
+-- Cổng cấu trúc (0009): mọi bảng FORCE RLS + chính sách chặn hết cho anon/authenticated; hàm không cấp cho PUBLIC.
+alter table public.lich_hen_lich_su force row level security;
+drop policy if exists chan_het on public.lich_hen_lich_su;
+create policy chan_het on public.lich_hen_lich_su for all to anon, authenticated using (false) with check (false);
+revoke execute on function public.lich_hen_gt(text, text) from public, anon, authenticated;
+revoke execute on function public.trg_lich_hen_zz_lich_su() from public, anon, authenticated;

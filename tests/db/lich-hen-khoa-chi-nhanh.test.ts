@@ -6,11 +6,11 @@ vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("next/server", () => ({ after: vi.fn() }));
 vi.mock("@/lib/push", () => ({ guiChoNhanVien: vi.fn() }));
 const VINH = "cn-vinh", DL = "cn-dl";
-let nguoiDung: { chiNhanhId: string | null; nhanVienId: string };
+let nguoiDung: { chiNhanhId: string | null; nhanVienId: string; vaiTro?: string };
 vi.mock("@/lib/auth", () => ({ kiemQuyen: async () => nguoiDung, KHONG_DU_QUYEN: "Bạn không có quyền thực hiện thao tác này." }));
 const dong: Record<string, Record<string, Record<string, unknown>>> = {
   khach_hang: { "k-vinh": { chi_nhanh_id: VINH }, "k-dl": { chi_nhanh_id: DL } },
-  lich_hen: { "l-vinh": { trang_thai: "hoan_thanh", chi_nhanh_id: VINH }, "l-dl": { trang_thai: "hoan_thanh", chi_nhanh_id: DL } },
+  lich_hen: { "l-vinh": { trang_thai: "hoan_thanh", chi_nhanh_id: VINH, tao_boi: "nv", khach_id: "k-vinh" }, "l-vinh-khac": { trang_thai: "chua_xac_nhan", chi_nhanh_id: VINH, tao_boi: "nguoi-khac" }, "l-sh": { trang_thai: "da_xac_nhan", chi_nhanh_id: VINH, tao_boi: null }, "l-dl": { trang_thai: "hoan_thanh", chi_nhanh_id: DL } },
 };
 const ghi: string[] = [];
 vi.mock("@/lib/db", () => ({
@@ -19,7 +19,7 @@ vi.mock("@/lib/db", () => ({
     from: (bang: string) => {
       const loc: Record<string, unknown> = {};
       const b: Record<string, unknown> = {
-        select: () => b, eq: (c: string, v: unknown) => { loc[c] = v; return b; }, neq: () => b, not: () => b, lt: () => b, gt: () => b, limit: () => b,
+        select: () => b, eq: (c: string, v: unknown) => { loc[c] = v; return b; }, neq: () => b, not: () => b, lt: () => b, gt: () => b, limit: () => b, order: () => b, or: () => b, in: () => b,
         maybeSingle: async () => ({ data: dong[bang]?.[String(loc.id)] ?? null }),
         update: () => { ghi.push(`${bang}.update`); return b; }, insert: () => { ghi.push(`${bang}.insert`); return b; }, delete: () => { ghi.push(`${bang}.delete`); return b; },
       };
@@ -42,6 +42,21 @@ describe("Lịch hẹn: khoá chi nhánh ở máy chủ", () => {
     const { luuLichHen } = await import("../../src/app/(app)/lich-hen/actions");
     expect((await luuLichHen(fd({ id: "l-dl", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe(KHONG);
     expect((await luuLichHen(fd({ id: "l-vinh", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");
+  });
+  it("sửa lịch: chỉ người tạo hoặc quản lý (chị Lâm 10/11), kiểm ở máy chủ", async () => {
+    const { luuLichHen } = await import("../../src/app/(app)/lich-hen/actions");
+    expect((await luuLichHen(fd({ id: "l-vinh-khac", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chỉ người tạo lịch hoặc quản lý được sửa.");
+    expect((await luuLichHen(fd({ id: "l-sh", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chỉ người tạo lịch hoặc quản lý được sửa.");
+    nguoiDung = { chiNhanhId: VINH, nhanVienId: "ql", vaiTro: "quan_ly" };
+    expect((await luuLichHen(fd({ id: "l-vinh-khac", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");
+    expect((await luuLichHen(fd({ id: "l-sh", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");
+    expect(ghi).toEqual([]);
+  });
+  it("đặt lịch mới thiếu loại lịch bị chặn", async () => {
+    const { luuLichHen } = await import("../../src/app/(app)/lich-hen/actions");
+    expect((await luuLichHen(fd({ khach_id: "k-vinh", ngay: "2026-12-01", gio: "09:00", dich_vu_ids: "dv1" }))).loi).toMatch(/^Chọn loại lịch/);
+    expect((await luuLichHen(fd({ khach_id: "k-vinh", ngay: "2026-12-01", gio: "09:00", dich_vu_ids: "dv1", loai_lich: "linh_tinh" }))).loi).toBe("Loại lịch không hợp lệ.");
+    expect(ghi).toEqual([]);
   });
   it("đổi trạng thái lịch chi nhánh khác bị chặn, lịch của mình tới được bước kiểm chuyển trạng thái", async () => {
     const { doiTrangThaiLich } = await import("../../src/app/(app)/lich-hen/actions");

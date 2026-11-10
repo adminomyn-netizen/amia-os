@@ -30,7 +30,6 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   // Loại lịch (chị Lâm 10/11): bắt buộc khi đặt mới; khi sửa bỏ trống thì giữ loại cũ.
   const loaiLich = chuoi(fd, "loai_lich");
   if (loaiLich && !laLoaiLich(loaiLich)) return { loi: "Loại lịch không hợp lệ." };
-  if (!id && !loaiLich) return { loi: "Chọn loại lịch (tư vấn khách mới, khách liệu trình…)." };
   // Sửa lịch: người tạo lịch hoặc quản lý; trường bị khoá theo trạng thái / hoá đơn thì giữ nguyên giá trị cũ (không tin dữ liệu gửi lên).
   let cu: { trang_thai: string; nhan_vien_id: string | null; chi_nhanh_id: string; khach_id: string; bat_dau: string; ket_thuc: string; tao_boi: string | null; hoa_don_sh_id: number | null } | null = null;
   let khoa = khoaSuaLich("chua_xac_nhan", false);
@@ -69,6 +68,7 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   // Lịch chuyển từ SalonHero có thể chỉ có tên dịch vụ dạng chữ (không có dòng dịch vụ): sửa lịch đó được để trống dịch vụ.
   if (dv.length === 0 && !(id && dvCu.length === 0)) return { loi: "Chọn ít nhất một dịch vụ." };
   if (phut < 5 || (phut > 600 && !khoa.gio)) return { loi: "Thời lượng phải từ 5 đến 600 phút." };
+  if (!id && !loaiLich) return { loi: "Chọn loại lịch (tư vấn khách mới, khách liệu trình…)." };
   // Lịch lặp (chỉ khi đặt mới, giống SalonHero): kiểu DAILY/WEEKLY/MONTHLY, mỗi N ngày/tuần/tháng, tổng số buổi.
   const kieuLap = id ? "" : chuoi(fd, "kieu_lap");
   if (kieuLap && !laKieuLap(kieuLap)) return { loi: "Kiểu lặp không hợp lệ." };

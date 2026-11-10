@@ -9,7 +9,7 @@ import { NUT_PHU } from "@/components/ui/dinh-dang";
 import { TRANG_THAI_HD } from "@/lib/loc-hoa-don";
 
 export type DongHoaDon = {
-  id: string; ma: string; khach: string; ngay: string; gio: string; nguoiLap: string; phaiThu: string; daThu: string; conNo: string;
+  id: string; ma: string; khach: string; /** SĐT khách in dưới tên như SalonHero. */ sdt?: string; ngay: string; gio: string; nguoiLap: string; phaiThu: string; daThu: string; conNo: string;
   trangThai: keyof typeof TRANG_THAI_HD; vat: "" | "co" | "chua"; vatSo: string;
   /** Đơn chuyển từ SalonHero (đồng bộ đêm còn ghi đè tới 15/11). */ laLichSu: boolean;
   /** Đã xuất hoá đơn điện tử: không sửa được (như trang chi tiết). */ coHddt: boolean; laSoDuDau: boolean;
@@ -53,7 +53,7 @@ export function BangHoaDon({ dong, thamSo, choSua, choHuy, suaAction, huyAction 
         cot={[
           { nhan: "Chọn", hienThi: (r) => <input type="checkbox" className={O_TICK} checked={chon.has(r.id)} onChange={() => doi(r.id)} aria-label={`Chọn hoá đơn ${r.ma}`} /> },
           { nhan: "Mã", hienThi: (r) => <Link href={`/hoa-don/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
-          { chinh: true, nhan: "Khách hàng", hienThi: (r) => r.khach },
+          { chinh: true, nhan: "Khách hàng", hienThi: (r) => <span className="flex flex-col items-start">{r.khach}{r.sdt ? <span className="text-[12px] font-normal tabular-nums text-muc-3">{r.sdt}</span> : null}</span> },
           { nhan: "Ngày", hienThi: (r) => <span className="whitespace-nowrap">{r.ngay}{r.gio ? <span className="text-muc-3"> {r.gio}</span> : null}</span> },
           { nhan: "Người lập", hienThi: (r) => r.nguoiLap },
           { nhan: "Phải thu", hienThi: (r) => r.phaiThu, phai: true }, { nhan: "Đã thu", hienThi: (r) => r.daThu, phai: true },

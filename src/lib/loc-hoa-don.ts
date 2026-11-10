@@ -4,7 +4,7 @@ import { boDau, homNayHCM } from "@/lib/dinh-dang";
 import type { sb } from "@/lib/db";
 
 /** Nhãn trạng thái hoá đơn (dùng ở danh sách và chi tiết; không để trong page.tsx vì Next chặn export lạ từ trang). */
-export const TRANG_THAI_HD = { nhap: { nhan: "Nháp", kieu: "tram" }, hoan_thanh: { nhan: "Hoàn thành", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "loi" } } as const;
+export const TRANG_THAI_HD = { nhap: { nhan: "Đang xử lý", kieu: "tram" }, hoan_thanh: { nhan: "Hoàn thành", kieu: "tot" }, huy: { nhan: "Đã huỷ", kieu: "loi" } } as const;
 
 /** Cỡ trang chọn được (như SalonHero: 10, 25, 50, 100). Mặc định 40 giữ như trước. */
 export const CO_TRANG = [10, 25, 40, 50, 100] as const;
@@ -158,7 +158,7 @@ export function apLocHoaDon<T extends BoLoc<T>>(q: T, loc: LocHoaDon, chiNhanhId
 /** Tổng toàn kỳ như SalonHero ("Hoàn thành: N đơn - Tổng tiền - Còn nợ | Đã huỷ: N đơn"): cộng trên MỌI hoá đơn đang lọc, không chỉ trang đang xem.
  *  PostgREST không cho hàm gộp nên đọc 3 cột hẹp theo từng đợt 1000 dòng, các đợt chạy song song. Quá GIOI_HAN_TONG dòng thì bỏ qua (trả null) để khỏi làm nặng máy chủ. */
 export const GIOI_HAN_TONG = 20000;
-export type TongKy = { hoanThanh: { don: number; phaiThu: number; conNo: number }; huy: { don: number }; nhap: { don: number } };
+export type TongKy = { hoanThanh: { don: number; phaiThu: number; conNo: number }; huy: { don: number; phaiThu: number }; nhap: { don: number; phaiThu: number } };
 export async function tongToanKy(doc: (tu: number, den: number) => PromiseLike<{ data: { trang_thai: string | null; tong_phai_thu: number | null; con_no: number | null }[] | null; error: unknown }>, tong: number): Promise<TongKy | null> {
   if (tong > GIOI_HAN_TONG) return null;
   const dot = Math.ceil(tong / 1000);
@@ -166,11 +166,11 @@ export async function tongToanKy(doc: (tu: number, den: number) => PromiseLike<{
   if (kq.some((x) => x.error)) return null;
   const dong = kq.flatMap((x) => x.data ?? []);
   if (dong.length !== tong) return null;
-  const t: TongKy = { hoanThanh: { don: 0, phaiThu: 0, conNo: 0 }, huy: { don: 0 }, nhap: { don: 0 } };
+  const t: TongKy = { hoanThanh: { don: 0, phaiThu: 0, conNo: 0 }, huy: { don: 0, phaiThu: 0 }, nhap: { don: 0, phaiThu: 0 } };
   for (const h of dong) {
     if (h.trang_thai === "hoan_thanh") { t.hoanThanh.don++; t.hoanThanh.phaiThu += Number(h.tong_phai_thu ?? 0); t.hoanThanh.conNo += Number(h.con_no ?? 0); }
-    else if (h.trang_thai === "huy") t.huy.don++;
-    else t.nhap.don++;
+    else if (h.trang_thai === "huy") { t.huy.don++; t.huy.phaiThu += Number(h.tong_phai_thu ?? 0); }
+    else { t.nhap.don++; t.nhap.phaiThu += Number(h.tong_phai_thu ?? 0); }
   }
   return t;
 }

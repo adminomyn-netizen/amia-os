@@ -61,8 +61,8 @@ describe("apLocHoaDon", () => {
 describe("tongToanKy", () => {
   const dot = (n: number, tt: string, tien: number, no: number) => ({ data: Array.from({ length: n }, () => ({ trang_thai: tt, tong_phai_thu: tien, con_no: no })), error: null });
   it("cộng hết các đợt, tách hoàn thành / huỷ", async () => {
-    const t = await tongToanKy(async (tu) => (tu === 0 ? dot(1000, "hoan_thanh", 10, 1) : { data: [...dot(5, "hoan_thanh", 100, 0).data, ...dot(2, "huy", 0, 0).data], error: null }), 1007);
-    expect(t).toEqual({ hoanThanh: { don: 1005, phaiThu: 10500, conNo: 1000 }, huy: { don: 2 }, nhap: { don: 0 } });
+    const t = await tongToanKy(async (tu) => (tu === 0 ? dot(1000, "hoan_thanh", 10, 1) : { data: [...dot(5, "hoan_thanh", 100, 0).data, ...dot(2, "huy", 0, 0).data, ...dot(3, "nhap", 50, 50).data], error: null }), 1010);
+    expect(t).toEqual({ hoanThanh: { don: 1005, phaiThu: 10500, conNo: 1000 }, huy: { don: 2, phaiThu: 0 }, nhap: { don: 3, phaiThu: 150 } });
   });
   it("đọc thiếu dòng hoặc lỗi thì trả null thay vì số sai", async () => {
     expect(await tongToanKy(async () => dot(10, "hoan_thanh", 1, 0), 1500)).toBeNull();

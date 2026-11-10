@@ -86,7 +86,7 @@ export function LocHoaDon({ tu, den, chiNhanh, nhanVien }: { tu: string; den: st
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]">
         <Chon ariaLabel="Trạng thái" giaTri={sp.get("tt") ?? ""} onDoi={(v) => doi({ tt: v })}
-          luaChon={[{ gia_tri: "", nhan: "Mọi trạng thái" }, { gia_tri: "hoan_thanh", nhan: "Hoàn thành" }, { gia_tri: "huy", nhan: "Đã huỷ" }]} />
+          luaChon={[{ gia_tri: "", nhan: "Mọi trạng thái" }, { gia_tri: "hoan_thanh", nhan: "Hoàn thành" }, { gia_tri: "nhap", nhan: "Đang xử lý" }, { gia_tri: "huy", nhan: "Đã huỷ" }]} />
         <Chon ariaLabel="Tình trạng trả tiền" giaTri={tra} onDoi={(v) => { const u = new URLSearchParams(sp.toString()); u.delete("no"); u.delete("trang"); if (v) u.set("tra", v); else u.delete("tra"); router.push(`/hoa-don?${u}`); }} luaChon={dsTra} />
         <Chon ariaLabel="Hoá đơn VAT" giaTri={sp.get("vat") ?? ""} onDoi={(v) => doi({ vat: v })}
           luaChon={[{ gia_tri: "", nhan: "HĐ VAT: tất cả" }, { gia_tri: "co", nhan: "Đã có hoá đơn VAT" }, { gia_tri: "chua", nhan: "Chưa có hoá đơn VAT" }]} />

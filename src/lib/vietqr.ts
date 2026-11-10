@@ -1,13 +1,30 @@
 // Mã VietQR (chuẩn EMVCo/Napas "chuyển nhanh 247 tới tài khoản") dựng ngay trên máy chủ, KHÔNG gọi dịch vụ ngoài.
-// Chỉ liệt kê ngân hàng có mã BIN đã chắc chắn (20 mã đã đối chiếu với danh sách công khai api.vietqr.io/v2/banks ngày 29/10/2026; LienVietPostBank = LPBank 970449); ngân hàng khác thì người dùng nhập "nội dung QRCode" có sẵn. Sai mã BIN là tiền chuyển nhầm ngân hàng nên không đoán.
-export const NGAN_HANG_QR: { ma: string; nhan: string; bin: string }[] = [
-  { ma: "VietinBank", nhan: "VietinBank", bin: "970415" }, { ma: "Vietcombank", nhan: "Vietcombank", bin: "970436" }, { ma: "BIDV", nhan: "BIDV", bin: "970418" },
-  { ma: "Agribank", nhan: "Agribank", bin: "970405" }, { ma: "OCB", nhan: "OCB", bin: "970448" }, { ma: "MBBank", nhan: "MBBank", bin: "970422" },
-  { ma: "Techcombank", nhan: "Techcombank", bin: "970407" }, { ma: "ACB", nhan: "ACB", bin: "970416" }, { ma: "VPBank", nhan: "VPBank", bin: "970432" },
-  { ma: "TPBank", nhan: "TPBank", bin: "970423" }, { ma: "Sacombank", nhan: "Sacombank", bin: "970403" }, { ma: "HDBank", nhan: "HDBank", bin: "970437" },
-  { ma: "SCB", nhan: "SCB", bin: "970429" }, { ma: "VIB", nhan: "VIB", bin: "970441" }, { ma: "SHB", nhan: "SHB", bin: "970443" },
-  { ma: "Eximbank", nhan: "Eximbank", bin: "970431" }, { ma: "MSB", nhan: "MSB", bin: "970426" }, { ma: "SeABank", nhan: "SeABank", bin: "970440" },
-  { ma: "LienVietPostBank", nhan: "LienVietPostBank", bin: "970449" }, { ma: "BacABank", nhan: "BacABank", bin: "970409" },
+import { chuanTenNganHang } from "@/lib/ngan-hang-ten";
+// ĐỦ 63 ngân hàng / ví của ô "Ngân Hàng" (QRCode thanh toán) trong SalonHero Thiết lập in, ĐÚNG THỨ TỰ và đúng chữ (chị Lâm 10/11/2026: "dropdown rất nhiều, bê qua hết").
+// `sh` = mã SalonHero gửi img.vietqr.io; `bin` = mã Napas đối chiếu danh sách công khai api.vietqr.io/v2/banks ngày 10/11/2026
+// (Oceanbank nay là MBV 970414; DongABank 970406 theo mã Napas cũ của Đông Á, danh sách mới không còn tên này). Sai BIN là chuyển nhầm ngân hàng nên không thêm mục ngoài danh sách.
+export const NGAN_HANG_QR: { ma: string; nhan: string; sh: string; bin: string }[] = [
+  { ma: "VietinBank", nhan: "VietinBank", sh: "ICB", bin: "970415" }, { ma: "Vietcombank", nhan: "Vietcombank", sh: "VCB", bin: "970436" }, { ma: "BIDV", nhan: "BIDV", sh: "BIDV", bin: "970418" },
+  { ma: "Agribank", nhan: "Agribank", sh: "VBA", bin: "970405" }, { ma: "OCB", nhan: "OCB", sh: "OCB", bin: "970448" }, { ma: "MBBank", nhan: "MBBank", sh: "MB", bin: "970422" },
+  { ma: "Techcombank", nhan: "Techcombank", sh: "TCB", bin: "970407" }, { ma: "ACB", nhan: "ACB", sh: "ACB", bin: "970416" }, { ma: "VPBank", nhan: "VPBank", sh: "VPB", bin: "970432" },
+  { ma: "TPBank", nhan: "TPBank", sh: "TPB", bin: "970423" }, { ma: "Sacombank", nhan: "Sacombank", sh: "STB", bin: "970403" }, { ma: "HDBank", nhan: "HDBank", sh: "HDB", bin: "970437" },
+  { ma: "VietCapitalBank", nhan: "VietCapitalBank", sh: "VCCB", bin: "970454" }, { ma: "SCB", nhan: "SCB", sh: "SCB", bin: "970429" }, { ma: "VIB", nhan: "VIB", sh: "VIB", bin: "970441" },
+  { ma: "SHB", nhan: "SHB", sh: "SHB", bin: "970443" }, { ma: "Eximbank", nhan: "Eximbank", sh: "EIB", bin: "970431" }, { ma: "MSB", nhan: "MSB", sh: "MSB", bin: "970426" },
+  { ma: "CAKE", nhan: "CAKE", sh: "CAKE", bin: "546034" }, { ma: "Ubank", nhan: "Ubank", sh: "Ubank", bin: "546035" }, { ma: "Timo", nhan: "Timo", sh: "TIMO", bin: "963388" },
+  { ma: "ViettelMoney", nhan: "ViettelMoney", sh: "VTLMONEY", bin: "971005" }, { ma: "VNPTMoney", nhan: "VNPTMoney", sh: "VNPTMONEY", bin: "971011" }, { ma: "SaigonBank", nhan: "SaigonBank", sh: "SGICB", bin: "970400" },
+  { ma: "BacABank", nhan: "BacABank", sh: "BAB", bin: "970409" }, { ma: "PVcomBank", nhan: "PVcomBank", sh: "PVCB", bin: "970412" }, { ma: "Oceanbank", nhan: "Oceanbank", sh: "Oceanbank", bin: "970414" },
+  { ma: "NCB", nhan: "NCB", sh: "NCB", bin: "970419" }, { ma: "ShinhanBank", nhan: "ShinhanBank", sh: "SHBVN", bin: "970424" }, { ma: "ABBANK", nhan: "ABBANK", sh: "ABB", bin: "970425" },
+  { ma: "VietABank", nhan: "VietABank", sh: "VAB", bin: "970427" }, { ma: "NamABank", nhan: "NamABank", sh: "NAB", bin: "970428" }, { ma: "PGBank", nhan: "PGBank", sh: "PGB", bin: "970430" },
+  { ma: "VietBank", nhan: "VietBank", sh: "VIETBANK", bin: "970433" }, { ma: "BaoVietBank", nhan: "BaoVietBank", sh: "BVB", bin: "970438" }, { ma: "SeABank", nhan: "SeABank", sh: "SEAB", bin: "970440" },
+  { ma: "COOPBANK", nhan: "COOPBANK", sh: "COOPBANK", bin: "970446" }, { ma: "LienVietPostBank", nhan: "LienVietPostBank", sh: "LPB", bin: "970449" }, { ma: "KienLongBank", nhan: "KienLongBank", sh: "KLB", bin: "970452" },
+  { ma: "KBank", nhan: "KBank", sh: "KBank", bin: "668888" }, { ma: "KookminHN", nhan: "KookminHN", sh: "KBHN", bin: "970462" }, { ma: "KEBHanaHCM", nhan: "KEBHanaHCM", sh: "KEBHANAHCM", bin: "970466" },
+  { ma: "KEBHANAHN", nhan: "KEBHANAHN", sh: "KEBHANAHN", bin: "970467" }, { ma: "MAFC", nhan: "MAFC", sh: "MAFC", bin: "977777" }, { ma: "Citibank", nhan: "Citibank", sh: "CITIBANK", bin: "533948" },
+  { ma: "KookminHCM", nhan: "KookminHCM", sh: "KBHCM", bin: "970463" }, { ma: "VBSP", nhan: "VBSP", sh: "VBSP", bin: "999888" }, { ma: "Woori", nhan: "Woori", sh: "WVN", bin: "970457" },
+  { ma: "VRB", nhan: "VRB", sh: "VRB", bin: "970421" }, { ma: "UnitedOverseas", nhan: "UnitedOverseas", sh: "UOB", bin: "970458" }, { ma: "StandardChartered", nhan: "StandardChartered", sh: "SCVN", bin: "970410" },
+  { ma: "PublicBank", nhan: "PublicBank", sh: "PBVN", bin: "970439" }, { ma: "Nonghyup", nhan: "Nonghyup", sh: "NHB HN", bin: "801011" }, { ma: "IndovinaBank", nhan: "IndovinaBank", sh: "IVB", bin: "970434" },
+  { ma: "IBKHCM", nhan: "IBKHCM", sh: "IBK - HCM", bin: "970456" }, { ma: "IBKHN", nhan: "IBKHN", sh: "IBK - HN", bin: "970455" }, { ma: "HSBC", nhan: "HSBC", sh: "HSBC", bin: "458761" },
+  { ma: "HongLeong", nhan: "HongLeong", sh: "HLBVN", bin: "970442" }, { ma: "GPBank", nhan: "GPBank", sh: "GPB", bin: "970408" }, { ma: "DongABank", nhan: "DongABank", sh: "DOB", bin: "970406" },
+  { ma: "DBSBank", nhan: "DBSBank", sh: "DBS", bin: "796500" }, { ma: "CIMB", nhan: "CIMB", sh: "CIMB", bin: "422589" }, { ma: "CBBank", nhan: "CBBank", sh: "CBB", bin: "970444" },
 ];
 export const binNganHang = (ma: string) => NGAN_HANG_QR.find((b) => b.ma === ma)?.bin ?? null;
 
@@ -30,4 +47,54 @@ export function taoNoiDungVietQr(o: { bin: string; soTk: string; soTien?: number
   const thanh = tlv("00", "01") + tlv("01", coTien ? "12" : "11") + tlv("38", taiKhoan) + tlv("53", "704") + (coTien ? tlv("54", String(Math.round(o.soTien!))) : "") + tlv("58", "VN") + (o.ghiChu ? tlv("62", tlv("08", o.ghiChu)) : "");
   const goc = `${thanh}6304`;
   return goc + crc16(goc);
+}
+
+// ── Mã QR cho TÀI KHOẢN NHẬN TIỀN (Cài đặt › Tài khoản Ngân Hàng) — chị Lâm 10/11/2026 "bê cả mã QR qua đây" ──
+// SalonHero không lưu ảnh QR: nó ghép ảnh VietQR động từ mã ngân hàng + số tài khoản + số tiền (img.vietqr.io …-compact2.jpg?amount=…&accountName=…)
+// ở hộp thanh toán khi chọn Chuyển khoản, ở màn hình khách và ở bản in (nếu bật QR trong thiết lập in). AMIA dựng CÙNG chuỗi VietQR ngay trong app (không gọi dịch vụ ngoài).
+
+/** Tên ngắn (chuanTenNganHang) khác mã trong NGAN_HANG_QR. */
+const BI_DANH_QR: Record<string, string> = {
+  LPBank: "LienVietPostBank", "DongA Bank": "DongABank", ABBank: "ABBANK", "Bao Viet Bank": "BaoVietBank", BVBank: "VietCapitalBank", "Shinhan Bank": "ShinhanBank",
+  "Nam A Bank": "NamABank", OceanBank: "Oceanbank", SGB: "SaigonBank", "Standard Chartered": "StandardChartered",
+};
+
+/** Mã ngân hàng trong NGAN_HANG_QR (ô "Ngân hàng" của Thiết lập in) theo tên lưu ở tai_khoan_ngan_hang; null nếu chưa có BIN. */
+export function maQrCuaTen(ten: string | null | undefined): string | null {
+  const ngan = chuanTenNganHang(ten);
+  const ma = ngan ? BI_DANH_QR[ngan] ?? ngan : null;
+  return ma && NGAN_HANG_QR.some((b) => b.ma === ma) ? ma : null;
+}
+
+/** BIN Napas của tài khoản theo tên ngân hàng lưu trong tai_khoan_ngan_hang ("Ngân hàng Vietcombank" …). null = chưa có BIN chắc chắn → không dựng QR (không đoán). */
+export function binTheoTenNganHang(ten: string | null | undefined): string | null {
+  const ma = maQrCuaTen(ten);
+  return ma ? binNganHang(ma) : null;
+}
+
+/** Nội dung chuyển khoản trong mã (trường 62/08): bỏ dấu, chỉ chữ + số + khoảng trắng (như SalonHero getQRCodeNoteContent), tối đa 25 ký tự (giới hạn của trường "mục đích giao dịch" EMVCo). */
+export function noiDungChuyenKhoan(s: string | null | undefined): string {
+  return String(s ?? "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D")
+    .replace(/[^A-Za-z0-9 ]/g, " ").replace(/\s+/g, " ").trim().slice(0, 25).trim();
+}
+
+/** Chuỗi VietQR chuyển tới một tài khoản nhận tiền; null nếu thiếu số tài khoản hợp lệ hoặc ngân hàng chưa có BIN. */
+export function vietQrTaiKhoan(tk: { ngan_hang: string; so_tai_khoan: string }, soTien?: number, noiDung?: string): string | null {
+  const bin = binTheoTenNganHang(tk.ngan_hang);
+  const so = String(tk.so_tai_khoan ?? "").replace(/\D/g, "");
+  if (!bin || !/^\d{6,19}$/.test(so)) return null;
+  const ghiChu = noiDungChuyenKhoan(noiDung);
+  return taoNoiDungVietQr({ bin, soTk: so, soTien: soTien && soTien > 0 ? Math.round(soTien) : undefined, ghiChu: ghiChu || undefined });
+}
+
+/** Đọc ngược chuỗi EMVCo (TLV) — dùng ở test và để hiện "mã này chuyển tới đâu". */
+export function docTlv(s: string): Record<string, string> {
+  const ra: Record<string, string> = {};
+  for (let i = 0; i + 4 <= s.length; ) {
+    const id = s.slice(i, i + 2), n = Number(s.slice(i + 2, i + 4));
+    if (!Number.isFinite(n)) break;
+    ra[id] = s.slice(i + 4, i + 4 + n);
+    i += 4 + n;
+  }
+  return ra;
 }

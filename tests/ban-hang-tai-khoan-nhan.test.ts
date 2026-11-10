@@ -2,13 +2,13 @@ import { describe, expect, it } from "vitest";
 import { apLuaChonNhan, datTienNhanh, dsLuaChonNhan, kiemTaiKhoanKhoan, luaChonCuaKhoan, luaChonTaiKhoanForm, type KhoanThu, type TaiKhoanNhan } from "../src/lib/ban-hang";
 
 // Số tài khoản trong test là số giả.
-const tk = (id: string, ten: string, o: Partial<TaiKhoanNhan> = {}): TaiKhoanNhan => ({ id, ten, chu: "Chủ " + id, so4: "1234", chiNhanhId: null, cx: true, qt: true, macDinh: false, ...o });
+const tk = (id: string, ten: string, o: Partial<TaiKhoanNhan> = {}): TaiKhoanNhan => ({ id, ten, chu: "Chủ " + id, so: "0001234", chiNhanhId: null, cx: true, qt: true, macDinh: false, ...o });
 
 describe("ô Tài khoản nhận ở Thu ngân (0323)", () => {
   it("mỗi tài khoản một lựa chọn (cùng ngân hàng vẫn tách), mặc định lên đầu, lọc chi nhánh + chức năng, cuối là Khác", () => {
     const ds = dsLuaChonNhan([tk("a", "Ngân hàng Vietcombank"), tk("b", "Ngân hàng Vietcombank", { macDinh: true }), tk("c", "Ngân hàng OCB", { qt: false }), tk("d", "Ngân hàng BIDV", { chiNhanhId: "dalat" })], "vinh", "chuyen_khoan");
     expect(ds.map((x) => x.gia_tri)).toEqual(["b", "a", "c", "Khác"]);
-    expect(ds[0]).toMatchObject({ nhan: "Vietcombank …1234 · Chủ b", ten: "Vietcombank", tkId: "b" });
+    expect(ds[0]).toMatchObject({ nhan: "Vietcombank 0001234 · Chủ b", ten: "Vietcombank", tkId: "b" });
     expect(dsLuaChonNhan([tk("c", "Ngân hàng OCB", { qt: false })], "vinh", "quet_the").some((x) => x.gia_tri === "c")).toBe(false);
   });
   it("chưa có tài khoản nào có id thì về danh sách tên ngân hàng như trước", () => {
@@ -44,6 +44,6 @@ describe("máy chủ kiểm tài khoản nhận", () => {
     const r = (id: string, o = {}) => ({ id, ngan_hang: "Ngân hàng OCB", chu_tai_khoan: "A", so_tai_khoan: "00 1234 5678", chi_nhanh_id: null, dung_chuyen_khoan: true, dung_quet_the: true, mac_dinh: false, ...o });
     const ds = luaChonTaiKhoanForm([r("x", { dung_quet_the: false }), r("y", { chi_nhanh_id: "dalat" }), r("z", { mac_dinh: true })], "vinh");
     expect(ds.map((x) => x.gia_tri)).toEqual(["z", "x", "Khác"]);
-    expect(ds[1].nhan).toBe("OCB …5678 · A (chỉ chuyển khoản)");
+    expect(ds[1].nhan).toBe("OCB 0012345678 · A (chỉ chuyển khoản)");
   });
 });

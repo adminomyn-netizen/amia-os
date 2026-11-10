@@ -6,7 +6,7 @@ import { docSoTien } from "@/lib/phieu-thu";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { CHU_IN, PHUONG_THUC_EN, type DuLieuIn, type NgonNguIn } from "@/components/cai-dat/BanInHoaDon";
 import { docIn, type CauHinhIn } from "@/lib/thiet-lap-in";
-import { binNganHang, taoNoiDungVietQr } from "@/lib/vietqr";
+import { binNganHang, noiDungChuyenKhoan, taoNoiDungVietQr } from "@/lib/vietqr";
 import { CO_SO, moTaThe, nhanTrangThaiHd, tenDongIn, tienTruThe } from "@/lib/in-hoa-don";
 import type { Tables } from "@/lib/supabase/database.types";
 
@@ -90,9 +90,10 @@ export async function dungToInHoaDon(db: Db, hds: Tables<"hoa_don">[], nnEp?: Ng
     const li = h.lich_hen_id ? mLich.get(h.lich_hen_id) : undefined;
     const gioPhucVu = h.gio_vao ? [gioHcm(h.gio_vao), gioHcm(h.gio_ra)].filter(Boolean).join("–") : li ? `${gioHcm(li.bat_dau)}–${gioHcm(li.ket_thuc)}` : "";
     let qrAnh: string | null = null;
+    // Ghi chú chuyển khoản để trống thì nội dung = mã hoá đơn (kế toán đối chiếu sao kê theo mã).
     if (cfg.qr) {
       const bin = binNganHang(cfg.qrNganHang);
-      const noiDung = cfg.qrNoiDung.trim() || (bin && cfg.qrSoTk ? taoNoiDungVietQr({ bin, soTk: cfg.qrSoTk, soTien: Number(h.con_no) > 0 ? Number(h.con_no) : 0, ghiChu: cfg.qrGhiChu || undefined }) : "");
+      const noiDung = cfg.qrNoiDung.trim() || (bin && cfg.qrSoTk ? taoNoiDungVietQr({ bin, soTk: cfg.qrSoTk, soTien: Number(h.con_no) > 0 ? Number(h.con_no) : 0, ghiChu: noiDungChuyenKhoan(cfg.qrGhiChu || h.ma) || undefined }) : "");
       if (noiDung) qrAnh = await QRCode.toDataURL(noiDung, { margin: 1, width: 240 });
     }
     const dongHd = dsDong.filter((x) => x.hoa_don_id === h.id);

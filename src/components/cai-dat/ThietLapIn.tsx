@@ -7,7 +7,7 @@ import { Chon } from "@/components/ui/Chon";
 import { CHON_HET, NHAN_O, NUT_CHU, O_NHAP, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
 import { BanInHoaDon, type DuLieuIn } from "@/components/cai-dat/BanInHoaDon";
 import { KHO_GIAY, type CauHinhIn, type LoaiIn } from "@/lib/thiet-lap-in";
-import { NGAN_HANG_QR } from "@/lib/vietqr";
+import { NGAN_HANG_QR, maQrCuaTen } from "@/lib/vietqr";
 
 type Khoa = "logo" | "thongTinCuaHang" | "nhanVienPhucVu" | "gioVaoRa" | "sdtKhach" | "ghiChu" | "gioiTinhNamSinh" | "chuKyKhach" | "thuNgan" | "diemTichLuy" | "chiInHoanThanh";
 const O: Record<LoaiIn, [Khoa, string][]> = {
@@ -19,9 +19,11 @@ const Hop = ({ id, nhan, bat, onDoi, tat }: { id: string; nhan: string; bat: boo
 );
 
 /** Bố cục như SalonHero "Thiết lập in": trái là biểu mẫu, phải là bản in mẫu cập nhật ngay khi tích. Chọn chi nhánh / loại tờ in thì tải lại trang với cấu hình tương ứng. */
-export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu }: {
+export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu, taiKhoan = [] }: {
   loai: LoaiIn; cn: string; chiNhanh: { id: string; ten: string }[]; dau: CauHinhIn; nguon: "chi_nhanh" | "chung" | "mac_dinh"; mau: DuLieuIn; sua: boolean;
   luu: (fd: FormData) => Promise<{ ok?: true; loi?: string }>;
+  /** Tài khoản chuyển khoản đang dùng: chọn một cái để điền sẵn ngân hàng / số TK / chủ TK của QRCode (khỏi gõ lại). */
+  taiKhoan?: { id: string; nganHang: string; so: string; chu: string }[];
 }) {
   const router = useRouter();
   const [c, setC] = useState(dau);
@@ -66,6 +68,12 @@ export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu }
           {c.qr && (
             <div className="space-y-3 rounded-nho border border-vien p-3">
               <p className="text-[13px] font-medium text-muc-2">QRCode thanh toán</p>
+              {taiKhoan.length > 0 && (
+                <div><label className={NHAN_O}>Lấy từ tài khoản ngân hàng</label>
+                  <Chon ariaLabel="Lấy từ tài khoản ngân hàng" voHieu={tat} giaTri={taiKhoan.find((x) => x.so === c.qrSoTk && maQrCuaTen(x.nganHang) === c.qrNganHang)?.id ?? ""}
+                    luaChon={[{ gia_tri: "", nhan: "Chọn tài khoản để điền sẵn" }, ...taiKhoan.map((x) => ({ gia_tri: x.id, nhan: `${x.nganHang} · ${x.so} · ${x.chu}` }))]}
+                    onDoi={(v) => { const x = taiKhoan.find((y) => y.id === v); if (x) dat({ qrNganHang: maQrCuaTen(x.nganHang) ?? "", qrSoTk: x.so.replace(/\D/g, ""), qrChuTk: x.chu.slice(0, 50) }); }} /></div>
+              )}
               <div className="grid gap-3 sm:grid-cols-2">
                 <div><label className={NHAN_O}>Ngân hàng</label><Chon ariaLabel="Ngân hàng" luaChon={[{ gia_tri: "", nhan: "Chọn ngân hàng" }, ...NGAN_HANG_QR.map((b) => ({ gia_tri: b.ma, nhan: b.nhan }))]} giaTri={c.qrNganHang} onDoi={(v) => dat({ qrNganHang: v })} voHieu={tat} /></div>
                 <div><label className={NHAN_O} htmlFor="in-sotk">Số TK</label><input id="in-sotk" inputMode="numeric" disabled={tat} value={c.qrSoTk} onChange={(e) => dat({ qrSoTk: e.target.value.replace(/\D/g, "") })} className={O_NHAP} autoComplete="off" /></div>

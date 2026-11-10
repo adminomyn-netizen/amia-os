@@ -2,7 +2,32 @@
 
 import { useEffect, useState } from "react";
 import { tienVN } from "@/lib/dinh-dang";
-import { KENH_MAN_HINH_KHACH, type DonChoKhach } from "@/lib/ban-hang";
+import { KENH_MAN_HINH_KHACH, type DonChoKhach, type QrKhoan } from "@/lib/ban-hang";
+import { useAnhQr } from "@/components/ui/MaQrChuyenKhoan";
+import { chuanTenNganHang } from "@/lib/ngan-hang-ten";
+import { vietQrTaiKhoan } from "@/lib/vietqr";
+
+/** Như SalonHero (màn hình khách nhận "paymentInfo.transfer" khi thu ngân chọn Chuyển khoản): mã VietQR lớn để khách quét, kèm ngân hàng, chủ TK, số TK, số tiền. */
+function QrKhach({ q }: { q: QrKhoan }) {
+  const anh = useAnhQr(vietQrTaiKhoan({ ngan_hang: q.tk.nganHang, so_tai_khoan: q.tk.so }, q.soTien, q.noiDung), 560);
+  const ten = chuanTenNganHang(q.tk.nganHang) ?? q.tk.nganHang;
+  return (
+    <div className="flex flex-col items-center gap-4 rounded-the border border-nhan bg-white p-5 sm:flex-row sm:items-start">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      {anh ? <img src={anh} alt={`Mã QR chuyển khoản ${ten}`} className="h-64 w-64 shrink-0" /> : <div className="h-64 w-64 shrink-0 animate-pulse bg-giay-tram" />}
+      <div className="w-full">
+        <p className="text-[18px] font-semibold text-nhan-dam">Mời quý khách quét mã chuyển khoản</p>
+        <dl className="mt-2 space-y-2 text-[16px]">
+        <div><dt className="text-[13px] text-muc-3">Ngân hàng</dt><dd className="font-medium text-muc">{ten}</dd></div>
+        <div><dt className="text-[13px] text-muc-3">Chủ tài khoản</dt><dd className="font-medium text-muc">{q.tk.chu}</dd></div>
+        <div><dt className="text-[13px] text-muc-3">Số tài khoản</dt><dd className="text-[20px] font-semibold tabular-nums text-muc">{q.tk.so}</dd></div>
+        <div><dt className="text-[13px] text-muc-3">Số tiền</dt><dd className="text-[22px] font-semibold tabular-nums text-nhan-dam">{tienVN(q.soTien)}</dd></div>
+        {q.noiDung && <div><dt className="text-[13px] text-muc-3">Nội dung</dt><dd className="text-muc-2">{q.noiDung}</dd></div>}
+        </dl>
+      </div>
+    </div>
+  );
+}
 
 export function ManHinhKhach() {
   const [don, setDon] = useState<DonChoKhach | null>(null);
@@ -41,6 +66,7 @@ export function ManHinhKhach() {
             {don.daThu > 0 && <div className="flex justify-between"><dt className="text-muc-3">Đã thu</dt><dd className="tabular-nums">{tienVN(don.daThu)}</dd></div>}
             {don.daThu > 0 && don.conNo > 0 && <div className="flex justify-between font-medium text-canh-bao"><dt>Còn lại</dt><dd className="tabular-nums">{tienVN(don.conNo)}</dd></div>}
           </dl>
+          {don.qr && don.qr.length > 0 && <div className="mt-6 space-y-4">{don.qr.map((q) => <QrKhach key={q.tkId} q={q} />)}</div>}
         </>
       )}
     </main>

@@ -142,8 +142,8 @@ export function lamSachDongNhap(v: unknown): DongDon[] {
 export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string;
   /** Chỉ cho chuyển khoản / quẹt thẻ: tài khoản nhận (Cài đặt › Tài khoản Ngân Hàng, 0323). Trống = "Khác" / chưa chọn. */ tai_khoan_id?: string; /** Chỉ cho ví điện tử: mã ví (LOAI_VI). */ loai_vi?: string };
 
-/** Tài khoản ngân hàng đang hoạt động (cài đặt › Ngân hàng) rút gọn cho ô "Ngân hàng nhận" ở Thu ngân. Chỉ đưa 4 số cuối xuống trình duyệt. */
-export type TaiKhoanNhan = { ten: string; chiNhanhId: string | null; cx: boolean; qt: boolean; macDinh: boolean; /** id tài khoản (0323) */ id?: string; /** chủ tài khoản */ chu?: string; /** 4 số cuối */ so4?: string };
+/** Tài khoản ngân hàng đang hoạt động (cài đặt › Ngân hàng) cho ô "Tài khoản nhận" ở Thu ngân. Số tài khoản ĐỦ (chị Lâm 10/11/2026 "y như Salon Hero", và mã QR chuyển khoản cần số đủ). */
+export type TaiKhoanNhan = { ten: string; chiNhanhId: string | null; cx: boolean; qt: boolean; macDinh: boolean; /** id tài khoản (0323) */ id?: string; /** chủ tài khoản */ chu?: string; /** số tài khoản (đủ) */ so?: string };
 /** Danh sách ngân hàng nhận cho khoản thu chuyển khoản / quẹt thẻ: tài khoản đang dùng của chi nhánh (tài khoản mặc định lên đầu) rồi "Khác"; bảng chưa có tài khoản nào dùng được thì danh sách mặc định. */
 export function dsNganHangNhan(tk: TaiKhoanNhan[], chiNhanhId: string, phuongThuc: string): string[] {
   const ap = tk.filter((x) => (x.chiNhanhId === null || x.chiNhanhId === chiNhanhId) && (phuongThuc === "quet_the" ? x.qt : x.cx));
@@ -153,8 +153,8 @@ export function dsNganHangNhan(tk: TaiKhoanNhan[], chiNhanhId: string, phuongThu
 /** Ô "Tài khoản nhận" (chị Lâm 10/11/2026, như SalonHero chọn tài khoản khi thu chuyển khoản / quẹt thẻ): mỗi lựa chọn là MỘT tài khoản
  *  (giá trị = id, nhãn "Vietcombank …1234 · Chủ TK"), tài khoản mặc định lên đầu, rồi "Khác". Chưa có tài khoản nào có id thì về danh sách tên ngân hàng như trước. */
 export type LuaChonNhan = { gia_tri: string; nhan: string; /** tên ngắn ngân hàng ghi vào thanh_toan.ngan_hang */ ten: string; tkId?: string };
-/** Nhãn ngắn: 4 số cuối đứng ngay sau tên ngân hàng để ô chọn hẹp (điện thoại) bị cắt chữ vẫn phân biệt được hai tài khoản cùng ngân hàng. */
-export const nhanTaiKhoan = (x: { ten: string; chu?: string | null; so4?: string | null }) => [[chuanTenNganHang(x.ten) ?? x.ten, x.so4 ? `…${x.so4}` : null].filter(Boolean).join(" "), x.chu || null].filter(Boolean).join(" · ");
+/** Nhãn: số tài khoản đủ đứng ngay sau tên ngân hàng (như SalonHero "số TK - ngân hàng - chủ TK") để ô chọn hẹp (điện thoại) bị cắt chữ vẫn phân biệt được hai tài khoản cùng ngân hàng. */
+export const nhanTaiKhoan = (x: { ten: string; chu?: string | null; so?: string | null }) => [[chuanTenNganHang(x.ten) ?? x.ten, x.so || null].filter(Boolean).join(" "), x.chu || null].filter(Boolean).join(" · ");
 export function dsLuaChonNhan(tk: TaiKhoanNhan[], chiNhanhId: string, phuongThuc: string): LuaChonNhan[] {
   const ap = tk.filter((x) => x.id && (x.chiNhanhId === null || x.chiNhanhId === chiNhanhId) && (phuongThuc === "quet_the" ? x.qt : x.cx)).sort((a, b) => Number(b.macDinh) - Number(a.macDinh));
   if (!ap.length) return dsNganHangNhan(tk, chiNhanhId, phuongThuc).map((t) => ({ gia_tri: t, nhan: t, ten: t }));
@@ -180,7 +180,7 @@ export function kiemTaiKhoanKhoan(phuongThuc: string, tk: { hoat_dong: boolean; 
 export type DongTaiKhoan = { id: string; ngan_hang: string; chu_tai_khoan: string; so_tai_khoan: string; chi_nhanh_id: string | null; dung_chuyen_khoan: boolean; dung_quet_the: boolean; mac_dinh: boolean };
 export function luaChonTaiKhoanForm(tk: DongTaiKhoan[], chiNhanhId: string | null): { gia_tri: string; nhan: string }[] {
   const ap = tk.filter((x) => !x.chi_nhanh_id || !chiNhanhId || x.chi_nhanh_id === chiNhanhId).sort((a, b) => Number(b.mac_dinh) - Number(a.mac_dinh));
-  return [...ap.map((x) => ({ gia_tri: x.id, nhan: nhanTaiKhoan({ ten: x.ngan_hang, chu: x.chu_tai_khoan, so4: x.so_tai_khoan.replace(/\D/g, "").slice(-4) }) + (x.dung_chuyen_khoan && !x.dung_quet_the ? " (chỉ chuyển khoản)" : !x.dung_chuyen_khoan && x.dung_quet_the ? " (chỉ quẹt thẻ)" : "") })),
+  return [...ap.map((x) => ({ gia_tri: x.id, nhan: nhanTaiKhoan({ ten: x.ngan_hang, chu: x.chu_tai_khoan, so: x.so_tai_khoan.replace(/\D/g, "") }) + (x.dung_chuyen_khoan && !x.dung_quet_the ? " (chỉ chuyển khoản)" : !x.dung_chuyen_khoan && x.dung_quet_the ? " (chỉ quẹt thẻ)" : "") })),
     { gia_tri: "Khác", nhan: "Khác (ngoài danh sách)" }];
 }
 /** Chọn sẵn: ngân hàng lần trước nếu còn trong danh sách, không thì ngân hàng đầu danh sách. */
@@ -289,4 +289,23 @@ export const KENH_MAN_HINH_KHACH = "amia-man-hinh-khach";
 export type DonChoKhach = {
   khach: string; dong: { ten: string; sl: number; thanh: number }[];
   hang: number; giam: number; vat: number; phuPhiTip: number; phai: number; daThu: number; conNo: number;
+  /** Mã QR chuyển khoản (như SalonHero gửi "customerDisplay:paymentInfo" khi chọn Chuyển khoản): mỗi tài khoản nhận một mã, số tiền = tổng các khoản chuyển vào tài khoản đó. */
+  qr?: QrKhoan[];
 };
+/** Một mã QR chuyển khoản của đơn đang dựng: tài khoản nhận + số tiền + nội dung (mã hoá đơn / mã khách). */
+export type QrKhoan = { tkId: string; tk: { nganHang: string; chu: string; so: string }; soTien: number; noiDung: string };
+/** Gom các khoản thu CHUYỂN KHOẢN có chọn tài khoản (có số TK) theo tài khoản, đúng thứ tự xuất hiện; khoản 0đ bỏ qua. Quẹt thẻ không cần QR. */
+export function qrCuaKhoanThu(thu: KhoanThu[], tk: TaiKhoanNhan[], noiDung: string): QrKhoan[] {
+  const ra: QrKhoan[] = [];
+  for (const t of thu) {
+    if (t.phuong_thuc !== "chuyen_khoan" || !t.tai_khoan_id || !(t.so_tien > 0)) continue;
+    const x = tk.find((y) => y.id === t.tai_khoan_id);
+    if (!x?.so) continue;
+    const co = ra.find((q) => q.tkId === t.tai_khoan_id);
+    if (co) co.soTien += t.so_tien;
+    else ra.push({ tkId: t.tai_khoan_id, tk: { nganHang: x.ten, chu: x.chu ?? "", so: x.so }, soTien: t.so_tien, noiDung });
+  }
+  return ra;
+}
+/** Nội dung chuyển khoản in trong mã: mã hoá đơn khi đã có (sửa hoá đơn), không thì "AMIA <mã khách>" để kế toán đối chiếu sao kê. */
+export const noiDungCkDon = (maHd: string | null | undefined, maKhach: string | null | undefined) => (maHd ? maHd : ["AMIA", maKhach].filter(Boolean).join(" "));

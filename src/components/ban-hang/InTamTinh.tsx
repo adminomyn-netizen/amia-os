@@ -4,16 +4,21 @@ import { useSyncExternalStore } from "react";
 import { BanInHoaDon, KHO_CUON, type DuLieuIn } from "@/components/cai-dat/BanInHoaDon";
 import { NutIn } from "@/components/hoa-don/NutIn";
 import type { CauHinhIn } from "@/lib/thiet-lap-in";
+import { useAnhQr } from "@/components/ui/MaQrChuyenKhoan";
 
 const KHOA = "amia-in-tam-tinh";
 const docTam = () => { try { return localStorage.getItem(KHOA); } catch { return null; } };
 const dangKy = () => () => undefined;
 
 /** Tờ in tạm tính: đọc đơn Thu ngân vừa gửi qua bộ nhớ trình duyệt (không qua máy chủ). */
-export function InTamTinh({ cfg, cuaHang }: { cfg: CauHinhIn; cuaHang: DuLieuIn["cuaHang"] | null }) {
+export function InTamTinh({ cfg: cfgGoc, cuaHang }: { cfg: CauHinhIn; cuaHang: DuLieuIn["cuaHang"] | null }) {
   const tho = useSyncExternalStore(dangKy, docTam, () => null);
   let d: DuLieuIn | null = null;
   try { d = tho ? (JSON.parse(tho) as DuLieuIn) : null; } catch { d = null; }
+  // Mã QR chuyển khoản của đơn (thu ngân đã chọn tài khoản nhận): vẽ ngay trên trang in, bật khối QR cuối tờ dù Thiết lập in chưa bật QR.
+  const anhQr = useAnhQr(d?.qrChuoi ?? null, 240);
+  if (d?.qrChuoi) d = { ...d, qrAnh: anhQr };
+  const cfg = d?.qrChuoi ? { ...cfgGoc, qr: true } : cfgGoc;
   const giay = cfg.khoGiay;
   return (
     <main data-theme="light" className="mx-auto bg-white text-muc">

@@ -34,6 +34,8 @@ export async function luuNganHang(fd: FormData): Promise<KQ> {
   const row = {
     ngan_hang: chuoi(fd, "ngan_hang"), so_tai_khoan: chuoi(fd, "so_tai_khoan").replace(/\s/g, ""), chu_tai_khoan: chuoi(fd, "chu_tai_khoan"),
     dung_quet_the: bat(fd, "dung_quet_the"), dung_chuyen_khoan: bat(fd, "dung_chuyen_khoan"), ghi_chu: chuoiHoacNull(fd, "ghi_chu"),
+    // Chi nhánh dùng tài khoản (trống = mọi chi nhánh): Thu ngân chỉ thấy tài khoản của chi nhánh mình.
+    chi_nhanh_id: /^[0-9a-f-]{36}$/i.test(chuoi(fd, "chi_nhanh_id")) ? chuoi(fd, "chi_nhanh_id") : null,
   };
   const macDinh = bat(fd, "mac_dinh");
   if (!row.ngan_hang) return { loi: "Mời chọn tên ngân hàng." };
@@ -47,6 +49,7 @@ export async function luuNganHang(fd: FormData): Promise<KQ> {
   if (error) return { loi: thongBaoLoi(error) };
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: id ? "sua_tai_khoan_ngan_hang" : "them_tai_khoan_ngan_hang", doi_tuong: "tai_khoan_ngan_hang", doi_tuong_id: moi.id, chi_tiet: { ngan_hang: row.ngan_hang, so_cuoi: row.so_tai_khoan.slice(-4), quet_the: row.dung_quet_the, chuyen_khoan: row.dung_chuyen_khoan, mac_dinh: macDinh } });
   revalidatePath("/cai-dat/ngan-hang");
+  revalidatePath("/ban-hang");
   return { ok: true };
 }
 

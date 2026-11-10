@@ -6,11 +6,14 @@ import { useRouter } from "next/navigation";
 import { Banknote, CreditCard, Landmark, Minus, Package, Pencil, Plus, Search, ShoppingBag, Sparkles, Ticket, Trash2, UserRound, X } from "lucide-react";
 import { Chon } from "@/components/ui/Chon";
 import { Hop } from "@/components/ui/Hop";
+import { MaQrChuyenKhoan } from "@/components/ui/MaQrChuyenKhoan";
+import { vietQrTaiKhoan } from "@/lib/vietqr";
+import { chuanTenNganHang } from "@/lib/ngan-hang-ten";
 import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
 import { GioChon } from "@/components/ui/GioChon";
-import { gtGoiY, chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, NHAN_PHUONG_THUC, nhanKhoanThu, HINH_THUC_NHANH, viTriNhanh, datTienNhanh, dienPhanCon, dsLuaChonNhan, luaChonCuaKhoan, apLuaChonNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
+import { gtGoiY, chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, NHAN_PHUONG_THUC, nhanKhoanThu, HINH_THUC_NHANH, viTriNhanh, datTienNhanh, dienPhanCon, dsLuaChonNhan, luaChonCuaKhoan, apLuaChonNhan, nganHangChonSan, noiDungCkDon, qrCuaKhoanThu, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type QrKhoan, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -469,13 +472,18 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   const noDong = conNo > 0 ? (noTay?.khoa === khoaNo ? noTay.ds : chiaNoTheoDong(thanhDong.map((x) => x.thanh), conNo)) : [];
   const tongNoDong = noDong.reduce((a, b) => a + b, 0);
   const { traLai, thieu } = tinhTraLai(khachDua, tienMat);
+  // Mã QR chuyển khoản (chị Lâm 10/11/2026 "bê cả mã QR qua đây", như SalonHero "Mời quét mã"): mỗi khoản chuyển khoản đã chọn tài khoản có một mã, số tiền = khoản đó,
+  // nội dung = mã hoá đơn (khi sửa hoá đơn) hoặc "AMIA <mã khách>". Gửi cả sang Màn hình khách và bản in tạm tính.
+  const ndCk = noiDungCkDon(sua?.ma, khach?.ma);
+  const tkQr = (t: KhoanThu) => { const x = t.phuong_thuc === "chuyen_khoan" && t.tai_khoan_id ? taiKhoanNhan.find((y) => y.id === t.tai_khoan_id) : undefined; return x?.so ? { nganHang: x.ten, chu: x.chu ?? "", so: x.so } : null; };
+  const qrKhoa = JSON.stringify(qrCuaKhoanThu(thu, taiKhoanNhan, ndCk));
   useEffect(() => {
     if (!dangXem) return;
     onDonChoKhach({
       khach: khach?.ho_ten ?? "", dong: dong.map((d) => ({ ten: tuMuc.get(khoaDong(d))?.ten ?? "", sl: d.sl, thanh: giaDong(d, tuMuc.get(khoaDong(d))) * d.sl - d.giam })),
-      hang, giam: giamDon + tienDiem + tienVoucher, vat, phuPhiTip: phuPhi + tip, phai, daThu, conNo,
+      hang, giam: giamDon + tienDiem + tienVoucher, vat, phuPhiTip: phuPhi + tip, phai, daThu, conNo, qr: JSON.parse(qrKhoa),
     });
-  }, [dangXem, onDonChoKhach, khach, dong, tuMuc, hang, giamDon, tienDiem, tienVoucher, vat, phuPhi, tip, phai, daThu, conNo]);
+  }, [dangXem, onDonChoKhach, khach, dong, tuMuc, hang, giamDon, tienDiem, tienVoucher, vat, phuPhi, tip, phai, daThu, conNo, qrKhoa]);
 
   const them = (m: MucBan) => {
     if (m.loai === "goi_the" && m.dichVu?.length) setLoc({ loai: "goi_the", id: m.id, ten: m.ten, dv: m.dichVu });
@@ -547,6 +555,8 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
       thanhToan: tt.thanhToan, tienTruThe: tt.tienTruThe, theSauTt: tt.theSauTt,
       conNo: Math.max(conNo, 0), khachDua: tienMat > 0 && khachDua > 0 ? khachDua : null, traLai: tienMat > 0 && khachDua > 0 ? traLai : null,
       bangChu: nn === "vi" ? docSoTien(phai) : null,
+      // Mã QR chuyển khoản (khoản chuyển khoản đầu tiên đã chọn tài khoản): tờ in tự vẽ ảnh từ chuỗi VietQR.
+      ...(() => { const q = (JSON.parse(qrKhoa) as QrKhoan[])[0]; return q ? { qrChuoi: vietQrTaiKhoan({ ngan_hang: q.tk.nganHang, so_tai_khoan: q.tk.so }, q.soTien, q.noiDung), qrNhan: `${nn === "en" ? "Transfer" : "Chuyển khoản"} ${tienVN(q.soTien)} · ${chuanTenNganHang(q.tk.nganHang) ?? q.tk.nganHang} ${q.tk.so} · ${q.tk.chu}` } : {}; })(),
     };
     try { localStorage.setItem("amia-in-tam-tinh", JSON.stringify(d)); } catch { return setLoi("Trình duyệt đang chặn lưu tạm nên chưa in được."); }
     window.open(`/in/tam-tinh?cn=${cnId}`, "_blank");
@@ -779,6 +789,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
                               onDoi={(v) => { ghiNho(pt, v); setThu((a) => a.map((y, j) => (j === i ? apLuaChonNhan(y, v, dsNh(pt)) : y))); }} /></div>
                           </div>
                         )}
+                        {t && t.so_tien > 0 && tkQr(t) && <div className="mt-2 pl-[26px]"><MaQrChuyenKhoan tk={tkQr(t)!} soTien={t.so_tien} noiDung={ndCk} co={104} /></div>}
                       </li>
                     );
                   })}
@@ -796,6 +807,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
                             onDoi={(v) => { ghiNho(t.phuong_thuc, v); setThu((a) => a.map((y, j) => (j === i ? apLuaChonNhan(y, v, dsNh(t.phuong_thuc)) : y))); }} /></div>
                         </div>
                       )}
+                      {t.so_tien > 0 && tkQr(t) && <div className="col-span-3"><MaQrChuyenKhoan tk={tkQr(t)!} soTien={t.so_tien} noiDung={ndCk} co={104} /></div>}
                       {t.phuong_thuc === "vi_dien_tu" && (
                         <div className="col-span-3 flex items-center gap-2 text-[12px] text-muc-3">
                           <span className="shrink-0">Loại ví</span>

@@ -21,6 +21,6 @@ export default async function TrangInTamTinh({ searchParams }: { searchParams: P
   const { cauHinh } = docIn("hoa_don", ch, cnId);
   // Đầu tờ y như hoá đơn đã chốt (dungToInHoaDon): tên cơ sở + lĩnh vực · giấy phép + "Chi nhánh: …" + địa chỉ + điện thoại.
   const cuaHang = { ten: cn?.ten ?? "AMIA", tenCoSo: ch1?.ten_phap_nhan || CO_SO.ten, phu: `${CO_SO.linhVuc} · ${cauHinh.ngonNgu === "en" ? "License" : "Giấy phép"} ${CO_SO.giayPhep}`, diaChi: cn?.dia_chi, dienThoai: cn?.dien_thoai ?? ch1?.dien_thoai };
-  // Bản tạm tính không có mã QR (chưa có số tiền chốt), không in "chỉ đơn hoàn thành".
+  // Bản tạm tính: QR theo Thiết lập in tắt (chưa có số tiền chốt); có khoản chuyển khoản đã chọn tài khoản thì InTamTinh tự in mã QR của khoản đó. Không in "chỉ đơn hoàn thành".
   return <InTamTinh cfg={{ ...cauHinh, qr: false }} cuaHang={cuaHang} />;
 }

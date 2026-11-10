@@ -17,10 +17,12 @@ export default async function TrangThietLapIn({ searchParams }: { searchParams: 
   const sp = await searchParams;
   const loai = laLoaiIn(sp.loai) ? sp.loai : "hoa_don";
   const db = sb();
-  const [{ data: cn }, { data: rows }, { data: ch }] = await Promise.all([
+  const [{ data: cn }, { data: rows }, { data: ch }, { data: dsTk }] = await Promise.all([
     db.from("chi_nhanh").select("id, ten, dia_chi, dien_thoai").eq("hoat_dong", true).order("thu_tu").order("ma"),
     db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "in.%"),
     db.from("cua_hang").select("ten_thuong_hieu").eq("id", 1).maybeSingle(),
+    // "Lấy từ tài khoản ngân hàng" ở khối QRCode: tài khoản chuyển khoản đang dùng (Cài đặt › Tài khoản Ngân Hàng).
+    db.from("tai_khoan_ngan_hang").select("id, ngan_hang, so_tai_khoan, chu_tai_khoan").eq("hoat_dong", true).eq("dung_chuyen_khoan", true).neq("so_tai_khoan", "").order("mac_dinh", { ascending: false }).order("tao_luc"),
   ]);
   const chon = (cn ?? []).find((x) => x.id === sp.cn);
   const ma = chon?.id ?? TAT_CA;
@@ -37,7 +39,7 @@ export default async function TrangThietLapIn({ searchParams }: { searchParams: 
   return (
     <div>
       <TieuDeNoi icon={Printer} quayLai={{ href: "/cai-dat", nhan: "Cài đặt" }} tieuDe="Thiết lập in" phu="Khổ giấy, các dòng hiện trên tờ in hoá đơn / lịch hẹn và nội dung cuối tờ, theo từng chi nhánh. Chỉ cấu hình hiển thị." />
-      <ThietLapInForm key={`${loai}-${ma}`} loai={loai} cn={ma} chiNhanh={(cn ?? []).map((x) => ({ id: x.id, ten: x.ten }))} dau={cauHinh} nguon={nguon} mau={mau} sua={coQuyen(nd, "hethong.phanquyen")} luu={luuThietLapIn} />
+      <ThietLapInForm key={`${loai}-${ma}`} loai={loai} cn={ma} chiNhanh={(cn ?? []).map((x) => ({ id: x.id, ten: x.ten }))} dau={cauHinh} nguon={nguon} mau={mau} sua={coQuyen(nd, "hethong.phanquyen")} taiKhoan={(dsTk ?? []).map((x) => ({ id: x.id, nganHang: x.ngan_hang, so: x.so_tai_khoan, chu: x.chu_tai_khoan }))} luu={luuThietLapIn} />
     </div>
   );
 }

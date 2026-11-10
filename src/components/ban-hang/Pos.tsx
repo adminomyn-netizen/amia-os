@@ -582,6 +582,8 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
           </button>
         )}
         {moLe && (<>
+        {/* SalonHero: nút "Danh sách khách hàng dùng thẻ" ngay trên dải Dịch vụ / Sản phẩm / Thẻ dịch vụ. */}
+        <Link href="/the" className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-[14px] font-medium text-nhan-dam hover:underline lg:min-h-0">Danh sách khách hàng dùng thẻ</Link>
         {/* Điện thoại: dải loại + ô tìm + sắp xếp dính trên đầu vùng cuộn, cuộn danh sách dài vẫn đổi tab / tìm được ngay. */}
         <div className="max-lg:sticky max-lg:-top-6 max-lg:z-20 max-lg:-mx-4 max-lg:mt-0 max-lg:bg-giay max-lg:px-4 max-lg:pt-6 max-lg:pb-2 max-lg:shadow-[0_8px_12px_-12px_rgb(10_43_38/0.35)]">
         <div className="flex gap-1 overflow-x-auto border-b border-vien [scrollbar-width:none] lg:mt-5 [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Danh mục bán">

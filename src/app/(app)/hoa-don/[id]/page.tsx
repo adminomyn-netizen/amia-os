@@ -1,3 +1,4 @@
+import type { Tables } from "@/lib/supabase/database.types";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
@@ -42,7 +43,19 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   // Lịch sử nợ (như hộp "Nợ của khách" SalonHero): các lần trả nợ sau khi chốt đơn và các lần xoá nợ; chỉ dòng cuối còn hiệu lực được huỷ.
   const { data: lsNo } = h.trang_thai === "hoan_thanh" ? await db.rpc("lich_su_no_hoa_don", { p_id: id }) : { data: [] };
   const idsDong = (dong ?? []).map((d) => d.id);
-  const { data: chia } = idsDong.length ? await db.from("dong_nhan_vien").select("*").in("dong_id", idsDong) : { data: [] };
+  const idsOf = (k: "dich_vu_id" | "san_pham_id" | "goi_id") => [...new Set((dong ?? []).map((d) => d[k]).filter((x): x is string => !!x))];
+  const [{ data: chia }, { data: maDv }, { data: maSp }, { data: maGoi }] = await Promise.all([
+    idsDong.length ? db.from("dong_nhan_vien").select("*").in("dong_id", idsDong) : Promise.resolve({ data: [] as Tables<"dong_nhan_vien">[] }),
+    idsOf("dich_vu_id").length ? db.from("dich_vu").select("id, ma").in("id", idsOf("dich_vu_id")) : Promise.resolve({ data: [] as { id: string; ma: string | null }[] }),
+    idsOf("san_pham_id").length ? db.from("san_pham").select("id, ma, ma_vach").in("id", idsOf("san_pham_id")) : Promise.resolve({ data: [] as { id: string; ma: string | null; ma_vach: string | null }[] }),
+    idsOf("goi_id").length ? db.from("goi_the").select("id, ma, loai, so_buoi").in("id", idsOf("goi_id")) : Promise.resolve({ data: [] as { id: string; ma: string | null; loai: string; so_buoi: number | null }[] }),
+  ]);
+  // Dòng dưới tên mục như SalonHero: mã dịch vụ / mã vạch sản phẩm / mã gói, thẻ lần thêm "Tổng số lần: N".
+  const mDv = new Map((maDv ?? []).map((x) => [x.id, x.ma])), mSp = new Map((maSp ?? []).map((x) => [x.id, x.ma_vach || x.ma])), mGoi = new Map((maGoi ?? []).map((x) => [x.id, x]));
+  const phuDong = (r: { dich_vu_id: string | null; san_pham_id: string | null; goi_id: string | null }) => {
+    if (r.goi_id) { const g = mGoi.get(r.goi_id); return [g?.ma, g && g.loai !== "tien" ? (g.so_buoi ? `Tổng số lần: ${g.so_buoi}` : "Không giới hạn lần") : ""].filter(Boolean).join(" · "); }
+    return (r.dich_vu_id ? mDv.get(r.dich_vu_id) : r.san_pham_id ? mSp.get(r.san_pham_id) : "") ?? "";
+  };
   const tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
   // Khoản thu chuyển từ SalonHero ghi người làm là tài khoản hệ thống, tên thu ngân thật nằm sau dấu "·" của ghi chú ("SalonHero PAYMENT · Trần Thị Thùy Dương"): in tên thật như SalonHero.
   const nguoiThu = (id: string | null | undefined, ghiChu: string | null | undefined) => { const ten = tenNv.get(id ?? "") ?? ""; const m = ten.normalize("NFC").includes("SalonHero") ? /[·•]\s*([^·•]+)$/.exec(ghiChu ?? "") : null; return m ? m[1].trim() : ten; };
@@ -134,7 +147,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         </MucTrang>
         <MucTrang noi tieuDe="Dòng hàng">
           <Bang duLieu={dong ?? []} khoa={(r) => r.id} cot={[
-            { nhan: "Mục", hienThi: (r) => <span className="text-muc">{r.ten}</span> }, { nhan: "SL", hienThi: (r) => r.so_luong, phai: true }, { nhan: "Đơn giá", hienThi: (r) => tienVN(r.don_gia), phai: true },
+            { nhan: "Mục", hienThi: (r) => { const phu = phuDong(r); return <span className="text-muc">{r.loai === "goi_the" && !/^mua /i.test(r.ten) ? `Mua ${r.ten}` : r.ten}{phu ? <span className="block text-[12px] text-muc-3">{phu}</span> : null}</span>; } }, { nhan: "SL", hienThi: (r) => r.so_luong, phai: true }, { nhan: "Đơn giá", hienThi: (r) => tienVN(r.don_gia), phai: true },
             { nhan: "Giảm", hienThi: (r) => (r.giam_gia ? tienVN(r.giam_gia) : ""), phai: true },
             { nhan: "% giảm", hienThi: (r) => (r.giam_gia && r.don_gia * r.so_luong > 0 ? `${Math.round((r.giam_gia * 10000) / (r.don_gia * r.so_luong)) / 100}%` : ""), phai: true }, { nhan: "Thành tiền", hienThi: (r) => tienVN(r.thanh_tien), phai: true },
             { nhan: "Người hưởng", hienThi: (r) => VAI.map((v) => { const ds = (chia ?? []).filter((c) => c.dong_id === r.id && c.vai === v.ma); return ds.length ? `${v.ten}: ${ds.map((c) => `${tenNv.get(c.nhan_vien_id)} ${Number(c.ti_le)}%`).join(", ")}` : null; }).filter(Boolean).join(" · ") },

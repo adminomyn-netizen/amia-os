@@ -289,23 +289,19 @@ export const KENH_MAN_HINH_KHACH = "amia-man-hinh-khach";
 export type DonChoKhach = {
   khach: string; dong: { ten: string; sl: number; thanh: number }[];
   hang: number; giam: number; vat: number; phuPhiTip: number; phai: number; daThu: number; conNo: number;
-  /** Mã QR chuyển khoản (như SalonHero gửi "customerDisplay:paymentInfo" khi chọn Chuyển khoản): mỗi tài khoản nhận một mã, số tiền = tổng các khoản chuyển vào tài khoản đó. */
-  qr?: QrKhoan[];
+  /** Mã QR chuyển khoản (như SalonHero gửi "customerDisplay:paymentInfo.transfer"): chỉ khi đơn trả bằng MỘT hình thức Chuyển khoản đã chọn tài khoản (xem qrThuNgan). */
+  qr?: QrKhoan | null;
 };
-/** Một mã QR chuyển khoản của đơn đang dựng: tài khoản nhận + số tiền + nội dung (mã hoá đơn / mã khách). */
-export type QrKhoan = { tkId: string; tk: { nganHang: string; chu: string; so: string }; soTien: number; noiDung: string };
-/** Gom các khoản thu CHUYỂN KHOẢN có chọn tài khoản (có số TK) theo tài khoản, đúng thứ tự xuất hiện; khoản 0đ bỏ qua. Quẹt thẻ không cần QR. */
-export function qrCuaKhoanThu(thu: KhoanThu[], tk: TaiKhoanNhan[], noiDung: string): QrKhoan[] {
-  const ra: QrKhoan[] = [];
-  for (const t of thu) {
-    if (t.phuong_thuc !== "chuyen_khoan" || !t.tai_khoan_id || !(t.so_tien > 0)) continue;
-    const x = tk.find((y) => y.id === t.tai_khoan_id);
-    if (!x?.so) continue;
-    const co = ra.find((q) => q.tkId === t.tai_khoan_id);
-    if (co) co.soTien += t.so_tien;
-    else ra.push({ tkId: t.tai_khoan_id, tk: { nganHang: x.ten, chu: x.chu ?? "", so: x.so }, soTien: t.so_tien, noiDung });
-  }
-  return ra;
+/** Mã QR chuyển khoản của đơn đang dựng: tài khoản nhận + số tiền. Như SalonHero: KHÔNG có nội dung chuyển khoản (addInfo) ở hộp thanh toán / màn hình khách. */
+export type QrKhoan = { tkId: string; tk: { nganHang: string; chu: string; so: string }; soTien: number };
+/** "Mời quét mã" y như SalonHero (hộp thanh toán, chỉ khi payment_type = TRANSFER; chọn "Nhiều hình thức" thì KHÔNG có mã):
+ *  hiện mã khi ĐÚNG MỘT khoản Chuyển khoản (đã chọn tài khoản có số TK) và không hình thức nào khác có tiền (trừ thẻ tiền không tính — SalonHero trừ thẻ ngoài hình thức thanh toán).
+ *  Số tiền = khoản chuyển khoản nếu 0 < khoản < phải thu (sau trừ thẻ tiền), không thì = phải thu. */
+export function qrThuNgan(thu: KhoanThu[], tk: TaiKhoanNhan[], phai: number): QrKhoan | null {
+  const ck = thu.filter((t) => t.phuong_thuc === "chuyen_khoan");
+  if (ck.length !== 1 || thu.some((t) => t.phuong_thuc !== "chuyen_khoan" && t.phuong_thuc !== "the_tien" && t.so_tien > 0)) return null;
+  const t = ck[0], x = t.tai_khoan_id ? tk.find((y) => y.id === t.tai_khoan_id) : undefined;
+  if (!x?.so || !t.tai_khoan_id) return null;
+  const tong = Math.max(phai - thu.filter((y) => y.phuong_thuc === "the_tien").reduce((a, y) => a + y.so_tien, 0), 0);
+  return { tkId: t.tai_khoan_id, tk: { nganHang: x.ten, chu: x.chu ?? "", so: x.so }, soTien: t.so_tien > 0 && t.so_tien < tong ? t.so_tien : tong };
 }
-/** Nội dung chuyển khoản in trong mã: mã hoá đơn khi đã có (sửa hoá đơn), không thì "AMIA <mã khách>" để kế toán đối chiếu sao kê. */
-export const noiDungCkDon = (maHd: string | null | undefined, maKhach: string | null | undefined) => (maHd ? maHd : ["AMIA", maKhach].filter(Boolean).join(" "));

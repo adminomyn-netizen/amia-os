@@ -5,20 +5,22 @@ import { BanInHoaDon, KHO_CUON, type DuLieuIn } from "@/components/cai-dat/BanIn
 import { NutIn } from "@/components/hoa-don/NutIn";
 import type { CauHinhIn } from "@/lib/thiet-lap-in";
 import { useAnhQr } from "@/components/ui/MaQrChuyenKhoan";
+import { chuoiQrIn, soTienQrIn } from "@/lib/vietqr";
 
 const KHOA = "amia-in-tam-tinh";
 const docTam = () => { try { return localStorage.getItem(KHOA); } catch { return null; } };
 const dangKy = () => () => undefined;
 
 /** Tờ in tạm tính: đọc đơn Thu ngân vừa gửi qua bộ nhớ trình duyệt (không qua máy chủ). */
-export function InTamTinh({ cfg: cfgGoc, cuaHang }: { cfg: CauHinhIn; cuaHang: DuLieuIn["cuaHang"] | null }) {
+export function InTamTinh({ cfg, cuaHang }: { cfg: CauHinhIn; cuaHang: DuLieuIn["cuaHang"] | null }) {
   const tho = useSyncExternalStore(dangKy, docTam, () => null);
   let d: DuLieuIn | null = null;
   try { d = tho ? (JSON.parse(tho) as DuLieuIn) : null; } catch { d = null; }
-  // Mã QR chuyển khoản của đơn (thu ngân đã chọn tài khoản nhận): vẽ ngay trên trang in, bật khối QR cuối tờ dù Thiết lập in chưa bật QR.
-  const anhQr = useAnhQr(d?.qrChuoi ?? null, 240);
-  if (d?.qrChuoi) d = { ...d, qrAnh: anhQr };
-  const cfg = d?.qrChuoi ? { ...cfgGoc, qr: true } : cfgGoc;
+  // Mã QR cuối tờ y như SalonHero (cùng directive in với hoá đơn đã chốt): chỉ khi Thiết lập in bật QRCode, tài khoản của Thiết lập in,
+  // số tiền theo các khoản thu đang nhập, nội dung = Ghi chú chuyển khoản (<ORDER_CODE> = mã hoá đơn khi đang sửa, đơn mới chưa có mã thì để trống).
+  const qrChuoi = d ? chuoiQrIn(cfg, { soTien: soTienQrIn((d.qrThu ?? []).filter((t) => t.phuong_thuc !== "the_tien"), d.phaiThu - (d.tienTruThe ?? 0)), maHd: d.ma, tenKhach: d.khach?.ten }) : "";
+  const anhQr = useAnhQr(qrChuoi || null, 240);
+  if (d && qrChuoi) d = { ...d, qrAnh: anhQr };
   const giay = cfg.khoGiay;
   return (
     <main data-theme="light" className="mx-auto bg-white text-muc">

@@ -59,7 +59,8 @@ export function loiIn(c: CauHinhIn): string {
   if (c.qrNoiDung.length > 400) return "Nội dung QRCode tối đa 400 ký tự.";
   if (c.qrSoTk && !/^\d{6,20}$/.test(c.qrSoTk)) return "Số tài khoản chỉ gồm chữ số (6–20 số).";
   if (c.qrChuTk.length > 50) return "Chủ tài khoản tối đa 50 ký tự.";
-  if (c.qrGhiChu && !/^[\p{L}\p{N} ]{1,25}$/u.test(c.qrGhiChu)) return "Ghi chú chuyển khoản tối đa 25 ký tự, chỉ chữ, số và dấu cách (không ký tự đặc biệt).";
+  // Như SalonHero: ghi chú được chèn <ORDER_CODE> / <CUSTOMER_NAME> (thay lúc in); còn lại chỉ chữ, số, dấu cách. Nội dung trong mã cắt 25 ký tự (giới hạn trường 62/08 EMVCo).
+  if (c.qrGhiChu && (c.qrGhiChu.length > 50 || !/^[\p{L}\p{N} ]*$/u.test(c.qrGhiChu.replace(/<ORDER_CODE>|<CUSTOMER_NAME>/g, "")))) return "Ghi chú chuyển khoản tối đa 50 ký tự, chỉ chữ, số, dấu cách và <ORDER_CODE> / <CUSTOMER_NAME> (không ký tự đặc biệt).";
   if (c.qr && !c.qrNoiDung.trim() && !(c.qrNganHang && c.qrSoTk)) return "Bật QRCode thì chọn ngân hàng và nhập số tài khoản, hoặc nhập nội dung QRCode.";
   return "";
 }

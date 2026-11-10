@@ -26,6 +26,7 @@ describe("thiết lập in", () => {
     expect(loiIn({ ...c, qr: true, qrNganHang: "Vietcombank", qrSoTk: "123" })).toMatch(/chữ số/);
     expect(loiIn({ ...c, qr: true, qrNganHang: "Vietcombank", qrSoTk: "0123456789", qrGhiChu: "a-b" })).toMatch(/ký tự đặc biệt/);
     expect(loiIn({ ...c, qr: true, qrNganHang: "Vietcombank", qrSoTk: "0123456789", qrGhiChu: "Thanh toan HD" })).toBe("");
+    expect(loiIn({ ...c, qr: true, qrNganHang: "Vietcombank", qrSoTk: "0123456789", qrGhiChu: "TT <ORDER_CODE> <CUSTOMER_NAME>" })).toBe("");
     expect(loiIn({ ...c, qr: true, qrNoiDung: "https://example.vn" })).toBe("");
   });
 });

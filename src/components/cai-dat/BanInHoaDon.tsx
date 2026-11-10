@@ -25,8 +25,8 @@ export type DuLieuIn = {
   thanhToan: { nhan: string; soTien: number | null }[]; conNo: number;
   /** Ảnh mã QR đã dựng sẵn (data URL); bản xem mẫu không có thì hiện khung giữ chỗ. */
   qrAnh?: string | null; xemMau?: boolean;
-  /** Bản tạm tính: chuỗi VietQR của khoản chuyển khoản thu ngân đã chọn tài khoản (tờ in tự vẽ ảnh) + dòng chú thích dưới mã (ngân hàng · số TK · chủ TK · số tiền). */
-  qrChuoi?: string | null; qrNhan?: string | null;
+  /** Bản tạm tính: các khoản thu đang nhập (tính số tiền trong mã QR như SalonHero getQROrderBankTransferAmount). */
+  qrThu?: { phuong_thuc: string; so_tien: number }[];
   /** Ngôn ngữ bản in (SalonHero: "In hoá đơn sau khi hoàn thành" chọn tiếng Việt / tiếng Anh). Mặc định tiếng Việt. */
   nn?: NgonNguIn;
   /** Tiền khách đưa (tiền mặt) và tiền trả lại khách, khi thu ngân có nhập. */
@@ -180,7 +180,7 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
           ) : (
             <div className="mx-auto flex h-24 w-24 items-center justify-center border border-dashed border-vien-dam text-[11px] text-muc-3">{d.xemMau ? c.maQr : c.chuaQr}</div>
           )}
-          {d.qrNhan ? <p className={lop("mt-1 text-muc-2")}>{d.qrNhan}</p> : cfg.qrChuTk && <p className={lop("mt-1 text-muc-2")}>{cfg.qrNganHang} · {cfg.qrChuTk}</p>}
+          {cfg.qrChuTk && <p className={lop("mt-1 text-muc-2")}>{cfg.qrNganHang} · {cfg.qrChuTk}</p>}
         </div>
       )}
       {cfg.noiDungCuoi.trim() && <p className={`mt-6 whitespace-pre-line text-center text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>{cfg.noiDungCuoi}</p>}

@@ -80,7 +80,7 @@ export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu, 
                 <div><label className={NHAN_O} htmlFor="in-chutk">Chủ TK</label><input id="in-chutk" disabled={tat} value={c.qrChuTk} onChange={(e) => dat({ qrChuTk: e.target.value })} className={O_NHAP} autoComplete="off" /></div>
                 <div><label className={NHAN_O} htmlFor="in-ghi-chu-ck">Ghi chú chuyển khoản</label><input id="in-ghi-chu-ck" disabled={tat} value={c.qrGhiChu} onChange={(e) => dat({ qrGhiChu: e.target.value })} className={O_NHAP} autoComplete="off" /></div>
               </div>
-              <p className="text-[12px] text-muc-3">Chú ý: không điền các ký tự đặc biệt (! @ # $ % ^ &amp; * ( ) - _ = + \ | [ ] {"{ }"} ; : / ? . &gt;). Mã chỉ dựng được cho các ngân hàng trong danh sách.</p>
+              <p className="text-[12px] text-muc-3">Chú ý: không điền các ký tự đặc biệt (! @ # $ % ^ &amp; * ( ) - _ = + \ | [ ] {"{ }"} ; : / ? . &gt;). Ghi chú có thể chèn &lt;ORDER_CODE&gt; (mã hoá đơn) và &lt;CUSTOMER_NAME&gt; (tên khách); để trống thì mã không kèm nội dung. Mã chỉ dựng được cho các ngân hàng trong danh sách.</p>
               <div><label className={NHAN_O} htmlFor="in-qr-nd">Hoặc nội dung QRCode</label><textarea id="in-qr-nd" disabled={tat} value={c.qrNoiDung} onChange={(e) => dat({ qrNoiDung: e.target.value })} className={`${O_NHIEU_DONG} !min-h-[64px]`} /></div>
             </div>
           )}

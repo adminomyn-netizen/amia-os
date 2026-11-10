@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { noiDungCkDon, qrCuaKhoanThu, type TaiKhoanNhan } from "@/lib/ban-hang";
+import { qrThuNgan, type TaiKhoanNhan } from "@/lib/ban-hang";
 import { DANH_SACH_NGAN_HANG } from "@/lib/ngan-hang";
-import { NGAN_HANG_QR, binTheoTenNganHang, crc16, docTlv, noiDungChuyenKhoan, vietQrTaiKhoan } from "@/lib/vietqr";
+import { NGAN_HANG_QR, binTheoTenNganHang, chuoiQrIn, crc16, docTlv, ghiChuCkIn, noiDungChuyenKhoan, soTienQrIn, vietQrTaiKhoan } from "@/lib/vietqr";
 
 // Mã QR của tài khoản nhận tiền (chị Lâm 10/11/2026: "bê cả mã QR qua đây"). Số tài khoản trong test là số GIẢ.
 describe("QR tài khoản nhận tiền", () => {
@@ -59,18 +59,49 @@ describe("QR của đơn đang dựng (Thu ngân / màn hình khách / tạm tí
     { id: "b", ten: "Ngân hàng OCB", chu: "B", so: "0004445556", chiNhanhId: null, cx: true, qt: false, macDinh: false },
     { id: "c", ten: "Ngân hàng TPBank", chu: "C", chiNhanhId: null, cx: true, qt: false, macDinh: false },
   ];
-  it("gom theo tài khoản, bỏ quẹt thẻ / tiền mặt / khoản 0đ / tài khoản thiếu số / Khác", () => {
-    const qr = qrCuaKhoanThu([
-      { phuong_thuc: "tien_mat", so_tien: 100 }, { phuong_thuc: "chuyen_khoan", so_tien: 300, tai_khoan_id: "a" }, { phuong_thuc: "quet_the", so_tien: 50, tai_khoan_id: "a" },
-      { phuong_thuc: "chuyen_khoan", so_tien: 200, tai_khoan_id: "b" }, { phuong_thuc: "chuyen_khoan", so_tien: 100, tai_khoan_id: "a" },
-      { phuong_thuc: "chuyen_khoan", so_tien: 0, tai_khoan_id: "b" }, { phuong_thuc: "chuyen_khoan", so_tien: 70, tai_khoan_id: "c" }, { phuong_thuc: "chuyen_khoan", so_tien: 90, ngan_hang: "Khác" },
-    ], tk, "HD1");
-    expect(qr.map((q) => [q.tkId, q.soTien, q.tk.so, q.noiDung])).toEqual([["a", 400, "0001112223", "HD1"], ["b", 200, "0004445556", "HD1"]]);
+  // Như SalonHero: "Mời quét mã" chỉ khi payment_type = TRANSFER (một hình thức), số tiền = khoản chuyển nếu thu thiếu, không thì tổng; KHÔNG addInfo.
+  it("một hình thức Chuyển khoản → một mã, không nội dung", () => {
+    expect(qrThuNgan([{ phuong_thuc: "chuyen_khoan", so_tien: 300, tai_khoan_id: "a" }], tk, 1000)).toEqual({ tkId: "a", tk: { nganHang: "Ngân hàng Vietcombank", chu: "A", so: "0001112223" }, soTien: 300 });
+    expect(qrThuNgan([{ phuong_thuc: "chuyen_khoan", so_tien: 0, tai_khoan_id: "a" }], tk, 1000)?.soTien).toBe(1000);
+    expect(qrThuNgan([{ phuong_thuc: "chuyen_khoan", so_tien: 1500, tai_khoan_id: "a" }], tk, 1000)?.soTien).toBe(1000);
+    expect(qrThuNgan([{ phuong_thuc: "tien_mat", so_tien: 0 }, { phuong_thuc: "chuyen_khoan", so_tien: 1000, tai_khoan_id: "b" }], tk, 1000)?.tkId).toBe("b");
+    // trừ thẻ tiền không tính là hình thức; tổng = phải thu − trừ thẻ
+    expect(qrThuNgan([{ phuong_thuc: "the_tien", so_tien: 400 }, { phuong_thuc: "chuyen_khoan", so_tien: 600, tai_khoan_id: "a" }], tk, 1000)?.soTien).toBe(600);
   });
-  it("nội dung: mã hoá đơn, không thì AMIA + mã khách", () => {
-    expect(noiDungCkDon("HD123", "KH1")).toBe("HD123");
-    expect(noiDungCkDon("", "AVI26006375")).toBe("AMIA AVI26006375");
-    expect(noiDungCkDon(null, null)).toBe("AMIA");
+  it("nhiều hình thức / nhiều khoản chuyển khoản / chưa chọn tài khoản → không có mã", () => {
+    expect(qrThuNgan([{ phuong_thuc: "tien_mat", so_tien: 100 }, { phuong_thuc: "chuyen_khoan", so_tien: 900, tai_khoan_id: "a" }], tk, 1000)).toBeNull();
+    expect(qrThuNgan([{ phuong_thuc: "chuyen_khoan", so_tien: 500, tai_khoan_id: "a" }, { phuong_thuc: "chuyen_khoan", so_tien: 500, tai_khoan_id: "b" }], tk, 1000)).toBeNull();
+    expect(qrThuNgan([{ phuong_thuc: "chuyen_khoan", so_tien: 70, tai_khoan_id: "c" }], tk, 1000)).toBeNull();
+    expect(qrThuNgan([{ phuong_thuc: "chuyen_khoan", so_tien: 90, ngan_hang: "Khác" }], tk, 1000)).toBeNull();
+    expect(qrThuNgan([{ phuong_thuc: "quet_the", so_tien: 1000, tai_khoan_id: "a" }], tk, 1000)).toBeNull();
+  });
+});
+
+// Tờ in (hoá đơn đã chốt + tạm tính) y như SalonHero directive "print": tài khoản của Thiết lập in, getQROrderBankTransferAmount, getQRCodeNoteContent.
+describe("QR cuối tờ in", () => {
+  it("số tiền: một hình thức → đã thu nếu thu thiếu, không thì tổng; nhiều hình thức → khoản chuyển khoản, không có thì 0", () => {
+    expect(soTienQrIn([{ phuong_thuc: "tien_mat", so_tien: 1000 }], 1000)).toBe(1000);
+    expect(soTienQrIn([{ phuong_thuc: "tien_mat", so_tien: 400 }], 1000)).toBe(400);
+    expect(soTienQrIn([], 1000)).toBe(1000);
+    expect(soTienQrIn([{ phuong_thuc: "tien_mat", so_tien: "300" }, { phuong_thuc: "chuyen_khoan", so_tien: "700" }], 1000)).toBe(700);
+    expect(soTienQrIn([{ phuong_thuc: "tien_mat", so_tien: 300 }, { phuong_thuc: "quet_the", so_tien: 700 }], 1000)).toBe(0);
+  });
+  it("nội dung = Ghi chú chuyển khoản, thay <ORDER_CODE> / <CUSTOMER_NAME>, bỏ dấu; trống thì không có", () => {
+    expect(ghiChuCkIn("TT <ORDER_CODE>", "HD2611-07", "Lê Thị Hoa")).toBe("TT HD2611 07");
+    expect(ghiChuCkIn("<CUSTOMER_NAME>", "HD1", "Lê Thị Hoa")).toBe("Le Thi Hoa");
+    expect(ghiChuCkIn("TT <ORDER_CODE>", "", null)).toBe("TT");
+    expect(ghiChuCkIn("  ", "HD1", "A")).toBe("");
+  });
+  const cfg = { qr: true, qrNganHang: "Vietcombank", qrSoTk: "0001112223", qrGhiChu: "", qrNoiDung: "" };
+  it("chỉ khi bật QRCode; ghi chú trống thì không có trường 62", () => {
+    expect(chuoiQrIn({ ...cfg, qr: false }, { soTien: 1000 })).toBe("");
+    const t = docTlv(chuoiQrIn(cfg, { soTien: 1000, maHd: "HD1" }));
+    expect(t["54"]).toBe("1000");
+    expect(t["62"]).toBeUndefined();
+    const t2 = docTlv(chuoiQrIn({ ...cfg, qrGhiChu: "AMIA <ORDER_CODE>" }, { soTien: 0, maHd: "HD1" }));
+    expect(t2["54"]).toBeUndefined();
+    expect(docTlv(t2["62"])["08"]).toBe("AMIA HD1");
+    expect(chuoiQrIn({ ...cfg, qrNoiDung: "https://example.vn" }, { soTien: 1 })).toBe("https://example.vn");
   });
 });
 

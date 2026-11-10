@@ -98,3 +98,34 @@ export function docTlv(s: string): Record<string, string> {
   }
   return ra;
 }
+
+// ── Mã QR cuối TỜ IN (hoá đơn đã chốt + tạm tính) — y như SalonHero (directive "print": img.vietqr.io/<ngân hàng Thiết lập in>-<số TK>-compact2.jpg?amount=…&accountName=…&addInfo=…) ──
+// Chỉ in khi Thiết lập in bật QRCode; ngân hàng / số TK lấy từ Thiết lập in (KHÔNG phải tài khoản thu ngân chọn lúc thanh toán).
+
+/** Số tiền trong mã ở tờ in (SalonHero getQROrderBankTransferAmount): đơn MỘT hình thức → đã thu nếu 0 < đã thu < tổng, không thì tổng
+ *  (kể cả đơn trả tiền mặt); đơn NHIỀU hình thức → khoản chuyển khoản đầu tiên, không có thì 0 (mã không kèm số tiền).
+ *  `thu`: các khoản THU (không gồm hoàn, không gồm trừ thẻ tiền); `tong`: phải thu sau trừ thẻ tiền (= order.total của SalonHero). */
+export function soTienQrIn(thu: { phuong_thuc: string; so_tien: number | string }[], tong: number): number {
+  const co = thu.filter((t) => Number(t.so_tien) > 0);
+  if (new Set(co.map((t) => t.phuong_thuc)).size > 1) return Number(co.find((t) => t.phuong_thuc === "chuyen_khoan")?.so_tien ?? 0);
+  const daThu = co.reduce((a, t) => a + Number(t.so_tien), 0);
+  return daThu > 0 && daThu < tong ? daThu : Math.max(tong, 0);
+}
+
+/** Nội dung chuyển khoản ở tờ in (SalonHero getQRCodeNoteContent): "Ghi chú chuyển khoản" của Thiết lập in, thay <ORDER_CODE> = mã hoá đơn,
+ *  <CUSTOMER_NAME> = tên khách, rồi bỏ dấu / ký tự đặc biệt. Ghi chú trống → không có nội dung. Tạm tính chưa có mã hoá đơn thì <ORDER_CODE> để trống. */
+export function ghiChuCkIn(mau: string | null | undefined, maHd: string | null | undefined, tenKhach: string | null | undefined): string {
+  const m = String(mau ?? "").trim();
+  if (!m) return "";
+  return noiDungChuyenKhoan(m.replace("<ORDER_CODE>", maHd ?? "").replace("<CUSTOMER_NAME>", tenKhach ?? ""));
+}
+
+/** Chuỗi QR cuối tờ in theo Thiết lập in: "nội dung QRCode" tự nhập được ưu tiên; không thì VietQR tới tài khoản của Thiết lập in. "" = không in mã. */
+export function chuoiQrIn(cfg: { qr: boolean; qrNganHang: string; qrSoTk: string; qrGhiChu: string; qrNoiDung: string }, o: { soTien: number; maHd?: string | null; tenKhach?: string | null }): string {
+  if (!cfg.qr) return "";
+  if (cfg.qrNoiDung.trim()) return cfg.qrNoiDung.trim();
+  const bin = binNganHang(cfg.qrNganHang);
+  if (!bin || !cfg.qrSoTk) return "";
+  const ghiChu = ghiChuCkIn(cfg.qrGhiChu, o.maHd, o.tenKhach);
+  return taoNoiDungVietQr({ bin, soTk: cfg.qrSoTk, soTien: o.soTien > 0 ? Math.round(o.soTien) : undefined, ghiChu: ghiChu || undefined });
+}

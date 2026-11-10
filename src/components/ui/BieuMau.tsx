@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Hop } from "./Hop";
 import { Chon, type LuaChon } from "./Chon";
 import { NgayChon } from "./NgayChon";
+import { ONgaySinh } from "./ONgaySinh";
 import { OTien } from "./OTien";
 import { Gat } from "./Gat";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_CHU_NGUY, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "./dinh-dang";
@@ -13,7 +14,7 @@ import { NutTraCuuMst } from "@/components/ui/NutTraCuuMst";
 export type Truong = {
   ten: string;
   nhan: string;
-  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "gio" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "mat_khau_an" | "email";
+  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "ngay_sinh" | "gio" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "mat_khau_an" | "email";
   luaChon?: LuaChon[];
   batBuoc?: boolean;
   goiY?: string;
@@ -175,6 +176,7 @@ export function NutHop({
                 {t.loai === "tien" && <OTien id={id} giaTriMacDinh={Number(gt) || 0} onDoi={(n) => dat(t.ten, n)} />}
                 {t.loai === "chon" && <Chon id={id} luaChon={luaChonDiaBan(t, v, diaBan)} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn"} />}
                 {t.loai === "ngay" && <NgayChon id={id} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} />}
+                {t.loai === "ngay_sinh" && <ONgaySinh id={id} giaTri={String(gt ?? "")} onDoi={(x) => dat(t.ten, x)} />}
                 {t.loai === "gio" && <Chon id={id} luaChon={[{ gia_tri: "", nhan: "Chưa chọn" }, ...gioSlot(t.tuGio, t.denGio, t.buocPhut)]} giaTri={String(gt ?? "").slice(0, 5)} onDoi={(x) => dat(t.ten, x)} trong={t.goiY ?? "Chọn giờ"} />}
                 {t.loai === "nhieu_dong" && <textarea id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHIEU_DONG} />}
                 {t.loai === "gat" && <Gat nhan={t.nhan} giaTriMacDinh={!!gt} onDoi={(x) => dat(t.ten, x)} />}

@@ -1,6 +1,7 @@
 import "server-only";
 import ExcelJS from "exceljs";
 import { chuanSdt, coSdtHopLe } from "@/lib/dinh-dang";
+import { ngaySinhKhongNam } from "@/lib/ngay-sinh";
 
 export type KhachNhap = { ho_ten: string; dien_thoai: string; zalo: string | null; email: string | null; ngay_sinh: string | null; gioi_tinh: string | null; dia_chi: string | null; ghi_chu: string | null; dong: number };
 export type LoiNhap = { dong: number; viec: string };
@@ -17,6 +18,8 @@ function ngay(v: unknown): string | null {
   const s = String(v ?? "").trim();
   const m = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(s);
   if (m) return `${m[3]}-${m[2].padStart(2, "0")}-${m[1].padStart(2, "0")}`;
+  const k = /^(\d{1,2})[/.-](\d{1,2})$/.exec(s); // "20/11" = chỉ ngày + tháng → không rõ năm (lưu năm quy ước 1904)
+  if (k) return ngaySinhKhongNam(Number(k[1]), Number(k[2]));
   return /^\d{4}-\d{2}-\d{2}$/.test(s) ? s : null;
 }
 const gt = (v: unknown) => { const s = bo(String(v ?? "")); return ["nu", "female", "f"].includes(s) ? "nữ" : ["nam", "male", "m"].includes(s) ? "nam" : s ? "khác" : null; };

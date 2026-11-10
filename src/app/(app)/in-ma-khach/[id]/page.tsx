@@ -5,6 +5,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { buoiConLai, ngayGioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { svgMaVach } from "@/lib/ma-vach";
+import { ngaySinhVN } from "@/lib/ngay-sinh";
 import { InNgay } from "@/components/khach/InNgay";
 
 /** Trang in của khách, nằm ngoài /khach-hang để không dính khung hai cột.
@@ -52,7 +53,7 @@ export default async function TrangInMaKhach({ params, searchParams }: { params:
   const tenNhom = (nhom ?? []).map((x) => (x.nhom_khach as unknown as { ten: string } | null)?.ten).filter(Boolean).join(", ");
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "in_phieu_khach", doi_tuong: "khach_hang", doi_tuong_id: id });
   const dong: [string, string][] = [
-    ["Mã khách", k.ma], ["Họ tên", k.ho_ten], ["Điện thoại", k.dien_thoai], ["Ngày sinh", ngayVN(k.ngay_sinh)],
+    ["Mã khách", k.ma], ["Họ tên", k.ho_ten], ["Điện thoại", k.dien_thoai], ["Ngày sinh", ngaySinhVN(k.ngay_sinh)],
     ["Địa chỉ", [k.dia_chi, ...[k.quan_huyen, k.tinh_thanh].filter((x) => x && !(k.dia_chi ?? "").includes(x))].filter(Boolean).join(", ")], ["Chi nhánh", cn?.ten ?? ""],
     ["Hạng", vk?.hang ?? ""], ["Nhóm khách", tenNhom], ["Điểm thưởng", soVN(k.diem_so_du)],
   ];

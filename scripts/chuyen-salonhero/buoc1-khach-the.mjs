@@ -5,7 +5,7 @@
 //  • Ghi chú riêng của SalonHero (CS######) → khach_ghi_chu (sh_id = mã ghi chú, bỏ qua nếu đã có).
 // Mặc định CHẠY THỬ trong 1 giao dịch rồi HUỶ (rollback) và in bảng đối chiếu; thêm --that mới ghi thật.
 // Dùng: PW=$(security find-generic-password -s amia-os-db-password -w) node scripts/chuyen-salonhero/buoc1-khach-the.mjs <thư-mục-xuất> [--that] [--dot SH-2810-01]
-import { ketNoi, docHet, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang } from "./lib.mjs";
+import { ketNoi, docHet, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, ngaySinhSh } from "./lib.mjs";
 import { readFileSync, writeFileSync } from "node:fs";
 
 const thuMuc = process.argv[2]; if (!thuMuc) throw new Error("Thiếu thư mục xuất");
@@ -57,8 +57,7 @@ try {
   const dong = (c) => {
     const rt = chiTiet.get(Number(c.id)); const ct = rt?.chi_tiet ?? {};
     if (!rt && !c._tu_the) { bao.mat_chi_tiet++; if (dieuTra.mat_chi_tiet.length < 20) dieuTra.mat_chi_tiet.push(c.id); }
-    const dobOk = Number(ct.dob_year) > 1900 && Number(ct.dob_month) >= 1 && Number(ct.dob_month) <= 12 && Number(ct.dob_date) >= 1 && Number(ct.dob_date) <= 31;
-    const ngaySinh = dobOk ? `${ct.dob_year}-${String(ct.dob_month).padStart(2, "0")}-${String(ct.dob_date).padStart(2, "0")}` : null;
+    const ngaySinh = ngaySinhSh(ct); // thiếu/sai năm → không rõ năm (1904-mm-dd), 0327
     const diaChi = [sach(ct.address), sach(ct.district_name), sach(ct.city_name)].filter(Boolean).join(", ") || null;
     return {
       sh_id: Number(c.id), ho_ten: sach(ct.full_name || c.full_name) || `Khách ${c.id}`, zalo: sdt(c.zalo) || null, email: sach(ct.email || c.email) || null,

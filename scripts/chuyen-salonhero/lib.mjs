@@ -18,6 +18,20 @@ export const vanBanGhiChuSh = (n) => {
   return nd.length ? nd.join("\n") + (n.creator_name ? `\n— ${sach(n.creator_name)} (SalonHero)` : "") : null;
 };
 
+/** Ngày sinh từ chi tiết khách SalonHero (dob_date/dob_month/dob_year). Đủ năm hợp lệ (1901..năm nay, ngày có thật) → "yyyy-mm-dd".
+ *  Thiếu năm / năm vô lý ("", "89", "199", "1072"…) nhưng ngày + tháng có thật → "1904-mm-dd" = KHÔNG RÕ NĂM (chị Lâm 10/11/2026, migration 0327),
+ *  trước đây để trống nên khách rơi khỏi danh sách sinh nhật. Không có ngày/tháng → null. Bản sao quy ước của src/lib/ngay-sinh.ts. */
+export const NAM_KHONG_RO = 1904;
+export function ngaySinhSh(ct) {
+  const y = Number(ct?.dob_year), m = Number(ct?.dob_month), d = Number(ct?.dob_date);
+  const dung = (nam) => { const s = `${nam}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`; const t = new Date(`${s}T00:00:00Z`); return !Number.isNaN(t.getTime()) && t.toISOString().slice(0, 10) === s ? s : null; };
+  if (!(m >= 1 && m <= 12 && d >= 1 && d <= 31)) return null;
+  if (Number.isInteger(y) && y > 1900 && y <= new Date().getFullYear()) { const s = dung(y); if (s) return s; }
+  return dung(NAM_KHONG_RO);
+}
+/** Không hạ ngày sinh đủ năm đang có ở AMIA xuống "không rõ năm" (vd SalonHero ghi năm "89" nhưng AMIA đã có 1989-10-09). */
+export const giuNgaySinhDuNam = (moi, cu) => (moi && moi.startsWith(`${NAM_KHONG_RO}-`) && /^(19|20)\d\d-\d\d-\d\d$/.test(String(cu ?? "")) && !String(cu).startsWith(`${NAM_KHONG_RO}-`) ? String(cu) : moi);
+
 export async function ketNoi() {
   if (!process.env.PW) throw new Error("Thiếu PW (mật khẩu DB lấy từ Keychain amia-os-db-password)");
   const db = new pg.Client({ connectionString: `postgresql://postgres.odhbmsjfbfefczienpda:${encodeURIComponent(process.env.PW)}@aws-0-ap-southeast-1.pooler.supabase.com:5432/postgres`, ssl: { rejectUnauthorized: false } });

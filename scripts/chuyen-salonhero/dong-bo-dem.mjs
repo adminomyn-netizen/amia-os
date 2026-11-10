@@ -13,7 +13,7 @@
 //   --tu       ngày VN bắt đầu (mặc định: mốc lần đồng bộ trước trong sao-luu/dong-bo-moc.json, nếu chưa có thì 2026-10-28)
 //   --thu-muc  dùng lại bản xuất đã có (bỏ qua bước xuất từ SalonHero)
 //   --tu-kiem  TỰ KIỂM: trong giao dịch, giả lập "mất" vài khách/HĐ/lịch/thẻ và đổi vài dòng rồi cho đồng bộ vá lại; luôn rollback.
-import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, chuanBiTaiKhoanSh, nganHangKhoan, khoaTaiKhoan, vanBanGhiChuSh } from "./lib.mjs";
+import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, chuanBiTaiKhoanSh, nganHangKhoan, khoaTaiKhoan, vanBanGhiChuSh, ngaySinhSh, giuNgaySinhDuNam } from "./lib.mjs";
 import { chuanHoaSoQuySh, napSoQuySh, tonQuyAmia } from "./so-quy-sh.mjs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync, statSync } from "node:fs";
 import { spawnSync, execSync } from "node:child_process";
@@ -257,8 +257,7 @@ try {
   const baoK = { sdt_doi_bo_qua: 0, sdt_trong: 0, sdt_trung: 0, thieu_chi_tiet_moi: 0, doi_thong_tin: 0, doi_chi_so: 0 };
   const dongKhach = (c) => {
     const rt = chiTiet.get(Number(c.id)); const ct = rt?.chi_tiet ?? {};
-    const dobOk = Number(ct.dob_year) > 1900 && Number(ct.dob_month) >= 1 && Number(ct.dob_month) <= 12 && Number(ct.dob_date) >= 1 && Number(ct.dob_date) <= 31;
-    const ngaySinh = dobOk ? `${ct.dob_year}-${String(ct.dob_month).padStart(2, "0")}-${String(ct.dob_date).padStart(2, "0")}` : null;
+    const ngaySinh = giuNgaySinhDuNam(ngaySinhSh(ct), hienCo.get(Number(c.id))?.ngay_sinh); // thiếu/sai năm → không rõ năm (1904), không hạ ngày đủ năm đang có
     const diaChi = [sach(ct.address), sach(ct.district_name), sach(ct.city_name)].filter(Boolean).join(", ") || null;
     return {
       sh_id: Number(c.id), ho_ten: sach(ct.full_name || c.full_name) || `Khách ${c.id}`, zalo: sdt(c.zalo) || null, email: sach(ct.email || c.email) || null,

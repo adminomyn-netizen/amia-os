@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Hop } from "@/components/ui/Hop";
 import { Chon, type LuaChon } from "@/components/ui/Chon";
 import { O_NHAP, NUT_PHU } from "@/components/ui/dinh-dang";
-import { ngayVN } from "@/lib/dinh-dang";
+import { ngaySinhVN } from "@/lib/ngay-sinh";
 
 type Dong = { id: string; ma: string; ho_ten: string; dien_thoai: string; hang: string | null; ngay_sinh?: string | null };
 const TAB = [{ ma: "hom_nay", ten: "Hôm nay" }, { ma: "7_ngay", ten: "7 ngày tới" }, { ma: "thang", ten: "Trong tháng" }] as const;
@@ -76,7 +76,7 @@ export function HopSinhNhat({ nhan, so, tab: tabDau, hang }: { nhan: string; so:
             <li key={k.id}>
               <Link href={`/khach-hang/${k.id}`} onClick={() => setMo(false)} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-3 py-2.5 hover:bg-giay-sang">
                 <span className="text-[14px] font-medium text-muc">{k.ho_ten}</span>
-                <span className="text-[13px] tabular-nums text-muc-3">{[k.ngay_sinh ? `Sinh ${ngayVN(k.ngay_sinh)}` : "", k.dien_thoai, k.ma, k.hang ?? ""].filter(Boolean).join(" · ")}</span>
+                <span className="text-[13px] tabular-nums text-muc-3">{[k.ngay_sinh ? `Sinh ${ngaySinhVN(k.ngay_sinh)}` : "", k.dien_thoai, k.ma, k.hang ?? ""].filter(Boolean).join(" · ")}</span>
               </Link>
             </li>
           ))}

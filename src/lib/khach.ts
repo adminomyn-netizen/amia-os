@@ -41,7 +41,7 @@ import type { LuaChon } from "@/components/ui/Chon";
 export function truongKhach(o: { dichVu: LuaChon[]; nhanVien: LuaChon[]; chiNhanh: LuaChon[]; nhom?: LuaChon[] }): Truong[] {
   return [
     { ten: "ho_ten", nhan: "Họ tên", loai: "chu", batBuoc: true }, { ten: "dien_thoai", nhan: "Số điện thoại (không trùng)", loai: "chu", batBuoc: true },
-    { ten: "zalo", nhan: "Zalo", loai: "chu" }, { ten: "ngay_sinh", nhan: "Ngày sinh", loai: "ngay" },
+    { ten: "zalo", nhan: "Zalo", loai: "chu" }, { ten: "ngay_sinh", nhan: "Ngày sinh", loai: "ngay_sinh" },
     { ten: "gioi_tinh", nhan: "Giới tính", loai: "chon", luaChon: [{ gia_tri: "nữ", nhan: "Nữ" }, { gia_tri: "nam", nhan: "Nam" }, { gia_tri: "khác", nhan: "Khác" }] },
     { ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon", luaChon: o.chiNhanh, batBuoc: true },
     { ten: "nguon", nhan: "Nguồn khách", loai: "chon", luaChon: NGUON, batBuoc: true },

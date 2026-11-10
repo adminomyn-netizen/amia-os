@@ -1,3 +1,5 @@
+import { ngaySinhVN } from "@/lib/ngay-sinh";
+
 // Lịch sử sửa hồ sơ khách của nhân viên (chị Diệu Thuý 10/11/2026 mục 3): mỗi lần lưu ghi một dòng nhat_ky_truy_cap (hanh_dong "sua_khach")
 // với chi_tiet.doi = { cột: [cũ, mới] } chỉ gồm các cột thật sự đổi. Phần tính thuần, không đọc DB, để test được.
 
@@ -31,6 +33,7 @@ export function moTaDoi(doi: Record<string, [GiaTri, GiaTri]>, o: { ten?: (cot: 
     if (v == null) return "(trống)";
     if (typeof v === "boolean") return v ? "Có" : "Không";
     if (COT_SDT.has(cot) && !o.xemSdt) return "•••";
+    if (cot === "ngay_sinh" && typeof v === "string") return ngaySinhVN(v); // "20/11 (không rõ năm)" thay vì "1904-11-20"
     return (cot.endsWith("_id") && o.ten?.(cot, String(v))) || String(v);
   };
   return Object.entries(doi).filter(([k]) => k in NHAN_COT_KHACH).map(([k, [a, b]]) => `${NHAN_COT_KHACH[k]}: ${hien(k, a)} → ${hien(k, b)}`);

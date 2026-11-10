@@ -7,6 +7,7 @@ import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
+import { ngaySinhVN } from "@/lib/ngay-sinh";
 import { NHAN_NGUON, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -141,7 +142,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   let noiDung: React.ReactNode = null;
   if (tab === "thong-tin") {
     const hang: [string, React.ReactNode][] = [
-      ...(coQuyen(nd, "khach.sdt") ? [["Điện thoại", k.dien_thoai], ["Số điện thoại phụ", kx?.sdt_phu ?? ""], ["Zalo", k.zalo ?? ""]] as [string, string][] : []), ...(coQuyen(nd, "khach.email") ? [["Email", k.email ?? ""]] as [string, string][] : []), ["Giới tính", k.gioi_tinh ? k.gioi_tinh.charAt(0).toUpperCase() + k.gioi_tinh.slice(1) : ""], ["Ngày sinh", ngayVN(k.ngay_sinh) || "Chưa có"],
+      ...(coQuyen(nd, "khach.sdt") ? [["Điện thoại", k.dien_thoai], ["Số điện thoại phụ", kx?.sdt_phu ?? ""], ["Zalo", k.zalo ?? ""]] as [string, string][] : []), ...(coQuyen(nd, "khach.email") ? [["Email", k.email ?? ""]] as [string, string][] : []), ["Giới tính", k.gioi_tinh ? k.gioi_tinh.charAt(0).toUpperCase() + k.gioi_tinh.slice(1) : ""], ["Ngày sinh", ngaySinhVN(k.ngay_sinh) || "Chưa có"],
       ["Địa chỉ", k.dia_chi ?? ""], ["Tỉnh/thành → Quận/huyện", [kx?.tinh_thanh, kx?.quan_huyen].filter(Boolean).join(" → ")],
       ["Facebook", kx?.facebook ? (/^https?:\/\//i.test(kx.facebook) ? <a href={kx.facebook} target="_blank" rel="noopener noreferrer" className="break-all font-medium text-nhan-dam underline underline-offset-2">{kx.facebook.replace(/^https?:\/\/(www\.)?/i, "")}</a> : kx.facebook) : ""],
       ["Website", kx?.website ?? ""], ["Nghề nghiệp", kx?.nghe_nghiep ?? ""], ["Công ty", kx?.cong_ty ?? ""], ["Mã số thuế", kx?.ma_so_thue ?? ""],

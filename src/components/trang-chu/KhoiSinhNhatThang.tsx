@@ -4,6 +4,7 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { laySinhNhatThang } from "@/lib/xep-hang";
 import { cheSdt } from "@/lib/tin-nhan";
 import { tienGon } from "@/lib/dinh-dang";
+import { tuoiSinhNhatNam } from "@/lib/ngay-sinh";
 
 /** Khách sinh nhật trong tháng (như ô "Khách hàng sinh nhật tháng này" của SalonHero): đủ danh sách, sắp theo ngày, hôm nay nổi lên đầu nhóm,
  *  bấm tên mở hồ sơ. SĐT đầy đủ chỉ với quyền xem số (khach.sdt), không thì che; tổng chi 12 tháng chỉ với quyền xem tiền. */
@@ -13,14 +14,14 @@ export async function KhoiSinhNhatThang({ cn, tenCn, homNay, xemSdt, xemTien }: 
   const homNayDs = ds.filter((k) => k.ngaySinh.slice(5) === md);
   const sapToi = ds.filter((k) => k.ngaySinh.slice(5) > md);
   const daQua = ds.filter((k) => k.ngaySinh.slice(5) < md);
-  const tuoi = (ns: string) => Number(homNay.slice(0, 4)) - Number(ns.slice(0, 4));
+  const tuoi = (ns: string) => { const t = tuoiSinhNhatNam(ns, homNay); return t == null ? "không rõ năm" : `${t} tuổi`; }; // khách không rõ năm (1904) không ra 122 tuổi
   const dong = (k: (typeof ds)[number], noi: boolean) => (
     <li key={k.id} className={`flex items-center gap-3 px-2 py-2 text-[13.5px] ${noi ? "rounded-nho bg-sac-hong-nen" : ""}`}>
       <span className={`w-12 shrink-0 text-center text-[12.5px] font-semibold tabular-nums ${noi ? "text-sac-hong" : "text-muc-3"}`}>{k.ngaySinh.slice(8)}/{k.ngaySinh.slice(5, 7)}</span>
       <div className="min-w-0 flex-1">
         <Link href={`/khach-hang/${k.id}`} className="block truncate font-semibold text-muc hover:text-nhan-dam hover:underline">{k.ten}</Link>
         <p className="truncate text-[12px] text-muc-3">
-          {[k.ma, `${tuoi(k.ngaySinh)} tuổi`, k.hang && k.hang !== "Thường" ? `hạng ${k.hang}` : null, k.theDangDung > 0 ? `${k.theDangDung} thẻ đang dùng` : null].filter(Boolean).join(" · ")}
+          {[k.ma, tuoi(k.ngaySinh), k.hang && k.hang !== "Thường" ? `hạng ${k.hang}` : null, k.theDangDung > 0 ? `${k.theDangDung} thẻ đang dùng` : null].filter(Boolean).join(" · ")}
         </p>
       </div>
       <div className="shrink-0 text-right">

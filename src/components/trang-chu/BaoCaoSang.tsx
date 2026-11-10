@@ -6,6 +6,7 @@ import { homNayHCM, soVN } from "@/lib/dinh-dang";
 import { docTinhSan } from "@/lib/bao-cao-nho-dem";
 import { gioVNHienTai, namVNHienTai, tieuDeTheoGio, vietBaoCaoSang, type BaoCaoSang as KqBaoCao } from "@/lib/bao-cao-sang";
 import { NutSaoChep } from "./NutSaoChep";
+import { tuoiSinhNhatNam } from "@/lib/ngay-sinh";
 import { MoRongBaoCao } from "./MoRongBaoCao";
 import { locKhach, type DongKhach } from "@/lib/khach-danh-sach";
 
@@ -110,7 +111,7 @@ export async function BaoCaoSang({ cn, tenCn }: { cn: string | null; tenCn: stri
   const q = b.hom_qua, n = b.hom_nay;
   const { tieuDe, phu } = tieuDeTheoGio(gioVNHienTai());
   const namNay = namVNHienTai();
-  const dsSn: KhachSn[] = d.sn.map((k) => ({ id: k.id, ten: k.ten, hang: k.hang, tuoi: k.ngay_sinh && Number(k.ngay_sinh.slice(0, 4)) > 1900 ? namNay - Number(k.ngay_sinh.slice(0, 4)) : null }));
+  const dsSn: KhachSn[] = d.sn.map((k) => ({ id: k.id, ten: k.ten, hang: k.hang, tuoi: tuoiSinhNhatNam(k.ngay_sinh, `${namNay}-01-01`) }));
   return (
     <section aria-label={tieuDe} className="the-noi vao min-w-0 space-y-5 p-5 pt-6">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-vien pb-2.5">

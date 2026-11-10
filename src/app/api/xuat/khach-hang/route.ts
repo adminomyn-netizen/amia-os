@@ -3,6 +3,7 @@ import { kiemQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
+import { ngaySinhVN } from "@/lib/ngay-sinh";
 import { docThamSo, khoaCnKhach, locKhach } from "@/lib/khach-danh-sach";
 import { NHAN_NGUON, TRANG_THAI_KHACH } from "@/lib/khach";
 
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
       const data = kq.ds;
       for (const r of data) {
         ws.addRow({
-          ma: r.ma, ten: r.ho_ten, sdt: coQuyen(nd, "khach.sdt") ? r.dien_thoai : "", zalo: coQuyen(nd, "khach.sdt") ? r.zalo ?? "" : "", email: coQuyen(nd, "khach.email") ? r.email ?? "" : "", gt: r.gioi_tinh ?? "", ns: ngayVN(r.ngay_sinh), dc: r.dia_chi ?? "", cn: tenCn.get(r.chi_nhanh_id ?? "") ?? "",
+          ma: r.ma, ten: r.ho_ten, sdt: coQuyen(nd, "khach.sdt") ? r.dien_thoai : "", zalo: coQuyen(nd, "khach.sdt") ? r.zalo ?? "" : "", email: coQuyen(nd, "khach.email") ? r.email ?? "" : "", gt: r.gioi_tinh ?? "", ns: ngaySinhVN(r.ngay_sinh), dc: r.dia_chi ?? "", cn: tenCn.get(r.chi_nhanh_id ?? "") ?? "",
           nguon: NHAN_NGUON[r.nguon ?? ""] ?? r.nguon, ct: r.nguon_chi_tiet ?? "", tt: TRANG_THAI_KHACH[r.trang_thai ?? "lead"]?.nhan ?? "", hang: r.hang ?? "", pt: tenNv.get(r.nguoi_phu_trach_id ?? "") ?? "",
           the: r.so_the_dang_dung ?? 0, chi: Number(r.chi_12_thang ?? 0), tao: ngayVN(r.tao_luc),
           tinh: r.tinh_thanh ?? "", quan: r.quan_huyen ?? "", diem: r.diem_so_du ?? 0, nhom: r.nhom.map((n) => n.ten).join(", "), fb: r.facebook ?? "",

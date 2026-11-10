@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CreditCard, Minus, Package, Pencil, Plus, Search, ShoppingBag, Sparkles, Ticket, Trash2, UserRound, X } from "lucide-react";
+import { Banknote, CreditCard, Landmark, Minus, Package, Pencil, Plus, Search, ShoppingBag, Sparkles, Ticket, Trash2, UserRound, X } from "lucide-react";
 import { Chon } from "@/components/ui/Chon";
 import { Hop } from "@/components/ui/Hop";
 import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
 import { GioChon } from "@/components/ui/GioChon";
-import { gtGoiY, chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
+import { gtGoiY, chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, NHAN_PHUONG_THUC, HINH_THUC_NHANH, viTriNhanh, datTienNhanh, dienPhanCon, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -516,7 +516,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
     // In sau khi hoàn thành: mở sẵn cửa sổ ngay lúc bấm (trình duyệt chặn cửa sổ mở sau khi chờ máy chủ), chốt xong mới nạp trang in.
     const cuaSoIn = inSau.bat ? window.open("about:blank", "_blank") : null;
     bat(async () => {
-      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong: dong.map((d, i) => ({ ...d, no: conNo > 0 ? noDong[i] : undefined })), giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu, doiDiem: diem, voucher: vc?.ma ?? "", gioVao, gioRa, soKhach: Number(soKhach) || 1, ngayHd: sua ? "" : ngayHd, hoaDonId: sua?.id, khachDua: tienMat > 0 ? khachDua : 0 }));
+      const kq = await chot(JSON.stringify({ khachId: khach?.id ?? null, lichId, chiNhanhId: cnId, dong: dong.map((d, i) => ({ ...d, no: conNo > 0 ? noDong[i] : undefined })), giamDon, vatPct: Number(vatPct) || 0, phuPhi, tip, nguoiGioiThieu: "", ghiChu, thu: thu.filter((t) => t.so_tien > 0), doiDiem: diem, voucher: vc?.ma ?? "", gioVao, gioRa, soKhach: Number(soKhach) || 1, ngayHd: sua ? "" : ngayHd, hoaDonId: sua?.id, khachDua: tienMat > 0 ? khachDua : 0 }));
       if ("loi" in kq && kq.loi) { setLoi(kq.loi); cuaSoIn?.close(); }
       else if ("id" in kq) {
         if (cuaSoIn) cuaSoIn.location.href = `/in/hoa-don/${kq.id}${inSau.nn === "en" ? "?nn=en" : ""}`;
@@ -739,10 +739,35 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
               </dl>
 
               <div className="border-t border-vien pt-3">
-                <div className="mb-2 flex items-center justify-between"><span className="text-[14px] font-semibold text-muc">Thanh toán</span>
-                  <button type="button" className={NUT_CHU} onClick={() => setThu((t) => [...t, { phuong_thuc: "tien_mat", so_tien: Math.max(conNo, 0) }])}>Thêm khoản thu</button></div>
-                <ul className="space-y-2">
-                  {thu.map((t, i) => (
+                <div className="mb-2 flex items-baseline justify-between gap-2"><span className="text-[14px] font-semibold text-muc">Thanh toán</span>
+                  <span className="text-[12px] text-muc-3">Bấm tên hình thức để điền phần còn lại</span></div>
+                {/* Như hộp "Thanh toán đơn hàng" của SalonHero: Tiền mặt, Quẹt thẻ, Chuyển khoản nhập sẵn cùng lúc (= "Nhiều hình thức"); khoản khác thêm ở nút bên dưới. */}
+                <ul className="divide-y divide-vien rounded-nho border border-vien">
+                  {HINH_THUC_NHANH.map((pt) => {
+                    const i = viTriNhanh(thu, pt);
+                    const t = i >= 0 ? thu[i] : null;
+                    const Bieu = pt === "tien_mat" ? Banknote : pt === "quet_the" ? CreditCard : Landmark;
+                    return (
+                      <li key={pt} className="px-3 py-2">
+                        <div className="flex items-center gap-2">
+                          <button type="button" onClick={() => setThu((x) => dienPhanCon(x, pt, phai, nhMacDinh(pt)))} aria-label={`${NHAN_PHUONG_THUC[pt]}: điền phần còn phải thu`}
+                            className={`flex min-h-11 w-[124px] shrink-0 items-center gap-2 rounded-nho text-left text-[14px] font-medium transition-colors hover:text-nhan-dam ${t ? "text-nhan-dam" : "text-muc-2"}`}>
+                            <Bieu aria-hidden strokeWidth={1.6} className="h-[18px] w-[18px] shrink-0" />{NHAN_PHUONG_THUC[pt]}</button>
+                          <OTien className="min-w-0 flex-1" giaTri={t?.so_tien ?? 0} onDoi={(n) => setThu((x) => datTienNhanh(x, pt, n, nhMacDinh(pt)))} ariaLabel={`Số tiền ${NHAN_PHUONG_THUC[pt].toLowerCase()}`} />
+                        </div>
+                        {t && (pt === "chuyen_khoan" || pt === "quet_the") && (
+                          <div className="mt-1.5 flex items-center gap-2 pb-0.5 text-[12px] text-muc-3">
+                            <span className="w-[124px] shrink-0 whitespace-nowrap pl-[26px]">Ngân hàng</span>
+                            <div className="min-w-0 flex-1"><Chon nho ariaLabel={`Ngân hàng nhận tiền ${NHAN_PHUONG_THUC[pt].toLowerCase()}`} giaTri={t.ngan_hang ?? ""} luaChon={[...new Set([...dsNh(pt), ...(t.ngan_hang ? [t.ngan_hang] : [])])].map((x) => ({ gia_tri: x, nhan: x }))}
+                              onDoi={(v) => { ghiNho(pt, v); setThu((a) => a.map((y, j) => (j === i ? { ...y, ngan_hang: v } : y))); }} /></div>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+                </ul>
+                <ul className="mt-2 space-y-2">
+                  {thu.map((t, i) => HINH_THUC_NHANH.some((pt) => viTriNhanh(thu, pt) === i) ? null : (
                     <li key={`${i}-${t.phuong_thuc}`} className="grid grid-cols-[1fr_1fr_auto] items-start gap-2">
                       <Chon nho ariaLabel="Phương thức" giaTri={t.phuong_thuc} luaChon={PHUONG_THUC} onDoi={(v) => setThu((x) => x.map((y, j) => (j === i ? { ...y, phuong_thuc: v, the_id: undefined, loai_vi: undefined, ngan_hang: v === "chuyen_khoan" || v === "quet_the" ? nhMacDinh(v) : undefined } : y)))} />
                       <OTien giaTri={t.so_tien} onDoi={(n) => setThu((x) => x.map((y, j) => (j === i ? { ...y, so_tien: n } : y)))} ariaLabel="Số tiền thu" />
@@ -769,6 +794,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
                     </li>
                   ))}
                 </ul>
+                <button type="button" className={`mt-1 min-h-11 ${NUT_CHU}`} onClick={() => setThu((t) => [...t, { phuong_thuc: "chuyen_khoan", so_tien: Math.max(conNo, 0), ngan_hang: nhMacDinh("chuyen_khoan") }])}>+ Thêm phương thức thanh toán</button>
                 {tienMat > 0 && (
                   <div className="mt-3 rounded-nho bg-giay-tram px-3 py-2.5 text-[14px]">
                     <div className="flex items-center justify-between gap-3"><label className="text-muc-3" htmlFor={`khach-dua-${k}`}>Tiền khách đưa (tiền mặt {tienVN(tienMat)})</label>

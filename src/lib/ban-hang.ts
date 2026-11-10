@@ -155,7 +155,25 @@ export const nganHangChonSan = (ds: string[], lanTruoc: string | null | undefine
 export const nganHangKhoanThu = (phuongThuc: string, ten: string | undefined | null) => (coNganHang(phuongThuc) ? chuanTenNganHang(ten) : null);
 /** "Tiền khách đưa / Trả lại khách" của Thu ngân (chỉ để tính tiền thối tại quầy, KHÔNG ghi vào sổ thu tiền): khách đưa bao nhiêu so với phần thu bằng tiền mặt.
  *  Chưa nhập tiền khách đưa (0) thì chưa có kết quả; đưa thiếu thì báo còn thiếu. */
-export const tinhTraLai = (khachDua: number, tienMat: number) => ({ traLai: khachDua > 0 ? Math.max(khachDua - tienMat, 0) : 0, thieu: khachDua > 0 ? Math.max(tienMat - khachDua, 0) : 0 });
+/** Khung Thanh toán của Thu ngân: 3 hình thức nhập sẵn, ĐÚNG THỨ TỰ hàng đầu hộp "Thanh toán đơn hàng" của SalonHero (Tiền mặt, Quẹt thẻ, Chuyển khoản);
+ *  hình thức thứ 4 của SalonHero là "Nhiều hình thức" = nút "Thêm phương thức thanh toán" (dòng thứ hai cùng hình thức, trừ thẻ tiền, ví, COD). */
+export const HINH_THUC_NHANH = ["tien_mat", "quet_the", "chuyen_khoan"] as const;
+/** Số tiền ô nhập sẵn của một hình thức = khoản thu ĐẦU TIÊN của hình thức đó (các khoản sau hiện ở danh sách bên dưới). */
+export const viTriNhanh = (thu: KhoanThu[], pt: string) => thu.findIndex((t) => t.phuong_thuc === pt);
+/** Gõ số tiền ở ô nhập sẵn: > 0 thì sửa / tạo khoản thu (tạo mới thì kèm ngân hàng chọn sẵn), 0 thì bỏ khoản thu (máy chủ không nhận khoản 0đ). */
+export function datTienNhanh(thu: KhoanThu[], pt: string, soTien: number, nganHang?: string): KhoanThu[] {
+  const i = viTriNhanh(thu, pt);
+  const n = Math.max(Math.floor(soTien) || 0, 0);
+  if (i < 0) return n > 0 ? [...thu, { phuong_thuc: pt, so_tien: n, ...(coNganHang(pt) && nganHang ? { ngan_hang: nganHang } : {}) }] : thu;
+  return n > 0 ? thu.map((t, j) => (j === i ? { ...t, so_tien: n } : t)) : thu.filter((_, j) => j !== i);
+}
+/** Bấm tên hình thức: ô đó nhận nốt phần còn phải thu (cộng cả số đang có trong ô, vì số đó đã trừ vào phần còn lại). */
+export function dienPhanCon(thu: KhoanThu[], pt: string, phai: number, nganHang?: string): KhoanThu[] {
+  const i = viTriNhanh(thu, pt);
+  const khac = thu.reduce((s, t, j) => (j === i ? s : s + t.so_tien), 0);
+  return datTienNhanh(thu, pt, Math.max(phai - khac, 0), nganHang);
+}
+export const tinhTraLai =(khachDua: number, tienMat: number) => ({ traLai: khachDua > 0 ? Math.max(khachDua - tienMat, 0) : 0, thieu: khachDua > 0 ? Math.max(tienMat - khachDua, 0) : 0 });
 export type DonBan = {
   khachId: string | null; lichId: string | null; chiNhanhId: string;
   dong: DongDon[]; giamDon: number; vatPct: number; phuPhi: number; tip: number; nguoiGioiThieu: string; ghiChu: string; thu: KhoanThu[];

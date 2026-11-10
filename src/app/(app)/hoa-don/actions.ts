@@ -104,7 +104,7 @@ export async function ghiNhanVat(fd: FormData): Promise<KQ> {
 }
 
 /** "Xác nhận với Kế toán" như SalonHero (confirmWithAccountant): chỉ hoá đơn đã hoàn thành, chưa xác nhận. SalonHero chỉ lưu ngày; AMIA lưu thêm người xác nhận.
- *  Như SalonHero: không có huỷ xác nhận, không khoá sửa (mở lại để sửa thì tự bỏ xác nhận, xem moLaiHoaDon). Quyền riêng "hd.ke_toan" (Kế toán, Quản lý, Chủ). */
+ *  Không khoá sửa (mở lại để sửa thì tự bỏ xác nhận, xem moLaiHoaDon); Chủ / Kỹ thuật bỏ xác nhận tay bằng boXacNhanKeToan. Quyền riêng "hd.ke_toan" (Kế toán, Quản lý, Chủ). */
 export async function xacNhanKeToan(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("hd.ke_toan");
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -120,6 +120,26 @@ export async function xacNhanKeToan(fd: FormData): Promise<KQ> {
   if (error) return { loi: thongBaoLoi(error) };
   if (!ghi?.length) return { loi: "Hoá đơn vừa được người khác xác nhận hoặc đã đổi trạng thái. Tải lại trang." };
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xac_nhan_ke_toan", doi_tuong: "hoa_don", doi_tuong_id: id, chi_tiet: { ma: h.ma, luc } });
+  revalidatePath(`/hoa-don/${id}`);
+  revalidatePath("/hoa-don");
+  return { ok: true };
+}
+
+/** "Bỏ xác nhận với Kế toán" (chị Lâm 10/11/2026: "cần nút bỏ xác nhận"): chỉ Chủ và Kỹ thuật (quyền "hd.bo_ke_toan"). Xoá người + lúc xác nhận,
+ *  ghi nhật ký giữ lại lần xác nhận cũ và người bỏ. Điều kiện "đang xác nhận đúng lúc đó" nằm trong câu update: hai người bấm cùng lúc thì chỉ một lần được ghi. */
+export async function boXacNhanKeToan(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("hd.bo_ke_toan");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "hoa_don_id");
+  const db = sb();
+  const { data: h } = await db.from("hoa_don").select("ma, chi_nhanh_id, ke_toan_xac_nhan_luc, ke_toan_xac_nhan_nguoi_id").eq("id", id).maybeSingle();
+  if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy hoá đơn." };
+  if (!h.ke_toan_xac_nhan_luc) return { loi: "Hoá đơn này chưa được xác nhận với kế toán." };
+  const { data: ghi, error } = await db.from("hoa_don").update({ ke_toan_xac_nhan_luc: null, ke_toan_xac_nhan_nguoi_id: null }).eq("id", id).eq("ke_toan_xac_nhan_luc", h.ke_toan_xac_nhan_luc).select("id");
+  if (error) return { loi: thongBaoLoi(error) };
+  if (!ghi?.length) return { loi: "Xác nhận của hoá đơn vừa được người khác thay đổi. Tải lại trang." };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "bo_xac_nhan_ke_toan", doi_tuong: "hoa_don", doi_tuong_id: id,
+    chi_tiet: { ly_do: "chu_bo_xac_nhan", ma: h.ma, luc: new Date().toISOString(), truoc_luc: h.ke_toan_xac_nhan_luc, truoc_nguoi_id: h.ke_toan_xac_nhan_nguoi_id } });
   revalidatePath(`/hoa-don/${id}`);
   revalidatePath("/hoa-don");
   return { ok: true };

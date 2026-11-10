@@ -14,7 +14,7 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
-import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, moLaiHoaDon, thuNo, xacNhanKeToan } from "../actions";
+import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, moLaiHoaDon, thuNo, xacNhanKeToan, boXacNhanKeToan } from "../actions";
 import { maPhieuThu } from "@/lib/phieu-thu";
 import { luuDanhGiaSauDieuTri } from "../sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
@@ -123,8 +123,12 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
       <TieuDeNoi tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)}{h.tao_luc ? ` ${gioVN(h.tao_luc)}` : ""} · lập bởi {nguoiLap}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{k?.dien_thoai && <a href={`tel:${k.dien_thoai}`} className="tabular-nums text-muc-2 hover:underline">{k.dien_thoai}</a>}</span>}>
         <Link href={`/in/hoa-don/${id}`} target="_blank" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In hoá đơn</Link>
         {h.trang_thai === "hoan_thanh" && !h.ke_toan_xac_nhan_luc && coQuyen(nd, "hd.ke_toan") && (
-          <NutHop kieu="phu" nhan="Xác nhận với Kế toán" tieuDe="Xác nhận với Kế toán" xacNhan={`Bạn có chắc chắn xác nhận nộp kế toán đơn ${h.ma} không? Hệ thống ghi lại người xác nhận và thời điểm, không bỏ xác nhận được (trừ khi hoá đơn được mở lại để sửa).`}
+          <NutHop kieu="phu" nhan="Xác nhận với Kế toán" tieuDe="Xác nhận với Kế toán" xacNhan={`Bạn có chắc chắn xác nhận nộp kế toán đơn ${h.ma} không? Hệ thống ghi lại người xác nhận và thời điểm, chỉ Chủ mới bỏ xác nhận được (hoá đơn mở lại để sửa cũng tự bỏ xác nhận).`}
             an={{ hoa_don_id: id }} nhanLuu="Xác nhận" action={xacNhanKeToan} />
+        )}
+        {h.ke_toan_xac_nhan_luc && coQuyen(nd, "hd.bo_ke_toan") && (
+          <NutHop kieu="phu" nguy nhan="Bỏ xác nhận" tieuDe="Bỏ xác nhận với Kế toán" xacNhan={`Bỏ xác nhận kế toán của đơn ${h.ma} (đã xác nhận ${ngayGioVN(h.ke_toan_xac_nhan_luc)}${h.ke_toan_xac_nhan_nguoi_id ? ` · ${tenNv.get(h.ke_toan_xac_nhan_nguoi_id) ?? ""}` : ""})? Hệ thống ghi lại người bỏ và thời điểm; kế toán xác nhận lại sau.`}
+            an={{ hoa_don_id: id }} nhanLuu="Bỏ xác nhận" action={boXacNhanKeToan} />
         )}
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}

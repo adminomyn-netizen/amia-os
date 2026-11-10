@@ -20,7 +20,8 @@ const that = process.argv.includes("--that");
 const arg = (k) => { const i = process.argv.indexOf(k); return i > 0 ? process.argv[i + 1] : null; };
 const nguonTuy = process.argv.flatMap((a, i, m) => (a === "--nguon" ? [m[i + 1]] : []));
 const tepSh = arg("--sh");
-if (!tepSh || !existsSync(tepSh)) throw new Error("Thiếu --sh <tệp danh sách tài khoản SalonHero>");
+if (tepSh && !existsSync(tepSh)) throw new Error("Không thấy tệp --sh");
+// Không có --sh: bỏ bước 1 (chỉ thêm tài khoản cũ còn thiếu + bù khoản thu), dùng khi chạy lại sau đồng bộ đêm.
 const GOC = "sao-luu";
 const teps = nguonTuy.length ? nguonTuy : [
   ...["hoa_don.ndjson", "hoa_don_2026_10.ndjson", "hoa_don_bosung.ndjson"].map((t) => join(GOC, "salonhero-20261028-1753", t)),
@@ -30,7 +31,7 @@ const che = (s) => `…${String(s).slice(-3)}`;
 const soCua = (khoa) => khoa.split("#")[1];
 
 // ── Nguồn 1: tài khoản đang dùng ──
-const dangDung = JSON.parse(readFileSync(tepSh, "utf8")).filter((x) => !x.xoa).map((x) => ({
+const dangDung = (tepSh ? JSON.parse(readFileSync(tepSh, "utf8")) : []).filter((x) => !x.xoa).map((x) => ({
   sh_id: x.id, so: String(x.so ?? "").replace(/\D/g, ""), chu: sach(x.chu ?? ""), ngan_hang: sach(x.ngan_hang ?? ""), the: !!x.the, ck: !!x.ck, mac_dinh: !!x.mac_dinh,
 })).filter((x) => x.so && x.ngan_hang);
 for (const x of dangDung) x.khoa = khoaTaiKhoan(x.ngan_hang, x.so);
@@ -47,8 +48,9 @@ const ghiLs = (bank, so, chu) => {
 for (const t of teps) {
   let n = 0;
   for await (const r of docNdjson(t)) {
-    if (r?.l?.id == null) continue;
-    nguon.set(Number(r.l.id), chuanBiTaiKhoanSh(r)); n++;
+    const shId = r?.l?.id ?? r?.id ?? r?.d?.id; // bản xuất đồng bộ đêm dạng {id, d}
+    if (shId == null) continue;
+    nguon.set(Number(shId), chuanBiTaiKhoanSh(r)); n++;
     const d = r.d ?? {}, l = r.l ?? {};
     for (const x of d.paymentHistory ?? []) if (!x.is_deleted) ghiLs(x.bank_name, x.account_number, x.account_owner);
     let m = []; try { m = JSON.parse(l.amount_paid_multi ?? d.amount_paid_multi ?? "[]"); } catch { m = []; }
@@ -87,7 +89,7 @@ try {
     }
   }
   // dòng mẫu trống còn lại: xoá nếu không khoản thu nào trỏ tới
-  for (const r of mauTrong.filter((r) => !daDung.has(r.id))) {
+  for (const r of tepSh ? mauTrong.filter((r) => !daDung.has(r.id)) : []) {
     const [{ n }] = await q(`select count(*)::int n from public.thanh_toan where tai_khoan_id = $1`, [r.id]);
     if (!n) { await q(`delete from public.tai_khoan_ngan_hang where id = $1`, [r.id]); bao.xoa_mau++; }
   }

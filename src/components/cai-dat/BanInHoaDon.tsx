@@ -21,7 +21,8 @@ export type DuLieuIn = {
   gioVaoRa?: string | null;
   dong: { ten: string; /** Ghi chú dòng (thẻ dịch vụ / liệu trình). */ ghiChu?: string | null; soLuong: number; donGia: number; giamGia: number; thanhTien: number; /** "HH:MM–HH:MM" khi dịch vụ bật "In giờ phục vụ trên hoá đơn". */ gioPhucVu?: string; /** Nhân viên làm / bán dòng này, in "(NV: A, B)" như SalonHero khi bật "Hiển thị nhân viên phục vụ". */ nhanVien?: string[] }[];
   tongHang: number; giamDon: number; vatPct: number; vatTien: number; phuPhi: number; tip: number; phaiThu: number;
-  thanhToan: { nhan: string; soTien: number }[]; conNo: number;
+  /** soTien null = bản tạm tính chưa nhập tiền hình thức này: in chỗ trống để ghi tay. */
+  thanhToan: { nhan: string; soTien: number | null }[]; conNo: number;
   /** Ảnh mã QR đã dựng sẵn (data URL); bản xem mẫu không có thì hiện khung giữ chỗ. */
   qrAnh?: string | null; xemMau?: boolean;
   /** Ngôn ngữ bản in (SalonHero: "In hoá đơn sau khi hoàn thành" chọn tiếng Việt / tiếng Anh). Mặc định tiếng Việt. */
@@ -131,7 +132,7 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
             {d.phuPhi > 0 && <div className="flex justify-between gap-2"><dt>{c.phuPhi}</dt><dd className="tabular-nums">{tienVN(d.phuPhi)}</dd></div>}
             {d.tip > 0 && <div className="flex justify-between gap-2"><dt>{c.tip}</dt><dd className="tabular-nums">{tienVN(d.tip)}</dd></div>}
             <div className={`flex justify-between gap-2 border-t border-muc pt-1 font-bold ${cuon ? "text-[13px]" : "text-[16px]"}`}><dt>{c.phaiThu}</dt><dd className="tabular-nums">{tienVN(d.phaiThu)}</dd></div>
-            {d.thanhToan.map((t, i) => (<div key={i} className="flex justify-between gap-2"><dt>{t.nhan}</dt><dd className="tabular-nums">{tienVN(t.soTien)}</dd></div>))}
+            {d.thanhToan.map((t, i) => (<div key={i} className="flex justify-between gap-2"><dt>{t.nhan}</dt><dd className="tabular-nums">{t.soTien == null ? "……………" : tienVN(t.soTien)}</dd></div>))}
             {d.conNo > 0 && <div className="flex justify-between gap-2 font-semibold"><dt>{c.conNo}</dt><dd className="tabular-nums">{tienVN(d.conNo)}</dd></div>}
             {d.khachDua != null && d.khachDua > 0 && <div className="flex justify-between gap-2 text-muc-2"><dt>{c.khachDua}</dt><dd className="tabular-nums">{tienVN(d.khachDua)}</dd></div>}
             {d.khachDua != null && d.khachDua > 0 && <div className="flex justify-between gap-2 text-muc-2"><dt>{c.traLai}</dt><dd className="tabular-nums">{tienVN(d.traLai ?? 0)}</dd></div>}

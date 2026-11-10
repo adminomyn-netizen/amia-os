@@ -10,11 +10,13 @@ import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
 import { GioChon } from "@/components/ui/GioChon";
-import { gtGoiY, chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, NHAN_PHUONG_THUC, HINH_THUC_NHANH, viTriNhanh, datTienNhanh, dienPhanCon, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
+import { gtGoiY, chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, NHAN_PHUONG_THUC, nhanKhoanThu, HINH_THUC_NHANH, viTriNhanh, datTienNhanh, dienPhanCon, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
 import { CHU_IN, PHUONG_THUC_EN, type DuLieuIn, type NgonNguIn } from "@/components/cai-dat/BanInHoaDon";
+import { nhanVienDongTamTinh, thanhToanTamTinh } from "@/lib/in-hoa-don";
+import { docSoTien } from "@/lib/phieu-thu";
 import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, DonNhapRut } from "@/app/(app)/ban-hang/actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 import { BaoPhieuBuoi, NutBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi";
@@ -527,14 +529,22 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   };
   // "In hoá đơn" trước khi chốt (SalonHero có nút In trong hộp thanh toán): in tạm tính đơn đang dựng theo Thiết lập in của chi nhánh; dữ liệu chỉ nằm trong trình duyệt.
   const inTamTinh = () => {
-    const c = CHU_IN[inSau.nn];
+    const nn = inSau.nn, c = CHU_IN[nn];
+    const tenNv = new Map(nhanVien.map((n) => [n.id, n.ten]));
+    // Thẻ tiền đang trừ trong giỏ: tên gói + mã + số dư hiện tại để in số dư sau khi trừ.
+    const theIn = theTien.map((t) => ({ id: t.id, ma: t.ma, soDu: t.soDu, ten: theKhach?.the.find((x) => x.id === t.id)?.ten ?? "Thẻ tiền" }));
+    const tt = thanhToanTamTinh(thu, { thanhToan: c.thanhToan, hinhThuc: (pt, vi) => (nn === "en" ? PHUONG_THUC_EN[pt] ?? pt : nhanKhoanThu(pt, vi)) }, theIn, nn);
+    const gio = new Date().toLocaleTimeString("en-GB", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", hour12: false });
     const d: DuLieuIn = {
-      loai: "hoa_don", cuaHang: { ten: chiNhanh.find((x) => x.id === cnId)?.ten ?? "AMIA" }, tieuDe: c.tamTinh, ma: "", ngay: new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }), trangThai: "nhap", thuNgan, ghiChu, nn: inSau.nn,
-      khach: khach ? { ten: khach.ho_ten, sdt: khach.dien_thoai } : null,
-      dong: dong.map((x) => { const m = tuMuc.get(khoaDong(x)); const g = giaDong(x, m); return { ten: m?.ten ?? "", ghiChu: x.ghiChu, soLuong: x.sl, donGia: g, giamGia: x.giam, thanhTien: g * x.sl - x.giam }; }),
+      loai: "hoa_don", cuaHang: { ten: chiNhanh.find((x) => x.id === cnId)?.ten ?? "AMIA" }, tieuDe: c.tamTinh, ma: sua?.ma ?? "", ngay: sua ? sua.ngayHd : ngayHd || new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }), gio,
+      trangThai: "nhap", trangThaiNhan: nn === "en" ? "Unpaid" : "Chưa thanh toán", thuNgan, ghiChu, nn,
+      gioVaoRa: [gioVao, gioRa].filter(Boolean).join(" – ") || null,
+      khach: khach ? { ten: khach.ho_ten, sdt: khach.dien_thoai, diem: diemKhach?.bat ? diemKhach.soDu : null } : null,
+      dong: dong.map((x) => { const m = tuMuc.get(khoaDong(x)); const g = giaDong(x, m); return { ten: m?.ten ?? "", ghiChu: x.ghiChu, soLuong: x.sl, donGia: g, giamGia: x.giam, thanhTien: g * x.sl - x.giam, nhanVien: nhanVienDongTamTinh(x.nv, (id) => tenNv.get(id)) }; }),
       tongHang: hang, giamDon: giamDon + tienDiem + tienVoucher, vatPct: Number(vatPct) || 0, vatTien: vat, phuPhi, tip, phaiThu: phai,
-      thanhToan: thu.map((t) => ({ nhan: `${c.daThu} · ${inSau.nn === "en" ? PHUONG_THUC_EN[t.phuong_thuc] ?? t.phuong_thuc : PHUONG_THUC.find((p) => p.gia_tri === t.phuong_thuc)?.nhan ?? t.phuong_thuc}`, soTien: t.so_tien })),
+      thanhToan: tt.thanhToan, tienTruThe: tt.tienTruThe, theSauTt: tt.theSauTt,
       conNo: Math.max(conNo, 0), khachDua: tienMat > 0 && khachDua > 0 ? khachDua : null, traLai: tienMat > 0 && khachDua > 0 ? traLai : null,
+      bangChu: nn === "vi" ? docSoTien(phai) : null,
     };
     try { localStorage.setItem("amia-in-tam-tinh", JSON.stringify(d)); } catch { return setLoi("Trình duyệt đang chặn lưu tạm nên chưa in được."); }
     window.open(`/in/tam-tinh?cn=${cnId}`, "_blank");

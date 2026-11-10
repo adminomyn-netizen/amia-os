@@ -1,5 +1,6 @@
 "use server";
 
+import { layBoSungThe } from "@/lib/the-bo-sung";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
@@ -44,7 +45,7 @@ export async function layTheKhach(khachId: string) {
   const db = sb();
   const [{ data: k }, { data: the }] = await Promise.all([
     db.from("v_khach_hang").select("hang, chi_nhanh_id").eq("id", khachId).maybeSingle(),
-    db.from("v_the_khach").select("id, ma, loai, goi_id, so_buoi_con, so_buoi_tong, so_du_tien, han_dung, tinh_trang").eq("khach_id", khachId).in("tinh_trang", ["hoat_dong", "sap_het"]).order("ngay_cap", { ascending: false }).limit(30),
+    db.from("v_the_khach").select("id, ma, loai, goi_id, so_buoi_con, so_buoi_tong, so_du_tien, tong_tien, ngay_cap, han_dung, tinh_trang, khach_id").eq("khach_id", khachId).in("tinh_trang", ["hoat_dong", "sap_het"]).order("ngay_cap", { ascending: false }).limit(30),
   ]);
   if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return null;
   const ids = [...new Set((the ?? []).map((t) => t.goi_id as string))];
@@ -65,6 +66,7 @@ export async function layTheKhach(khachId: string) {
   for (const b of buoi ?? []) if (b.the_id && !buoiCuoi.has(b.the_id)) buoiCuoi.set(b.the_id, { dv: b.dich_vu_id, nv: b.nv_thuc_hien_id, bs: b.bac_si_id ?? "" });
   const idsHd = (hdGan ?? []).map((h) => h.id as string);
   const { data: dongGan } = idsHd.length ? await db.from("hoa_don_dong").select("hoa_don_id, dich_vu_id").in("hoa_don_id", idsHd).not("dich_vu_id", "is", null) : { data: [] };
+  const bs = await layBoSungThe((the ?? []).map((t) => ({ id: t.id as string, khach_id: t.khach_id as string, loai: t.loai as string })), nd.chiNhanhId);
   const thuTuHd = new Map(idsHd.map((id, i) => [id, i]));
   const dvDaLam = [...(dongGan ?? [])].sort((a, b) => (thuTuHd.get(a.hoa_don_id) ?? 0) - (thuTuHd.get(b.hoa_don_id) ?? 0)).map((d) => d.dich_vu_id as string);
   const lanTruoc = (theId: string, dvThe: string[]) => {
@@ -78,6 +80,7 @@ export async function layTheKhach(khachId: string) {
     the: (the ?? []).map((t) => ({
       id: t.id as string, ma: t.ma as string, goiId: t.goi_id as string, loai: t.loai as "lan" | "tien", ten: ten.get(t.goi_id as string) ?? "Thẻ",
       buoiCon: Number(t.so_buoi_con ?? 0), buoiTong: t.so_buoi_tong == null ? null : Number(t.so_buoi_tong), soDu: Number(t.so_du_tien ?? 0), han: (t.han_dung as string | null) ?? null, tinhTrang: (t.tinh_trang as string | null) ?? "hoat_dong",
+      tongTien: t.tong_tien == null ? null : Number(t.tong_tien), ngayCap: (t.ngay_cap as string | null) ?? null, lanGan: bs.lanGan(t.id as string), lichToi: bs.lichToi(khachId), phuTrach: bs.phuTrach(khachId),
       /** Dịch vụ của gói (nút "Dùng buổi" chọn sẵn); rỗng = gói không gắn dịch vụ, thu ngân chọn trong cả danh mục. */
       dichVu: dvGoi.get(t.goi_id as string) ?? [],
       /** Lần trước khách dùng thẻ này (để "Dùng buổi" điền sẵn); null = chưa có. */

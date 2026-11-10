@@ -19,10 +19,10 @@ import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layT
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 import { BaoPhieuBuoi, NutBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
-import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
+import { KhoiThe } from "@/components/the/KhoiThe";
 
 type Nv = { id: string; ten: string; vaiTro: string };
-type TheKh = { id: string; ma: string; goiId: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; tinhTrang?: string; dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
+type TheKh = { id: string; ma: string; goiId: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; tinhTrang?: string; tongTien?: number | null; ngayCap?: string | null; lanGan?: { ngay: string; dv?: string | null; nv?: string | null } | null; lichToi?: string | null; phuTrach?: string | null; dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
 type TheTien = { id: string; ma: string; soDu: number };
 /** Màu theo nhóm hàng (ổn định theo tên nhóm) lấy từ bảng màu thương hiệu: nhìn là phân biệt được nhóm, không còn một màu trắng đơn điệu. Cả sáng lẫn tối. */
 const SAC = [
@@ -313,7 +313,6 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
   const dungDuoc = (t: TheKh) => (t.loai === "lan" && dvDon ? t.dichVu.filter((d) => dvDon.has(d)).map((d) => dvDon.get(d)!) : []);
   const the = dsThe && [...dsThe].sort((a, b) => Number(dungDuoc(b).length > 0) - Number(dungDuoc(a).length > 0));
   if (the === null && theBan.length === 0) return null;
-  const han = (d: string) => new Date(d).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
   return (
     <div className="mt-3 grid gap-3 text-[13px] sm:grid-cols-2">
       <div className="rounded-nho border border-vien px-3 py-2.5">
@@ -321,9 +320,11 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
         {the === null ? <p className="text-muc-3">Đang tải</p> : the.length === 0 ? <p className="text-muc-3">Khách chưa có thẻ nào còn dùng được.</p> : (
           <ul className="space-y-1.5">
             {the.map((t) => (
-              <li key={t.id} className="flex items-start justify-between gap-3"><span className="min-w-0 text-muc-2">{giaHan?.(t) ? <button type="button" title="Thêm lại đúng gói này vào đơn (gia hạn)" className="text-left font-medium text-nhan-dam hover:underline" onClick={giaHan(t)!}>{t.ten}</button> : t.ten} <span className="text-muc-3">{t.ma}</span> <NhanTinhTrangThe tt={t.tinhTrang} />{t.han && <span className="block text-[12px] text-muc-3">Hạn {han(t.han)}</span>}
-                {dungDuoc(t).length > 0 && <span className="mt-0.5 block rounded-tag bg-sac-xanh-nen px-2 py-0.5 text-[12px] font-medium text-sac-xanh">Trừ buổi được cho: {dungDuoc(t).join(", ")}</span>}</span>
-                <span className="flex shrink-0 flex-col items-end gap-0.5"><span className="font-medium tabular-nums text-muc">{t.loai === "lan" ? `${t.buoiCon}${t.buoiTong ? `/${t.buoiTong}` : ""} buổi` : tienVN(t.soDu)}</span>{nut?.(t)}{giaHan?.(t) && <button type="button" className={NUT_CHU} onClick={giaHan(t)!}>Gia hạn</button>}</span></li>
+              <li key={t.id}>
+                {dungDuoc(t).length > 0 && <span className="mb-1 block rounded-tag bg-sac-xanh-nen px-2 py-0.5 text-[12px] font-medium text-sac-xanh">Trừ buổi được cho: {dungDuoc(t).join(", ")}</span>}
+                <KhoiThe an={{ khach: true }} t={{ id: t.id, ma: t.ma, ten: t.ten, loai: t.loai, tinhTrang: t.tinhTrang ?? null, buoiCon: t.buoiCon, buoiTong: t.buoiTong, soDu: t.soDu, tongTien: t.tongTien ?? null, ngayCap: t.ngayCap ?? null, han: t.han, lanGan: t.lanGan ?? null, lichToi: t.lichToi ?? null, phuTrach: t.phuTrach ?? null }}
+                  nut={<>{nut?.(t)}{giaHan?.(t) && <button type="button" title="Thêm lại đúng gói này vào đơn (gia hạn)" className={NUT_CHU} onClick={giaHan(t)!}>Gia hạn</button>}</>} />
+              </li>
             ))}
           </ul>
         )}

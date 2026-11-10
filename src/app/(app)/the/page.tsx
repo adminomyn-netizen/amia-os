@@ -2,11 +2,11 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { boDau, ngayVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
+import { boDau } from "@/lib/dinh-dang";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
-import { Bang } from "@/components/ui/Table";
-import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
+import { KhoiThe, LuoiThe } from "@/components/the/KhoiThe";
+import { layBoSungThe } from "@/lib/the-bo-sung";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { capTheTay, duKienHanThe, thucHienBuoi } from "./actions";
@@ -56,6 +56,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
   const tenGoi = new Map((goi ?? []).map((g) => [g.id, g.ten]));
   const conNua = (the ?? []).length > so, ds = (the ?? []).slice(0, so);
+  const bs = await layBoSungThe(ds.map((r) => ({ id: r.id ?? "", khach_id: r.khach_id, loai: r.loai })), nd.chiNhanhId);
   const lienKetThem = `/the?${new URLSearchParams({ tab, ...(sp.q ? { q: sp.q } : {}), ...(sp.het === "1" ? { het: "1" } : {}), so: String(so + 50) })}`;
   const nvLC = luaChonNhanVien(nv ?? []);
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
@@ -80,17 +81,16 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
         <form className="flex-1" action="/the"><input type="hidden" name="tab" value={tab} /><input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm mã thẻ, tên, SĐT khách (Enter)" aria-label="Tìm thẻ" className="h-11 w-full max-w-md rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] outline-none focus:border-nhan" /></form>
         <Link href={`/the?tab=${tab}${sp.het === "1" ? "" : "&het=1"}`} className="font-medium text-nhan-dam hover:underline">{sp.het === "1" ? "Chỉ thẻ còn dùng" : "Hiện cả thẻ đã hết/hết hạn/thu hồi"}</Link>
       </div>
-      <Bang noi duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có thẻ nào."
-        cot={[
-          { nhan: "Mã thẻ", hienThi: (r) => <Link href={`/the/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> },
-          { chinh: true, nhan: "Khách", hienThi: (r) => { const k = tenK.get(r.khach_id ?? ""); return k ? <Link href={`/khach-hang/${k.id}`} className="text-muc hover:underline">{k.ho_ten}</Link> : ""; } },
-          { nhan: "Gói", hienThi: (r) => tenGoi.get(r.goi_id ?? "") ?? "" },
-          { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
-          { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
-          { nhan: "Tình trạng", hienThi: (r) => <NhanTinhTrangThe tt={r.tinh_trang} /> },
-          ...(tab === "lan" && coQuyen(nd, "the.thuchien") ? [{ nhan: "", hienThi: (r: NonNullable<typeof the>[number]) => (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? (
-            <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} />) : null }] : []),
-        ]} />
+      {ds.length === 0 ? <p className="py-10 text-center text-[14px] text-muc-3">Chưa có thẻ nào.</p> : (
+        <LuoiThe>
+          {ds.map((r) => { const k = tenK.get(r.khach_id ?? ""); return (
+            <KhoiThe key={r.id} t={{ id: r.id ?? "", ma: r.ma ?? "", ten: tenGoi.get(r.goi_id ?? "") ?? (r.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình"), loai: r.loai ?? "lan", tinhTrang: r.tinh_trang,
+              buoiCon: Number(r.so_buoi_con ?? 0), buoiTong: r.so_buoi_tong == null ? null : Number(r.so_buoi_tong), soDu: Number(r.so_du_tien ?? 0), tongTien: r.tong_tien == null ? null : Number(r.tong_tien),
+              ngayCap: r.ngay_cap, han: r.han_dung, khach: k ? { id: k.id, ten: k.ho_ten, ma: k.ma } : null, lanGan: bs.lanGan(r.id ?? ""), lichToi: bs.lichToi(r.khach_id), phuTrach: bs.phuTrach(r.khach_id) }}
+              nut={tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null} />
+          ); })}
+        </LuoiThe>
+      )}
       {conNua && <p className="mt-4 text-center text-[14px]"><Link href={lienKetThem} scroll={false} className="font-medium text-nhan-dam hover:underline">Xem thêm 50 thẻ</Link></p>}
     </>
   );

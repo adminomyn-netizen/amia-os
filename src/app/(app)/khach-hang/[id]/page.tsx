@@ -11,6 +11,10 @@ import { NHAN_NGUON, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
+import { KhoiThe, LuoiThe } from "@/components/the/KhoiThe";
+import { NutBuoi } from "@/components/the/NutBuoi";
+import { layBoSungThe } from "@/lib/the-bo-sung";
+import { thucHienBuoi } from "../../the/actions";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
@@ -174,6 +178,17 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     const { data: goiTen } = idsGoi.length ? await db.from("goi_the").select("id, ten").in("id", idsGoi) : { data: [] };
     const tenGoi = new Map((goiTen ?? []).map((g) => [g.id as string, g.ten as string]));
     const hien = dsThe.filter((x) => khopLoc(x.tinh_trang, loc));
+    // Mỗi thẻ hiện ra ngoài luôn (chị Lâm 10/11): tiến độ buổi, ngày mua, hạn, lần làm gần nhất, lịch kế tiếp, phụ trách + nút Dùng buổi ngay trên thẻ.
+    const dungBuoi = coQuyen(nd, "the.thuchien");
+    const [bsThe, { data: lkGoi }, { data: dvBuoi0 }] = await Promise.all([
+      layBoSungThe(hien.map((x) => ({ id: x.id ?? "", khach_id: x.khach_id, loai: x.loai })), nd.chiNhanhId),
+      dungBuoi && idsGoi.length ? db.from("goi_the_dich_vu").select("goi_id, dich_vu_id").in("goi_id", idsGoi) : Promise.resolve({ data: [] as { goi_id: string; dich_vu_id: string }[] }),
+      dungBuoi ? db.from("dich_vu").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] as { id: string; ten: string }[] }),
+    ]);
+    const dvDu = (dvBuoi0 ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten }));
+    const dvCuaGoi = (goiId: string | null) => { const ds = (lkGoi ?? []).filter((l) => l.goi_id === goiId).map((l) => dvDu.find((d) => d.gia_tri === l.dich_vu_id)).filter((d): d is { gia_tri: string; nhan: string } => !!d); return ds.length ? ds : dvDu; };
+    const nvBuoi = luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"));
+    const bsBuoi = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
     noiDung = (
       <>
         <div className="mb-3 flex flex-wrap gap-2" aria-label="Lọc thẻ theo tình trạng">
@@ -185,21 +200,14 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         </div>
         <p className="mb-2 text-[13px] text-muc-3">Tổng số thẻ: <span className="font-medium tabular-nums text-muc">{hien.length}</span></p>
         {hien.length === 0 ? <p className="py-10 text-center text-[14px] text-muc-3">Không có thẻ nào.</p> : (
-          <ul className="divide-y divide-vien rounded-nho border border-vien">
-            {hien.map((x) => {
-              const tong = x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), con = Number(x.so_buoi_con ?? 0);
-              return (
-                <li key={x.id}><Link href={`/the/${x.id}`} className="flex items-start justify-between gap-3 px-3 py-2.5 hover:bg-giay-tram">
-                  <span className="min-w-0"><span className="font-medium text-nhan-dam">{x.ma}</span> <span className="text-muc">{tenGoi.get(x.goi_id ?? "") ?? (x.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình")}</span>
-                    <span className="block text-[12px] text-muc-3">{x.han_dung ? `Ngày hết hạn ${ngayVN(x.han_dung)}` : "Không hết hạn"}</span></span>
-                  <span className="flex shrink-0 flex-col items-end gap-1">
-                    <span className="text-[13px] font-medium tabular-nums text-muc">{x.loai === "lan" ? (tong == null ? `Còn ${con} buổi` : `${Math.max(tong - con, 0)}/${tong}`) : tienVN(x.so_du_tien)}</span>
-                    <NhanTinhTrangThe tt={x.tinh_trang} />
-                  </span>
-                </Link></li>
-              );
-            })}
-          </ul>
+          <LuoiThe>
+            {hien.map((x) => (
+              <KhoiThe key={x.id} an={{ khach: true }} t={{ id: x.id ?? "", ma: x.ma ?? "", ten: tenGoi.get(x.goi_id ?? "") ?? (x.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình"), loai: x.loai ?? "lan", tinhTrang: x.tinh_trang,
+                buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), soDu: Number(x.so_du_tien ?? 0), tongTien: x.tong_tien == null ? null : Number(x.tong_tien),
+                ngayCap: x.ngay_cap, han: x.han_dung, lanGan: bsThe.lanGan(x.id ?? ""), lichToi: bsThe.lichToi(x.khach_id), phuTrach: bsThe.phuTrach(x.khach_id) }}
+                nut={dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null} />
+            ))}
+          </LuoiThe>
         )}
       </>
     );

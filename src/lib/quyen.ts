@@ -29,7 +29,7 @@ export type Quyen =
   | "khach.xem" | "khach.sua" | "khach.nhap" | "khach.xuat" | "khach.sdt" | "khach.email"
   | "hoso.xem" | "hoso.sua" | "anh.xem" | "anh.them"
   | "lich.xem" | "lich.sua" | "lich.xuat"
-  | "ban.xem" | "ban.tao" | "ban.huy" | "ban.sua" | "ban.giamgia" | "ban.sua_khoa" | "ban.toan_co_so" | "ban.tip" | "no.thu" | "no.xoa" | "hd.vat"
+  | "ban.xem" | "ban.tao" | "ban.huy" | "ban.sua" | "ban.giamgia" | "ban.sua_khoa" | "ban.toan_co_so" | "ban.tip" | "no.thu" | "no.xoa" | "hd.vat" | "hd.ke_toan"
   | "the.xem" | "the.thuchien" | "the.dieuchinh"
   | "danhmuc.xem" | "danhmuc.sua"
   | "kho.xem" | "kho.nhap" | "kho.duyet" | "ky.khoa" | "ky.mo_lai"
@@ -50,7 +50,7 @@ export type Quyen =
 // Chủ (chị Lâm chốt lại 28/10/2026, trước đó bỏ 26/10): người sở hữu, nhìn toàn cảnh điều hành và tự phân quyền, cài đặt hệ thống. Khác Kỹ thuật ở chỗ KHÔNG được bỏ qua quy tắc "người lập không tự duyệt".
 const TAT_CA: Quyen[] = [
   "khach.xem", "khach.sua", "khach.nhap", "khach.xuat", "khach.sdt", "khach.email", "lich.xuat", "ban.giamgia", "ban.sua_khoa", "ban.toan_co_so", "ban.tip", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "lich.sua",
-  "ban.xem", "ban.tao", "ban.huy", "ban.sua", "no.thu", "hd.vat", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
+  "ban.xem", "ban.tao", "ban.huy", "ban.sua", "no.thu", "hd.vat", "hd.ke_toan", "the.xem", "the.thuchien", "the.dieuchinh", "danhmuc.xem", "danhmuc.sua",
   "kho.xem", "kho.nhap", "kho.duyet", "ky.khoa", "ky.mo_lai", "phieu.xem", "phieu.chidinh", "phieu.cap", "phieu.nhan", "phieu.doichieu", "baocao.xem", "baocao.tien", "nhanvien.quanly", "hr.hoso", "qt.sua", "kn.ghi", "kn.duyet", "bc.bao", "bc.xu_ly", "tongquan.xem", "quy.xem", "quy.ghi", "quy.dao", "mua.xem", "mua.tao", "mua.duyet", "viec.tatca", "dexuat.duyet", "wiki.sua",
   "cong.xem", "cong.sua", "nghi.duyet", "nghi.duyet_bgd", "luong.xem", "luong.sua", "luong.duyet", "noibo.dung",
   "mkt.xem", "mkt.sua", "mkt.duyet", "lead.xu_ly", "vb.xem", "vb.soan", "vb.duyet",
@@ -69,7 +69,7 @@ const MAC_DINH_CU: Record<VaiTro, Quyen[]> = {
   bac_si: ["khach.xem", "khach.sua", "hoso.xem", "hoso.sua", "anh.xem", "anh.them", "lich.xem", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.chidinh", "noibo.dung", "bc.bao", "bc.xu_ly"], // SalonHero: Bác sĩ thêm/sửa khách (customer create+update)
   ktv: ["khach.xem", "khach.sua", "hoso.xem", "anh.xem", "anh.them", "lich.xem", "lich.sua", "the.xem", "the.thuchien", "danhmuc.xem", "phieu.xem", "phieu.nhan", "noibo.dung", "bc.bao"], // SalonHero: Nhân viên/Tư vấn đặt lịch và thêm/sửa khách (booking+customer create/update)
   thu_kho: ["tongquan.xem", "danhmuc.xem", "kho.xem", "kho.nhap", "phieu.xem", "phieu.cap", "phieu.doichieu", "mua.xem", "mua.tao", "noibo.dung"],
-  ke_toan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "ban.xem", "no.thu", "hd.vat", "danhmuc.xem", "kho.xem", "kho.duyet", "ky.khoa", "baocao.xem", "baocao.tien", "phieu.xem", "quy.xem", "quy.ghi", "mua.xem", "cong.xem", "luong.xem", "luong.sua", "noibo.dung", "vb.xem"], // SalonHero: Kế toán xem lịch, thêm/sửa khách (booking read, customer create+update)
+  ke_toan: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "ban.xem", "no.thu", "hd.vat", "hd.ke_toan", "danhmuc.xem", "kho.xem", "kho.duyet", "ky.khoa", "baocao.xem", "baocao.tien", "phieu.xem", "quy.xem", "quy.ghi", "mua.xem", "cong.xem", "luong.xem", "luong.sua", "noibo.dung", "vb.xem"], // SalonHero: Kế toán xem lịch, thêm/sửa khách (booking read, customer create+update)
   marketing: ["tongquan.xem", "khach.xem", "khach.sua", "lich.xem", "danhmuc.xem", "baocao.xem", "noibo.dung", "mkt.xem", "mkt.sua", "lead.xu_ly", "vb.xem", "vb.soan"], // SalonHero: Marketing CSKH thêm/sửa khách (customer create+update)
   nha_dau_tu: ["tongquan.xem", "baocao.xem", "baocao.tien"],
   nhan_vien: ["noibo.dung"],
@@ -102,7 +102,7 @@ export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] 
   { nhom: "Tổng quan", muc: [{ ma: "tongquan.xem", nhan: "Có dashboard (Tổng quan)" }] },
   { nhom: "Khách hàng", muc: [{ ma: "khach.xem", nhan: "Xem khách" }, { ma: "khach.sua", nhan: "Thêm / sửa khách" }, { ma: "khach.nhap", nhan: "Nhập Excel khách" }, { ma: "khach.xuat", nhan: "Xuất Excel khách" }, { ma: "khach.sdt", nhan: "Xem SĐT khách" }, { ma: "khach.email", nhan: "Xem email khách" }, { ma: "hoso.xem", nhan: "Xem hồ sơ điều trị" }, { ma: "hoso.sua", nhan: "Ghi hồ sơ điều trị" }, { ma: "anh.xem", nhan: "Xem ảnh khách" }, { ma: "anh.them", nhan: "Thêm ảnh khách" }] },
   { nhom: "Lịch hẹn", muc: [{ ma: "lich.xem", nhan: "Xem lịch" }, { ma: "lich.sua", nhan: "Đặt / đổi / huỷ lịch" }, { ma: "lich.xuat", nhan: "Xuất Excel lịch hẹn" }] },
-  { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "ban.sua", nhan: "Sửa hoá đơn đã chốt (mở lại về nháp)" }, { ma: "ban.giamgia", nhan: "Giảm giá khi bán" }, { ma: "ban.sua_khoa", nhan: "Sửa hoá đơn đã khoá" }, { ma: "ban.toan_co_so", nhan: "Xem hoá đơn toàn cơ sở" }, { ma: "ban.tip", nhan: "Nhập tiền tip" }, { ma: "no.thu", nhan: "Thu nợ" }, { ma: "hd.vat", nhan: "Ghi nhận đã xuất hoá đơn VAT" }] },
+  { nhom: "Bán hàng", muc: [{ ma: "ban.xem", nhan: "Xem hoá đơn" }, { ma: "ban.tao", nhan: "Bán hàng (thu ngân)" }, { ma: "ban.huy", nhan: "Huỷ hoá đơn" }, { ma: "ban.sua", nhan: "Sửa hoá đơn đã chốt (mở lại về nháp)" }, { ma: "ban.giamgia", nhan: "Giảm giá khi bán" }, { ma: "ban.sua_khoa", nhan: "Sửa hoá đơn đã khoá" }, { ma: "ban.toan_co_so", nhan: "Xem hoá đơn toàn cơ sở" }, { ma: "ban.tip", nhan: "Nhập tiền tip" }, { ma: "no.thu", nhan: "Thu nợ" }, { ma: "hd.vat", nhan: "Ghi nhận đã xuất hoá đơn VAT" }, { ma: "hd.ke_toan", nhan: "Xác nhận hoá đơn với Kế toán" }] },
   { nhom: "Thẻ liệu trình", muc: [{ ma: "the.xem", nhan: "Xem thẻ" }, { ma: "the.thuchien", nhan: "Thực hiện buổi" }, { ma: "the.dieuchinh", nhan: "Điều chỉnh / cấp thẻ tay" }] },
   { nhom: "Vật tư & kho", muc: [{ ma: "phieu.xem", nhan: "Xem phiếu cấp vật tư" }, { ma: "phieu.chidinh", nhan: "Bác sĩ chỉ định vật tư" }, { ma: "phieu.cap", nhan: "Kho cấp vật tư" }, { ma: "phieu.nhan", nhan: "Chuyên viên trị liệu nhận vật tư" }, { ma: "phieu.doichieu", nhan: "Đối chiếu phiếu" }, { ma: "kho.xem", nhan: "Xem kho" }, { ma: "kho.nhap", nhan: "Nhập / kiểm kho" }, { ma: "kho.duyet", nhan: "Duyệt kiểm kê, xử lý vật tư, hậu kiểm xuất khẩn cấp" }] },
   { nhom: "Mua hàng", muc: [{ ma: "mua.xem", nhan: "Xem đơn mua, nhà cung cấp, công nợ" }, { ma: "mua.tao", nhan: "Lập đơn mua, nhà cung cấp" }, { ma: "mua.duyet", nhan: "Duyệt / từ chối đơn mua" }] },

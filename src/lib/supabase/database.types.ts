@@ -4769,6 +4769,8 @@ export type Database = {
           khach_dua: number | null
           khach_id: string | null
           khach_moi: boolean | null
+          ke_toan_xac_nhan_luc: string | null
+          ke_toan_xac_nhan_nguoi_id: string | null
           la_lich_su: boolean
           la_so_du_dau: boolean
           lich_hen_id: string | null
@@ -4819,6 +4821,8 @@ export type Database = {
           khach_dua?: number | null
           khach_id?: string | null
           khach_moi?: boolean | null
+          ke_toan_xac_nhan_luc?: string | null
+          ke_toan_xac_nhan_nguoi_id?: string | null
           la_lich_su?: boolean
           la_so_du_dau?: boolean
           lich_hen_id?: string | null
@@ -4868,6 +4872,8 @@ export type Database = {
           khach_dua?: number | null
           khach_id?: string | null
           khach_moi?: boolean | null
+          ke_toan_xac_nhan_luc?: string | null
+          ke_toan_xac_nhan_nguoi_id?: string | null
           la_lich_su?: boolean
           la_so_du_dau?: boolean
           lich_hen_id?: string | null
@@ -11324,6 +11330,7 @@ export type Database = {
           phuong_thuc: string
           so_phieu: number
           so_tien: number
+          tai_khoan_id: string | null
           tao_luc: string
           the_id: string | null
         }
@@ -11342,6 +11349,7 @@ export type Database = {
           phuong_thuc: string
           so_phieu?: number
           so_tien: number
+          tai_khoan_id?: string | null
           tao_luc?: string
           the_id?: string | null
         }
@@ -11360,6 +11368,7 @@ export type Database = {
           phuong_thuc?: string
           so_phieu?: number
           so_tien?: number
+          tai_khoan_id?: string | null
           tao_luc?: string
           the_id?: string | null
         }
@@ -12797,6 +12806,7 @@ export type Database = {
           hinh_thuc: string[] | null
           id: string | null
           khach_id: string | null
+          ke_toan_xac_nhan_luc: string | null
           la_lich_su: boolean | null
           la_so_du_dau: boolean | null
           ly_do_huy: string | null

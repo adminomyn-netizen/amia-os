@@ -20,7 +20,7 @@ const dauThang = (d: string) => d.slice(0, 8) + "01";
 const cuoiThang = (d: string) => { const [y, m] = d.split("-").map(Number); return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10); };
 
 /** Tham số bộ lọc nâng cao: có cái nào đang bật thì mở sẵn khung "Lọc thêm". */
-const THAM_SO_NANG_CAO = ["cn", "lap", "nv", "vai", "tra", "tien_tu", "tien_den", "gc", "the", "vc", "ht", "pp", "tip", "mhd", "cx"];
+const THAM_SO_NANG_CAO = ["cn", "lap", "nv", "vai", "tra", "tien_tu", "tien_den", "gc", "the", "kt", "vc", "ht", "pp", "tip", "mhd", "cx"];
 
 function useDoiUrl() {
   const router = useRouter();
@@ -112,6 +112,7 @@ export function LocHoaDon({ tu, den, chiNhanh, nhanVien }: { tu: string; den: st
           <OGo tham="tien_den" nhan="Tổng tiền đến (đ)" ariaLabel="Tổng tiền hoá đơn đến" soTien />
           <OGo tham="gc" nhan="Ghi chú có chữ" ariaLabel="Lọc theo ghi chú" />
           <Chon ariaLabel="Mua hoặc sử dụng thẻ dịch vụ" giaTri={sp.get("the") ?? ""} onDoi={(v) => doi({ the: v })} luaChon={[{ gia_tri: "", nhan: "Mua/sử dụng thẻ: tất cả" }, ...LOC_THE.map((x) => ({ gia_tri: x.gia_tri, nhan: x.nhan }))]} />
+          <Chon ariaLabel="Xác nhận với kế toán" giaTri={sp.get("kt") ?? ""} onDoi={(v) => doi({ kt: v })} luaChon={[{ gia_tri: "", nhan: "Xác nhận kế toán: tất cả" }, { gia_tri: "co", nhan: "Đã xác nhận với kế toán" }, { gia_tri: "chua", nhan: "Chưa xác nhận với kế toán" }]} />
           <Chon ariaLabel="Sử dụng voucher" giaTri={sp.get("vc") ?? ""} onDoi={(v) => doi({ vc: v })} luaChon={[{ gia_tri: "", nhan: "Voucher: tất cả" }, { gia_tri: "co", nhan: "Có dùng voucher" }, { gia_tri: "khong", nhan: "Không dùng voucher" }]} />
           <Chon ariaLabel="Phí dịch vụ" giaTri={sp.get("pp") ?? ""} onDoi={(v) => doi({ pp: v })} luaChon={[{ gia_tri: "", nhan: "Phí dịch vụ: tất cả" }, { gia_tri: "co", nhan: "Có tính phí dịch vụ" }, { gia_tri: "khong", nhan: "Không tính phí dịch vụ" }]} />
           <Chon ariaLabel="Tiền tip" giaTri={sp.get("tip") ?? ""} onDoi={(v) => doi({ tip: v })} luaChon={[{ gia_tri: "", nhan: "Tip: tất cả" }, { gia_tri: "co", nhan: "Có tip" }, { gia_tri: "khong", nhan: "Không tip" }]} />

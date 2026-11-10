@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Bang } from "@/components/ui/Table";
 import { NutHop, type KetQuaHD } from "@/components/ui/BieuMau";
@@ -11,6 +12,7 @@ import { TRANG_THAI_HD } from "@/lib/loc-hoa-don";
 export type DongHoaDon = {
   id: string; ma: string; khach: string; /** SĐT khách in dưới tên như SalonHero. */ sdt?: string; ngay: string; gio: string; nguoiLap: string; phaiThu: string; daThu: string; conNo: string;
   trangThai: keyof typeof TRANG_THAI_HD; vat: "" | "co" | "chua"; vatSo: string;
+  /** Đã xác nhận với kế toán: "dd/MM/yyyy HH:mm" (rỗng = chưa). Như dấu tích xanh "Đã nộp kế toán ngày …" của SalonHero. */ keToan?: string;
   /** Đơn chuyển từ SalonHero (đồng bộ đêm còn ghi đè tới 15/11). */ laLichSu: boolean;
   /** Đã xuất hoá đơn điện tử: không sửa được (như trang chi tiết). */ coHddt: boolean; laSoDuDau: boolean;
 };
@@ -59,7 +61,7 @@ export function BangHoaDon({ dong, thamSo, choSua, choHuy, suaAction, huyAction 
           { nhan: "Phải thu", hienThi: (r) => r.phaiThu, phai: true }, { nhan: "Đã thu", hienThi: (r) => r.daThu, phai: true },
           { nhan: "Còn nợ", hienThi: (r) => (r.conNo ? <span className="font-medium text-canh-bao">{r.conNo}</span> : ""), phai: true },
           { nhan: "HĐ VAT", hienThi: (r) => (r.vat === "co" ? <span className="text-nhan-dam" title={r.vatSo ? `Số ${r.vatSo}` : undefined}>Đã có hoá đơn</span> : r.vat === "chua" ? <span className="text-muc-3">Chưa có hoá đơn</span> : "") },
-          { nhan: "Trạng thái", hienThi: (r) => { const t = TRANG_THAI_HD[r.trangThai]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
+          { nhan: "Trạng thái", hienThi: (r) => { const t = TRANG_THAI_HD[r.trangThai]; return <span className="flex flex-wrap items-center gap-1.5"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>{r.keToan ? <span className="inline-flex items-center gap-0.5 whitespace-nowrap text-[12px] font-medium text-nhan-dam" title={`Đã xác nhận với kế toán ngày ${r.keToan}`}><Check className="h-3.5 w-3.5" aria-hidden /><span className="sr-only">Đã xác nhận với </span>Kế toán</span> : null}</span>; } },
           { nhan: "", hienThi: (r) => <ThaoTacDong r={r} choSua={choSua} choHuy={choHuy} suaAction={suaAction} huyAction={huyAction} /> },
         ]} />
     </>

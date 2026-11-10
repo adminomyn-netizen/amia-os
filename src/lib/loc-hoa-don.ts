@@ -35,6 +35,7 @@ export type LocHoaDon = {
   gc: string;
   the: "" | (typeof LOC_THE)[number]["gia_tri"];
   vc: "" | "co" | "khong";
+  /** Xác nhận với kế toán: co = đã xác nhận, chua = hoá đơn hoàn thành chưa xác nhận. */ kt: "" | "co" | "chua";
   /** Có / không tính phí dịch vụ (phụ phí) và tip. */
   pp: "" | "co" | "khong"; tip: "" | "co" | "khong";
   ht: "" | (typeof LOC_HINH_THUC)[number]["gia_tri"];
@@ -74,6 +75,7 @@ export function docLocHoaDon(sp: Record<string, string | undefined>): LocHoaDon 
     gc: (sp.gc ?? "").trim().slice(0, 80),
     the: trong(sp.the, LOC_THE.map((x) => x.gia_tri)) as LocHoaDon["the"],
     vc: sp.vc === "co" || sp.vc === "khong" ? sp.vc : "",
+    kt: sp.kt === "co" || sp.kt === "chua" ? sp.kt : "",
     pp: sp.pp === "co" || sp.pp === "khong" ? sp.pp : "", tip: sp.tip === "co" || sp.tip === "khong" ? sp.tip : "",
     ht: trong(sp.ht, LOC_HINH_THUC.map((x) => x.gia_tri)) as LocHoaDon["ht"],
     n: (CO_TRANG as readonly number[]).includes(n) ? n : CO_TRANG_MAC_DINH,
@@ -128,6 +130,8 @@ export function apLocHoaDon<T extends BoLoc<T>>(q: T, loc: LocHoaDon, chiNhanhId
   if (loc.tienTu) r = r.gte("tong_phai_thu", Number(loc.tienTu));
   if (loc.tienDen) r = r.lte("tong_phai_thu", Number(loc.tienDen));
   if (loc.gc) r = r.ilike("ghi_chu", `%${loc.gc.replace(/[%_\\]/g, " ")}%`);
+  if (loc.kt === "co") r = r.not("ke_toan_xac_nhan_luc", "is", null);
+  if (loc.kt === "chua") r = r.is("ke_toan_xac_nhan_luc", null).eq("trang_thai", "hoan_thanh");
   if (loc.vc === "co") r = r.gt("giam_voucher", 0);
   if (loc.vc === "khong") r = r.eq("giam_voucher", 0);
   if (loc.pp === "co") r = r.gt("phu_phi", 0);

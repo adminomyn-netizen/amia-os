@@ -13,7 +13,7 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
-import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, moLaiHoaDon, thuNo } from "../actions";
+import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, moLaiHoaDon, thuNo, xacNhanKeToan } from "../actions";
 import { maPhieuThu } from "@/lib/phieu-thu";
 import { luuDanhGiaSauDieuTri } from "../sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
@@ -94,6 +94,8 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
     h.huy_luc ? ["Huỷ lúc", ngayGioVN(h.huy_luc)] : null,
     ["Giờ vào", h.gio_vao ? gioVN(h.gio_vao) : gioVN(h.tao_luc)],
     h.gio_ra || h.chot_luc ? ["Giờ ra", gioVN((h.gio_ra ?? h.chot_luc) as string)] : null,
+    // Như SalonHero "Đã xác nhận với kế toán ngày dd/MM/yyyy HH:mm"; AMIA ghi thêm người xác nhận.
+    h.ke_toan_xac_nhan_luc ? ["Xác nhận với kế toán", <span key="kt" className="text-nhan-dam">Đã xác nhận ngày {ngayGioVN(h.ke_toan_xac_nhan_luc)}{h.ke_toan_xac_nhan_nguoi_id ? ` · ${tenNv.get(h.ke_toan_xac_nhan_nguoi_id) ?? ""}` : ""}</span>] : null,
     mocSua ? ["Chỉnh sửa lần cuối", `${ngayGioVN(mocSua.luc)}${mocSua.ai ? ` · ${mocSua.ai}` : ""}`] : null,
     khachDua != null ? ["Tiền khách đưa", tienVN(khachDua)] : null,
     khachDua != null ? ["Trả lại khách", tienVN(Math.max(khachDua - tienMatThu, 0))] : null,
@@ -110,6 +112,10 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
     <>
       <TieuDeNoi tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)}{h.tao_luc ? ` ${gioVN(h.tao_luc)}` : ""} · lập bởi {nguoiLap}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{k?.dien_thoai && <a href={`tel:${k.dien_thoai}`} className="tabular-nums text-muc-2 hover:underline">{k.dien_thoai}</a>}</span>}>
         <Link href={`/in/hoa-don/${id}`} target="_blank" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In hoá đơn</Link>
+        {h.trang_thai === "hoan_thanh" && !h.ke_toan_xac_nhan_luc && coQuyen(nd, "hd.ke_toan") && (
+          <NutHop kieu="phu" nhan="Xác nhận với Kế toán" tieuDe="Xác nhận với Kế toán" xacNhan={`Bạn có chắc chắn xác nhận nộp kế toán đơn ${h.ma} không? Hệ thống ghi lại người xác nhận và thời điểm, không bỏ xác nhận được (trừ khi hoá đơn được mở lại để sửa).`}
+            an={{ hoa_don_id: id }} nhanLuu="Xác nhận" action={xacNhanKeToan} />
+        )}
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
             truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC_TIEN, batBuoc: true }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />

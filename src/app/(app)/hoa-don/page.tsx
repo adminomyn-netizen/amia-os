@@ -2,7 +2,7 @@ import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { gioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
+import { gioVN, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 
 /** "0367294116" → "036 729 4116" như SalonHero. */
 const dinhSdt = (s: string | null | undefined) => { const d = String(s ?? "").replace(/\D/g, ""); return d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : String(s ?? ""); };
@@ -23,7 +23,7 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
   const toanCoSo = coQuyen(nd, "ban.toan_co_so");
   const tra = await traCuuLoc(db, loc);
   const moiTrang = loc.n;
-  const COT = "id, ma, sh_ma, ngay_hd, tao_luc, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, thu_ngan_ten, la_lich_su, la_so_du_dau, chi_nhanh_id, vat_hd_luc, vat_hd_so";
+  const COT = "id, ma, sh_ma, ngay_hd, tao_luc, trang_thai, tong_phai_thu, da_thu, con_no, khach_id, nguoi_lap_id, thu_ngan_ten, la_lich_su, la_so_du_dau, chi_nhanh_id, vat_hd_luc, vat_hd_so, ke_toan_xac_nhan_luc";
   const goiHan = <Q extends { eq(c: string, v: string): Q }>(x: Q) => (toanCoSo ? x : x.eq("nguoi_lap_id", nd.nhanVienId ?? ""));
   const q = goiHan(apLocHoaDon(db.from("v_hoa_don_loc").select(COT, { count: "exact" }), loc, nd.chiNhanhId, tra)).order("ngay_hd", { ascending: false }).order("tao_luc", { ascending: false }).order("id").range((trang - 1) * moiTrang, trang * moiTrang - 1);
   // Số đơn mọi trạng thái (cho tổng + thanh trạng thái): đang lọc theo trạng thái thì đếm riêng một lần.
@@ -52,6 +52,7 @@ export default async function TrangHoaDon({ searchParams }: { searchParams: Prom
     conNo: r.trang_thai === "hoan_thanh" && Number(r.con_no) > 0 ? tienVN(r.con_no) : "", trangThai: (r.trang_thai ?? "nhap") as DongHoaDon["trangThai"],
     vat: r.trang_thai !== "hoan_thanh" ? "" : r.vat_hd_luc ? "co" : "chua", vatSo: r.vat_hd_so ?? "",
     laLichSu: !!r.la_lich_su, coHddt: !!(r.vat_hd_so || r.vat_hd_luc), laSoDuDau: !!r.la_so_du_dau,
+    keToan: r.ke_toan_xac_nhan_luc ? ngayGioVN(r.ke_toan_xac_nhan_luc) : "",
   }));
 
   return (

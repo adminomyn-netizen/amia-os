@@ -33,6 +33,15 @@ describe("apLocHoaDon", () => {
     apLocHoaDon(b as never, docLocHoaDon({ tra: "no", tien_tu: "1000000", tien_den: "5000000", the: "dung_tien", vc: "co", ht: "chuyen_khoan", nv: UUID, vai: "tu_van", pp: "co", tip: "khong" }), null, { khachIds: [], lapIds: [] });
     for (const x of ['gt("con_no",0)', 'gte("tong_phai_thu",1000000)', 'lte("tong_phai_thu",5000000)', 'gt("tien_tru_the",0)', 'gt("giam_voucher",0)', 'contains("hinh_thuc",["chuyen_khoan"])', `contains("nv_tu_van",["${UUID}"])`, 'gt("phu_phi",0)', 'eq("tip",0)']) expect(ghi).toContain(x);
   });
+  it("xác nhận kế toán: đã xác nhận / chưa xác nhận (chỉ hoá đơn hoàn thành), giá trị lạ bỏ qua", () => {
+    const a = gia();
+    apLocHoaDon(a.b as never, docLocHoaDon({ kt: "co" }), null, { khachIds: [], lapIds: [] });
+    expect(a.ghi).toContain('not("ke_toan_xac_nhan_luc","is",null)');
+    const c = gia();
+    apLocHoaDon(c.b as never, docLocHoaDon({ kt: "chua" }), null, { khachIds: [], lapIds: [] });
+    expect(c.ghi).toContain('is("ke_toan_xac_nhan_luc",null)'); expect(c.ghi).toContain('eq("trang_thai","hoan_thanh")');
+    expect(docLocHoaDon({ kt: "xx" }).kt).toBe("");
+  });
   it("Mã HD: tìm chính xác khớp trọn mã AMIA hoặc SalonHero, không tick thì có chứa; chọn nhiều thì lọc theo id", () => {
     const a = gia();
     apLocHoaDon(a.b as never, docLocHoaDon({ mhd: " HD000123 ", cx: "1" }), null, { khachIds: [], lapIds: [] });

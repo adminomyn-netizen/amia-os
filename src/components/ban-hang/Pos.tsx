@@ -573,7 +573,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         )}
         {moLe && (<>
         {/* Điện thoại: dải loại + ô tìm + sắp xếp dính trên đầu vùng cuộn, cuộn danh sách dài vẫn đổi tab / tìm được ngay. */}
-        <div className="max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:-mx-4 max-lg:mt-4 max-lg:bg-giay max-lg:px-4 max-lg:pb-2 max-lg:shadow-[0_8px_12px_-12px_rgb(10_43_38/0.35)]">
+        <div className="max-lg:sticky max-lg:-top-6 max-lg:z-20 max-lg:-mx-4 max-lg:mt-0 max-lg:bg-giay max-lg:px-4 max-lg:pt-6 max-lg:pb-2 max-lg:shadow-[0_8px_12px_-12px_rgb(10_43_38/0.35)]">
         <div className="flex gap-1 overflow-x-auto border-b border-vien [scrollbar-width:none] lg:mt-5 [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Danh mục bán">
           {LOAI_TAB.map((t) => (
             <button key={t.ma} type="button" role="tab" aria-selected={tab === t.ma} onClick={() => setTab(t.ma)}

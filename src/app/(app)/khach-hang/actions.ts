@@ -142,6 +142,23 @@ export async function suaDiemKhach(fd: FormData): Promise<KQ> {
   return { ok: true };
 }
 
+/** Sửa nhanh ghi chú chung của khách (khach_hang.ghi_chu) từ đầu hồ sơ, không phải mở cả hộp Sửa hồ sơ (chị Diệu Thuý 10/11 mục 6: ghi chú trên điện thoại).
+ *  Đồng bộ SalonHero hằng đêm chỉ thêm khách mới (on conflict do nothing) nên không ghi đè ghi chú sửa ở đây. */
+export async function suaGhiChuChung(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("khach.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id");
+  const ghiChu = chuoi(fd, "ghi_chu").slice(0, 2000) || null;
+  if (!id) return { loi: "Không tìm thấy khách." };
+  const db = sb();
+  const { data: k } = await db.from("khach_hang").select("id, chi_nhanh_id").eq("id", id).maybeSingle();
+  if (!k || (nd.chiNhanhId && k.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy khách." };
+  const { error } = await db.from("khach_hang").update({ ghi_chu: ghiChu }).eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  revalidatePath(`/khach-hang/${id}`);
+  return { ok: true };
+}
+
 export async function luuGhiChu(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("hoso.sua");
   if (!nd) return { loi: KHONG_DU_QUYEN };

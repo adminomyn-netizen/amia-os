@@ -12,7 +12,7 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
 import { KhoiThe, LuoiThe } from "@/components/the/KhoiThe";
-import { NutBuoi } from "@/components/the/NutBuoi";
+import { NutBuoi, NutNhieuThe } from "@/components/the/NutBuoi";
 import { layBoSungThe } from "@/lib/the-bo-sung";
 import { NutSuaThe } from "@/components/the/NutSuaThe";
 import { thucHienBuoi } from "../../the/actions";
@@ -203,7 +203,10 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
               className={`rounded-tag border px-3 py-1 text-[13px] ${loc === m ? "border-nhan bg-nhan-nhat font-medium text-nhan-dam" : "border-vien text-muc-2 hover:bg-giay-tram"}`}>{ten} <span className="tabular-nums text-muc-3">{n}</span></Link>;
           })}
         </div>
-        <p className="mb-2 text-[13px] text-muc-3">Tổng số thẻ: <span className="font-medium tabular-nums text-muc">{hien.length}</span></p>
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <p className="text-[13px] text-muc-3">Tổng số thẻ: <span className="font-medium tabular-nums text-muc">{hien.length}</span></p>
+          {dungBuoi && <NutNhieuThe nhanVien={nvBuoi} bacSi={bsBuoi} the={dsThe.filter((x) => x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het")).map((x) => ({ id: x.id ?? "", ten: tenThe(x), ma: x.ma ?? "", buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), dichVu: dvCuaGoi(x.goi_id) }))} />}
+        </div>
         {hien.length === 0 ? <p className="py-10 text-center text-[14px] text-muc-3">Không có thẻ nào.</p> : (
           <LuoiThe>
             {hien.map((x) => (

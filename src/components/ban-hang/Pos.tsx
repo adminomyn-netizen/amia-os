@@ -19,7 +19,7 @@ import { nhanVienDongTamTinh, thanhToanTamTinh } from "@/lib/in-hoa-don";
 import { docSoTien } from "@/lib/phieu-thu";
 import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, DonNhapRut } from "@/app/(app)/ban-hang/actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
-import { BaoPhieuBuoi, NutBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi";
+import { BaoPhieuBuoi, NutBuoi, NutNhieuThe, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
 import { KhoiThe } from "@/components/the/KhoiThe";
 
@@ -567,6 +567,9 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         </div>
         <ChonKhach tuFocus={kieu === "dich_vu" && !dauTien} khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
         {/* Đơn làm dịch vụ: danh sách dịch vụ đã mua còn buổi đứng ngay dưới ô khách (danh mục chính của đơn này). */}
+        {kieu === "dich_vu" && buoi && khach && theKhach && <div className="mt-2"><NutNhieuThe nhanVien={nvLC} bacSi={bacSiLC} lichId={lichId ?? undefined}
+          the={theKhach.the.filter((t) => t.loai === "lan").map((t) => { const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri)); return { id: t.id, ten: t.ten, ma: t.ma, buoiCon: t.buoiCon, buoiTong: t.buoiTong, dichVu: dvThe.length ? dvThe : dvMuc }; })}
+          onXong={(r) => { setTaiLaiThe((x) => x + 1); setPhieuBuoi({ kq: r, khachId: khach.id }); }} /></div>}
         {kieu === "dich_vu" && <DvDaMua khach={!!khach} the={theKhach ? theKhach.the.filter((t) => t.loai === "lan" && t.buoiCon > 0) : null} nut={(t) => nutThe(t, "Làm buổi này")} coQuyen={!!buoi} />}
         {sua && <p role="status" className="mt-2 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Đang sửa hoá đơn <b>{sua.ma}</b> (đã mở lại về nháp). Chốt đơn sẽ ghi lại vào chính hoá đơn này, giữ mã và ngày {ngayVN(sua.ngayHd)}.</p>}
         <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />

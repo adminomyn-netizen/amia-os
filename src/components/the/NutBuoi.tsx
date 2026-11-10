@@ -5,7 +5,7 @@ import Link from "next/link";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import type { LuaChon } from "@/components/ui/Chon";
 import { homNayHCM } from "@/lib/dinh-dang";
-import { chuyenTriLieu } from "@/app/(app)/the/cho-lam/actions";
+import { chuyenNhieuThe, chuyenTriLieu } from "@/app/(app)/the/cho-lam/actions";
 
 export type KetQuaBuoi = { ok?: boolean; loi?: string; canhBao?: string; phieuId?: string; phieuMa?: string; xemPhieu?: boolean; phieuBacSi?: boolean; /** Đã chuyển cho chuyên viên trị liệu (chưa trừ buổi). */ chuyenCho?: string; luotId?: string };
 
@@ -33,12 +33,12 @@ export const luaChonNhieu = (ds: LuaChon[], uuTien?: string): LuaChon[] =>
 /** Các ô người làm + tư vấn + thông số ca, dùng chung cho hộp Thực hiện buổi và hộp Đã làm xong của chuyên viên (/the/cho-lam). */
 export function truongBuoi({ nhanVien, bacSi, coNgay }: { nhanVien: LuaChon[]; bacSi: LuaChon[]; coNgay?: boolean }): Truong[] {
   return [
-    { ten: "nv_ids", nhan: "Người thực hiện", loai: "nhieu", luaChon: luaChonNhieu(nhanVien, "Chuyên viên trị liệu"), batBuoc: true, rong: true, ghiChu: "Chọn được nhiều người (vd bác sĩ + chuyên viên cùng làm). Người chọn đầu tiên là người chính, doanh thu / hoa hồng buổi tính cho người chính." },
-    { ten: "bac_si_id", nhan: "Bác sĩ chỉ định", loai: "chon", luaChon: bacSi }, ...(coNgay ? [{ ten: "ngay", nhan: "Ngày làm", loai: "ngay" } as Truong] : []),
-    { ten: "tu_van_ids", nhan: "Tư vấn", loai: "nhieu", luaChon: luaChonNhieu(nhanVien, "Tư vấn"), rong: true, ghiChu: "Người tư vấn cho khách trong buổi này (chọn được nhiều người)." },
+    { ten: "nv_ids", nhan: "Người làm (chuyên viên trị liệu)", loai: "nhieu", luaChon: luaChonNhieu(nhanVien, "Chuyên viên trị liệu"), batBuoc: true, rong: true, ghiChu: "Chọn được nhiều người (vd bác sĩ + chuyên viên cùng làm). Người chọn đầu tiên là người chính, doanh thu / hoa hồng buổi tính cho người chính." },
+    { ten: "bac_si_id", nhan: "Bác sĩ", loai: "chon", luaChon: bacSi }, ...(coNgay ? [{ ten: "ngay", nhan: "Ngày làm", loai: "ngay" } as Truong] : []),
+    { ten: "tu_van_ids", nhan: "Tư vấn viên", loai: "nhieu", luaChon: luaChonNhieu(nhanVien, "Tư vấn"), rong: true, ghiChu: "Người tư vấn cho khách trong buổi này (chọn được nhiều người)." },
     { ten: "tu_van_tinh_trang", nhan: "Tư vấn: tình trạng da", loai: "nhieu_dong", goiY: "Vd: da dầu, lỗ chân lông to vùng chữ T, thâm sau mụn" },
     { ten: "tu_van_de_xuat", nhan: "Tư vấn: khuyến nghị, sản phẩm / dịch vụ đề xuất", loai: "nhieu_dong", goiY: "Vd: dùng kem chống nắng hằng ngày, đề xuất thêm 3 buổi peel", ghiChu: "Có nội dung tư vấn thì lưu thành phiếu tư vấn của khách (người tư vấn đầu tiên đứng tên)." },
-    { ten: "vung", nhan: "Vùng làm", loai: "chu", goiY: "Mặt, cổ, bụng..." },
+    { ten: "vung", nhan: "Vùng điều trị", loai: "chu", goiY: "Mặt, cổ, bụng..." },
     { ten: "shot", nhan: "Số shot thực tế", loai: "so" }, { ten: "line", nhan: "Số line thực tế", loai: "so" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong" },
     { ten: "ke_tiep_ngay", nhan: "Hẹn buổi kế tiếp: ngày", loai: "ngay", ghiChu: "Không bắt buộc. Có ngày hẹn thì hệ thống ghi nhắc và hiện ở trang Nhắc tái khám. Không ảnh hưởng số buổi hay tiền." },
     { ten: "ke_tiep_noi_dung", nhan: "Hẹn buổi kế tiếp: nội dung", loai: "chu", goiY: "Vd: làm vùng cổ, kiểm tra sau 2 tuần" },
@@ -64,6 +64,32 @@ export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, lichId, nhan =
         truong={[{ ten: "dich_vu_id", nhan: "Dịch vụ khách làm hôm nay", loai: "chon", luaChon: dichVu, batBuoc: true, rong: true, ghiChu: "Phiếu vật tư lấy định mức của dịch vụ này." }, ...truongBuoi({ nhanVien, bacSi, coNgay: true })]}
         action={async (fd) => { const r: KetQuaBuoi = await chuyenTriLieu(fd); if (r.ok) xong({ ...r, chuyenCho: r.chuyenCho ?? "" }); return r; }}
         nutPhu={{ nhan: "Đã làm xong", action: async (fd) => { const r = await action(fd); if (r.ok) xong(r); return r; } }} />
+      {!onXong && <BaoPhieuBuoi phieu={phieu} />}
+    </span>
+  );
+}
+
+export type TheChuyen = { id: string; ten: string; ma: string; buoiCon: number; buoiTong: number | null; dichVu: LuaChon[] };
+
+/** "Làm nhiều thẻ cùng lúc": khách làm nhiều dịch vụ ở nhiều thẻ trong một lần đến. Mỗi thẻ chọn dịch vụ (để trống = không làm),
+ *  người làm / bác sĩ / tư vấn viên dùng chung; chuyển hết cho chuyên viên trị liệu một lần (chưa trừ buổi). */
+export function NutNhieuThe({ the, nhanVien, bacSi, lichId, onXong }: { the: TheChuyen[]; nhanVien: LuaChon[]; bacSi: LuaChon[]; lichId?: string; onXong?: (kq: KetQuaBuoi) => void }) {
+  const [phieu, setPhieu] = useState<KetQuaBuoi | null>(null);
+  const ds = the.filter((t) => t.buoiCon > 0 && t.dichVu.length).slice(0, 10);
+  if (ds.length < 2) return null;
+  return (
+    <span className="inline-flex flex-col items-start gap-0.5">
+      <NutHop kieu="phu" nhan={`Làm nhiều thẻ cùng lúc (${ds.length})`} tieuDe="Làm nhiều thẻ cùng lúc" rong
+        moTa="Mỗi thẻ chọn dịch vụ khách làm hôm nay; thẻ nào không làm thì để trống. Người làm, bác sĩ, tư vấn viên dùng chung cho các thẻ. Bấm chuyển: mỗi thẻ thành một lượt Chờ làm của chuyên viên trị liệu, CHƯA trừ buổi."
+        nhanLuu="Chuyển cho chuyên viên trị liệu"
+        an={{ ...(lichId ? { lich_id: lichId } : {}), ...Object.fromEntries(ds.map((t) => [`ten__${t.id}`, t.ten])) }}
+        giaTri={{ nv_ids: [], tu_van_ids: [], ...Object.fromEntries(ds.map((t) => [`dv__${t.id}`, ""])) }}
+        truong={[
+          ...ds.map((t): Truong => ({ ten: `dv__${t.id}`, nhan: `${t.ten}${t.ma ? ` (#${t.ma})` : ""} · còn ${t.buoiCon}${t.buoiTong != null && t.buoiTong < 999_999 ? `/${t.buoiTong}` : ""} buổi`, loai: "chon", rong: true,
+            luaChon: [{ gia_tri: "", nhan: "Không làm thẻ này" }, ...t.dichVu] })),
+          ...truongBuoi({ nhanVien, bacSi }),
+        ]}
+        action={async (fd) => { const r: KetQuaBuoi = await chuyenNhieuThe(fd); if (r.ok) { const k = { ...r, chuyenCho: r.chuyenCho ?? "" }; if (onXong) onXong(k); else setPhieu(k); } return r; }} />
       {!onXong && <BaoPhieuBuoi phieu={phieu} />}
     </span>
   );

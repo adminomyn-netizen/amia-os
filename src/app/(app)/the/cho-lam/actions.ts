@@ -81,6 +81,27 @@ export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
   return { ok: true, chuyenCho, luotId: moi?.id };
 }
 
+/** Một lần chuyển NHIỀU thẻ của cùng khách cho chuyên viên trị liệu (chị Diệu Thuý 10/11 mục 8: một hoá đơn làm dịch vụ chọn được nhiều thẻ).
+ *  Ô `dv__<theId>` = dịch vụ làm hôm nay của thẻ đó (để trống = không làm thẻ này); người làm / bác sĩ / tư vấn dùng chung.
+ *  Mỗi thẻ vẫn là một lượt chờ riêng (chuyenTriLieu, đủ mọi kiểm tra), chưa trừ buổi. Thẻ nào lỗi thì báo, thẻ khác vẫn chuyển. */
+export async function chuyenNhieuThe(fd: FormData): Promise<KQChuyen> {
+  const chon = [...fd.entries()].filter(([k, v]) => k.startsWith("dv__") && String(v).trim()).map(([k, v]) => ({ theId: k.slice(4), dvId: String(v).trim() }));
+  if (!chon.length) return { loi: "Chọn dịch vụ cho ít nhất một thẻ." };
+  if (chon.length > 10) return { loi: "Mỗi lần chuyển tối đa 10 thẻ." };
+  const ok: string[] = [], loi: string[] = [];
+  let nguoi = "";
+  for (const c of chon) {
+    const f = new FormData();
+    for (const [k, v] of fd.entries()) if (!k.startsWith("dv__") && k !== "the_id" && k !== "dich_vu_id") f.append(k, v);
+    f.set("the_id", c.theId); f.set("dich_vu_id", c.dvId);
+    const r = await chuyenTriLieu(f);
+    const ten = chuoi(fd, `ten__${c.theId}`) || "Thẻ";
+    if (r.ok) { ok.push(ten); nguoi = r.chuyenCho ?? nguoi; } else loi.push(`${ten}: ${r.loi ?? "lỗi"}`);
+  }
+  if (!ok.length) return { loi: loi.join("\n") };
+  return { ok: true, chuyenCho: nguoi, ...(loi.length ? { canhBao: `Đã chuyển ${ok.length} thẻ. Chưa chuyển được:\n${loi.join("\n")}` } : {}) };
+}
+
 /** Chuyên viên bấm Bắt đầu làm: ghi giờ bắt đầu; lượt gắn lịch hẹn thì mở ca ("Đang phục vụ") để chuông quá giờ đếm đúng. */
 export async function batDauLam(fd: FormData): Promise<KQ> {
   const nd = await nguoiThaoTac();

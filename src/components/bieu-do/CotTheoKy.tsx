@@ -1,4 +1,5 @@
 import { MAU_BIEU_DO } from "./mau";
+import { ChonDiemDuong, type CotChiTiet } from "./ChonDiemDuong";
 
 /** Biểu đồ cột theo kỳ (ngày/tuần/tháng/quý), SVG tự vẽ, tối giản: 3 vạch ngang có số rút gọn, mỗi cột có chú thích khi rê chuột (title),
  *  nhãn trục ngang thưa ra khi nhiều cột để không chồng chữ. Giá trị âm vẽ như 0 (số thật vẫn nằm trong bảng bên dưới). */
@@ -19,14 +20,14 @@ export function tranDep(max: number) {
   return (t <= 1 ? 1 : t <= 2 ? 2 : t <= 2.5 ? 2.5 : t <= 5 ? 5 : 10) * mu;
 }
 
-export function CotTheoKy({ duLieu, ten, dinhDang = rutGonTien, trong = "Chưa có số liệu trong khoảng này." }: { duLieu: CotKy[]; ten: string; dinhDang?: (n: number) => string; trong?: string }) {
+export function CotTheoKy({ duLieu, ten, dinhDang = rutGonTien, trong = "Chưa có số liệu trong khoảng này.", chiTiet, nutChiTiet }: { duLieu: CotKy[]; ten: string; dinhDang?: (n: number) => string; trong?: string; /** Khung số khi rê/bấm vào từng cột (cùng thứ tự duLieu). */ chiTiet?: CotChiTiet[]; nutChiTiet?: string }) {
   if (!duLieu.length || duLieu.every((d) => d.gia_tri <= 0)) return <p className="py-6 text-center text-[14px] text-muc-3">{trong}</p>;
   const W = 720, H = 220, trai = 56, phai = 8, tren = 12, duoi = 28, rong = W - trai - phai, cao = H - tren - duoi;
   const tran = tranDep(Math.max(...duLieu.map((d) => d.gia_tri))), buoc = rong / duLieu.length, wCot = Math.min(36, buoc * 0.7);
   const cachNhan = Math.max(1, Math.ceil(duLieu.length / 10));
   const y = (v: number) => tren + cao - (Math.max(0, v) / tran) * cao;
   return (
-    <figure className="m-0">
+    <figure className="relative m-0">
       <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${ten}: ${duLieu.length} kỳ, cao nhất ${dinhDang(Math.max(...duLieu.map((d) => d.gia_tri)))}`} className="h-auto w-full">
         {[0, 0.5, 1].map((t) => (
           <g key={t}>
@@ -44,6 +45,7 @@ export function CotTheoKy({ duLieu, ten, dinhDang = rutGonTien, trong = "Chưa c
           );
         })}
       </svg>
+      {chiTiet && <ChonDiemDuong kieu="cot" cot={chiTiet} nutChiTiet={nutChiTiet} trai={(trai / W) * 100} phai={(phai / W) * 100} tren={(tren / H) * 100} duoi={(duoi / H) * 100} />}
     </figure>
   );
 }

@@ -31,7 +31,7 @@ import { LocKhachThe } from "@/components/bao-cao/LocKhachThe";
 import { LocNo } from "@/components/bao-cao/LocNo";
 import { XemKhachMuc } from "@/components/bao-cao/XemKhachMuc";
 import { layDanhSachNo } from "@/lib/bao-cao-no";
-import { gomTheoKy, HANG_KHACH, KIEU_GOM, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, layTongKhoanChi, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
+import { gomTheoKy, HANG_KHACH, KIEU_GOM, khoaKy, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, layTongKhoanChi, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
 const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "voucher", ten: "Hiệu quả voucher" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }, { ma: "nhap-xuat-kho", ten: "Nhập xuất kho hàng" }, { ma: "nhap-kho", ten: "Báo cáo nhập kho" }, { ma: "xuat-kho", ten: "Xuất kho bởi nhân viên" }, { ma: "ban-san-pham", ten: "Sản phẩm đã bán" }, { ma: "ton-lo", ten: "Báo cáo tồn theo lô hàng" }, { ma: "chi-phi-dv", ten: "Báo cáo chi phí dịch vụ" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
@@ -168,6 +168,17 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
     const gocPhanTrang = { tab: "doanh-thu", gom: sp.gom, tu: sp.tu, den: sp.den, cn: sp.cn, so: sp.so };
     const nhanNgan = (n: string) => (gom === "ngay" ? n.slice(0, 5).replace("-", "/") : n);
     const dsBieuDo = [...ds].reverse().map((r) => ({ nhan: r.nhan, nhanNgan: nhanNgan(r.nhan), gia_tri: r.thuc_thu }));
+    // Rê/bấm từng cột: hiện số của kỳ + nút mở hoá đơn đúng khoảng ngày của kỳ đó (chị Lâm 10/11).
+    const khoangKy = new Map<string, { tu: string; den: string }>();
+    for (const r of ngayRows) { const nk = khoaKy(r.ngay, gom).nhan, c = khoangKy.get(nk); khoangKy.set(nk, { tu: c && c.tu < r.ngay ? c.tu : r.ngay, den: c && c.den > r.ngay ? c.den : r.ngay }); }
+    const chiTietCot = [...ds].reverse().map((r) => {
+      const kk = khoangKy.get(r.nhan);
+      return { nhan: r.nhan, href: kk ? `/hoa-don?tu=${kk.tu}&den=${kk.den}&tt=hoan_thanh${sp.cn ? `&cn=${sp.cn}` : ""}` : undefined, dong: [
+        { ten: "Thực thu", mau: "var(--sac-luc-mau)", gt: tienVN(r.thuc_thu) }, { ten: "Doanh thu", mau: "var(--dat)", gt: tienVN(r.doanh_thu) },
+        { ten: "Số đơn", mau: "var(--muc-3)", gt: soVN(r.so_don) }, { ten: "Tiền mặt", mau: "var(--sac-xanh-mau)", gt: tienVN(r.tien_mat) },
+        { ten: "Chuyển khoản", mau: "var(--sac-tim-mau)", gt: tienVN(r.chuyen_khoan) }, { ten: "Nợ mới", mau: "var(--sac-hong-mau)", gt: tienVN(r.no_moi ?? 0) },
+      ] };
+    });
     noiDung = (
       <>
         {lc}
@@ -191,7 +202,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
           ))}
         </nav>
         <TieuDeMuc>Thực thu theo {KIEU_GOM.find((k) => k.ma === gom)?.ten.toLowerCase()}</TieuDeMuc>
-        <CotTheoKy duLieu={dsBieuDo} ten="Thực thu theo kỳ" />
+        <CotTheoKy duLieu={dsBieuDo} ten="Thực thu theo kỳ" chiTiet={chiTietCot} nutChiTiet={gom === "ngay" ? "Xem hoá đơn ngày này" : "Xem hoá đơn kỳ này"} />
         <div className="mb-3 mt-6 flex flex-wrap items-center justify-between gap-3"><h2 className="text-[15px] font-medium text-muc">Bảng số liệu chi tiết</h2><ChonSoDong so={soDong} /></div>
         <Bang noi duLieu={dsHien} khoa={(r) => r.nhan} trong="Không có phát sinh trong khoảng này."
           cot={[

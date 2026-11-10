@@ -65,7 +65,7 @@ export type KieuGom = "ngay" | "tuan" | "thang" | "quy";
 export const KIEU_GOM: { ma: KieuGom; ten: string }[] = [{ ma: "ngay", ten: "Ngày" }, { ma: "tuan", ten: "Tuần" }, { ma: "thang", ten: "Tháng" }, { ma: "quy", ten: "Quý" }];
 export const kieuGom = (s?: string): KieuGom => (KIEU_GOM.some((k) => k.ma === s) ? (s as KieuGom) : "ngay");
 const dmy = (iso: string) => iso.split("-").reverse().join("-");
-function khoaKy(ngay: string, k: KieuGom): { khoa: string; nhan: string } {
+export function khoaKy(ngay: string, k: KieuGom): { khoa: string; nhan: string } {
   if (k === "ngay") return { khoa: ngay, nhan: dmy(ngay) };
   const d = new Date(`${ngay}T00:00:00Z`);
   if (k === "tuan") {

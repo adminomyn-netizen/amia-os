@@ -109,12 +109,13 @@ export function BangSoLieu({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
 
 /** Xếp hạng trong tháng: dịch vụ, sản phẩm, khách chi nhiều. Số tiền chỉ hiện cho người xem được số tiền. */
 function BangXepHang({ d, xemTien }: { d: SoLieu; xemTien: boolean }) {
-  const hang = (ds: { ten: string; so: number; tien: number }[], don: string) => ds.map((x) => ({ ten: x.ten, phu2: `${x.so} ${don}`, chu: xemTien ? tienVN(x.tien) : `${x.so} ${don}`, gt: xemTien ? x.tien : x.so, chiTiet: [{ nhan: "Số " + don.replace("lượt", "lượt"), gt: String(x.so) }, ...(xemTien ? [{ nhan: "Doanh thu", gt: tienVN(x.tien) }] : [])] }));
+  // theoTien = false (dịch vụ): xếp và hiện theo SỐ LƯỢT như "Dịch vụ làm nhiều nhất" ở /tong-quan (lượt dùng thẻ 0đ, tiền chỉ là phần bán lẻ).
+  const hang = (ds: { ten: string; so: number; tien: number }[], don: string, theoTien = true) => ds.map((x) => ({ ten: x.ten, phu2: theoTien ? `${x.so} ${don}` : undefined, chu: theoTien && xemTien ? tienVN(x.tien) : `${x.so} ${don}`, gt: theoTien && xemTien ? x.tien : x.so, chiTiet: [{ nhan: "Số " + don.replace("lượt", "lượt"), gt: String(x.so) }, ...(xemTien ? [{ nhan: theoTien ? "Doanh thu" : "Doanh thu bán lẻ", gt: tienVN(x.tien) }] : [])] }));
   return (
     <div className="space-y-4">
       <h2 className="text-[15px] font-semibold text-muc">Bảng xếp hạng tháng này</h2>
       <div className="grid items-start gap-5 md:grid-cols-2 xl:grid-cols-3">
-        <BangXepHangDep tieuDe="Top dịch vụ" Icon={Sparkles} href="/bao-cao" nhanHref="Báo cáo" trong="Chưa có dịch vụ nào được bán tháng này." dong={hang(d.topDichVu, "lượt")} />
+        <BangXepHangDep tieuDe="Top dịch vụ" Icon={Sparkles} href="/bao-cao" nhanHref="Báo cáo" trong="Chưa có dịch vụ nào được làm tháng này." dong={hang(d.topDichVu, "lượt", false)} />
         <BangXepHangDep tieuDe="Top sản phẩm" Icon={Package} href="/kho" nhanHref="Kho" trong="Chưa bán sản phẩm nào tháng này." dong={hang(d.topSanPham, "cái")} />
         {xemTien && <BangXepHangDep tieuDe="Top khách chi nhiều (12 tháng)" Icon={Users} href="/khach-hang" nhanHref="Khách hàng" trong="Chưa có khách nào phát sinh chi tiêu 12 tháng gần đây." dong={d.topKhach.map((x) => ({ ten: x.ten, chu: tienGon(x.chi), gt: x.chi, chiTiet: [{ nhan: "Chi 12 tháng", gt: tienVN(x.chi) }] }))} />}
       </div>

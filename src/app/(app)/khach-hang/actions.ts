@@ -13,6 +13,7 @@ import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
 import { docKhachTuExcel } from "@/lib/nhap-khach";
 import { cotDoi } from "@/lib/lich-su-sua-khach";
+import { ngaySinhHopLe } from "@/lib/ngay-sinh";
 
 type KQ = { ok?: true; loi?: string; id?: string };
 const NGUON_HOP_LE = ["mkt", "telesale", "tu_van", "khach_cu_gioi_thieu", "khac"];
@@ -37,6 +38,10 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   // Khi sửa: đọc bản ghi hiện tại để giữ người giới thiệu nếu người dùng không đổi (form hiện sẵn mã người giới thiệu cũ).
   const { data: cu } = id ? await db.from("khach_hang").select("*").eq("id", id).maybeSingle() : { data: null };
   let nguoiGt: string | null = cu?.nguoi_gioi_thieu_id ?? null;
+  // Ngày sinh phải trước hôm nay: ô ngày mở sẵn tháng hiện tại và có nút "Hôm nay" → dễ bấm nhầm thành ngày tạo khách (KH000014 ngày 10/11/2026
+  // lọt vào "sinh nhật hôm nay", lệch SalonHero 25/24). Chỉ kiểm khi ngày sinh đổi, để không chặn sửa khách cũ chuyển từ SalonHero.
+  const ngaySinh = chuoiHoacNull(fd, "ngay_sinh");
+  if (ngaySinh && ngaySinh !== (cu?.ngay_sinh ?? null) && !ngaySinhHopLe(ngaySinh, homNayHCM())) return { loi: "Ngày sinh chưa đúng: phải trước hôm nay (đừng bấm \"Hôm nay\" ở ô ngày sinh). Chưa biết thì để trống." };
   const gt = chuoi(fd, "nguoi_gioi_thieu");
   if (nguon === "khach_cu_gioi_thieu") {
     const maCu = nguoiGt ? ((await db.from("khach_hang").select("ma").eq("id", nguoiGt).maybeSingle()).data?.ma ?? "") : "";
@@ -58,7 +63,7 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
   const row = {
     ho_ten: chuoi(fd, "ho_ten"), dien_thoai: sdt, zalo: chuoiHoacNull(fd, "zalo"), email: chuoiHoacNull(fd, "email"),
     gioi_tinh: ["nữ", "nam", "khác"].includes(chuoi(fd, "gioi_tinh")) ? chuoi(fd, "gioi_tinh") : null,
-    ngay_sinh: chuoiHoacNull(fd, "ngay_sinh"), dia_chi: chuoiHoacNull(fd, "dia_chi"), chi_nhanh_id: chuoi(fd, "chi_nhanh_id"),
+    ngay_sinh: ngaySinh, dia_chi: chuoiHoacNull(fd, "dia_chi"), chi_nhanh_id: chuoi(fd, "chi_nhanh_id"),
     nguon, nguon_chi_tiet: chuoiHoacNull(fd, "nguon_chi_tiet"), nguoi_gioi_thieu_id: nguoiGt, nguoi_phu_trach_id: chuoi(fd, "nguoi_phu_trach_id"),
     ghi_chu: chuoiHoacNull(fd, "ghi_chu"), dong_y_dung_hinh: dongY, cap_nhat_luc: new Date().toISOString(),
     // Các ô thêm như SalonHero. Khi SỬA mà form không gửi ô nào (gọi cũ) thì không đụng tới cột đó, tránh xoá dữ liệu chuyển từ SalonHero.

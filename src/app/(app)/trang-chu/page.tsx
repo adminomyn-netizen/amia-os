@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { sb } from "@/lib/db";
 import { chiNhanhHoatDong, tatCaChiNhanh } from "@/lib/chi-nhanh";
 import { layCanhBao } from "@/lib/canh-bao";
-import { bcDoanhThuNgayNho, bcDoanhThuNgayViNho, bcNhanVienNho, topBanThangNho, topKhachNho } from "@/lib/bao-cao-nho-dem";
+import { cnXepHang, layXepHang } from "@/lib/xep-hang";
+import { bcDoanhThuNgayNho, bcDoanhThuNgayViNho, bcNhanVienNho, topKhachNho } from "@/lib/bao-cao-nho-dem";
 import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienGon, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, NHAN_VAI_TRO, type VaiTro } from "@/lib/quyen";
 import { DongHo } from "@/components/layout/DongHo";
@@ -115,7 +116,12 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
   if (cn) { lq = lq.eq("chi_nhanh_id", cn); kq = kq.eq("chi_nhanh_id", cn); tk = tk.eq("chi_nhanh_id", cn); no = no.eq("chi_nhanh_id", cn); nvq = nvq.eq("chi_nhanh_id", cn); }
   const pKhMoi = khoiDong(kq), pTk = khoiDong(tk), pTc = khoiDong(tc), pNv = khoiDong(nvq);
   // Top bán chạy / top khách: giữ 45 giây dùng chung (như các số liệu nặng khác); lỗi thì coi như rỗng, không làm hỏng trang.
-  const pTopBan = topBanThangNho(dauThang, cn ?? null).then((data) => ({ data }), () => ({ data: null }));
+  // Top dịch vụ / sản phẩm: CÙNG nguồn số với bảng xếp hạng ở /tong-quan (layXepHang → bc_san_pham_dich_vu, cùng chi nhánh như cnXepHang, cùng kỳ
+  // đầu tháng → hôm nay). Bỏ top_ban_thang cũ vì nó gộp mọi dòng không phải sản phẩm (cả dòng BÁN THẺ) thành "dịch vụ" → lệch /tong-quan (chị Lâm 10/11/2026).
+  const pTopBan = cnXepHang(cn ?? null).then((c) => layXepHang(dauThang, homNay, c.id)).then((x) => ({ data: [
+    ...x.dichVu.map((m) => ({ nhom: "dich_vu", ten: m.ten, so: m.so, tien: m.tien })),
+    ...x.sanPham.map((m) => ({ nhom: "san_pham", ten: m.ten, so: m.so, tien: m.tien })),
+  ] }), () => ({ data: null }));
   const pTopKh = topKhachNho(10, cn ?? null).then((data) => ({ data }), () => ({ data: null }));
   // Ví điện tử / Ship COD tháng này (cơ cấu thu chia theo hình thức như SalonHero, 0199). Không quyền báo cáo thì không chạy.
   const pVi = khoiDong(coQuyen(nd, "baocao.xem") ? bcDoanhThuNgayViNho(dauThang, homNay, cn ?? null).then((data): { data: typeof data | null } => ({ data })) : Promise.resolve({ data: null }));

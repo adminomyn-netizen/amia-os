@@ -9,8 +9,10 @@ import { CO_SO } from "@/lib/in-hoa-don";
 export default async function TrangInTamTinh({ searchParams }: { searchParams: Promise<{ cn?: string }> }) {
   const nd = await yeuCauQuyen("ban.tao");
   const q = (await searchParams).cn ?? "";
-  const cnId = nd.chiNhanhId ?? (/^[0-9a-f-]{36}$/i.test(q) ? q : "");
   const db = sb();
+  // Chi nhánh của giỏ (?cn=); tài khoản gắn chi nhánh thì theo tài khoản. Không có (giỏ chưa chọn) thì lấy chi nhánh đang hoạt động đầu tiên (chỉ Vinh) để đầu tờ luôn có tên + địa chỉ.
+  let cnId = nd.chiNhanhId || (/^[0-9a-f-]{36}$/i.test(q) ? q : "");
+  if (!cnId) cnId = (await db.from("chi_nhanh").select("id").eq("hoat_dong", true).order("ten").limit(1).maybeSingle()).data?.id ?? "";
   const [{ data: ch }, { data: cn }, { data: ch1 }] = await Promise.all([
     db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "in.hoa_don.%"),
     cnId ? db.from("chi_nhanh").select("ten, dia_chi, dien_thoai").eq("id", cnId).maybeSingle() : Promise.resolve({ data: null }),

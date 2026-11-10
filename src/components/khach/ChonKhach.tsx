@@ -8,7 +8,7 @@ import type { timKhach } from "@/app/(app)/ban-hang/actions";
 export type KhachChon = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; /** Nguồn giới thiệu của khách (khach_hang.doi_tac_id) để Thu ngân gợi ý. */ doi_tac_id?: string | null };
 
 /** Ô tìm khách theo tên / SĐT / mã (gợi ý sau 250 ms). Dùng ở Thu ngân và Lịch hẹn. */
-export function ChonKhach({ khach, onDoi, tim }: { khach: KhachChon | null; onDoi: (k: KhachChon | null) => void; tim: typeof timKhach }) {
+export function ChonKhach({ khach, onDoi, tim, tuFocus }: { khach: KhachChon | null; onDoi: (k: KhachChon | null) => void; tim: typeof timKhach; /** Mở là đặt con trỏ vào ô tìm (Đơn làm dịch vụ: chọn khách trước). */ tuFocus?: boolean }) {
   const [q, setQ] = useState("");
   const [kq, setKq] = useState<KhachChon[]>([]);
   const lanDau = useRef(true);
@@ -28,7 +28,7 @@ export function ChonKhach({ khach, onDoi, tim }: { khach: KhachChon | null; onDo
   return (
     <div className="relative">
       <Search aria-hidden strokeWidth={1.6} className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muc-3" />
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm khách theo tên, số điện thoại hoặc mã (bỏ trống nếu bán lẻ không cần khách)" aria-label="Tìm khách" className={`${O_NHAP} pl-9`} />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm khách theo tên, số điện thoại hoặc mã (bỏ trống nếu bán lẻ không cần khách)" aria-label="Tìm khách" autoFocus={tuFocus} className={`${O_NHAP} pl-9`} />
       {kq.length > 0 && (
         <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-the border border-vien bg-giay-sang shadow-[0_14px_32px_rgba(5,40,36,0.18)]">
           {kq.map((k) => (

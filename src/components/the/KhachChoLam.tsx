@@ -8,7 +8,8 @@ import type { LuaChon } from "@/components/ui/Chon";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { BaoPhieuBuoi, truongBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import { batDauLam, huyLuotCho, traLaiThuNgan, xongBuoiCho } from "@/app/(app)/the/cho-lam/actions";
-import type { BuoiCho } from "@/lib/buoi-cho-lam";
+import type { BuoiCho, QuyTrinhKhach } from "@/lib/buoi-cho-lam";
+import { BuocQuyTrinh } from "@/components/the/BuocQuyTrinh";
 
 const NHAN: Record<string, { chu: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
   cho_lam: { chu: "Chờ làm", kieu: "cho" }, dang_lam: { chu: "Đang làm", kieu: "tot" }, xong: { chu: "Đã làm xong", kieu: "tram" },
@@ -34,7 +35,7 @@ function NutBatDau({ id }: { id: string }) {
 }
 
 /** Một khách chờ làm: thông tin thu ngân chuyển + các nút của chuyên viên trị liệu. */
-function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe }: { r: BuoiCho; nhanVien: LuaChon[]; bacSi: LuaChon[]; thaoTac: boolean; coLienKetThe: boolean }) {
+function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe, qt, hienQt }: { r: BuoiCho; nhanVien: LuaChon[]; bacSi: LuaChon[]; thaoTac: boolean; coLienKetThe: boolean; /** Quy trình hôm nay của khách (gộp mọi lượt). */ qt?: QuyTrinhKhach; /** Lượt này hiện khối quy trình (chỉ một lượt mỗi khách). */ hienQt?: boolean }) {
   const [kq, setKq] = useState<KetQuaBuoi | null>(null);
   const mo = r.trangThai === "cho_lam" || r.trangThai === "dang_lam";
   const nhan = NHAN[r.trangThai] ?? { chu: r.trangThai, kieu: "tram" as const };
@@ -62,11 +63,12 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe }: { r: BuoiCho; n
         {r.tuVanTinhTrang && <><dt className="text-muc-3">Tình trạng da</dt><dd className="whitespace-pre-line text-muc-2">{r.tuVanTinhTrang}</dd></>}
         {r.lyDo && <><dt className="text-muc-3">Lý do</dt><dd className="text-loi">{r.lyDo}</dd></>}
       </dl>
+      {mo && qt && hienQt && <BuocQuyTrinh khachId={r.khachId} qt={qt} thaoTac={thaoTac} />}
       {mo && thaoTac && (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           {r.trangThai === "cho_lam" && <NutBatDau id={r.id} />}
-          <NutHop kieu={r.trangThai === "dang_lam" ? "chinh" : "phu"} nhan="Đã làm xong" tieuDe={`Đã làm xong · ${r.khachTen}`} rong nhanLuu="Đã làm xong, trừ 1 buổi"
-            moTa={`${r.dichVuTen} · thẻ ${r.theMa}. Bấm lưu là trừ 1 buổi của thẻ, ghi doanh thu của buổi và ra phiếu vật tư theo định mức để chuyên viên kiểm.`}
+          <NutHop kieu={r.trangThai === "dang_lam" ? "chinh" : "phu"} nhan="Kết thúc (trả khách)" tieuDe={`Kết thúc · ${r.khachTen}`} rong nhanLuu="Kết thúc, trừ 1 buổi"
+            moTa={`${r.dichVuTen} · thẻ ${r.theMa}. Bấm khi đã làm xong và trả khách: trừ 1 buổi của thẻ, ghi doanh thu của buổi và ra phiếu vật tư theo định mức để chuyên viên kiểm.${qt && qt.buoc.some((b) => !b.daTich) ? ` Còn ${qt.buoc.filter((b) => !b.daTich).length} bước quy trình chưa tích.` : ""}`}
             an={{ id: r.id }} truong={truongBuoi({ nhanVien, bacSi })}
             giaTri={{ nv_ids: r.nvIds, bac_si_id: r.bacSiId ?? "", tu_van_ids: r.tuVanIds, tu_van_tinh_trang: r.tuVanTinhTrang ?? "", tu_van_de_xuat: r.tuVanDeXuat ?? "", vung: r.vung, shot: r.shot, line: r.line,
               ghi_chu: r.ghiChu ?? "", ke_tiep_ngay: r.keTiepNgay ?? "", ke_tiep_noi_dung: r.keTiepNoiDung ?? "" }}
@@ -86,10 +88,14 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe }: { r: BuoiCho; n
 }
 
 /** Danh sách khách thu ngân đã chuyển cho chuyên viên trị liệu. `thaoTac(r)` = người đang xem bấm được nút của dòng đó. */
-export function KhachChoLam({ ds, nhanVien, bacSi, thaoTacIds, coLienKetThe = true, trong }: {
+export function KhachChoLam({ ds, nhanVien, bacSi, thaoTacIds, coLienKetThe = true, trong, quyTrinh }: {
   ds: BuoiCho[]; nhanVien: LuaChon[]; bacSi: LuaChon[]; /** id các lượt người đang xem thao tác được. */ thaoTacIds: string[]; coLienKetThe?: boolean; trong?: string;
+  /** Quy trình hôm nay theo khách (0322). */ quyTrinh?: Record<string, QuyTrinhKhach>;
 }) {
   if (!ds.length) return <p className="rounded-hop border border-dashed border-vien-dam px-4 py-6 text-center text-[14px] text-muc-3">{trong ?? "Chưa có khách nào được chuyển."}</p>;
   const cho = new Set(thaoTacIds);
-  return <ul className="grid gap-3 lg:grid-cols-2">{ds.map((r) => <TheKhach key={r.id} r={r} nhanVien={nhanVien} bacSi={bacSi} thaoTac={cho.has(r.id)} coLienKetThe={coLienKetThe} />)}</ul>;
+  // Khối quy trình hiện ở MỘT lượt mỗi khách (ưu tiên lượt đang làm): khách làm nhiều thẻ thì bước chung không lặp.
+  const hienO = new Map<string, string>();
+  for (const r of [...ds].sort((a, b) => Number(b.trangThai === "dang_lam") - Number(a.trangThai === "dang_lam"))) if (!hienO.has(r.khachId)) hienO.set(r.khachId, r.id);
+  return <ul className="grid gap-3 lg:grid-cols-2">{ds.map((r) => <TheKhach key={r.id} r={r} nhanVien={nhanVien} bacSi={bacSi} thaoTac={cho.has(r.id)} coLienKetThe={coLienKetThe} qt={quyTrinh?.[r.khachId]} hienQt={hienO.get(r.khachId) === r.id} />)}</ul>;
 }

@@ -2028,6 +2028,96 @@ export type Database = {
         }
         Relationships: []
       }
+      buoc_quy_trinh: {
+        Row: {
+          dung_chung: boolean
+          goi_y_vat_tu: string | null
+          hoat_dong: boolean
+          id: string
+          khoa: string
+          tao_luc: string
+          ten: string
+        }
+        Insert: {
+          dung_chung?: boolean
+          goi_y_vat_tu?: string | null
+          hoat_dong?: boolean
+          id?: string
+          khoa: string
+          tao_luc?: string
+          ten: string
+        }
+        Update: {
+          dung_chung?: boolean
+          goi_y_vat_tu?: string | null
+          hoat_dong?: boolean
+          id?: string
+          khoa?: string
+          tao_luc?: string
+          ten?: string
+        }
+        Relationships: []
+      }
+      dich_vu_buoc: {
+        Row: {
+          buoc_id: string
+          dich_vu_id: string
+          goi_y_vat_tu: string | null
+          nguon: string | null
+          thu_tu: number
+        }
+        Insert: {
+          buoc_id: string
+          dich_vu_id: string
+          goi_y_vat_tu?: string | null
+          nguon?: string | null
+          thu_tu: number
+        }
+        Update: {
+          buoc_id?: string
+          dich_vu_id?: string
+          goi_y_vat_tu?: string | null
+          nguon?: string | null
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      luot_buoc: {
+        Row: {
+          buoc_id: string
+          chi_nhanh_id: string
+          ghi_chu: string | null
+          id: string
+          khach_id: string
+          luot_ids: string[]
+          ngay: string
+          xong_boi: string | null
+          xong_luc: string
+        }
+        Insert: {
+          buoc_id: string
+          chi_nhanh_id: string
+          ghi_chu?: string | null
+          id?: string
+          khach_id: string
+          luot_ids?: string[]
+          ngay?: string
+          xong_boi?: string | null
+          xong_luc?: string
+        }
+        Update: {
+          buoc_id?: string
+          chi_nhanh_id?: string
+          ghi_chu?: string | null
+          id?: string
+          khach_id?: string
+          luot_ids?: string[]
+          ngay?: string
+          xong_boi?: string | null
+          xong_luc?: string
+        }
+        Relationships: []
+      }
       buoi_nhan_vien: {
         Row: {
           buoi_id: string

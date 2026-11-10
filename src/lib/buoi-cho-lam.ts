@@ -1,6 +1,7 @@
 import "server-only";
 import { sb } from "@/lib/db";
 import { tenGonNv } from "@/lib/lua-chon-nhan-vien";
+import { gopBuoc, type BuocGop } from "@/lib/quy-trinh-buoc";
 
 /** Trạng thái lượt khách thu ngân chuyển cho chuyên viên trị liệu (0321). */
 export const TRANG_THAI_CHO: Record<string, { nhan: string; kieu: "cho" | "dang" | "xong" | "tat" }> = {
@@ -50,4 +51,31 @@ export async function docBuoiCho(o: { chiNhanhId: string | null; ngay: string; n
       batDauLuc: r.bat_dau_luc, xongLuc: r.xong_luc, lyDo: r.ly_do, lichHenId: r.lich_hen_id,
     };
   });
+}
+
+export type QuyTrinhKhach = { buoc: BuocGop[]; dvChuaCo: string[] };
+
+/** Quy trình hôm nay của từng khách có lượt đang mở (0322): gộp bước của mọi dịch vụ khách đang làm + bước đã tích hôm nay.
+ *  Bảng 0322 chưa áp thì trả rỗng (trang vẫn chạy như trước). */
+export async function docQuyTrinh(ds: BuoiCho[], ngay: string): Promise<Record<string, QuyTrinhKhach>> {
+  const mo = ds.filter((r) => r.trangThai === "cho_lam" || r.trangThai === "dang_lam");
+  if (!mo.length) return {};
+  const db = sb();
+  const idsDv = [...new Set(mo.map((r) => r.dichVuId))], idsKh = [...new Set(mo.map((r) => r.khachId))];
+  const [{ data: lk, error: e1 }, { data: tich, error: e2 }] = await Promise.all([
+    db.from("dich_vu_buoc").select("dich_vu_id, buoc_id, thu_tu, goi_y_vat_tu").in("dich_vu_id", idsDv),
+    db.from("luot_buoc").select("khach_id, buoc_id").in("khach_id", idsKh).eq("ngay", ngay),
+  ]);
+  if (e1 || e2) { console.error("docQuyTrinh:", (e1 ?? e2)?.message); return {}; }
+  const idsBuoc = [...new Set((lk ?? []).map((x) => x.buoc_id))];
+  const { data: bc } = idsBuoc.length ? await db.from("buoc_quy_trinh").select("id, ten, goi_y_vat_tu").in("id", idsBuoc).eq("hoat_dong", true) : { data: [] };
+  const mB = new Map((bc ?? []).map((b) => [b.id, b]));
+  const ra: Record<string, QuyTrinhKhach> = {};
+  for (const kh of idsKh) {
+    const dv = [...new Map(mo.filter((r) => r.khachId === kh).map((r) => [r.dichVuId, r.dichVuTen])).entries()].map(([id, ten]) => ({
+      ten, buoc: (lk ?? []).filter((x) => x.dich_vu_id === id && mB.has(x.buoc_id)).map((x) => ({ buocId: x.buoc_id, ten: mB.get(x.buoc_id)!.ten, thuTu: x.thu_tu, goiY: x.goi_y_vat_tu ?? mB.get(x.buoc_id)!.goi_y_vat_tu })),
+    }));
+    ra[kh] = gopBuoc(dv, new Set((tich ?? []).filter((t) => t.khach_id === kh).map((t) => t.buoc_id)));
+  }
+  return ra;
 }

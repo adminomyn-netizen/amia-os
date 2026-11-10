@@ -180,3 +180,28 @@ async function dongLuot(fd: FormData, trangThai: "tra_lai" | "huy"): Promise<KQ>
 }
 export async function traLaiThuNgan(fd: FormData): Promise<KQ> { return dongLuot(fd, "tra_lai"); }
 export async function huyLuotCho(fd: FormData): Promise<KQ> { return dongLuot(fd, "huy"); }
+
+/** Chuyên viên tích / bỏ tích một bước quy trình của khách hôm nay (0322). Chỉ ghi bảng luot_buoc: không trừ buổi, không tiền, không kho.
+ *  Khách phải đang có lượt chờ / đang làm hôm nay trong phạm vi chi nhánh, và người bấm phải thao tác được lượt đó. */
+export async function tichBuoc(fd: FormData): Promise<KQ> {
+  const nd = await nguoiThaoTac();
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const khachId = chuoi(fd, "khach_id"), buocId = chuoi(fd, "buoc_id"), bo = chuoi(fd, "bo") === "1";
+  if (!khachId || !buocId) return { loi: "Thiếu khách hoặc bước." };
+  const db = sb();
+  let q = db.from("buoi_cho_lam").select("*").eq("khach_id", khachId).in("trang_thai", ["cho_lam", "dang_lam"]);
+  if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  const { data: luot } = await q;
+  const cuaToi = (luot ?? []).filter((l) => duocThaoTac(nd, l));
+  if (!cuaToi.length) return { loi: "Khách không còn lượt đang làm (đã kết thúc hoặc không thuộc bạn)." };
+  const ngay = homNayHCM();
+  if (bo) {
+    const { error } = await db.from("luot_buoc").delete().eq("khach_id", khachId).eq("ngay", ngay).eq("buoc_id", buocId);
+    if (error) return { loi: thongBaoLoi(error) };
+  } else {
+    const { error } = await db.from("luot_buoc").upsert({ khach_id: khachId, chi_nhanh_id: cuaToi[0].chi_nhanh_id, ngay, buoc_id: buocId, luot_ids: cuaToi.map((l) => l.id), xong_boi: nd.nhanVienId, xong_luc: new Date().toISOString() }, { onConflict: "khach_id,ngay,buoc_id" });
+    if (error) return { loi: thongBaoLoi(error) };
+  }
+  revalidatePath("/the/cho-lam");
+  return { ok: true };
+}

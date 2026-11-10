@@ -57,7 +57,7 @@ export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, lichId, nhan =
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
       <NutHop kieu="chu" nhan={nhan} tieuDe="Thực hiện buổi" rong
-        moTa="Chuyển cho chuyên viên trị liệu: khách vào danh sách Chờ làm của chuyên viên, CHƯA trừ buổi. Chuyên viên bấm Đã làm xong mới trừ 1 buổi, ghi doanh thu buổi và ra phiếu vật tư theo định mức. Khách đã làm xong rồi thì bấm Đã làm xong ngay tại đây. Nhập nhầm thì huỷ buổi để hoàn lại."
+        moTa="Chuyển cho chuyên viên trị liệu: khách vào danh sách Chờ làm của chuyên viên, CHƯA trừ buổi. Chuyên viên tích từng bước khi làm, bấm Kết thúc mới trừ 1 buổi, ghi doanh thu buổi và ra phiếu vật tư theo định mức. Khách đã làm xong rồi thì bấm Đã làm xong ngay tại đây. Nhập nhầm thì huỷ buổi để hoàn lại."
         nhanLuu="Chuyển cho chuyên viên trị liệu"
         an={{ the_id: theId, ...(lichId ? { lich_id: lichId } : {}) }} giaTri={{ dich_vu_id: dichVu.length === 1 ? dichVu[0].gia_tri : macDinh?.dv && dichVu.some((d) => d.gia_tri === macDinh.dv) ? macDinh.dv : "", ngay: homNayHCM(),
           nv_ids: macDinh?.nv && nhanVien.some((n) => n.gia_tri === macDinh.nv) ? [macDinh.nv] : [], tu_van_ids: [], ...(macDinh?.bs && bacSi.some((n) => n.gia_tri === macDinh.bs) ? { bac_si_id: macDinh.bs } : {}) }}

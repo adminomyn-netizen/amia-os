@@ -5,7 +5,7 @@ import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { KhachChoLam } from "@/components/the/KhachChoLam";
-import { docBuoiCho } from "@/lib/buoi-cho-lam";
+import { docBuoiCho, docQuyTrinh } from "@/lib/buoi-cho-lam";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 /** Khách chờ làm: thu ngân / lễ tân chuyển khách cho chuyên viên trị liệu ở hộp Thực hiện buổi.
@@ -26,13 +26,14 @@ export default async function TrangKhachChoLam({ searchParams }: { searchParams:
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
   const coThaoTac = coQuyen(nd, "the.thuchien") || coQuyen(nd, "ban.tao");
   const thaoTacIds = coThaoTac ? ds.filter((r) => thaoTacChung || r.nvIds.includes(nd.nhanVienId) || r.chuyenBoi === nd.nhanVienId).map((r) => r.id) : [];
+  const quyTrinh = await docQuyTrinh(ds, homNay);
   const mo = ds.filter((r) => r.trangThai === "cho_lam" || r.trangThai === "dang_lam"), dong = ds.filter((r) => !mo.includes(r));
   const dem = (t: string) => ds.filter((r) => r.trangThai === t).length;
 
   return (
     <>
       <TieuDeNoi tieuDe="Khách chờ làm" quayLai={{ href: "/the", nhan: "Thẻ liệu trình" }}
-        phu={`Thu ngân bấm "Chuyển cho chuyên viên trị liệu" ở hộp Thực hiện buổi thì khách hiện ở đây. Chuyên viên bấm Bắt đầu làm, làm xong bấm Đã làm xong: lúc đó mới trừ 1 buổi, ghi doanh thu và ra phiếu vật tư. Hôm nay ${ngayVN(homNay)}.`} />
+        phu={`Thu ngân bấm "Chuyển cho chuyên viên trị liệu" ở hộp Thực hiện buổi thì khách hiện ở đây. Chuyên viên bấm Bắt đầu làm (xác nhận dịch vụ), làm bước nào tích bước đó, trả khách thì bấm Kết thúc: lúc đó mới trừ 1 buổi, ghi doanh thu và ra phiếu vật tư. Hôm nay ${ngayVN(homNay)}.`} />
       <Tab goc="/the/cho-lam" dang={tab} muc={[{ ma: "toi", ten: "Của tôi" }, { ma: "chi_nhanh", ten: "Cả chi nhánh hôm nay" }]} />
       <p className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-muc-3" aria-live="polite">
         <span>Chờ làm <b className="font-semibold text-canh-bao">{dem("cho_lam")}</b></span>
@@ -41,7 +42,7 @@ export default async function TrangKhachChoLam({ searchParams }: { searchParams:
         {dem("tra_lai") + dem("huy") > 0 && <span>Trả lại / không làm <b className="font-semibold text-loi">{dem("tra_lai") + dem("huy")}</b></span>}
       </p>
       <section aria-label="Khách đang chờ và đang làm" className="space-y-3">
-        <KhachChoLam ds={mo} nhanVien={nvLC} bacSi={bacSiLC} thaoTacIds={thaoTacIds}
+        <KhachChoLam ds={mo} nhanVien={nvLC} bacSi={bacSiLC} thaoTacIds={thaoTacIds} quyTrinh={quyTrinh}
           trong={tab === "toi" ? "Chưa có khách nào chuyển cho bạn. Khi thu ngân chuyển, khách hiện ở đây và chuông thông báo sẽ báo." : "Chưa có khách nào đang chờ làm."} />
       </section>
       {dong.length > 0 && (

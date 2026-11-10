@@ -556,6 +556,8 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
           <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
         </div>
         <ChonKhach tuFocus={kieu === "dich_vu" && !dauTien} khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
+        {/* Đơn làm dịch vụ: danh sách dịch vụ đã mua còn buổi đứng ngay dưới ô khách (danh mục chính của đơn này). */}
+        {kieu === "dich_vu" && <DvDaMua khach={!!khach} the={theKhach ? theKhach.the.filter((t) => t.loai === "lan" && t.buoiCon > 0) : null} nut={(t) => nutThe(t, "Làm buổi này")} coQuyen={!!buoi} />}
         {sua && <p role="status" className="mt-2 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Đang sửa hoá đơn <b>{sua.ma}</b> (đã mở lại về nháp). Chốt đơn sẽ ghi lại vào chính hoá đơn này, giữ mã và ngày {ngayVN(sua.ngayHd)}.</p>}
         <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />
         {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} nut={nutThe} dvDon={dvDon} giaHan={giaHan} />}
@@ -564,7 +566,6 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>
             {diemKhach.bat ? ` · 1 điểm = ${tienVN(diemKhach.tienMoiDiem)}` : " · đổi điểm đang tắt"}</p>
         )}
-        {kieu === "dich_vu" && <DvDaMua khach={!!khach} the={theKhach ? theKhach.the.filter((t) => t.loai === "lan" && t.buoiCon > 0) : null} nut={(t) => nutThe(t, "Làm buổi này")} coQuyen={!!buoi} />}
         {!moLe && (
           <button type="button" onClick={() => setMoLe(true)} className="mt-4 flex h-11 w-full items-center justify-center gap-1.5 rounded-nho border border-dashed border-vien-dam text-[14px] font-medium text-nhan-dam hover:bg-giay-tram">
             <Plus aria-hidden strokeWidth={2} className="h-4 w-4" />Thêm dịch vụ lẻ (khách làm thêm, tính tiền)

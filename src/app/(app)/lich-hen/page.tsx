@@ -269,7 +269,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     const maLich = l.ma_dat_lich ?? l.id.slice(0, 8).toUpperCase();
     const dvTen = dvIds.map((d) => tenDv.get(d)).filter(Boolean).join(", ") || l.dich_vu_ten || "";
     const dong: [string, React.ReactNode][] = [
-      ["Giờ hẹn", <span key="g" className="tabular-nums">{gioVN(l.bat_dau)} ~ {gioVN(l.ket_thuc)} · {ngayVN(ngayCuaIso(l.bat_dau))}</span>],
+      ["Giờ hẹn", `${gioVN(l.bat_dau)} ~ ${gioVN(l.ket_thuc)} · ${ngayVN(ngayCuaIso(l.bat_dau))}`],
       ["Thời lượng", `${phut} phút`],
       ["Dịch vụ", dvTen],
       ["Người thực hiện", l.nhan_vien_id ? tenNv.get(l.nhan_vien_id) ?? "" : "Chưa phân"],
@@ -285,7 +285,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       ["Tạo bởi", `${nguoiTao ? `${nguoiTao} · ` : ""}${gioVN(l.tao_luc)} ${ngayVN(ngayCuaIso(l.tao_luc))}`],
     ];
     return (
-      <div className="p-4 sm:p-5">
+      <div key={l.id} className="p-4 sm:p-5">
         <div className="flex flex-wrap items-center gap-1.5 pr-10">
           <span className={`rounded-tag px-2 py-0.5 text-[12px] font-semibold ${MAU_TRANG_THAI[l.trang_thai]?.dac ?? "bg-giay-tram text-muc"}`}>{TT[l.trang_thai].nhan}</span>
           {l.loai_lich && <span className="rounded-tag border border-nhan px-2 py-0.5 text-[12px] font-medium text-nhan-dam">{nhanLoaiLich(l.loai_lich)}</span>}
@@ -302,10 +302,11 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
           <span className="text-[13px] text-muc-3">Hạng {k?.hang ?? "Thường"}</span>
         </div>
         <dl className="mt-3 grid grid-cols-[112px_1fr] gap-x-3 gap-y-1.5 border-t border-vien pt-3 text-[14px]">
-          {dong.filter(([, v]) => v).map(([n, v]) => <div key={n} className="contents"><dt className="text-muc-3">{n}</dt><dd className="min-w-0 break-words text-muc">{v}</dd></div>)}
+          {dong.filter(([, v]) => v).map(([n, v]) => <div key={n} className="contents"><dt className="text-muc-3">{n}</dt><dd className="min-w-0 break-words tabular-nums text-muc">{v}</dd></div>)}
         </dl>
         <div className="mt-4 space-y-3 border-t border-vien pt-3">
-          {sua && <div className="flex flex-wrap items-center gap-2.5">{nutSua(l, k, dvIds, "chinh")}<NutInLich tieuDe={`Lịch hẹn #${maLich}`} phu={cnLC.find((c) => c.gia_tri === l.chi_nhanh_id)?.nhan} dong={dong.filter(([, v]) => typeof v === "string" && v).map(([n, v]) => [n, v as string])} /></div>}
+          {sua && <div className="flex flex-wrap items-center gap-2.5">{nutSua(l, k, dvIds, "chinh")}<NutInLich tieuDe={`Lịch hẹn #${maLich}`} phu={cnLC.find((c) => c.gia_tri === l.chi_nhanh_id)?.nhan} dong={[["Khách hàng", k?.ho_ten ?? ""], ["Điện thoại", k?.dien_thoai ?? ""], ["Mã khách", k?.ma ?? ""], ["Trạng thái", TT[l.trang_thai].nhan], ["Loại lịch", nhanLoaiLich(l.loai_lich)],
+            ...dong.map(([n, v]): [string, string] => [n, typeof v === "string" ? v : ""]), ...nhomCua(l.id).map((x): [string, string] => [x.ten, [(x.dich_vu_ids ?? []).map((d) => tenDv.get(d)).filter(Boolean).join(", "), x.nhan_vien_id ? tenNv.get(x.nhan_vien_id) ?? "" : "", x.phong ?? ""].filter(Boolean).join(" · ")]), ["Hoá đơn", hoaDon ? `#${hoaDon.sh_ma ?? hoaDon.ma}` : ""]].filter(([, v]) => v) as [string, string][]} /></div>}
           {hanhDong(l, k, dvIds, true)}
         </div>
         {quanLy && (

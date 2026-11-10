@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 // /api/cron/* và /api/mkt/so-lieu-ngay (luồng AnyCross đọc số liệu MKT) tự kiểm CRON_SECRET trong từng route (Vercel Cron không có phiên đăng nhập); /api/chat-agent/cong-cu tự kiểm mã thông hành của từng tin chat.
 // /ctv: cổng CTV công khai — KHÔNG dùng phiên nhân viên; tự kiểm phiên CTV riêng (cookie amia_ctv ký HMAC, src/lib/ctv-phien.ts) trong từng trang/hành động.
 // /dat-lich: khách tự gửi yêu cầu đặt lịch (không đăng nhập) — trang chỉ đọc danh mục công khai và ghi vào bảng yêu cầu riêng qua hàm có giới hạn.
-const DUONG_DAN_CONG_KHAI = ["/dang-nhap", "/dang-ky", "/quen-mat-khau", "/dat-lai-mat-khau", "/api/cron", "/api/mkt/so-lieu-ngay", "/api/chat-agent/cong-cu", "/l/", "/dat-lich", "/blog", "/ctv"];
+const DUONG_DAN_CONG_KHAI = ["/dang-nhap", "/dang-ky", "/quen-mat-khau", "/dat-lai-mat-khau", "/api/cron", "/api/mkt/so-lieu-ngay", "/api/chat-agent/cong-cu", "/l/", "/dat-lich", "/blog", "/ctv", "/api/suc-khoe"];
 
 export async function capNhatPhien(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });

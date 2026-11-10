@@ -35,6 +35,7 @@ export type KhucTron = {
   gon: string;   // giá trị gọn, dùng ở chú giải
   pt: string;    // phần trăm đã làm tròn, vd "85%"
   doc: string;   // câu cho trình đọc màn hình, vd "Tiền mặt: 12.500.000 đ, 45%"
+  href?: string; // bấm tên ở chú giải thì mở chi tiết
 };
 
 /** Làm tròn phần trăm một kiểu cho khung chi tiết, chú giải và trình đọc: ≥10% lấy số nguyên, dưới 10% lấy một số lẻ. */

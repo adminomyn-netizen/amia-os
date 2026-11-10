@@ -13,7 +13,7 @@ import { NHAN_VAI_TRO, VAI_TRO } from "@/lib/quyen";
 
 /** Các bảng điều hành (mỗi tab một bảng, vẽ bằng SVG ở máy chủ). Số liệu gom ở DB; `cn` = chi nhánh của người xem (null = mọi chi nhánh). */
 const cnArg = (cn: string | null) => (cn ?? undefined) as string;
-const DAY = (dl: { nhan: string; gia_tri: number }[]) => dl.sort((a, b) => b.gia_tri - a.gia_tri);
+const DAY = <T extends { nhan: string; gia_tri: number }>(dl: T[]) => dl.sort((a, b) => b.gia_tri - a.gia_tri);
 
 type PhanBo = { nhom: string; nhan: string; so: number; tien: number };
 /** Chỉ tính nhóm tab cần (0318): tab Thẻ/Kho không phải chờ quét v_khach_hang. */
@@ -30,7 +30,7 @@ async function layPhanBo(cn: string | null, dsNhom: string[]) {
   const nhom = (n: string) => ds.filter((r) => r.nhom === n);
   return { nhom, so: (n: string) => nhom(n).map((r) => ({ nhan: r.nhan, gia_tri: Number(r.so) })), tien: (n: string) => nhom(n).map((r) => ({ nhan: r.nhan, gia_tri: Number(r.tien) })) };
 }
-const doiNhan = (dl: { nhan: string; gia_tri: number }[], bang: Record<string, string>) => dl.map((d) => ({ ...d, nhan: bang[d.nhan] ?? d.nhan }));
+const doiNhan = <T extends { nhan: string; gia_tri: number }>(dl: T[], bang: Record<string, string>) => dl.map((d) => ({ ...d, nhan: bang[d.nhan] ?? d.nhan }));
 
 const NHAN_TRANG_THAI_KHACH = { dang_lieu_trinh: "Đang liệu trình", het_lieu_trinh: "Hết liệu trình", da_den: "Đã đến", lead: "Khách tiềm năng", mat: "Lâu không đến" };
 const NHAN_NGUON = { mkt: "Marketing", telesale: "Telesale", tu_van: "Tư vấn", khach_cu_gioi_thieu: "Khách cũ giới thiệu", khac: "Khác / chưa rõ" };
@@ -86,13 +86,20 @@ export async function BangDoanhThu({ cn }: { cn: string | null }) {
 }
 
 export async function BangKhach({ cn }: { cn: string | null }) {
-  const pb = await layPhanBo(cn, NHOM_KHACH);
+  const [pb, { data: dsNv }] = await Promise.all([layPhanBo(cn, NHOM_KHACH), sb().from("nhan_vien").select("id, ho_ten")]);
+  // Bấm vào cột/miếng biểu đồ là mở danh sách khách đã lọc đúng nhóm đó (chị Lâm 10/11: "bấm vào có chi tiết là ai").
+  const lk = (k: string, v: string | null | undefined) => (v ? `/khach-hang?${k}=${encodeURIComponent(v)}` : undefined);
+  const demTen = new Map<string, number>();
+  for (const n of dsNv ?? []) demTen.set(n.ho_ten, (demTen.get(n.ho_ten) ?? 0) + 1);
+  const idTheoTen = new Map((dsNv ?? []).filter((n) => demTen.get(n.ho_ten) === 1).map((n) => [n.ho_ten, n.id as string]));
+  const ganLk = (dl: { nhan: string; gia_tri: number }[], k: string, bo: string[] = []) => dl.map((d) => ({ ...d, href: bo.includes(d.nhan) ? undefined : lk(k, d.nhan) }));
   const tong = pb.so("trang_thai").reduce((s, d) => s + d.gia_tri, 0);
   const g = (k: string) => pb.so("trang_thai").find((d) => d.nhan === k)?.gia_tri ?? 0;
   const homNay = homNayHCM();
   const thangNay = homNay.slice(0, 7);
   const moi = pb.so("khach_moi").find((d) => d.nhan === thangNay)?.gia_tri ?? 0;
-  const thang = pb.so("khach_moi").sort((a, b) => a.nhan.localeCompare(b.nhan)).map((d) => ({ nhan: `T${Number(d.nhan.slice(5))}`, gia_tri: d.gia_tri }));
+  const cuoiThang = (ym: string) => { const d = new Date(`${ym}-01T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + 1); d.setUTCDate(0); return d.toISOString().slice(0, 10); };
+  const thang = pb.so("khach_moi").sort((a, b) => a.nhan.localeCompare(b.nhan)).map((d) => ({ nhan: `T${Number(d.nhan.slice(5))}`, gia_tri: d.gia_tri, href: `/khach-hang?tao_tu=${d.nhan}-01&tao_den=${cuoiThang(d.nhan)}&sx=moi` }));
   return (
     <div className="space-y-6">
       <HangChiSo muc={[
@@ -100,11 +107,11 @@ export async function BangKhach({ cn }: { cn: string | null }) {
         { nhan: "Lâu không đến", so: soVN(g("mat")), ghiChu: "cần chăm sóc lại" }, { nhan: "Khách mới tháng này", so: soVN(moi) },
       ]} />
       <div className={luoi}>
-        <MucTrang noi tieuDe="Khách theo hạng"><BieuDoTron ten="Khách theo hạng" kieu="vong" nhanTam="khách" duLieu={DAY(pb.so("hang"))} /></MucTrang>
-        <MucTrang noi tieuDe="Khách theo trạng thái"><BieuDoTron ten="Khách theo trạng thái" kieu="banh" duLieu={DAY(doiNhan(pb.so("trang_thai"), NHAN_TRANG_THAI_KHACH))} /></MucTrang>
-        <MucTrang noi tieuDe="Khách theo nguồn"><BieuDoTron ten="Khách theo nguồn" kieu="vong" nhanTam="khách" duLieu={DAY(doiNhan(pb.so("nguon"), NHAN_NGUON))} /></MucTrang>
+        <MucTrang noi tieuDe="Khách theo hạng"><BieuDoTron ten="Khách theo hạng" kieu="vong" nhanTam="khách" duLieu={DAY(ganLk(pb.so("hang"), "hang", ["Chưa xếp"]))} /></MucTrang>
+        <MucTrang noi tieuDe="Khách theo trạng thái"><BieuDoTron ten="Khách theo trạng thái" kieu="banh" duLieu={DAY(doiNhan(ganLk(pb.so("trang_thai"), "trang_thai"), NHAN_TRANG_THAI_KHACH))} /></MucTrang>
+        <MucTrang noi tieuDe="Khách theo nguồn"><BieuDoTron ten="Khách theo nguồn" kieu="vong" nhanTam="khách" duLieu={DAY(doiNhan(ganLk(pb.so("nguon"), "nguon"), NHAN_NGUON))} /></MucTrang>
         <MucTrang noi tieuDe="Khách mới 6 tháng gần nhất"><CotDung ten="Khách mới theo tháng" duLieu={thang} /></MucTrang>
-        <MucTrang noi tieuDe="Khách theo người phụ trách"><CotNgang mau="var(--dat)" duLieu={DAY(pb.so("phu_trach"))} /></MucTrang>
+        <MucTrang noi tieuDe="Khách theo người phụ trách"><CotNgang mau="var(--dat)" duLieu={DAY(pb.so("phu_trach").map((d) => ({ ...d, href: lk("phu_trach", idTheoTen.get(d.nhan)) })))} /></MucTrang>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ export function BieuDoTron({ duLieu, kieu = "vong", nhanTam, dinhDang = (n: numb
   const khuc: KhucTron[] = ds.map((d, i) => {
     const truoc = ds.slice(0, i).reduce((t, x) => t + x.gia_tri, 0);
     const a0 = (truoc / tong) * 2 * Math.PI, a1 = ((truoc + d.gia_tri) / tong) * 2 * Math.PI, pt = phanTramChu((d.gia_tri / tong) * 100), tien = dinhDang(d.gia_tri);
-    return { nhan: d.nhan, mau: d.mau ?? MAU_BIEU_DO[i % MAU_BIEU_DO.length], a0, a1, tien, gon: gon(d.gia_tri), pt, doc: `${d.nhan}: ${tien}, ${pt}` };
+    return { nhan: d.nhan, mau: d.mau ?? MAU_BIEU_DO[i % MAU_BIEU_DO.length], a0, a1, tien, gon: gon(d.gia_tri), pt, doc: `${d.nhan}: ${tien}, ${pt}`, href: d.href };
   });
   const giua = tamChinh ?? (dinhDangTam ?? dinhDang)(tong);
   return <TronTuongTac khuc={khuc} hinh={hinh} ten={ten} tamChinh={coTam ? giua : undefined} tamPhu={coTam ? nhanTam : undefined} bocCuc={bocCuc} bong={kieu !== "mong"} />;

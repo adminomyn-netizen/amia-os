@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { cung, toaDo, type HinhTron, type KhucTron } from "./hinh-cung";
 
@@ -107,7 +108,7 @@ export function TronTuongTac({ khuc, hinh, ten, tamChinh, tamPhu, bocCuc, bong, 
           {lat.map((l) => (
             <li key={l.nhan} {...choTro(l.i)} className={`flex min-h-9 cursor-pointer items-center gap-2.5 rounded-nho px-1.5 py-1 transition-colors motion-reduce:transition-none ${l.ra ? "bg-giay-tram" : ""}`}>
               <span aria-hidden className="h-3 w-3 shrink-0 rounded-sm" style={{ background: l.mau }} />
-              <span className="min-w-0 flex-1 truncate text-muc-2" title={l.nhan}>{l.nhan}</span>
+              {l.href ? <Link href={l.href} onClick={(e) => e.stopPropagation()} className="min-w-0 flex-1 truncate font-medium text-nhan-dam hover:underline" title={`Xem danh sách: ${l.nhan}`}>{l.nhan}</Link> : <span className="min-w-0 flex-1 truncate text-muc-2" title={l.nhan}>{l.nhan}</span>}
               <span className="tabular-nums text-muc">{l.gon}</span>
               <span className="w-12 text-right tabular-nums text-muc-2">{l.pt}</span>
             </li>

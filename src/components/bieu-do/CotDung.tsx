@@ -11,13 +11,14 @@ export function CotDung({ duLieu, dinhDang = (n: number) => n.toLocaleString("vi
       <line x1="0" x2={W} y1={day} y2={day} stroke="var(--vien)" />
       {duLieu.map((d, i) => {
         const h = Math.max(3, (d.gia_tri / max) * (day - 24)), x = i * rong + rong * 0.2, w = rong * 0.6;
-        return (
-          <g key={d.nhan}>
+        const noiDung = (
+          <>
             <rect x={x} y={day - h} width={w} height={h} rx="4" fill="url(#gd-cot)"><title>{`${d.nhan}: ${dinhDang(d.gia_tri)}`}</title></rect>
             <text x={x + w / 2} y={day - h - 6} textAnchor="middle" fontSize="12" fontWeight="500" fill="var(--muc)">{dinhDang(d.gia_tri)}</text>
             <text x={x + w / 2} y={day + 18} textAnchor="middle" fontSize="11" fill="var(--muc-3)">{d.nhan}</text>
-          </g>
+          </>
         );
+        return <g key={d.nhan}>{d.href ? <a href={d.href} aria-label={`Xem danh sách ${d.nhan}: ${dinhDang(d.gia_tri)}`} className="cursor-pointer hover:opacity-80">{noiDung}</a> : noiDung}</g>;
       })}
     </svg>
   );

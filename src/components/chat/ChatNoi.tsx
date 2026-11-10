@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { Paperclip, SendHorizontal, X } from "lucide-react";
 import { duyetSuaChat, guiTinChat, layChat, type TrangChat } from "@/app/(app)/chat/actions";
 
@@ -28,6 +29,8 @@ const GOI_Y = ["Hôm nay có bao nhiêu lịch hẹn?", "Tìm khách theo số �
 /** Chat nổi với Tula ở góc dưới bên phải mọi trang. Chủ và Kỹ thuật có thêm chế độ "Nhờ sửa ứng dụng". Amia Bot online hay không hiện ngay ở đầu khung. */
 export function ChatNoi({ choPhepSua, hoTen }: { choPhepSua: boolean; hoTen: string }) {
   const [mo, setMo] = useState(false);
+  // Màn Bán hàng trên điện thoại có thanh giỏ dính đáy + nút thêm món bên phải: ẩn nút chat nổi để không che (máy tính vẫn hiện).
+  const anTrenDienThoai = usePathname().startsWith("/ban-hang");
   const [chat, setChat] = useState<TrangChat | null>(null);
   const [soChuaDoc, setSoChuaDoc] = useState(0);
   const [nhap, setNhap] = useState("");
@@ -146,7 +149,7 @@ export function ChatNoi({ choPhepSua, hoTen }: { choPhepSua: boolean; hoTen: str
   return (
     <>
       {!mo && (
-        <div className="fixed bottom-[84px] right-4 z-40 flex items-end lg:bottom-6 lg:right-6">
+        <div className={`fixed bottom-[84px] right-4 z-40 flex items-end lg:bottom-6 lg:right-6 ${anTrenDienThoai ? "max-lg:hidden" : ""}`}>
           <div role="status" aria-live="polite" className="min-w-0">
             {bong && (
               <div className="tula-bong relative mr-3 mb-1 flex w-max max-w-[min(15rem,calc(100vw-7.5rem))] items-start"

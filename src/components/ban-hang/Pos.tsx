@@ -33,7 +33,7 @@ const SAC = [
 ] as const;
 const sacCua = (nhom: string) => SAC[[...nhom].reduce((t, c) => t + c.charCodeAt(0), 0) % SAC.length];
 const BIEU_TUONG = { dich_vu: Sparkles, goi_the: CreditCard, san_pham: Package } as const;
-const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ" }, { ma: "goi_the", ten: "Thẻ và liệu trình" }, { ma: "san_pham", ten: "Sản phẩm" }] as const;
+const LOAI_TAB = [{ ma: "dich_vu", ten: "Dịch vụ", ngan: "Dịch vụ" }, { ma: "goi_the", ten: "Thẻ và liệu trình", ngan: "Thẻ, liệu trình" }, { ma: "san_pham", ten: "Sản phẩm", ngan: "Sản phẩm" }] as const;
 const TAO_MOI = { dich_vu: { nhan: "Tạo dịch vụ mới", href: "/danh-muc?tab=dich-vu" }, goi_the: { nhan: "Tạo thẻ mới", href: "/danh-muc?tab=goi-the" }, san_pham: { nhan: "Tạo sản phẩm mới", href: "/danh-muc?tab=san-pham" } } as const;
 const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
@@ -141,8 +141,10 @@ export function Pos(props: PropsPos) {
   const nhanTab = (t: Tab, i: number) => t.ten || `Đơn ${i + 1}`;
   return (
     <div>
-      <div className="mb-4 flex items-center gap-2 border-b border-vien">
-        <div role="tablist" aria-label="Các đơn đang mở" className="-mb-px flex min-w-0 flex-1 gap-1 overflow-x-auto">
+      {/* Điện thoại: dải đơn đang mở một hàng riêng, các nút phụ một hàng cuộn ngang bên dưới (không đè bẹp tab đơn, không tràn ngang).
+          Máy tính (lg+): hàng nút dùng display: contents nên vẫn chung một hàng như cũ. */}
+      <div className="mb-3 flex flex-col lg:mb-4 lg:flex-row lg:items-center lg:gap-2 lg:border-b lg:border-vien">
+        <div role="tablist" aria-label="Các đơn đang mở" className="flex min-w-0 flex-1 gap-1 overflow-x-auto border-b border-vien [scrollbar-width:none] lg:-mb-px lg:border-b-0 [&::-webkit-scrollbar]:hidden">
           {ds.map((t, i) => (
             <span key={t.k} className={`flex shrink-0 items-center rounded-t-nho border border-b-0 ${t.k === dangXem ? "border-vien bg-giay-sang" : "border-transparent"}`}>
               <button type="button" role="tab" id={`don-tab-${t.k}`} aria-controls={`don-${t.k}`} aria-selected={t.k === dangXem} tabIndex={t.k === dangXem ? 0 : -1}
@@ -154,17 +156,19 @@ export function Pos(props: PropsPos) {
             </span>
           ))}
         </div>
+        <div className="flex items-center gap-4 overflow-x-auto pt-1 [scrollbar-width:none] lg:contents [&::-webkit-scrollbar]:hidden">
         <button type="button" onClick={them} disabled={ds.length >= TOI_DA_DON} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU} disabled:opacity-40`} aria-label="Mở thêm một đơn mới">
           <Plus strokeWidth={1.8} className="h-4 w-4" />Thêm đơn
         </button>
-        <Link href="/hoa-don" className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>Danh sách đơn hàng</Link>
+        <Link href="/hoa-don" className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}><span className="lg:hidden">Hoá đơn</span><span className="max-lg:hidden">Danh sách đơn hàng</span></Link>
         <button type="button" onClick={() => { setMoNhap((v) => !v); lamMoiNhap(); }} aria-expanded={moNhap} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>
           Đơn nháp<span className="rounded-tag bg-giay-tram px-1.5 text-[12px] font-medium tabular-nums text-muc-2">{nhap.length}</span>
         </button>
-        <button type="button" onClick={() => window.open("/man-hinh-khach", "amia-man-hinh-khach", "popup,width=960,height=720")} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>Màn hình khách</button>
+        <button type="button" onClick={() => window.open("/man-hinh-khach", "amia-man-hinh-khach", "popup,width=960,height=720")} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] max-lg:hidden ${NUT_CHU}`}>Màn hình khách</button>
         {props.choThanhToan != null && (
           <button type="button" aria-expanded={moCho} onClick={() => { setMoCho((v) => !v); setMoNhap(false); if (!moCho) taiCho(); }} className={`flex shrink-0 items-center gap-1 py-2 text-[14px] ${NUT_CHU}`}>Chờ thanh toán<span className={`rounded-tag px-1.5 text-[12px] font-medium tabular-nums ${props.choThanhToan > 0 ? "bg-canh-bao-nen text-canh-bao" : "bg-giay-tram text-muc-3"}`}>{dsChoTai?.length ?? props.choThanhToan}</span></button>
         )}
+        </div>
       </div>
       {moNhap && (
         <div className="mb-4 rounded-nho border border-vien bg-giay-sang p-3">
@@ -339,6 +343,14 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   const [theKh, setTheKh] = useState<{ khachId: string; hang: string; the: TheKh[] } | null>(null);
   const [vc, setVc] = useState<VoucherTim | null>(null);
   const [suaGt, setSuaGt] = useState<number | null>(null);
+  /** Điện thoại: giỏ (đơn hàng + thanh toán) mở thành bảng trượt từ đáy; máy tính luôn hiện cột phải. */
+  const [moGio, setMoGio] = useState(false);
+  useEffect(() => {
+    if (!moGio) return;
+    const phim = (e: KeyboardEvent) => { if (e.key === "Escape" && !document.querySelector('[role="dialog"], [role="listbox"]')) setMoGio(false); };
+    document.addEventListener("keydown", phim);
+    return () => document.removeEventListener("keydown", phim);
+  }, [moGio]);
   // Hộp thanh toán như SalonHero: tick "Đặt lịch hẹn tiếp theo" và "In hoá đơn sau khi hoàn thành" (tiếng Việt / tiếng Anh). Lựa chọn in nhớ trong trình duyệt.
   const KHOA_IN = "amia-pos-in-sau";
   const [datLichTiep, setDatLichTiep] = useState(false);
@@ -492,7 +504,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
 
   return (
     <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
-      <section className="min-w-0">
+      <section className="pos-chu-lon min-w-0">
         <div className="mb-4 text-[13px] text-muc-2"><span className="mb-1 block">Chi nhánh bán</span>
           <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
         </div>
@@ -505,21 +517,24 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>
             {diemKhach.bat ? ` · 1 điểm = ${tienVN(diemKhach.tienMoiDiem)}` : " · đổi điểm đang tắt"}</p>
         )}
-        <div className="mt-5 flex gap-1 overflow-x-auto border-b border-vien" role="tablist" aria-label="Danh mục bán">
+        {/* Điện thoại: dải loại + ô tìm + sắp xếp dính trên đầu vùng cuộn, cuộn danh sách dài vẫn đổi tab / tìm được ngay. */}
+        <div className="max-lg:sticky max-lg:top-0 max-lg:z-20 max-lg:-mx-4 max-lg:mt-4 max-lg:bg-giay max-lg:px-4 max-lg:pb-2 max-lg:shadow-[0_8px_12px_-12px_rgb(10_43_38/0.35)]">
+        <div className="flex gap-1 overflow-x-auto border-b border-vien [scrollbar-width:none] lg:mt-5 [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Danh mục bán">
           {LOAI_TAB.map((t) => (
             <button key={t.ma} type="button" role="tab" aria-selected={tab === t.ma} onClick={() => setTab(t.ma)}
-              className={`-mb-px flex items-center gap-2 border-b-2 px-4 py-2.5 text-[14px] ${tab === t.ma ? "border-nhan font-semibold text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}>{t.ten}<span className={`rounded-tag px-1.5 py-0.5 text-[11px] tabular-nums ${tab === t.ma ? "bg-nhan-dam text-giay" : "bg-giay-tram text-muc-3"}`}>{mucHien.filter((m) => m.loai === t.ma).length}</span></button>
+              className={`-mb-px flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-2.5 py-2.5 text-[14px] lg:gap-2 lg:px-4 ${tab === t.ma ? "border-nhan font-semibold text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}><span className="lg:hidden">{t.ngan}</span><span className="max-lg:hidden">{t.ten}</span><span className={`rounded-tag px-1.5 py-0.5 text-[11px] tabular-nums ${tab === t.ma ? "bg-nhan-dam text-giay" : "bg-giay-tram text-muc-3"}`}>{mucHien.filter((m) => m.loai === t.ma).length}</span></button>
           ))}
         </div>
-        <div className="mt-4 grid grid-cols-[1fr_auto] items-center gap-2">
+        <div className="mt-2 grid grid-cols-[1fr_auto] items-center gap-2 lg:mt-4">
           <div className="relative">
             <Search aria-hidden strokeWidth={1.6} className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muc-3" />
             <input value={tu} onChange={(e) => setTu(e.target.value)} placeholder="Tìm tên, mã hoặc mã vạch" aria-label="Tìm trong danh mục" className={`${O_NHAP} pl-9`} />
           </div>
-          <div className="w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }, { gia_tri: "moi_nhat", nhan: "Mới nhất" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
+          <div className="w-32 lg:w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }, { gia_tri: "moi_nhat", nhan: "Mới nhất" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
         </div>
-        {locTab && <p role="status" className="mt-3 flex flex-wrap items-center gap-2 rounded-nho bg-sac-xanh-nen px-3 py-2 text-[13px] text-sac-xanh">{locTab.loai === "goi_the" ? "Chỉ hiện dịch vụ của thẻ" : "Chỉ hiện thẻ có dịch vụ"} <b>{locTab.ten}</b><button type="button" className={`ml-auto ${NUT_CHU}`} onClick={() => setLoc(null)}>Hiện tất cả</button></p>}
-        <div className="mt-4 space-y-5">
+        {locTab && <p role="status" className="mt-2 lg:mt-3 flex flex-wrap items-center gap-2 rounded-nho bg-sac-xanh-nen px-3 py-2 text-[13px] text-sac-xanh">{locTab.loai === "goi_the" ? "Chỉ hiện dịch vụ của thẻ" : "Chỉ hiện thẻ có dịch vụ"} <b>{locTab.ten}</b><button type="button" className={`ml-auto ${NUT_CHU}`} onClick={() => setLoc(null)}>Hiện tất cả</button></p>}
+        </div>
+        <div className="mt-3 space-y-5 lg:mt-4">
           {nhomMuc.map((n) => {
             const sac = sacCua(n), ds = dsMuc.filter((m) => m.nhom === n), Bt = BIEU_TUONG[tab];
             return (
@@ -529,20 +544,25 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
                   <span className="nhan-muc">{n}</span>
                   <span className={`rounded-tag px-1.5 py-0.5 text-[11px] font-medium tabular-nums ${sac.chip}`}>{ds.length}</span>
                 </div>
-                <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
+                <div className="grid gap-1.5 lg:grid-cols-2 lg:gap-2.5 xl:grid-cols-3">
                   {ds.map((m) => {
                     const daChon = dong.filter((d) => khoaDong(d) === `${m.loai}:${m.id}`).reduce((t, d) => t + d.sl, 0);
                     return (
-                      <button key={m.id} type="button" onClick={() => them(m)}
-                        className={`group relative flex items-start gap-3 rounded-the border border-l-4 bg-gradient-to-b from-giay-sang to-giay px-3 py-3 text-left shadow-sm transition-[transform,box-shadow,border-color] duration-200 hover:-translate-y-0.5 hover:border-nhan hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nhan ${sac.vien} ${daChon ? "border-nhan ring-1 ring-nhan" : "border-vien"}`}>
-                        <span className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-nho ${sac.chip}`}><Bt aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" /></span>
+                      // Điện thoại: dòng gọn (tên 2 dòng + giá, ô + 44px bên phải, chạm cả dòng là thêm); máy tính (lg+) giữ thẻ như cũ.
+                      <button key={m.id} type="button" data-muc onClick={() => them(m)} aria-label={`Thêm ${m.ten}, ${tienVN(m.gia)}${daChon ? `, đã chọn ${daChon}` : ""}`}
+                        className={`group relative flex items-center gap-3 rounded-the border border-l-4 bg-gradient-to-b from-giay-sang to-giay py-1.5 pl-3 pr-1.5 text-left shadow-sm transition-[transform,box-shadow,border-color] duration-200 active:bg-giay-tram lg:items-start lg:px-3 lg:py-3 lg:hover:-translate-y-0.5 lg:hover:border-nhan lg:hover:shadow-md focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-nhan ${sac.vien} ${daChon ? "border-nhan ring-1 ring-nhan" : "border-vien"}`}>
+                        <span className={`mt-0.5 hidden h-9 w-9 shrink-0 items-center justify-center rounded-nho lg:flex ${sac.chip}`}><Bt aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" /></span>
                         <span className="min-w-0 flex-1">
-                          <span className="block text-[14px] font-medium leading-snug text-muc">{m.ten}</span>
-                          <span className={`mt-1 block text-[15px] font-semibold tabular-nums ${sac.gia}`}>{tienVN(m.gia)}</span>
+                          <span className="line-clamp-2 text-[15px] font-medium leading-snug text-muc lg:line-clamp-none lg:block lg:text-[14px]">{m.ten}</span>
+                          <span className={`mt-0.5 block text-[14px] font-semibold tabular-nums lg:mt-1 lg:text-[15px] ${sac.gia}`}>{tienVN(m.gia)}</span>
+                        </span>
+                        <span aria-hidden className="flex shrink-0 items-center gap-1.5 lg:hidden">
+                          {daChon > 0 && <span className="rounded-tag bg-nhan-dam px-1.5 py-0.5 text-[13px] font-semibold tabular-nums text-giay">×{daChon}</span>}
+                          <span className={`flex h-11 w-11 items-center justify-center rounded-nho ${daChon ? "bg-nhan text-giay" : "bg-nhan-nhat text-nhan-dam"}`}><Plus strokeWidth={2.2} className="h-5 w-5" /></span>
                         </span>
                         {daChon > 0
-                          ? <span className="absolute right-2 top-2 rounded-tag bg-nhan-dam px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-giay">×{daChon}</span>
-                          : <Plus aria-hidden strokeWidth={2} className="absolute right-2.5 top-2.5 h-4 w-4 text-muc-3 opacity-0 transition-opacity group-hover:opacity-100" />}
+                          ? <span className="absolute right-2 top-2 hidden rounded-tag bg-nhan-dam px-1.5 py-0.5 text-[11px] font-semibold tabular-nums text-giay lg:block">×{daChon}</span>
+                          : <Plus aria-hidden strokeWidth={2} className="absolute right-2.5 top-2.5 hidden h-4 w-4 text-muc-3 opacity-0 transition-opacity group-hover:opacity-100 lg:block" />}
                       </button>
                     );
                   })}
@@ -564,7 +584,22 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         </div>
       </section>
 
-      <aside className="min-w-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:rounded-hop">
+      {/* Điện thoại: giỏ là bảng trượt từ đáy (mở bằng thanh giỏ dính đáy), có đầu bảng + chân bảng "Phải thu / Chốt đơn" luôn trong tầm ngón cái.
+          Máy tính (lg+): cột phải dính như cũ, các lớp max-lg không áp. */}
+      {moGio && <button type="button" aria-label="Đóng giỏ hàng" tabIndex={-1} className="fixed inset-0 z-50 bg-muc/45 lg:hidden" onClick={() => setMoGio(false)} />}
+      <aside aria-label="Đơn hàng" data-gio
+        className={`min-w-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:rounded-hop ${moGio ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-[5dvh] max-lg:z-50 max-lg:flex max-lg:flex-col max-lg:overflow-hidden max-lg:rounded-t-[20px] max-lg:bg-giay max-lg:shadow-[0_-18px_40px_-12px_rgba(6,26,23,0.5)]" : "max-lg:hidden"}`}>
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-vien px-2 pb-1 pt-2 lg:hidden">
+          <button type="button" onClick={() => setMoGio(false)} className="flex h-11 items-center gap-1.5 rounded-nho px-2 text-[15px] font-medium text-nhan-dam active:bg-giay-tram"><Plus aria-hidden strokeWidth={2} className="h-4 w-4" />Chọn thêm món</button>
+          <span aria-hidden className="h-1 w-10 rounded-[3px] bg-vien-dam" />
+          <button type="button" aria-label="Đóng giỏ hàng" onClick={() => setMoGio(false)} className="flex h-11 w-11 items-center justify-center rounded-nho text-muc-2 active:bg-giay-tram"><X strokeWidth={1.8} className="h-5 w-5" /></button>
+        </div>
+        {/* Bàn phím điện thoại mở lên thì đưa ô đang nhập ra giữa vùng nhìn thấy (không bị bàn phím / chân bảng che). */}
+        <div className="pos-chu-lon max-lg:min-h-0 max-lg:flex-1 max-lg:scroll-pb-28 max-lg:overflow-y-auto max-lg:overscroll-contain max-lg:px-3 max-lg:py-3"
+          onFocusCapture={(e) => { const o = e.target as HTMLElement; if (moGio && /^(INPUT|TEXTAREA)$/.test(o.tagName)) setTimeout(() => o.scrollIntoView({ block: "center", behavior: "smooth" }), 300); }}>
+        <div className="mb-3 lg:hidden">
+          <ChonKhach khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
+        </div>
         <div className="overflow-hidden rounded-hop border border-vien bg-giay-sang shadow-md">
           <h2 className="flex items-center justify-between gap-3 bg-gradient-to-r from-espresso to-[#0d4a42] px-4 py-3.5 text-[15px] font-semibold text-white">
             <span className="flex items-center gap-2"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Đơn hàng</span>
@@ -579,13 +614,13 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
                 <li key={khoaDong(d)} className="px-4 py-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0"><div className="text-[14px] font-medium text-muc">{m.ten}</div><div className="text-[12px] text-muc-3 tabular-nums">{tienVN(giaDong(d, m))} / đơn vị{d.gia != null && d.gia !== m.gia ? <span className="ml-1 text-canh-bao">(giá gốc {tienVN(m.gia)})</span> : null}</div></div>
-                    <button type="button" aria-label={`Bỏ ${m.ten}`} onClick={() => setDong((ds) => ds.filter((_, j) => j !== i))} className="p-1 text-muc-3 hover:text-loi"><Trash2 strokeWidth={1.6} className="h-4 w-4" /></button>
+                    <button type="button" aria-label={`Bỏ ${m.ten}`} onClick={() => setDong((ds) => ds.filter((_, j) => j !== i))} className="-mr-2 -mt-1.5 flex h-11 w-11 shrink-0 items-center justify-center text-muc-3 hover:text-loi lg:m-0 lg:block lg:h-auto lg:w-auto lg:p-1"><Trash2 strokeWidth={1.6} className="h-4 w-4" /></button>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-3">
                     <span className="flex items-center rounded-nho border border-vien-dam">
-                      <button type="button" aria-label="Giảm số lượng" disabled={d.sl <= 1} onClick={() => capNhat(i, { sl: d.sl - 1 })} className="p-2 text-muc-2 disabled:opacity-40"><Minus strokeWidth={1.8} className="h-3.5 w-3.5" /></button>
-                      <span className="min-w-[28px] text-center text-[14px] tabular-nums">{d.sl}</span>
-                      <button type="button" aria-label="Tăng số lượng" onClick={() => capNhat(i, { sl: d.sl + 1 })} className="p-2 text-muc-2"><Plus strokeWidth={1.8} className="h-3.5 w-3.5" /></button>
+                      <button type="button" aria-label="Giảm số lượng" disabled={d.sl <= 1} onClick={() => capNhat(i, { sl: d.sl - 1 })} className="flex h-11 w-11 items-center justify-center text-muc-2 disabled:opacity-40 lg:block lg:h-auto lg:w-auto lg:p-2"><Minus strokeWidth={1.8} className="h-4 w-4 lg:h-3.5 lg:w-3.5" /></button>
+                      <span className="min-w-[32px] text-center text-[16px] font-medium tabular-nums lg:min-w-[28px] lg:text-[14px] lg:font-normal">{d.sl}</span>
+                      <button type="button" aria-label="Tăng số lượng" onClick={() => capNhat(i, { sl: d.sl + 1 })} className="flex h-11 w-11 items-center justify-center text-muc-2 lg:block lg:h-auto lg:w-auto lg:p-2"><Plus strokeWidth={1.8} className="h-4 w-4 lg:h-3.5 lg:w-3.5" /></button>
                     </span>
                     {m.choSuaGia && LOAI_SUA_GIA.includes(d.loai) && <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Đơn giá <OTien className="w-[120px]" giaTri={giaDong(d, m)} onDoi={(n) => { const g = Math.min(n, GIA_SUA_TOI_DA); capNhat(i, { gia: g === m.gia ? undefined : g, giam: Math.min(d.giam, g * d.sl) }); }} ariaLabel="Sửa đơn giá dòng" /></span>}
                     {choGiam && <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Giảm <OTien className="w-[120px]" giaTri={d.giam} onDoi={(n) => capNhat(i, { giam: Math.min(n, giaDong(d, m) * d.sl), pct: undefined })} ariaLabel="Giảm giá dòng" /></span>}
@@ -711,14 +746,14 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2 lg:grid-cols-3">
                 <div><label className={NHAN_O}>Giờ vào</label><GioChon ariaLabel="Giờ vào" giaTriMacDinh={gioVao} onDoi={setGioVao} /></div>
                 <div><label className={NHAN_O}>Giờ ra</label><GioChon ariaLabel="Giờ ra" giaTriMacDinh={gioRa} onDoi={setGioRa} /></div>
-                <div><label className={NHAN_O} htmlFor={`so-khach-${k}`}>Số khách</label><input id={`so-khach-${k}`} inputMode="numeric" value={soKhach} onChange={(e) => setSoKhach(e.target.value.replace(/\D/g, "").slice(0, 2))} className={`${O_NHAP} tabular-nums`} /></div>
+                <div className="max-lg:col-span-2"><label className={NHAN_O} htmlFor={`so-khach-${k}`}>Số khách</label><input id={`so-khach-${k}`} inputMode="numeric" value={soKhach} onChange={(e) => setSoKhach(e.target.value.replace(/\D/g, "").slice(0, 2))} className={`${O_NHAP} tabular-nums`} /></div>
               </div>
               <div><label className={NHAN_O}>Ghi chú đơn</label><textarea className={O_NHIEU_DONG} style={{ minHeight: 64 }} value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} /></div>
-              {loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
-              <button type="button" disabled={dang} onClick={gui} className={`${NUT_CHINH} h-12 w-full text-[15px]`}>{dang ? "Đang chốt đơn" : conNo > 0 ? `Chốt đơn, ghi nợ ${tienVN(conNo)}` : "Chốt đơn"}</button>
+              {loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi max-lg:hidden">{loi}</div>}
+              <button type="button" disabled={dang} onClick={gui} className={`${NUT_CHINH} h-12 w-full text-[15px] max-lg:hidden`}>{dang ? "Đang chốt đơn" : conNo > 0 ? `Chốt đơn, ghi nợ ${tienVN(conNo)}` : "Chốt đơn"}</button>
               {tinNhap && <p role="status" className="text-[13px] text-nhan-dam">{tinNhap}</p>}
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" disabled={dang || !dong.length} onClick={luuNhapDon} className={`${NUT_PHU} h-11 text-[14px]`}>Lưu nháp</button>
@@ -729,7 +764,34 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
             </div>
           )}
         </div>
+        </div>
+        {dong.length > 0 && (
+          <div className="bang-duoi shrink-0 space-y-2 border-t border-vien bg-giay-sang px-4 pt-2.5 lg:hidden">
+            {loi && <div role="alert" className="rounded-nho bg-loi-nen px-3 py-2 text-[14px] text-loi">{loi}</div>}
+            <div className="flex items-center gap-3 pb-2.5">
+              <div className="min-w-0 flex-1">
+                <div className="text-[13px] text-muc-3">Phải thu{conNo > 0 && thu.length > 0 ? ` · còn nợ ${tienVN(conNo)}` : ""}</div>
+                <div className="truncate text-[20px] font-bold tabular-nums text-nhan-dam">{tienVN(phai)}</div>
+              </div>
+              <button type="button" disabled={dang} onClick={gui} className={`${NUT_CHINH} h-12 shrink-0 px-5 text-[15px]`}>{dang ? "Đang chốt" : conNo > 0 ? "Chốt, ghi nợ" : "Chốt đơn"}</button>
+            </div>
+          </div>
+        )}
       </aside>
+
+      {/* Thanh giỏ dính đáy (điện thoại): số món + tổng + mở giỏ, khỏi cuộn hết danh mục mới tới đơn. */}
+      <div className="sticky -bottom-8 z-20 -mx-4 -mb-8 border-t border-vien bg-giay-sang px-4 py-2 shadow-[0_-8px_20px_-14px_rgb(10_43_38/0.3)] lg:hidden">
+        <button type="button" data-mo-gio onClick={() => setMoGio(true)} aria-haspopup="dialog" aria-expanded={moGio}
+          className="flex h-[52px] w-full items-center gap-3 rounded-the bg-gradient-to-r from-espresso to-[#0d4a42] pl-3 pr-4 text-left text-white active:opacity-90">
+          <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-nho bg-white/15"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-5 w-5" />
+            {dong.length > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-tag bg-dat px-1 text-[12px] font-bold tabular-nums text-espresso">{dong.reduce((t, d) => t + d.sl, 0)}</span>}</span>
+          <span className="min-w-0 flex-1">
+            <span className="block truncate text-[14px] font-medium">{dong.length ? `${dong.reduce((t, d) => t + d.sl, 0)} món · ${khach?.ho_ten ?? "Khách lẻ"}` : "Chưa chọn món"}</span>
+            {dong.length > 0 && <span className="block text-[16px] font-bold tabular-nums">{tienVN(phai)}</span>}
+          </span>
+          <span className="shrink-0 text-[15px] font-semibold">Xem đơn</span>
+        </button>
+      </div>
 
       {moVc && (
         <HopVoucher dong={() => setMoVc(false)} chiNhanhId={cnId} khachId={khach?.id ?? null} lichId={lichId} dangDung={vc} lay={voucher} ds={dsVc} apDung={(v) => { setVc(v); setMoVc(false); }} />

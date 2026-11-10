@@ -343,6 +343,10 @@ body {
 }
 @media print { .khung-di-dong { height: auto; overflow: visible; } .noi-dung-cuon { overflow: visible; } }
 .bang-duoi { padding-bottom: env(safe-area-inset-bottom); }
+/* Bán hàng trên điện thoại: chữ phụ 12–13px nâng lên 14px cho dễ đọc khi cầm một tay (máy tính giữ nguyên). */
+@media (max-width: 1023px) {
+  .pos-chu-lon .text-\[12px\], .pos-chu-lon .text-\[13px\] { font-size: 14px; }
+}
 
 /* Tiêu đề: Roboto đậm 700, giãn chữ -0.015em như tiêu đề SalonHero (23px/700/-0.345px). */
 .chu-tieu-de {

@@ -5,7 +5,7 @@ import { Search } from "lucide-react";
 import { NUT_CHU, O_NHAP } from "@/components/ui/dinh-dang";
 import type { timKhach } from "@/app/(app)/ban-hang/actions";
 
-export type KhachChon = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string };
+export type KhachChon = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; /** Nguồn giới thiệu của khách (khach_hang.doi_tac_id) để Thu ngân gợi ý. */ doi_tac_id?: string | null };
 
 /** Ô tìm khách theo tên / SĐT / mã (gợi ý sau 250 ms). Dùng ở Thu ngân và Lịch hẹn. */
 export function ChonKhach({ khach, onDoi, tim }: { khach: KhachChon | null; onDoi: (k: KhachChon | null) => void; tim: typeof timKhach }) {

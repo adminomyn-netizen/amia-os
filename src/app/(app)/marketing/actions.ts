@@ -223,9 +223,15 @@ export async function luuDoiTac(fd: FormData): Promise<KQ> {
   const coMuc = fd.has("hh_kieu");
   const muc = coMuc ? docMucHoaHong(chuoi(fd, "hh_kieu"), so(fd, "hh_gia_tri")) : null;
   if (muc && "loi" in muc) return { loi: muc.loi };
+  // M4: tên hiển thị trên trang đặt lịch, email + công tắc gửi email (biểu mẫu cũ không gửi các ô này thì giữ nguyên).
+  const email = fd.has("email") ? chuoiHoacNull(fd, "email")?.toLowerCase() ?? null : undefined;
+  if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { loi: "Email chưa hợp lệ." };
+  const tenHienThi = fd.has("ten_hien_thi") ? (chuoiHoacNull(fd, "ten_hien_thi")?.slice(0, 80) ?? null) : undefined;
   const row = {
     ten, loai: ["ctv", "khach_cu", "kol", "khac"].includes(chuoi(fd, "loai")) ? chuoi(fd, "loai") : "ctv", dien_thoai: sdt, ghi_chu: chuoiHoacNull(fd, "ghi_chu"), hoat_dong: chuoi(fd, "hoat_dong") !== "0",
     ...(muc ? { hh_kieu: muc.kieu, hh_gia_tri: muc.giaTri } : {}),
+    ...(email !== undefined ? { email, gui_email: !!email && bat(fd, "gui_email") } : {}),
+    ...(tenHienThi !== undefined ? { ten_hien_thi: tenHienThi } : {}),
   };
   if (id) {
     const db = sb();
@@ -242,6 +248,7 @@ export async function luuDoiTac(fd: FormData): Promise<KQ> {
   }
   lamMoi();
   revalidatePath("/hoa-hong");
+  if (id) revalidatePath(`/marketing/doi-tac/${id}`);
   return { ok: true };
 }
 

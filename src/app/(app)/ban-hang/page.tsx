@@ -5,7 +5,7 @@ import { sb } from "@/lib/db";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { ShoppingBag } from "lucide-react";
 import { Pos } from "@/components/ban-hang/Pos";
-import { hienThuNgan, nhomNguonGt, type DongDon, type MucBan, type NguonGt, type SuaHoaDon, type TaiKhoanNhan } from "@/lib/ban-hang";
+import { gtGoiY, hienThuNgan, nhomNguonGt, type DongDon, type MucBan, type NguonGt, type SuaHoaDon, type TaiKhoanNhan } from "@/lib/ban-hang";
 import { thucHienBuoi } from "../the/actions";
 import { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap } from "./actions";
 
@@ -37,11 +37,14 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     db.from("doi_tac_gt").select("id, ma, ma_gioi_thieu, ten, loai, loai_sh, hh_kieu, hh_gia_tri").eq("hoat_dong", true).order("ten"),
     db.from("goi_the_dich_vu").select("goi_id, dich_vu_id").limit(5000),
   ]);
+  const { data: hhMuc } = await db.from("doi_tac_hh_muc").select("doi_tac_id, loai, muc_id, kieu, gia_tri").limit(20000);
+  const mucCuaNguon = new Map<string, Record<string, { kieu: "phan_tram" | "tien"; giaTri: number }>>();
+  for (const r of hhMuc ?? []) { const m = mucCuaNguon.get(r.doi_tac_id) ?? {}; m[`${r.loai}:${r.muc_id}`] = { kieu: r.kieu === "tien" ? "tien" : "phan_tram", giaTri: Number(r.gia_tri) }; mucCuaNguon.set(r.doi_tac_id, m); }
   const dvCuaGoi = new Map<string, string[]>();
   for (const l of goiDv ?? []) dvCuaGoi.set(l.goi_id, [...(dvCuaGoi.get(l.goi_id) ?? []), l.dich_vu_id]);
   const choThanhToan = (demNo ?? 0) + (demSua ?? 0);
   // Nguồn giới thiệu cho ô "Người giới thiệu" từng dòng (mức hoa hồng mặc định theo nguồn; theo điểm không phải tiền nên mặc định 0%).
-  const nguonGt: NguonGt[] = (gt ?? []).map((g) => ({ id: g.id, ten: g.ten, ma: g.ma_gioi_thieu ?? g.ma, nhom: nhomNguonGt(g.loai, g.loai_sh), kieu: g.hh_kieu === "tien" ? "tien" : "phan_tram", giaTri: g.hh_kieu === "diem" ? 0 : Number(g.hh_gia_tri) }));
+  const nguonGt: NguonGt[] = (gt ?? []).map((g) => ({ id: g.id, ten: g.ten, ma: g.ma_gioi_thieu ?? g.ma, nhom: nhomNguonGt(g.loai, g.loai_sh), kieu: g.hh_kieu === "tien" ? "tien" : "phan_tram", giaTri: g.hh_kieu === "diem" ? 0 : Number(g.hh_gia_tri), ...(mucCuaNguon.has(g.id) ? { muc: mucCuaNguon.get(g.id) } : {}) }));
   const tenNhom = new Map((nhomDv ?? []).map((n) => [n.id, n.ten]));
   // "Nơi hiển thị" + "Địa điểm cung cấp" (Danh mục): chỉ ẨN khỏi ô chọn mục; vẫn giữ trong danh sách để dòng cũ (lịch hẹn, đơn nháp) còn tên và giá.
   const anTN = (noi: string) => !hienThuNgan(noi);
@@ -50,25 +53,27 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma, anThuNgan: anTN(g.noi_hien_thi), choSuaGia: g.cho_sua_gia, dichVu: dvCuaGoi.get(g.id) ?? [] })),
     ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm", tao: s.tao_luc, ma: s.ma, maVach: s.ma_vach ?? undefined, anThuNgan: anTN(s.noi_hien_thi), choSuaGia: s.cho_sua_gia })),
   ];
-  type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string };
+  type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string; doi_tac_id: string | null };
   let khach: K | null = null;
-  if (khachId) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", khachId).maybeSingle()).data;
+  if (khachId) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id, doi_tac_id").eq("id", khachId).maybeSingle()).data;
   let dongBanDau: DongDon[] = [];
   let lichDung: string | null = null;
   let cnLich: string | null = null;
   let nguonLich = "";
   let viTriLich = "";
   let soKhachLich = 1;
+  let gtLich: string | null = null;
   if (lichId) {
-    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id, nguon, phong").eq("id", lichId).maybeSingle();
+    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id, nguon, phong, doi_tac_id").eq("id", lichId).maybeSingle();
     if (l && (!nd.chiNhanhId || l.chi_nhanh_id === nd.chiNhanhId)) {
       lichDung = l.id; cnLich = l.chi_nhanh_id; nguonLich = nhanNguon(l.nguon); viTriLich = l.phong ?? "";
-      if (!khach) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", l.khach_id).maybeSingle()).data;
+      if (!khach) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id, doi_tac_id").eq("id", l.khach_id).maybeSingle()).data;
       const { data: ld } = await db.from("lich_hen_dich_vu").select("dich_vu_id, so_luong").eq("lich_id", l.id);
       dongBanDau = (ld ?? []).filter((x) => muc.some((m) => m.loai === "dich_vu" && m.id === x.dich_vu_id)).map((x) => ({
         loai: "dich_vu", ref: x.dich_vu_id, sl: x.so_luong, giam: 0,
         nv: { phuc_vu: l.nhan_vien_id ? [{ id: l.nhan_vien_id, ti: 100 }] : [], tu_van: [], ban: khach?.nguoi_phu_trach_id ? [{ id: khach.nguoi_phu_trach_id, ti: 100 }] : [] },
       }));
+      gtLich = l.doi_tac_id;
       // Lịch nhiều khách (Khách 2, 3… ở lich_hen_khach): gom dịch vụ của CẢ NHÓM vào MỘT hoá đơn của khách chính như SalonHero createOrderBooking;
       // mỗi dòng giữ người thực hiện của khách đó; số khách của hoá đơn = số người trong nhóm.
       const nhom = await docNhomLich(l.id);
@@ -88,7 +93,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
     if (hs && hs.trang_thai === "nhap" && hs.mo_lai_luc && !hs.la_lich_su && (!nd.chiNhanhId || hs.chi_nhanh_id === nd.chiNhanhId)) {
       const [{ data: dd }, { data: kh }] = await Promise.all([
         db.from("hoa_don_dong").select("id, loai, dich_vu_id, goi_id, san_pham_id, so_luong, don_gia, giam_gia, tao_luc, ghi_chu, gt_doi_tac_id, gt_kieu, gt_gia_tri, dong_nhan_vien(nhan_vien_id, vai, ti_le)").eq("hoa_don_id", hs.id).order("tao_luc"),
-        hs.khach_id ? db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id").eq("id", hs.khach_id).maybeSingle() : Promise.resolve({ data: null }),
+        hs.khach_id ? db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id, doi_tac_id").eq("id", hs.khach_id).maybeSingle() : Promise.resolve({ data: null }),
       ]);
       const gioHHMM = (t: string | null) => (t ? new Date(t).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" }) : "");
       suaHd = { id: hs.id, ma: hs.ma, ngayHd: hs.ngay_hd, giamDon: Number(hs.giam_gia_don), vatPct: Number(hs.vat_pct), phuPhi: Number(hs.phu_phi), tip: Number(hs.tip), ghiChu: hs.ghi_chu ?? "", gioVao: gioHHMM(hs.gio_vao), gioRa: gioHHMM(hs.gio_ra), soKhach: hs.so_khach ?? 1 };
@@ -103,6 +108,12 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
           ...(d.ghi_chu ? { ghiChu: d.ghi_chu } : {}), ...(d.gt_doi_tac_id && (d.gt_kieu === "phan_tram" || d.gt_kieu === "tien") ? { gt: { id: d.gt_doi_tac_id, kieu: d.gt_kieu as "phan_tram" | "tien", giaTri: Number(d.gt_gia_tri ?? 0) } } : {}) }];
       });
     }
+  }
+  // Gợi ý người giới thiệu (M4): đơn mới từ lịch hẹn / khách có nguồn giới thiệu (đặt qua link REF) → mọi dòng chưa có người giới thiệu mang nguồn đó
+  // với mức riêng theo mục hoặc mức chung; thu ngân thấy ở dòng "Người giới thiệu" và sửa / bỏ được. Không áp cho hoá đơn đang sửa.
+  if (!suaHd) {
+    const goiY = gtLich ?? khach?.doi_tac_id ?? null;
+    if (goiY) dongBanDau = dongBanDau.map((x) => (x.gt ? x : { ...x, gt: gtGoiY(nguonGt, goiY, x.loai, x.ref) }));
   }
   // Khoá ở máy chủ: người gắn chi nhánh không mở được khách chi nhánh khác qua ?khach=; không có quyền xem SĐT thì không đưa số xuống trình duyệt.
   if (khach && nd.chiNhanhId && khach.chi_nhanh_id !== nd.chiNhanhId) khach = null;

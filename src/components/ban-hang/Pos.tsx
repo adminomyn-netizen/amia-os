@@ -10,7 +10,7 @@ import { OTien } from "@/components/ui/OTien";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "@/components/ui/dinh-dang";
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
 import { GioChon } from "@/components/ui/GioChon";
-import { chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
+import { gtGoiY, chiaDeuTi, chiaDoanhThuNguoiHuong, chiaNoTheoDong, giamTheoPct, NHOM_GT, type NguonGt, giaDong, GIA_SUA_TOI_DA, GIOI_HAN_VOUCHER, hienOThuNgan, LOAI_SUA_GIA, KENH_MAN_HINH_KHACH, khopMuc, lamTron, LOAI_VI, PHUONG_THUC, dsNganHangNhan, nganHangChonSan, tinhDon, tinhTraLai, tinhGiamVoucher, TOI_DA_NGUOI_HUONG, VAI, type DonChoKhach, type DongDon, type KhoanThu, type MucBan, type TaiKhoanNhan, type Vai, type SuaHoaDon } from "@/lib/ban-hang";
 import { ChonKhach, type KhachChon } from "@/components/khach/ChonKhach";
 import type { VoucherTim } from "@/lib/voucher";
 import { HopVoucher } from "./HopVoucher";
@@ -421,7 +421,9 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
       const i = ds.findIndex((d) => khoaDong(d) === khoaDong({ loai: m.loai, ref: m.id }));
       if (i >= 0) return ds.map((d, j) => (j === i ? { ...d, sl: d.sl + 1 } : d));
       const macDinhBan = khach?.nguoi_phu_trach_id ? [{ id: khach.nguoi_phu_trach_id, ti: 100 }] : [];
-      return [...ds, { loai: m.loai, ref: m.id, sl: 1, giam: 0, nv: { phuc_vu: [], tu_van: [], ban: macDinhBan } }];
+      // Gợi ý người giới thiệu: khách có nguồn giới thiệu (đặt lịch qua link REF) thì dòng mới tự mang nguồn đó, thu ngân sửa/bỏ được.
+      const gt = gtGoiY(nguonGt, khach?.doi_tac_id, m.loai, m.id);
+      return [...ds, { loai: m.loai, ref: m.id, sl: 1, giam: 0, nv: { phuc_vu: [], tu_van: [], ban: macDinhBan }, ...(gt ? { gt } : {}) }];
     });
   };
   // Dòng đang giảm theo % thì đổi số lượng / giá vẫn giữ đúng %.
@@ -834,7 +836,7 @@ function NguoiGioiThieu({ d, ten, nguon, dong, luu }: { d: DongDon; ten: string;
   const [giaTri, setGiaTri] = useState(d.gt?.giaTri ?? 0);
   const [loi, setLoi] = useState("");
   const ds = nguon.filter((g) => g.nhom === nhom);
-  const chon = (v: string) => { setId(v); const g = nguon.find((x) => x.id === v); if (g) { setKieu(g.kieu); setGiaTri(g.giaTri); } };
+  const chon = (v: string) => { setId(v); const g = gtGoiY(nguon, v, d.loai, d.ref); if (g) { setKieu(g.kieu); setGiaTri(g.giaTri); } };
   const xong = () => {
     if (!id) return luu(null);
     if (kieu === "phan_tram" && (giaTri < 0 || giaTri > 100)) return setLoi("Phần trăm hoa hồng từ 0 đến 100.");

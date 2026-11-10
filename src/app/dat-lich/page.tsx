@@ -7,6 +7,7 @@ import { anhBlogUrl } from "@/lib/blog";
 import { layWebDatLich, thoiLuongMacDinh } from "@/lib/web-dat-lich";
 import { FormDatLich, type CnDat, type DvDat, type NvDat } from "./FormDatLich";
 import { hoiDapDatLich, type NgonNgu } from "./chu";
+import { traGioiThieu } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -33,11 +34,13 @@ export async function generateMetadata({ searchParams }: { searchParams: Promise
 
 /** TRANG CÔNG KHAI (không đăng nhập) y SalonHero amia.salonhero.vn/dat-lich: chỉ hiện tên/địa chỉ chi nhánh, giờ mở cửa, dịch vụ (khi cài đặt bật), tên người làm (khi bật "Cho phép chọn stylist"). Không có dữ liệu khách.
  *  Kèm dữ liệu có cấu trúc (MedicalClinic + FAQPage + danh mục dịch vụ) để Google và trợ lý AI đọc đúng tên, địa chỉ, giờ mở cửa, cách đặt lịch. */
-export default async function TrangDatLich({ searchParams }: { searchParams: Promise<{ lang?: string }> }) {
+export default async function TrangDatLich({ searchParams }: { searchParams: Promise<{ lang?: string; ref?: string }> }) {
   const db = sb();
   const web = await layWebDatLich(db);
   const sp = await searchParams;
   const nn: NgonNgu = sp.lang === "en" || sp.lang === "vi" ? sp.lang : web.ngonNgu === "en" ? "en" : "vi";
+  // Link giới thiệu /dat-lich?ref=<SĐT> (hoặc /dat-lich/ref=<SĐT>): ô "Người giới thiệu" hiện tên hiển thị; lượt ghé đếm trong DB.
+  const gioiThieu = typeof sp.ref === "string" && sp.ref ? await traGioiThieu(sp.ref) : null;
   const [{ data: ch }, { data: cn }, { data: cho }, dvKq, nhomKq, nvKq] = await Promise.all([
     db.from("cua_hang").select("ten_thuong_hieu, dien_thoai, gio_lam_viec").eq("id", 1).maybeSingle(),
     db.from("chi_nhanh").select("id, ten, dia_chi, dien_thoai, thanh_pho, gio_lam_viec").eq("hoat_dong", true).eq("hien_dat_lich", true).order("thu_tu").order("ma"),
@@ -104,7 +107,7 @@ export default async function TrangDatLich({ searchParams }: { searchParams: Pro
         nn={nn} mo={mo} sdt={sdt} tenCuaHang={tenCuaHang} anhBia={anhBlogUrl(web.anhBia)} giayPhep={GIAY_PHEP} hoiDap={hoiDap}
         chiNhanh={chiNhanh} dichVu={web.hienDvSp ? dichVu : []} nhanVien={nhanVien}
         homNay={homNay} soNgay={soNgay} khungPhut={web.khungPhut} hienBuoi={web.hienBuoi} doiTuong={web.doiTuong}
-        phutMacDinh={thoiLuongMacDinh(web)}
+        phutMacDinh={thoiLuongMacDinh(web)} gioiThieu={gioiThieu}
       />
     </div>
   );

@@ -57,7 +57,15 @@ export type DongDon = { loai: MucBan["loai"]; ref: string; sl: number; giam: num
 /** Người giới thiệu theo dòng: nguồn giới thiệu (bảng doi_tac_gt) + mức hoa hồng. */
 export type GioiThieuDong = { id: string; kieu: "phan_tram" | "tien"; giaTri: number };
 /** Nguồn giới thiệu rút gọn cho Thu ngân. Nhóm như SalonHero: Khách hàng / Nhân viên / Khác. */
-export type NguonGt = { id: string; ten: string; ma: string; nhom: "khach" | "nhan_vien" | "khac"; kieu: "phan_tram" | "tien"; giaTri: number };
+export type NguonGt = { id: string; ten: string; ma: string; nhom: "khach" | "nhan_vien" | "khac"; kieu: "phan_tram" | "tien"; giaTri: number;
+  /** Mức riêng theo mục (tab "Hoa hồng theo dịch vụ" của nguồn), khoá "<loai>:<id>". */ muc?: Record<string, { kieu: "phan_tram" | "tien"; giaTri: number }> };
+/** Người giới thiệu gợi ý cho một dòng: mức riêng của mục nếu có, không thì mức chung của nguồn. Nguồn không còn trong danh sách → null. */
+export function gtGoiY(nguon: NguonGt[], doiTacId: string | null | undefined, loai: string, ref: string): GioiThieuDong | null {
+  const g = doiTacId ? nguon.find((x) => x.id === doiTacId) : undefined;
+  if (!g) return null;
+  const m = g.muc?.[`${loai}:${ref}`];
+  return { id: g.id, kieu: m?.kieu ?? g.kieu, giaTri: m?.giaTri ?? g.giaTri };
+}
 export const NHOM_GT: { ma: NguonGt["nhom"]; ten: string }[] = [{ ma: "khach", ten: "Khách hàng" }, { ma: "nhan_vien", ten: "Nhân viên" }, { ma: "khac", ten: "Khác" }];
 /** doi_tac_gt → nhóm SalonHero: loai_sh STAFF = Nhân viên; loại khach_cu / CUSTOMER = Khách hàng; còn lại = Khác. */
 export const nhomNguonGt = (loai: string, loaiSh: string | null | undefined): NguonGt["nhom"] => (loaiSh === "STAFF" ? "nhan_vien" : loai === "khach_cu" || loaiSh === "CUSTOMER" ? "khach" : "khac");

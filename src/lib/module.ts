@@ -163,7 +163,7 @@ export const MODULE: Module[] = [
         { ten: "Nội dung", moTa: "Việc làm nội dung: người làm, hạn, duyệt, link bài đăng.", duongDan: "/marketing/noi-dung", trangThai: "san_sang", quyen: ["mkt.xem"] },
       ] },
       { nhan: "Giới thiệu & theo dõi", the: [
-        { ten: "Nguồn giới thiệu / cộng tác viên", moTa: "Đối tác giới thiệu, mã giới thiệu và danh sách nguồn lead.", duongDan: "/marketing/doi-tac", trangThai: "san_sang", quyen: ["mkt.xem"] },
+        { ten: "Nguồn giới thiệu / cộng tác viên", moTa: "Giới thiệu & CTV: mã REF = SĐT, link/QR/poster đặt lịch, hoa hồng theo dịch vụ, sổ bút toán, chi trả hoa hồng.", duongDan: "/marketing/doi-tac", trangThai: "san_sang", quyen: ["mkt.xem"] },
         { ten: "Link / mã QR theo dõi", moTa: "Link đếm lượt bấm và mã QR cho từng chiến dịch.", duongDan: "/marketing/link", trangThai: "san_sang", quyen: ["mkt.xem"] },
       ] },
       { nhan: "Báo cáo", the: [

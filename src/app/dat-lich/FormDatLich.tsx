@@ -22,6 +22,8 @@ type Props = {
   nn: NgonNgu; mo: boolean; sdt: string; tenCuaHang: string; anhBia: string | null; chiNhanh: CnDat[]; dichVu: DvDat[]; nhanVien: NvDat[];
   homNay: string; soNgay: number; khungPhut: number; hienBuoi: boolean; doiTuong: string; phutMacDinh: number;
   giayPhep?: string; hoiDap?: [string, string][];
+  /** Link giới thiệu (?ref=SĐT): REF gửi kèm khi đặt + tên hiển thị của người giới thiệu (đã tra ở máy chủ). */
+  gioiThieu?: { ref: string; ten: string } | null;
 };
 
 const congNgay = (d: string, n: number) => { const x = new Date(`${d}T12:00:00Z`); x.setUTCDate(x.getUTCDate() + n); return x.toISOString().slice(0, 10); };
@@ -142,7 +144,7 @@ export function FormDatLich(p: Props) {
     <div className="flex items-center gap-2">
       {p.sdt && <a href={`tel:${p.sdt.replace(/\s/g, "")}`} className="hidden h-9 items-center gap-2 rounded-nho border border-white/20 bg-espresso/40 px-3 text-[13px] font-medium text-white hover:bg-white/10 sm:flex"><Phone className="h-4 w-4" aria-hidden />{p.sdt}</a>}
       <div className="flex overflow-hidden rounded-nho border border-white/25 bg-espresso/40 text-[12px] font-semibold" role="group" aria-label="Ngôn ngữ / Language">
-        {(["vi", "en"] as const).map((x) => <Link key={x} href={`?lang=${x}`} hrefLang={x} aria-current={p.nn === x ? "true" : undefined} className={`px-2.5 py-1.5 ${p.nn === x ? "bg-white text-espresso" : "text-white/85 hover:bg-white/10"}`}>{x.toUpperCase()}</Link>)}
+        {(["vi", "en"] as const).map((x) => <Link key={x} href={`?lang=${x}${p.gioiThieu ? `&ref=${encodeURIComponent(p.gioiThieu.ref)}` : ""}`} hrefLang={x} aria-current={p.nn === x ? "true" : undefined} className={`px-2.5 py-1.5 ${p.nn === x ? "bg-white text-espresso" : "text-white/85 hover:bg-white/10"}`}>{x.toUpperCase()}</Link>)}
       </div>
     </div>
   );
@@ -367,6 +369,7 @@ export function FormDatLich(p: Props) {
         <input type="hidden" name="gio" value={gio} />
         <input type="hidden" name="so_khach" value={khach} />
         <input type="hidden" name="gioi_tinh" value={gt} />
+        {p.gioiThieu && <input type="hidden" name="ref" value={p.gioiThieu.ref} />}
         {/* Ô bẫy cho bot: người thật không thấy, không tới được bằng bàn phím */}
         <div aria-hidden="true" className="absolute -left-[9999px] h-0 w-0 overflow-hidden"><label>Website<input name="website" tabIndex={-1} autoComplete="off" /></label></div>
 
@@ -546,6 +549,7 @@ export function FormDatLich(p: Props) {
           <section className={THE}>
             <Buoc so={4 + soBuocDv + soBuocNv} chu={T.b4} xong={false} />
             <textarea id="ghi_chu" name="ghi_chu" aria-label={T.b4} maxLength={300} className={O_NHIEU_DONG} />
+            {p.gioiThieu && <p className="mt-3 rounded-nho bg-nhan-nhat px-3 py-2 text-[14px] text-nhan-dam">{p.nn === "en" ? "Referred by" : "Người giới thiệu"}: <b>{p.gioiThieu.ten}</b></p>}
           </section>
         </div>
 

@@ -18,6 +18,15 @@ export type KQGio = { gio: KhungGio[]; loi?: string };
 export type DaDat = { gio: string; ngay: string; ten: string; sdt: string; diaChi: string; dichVu: string[]; nguoiLam: string };
 export type KQGui = { ok?: true; loi?: string; daDat?: DaDat };
 
+/** Trang mở bằng link giới thiệu: ghi một lượt ghé (mỗi IP băm 1 lần/ngày, trong DB) và lấy tên hiển thị người giới thiệu. REF sai → null. */
+export async function traGioiThieu(ref: string): Promise<{ ref: string; ten: string } | null> {
+  const r = ref.trim();
+  if (!/^[0-9A-Za-z+ ]{3,30}$/.test(r)) return null;
+  const { data } = await sb().rpc("ghi_luot_ghe_ref", { p_ref: r, p_ip_bam: await dauVetIp() });
+  const ten = (data as { ten?: string } | null)?.ten;
+  return ten ? { ref: r, ten } : null;
+}
+
 /** Băm IP + muối bí mật: đủ để đếm giới hạn theo IP mà không lưu IP thật. */
 async function dauVetIp() {
   const h = await headers();
@@ -70,7 +79,7 @@ export async function datLichOnline(_: KQGui | undefined, fd: FormData): Promise
   const { data, error } = await db.rpc("dat_lich_online", {
     p_cn: cn, p_dv: web.hienDvSp ? dv : [], p_bat_dau: new Date(`${ngay}T${gio}:00+07:00`).toISOString(), p_ho_ten: chuoi("ho_ten"), p_sdt: chuoi("dien_thoai"),
     p_gioi_tinh: chuoi("gioi_tinh") === "nam" ? "nam" : "nữ", p_so_khach: Number.isInteger(soKhach) ? soKhach : 1, p_nv: web.chonKtv && nv ? nv : null,
-    p_ghi_chu: chuoi("ghi_chu"), p_ip_bam: await dauVetIp(),
+    p_ghi_chu: chuoi("ghi_chu"), p_ip_bam: await dauVetIp(), p_ref: /^[0-9A-Za-z+ ]{3,30}$/.test(chuoi("ref")) ? chuoi("ref") : null,
   });
   if (error || !data) return { loi: thongBaoLoi(error) || "Có lỗi xảy ra, không thể đặt được lịch" };
   const kq = data as { lich_id: string; ma: string };

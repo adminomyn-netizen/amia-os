@@ -19,7 +19,7 @@ vi.mock("@/lib/db", () => ({
     from: (bang: string) => {
       const loc: Record<string, unknown> = {};
       const b: Record<string, unknown> = {
-        select: () => b, eq: (c: string, v: unknown) => { loc[c] = v; return b; }, in: () => b, order: () => b, limit: () => b,
+        select: () => b, eq: (c: string, v: unknown) => { loc[c] = v; return b; }, in: () => b, gte: () => b, order: () => b, limit: () => b,
         maybeSingle: async () => ({ data: dong[bang]?.[String(loc.id)] ?? null }),
         then: (ok: (r: { data: unknown[] }) => unknown) => ok({ data: bang === "v_the_khach" ? bang_the : bang === "goi_the" ? [{ id: "g1", ten: "Thẻ tiền 1tr" }] : [] }),
       };

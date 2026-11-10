@@ -83,17 +83,25 @@ const soTien = (v) => Math.round(Number(v) || 0);
 
 /** Chuẩn bị dữ liệu ngân hàng của MỘT hoá đơn SalonHero ({l, d} trong tệp NDJSON hoặc d lấy từ API): ngân hàng theo từng khoản (phương thức + số tiền) từ lịch sử thanh toán,
  *  dự phòng từ amount_paid_multi, và ngân hàng chung của hoá đơn (chỉ khi hoá đơn TRANSFER/CARD một loại). */
-export function chuanBiNganHangSh(r) {
+export function chuanBiNganHangSh(r) { return chuanBiTheoKhoan(r, (x) => chuanTenNganHang(x?.bank_name)); }
+
+/** Như chuanBiNganHangSh nhưng giá trị là TÀI KHOẢN nhận ("<tên ngắn ngân hàng>#<số tài khoản chỉ chữ số>", migration 0323 thanh_toan.tai_khoan_id).
+ *  Dùng với nganHangKhoan(ch, pt, tien).ten → khoá tài khoản (khoaTaiKhoan) hoặc null nếu không rõ / mơ hồ. */
+export function chuanBiTaiKhoanSh(r) { return chuanBiTheoKhoan(r, (x) => khoaTaiKhoan(x?.bank_name, x?.account_number)); }
+/** Khoá so khớp tài khoản ngân hàng: tên ngắn + số (bỏ khoảng trắng/dấu). null khi thiếu số. */
+export const khoaTaiKhoan = (nganHang, so) => { const s = String(so ?? "").replace(/\D/g, ""); return s ? `${chuanTenNganHang(nganHang) ?? ""}#${s}` : null; };
+
+function chuanBiTheoKhoan(r, giaTri) {
   const l = r.l ?? {}, d = r.d ?? {};
   const ptHd = String(l.payment_type ?? d.payment_type ?? "").toUpperCase();
   const theoSuKien = new Map(), theoMulti = new Map();
   const them = (m, pt, tien, ten) => { const k = `${pt}|${tien}`; (m.get(k) ?? m.set(k, new Set()).get(k)).add(ten ?? ""); };
-  for (const x of d.paymentHistory ?? []) if (!x.is_deleted && soTien(x.amount_paid) > 0) them(theoSuKien, ptShDich(x.payment_type), soTien(x.amount_paid), chuanTenNganHang(x.bank_name));
+  for (const x of d.paymentHistory ?? []) if (!x.is_deleted && soTien(x.amount_paid) > 0) them(theoSuKien, ptShDich(x.payment_type), soTien(x.amount_paid), giaTri(x));
   if (ptHd === "MULTIPLE") {
     let m = []; try { m = JSON.parse(l.amount_paid_multi ?? d.amount_paid_multi ?? "[]"); } catch { m = []; }
-    for (const x of Array.isArray(m) ? m : []) if (soTien(x.amount_paid) > 0) them(theoMulti, ptShDich(x.payment_type), soTien(x.amount_paid), chuanTenNganHang(x.bank_name));
+    for (const x of Array.isArray(m) ? m : []) if (soTien(x.amount_paid) > 0) them(theoMulti, ptShDich(x.payment_type), soTien(x.amount_paid), giaTri(x));
   }
-  const tenHd = ptHd === "TRANSFER" || ptHd === "CARD" ? chuanTenNganHang(l.bank_name ?? d.bank_name) : null;
+  const tenHd = ptHd === "TRANSFER" || ptHd === "CARD" ? giaTri({ bank_name: l.bank_name ?? d.bank_name, account_number: l.account_number ?? d.account_number }) : null;
   return { ptHd, theoSuKien, theoMulti, tenHd };
 }
 

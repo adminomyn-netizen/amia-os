@@ -13,7 +13,7 @@
 //   --tu       ngày VN bắt đầu (mặc định: mốc lần đồng bộ trước trong sao-luu/dong-bo-moc.json, nếu chưa có thì 2026-10-28)
 //   --thu-muc  dùng lại bản xuất đã có (bỏ qua bước xuất từ SalonHero)
 //   --tu-kiem  TỰ KIỂM: trong giao dịch, giả lập "mất" vài khách/HĐ/lịch/thẻ và đổi vài dòng rồi cho đồng bộ vá lại; luôn rollback.
-import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, nganHangKhoan, vanBanGhiChuSh } from "./lib.mjs";
+import { ketNoi, docNdjson, theoLo, taoDot, nhanVienHeThong, mapMa, HANG, cnTheoLoc, vnNgay, sdt, sach, so, inBang, chuanBiNganHangSh, chuanBiTaiKhoanSh, nganHangKhoan, khoaTaiKhoan, vanBanGhiChuSh } from "./lib.mjs";
 import { chuanHoaSoQuySh, napSoQuySh, tonQuyAmia } from "./so-quy-sh.mjs";
 import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync, readdirSync, statSync } from "node:fs";
 import { spawnSync, execSync } from "node:child_process";
@@ -464,11 +464,12 @@ try {
     if (!huy) {
       const ev = (d.paymentHistory ?? []).filter((x) => !x.is_deleted && so(x.amount_paid) > 0);
       const chNh = chuanBiNganHangSh({ l, d }), nh = (pt, tien) => nganHangKhoan(chNh, pt, tien).ten; // ngân hàng nhận (migration 0179)
+      const chTk = chuanBiTaiKhoanSh({ l, d }), tk = (pt, tien) => nganHangKhoan(chTk, pt, tien).ten; // tài khoản nhận (0323): "<ngân hàng>#<số>", đổi ra id lúc ghi
       let tong = 0;
-      for (const x of ev) { ttC.push({ don_sh: shId, pt: ptDich(x.payment_type), vi: viDich(ptDich(x.payment_type), x.wallet_type ?? d.wallet_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
+      for (const x of ev) { ttC.push({ don_sh: shId, pt: ptDich(x.payment_type), vi: viDich(ptDich(x.payment_type), x.wallet_type ?? d.wallet_type), nh: nh(ptDich(x.payment_type), so(x.amount_paid)), tk: tk(ptDich(x.payment_type), so(x.amount_paid)), so_tien: so(x.amount_paid), ngay: vnNgay(x.action_date) ?? ngay, ghi: `SalonHero ${x.actions}${x.user_name ? " · " + sach(x.user_name) : ""}` }); tong += so(x.amount_paid); }
       const thieu = Math.max(0, phai - so(d.total_amount_card) - tong);
       if (daThuNguon > phai) baoH.khach_dong_du.push([shId, daThuNguon - phai]);
-      if (tong !== so(d.amount_paid)) { const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) ttC.push({ don_sh: shId, pt: ptDich(d.payment_type), vi: viDich(ptDich(d.payment_type), d.wallet_type), nh: nh(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
+      if (tong !== so(d.amount_paid)) { const bu = Math.min(so(d.amount_paid) - tong, thieu); if (bu > 0) ttC.push({ don_sh: shId, pt: ptDich(d.payment_type), vi: viDich(ptDich(d.payment_type), d.wallet_type), nh: nh(ptDich(d.payment_type), bu), tk: tk(ptDich(d.payment_type), bu), so_tien: bu, ngay, ghi: "Chênh lệch lịch sử thanh toán SalonHero (bù để khớp số đã thu)" }); }
       if (so(d.total_amount_card) > 0) ttC.push({ don_sh: shId, pt: "the_tien", so_tien: so(d.total_amount_card), ngay, ghi: "Trừ thẻ (lịch sử SalonHero, không ghi sổ thẻ)" });
     }
     const dau = {
@@ -543,10 +544,12 @@ try {
   if (hhC.length) await theoLo(hhC, 2000, (l) => q(`insert into public.dong_hoa_hong_goc (dong_id, vai, nhan_vien_id, sh_nhan_vien_id, gia_tri, kieu, nhap_dot)
      select d.id, x.vai, x.nv, x.sh_nv, x.gia_tri, x.kieu, d.nhap_dot from jsonb_to_recordset($1::jsonb) as x(dong_sh bigint, vai text, sh_nv bigint, nv uuid, gia_tri numeric, kieu text) join public.hoa_don_dong d on d.sh_id = x.dong_sh`, [JSON.stringify(l)]));
   const ttCan = tt.filter((x) => dsHd.has(x.don_sh)).map((x) => ({ ...x, dot: dotHd.get(x.don_sh) }));
+  // Tài khoản nhận (0323): khoá "<ngân hàng>#<số>" → id trong Cài đặt › Tài khoản Ngân Hàng (gồm tài khoản ẩn). Không thấy thì để null, không tạo mới ở đây.
+  const idTaiKhoan = new Map((await q(`select id, ngan_hang, so_tai_khoan from public.tai_khoan_ngan_hang where so_tai_khoan <> ''`)).map((r) => [khoaTaiKhoan(r.ngan_hang, r.so_tai_khoan), r.id]));
   let nTt = 0;
   await theoLo(ttCan, 2000, async (l) => {
-    nTt += (await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang, loai_vi)
-       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, x.dot, x.nh, x.vi from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, vi text, so_tien bigint, ngay date, ghi text, dot text) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(l), he])).length;
+    nTt += (await q(`insert into public.thanh_toan (hoa_don_id, loai, phuong_thuc, so_tien, ngay, nguoi_id, ghi_chu, la_lich_su, nhap_dot, ngan_hang, loai_vi, tai_khoan_id)
+       select h.id, 'thu', x.pt, x.so_tien, x.ngay, $2::uuid, x.ghi, true, x.dot, x.nh, x.vi, x.tk_id from jsonb_to_recordset($1::jsonb) as x(don_sh bigint, pt text, nh text, vi text, so_tien bigint, ngay date, ghi text, dot text, tk_id uuid) join public.hoa_don h on h.sh_id = x.don_sh returning 1`, [JSON.stringify(l.map((x) => ({ ...x, tk_id: (x.tk && idTaiKhoan.get(x.tk)) || null }))), he])).length;
   });
   await q(`select public.tinh_lai_hoa_don(h.id) from public.hoa_don h where h.sh_id = any($1::bigint[])`, [[...dsHd]]);
   tom.hoa_don = { moi: nHd, doi: doi.length, huy_moi_trong_doi: baoH.huy_moi, nang_cap_no_dau: baoH.nang_cap_no_dau, khong_doi: baoH.khong_doi, dong: nDong, thanh_toan: nTt, nhap_bo_qua: baoH.nhap_bo_qua, khong_co_khach_o_amia: baoH.khong_co_khach_o_amia,

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { chuanTenNganHang, coNganHang } from "../src/lib/ngan-hang-ten";
 import { DANH_SACH_NGAN_HANG } from "../src/lib/ngan-hang";
-import { chuanTenNganHang as chuanScript, chuanBiNganHangSh, nganHangKhoan } from "../scripts/chuyen-salonhero/lib.mjs";
+import { chuanTenNganHang as chuanScript, chuanBiNganHangSh, chuanBiTaiKhoanSh, khoaTaiKhoan, nganHangKhoan } from "../scripts/chuyen-salonhero/lib.mjs";
 
 describe("chuẩn hoá tên ngân hàng", () => {
   it("bỏ chữ Ngân hàng, về dạng ngắn", () => {
@@ -72,5 +72,26 @@ describe("bù ngân hàng cho dữ liệu SalonHero (script)", () => {
   it("sự kiện đã xoá không tính", () => {
     const ch = chuanBiNganHangSh({ l: { payment_type: "MULTIPLE" }, d: { paymentHistory: [{ ...ev("TRANSFER", 100, "Ngân hàng BIDV"), is_deleted: 1 }] } });
     expect(nganHangKhoan(ch, "chuyen_khoan", 100).ten).toBeNull();
+  });
+});
+
+// Số tài khoản trong test là số giả.
+const evTk = (payment_type: string, amount_paid: number, bank_name: string, account_number: string | null) => ({ payment_type, amount_paid, bank_name, account_number, is_deleted: 0 });
+describe("bù tài khoản nhận cho dữ liệu SalonHero (script, migration 0323)", () => {
+  it("khoá tài khoản = tên ngắn + số chỉ chữ số; thiếu số thì null", () => {
+    expect(khoaTaiKhoan("Ngân hàng Vietcombank", "0123 456 789")).toBe("Vietcombank#0123456789");
+    expect(khoaTaiKhoan("Ngân hàng Vietcombank", "")).toBeNull();
+    expect(khoaTaiKhoan("Ngân hàng Vietcombank", null)).toBeNull();
+  });
+  it("cùng ngân hàng hai tài khoản khác nhau: tách theo từng khoản; trùng phương thức + số tiền mà khác tài khoản thì không đoán", () => {
+    const ch = chuanBiTaiKhoanSh({ l: { payment_type: "TRANSFER" }, d: { paymentHistory: [evTk("TRANSFER", 1000, "Ngân hàng Vietcombank", "111"), evTk("TRANSFER", 500, "Ngân hàng Vietcombank", "222")] } });
+    expect(nganHangKhoan(ch, "chuyen_khoan", 1000).ten).toBe("Vietcombank#111");
+    expect(nganHangKhoan(ch, "chuyen_khoan", 500).ten).toBe("Vietcombank#222");
+    const mh = chuanBiTaiKhoanSh({ l: { payment_type: "TRANSFER" }, d: { paymentHistory: [evTk("TRANSFER", 100, "Ngân hàng Vietcombank", "111"), evTk("TRANSFER", 100, "Ngân hàng Vietcombank", "222")] } });
+    expect(nganHangKhoan(mh, "chuyen_khoan", 100)).toEqual({ ten: null, nguon: "mo_ho" });
+  });
+  it("khoản không có sự kiện lấy tài khoản chung của hoá đơn TRANSFER/CARD", () => {
+    const ch = chuanBiTaiKhoanSh({ l: { payment_type: "CARD", bank_name: "Ngân hàng Sacombank", account_number: "333" }, d: { paymentHistory: [] } });
+    expect(nganHangKhoan(ch, "quet_the", 700)).toEqual({ ten: "Sacombank#333", nguon: "hoa_don" });
   });
 });

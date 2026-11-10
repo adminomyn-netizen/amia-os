@@ -14612,6 +14612,10 @@ export type Database = {
       tuy_chon_loc_khach: { Args: never; Returns: Json }
       vai_tai_chi_nhanh: { Args: { p_cn: string; p_nv: string }; Returns: string }
       voucher_loai_dong: { Args: { p_gioi_han: string }; Returns: string[] }
+      xh_the_gia_han: {
+        Args: { p_cn?: string; p_den: string; p_so?: number; p_tu: string }
+        Returns: { goi_id: string; so_khach: number; so_lan: number; ten: string; tien: number }[]
+      }
       xong_buoi_cho: {
         Args: { p_bac_si: string; p_de_xuat: string; p_ghi_chu: string; p_id: string; p_nguoi: string; p_nv: string[]; p_tham_so: Json; p_tinh_trang: string; p_tu_van: string[] }
         Returns: string

@@ -13,10 +13,15 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { TongQuanKyThuat } from "./KyThuat";
 import { Tab } from "@/components/ui/Tab";
 import { BangDoanhThu, BangHeThong, BangKho, BangKhach, BangTheNo } from "./bang";
+import { CotDoanhThuNgay } from "@/components/trang-chu/CotDoanhThuNgay";
+import { KhoiXepHang } from "@/components/trang-chu/KhoiXepHang";
+import type { KyXh } from "@/lib/ky-xep-hang";
+import { KhoiSinhNhatThang } from "@/components/trang-chu/KhoiSinhNhatThang";
+import { cnXepHang } from "@/lib/xep-hang";
 
 const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { chu: "Bảng điều hành của Chủ", ky_thuat: "Bảng điều khiển kỹ thuật", quan_ly: "Bảng điều hành", ke_toan: "Bảng kế toán", thu_kho: "Bảng kho", thu_ngan: "Bảng thu ngân", marketing: "Bảng marketing", nha_dau_tu: "Bảng nhà đầu tư" };
 
-export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string }> }) {
+export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string; xh?: string }> }) {
   const nd = await yeuCauQuyen("tongquan.xem");
   const sp = await searchParams;
   const homNay = homNayHCM();
@@ -41,7 +46,7 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
       {banner}
       {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" />}
       {/* Mỗi tab tải riêng: đầu trang + dải tab hiện ngay, phần số liệu hiện khung chờ rồi đổ vào. */}
-      <Suspense key={tab} fallback={<KhungCho />}>{bang ?? <HomNay nd={nd} homNay={homNay} coBaoCao={coBaoCao} coTien={coTien} />}</Suspense>
+      <Suspense key={tab} fallback={<KhungCho />}>{bang ?? <HomNay nd={nd} homNay={homNay} coBaoCao={coBaoCao} coTien={coTien} ky={sp.xh === "thang-truoc" ? "thang-truoc" : "thang-nay"} />}</Suspense>
     </>
   );
 }
@@ -55,7 +60,7 @@ function KhungCho() {
   );
 }
 
-async function HomNay({ nd, homNay, coBaoCao, coTien }: { nd: Awaited<ReturnType<typeof yeuCauQuyen>>; homNay: string; coBaoCao: boolean; coTien: boolean }) {
+async function HomNay({ nd, homNay, coBaoCao, coTien, ky }: { nd: Awaited<ReturnType<typeof yeuCauQuyen>>; homNay: string; coBaoCao: boolean; coTien: boolean; ky: KyXh }) {
   const db = sb();
   const cn = nd.chiNhanhId;
   const tu = new Date(`${homNay}T00:00:00+07:00`).toISOString();
@@ -75,10 +80,12 @@ async function HomNay({ nd, homNay, coBaoCao, coTien }: { nd: Awaited<ReturnType
   if (cn) tq = tq.eq("chi_nhanh_id", cn);
   const rong = Promise.resolve({ count: 0, data: [] as { con_no: number }[] });
   // Mọi truy vấn chạy cùng lúc (mỗi lượt hosting→Supabase ~90ms; chạy nối tiếp 6 lượt là chậm thấy rõ).
-  const [{ data: lich }, { count: phieuCho }, ngayAll, { data: no }, { count: demKho }, { count: demThe }] = await Promise.all([
+  const [{ data: lich }, { count: phieuCho }, ngayAll, { data: no }, { count: demKho }, { count: demThe }, cnXh] = await Promise.all([
     lq, coQuyen(nd, "phieu.xem") ? pq : rong,
     coBaoCao ? bcDoanhThuNgayNho(dThang.toISOString().slice(0, 10), homNay, cn ?? null) : Promise.resolve([]),
     coBaoCao ? nq : rong, coBaoCao && coQuyen(nd, "kho.xem") ? kq : rong, coQuyen(nd, "the.xem") ? tq : rong,
+    // Bảng xếp hạng + sinh nhật: Chủ không gắn chi nhánh thì lấy chi nhánh đang hoạt động duy nhất (Vinh).
+    cnXepHang(cn),
   ]);
   const idsK = [...new Set((lich ?? []).map((l) => l.khach_id))];
   const { data: ks } = idsK.length ? await db.from("khach_hang").select("id, ho_ten").in("id", idsK) : { data: [] };
@@ -89,8 +96,13 @@ async function HomNay({ nd, homNay, coBaoCao, coTien }: { nd: Awaited<ReturnType
   const canhBao: { nhan: string; href: string }[] = [];
   if (coBaoCao) {
     const ngay = ngayAll.filter((n) => n.ngay >= tuNgay);
+    // Đủ 14 ngày liên tiếp (ngày không có hoá đơn vẫn có cột 0) để trục ngày không bị nhảy.
+    const theoNgay = new Map(ngay.map((n) => [n.ngay, n]));
+    const cot14 = Array.from({ length: 14 }, (_, i) => congNgay(tuNgay, i)).map((d) => {
+      const n = theoNgay.get(d);
+      return { ngay: d, doanhThu: Number(n?.doanh_thu ?? 0), thucThu: Number(n?.thuc_thu ?? 0), soDon: Number(n?.so_don ?? 0), soBuoi: Number(n?.so_buoi ?? 0) };
+    });
     const hn = (ngay ?? []).find((n) => n.ngay === homNay);
-    const max = Math.max(1, ...(ngay ?? []).map((n) => Number(n.doanh_thu)));
     const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
     if (tongNo > 0 && coTien) canhBao.push({ nhan: `${(no ?? []).length} hoá đơn còn nợ, tổng ${tienVN(tongNo)}`, href: "/bao-cao?tab=no" });
     phanSo = (
@@ -100,14 +112,7 @@ async function HomNay({ nd, homNay, coBaoCao, coTien }: { nd: Awaited<ReturnType
           : [{ nhan: "Đơn mới hôm nay", so: String(hn?.so_don ?? 0) }, { nhan: "Buổi đã làm hôm nay", so: String(hn?.so_buoi ?? 0) }]} />
         {coTien && (
           <div className="mt-6"><MucTrang noi tieuDe="Doanh thu 14 ngày gần nhất" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Xem báo cáo</Link>}>
-            <div className="flex h-44 items-end gap-1.5" role="img" aria-label="Biểu đồ doanh thu 14 ngày">
-              {(ngay ?? []).map((n) => (
-                <div key={n.ngay} className="group flex flex-1 flex-col items-center justify-end gap-1" title={`${ngayVN(n.ngay)}: ${tienVN(n.doanh_thu)}`}>
-                  <div className="w-full rounded-t-[3px]" style={{ height: `${Math.max(2, (Number(n.doanh_thu) / max) * 140)}px`, background: n.ngay === homNay ? "var(--gradient-vang)" : "var(--sac-luc-mau)", opacity: n.ngay === homNay ? 1 : 0.55 }} />
-                  <span className="text-[10px] text-muc-3">{n.ngay.slice(8)}</span>
-                </div>
-              ))}
-            </div>
+            <CotDoanhThuNgay du={cot14} homNay={homNay} />
           </MucTrang></div>
         )}
       </>
@@ -141,6 +146,20 @@ async function HomNay({ nd, homNay, coBaoCao, coTien }: { nd: Awaited<ReturnType
           <MucTrang noi tieuDe="Lối tắt"><ul className="grid gap-2 sm:grid-cols-2">{locMenu(nd).filter((m) => m.duong_dan !== "/tong-quan").map((m) => <li key={m.duong_dan}><Link href={m.duong_dan} className="block rounded-nho border border-vien px-3 py-2 text-[14px] hover:border-nhan">{m.ten}</Link></li>)}</ul></MucTrang>
         )}
       </div>
+      {coBaoCao && (
+        <div className="mt-8">
+          <Suspense key={ky} fallback={<div aria-busy="true" aria-label="Đang tải bảng xếp hạng" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="h-80 animate-pulse rounded-hop bg-vien/50" />)}</div>}>
+            <KhoiXepHang cn={cnXh.id} tenCn={cnXh.ten} ky={ky} homNay={homNay} xemTien={coTien} goc="/tong-quan?tab=hom-nay" />
+          </Suspense>
+        </div>
+      )}
+      {coQuyen(nd, "khach.xem") && (
+        <div className="mt-8">
+          <Suspense fallback={<div aria-busy="true" aria-label="Đang tải khách sinh nhật" className="h-64 animate-pulse rounded-hop bg-vien/50" />}>
+            <KhoiSinhNhatThang cn={cnXh.id} tenCn={cnXh.ten} homNay={homNay} xemSdt={coQuyen(nd, "khach.sdt")} xemTien={coTien} />
+          </Suspense>
+        </div>
+      )}
     </>
   );
 }

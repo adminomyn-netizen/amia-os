@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { BarChart3 } from "lucide-react";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
@@ -68,18 +69,16 @@ export default async function ThongKeKhach({ searchParams }: { searchParams: Pro
   if (tu < congNgay(den, -91)) tu = congNgay(den, -91);
   const soNgay = Math.round((Date.parse(den) - Date.parse(tu)) / 86_400_000) + 1;
   const macDinh = !sp.tu && !sp.den;
-  const [t0, { data: cn }, ngay, tc] = await Promise.all([docThongKe().catch((e: Error) => { console.error("[khach-thong-ke]", e.message); return null; }), sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true), docKhachNgay(soNgay, den === hom ? "" : den).catch((e: Error) => { console.error("[khach-thong-ke-ngay]", e.message); return null; }), tuyChonLocKhach()]);
-  const t = t0 ?? ({ tong: 0, gioi_tinh: {}, nguon: {}, chi_nhanh: {}, tinh: [], chua_co_tinh: 0, tuoi: {}, moi_theo_thang: [], trang_thai: {}, hang: {}, co_the: 0, dang_no: 0, co_diem: 0, tong_diem: 0 } as ThongKe);
-  const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
-  const sap = (o: Record<string, number>) => Object.entries(o ?? {}).sort((a, b) => b[1] - a[1]);
-  const the = [{ nhan: "Có thẻ đang dùng", so: t.co_the, lk: "/khach-hang?the=co" }, { nhan: "Đang nợ", so: t.dang_no, lk: "/khach-hang?no=co" }, { nhan: "Có điểm thưởng", so: t.co_diem, lk: "/khach-hang?diem_tu=1" }];
+  // Cơ cấu khách (hàm thong_ke_khach ~1,7s khi chưa nhớ) KHÔNG chặn trang: đầu trang + biểu đồ hiện trước, các khối cơ cấu điền sau (Suspense).
+  const pThongKe = docThongKe().catch((e: Error) => { console.error("[khach-thong-ke]", e.message); return null; });
+  const ngay = await docKhachNgay(soNgay, den === hom ? "" : den).catch((e: Error) => { console.error("[khach-thong-ke-ngay]", e.message); return null; });
   return (
     <div className="space-y-4">
-      <TieuDeNoi gon tieuDe="Thống kê khách" icon={BarChart3} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>{t0 ? `${so(t.tong)} khách · tổng ${so(t.tong_diem)} điểm thưởng · ` : ""}số liệu làm mới mỗi 5 phút</>}>
+      <TieuDeNoi gon tieuDe="Thống kê khách" icon={BarChart3} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<><Suspense fallback={null}><TongDau pThongKe={pThongKe} /></Suspense>số liệu làm mới mỗi 5 phút</>}>
         <NutXuatExcel loai="thong-ke-khach" ten="thống kê khách" />
       </TieuDeNoi>
       <dl className="grid grid-cols-2 gap-2">
-        <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Tổng số khách hàng</dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{t0 ? so(t.tong) : "—"}</dd></div>
+        <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Tổng số khách hàng</dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc"><Suspense fallback={<span aria-hidden className="inline-block h-6 w-20 animate-pulse rounded-[3px] bg-giay-tram align-middle" />}><TongSo pThongKe={pThongKe} /></Suspense></dd></div>
         <div className="the-noi the-noi-thap px-4 pb-3 pt-3.5"><dt className="text-[12px] text-muc-3">Khách mới trong tuần <span className="text-muc-3">(hồ sơ tạo 7 ngày gần nhất)</span></dt><dd className="text-[20px] font-medium leading-tight tabular-nums text-muc">{so(ngay?.moi_tuan ?? 0)}</dd></div>
       </dl>
       <section className="the-noi p-4 pt-5">
@@ -92,6 +91,35 @@ export default async function ThongKeKhach({ searchParams }: { searchParams: Pro
         </div>
         {ngay ? <BieuDoKhachNgay dong={ngay.ngay} /> : <p role="alert" className="text-[13px] text-loi">Chưa tải được biểu đồ (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
       </section>
+      <Suspense fallback={<div aria-busy="true" aria-label="Đang tải cơ cấu khách" className="grid gap-4 xl:grid-cols-2">{Array.from({ length: 4 }, (_, i) => <div key={i} className="h-56 animate-pulse rounded-the bg-giay-tram" />)}</div>}>
+        <CoCau pThongKe={pThongKe} />
+      </Suspense>
+    </div>
+  );
+}
+
+type PThongKe = Promise<ThongKe | null>;
+const RONG = { tong: 0, gioi_tinh: {}, nguon: {}, chi_nhanh: {}, tinh: [], chua_co_tinh: 0, tuoi: {}, moi_theo_thang: [], trang_thai: {}, hang: {}, co_the: 0, dang_no: 0, co_diem: 0, tong_diem: 0 } as ThongKe;
+
+async function TongDau({ pThongKe }: { pThongKe: PThongKe }) {
+  const t = await pThongKe;
+  return t ? <>{so(t.tong)} khách · tổng {so(t.tong_diem)} điểm thưởng · </> : null;
+}
+
+async function TongSo({ pThongKe }: { pThongKe: PThongKe }) {
+  const t = await pThongKe;
+  return <>{t ? so(t.tong) : "—"}</>;
+}
+
+/** Các khối cơ cấu khách (trạng thái, hạng, thẻ, nhóm, giới tính, tuổi, nguồn, chi nhánh, tỉnh, khách mới 12 tháng). */
+async function CoCau({ pThongKe }: { pThongKe: PThongKe }) {
+  const [t0, { data: cn }, tc] = await Promise.all([pThongKe, sb().from("chi_nhanh").select("id, ten").eq("hoat_dong", true), tuyChonLocKhach()]);
+  const t = t0 ?? RONG;
+  const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
+  const sap = (o: Record<string, number>) => Object.entries(o ?? {}).sort((a, b) => b[1] - a[1]);
+  const the = [{ nhan: "Có thẻ đang dùng", so: t.co_the, lk: "/khach-hang?the=co" }, { nhan: "Đang nợ", so: t.dang_no, lk: "/khach-hang?no=co" }, { nhan: "Có điểm thưởng", so: t.co_diem, lk: "/khach-hang?diem_tu=1" }];
+  return (
+    <>
       {!t0 && <p role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Chưa tải được các số liệu cơ cấu bên dưới (hệ thống đang chậm). Tải lại trang sau ít phút để thử lại.</p>}
       {t0 && <div className="grid gap-4 xl:grid-cols-2">
         <Khoi tieuDe="Trạng thái" tong={t.tong} dong={sap(t.trang_thai).map(([k, n]) => ({ nhan: TRANG_THAI_KHACH[k]?.nhan ?? k, so: n, lk: `/khach-hang?trang_thai=${k}` }))} />
@@ -105,6 +133,6 @@ export default async function ThongKeKhach({ searchParams }: { searchParams: Pro
         <Khoi tieuDe="Tỉnh/thành (10 nơi nhiều khách nhất)" tong={t.tong} dong={(t.tinh ?? []).map((x) => ({ nhan: x.ten, so: x.so }))} ghiChu={`${so(t.chua_co_tinh)} khách chưa có tỉnh/thành.`} />
         <Khoi tieuDe="Khách mới 12 tháng gần nhất" tong={t.moi_theo_thang.reduce((s, x) => s + x.so, 0)} dong={t.moi_theo_thang.map((x) => ({ nhan: `Tháng ${Number(x.thang.slice(5))}/${x.thang.slice(0, 4)}`, so: x.so, lk: `/khach-hang?tao_tu=${x.thang}-01&tao_den=${x.thang}-${new Date(Number(x.thang.slice(0, 4)), Number(x.thang.slice(5)), 0).getDate()}` }))} />
       </div>}
-    </div>
+    </>
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { PhoneCall } from "lucide-react";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { yeuCauQuyen } from "@/lib/auth";
@@ -28,13 +29,14 @@ const TRUONG_GOI: Truong[] = [
 export default async function ChamSocKhach({ searchParams }: { searchParams: Promise<{ loai?: string; cn?: string; n?: string; trang?: string }> }) {
   const nd = await yeuCauQuyen("khach.xem");
   const sp = await searchParams;
-  const ng = await docNguongCSKH();
-  const { cn, ds: dsCn, khoa } = await chiNhanhXem(nd, sp.cn);
+  const [ng, { cn, ds: dsCn, khoa }] = await Promise.all([docNguongCSKH(), chiNhanhXem(nd, sp.cn)]);
   const loai: MaHang = laMaHang(sp.loai) ? sp.loai : "nhac_lich";
   const sauDt = soTrongKhoang(sp.n, 0, 60, ng.sauDieuTriNgay)!;
   const trang = Math.max(1, Math.min(10_000, Number(sp.trang) || 1));
-  const [dem, ds] = await Promise.all([demChamSoc(cn, sauDt), docChamSoc(loai, cn, sauDt, trang)]);
-  const tong = ds[0]?.tong ?? dem[loai] ?? 0;
+  // Số trên các nút lọc (quét mọi hàng đợi ~0,5s) KHÔNG chặn danh sách: nút hiện ngay, số điền sau (Suspense).
+  const pDem = demChamSoc(cn, sauDt).catch(() => null);
+  const ds = await docChamSoc(loai, cn, sauDt, trang);
+  const tong = ds[0]?.tong ?? 0;
   const soTrang = Math.max(1, Math.ceil(tong / DONG_MOI_TRANG));
   const sua = coQuyen(nd, "khach.sua"), xemSdt = coQuyen(nd, "khach.sdt"), datLich = coQuyen(nd, "lich.sua");
   const tenCn = new Map(dsCn.map((c) => [c.id, c.ten]));
@@ -56,7 +58,7 @@ export default async function ChamSocKhach({ searchParams }: { searchParams: Pro
         {HANG.map((h) => (
           <Link key={h.ma} href={lk({ loai: h.ma })} scroll={false} aria-current={h.ma === loai ? "page" : undefined}
             className={`flex h-9 shrink-0 items-center gap-1.5 rounded-nho border px-3 text-[13px] font-medium ${h.ma === loai ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien-dam text-muc-2 hover:border-nhan"}`}>
-            {h.nhan}<span className="tabular-nums text-muc-3">{soVN(dem[h.ma] ?? 0)}</span>
+            {h.nhan}<Suspense fallback={<span aria-hidden className="h-3 w-5 animate-pulse rounded-[3px] bg-giay-tram" />}><SoHang pDem={pDem} ma={h.ma} /></Suspense>
           </Link>
         ))}
       </nav>
@@ -122,4 +124,10 @@ function mocLyDo(r: { loai: string; moc: number | null }) {
   if (r.loai === "dinh_ky" && r.moc) return `Định kỳ ${r.moc} tháng sau lần đến cuối`;
   if (r.loai === "sinh_nhat") return "Sinh nhật";
   return nhanHang(r.loai);
+}
+
+/** Số khách của một hàng đợi (chờ hàm đếm dem_cham_soc; lỗi thì để trống, không làm hỏng trang). */
+async function SoHang({ pDem, ma }: { pDem: Promise<Record<string, number> | null>; ma: string }) {
+  const dem = await pDem;
+  return dem ? <span className="tabular-nums text-muc-3">{soVN(dem[ma] ?? 0)}</span> : null;
 }

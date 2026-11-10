@@ -1,5 +1,6 @@
 import { bcDoanhThuNgayNho } from "@/lib/bao-cao-nho-dem";
 import Link from "next/link";
+import { Suspense } from "react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
@@ -18,7 +19,6 @@ const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { chu: "Bảng điều 
 export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string }> }) {
   const nd = await yeuCauQuyen("tongquan.xem");
   const sp = await searchParams;
-  const db = sb();
   const homNay = homNayHCM();
   const cn = nd.chiNhanhId;
   const TAB = [
@@ -34,13 +34,52 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
   const coTien = coQuyen(nd, "baocao.tien");
   const banner = sp["khong-du-quyen"] ? <p role="alert" className="mb-5 rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p> : null;
 
+  const bang = tab === "doanh-thu" ? <BangDoanhThu cn={cn} /> : tab === "khach" ? <BangKhach cn={cn} /> : tab === "the-no" ? <BangTheNo cn={cn} xemTien={coTien} /> : tab === "kho" ? <BangKho cn={cn} /> : tab === "he-thong" ? <><TongQuanKyThuat /><BangHeThong /></> : null;
+  return (
+    <>
+      <TieuDeNoi tieuDe={`Xin chào, ${nd.hoTen}`} phu={`${TIEU_DE_VAI_TRO[nd.vaiTro] ?? "Tổng quan"} · hôm nay ${ngayVN(homNay)}${cn ? "" : " · mọi chi nhánh"}`} />
+      {banner}
+      {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" />}
+      {/* Mỗi tab tải riêng: đầu trang + dải tab hiện ngay, phần số liệu hiện khung chờ rồi đổ vào. */}
+      <Suspense key={tab} fallback={<KhungCho />}>{bang ?? <HomNay nd={nd} homNay={homNay} coBaoCao={coBaoCao} coTien={coTien} />}</Suspense>
+    </>
+  );
+}
+
+function KhungCho() {
+  return (
+    <div aria-busy="true" aria-label="Đang tải" className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 animate-pulse rounded-hop bg-vien/60" />)}</div>
+      <div className="h-56 animate-pulse rounded-hop bg-vien/50" />
+    </div>
+  );
+}
+
+async function HomNay({ nd, homNay, coBaoCao, coTien }: { nd: Awaited<ReturnType<typeof yeuCauQuyen>>; homNay: string; coBaoCao: boolean; coTien: boolean }) {
+  const db = sb();
+  const cn = nd.chiNhanhId;
   const tu = new Date(`${homNay}T00:00:00+07:00`).toISOString();
   const den = new Date(`${congNgay(homNay, 1)}T00:00:00+07:00`).toISOString();
   let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(60);
   if (cn) lq = lq.eq("chi_nhanh_id", cn);
   let pq = db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"]).is("buoi_id", null);
   if (cn) pq = pq.eq("chi_nhanh_id", cn);
-  const [{ data: lich }, { count: phieuCho }] = await Promise.all([lq, coQuyen(nd, "phieu.xem") ? pq : Promise.resolve({ count: 0 })]);
+  const tuNgay = congNgay(homNay, -13);
+  // Đọc bản tính sẵn của trang chủ (từ đầu tháng trước đến hôm nay, 0305) rồi lấy 14 ngày cuối — số theo ngày y hệt gọi riêng 14 ngày.
+  const dauThang = `${homNay.slice(0, 8)}01`, dThang = new Date(`${dauThang}T00:00:00Z`); dThang.setUTCMonth(dThang.getUTCMonth() - 1);
+  let nq = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0);
+  if (cn) nq = nq.eq("chi_nhanh_id", cn);
+  let kq = db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true }).eq("duoi_muc_toi_thieu", true);
+  if (cn) kq = kq.eq("chi_nhanh_id", cn);
+  let tq = db.from("v_the_khach").select("id", { count: "exact", head: true }).eq("tinh_trang", "sap_het").eq("loai", "lan");
+  if (cn) tq = tq.eq("chi_nhanh_id", cn);
+  const rong = Promise.resolve({ count: 0, data: [] as { con_no: number }[] });
+  // Mọi truy vấn chạy cùng lúc (mỗi lượt hosting→Supabase ~90ms; chạy nối tiếp 6 lượt là chậm thấy rõ).
+  const [{ data: lich }, { count: phieuCho }, ngayAll, { data: no }, { count: demKho }, { count: demThe }] = await Promise.all([
+    lq, coQuyen(nd, "phieu.xem") ? pq : rong,
+    coBaoCao ? bcDoanhThuNgayNho(dThang.toISOString().slice(0, 10), homNay, cn ?? null) : Promise.resolve([]),
+    coBaoCao ? nq : rong, coBaoCao && coQuyen(nd, "kho.xem") ? kq : rong, coQuyen(nd, "the.xem") ? tq : rong,
+  ]);
   const idsK = [...new Set((lich ?? []).map((l) => l.khach_id))];
   const { data: ks } = idsK.length ? await db.from("khach_hang").select("id, ho_ten").in("id", idsK) : { data: [] };
   const tenK = new Map((ks ?? []).map((k) => [k.id, k.ho_ten]));
@@ -49,15 +88,9 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
   let phanSo: React.ReactNode = null;
   const canhBao: { nhan: string; href: string }[] = [];
   if (coBaoCao) {
-    const tuNgay = congNgay(homNay, -13);
-    // Đọc bản tính sẵn của trang chủ (từ đầu tháng trước đến hôm nay, 0305) rồi lấy 14 ngày cuối — số theo ngày y hệt gọi riêng 14 ngày.
-    const dauThang = `${homNay.slice(0, 8)}01`, dThang = new Date(`${dauThang}T00:00:00Z`); dThang.setUTCMonth(dThang.getUTCMonth() - 1);
-    const ngay = (await bcDoanhThuNgayNho(dThang.toISOString().slice(0, 10), homNay, cn ?? null)).filter((n) => n.ngay >= tuNgay);
+    const ngay = ngayAll.filter((n) => n.ngay >= tuNgay);
     const hn = (ngay ?? []).find((n) => n.ngay === homNay);
     const max = Math.max(1, ...(ngay ?? []).map((n) => Number(n.doanh_thu)));
-    let nq = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0);
-    if (cn) nq = nq.eq("chi_nhanh_id", cn);
-    const { data: no } = await nq;
     const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
     if (tongNo > 0 && coTien) canhBao.push({ nhan: `${(no ?? []).length} hoá đơn còn nợ, tổng ${tienVN(tongNo)}`, href: "/bao-cao?tab=no" });
     phanSo = (
@@ -80,29 +113,17 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
       </>
     );
     if (coQuyen(nd, "kho.xem")) {
-      let kq = db.from("v_ton_kho").select("san_pham_id", { count: "exact", head: true }).eq("duoi_muc_toi_thieu", true);
-      if (cn) kq = kq.eq("chi_nhanh_id", cn);
-      const { count } = await kq;
-      if ((count ?? 0) > 0) canhBao.push({ nhan: `${count} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
+      if ((demKho ?? 0) > 0) canhBao.push({ nhan: `${demKho} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
     }
   }
   if ((phieuCho ?? 0) > 0) canhBao.push({ nhan: `${phieuCho} phiếu cấp vật tư đang chờ kho cấp hoặc Chuyên viên trị liệu nhận`, href: "/phieu-cap" });
   if (chua > 0 && coQuyen(nd, "lich.xem")) canhBao.push({ nhan: `${chua} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
   if (coQuyen(nd, "the.xem")) {
-    let tq = db.from("v_the_khach").select("id", { count: "exact", head: true }).eq("tinh_trang", "sap_het").eq("loai", "lan");
-    if (cn) tq = tq.eq("chi_nhanh_id", cn);
-    const { count } = await tq;
-    if ((count ?? 0) > 0) canhBao.push({ nhan: `${count} thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)`, href: "/the" });
+    if ((demThe ?? 0) > 0) canhBao.push({ nhan: `${demThe} thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)`, href: "/the" });
   }
 
-  const bang = tab === "doanh-thu" ? <BangDoanhThu cn={cn} /> : tab === "khach" ? <BangKhach cn={cn} /> : tab === "the-no" ? <BangTheNo cn={cn} xemTien={coTien} /> : tab === "kho" ? <BangKho cn={cn} /> : tab === "he-thong" ? <><TongQuanKyThuat /><BangHeThong /></> : null;
   return (
     <>
-      <TieuDeNoi tieuDe={`Xin chào, ${nd.hoTen}`} phu={`${TIEU_DE_VAI_TRO[nd.vaiTro] ?? "Tổng quan"} · hôm nay ${ngayVN(homNay)}${cn ? "" : " · mọi chi nhánh"}`} />
-      {banner}
-      {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" />}
-      {bang ?? (
-        <>
           {phanSo}
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <MucTrang noi tieuDe="Cần xử lý">
@@ -120,8 +141,6 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
           <MucTrang noi tieuDe="Lối tắt"><ul className="grid gap-2 sm:grid-cols-2">{locMenu(nd).filter((m) => m.duong_dan !== "/tong-quan").map((m) => <li key={m.duong_dan}><Link href={m.duong_dan} className="block rounded-nho border border-vien px-3 py-2 text-[14px] hover:border-nhan">{m.ten}</Link></li>)}</ul></MucTrang>
         )}
       </div>
-        </>
-      )}
     </>
   );
 }

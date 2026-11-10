@@ -103,8 +103,8 @@ export async function BangKhach({ cn }: { cn: string | null }) {
 
 export async function BangTheNo({ cn, xemTien }: { cn: string | null; xemTien: boolean }) {
   const db = sb();
-  const pb = await layPhanBo(cn);
-  const [{ data: du }, { data: no }] = await Promise.all([
+  const [pb, { data: du }, { data: no }] = await Promise.all([
+    layPhanBo(cn),
     db.rpc("bc_the_con_du", { p_cn: cnArg(cn) }),
     xemTien ? (() => { let q = db.from("hoa_don").select("id, ma, khach_id, con_no, ngay_hd").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("con_no", { ascending: false }).limit(8); if (cn) q = q.eq("chi_nhanh_id", cn); return q; })() : Promise.resolve({ data: [] }),
   ]);
@@ -147,10 +147,9 @@ export async function BangTheNo({ cn, xemTien }: { cn: string | null; xemTien: b
 
 export async function BangKho({ cn }: { cn: string | null }) {
   const db = sb();
-  const pb = await layPhanBo(cn);
   let q = db.from("v_ton_kho").select("san_pham_id, ma, ten, ton, ton_toi_thieu, don_vi, duoi_muc_toi_thieu");
   if (cn) q = q.eq("chi_nhanh_id", cn);
-  const { data } = await q;
+  const [pb, { data }] = await Promise.all([layPhanBo(cn), q]);
   const ds = data ?? [];
   const thieu = ds.filter((r) => r.duoi_muc_toi_thieu);
   return (

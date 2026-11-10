@@ -79,6 +79,7 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe }: { r: BuoiCho; n
           </div>
         </div>
       )}
+      <p className="mt-2"><Link href={`/in/phieu-lam/${r.id}`} target="_blank" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu làm dịch vụ</Link></p>
       {kq && <p className="mt-2"><BaoPhieuBuoi phieu={kq} /></p>}
     </li>
   );

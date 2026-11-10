@@ -94,6 +94,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
                 return ds.length || p ? <span className="block max-w-[280px] text-[13px]">{ds.join(", ")}{p && <span className="block text-muc-3">{[p.dat_van_de, p.phan_tich].filter(Boolean).join(" · ")}</span>}</span> : ""; } },
               { nhan: "Tham số", hienThi: (r) => Object.entries((r.tham_so ?? {}) as Record<string, unknown>).map(([a, b]) => `${a}: ${b}`).join(", ") },
               { nhan: "Doanh thu buổi", hienThi: (r) => (r.trang_thai === "huy" ? <s className="text-muc-3">{tienVN(r.doanh_thu_buoi)}</s> : tienVN(r.doanh_thu_buoi)), phai: true },
+              { nhan: "", hienThi: (r) => <Link href={`/in/phieu-lam/${r.id}`} target="_blank" className="whitespace-nowrap text-[13px] font-medium text-nhan-dam hover:underline">In phiếu</Link> },
               { nhan: "", hienThi: (r) => (r.trang_thai === "huy" ? <span className="text-[13px] text-muc-3">Đã huỷ: {r.ly_do_huy}</span> : dieuChinh ? <NutHop kieu="chu" nguy nhan="Huỷ buổi" tieuDe="Huỷ buổi đã làm" moTa="Hoàn lại 1 buổi vào thẻ." an={{ buoi_id: r.id, the_id: id }} nhanLuu="Huỷ buổi" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={huyBuoi} /> : null) },
             ]} />
           </MucTrang>

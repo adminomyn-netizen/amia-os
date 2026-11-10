@@ -14,7 +14,7 @@ import { tenGonNv } from "@/lib/ten-nv";
 // Chỉ "Đã làm xong" mới trừ buổi: hàm xong_buoi_cho gọi đúng thuc_hien_buoi có sẵn, khoá lượt chờ để bấm hai lần không trừ hai buổi.
 
 type KQ = { ok?: true; loi?: string; canhBao?: string };
-export type KQChuyen = KQ & { chuyenCho?: string };
+export type KQChuyen = KQ & { chuyenCho?: string; /** id lượt chờ vừa tạo, để in phiếu làm dịch vụ. */ luotId?: string };
 export type KQXong = KQ & Partial<PhieuBuoi> & { xemPhieu?: boolean };
 
 const lamMoi = (theId?: string) => {
@@ -66,11 +66,11 @@ export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
     if (!l || l.khach_id !== t.khach_id) return { loi: "Lịch hẹn không thuộc khách của thẻ." };
     if (["huy", "khong_den", "hoan_thanh"].includes(l.trang_thai)) return { loi: "Lịch hẹn đã huỷ / khách không đến / đã hoàn thành." };
   }
-  const { error } = await db.from("buoi_cho_lam").insert({
+  const { data: moi, error } = await db.from("buoi_cho_lam").insert({
     the_id: theId, khach_id: t.khach_id, chi_nhanh_id: t.chi_nhanh_id, dich_vu_id: dvId, nv_ids: nguoi.nv, bac_si_id: tuyChon(chuoi(fd, "bac_si_id")), lich_hen_id: tuyChon(lichId),
     ngay: homNayHCM(), tham_so: docThamSo(fd), ghi_chu: chuoi(fd, "ghi_chu").slice(0, 1000) || null, tu_van_ids: nguoi.tuVan, tu_van_tinh_trang: nguoi.tinhTrang, tu_van_de_xuat: nguoi.deXuat,
     ke_tiep_ngay: hen.co ? hen.ngay : null, ke_tiep_noi_dung: hen.co ? hen.noiDung : null, chuyen_boi: nd.nhanVienId,
-  });
+  }).select("id").maybeSingle();
   if (error) return { loi: error.code === "23505" ? "Khách này đã được chuyển làm dịch vụ này và đang chờ chuyên viên trị liệu. Xem ở mục Khách chờ làm." : thongBaoLoi(error) };
   lamMoi(theId);
   const tenNv = new Map((nv ?? []).map((n) => [n.id, tenGonNv(n.ho_ten)]));
@@ -78,7 +78,7 @@ export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
   const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", t.khach_id).maybeSingle();
   // Báo đẩy tới điện thoại chuyên viên (chuông trong app tự cập nhật qua canh-bao). Lỗi đẩy không làm hỏng việc chuyển.
   await guiChoNhanVien(nguoi.nv, { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${dv.ten}${nd.hoTen ? ` (${tenGonNv(nd.hoTen)} chuyển)` : ""}`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null);
-  return { ok: true, chuyenCho };
+  return { ok: true, chuyenCho, luotId: moi?.id };
 }
 
 /** Chuyên viên bấm Bắt đầu làm: ghi giờ bắt đầu; lượt gắn lịch hẹn thì mở ca ("Đang phục vụ") để chuông quá giờ đếm đúng. */

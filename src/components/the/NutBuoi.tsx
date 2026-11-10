@@ -7,13 +7,14 @@ import type { LuaChon } from "@/components/ui/Chon";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { chuyenTriLieu } from "@/app/(app)/the/cho-lam/actions";
 
-export type KetQuaBuoi = { ok?: boolean; loi?: string; canhBao?: string; phieuId?: string; phieuMa?: string; xemPhieu?: boolean; phieuBacSi?: boolean; /** Đã chuyển cho chuyên viên trị liệu (chưa trừ buổi). */ chuyenCho?: string };
+export type KetQuaBuoi = { ok?: boolean; loi?: string; canhBao?: string; phieuId?: string; phieuMa?: string; xemPhieu?: boolean; phieuBacSi?: boolean; /** Đã chuyển cho chuyên viên trị liệu (chưa trừ buổi). */ chuyenCho?: string; luotId?: string };
 
 /** Dòng báo sau khi bấm: đã chuyển cho chuyên viên trị liệu (chờ làm), hoặc phiếu vật tư vừa tạo cho buổi (có quyền xem phiếu thì là link). */
 export function BaoPhieuBuoi({ phieu }: { phieu: KetQuaBuoi | null }) {
   if (phieu?.chuyenCho !== undefined) return (
     <span className="text-[12.5px] text-muc-3">
       Đã chuyển cho {phieu.chuyenCho || "chuyên viên trị liệu"}, chờ làm (chưa trừ buổi) · <Link href="/the/cho-lam" className="font-medium text-nhan-dam hover:underline">Xem khách chờ làm</Link>
+      {phieu.luotId && <> · <Link href={`/in/phieu-lam/${phieu.luotId}`} target="_blank" className="font-medium text-nhan-dam hover:underline">In phiếu làm dịch vụ</Link></>}
     </span>
   );
   if (!phieu?.phieuId) return null;

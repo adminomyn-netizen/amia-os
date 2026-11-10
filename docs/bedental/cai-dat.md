@@ -1,6 +1,8 @@
 # BeDental ERP — Mục CÀI ĐẶT (đề bài cho AMIA OS)
 
-Nguồn: bản chụp chữ demo BeDental ERP (nhóm C) và bản chụp bổ sung đọc được thêm: Thông tin chung, Chi nhánh, Web đặt lịch, Tài khoản ngân hàng, Bảng tin công ty, Danh mục dịch vụ / sản phẩm / thẻ, Hoa hồng, Chính sách phê duyệt, Trung tâm thông báo, Zalo Mini App. Không chép tên người, SĐT, số tài khoản, email, mã khách, số giấy phép. Chỗ nào vẫn không đọc được thì ghi "chưa đọc được". [NHA KHOA] = điểm riêng nha khoa.
+Nguồn: bản chụp chữ demo BeDental ERP (nhóm C, 27/10/2026) + đọc lại trực tiếp demo ngày 10/11/2026 (mở form chỉ để đọc trường, không bấm Lưu). Không chép tên người, SĐT, số tài khoản, email, mã khách, số giấy phép. Chỗ nào vẫn không đọc được thì ghi "chưa đọc được". [NHA KHOA] = điểm riêng nha khoa.
+
+Cập nhật 10/11/2026: đọc được form Thêm chi nhánh (2 tab, GPS chấm công theo chi nhánh), form Tạo dịch vụ (3 tab, giá vốn, giá theo nhân viên, địa điểm cung cấp), Tạo sản phẩm (3 tab, nhãn hiệu, quốc gia, dung tích, Mua đứt/Ký gửi, khu vực kho), Tạo thẻ dịch vụ (giá trị 1 lần để tính hoa hồng, tự giảm hoa hồng theo giảm giá, màu thẻ, nhóm thẻ), form Tài khoản ngân hàng, form Bảng tin (soạn thảo trực quan/HTML, lưu nháp/xuất bản), trạng thái tích thật của Chính sách phê duyệt, form Hoa hồng nhân viên sau khi chọn người + Thiết lập nâng cao. MỚI so với 27/10: (1) trang **Cấu hình gửi email** (`#/gmail_settings`, Gmail OAuth, mẫu email theo 27 nhóm mục đích, thông báo nhân viên, email gửi lỗi) — không có thẻ trên trang Cài đặt, mở từ link nội bộ; (2) Web đặt lịch thêm ô "Địa chỉ trang đặt hẹn trên website (dùng cho link giới thiệu CTV)" dạng `<địa chỉ>/ref=<SĐT CTV>`; (3) Zalo Mini App tách 2 tab "Cấu hình chung" | "Ưu đãi · Đối tác · Tin tức" (CMS nội dung có trạng thái + lịch); (4) policy hoa hồng thực thu lên bản r65 (27/10 là r48); (5) page `zalo_campaigns` "Chiến dịch truyền thông" có trong bảng tên route nhưng không có thẻ (xem marketing.md). Phần Marketing trong Cài đặt (hoa hồng giới thiệu 2 cấp, webhook/tích hợp, Trung tâm thông báo, Chiến dịch truyền thông, tab Mã ưu đãi của Mini App) đọc lại ở marketing.md.
 
 ## 1. Mục đích
 
@@ -30,7 +32,12 @@ Khối 1 - hồ sơ cửa hàng:
 Khối 2 - "Thông tin pháp lý trên văn bản": dùng cho văn bản nội bộ ở Văn bản & Hợp đồng. Khi bấm "Ban hành & cấp số", hệ thống cấp số theo mẫu 01/2026/QĐ-BE (số thứ tự / năm / loại văn bản - ký hiệu viết tắt công ty), đánh số CHUNG toàn công ty, mỗi loại văn bản một dãy số theo năm. Trường: Tên pháp lý công ty * | Mã số thuế * | Ký hiệu viết tắt * | Địa chỉ đăng ký * | nút "Lưu thông tin pháp lý". [NHA KHOA] không đặc thù: mọi doanh nghiệp đều cần.
 
 ### 2.1b Các thẻ Cửa hàng khác
-Chi nhánh -> 2.9 · Web đặt lịch -> 2.10 · Tài khoản ngân hàng -> tai-chinh-ke-toan.md 3.11 · Bảng tin công ty -> 2.11 · Zalo Mini App -> 2.12 · Trung tâm thông báo -> 2.13 · Webhook và nhật ký tích hợp -> marketing.md 2.3.
+Chi nhánh -> 2.9 · Web đặt lịch -> 2.10 · Tài khoản ngân hàng -> 2.1c (và tai-chinh-ke-toan.md 3.11) · Bảng tin công ty -> 2.11 · Zalo Mini App -> 2.12 · Trung tâm thông báo -> 2.13 (chi tiết marketing.md) · Cấu hình gửi email -> 2.14 · Webhook và nhật ký tích hợp -> marketing.md.
+
+### 2.1c Tài khoản ngân hàng (`#/bank_accounts`) - ĐỌC ĐƯỢC
+- Nút "Thêm tài khoản"; lọc chi nhánh. Ghi chú: số tài khoản luôn che; tài khoản đã ngừng không dùng lập phiếu mới nhưng lịch sử chứng từ giữ nguyên tên và số đã che tại thời điểm ghi sổ.
+- Mỗi thẻ: tên tài khoản (có loại "TK chờ thanh toán bảo lãnh" [NHA KHOA]) · ngân hàng · số che `••••1234` · nút Sửa, **Ngừng sử dụng** (không xóa).
+- Form: Tên tài khoản · Ngân hàng · Chủ tài khoản · Số tài khoản ("Để trống nếu giữ nguyên" khi sửa). Quyền xem / thêm-sửa-ngừng tài khoản ngân hàng là quyền nhạy cảm riêng.
 
 ### 2.2 Danh mục dịch vụ
 - Cột trái "Phân nhóm dịch vụ": cây nhóm có số lượng. Demo: 117 dịch vụ, 13 nhóm: Chăm sóc răng miệng tại nhà · Chỉnh nha - niềng răng · Cấy ghép Implant · Khám và chẩn đoán · Khám chữa bệnh · Nha khoa dự phòng · Nha chu · Phục hồi · Thẩm mỹ · Phẫu thuật răng hàm mặt · Phục hình cố định (răng sứ, cầu răng) · Phục hình răng · Điều trị nội nha (tủy). [NHA KHOA]
@@ -38,22 +45,32 @@ Chi nhánh -> 2.9 · Web đặt lịch -> 2.10 · Tài khoản ngân hàng -> ta
 - Bộ lọc: tình trạng (Sẵn sàng / Ẩn / Ngưng hoạt động) và "Tùy chọn nơi hiển thị" (Thu ngân và Đặt lịch / Chỉ Thu ngân / Chỉ Đặt lịch / Đã ẩn).
 - Bảng: Ảnh · Mã dịch vụ · Tên dịch vụ (tên Việt + tên Anh) · Giá bán · VAT · Thời gian (ví dụ 30p, 1g) · Tình trạng · Nơi hiển thị. Có cờ "Sửa giá khi thanh toán" cho dịch vụ giá linh hoạt.
 - Giá từ vài trăm nghìn đến hàng triệu đồng mỗi dịch vụ.
+- **Form "Tạo dịch vụ mới"** (3 tab; tình trạng và nơi hiển thị ở chân form):
+  - Thông tin dịch vụ: Mã / SKU (trống = tự sinh, dạng DVyymmxxxx) · Phân nhóm dịch vụ · Tên dịch vụ* · Tên tiếng Anh · Thời gian (giờ) + (phút)* · Đơn vị tính (lần, buổi, gói…) · Giá dịch vụ* · **Giá vốn** · Thông tin chi tiết · Mức thuế VAT (%) · URL ảnh · "In giờ phục vụ trên hóa đơn" · "Cho phép sửa giá tại thu ngân".
+  - Tùy chọn giá: "Tùy chọn dịch vụ theo nhân viên" (giá khác nhau theo người làm, + Thêm tùy chọn) · "Tùy chọn dịch vụ khác" (biến thể/bổ sung).
+  - Địa điểm cung cấp: "Tất cả địa điểm" hoặc tích từng chi nhánh.
+  - Chân: Tình trạng (Sẵn sàng / Ẩn / Ngưng hoạt động) · Nơi hiển thị (Thu ngân & Đặt lịch / Chỉ Thu ngân / Chỉ Đặt lịch / Ẩn ở cả hai).
 
 ### 2.3 Danh mục sản phẩm
 - Giống 2.2 nhưng có phân nhóm sản phẩm (demo 12 sản phẩm, 1 nhóm "Sản phẩm điều trị") và cột Đơn vị (Tuýp, Chai) thay cho Thời gian; cờ "Sửa giá". Nơi hiển thị có "Chỉ Thu ngân". [NHA KHOA]: sản phẩm là kem đánh răng, nước súc miệng điều trị.
 - Mã sản phẩm dạng SP-xxxxxx; mã dịch vụ DVyymmxxxx.
+- Dữ liệu 10/11: 709 sản phẩm, 2 nhóm: "Sản phẩm điều trị" (9) và "VTTH" (vật tư tiêu hao, 700, giá 0 đ, nơi hiển thị "Đã ẩn") — tức danh mục sản phẩm dùng chung cho hàng bán VÀ vật tư nội bộ, phân bằng nhóm + nơi hiển thị.
+- **Form "Tạo sản phẩm mới"** (3 tab): Thông tin sản phẩm (Mã/SKU tùy chọn · Tên* · Tên tiếng Anh · Giá bán* · "Sửa giá khi thanh toán" · Giá nhập vào · Đơn vị đếm (Chai, Hộp, Cái, Gói, Tuýp, Lọ, Bộ, Thùng) · Nhóm sản phẩm* · Nhãn hiệu · Quốc gia · Thông tin chi tiết · VAT (10% / 8% / 5% / 0% / Không chịu thuế / Không kê khai) · Hình ảnh) · Phân loại sản phẩm (đơn vị đếm, dung tích / số lượng + đơn vị ml, g, kg, l, pcs, cái) · Khu vực kho hàng (tất cả địa điểm hoặc chọn). Chân: Tình trạng (Sẵn sàng / Ẩn / Ngưng) · Nơi hiển thị · **Hình thức nhập: Mua đứt / Ký gửi**.
 
 ### 2.4 Loại thẻ dịch vụ / liệu trình
 - Nút: Xuất Excel · Nhập từ Excel · KH dùng thẻ · Tạo thẻ dịch vụ · Tạo nhóm thẻ · Sửa.
 - Tab: Tất cả · Thẻ số lần · Thẻ số tiền (hai loại thẻ).
 - Bảng: Mã · Tên thẻ · Loại thẻ · Giá bán thẻ · Số lần sử dụng · Tài khoản thẻ (số dư tiền) · Thời hạn thẻ (ví dụ 12 tháng) · Phân nhóm thẻ · Mô tả chức năng. Demo 1 thẻ số lần, 10 lần.
+- **Form "Tạo thẻ dịch vụ"**: Mã (tự sinh nếu trống) · Tên thẻ* · Tên tiếng Anh · Mô tả chức năng · **Màu thẻ** · Loại thẻ (Thẻ số lần / Thẻ số tiền) · Giá bán thẻ* + "Sửa giá khi thanh toán" · Số lần sử dụng* + "Không giới hạn" · Thời hạn thẻ (từ ngày cấp thẻ, N tháng / ngày; "có thể thay đổi khi bán thẻ") · Phân nhóm thẻ (Thẻ thành viên / Thẻ liệu trình / Thẻ giá trị, hoặc nhập nhóm mới) · Thời gian làm 1 lần dịch vụ (15-120 phút) · **Tính hoa hồng nhân viên**: "Giá trị 1 lần làm dịch vụ" (đ) + "Tự động tính theo giá bán thẻ / số lần" + "Tự động giảm hoa hồng theo tỉ lệ giảm giá khi bán thẻ" · Chi nhánh áp dụng ("Áp dụng tất cả chi nhánh") · Nơi hiển thị (cả hai / chỉ POS / chỉ đặt lịch / ẩn). Không thấy trường "dịch vụ được dùng thẻ" trong form tạo (chưa rõ thẻ gắn dịch vụ ở đâu).
 
-### 2.5 Cấu hình hoa hồng nhân viên (hr_commission, cũng mở từ Nhân sự)
-- Cột trái: danh sách nhân viên; cột phải "Cài đặt chi tiết hoa hồng" với nút Sao chép cài đặt · Cài đặt đồng loạt · Lưu thiết lập; lọc Tất cả sản phẩm/dịch vụ/thẻ · Dịch vụ · Sản phẩm · Thẻ dịch vụ. Có nút "Thiết lập nâng cao". Khi chưa chọn nhân viên chưa hiện form chi tiết (chưa đọc được các trường nhập).
+### 2.5 Cấu hình hoa hồng nhân viên (hr_commission, cũng mở từ Nhân sự) - ĐỌC ĐỦ
+- Cột trái: danh sách nhân viên; cột phải "Cài đặt chi tiết hoa hồng" với nút Sao chép cài đặt · Cài đặt đồng loạt · Lưu thiết lập; lọc Tất cả sản phẩm/dịch vụ/thẻ · Dịch vụ · Sản phẩm · Thẻ dịch vụ.
+- Sau khi chọn người: bảng mỗi mặt hàng (tên + giá) x 3 cột **Hoa hồng tư vấn dịch vụ | Hoa hồng bán sản phẩm | Hoa hồng làm dịch vụ**; mỗi ô có số, đơn vị `%` / `VND` / `Tùy chỉnh`, và thời điểm `Khi lập HĐ` / `Theo tiền đã thu`.
+- "Thiết lập nâng cao" (toàn công ty): chia đều doanh số khi nhiều người cùng làm (riêng cho dịch vụ / bán hàng-thẻ / tư vấn) · tính trước hay sau giảm giá · giảm giá dòng hay cả giảm tổng hóa đơn · hệ số % theo giờ phục vụ (8h-22h) · hệ số % theo phản hồi khách (5 mức Rất kém → Rất tốt). Chi tiết ở nhan-su.md 2.5.
 
 ### 2.6 Cấu hình hoa hồng theo thực thu (cash_commission_settings)
 Màn lớn nhất (chữ gần 2 MB do lặp). Đã đọc phần đầu và thống kê cấu trúc toàn tệp.
-- Đầu trang: "Tỷ lệ dưới đây chỉ đọc và tham chiếu đúng policy đang hiệu lực." Nút: Làm mới cấu hình · Mở Thiết lập nâng cao. Nhãn phiên bản: "Policy r48" (policy có số revision, hiện là bản 48).
+- Đầu trang: "Tỷ lệ dưới đây chỉ đọc và tham chiếu đúng policy đang hiệu lực." Nút: Làm mới cấu hình · Mở Thiết lập nâng cao. Nhãn phiên bản: "Policy r48" ngày 27/10, **"Policy r65" ngày 10/11** (mỗi lần lưu cấu hình hoa hồng sinh một revision; 17 bản trong 2 tuần).
 - Chế độ split (chia doanh số trước khi xét ngưỡng và tính hoa hồng): giá trị đang chọn "Không đánh giá: hưởng 100%" (không chia doanh số giữa các người).
 - Bảng rule: cột Rule · Nhánh · Tỷ lệ. Khóa rule có cấu trúc `staff:<mã nhân viên>:<loại hàng: product hoặc service>:<mã hàng>:<vai trò>`. Số lượng đếm được: khoảng 19.500 rule cho 29 nhân viên x 100 dịch vụ + 11 sản phẩm x 3 vai trò.
 - 3 vai trò hưởng hoa hồng trên mỗi dòng bán: `sales` (người bán / chốt), `service` (người thực hiện), `consultant` (người tư vấn).
@@ -61,11 +78,10 @@ Màn lớn nhất (chữ gần 2 MB do lặp). Đã đọc phần đầu và th�
 - Tỷ lệ quan sát được (đếm theo dòng): đa số 0%; 10% (phần lớn rule người thực hiện); 1% (tư vấn); 15% (người bán sản phẩm, và một số dịch vụ); một số dịch vụ tính cố định 200.000 đ hoặc 300.000 đ trên mỗi đơn vị; ghi đè chi nhánh: tư vấn 5% hoặc 2% ở chi nhánh 1, 1% ở chi nhánh 2.
 - Mẫu mặc định rút ra: sản phẩm người bán 15%; dịch vụ người thực hiện 10% hoặc số tiền cố định theo đơn vị; tư vấn 0-1% (có chi nhánh cao hơn); người bán dịch vụ 0%.
 - Khối "Mô phỏng không ghi sổ" (chạy thử, không tạo bút toán): trường nhập Kỳ · Doanh số dòng · Số lượng · Các dòng cùng mặt hàng · Doanh số cá nhân sau chia · Doanh số chi nhánh · % giảm giá · Nguồn đối tác · Hệ số giờ (%) · Hệ số đánh giá k (%) · nút "Chạy mô phỏng". Các trường này cho thấy công thức hoa hồng có thể phụ thuộc: doanh số, số lượng, giảm giá, đối tác bảo hiểm, giờ làm, điểm đánh giá, ngưỡng doanh số cá nhân và chi nhánh.
-- Cuối màn hiện "Not Found Exception" (lỗi khi tải phần mô phỏng/kỳ trong bản demo). Phần "quản lý trạng thái kỳ hoa hồng thực thu" (mở / khóa kỳ) nêu ở mô tả thẻ nhưng nội dung chưa đọc được.
+- Cuối màn vẫn hiện "Not Found Exception" (10/11 vẫn lỗi; phần mô phỏng/kỳ trong bản demo). Phần "quản lý trạng thái kỳ hoa hồng thực thu" (mở / khóa kỳ) nêu ở mô tả thẻ nhưng nội dung chưa đọc được.
 
 ### 2.7 Cấu hình hoa hồng giới thiệu 2 cấp
-- Nút: "+ Chương trình 2 cấp". Bảng: Mã · Tên · Số cấp · Cấp 1 · Cấp 2 · Trạng thái · Version. Demo rỗng.
-- Quy tắc ghi trên màn: admin nhập mức từng cấp (cấp 1 trực tiếp, cấp 2 tuyến trên), không hardcode; sửa cấu hình sinh version mới, không ảnh hưởng hoa hồng đã ghi; báo cáo và bút toán xem tại Báo cáo, Hoa hồng giới thiệu.
+Thuộc Marketing / CTV: đọc lại và chi tiết ở marketing.md (27/10: nút "+ Chương trình 2 cấp"; bảng Mã · Tên · Số cấp · Cấp 1 · Cấp 2 · Trạng thái · Version; versioned, không hardcode).
 
 ### 2.8 Chính sách phê duyệt (maker-checker)
 Khác với "Quy trình phê duyệt" ở Nhân sự (cấu hình ai duyệt) và "Trung tâm phê duyệt" (hàng chờ hằng ngày): màn này quyết định THAO TÁC NÀO phải duyệt và ở chế độ kiểm soát nào.
@@ -93,13 +109,17 @@ Cách đọc bảng: mỗi dòng thao tác có ô tích nhanh "Cần duyệt" v�
 Bằng chứng dùng thật (từ Trung tâm phê duyệt, xem noi-lam-viec.md 2.2): thao tác Sổ quỹ (lập phiếu thu / chi thủ công, đảo phiếu) và thu nợ lùi ngày chiếm toàn bộ hàng chờ "thao tác nhạy cảm" của demo.
 
 Cấu hình chung (cuối màn): Không cho tự duyệt (người tạo không được tự duyệt đơn của mình) · Cảnh báo kỳ đã chốt · SLA xử lý (giờ) · Thời hạn bổ sung nhân viên sau khi thanh toán (giờ). Nút "Lưu chính sách".
-Chưa đọc được: giá trị đã tích ở cột "Cần duyệt" của từng dòng (bản chụp không giữ trạng thái tích); chỉ biết các dòng có ô nhập lý do / chứng từ / ngưỡng.
+Trạng thái tích thật (đọc 10/11): cột "Cần duyệt" chỉ BẬT ở 7 thao tác tiền: Lập phiếu thu thủ công · Lập phiếu chi thủ công · Chuyển/nạp/rút quỹ · Đảo phiếu đã ghi sổ · Thiết lập/điều chỉnh số dư ban đầu · Thu nợ lùi ngày · Hủy phiếu thu nợ. Cột "Yêu cầu lý do sửa" BẬT ở MỌI thao tác; "Yêu cầu chứng từ" tắt hết; ngưỡng tiền đều để trống. Cấu hình chung: Không cho tự duyệt = bật · Cảnh báo kỳ đã chốt = bật · SLA xử lý = 24 giờ · Thời hạn bổ sung nhân viên sau thanh toán = 24 giờ. Màn không đổi so với 27/10.
 
 ### 2.9 Chi nhánh (branches) - ĐỌC ĐƯỢC
 - Tiêu đề "Quản lý chi nhánh", đếm "N chi nhánh" (demo 6). Nút "Quay lại", "Thêm chi nhánh". Bộ lọc trạng thái: Tất cả | Nháp | Hoạt động | Tạm ngưng | Đã đóng.
 - Bảng 11 cột: Chi nhánh (tên + địa chỉ ngắn) | Mã (dạng chữ HOA gạch dưới, ví dụ mã theo địa chỉ hoặc "TRU_SO_CHINH" cho trụ sở) | Giấy phép hoạt động (số GPHĐ theo tỉnh, dạng .../HNO-GPHĐ hoặc .../HCM-GPHĐ; "-" nếu không phải cơ sở khám) [NHA KHOA] | Bác sĩ phụ trách chuyên môn (người đứng tên giấy phép) [NHA KHOA] | Thành phố | GPS (bán kính cho chấm công, hiện "50m" hoặc "Tắt") | Google Maps (nút "Mở bản đồ" hoặc "+ Thêm link") | Nhân viên (số nhân viên đang gán) | Trạng thái | Mặc định (đánh dấu một chi nhánh mặc định) | Thao tác.
 - Demo: 3 cơ sở khám (có giấy phép, bác sĩ phụ trách, thành phố), 1 trụ sở chính (1 nhân viên, không giấy phép), 2 chi nhánh tạm ngưng (đặt trước, 0 nhân viên, GPS tắt).
-- Quy tắc: chi nhánh dùng ở mọi bộ lọc (sổ quỹ, lịch hẹn, kỳ kế toán, báo cáo); chi nhánh "Tạm ngưng" không xuất hiện trong bộ chọn chi nhánh của Sổ quỹ / Khóa kỳ / Web đặt lịch (các bộ chọn đó chỉ liệt kê 4 chi nhánh đang hoạt động), dữ liệu cũ giữ; một chi nhánh mặc định; GPS có thể tắt theo chi nhánh. Ảnh bìa từng chi nhánh cho Zalo Mini App cũng chỉnh ở đây (xem 2.12). Form Thêm / Sửa chi nhánh chưa đọc được (suy luận: tên, mã, địa chỉ, giấy phép, bác sĩ phụ trách, tọa độ + bán kính, giờ mở cửa, ảnh bìa).
+- Quy tắc: chi nhánh dùng ở mọi bộ lọc (sổ quỹ, lịch hẹn, kỳ kế toán, báo cáo); chi nhánh "Tạm ngưng" không xuất hiện trong bộ chọn chi nhánh của Sổ quỹ / Khóa kỳ / Web đặt lịch, dữ liệu cũ giữ; một chi nhánh mặc định; GPS có thể tắt theo chi nhánh. Thao tác mỗi dòng: Mở bản đồ · Sửa · Xóa.
+- **Form "Thêm chi nhánh"** (2 tab) — ĐỌC ĐƯỢC 10/11:
+  - Thông tin chung: Tên chi nhánh* · Mã (trống = tự tạo) · Tên hiển thị · Điện thoại · Email · Giấy phép hoạt động [NHA KHOA/Y TẾ] · Bác sĩ phụ trách chuyên môn [NHA KHOA/Y TẾ] · Liên kết Google Maps · "Đặt làm chi nhánh mặc định".
+  - Địa chỉ & GPS: Địa chỉ · Phường/Xã · Quận/Huyện · Thành phố · Quốc gia · Ghi chú địa điểm (một dòng hiện dưới địa chỉ khi khách chọn chi nhánh trên web đặt hẹn) · Latitude · Longitude · nút "Lấy tọa độ hiện tại" · Bán kính chấm công (mét) · Bật chấm công GPS · Cho phép chấm ngoài bán kính · Chấm ngoài bán kính cần duyệt · Ghi chú vị trí.
+  - Không thấy giờ mở cửa / ảnh bìa trong form (ảnh bìa Mini App nói là chỉnh ở Chi nhánh nhưng form không có trường; chưa rõ).
 
 ### 2.10 Web đặt lịch (booking_web) - ĐỌC ĐƯỢC
 Nút "Quay lại", "Sửa web đặt lịch". Khối thông tin:
@@ -112,24 +132,36 @@ Nút "Quay lại", "Sửa web đặt lịch". Khối thông tin:
 - "Cài đặt ngày nghỉ ở cửa hàng": nhập theo múi giờ Asia/Saigon, lưu mốc UTC; "Tất cả chi nhánh" dùng múi giờ trình duyệt. Trường: Từ ngày | Đến ngày | Chi nhánh (Tất cả hoặc từng chi nhánh) | nút "Tạo mới". Bảng ngày nghỉ: Từ ngày | Đến ngày | Chi nhánh | (thao tác). Demo "Chưa có ngày nghỉ nào".
 - "Email nhận thông báo lịch hẹn": gửi email nội bộ khi có lịch mới, đổi lịch hoặc hủy (áp dụng toàn hệ thống; SĐT khách được che trong email). Hộp tích: Lịch hẹn mới | Lịch hẹn thay đổi (giờ, chi nhánh, người phụ trách) | Lịch hẹn bị hủy | Gửi cho nhân viên phụ trách lịch hẹn. Danh sách email nhận (ô nhập + nút "Thêm") và nút "Lưu email lịch hẹn".
 - Ghi chú: không chọn bác sĩ / kỹ thuật viên ngay trên trang web đặt lịch; chọn dịch vụ và khung giờ (suy luận, không thấy trường chọn người).
+- **MỚI 10/11**: ô "Địa chỉ trang đặt hẹn trên website (dùng cho link giới thiệu CTV)": link CTV có dạng `<địa chỉ này>/ref=<SĐT CTV>`; trang đó phải nhúng form đặt lịch bằng mã nhúng; bỏ trống thì dùng link trang đặt lịch của hệ thống. Tức lịch hẹn web mang theo mã người giới thiệu (xem marketing.md).
 
 ### 2.11 Bảng tin công ty (company_announcements) - ĐỌC ĐƯỢC
 - "Cài đặt > Bảng tin công ty"; mô tả "Thông báo áp dụng cho toàn bộ nhân viên trong công ty". Nút "Tạo thông báo" và liên kết quay lại "Cài đặt". Phân trang "Trước / 1 / 1 / Sau".
+- **Form Tạo thông báo** (đọc 10/11): Tiêu đề · Nội dung bài viết (trình soạn thảo 2 chế độ Trực quan / HTML, kiểu đoạn Văn bản / Tiêu đề lớn / Tiêu đề nhỏ) · Bắt đầu hiển thị (ngày-giờ) · Kết thúc hiển thị · "Ghim lên đầu bảng tin" · nút Hủy / Lưu nháp / Xuất bản. Không có trường "đối tượng" (luôn toàn công ty). Bảng tin hiện ở Dashboard; quyền "Quản lý bảng tin công ty" nằm trong nhóm Dashboard. Có mẫu email "Nhân viên: bảng tin công ty" để báo qua email.
 - Mỗi thông báo (thẻ): nhãn GHIM (ghim lên đầu), tiêu đề, đoạn trích nội dung (hiện khoảng 300 ký tự, cắt bằng "..."), người sửa cuối + thời điểm cập nhật, khung "Hiển thị từ ... đến ..." (lên lịch hiển thị theo ngày giờ), trạng thái ("Đang xuất bản"; suy luận còn trạng thái ẩn / hết hạn), nút "Sửa" | "Ẩn" | "Xóa". Form tạo (trường: tiêu đề, nội dung, ghim, thời gian hiển thị, đối tượng) chưa đọc được.
 - [NHA KHOA] Nội dung demo: thông báo đối tác bảo hiểm mới chấp nhận bảo lãnh viện phí trực tiếp; thông báo chấn chỉnh giờ làm việc toàn cơ sở (giờ làm 08:30 đến 18:00, nghỉ trưa 12:00 đến 13:30; khớp với ca "Cả ngày" ở nhan-su.md 2.3).
 - Dùng cho thông báo toàn công ty có thời hạn; khác Wiki công ty (tài liệu ban hành lâu dài, xem noi-lam-viec.md 2.6).
 
 ### 2.12 Zalo Mini App (miniapp_settings) - ĐỌC ĐƯỢC
+Cập nhật 10/11: trang tách 2 tab "Cấu hình chung" | "Ưu đãi · Đối tác · Tin tức" (tab sau là CMS: 5 thẻ nhóm Ưu đãi "Quản lý chiến dịch và mã ưu đãi" · Bảo hiểm "Đối tác bảo lãnh viện phí" · Tuyển dụng "Vị trí đang tuyển" · Tin tức sức khỏe "Bài viết và hướng dẫn" · Đối tác "Đối tác dịch vụ", mỗi thẻ đếm hiển thị / nháp / lịch; lọc trạng thái Nháp / Đã lên lịch / Đang hiển thị / Hết hạn / Đã ẩn; sắp xếp Mới cập nhật / Ngày xuất bản / Thứ tự / Tên A–Z; bảng Nội dung (tiêu đề + slug) · Trạng thái · Lịch hiển thị · Thứ tự · Chỉnh sửa / Ẩn / Xóa; "Thêm nội dung" mở "Chỉnh sửa nhanh": Tiêu đề · Tóm tắt · Đường dẫn ảnh thumbnail · Thứ tự hiển thị · Thời gian xuất bản · Thời gian hết hạn · "Mở trình biên tập đầy đủ" · Lưu nháp / Xuất bản). Nhóm Ưu đãi chính là thẻ Marketing "Mã ưu đãi" — chi tiết ở marketing.md.
 Nút "Quay lại", "Lưu thay đổi". Hai khối.
 - "Cấu hình chung" (nội dung public catalog cho khách; ảnh bìa từng chi nhánh chỉnh ở Cài đặt > Chi nhánh): hộp tích "Hiển thị bảng giá" | "Hiển thị danh sách chi nhánh" | "Giá bằng 0 hiển thị 'Liên hệ'"; ô nhập Tiêu đề tư vấn | Nhãn nút tư vấn | Zalo OA URL | Giới thiệu chi nhánh | Ảnh mặc định cho chi nhánh (URL).
 - "Biên tập nội dung Mini App": tạo, sửa, xuất bản và ẩn nội dung hiển thị cho khách, chia 5 tab: Ưu đãi & mã | Bảo hiểm | Tuyển dụng | Tin tức sức khỏe | Đối tác. [NHA KHOA] riêng: tab Bảo hiểm và Đối tác.
 - "Xem trước nội dung" mô phỏng giao diện điện thoại: câu hỏi "Không biết chọn dịch vụ nào?" với nút "Tư vấn khám", các mục "Bảng giá" (kèm một dịch vụ mẫu "Khám tổng quát"), "Liên hệ", "Chi nhánh" với tiêu đề "Hệ thống chi nhánh". Tức Mini App cho khách có các phần: bảng giá, chi nhánh, tư vấn (mở Zalo OA), nội dung (ưu đãi, bảo hiểm, tin).
 
 ### 2.13 Trung tâm thông báo (zalo_messaging) - ĐỌC ĐƯỢC
+Thuộc kênh khách hàng / Marketing: bản đọc lại 10/11 ở marketing.md (cả `zalo_campaigns` "Chiến dịch truyền thông"). Nội dung 27/10 giữ dưới đây.
 - 3 ô tóm tắt: số "Quy tắc đang bật" | "Bản nháp cấu hình" | "Email song song" (demo: 9 / 14 / 8).
 - "Định tuyến khách hàng - Zalo + WhatsApp" theo quốc gia của số điện thoại nhận: số Việt Nam -> tin UID Zalo, nếu không được thì tin ZNS; số quốc tế -> tin WhatsApp; không chuyển chéo giữa hai nhóm. Email là nhánh độc lập, bật riêng từng loại tin. Dòng trạng thái: WhatsApp đã kết nối; SMS còn khóa đến khi tích hợp bộ gửi.
 - Khối bộ gửi OA/ZNS ("sẵn sàng"): nhịp gửi gần nhất (mốc thời gian), hàng đợi (số đến hạn, độ trễ lớn nhất tính bằng giây, số lỗi, số "chưa rõ kết quả"). Demo: 0 đến hạn, 85 lỗi, 3 chưa rõ kết quả - tức hàng lỗi tồn đọng, cần màn xem lỗi và gửi lại.
 - Danh sách quy tắc (suy luận: loại tin như nhắc lịch, xác nhận, cảm ơn; kênh; mẫu; bật / tắt) chưa đọc được trong bản chụp.
+
+### 2.14 Cấu hình gửi email (`#/gmail_settings`) - MỚI, ĐỌC ĐƯỢC
+Tiêu đề "Cấu hình gửi email", dòng phụ "Cài đặt → Kết nối · Tài khoản duy nhất <gmail công ty>". Không có thẻ trên trang Cài đặt (mở từ link trong Trung tâm thông báo / thông báo nhân viên). 4 tab:
+- Kết nối & lịch sử gửi: trạng thái "Đã kết nối Gmail" (tài khoản che) · "Không lưu mật khẩu Gmail · token được mã hóa AES-256-GCM" · nút Gửi thư kiểm tra · Ngắt kết nối (hoặc Kết nối Gmail / Kết nối lại khi lỗi `GMAIL_REAUTH_REQUIRED`) · bảng "Lịch sử gửi email": Thời gian · Loại thư (Email nghiệp vụ, Phiếu khám…) · Người nhận (che) · Trạng thái (Gmail đã tiếp nhận / Đã hủy…) · Số lần · Thao tác.
+- Mẫu email: nút "Tạo mẫu mới"; lọc 27 nhóm mục đích: Nhân viên · Bảo mật · Bảng lương · Hóa đơn khách hàng · Phiếu khám · Đối tác kinh doanh · Xác nhận lịch hẹn · Nhắc lịch hẹn · Thông báo thay đổi lịch hẹn · Thông báo: Lịch hẹn mới / Lịch hẹn định kỳ / Đổi lịch / Hủy lịch / Nhắc lịch / Nhắc lịch tái khám định kỳ / Từ chối đổi lịch / Chúc mừng sinh nhật / Hoàn tất đơn hàng / Biên nhận thu nợ / Phát hành hóa đơn GTGT / Thông báo lịch hẹn chung / Nhân viên: yêu cầu duyệt / Nhân viên: kết quả duyệt / Nhân viên: bảng tin công ty / Chiến dịch khuyến mại. Mỗi mẫu: tên · nhóm · "Phiên bản N" · "Đang dùng cho N nghiệp vụ" hoặc "Chưa gắn nghiệp vụ" · Đang bật · Hủy kích hoạt · Nhân bản · Xóa; có bản song ngữ. Form mẫu: Tên mẫu · Nhóm mục đích · Tiêu đề email · thân (Soạn thảo / Mã HTML / Xem trước, màu chữ) · "Biến được phép — bấm để chèn"; hệ thống chặn mẫu dùng biến mà loại tin không có.
+- Thông báo nhân viên: "Tự động gửi lời chúc sinh nhật" (09:00 giờ VN, tối đa 1 lần/năm/người, mặc định tắt) · "Thư hướng dẫn hội nhập" (chỉ email nhân viên đã xác minh; luôn tạo BẢN NHÁP để duyệt trước khi gửi; chọn nhân viên → Tạo bản nháp → Xem nội dung → Gửi).
+- Email gửi lỗi: 4 ô đếm Đang chờ gửi · Đang chờ thử lại · Đã xếp hàng · Hỏng hẳn + "Chờ lâu nhất (giây)"; lọc loại thư (Xác nhận lịch hẹn, Nhắc lịch hẹn, Thông báo đổi lịch), từ ngày - đến ngày; bảng lỗi + phân trang. Demo: hàng chờ hơn 2.500 thư (lỗi cấu hình demo).
+- Quyền: kết nối/ngắt/gửi thử Gmail và xem nhật ký Gmail là 2 quyền nhạy cảm trong nhóm Cài đặt; gửi bảng lương / thư hội nhập đi qua đề nghị → duyệt → thực thi (nhóm "Email nghiệp vụ").
 
 ## 3. Quy tắc nghiệp vụ thấy được
 
@@ -147,12 +179,15 @@ Phê duyệt maker-checker
 - Cấm tự duyệt; có SLA xử lý theo giờ; yêu cầu lý do và chứng từ tùy thao tác; cảnh báo khi đụng kỳ đã chốt.
 
 Danh mục
-- Dịch vụ / sản phẩm: nhóm, giá, VAT, thời lượng hoặc đơn vị, tình trạng 3 mức, nơi hiển thị (thu ngân / đặt lịch), cờ sửa giá khi thanh toán, nhập / xuất Excel, chép từ chi nhánh.
+- Dịch vụ / sản phẩm: nhóm, giá, giá vốn, VAT, thời lượng hoặc đơn vị, tình trạng 3 mức, nơi hiển thị (thu ngân / đặt lịch), cờ sửa giá khi thanh toán, nhập / xuất Excel, chép từ chi nhánh, giá theo nhân viên, địa điểm cung cấp theo chi nhánh; sản phẩm có nhãn hiệu, quốc gia, dung tích, Mua đứt / Ký gửi; vật tư tiêu hao nằm chung danh mục sản phẩm (nhóm riêng, ẩn khỏi bán).
+- Thẻ: giá trị 1 lần làm dịch vụ để tính hoa hồng; tự giảm hoa hồng theo tỉ lệ giảm giá khi bán thẻ.
 - Thẻ: loại theo số lần hoặc theo số tiền, có hạn dùng (tháng), có nhóm thẻ.
 - Số tài khoản ngân hàng luôn che khi hiển thị.
 
 Thông báo và kết nối
 - Kênh theo quốc gia: Zalo/ZNS cho số Việt Nam, WhatsApp cho số nước ngoài, không chuyển chéo; email riêng; thông báo nhân viên riêng.
+- Email đi qua MỘT Gmail công ty (OAuth, token mã hóa), có hàng đợi + thử lại + nhật ký; mẫu email có phiên bản, gắn với nghiệp vụ, kiểm biến; thư nhạy cảm (bảng lương, hội nhập) phải qua bản nháp / duyệt.
+- Tài khoản ngân hàng: ngừng sử dụng chứ không xóa; chứng từ cũ giữ tên + số che tại thời điểm ghi.
 
 ## 4. Điểm riêng nha khoa [NHA KHOA]
 - Cây nhóm dịch vụ nha khoa (niềng, implant, nội nha, phục hình, nha chu...).
@@ -170,6 +205,8 @@ Làm theo thứ tự:
 5. Hoa hồng giới thiệu (1 cấp trước, 2 cấp sau), cùng cơ chế version.
 6. Tài khoản ngân hàng (che số), Trung tâm thông báo (Zalo/ZNS, email; chỉ giữ WhatsApp nếu có khách quốc tế; kèm hàng đợi có màn lỗi / gửi lại), Zalo Mini App hoặc web đặt lịch. Web đặt lịch AMIA nên có đủ: khung giờ 15 - 60 phút, đặt trước tối thiểu, số khách tối đa mỗi khung, giới hạn số ngày đặt trước, thời lượng mặc định, trạng thái mặc định, quy tắc sức chứa theo khung giờ, ngày nghỉ theo chi nhánh, email báo lịch mới / đổi / hủy, tự tạo lịch tái khám sau hóa đơn (rất hợp liệu trình).
 7. Danh mục chi nhánh: mã, giấy phép, người phụ trách chuyên môn (AMIA: số giấy phép hoạt động 1233/NA-GPHĐ phải hiển thị trên bài đăng và văn bản), bán kính GPS, link bản đồ, trạng thái 4 mức, đánh dấu mặc định. Thông tin chung chọn nhóm kinh doanh Beauty Clinic; khối pháp lý để cấp số văn bản.
+
+Bổ sung 10/11: (a) Email giao dịch qua Gmail công ty + mẫu email theo nghiệp vụ + hàng đợi lỗi (AMIA đang có Zalo OA / SMS, chưa có email); (b) Chi nhánh thêm tọa độ, giấy phép hoạt động, người phụ trách chuyên môn, ghi chú địa điểm; (c) Danh mục thêm giá theo nhân viên, giá trị 1 lần làm của thẻ để tính hoa hồng, tự giảm hoa hồng theo giảm giá; (d) Tài khoản ngân hàng đổi Xóa thành Ngừng sử dụng.
 
 Bỏ hoặc để sau: Bảng tin công ty (nếu cần thì rất nhẹ: tiêu đề, nội dung, ghim, lịch hiển thị, ẩn), API keys, Facebook, webhook / nhật ký tích hợp (dùng log của Supabase trước), cap / kỳ khóa / rule version (làm đơn giản bằng cột `effective_from`), các thao tác "Future" trong chính sách (kho, mua hàng, kế toán) cho tới khi có module tương ứng.
 Lưu ý thiết kế rút từ lỗi demo: tránh nhân rule theo từng nhân viên x từng dịch vụ; tránh hardcode mức hoa hồng; cần có mặc định theo nhóm; tách rõ ba loại "chính sách / quy trình / hàng chờ" ngay từ đầu.

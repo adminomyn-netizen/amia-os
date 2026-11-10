@@ -20,7 +20,7 @@ beforeAll(async () => {
     ('KH2','Bình','0900000002',$1,'mkt','${u(1)}','nam',null),
     ('KH3','Chi','0900000003',$1,'mkt','${u(1)}','nữ',null)`, [CN]);
   A = (await q<{ id: string }>(`insert into nhom_khach (ten, mau) values ('LUXURY','#ff7043') returning id`))[0].id;
-  B = (await q<{ id: string }>(`insert into nhom_khach (ten, mau) values ('Luxury','#65ba69') returning id`))[0].id;
+  B = (await q<{ id: string }>(`insert into nhom_khach (ten, mau) values ('VIP','#65ba69') returning id`))[0].id;
 });
 
 describe("gán nhóm hàng loạt theo bộ lọc", () => {
@@ -34,17 +34,17 @@ describe("gán nhóm hàng loạt theo bộ lọc", () => {
     expect(await nhomCua("KH2")).toEqual([]);
     expect((await gan({ gioi_tinh: "nữ" }, A, "gan", true)).thay_doi).toBe(0);
   });
-  it("một khách nhiều nhóm; tên trùng hoa/thường vẫn là hai nhóm riêng (không tự gộp)", async () => {
+  it("một khách nhiều nhóm; tên trùng hoa/thường bị chặn (0311, chị Lâm gộp Luxury 9/11/2026)", async () => {
     await gan({ q: "An" }, B, "gan", true);
-    expect(await nhomCua("KH1")).toEqual(["LUXURY", "Luxury"]);
-    expect((await q(`select 1 from nhom_khach where lower(ten) = 'luxury'`)).length).toBe(2);
+    expect(await nhomCua("KH1")).toEqual(["LUXURY", "VIP"]);
+    await expect(q(`insert into nhom_khach (ten) values (' luxury ')`)).rejects.toThrow(/nhom_khach_ten_khong_trung/);
   });
   it("bỏ nhóm theo bộ lọc chỉ gỡ liên kết, khách vẫn còn", async () => {
     const xem = await gan({ gioi_tinh: "nữ" }, A, "bo", false);
     expect(xem.thay_doi).toBe(2);
     const ap = await gan({ gioi_tinh: "nữ" }, A, "bo", true);
     expect(ap.thay_doi).toBe(2);
-    expect(await nhomCua("KH1")).toEqual(["Luxury"]);
+    expect(await nhomCua("KH1")).toEqual(["VIP"]);
     expect((await q(`select 1 from khach_hang`)).length).toBe(3);
   });
   it("nhóm ẩn: không còn nhãn trên danh sách, liên kết giữ nguyên, không gán được thêm", async () => {

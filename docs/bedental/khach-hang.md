@@ -1,57 +1,71 @@
 # Khách hàng (BeDental ERP, mục `customers`)
 
-Nguồn: chữ chụp từ bản demo. Không chép tên, số điện thoại, mã khách thật; chỉ ghi cấu trúc. Chỉ có trang tổng quan của mục; các tab con (Nhóm KH, Gần đây, Thống kê, Nhập Excel, Thêm mới) chưa đọc được (popup/khung ngoài vùng chính, không có tệp riêng).
+Nguồn: đọc trực tiếp bản demo (chỉ xem; các hộp thoại mở ra rồi đóng, không lưu) và mã giao diện. Không chép tên, số điện thoại, mã khách thật; chỉ ghi cấu trúc.
+
+Cập nhật 10/11/2026: đã đọc được mọi phần 27/10 ghi "chưa đọc được": form Thêm khách (19 trường), Nhóm KH, Gần đây, Thống kê, Nhập Excel, menu Thao tác (Sửa / Gộp hồ sơ / Lưu trữ) và TRANG HỒ SƠ KHÁCH 7 tab (Thông tin cá nhân, Lịch sử khám, Chăm sóc khách hàng, Ảnh bệnh nhân, Khách hàng liên quan, Thẻ dịch vụ, Thiết đặt thông báo). Mới thấy: phiếu khám có chữ ký bác sĩ + bệnh nhân, kê đơn thuốc từ mẫu, nhật ký điều trị kèm ảnh, tài liệu đính kèm, cây giới thiệu, liên hệ khẩn cấp, khóa gửi Zalo theo khách, điểm thưởng.
 
 ## 1. Mục đích
-Danh bạ khách trung tâm của chuỗi: tìm, lọc, phân nhóm, xem doanh thu trọn đời và lần đến gần nhất, làm nền cho lịch hẹn, POS, marketing. Demo có 13.443 khách, 269 trang.
+Danh bạ khách trung tâm của chuỗi (demo ~13.600 khách): tìm, lọc, phân nhóm, xem doanh thu trọn đời và lần đến gần nhất; hồ sơ khách là nơi khám, kê đơn, chăm sóc, ảnh, thẻ.
 
 ## 2. Màn hình con
 
-### 2.1 Danh sách khách hàng (trang chính)
-- Tiêu đề kèm tổng: "N khách hàng" (cập nhật theo bộ lọc, đoán).
-- Thanh nút trên cùng: Nhóm KH | Gần đây | Thống kê | Nhập Excel | Thêm mới.
-- Bộ lọc (dạng ô chọn, có nút "Tắt bộ lọc" để xóa hết):
-  1. Chi nhánh: Tất cả + từng chi nhánh (4 cơ sở và 1 Head Office).
-  2. Nhóm khách (~28 nhóm): nhóm theo bảo hiểm (AIA, Bảo Việt, Fubon/Fulerton, Pacific Cross, MIC, VBI, PVI, Pjico), nhóm theo dịch vụ (Chỉnh nha, Răng sứ thẩm mỹ, Implant, Điều trị), nhóm theo kênh/đối tác (CTV, Cộng tác viên, Voucher, CTV voucher, telesale, zalo OA, google, ful, Hồ Chí Minh), nhóm theo đối tác nha khoa (Zenyum, SmileBeauty, Nha khoa HeRa), trạng thái (Khách vãng lai, Khách hàng nợ xấu).
-  3. Hạng: Tất cả, Thường, Vàng, Bạc (có dòng trùng "Hạng Thường" 3 lần: dữ liệu cấu hình bẩn).
-  4. Lần đến: Tất cả, đến trong 30 ngày, trong 3 tháng, chưa quay lại > 3 tháng, > 6 tháng, > 12 tháng, chưa đến lần nào.
-  5. Nguồn giới thiệu: gần 60 giá trị, gồm kênh (Facebook, Google, Zalo, Telesale), tên CTV, tên nhân viên, tên khách cũ giới thiệu, nguồn phòng khám cũ.
-- Bảng: Khách hàng | Điện thoại | Chi nhánh | Thẻ | Phân hạng | Nhóm | Nguồn giới thiệu | Lần đến gần nhất | Doanh thu | Thao tác.
-  - Ô Khách hàng: avatar chữ cái đầu + tên + mã khách (hai kiểu tiền tố: kiểu nhập từ hệ thống cũ và kiểu tạo mới, kèm dãy số).
-  - Ô Điện thoại: số có mã quốc gia + tên quốc gia (khách quốc tế là bình thường); có khách không có số ("—").
-  - Thẻ: số thẻ dịch vụ/liệu trình khách đang giữ ("0 thẻ").
-  - Lần đến gần nhất: ngày + diễn đạt tương đối ("12 ngày trước", "6 năm trước") hoặc "Chưa đến".
-  - Doanh thu: tổng đã thu trọn đời (vd 0 ₫ với khách chưa phát sinh).
-  - Thao tác: cột nút (nội dung chưa đọc được).
-- Phân trang: "Hiển thị 1-50 / 13.443 khách", cỡ trang 50/100/200, chọn trang.
+### 2.1 Danh sách khách hàng
+- Tiêu đề "N khách hàng". Nút: Nhóm KH | Gần đây | Thống kê | Nhập Excel | Thêm mới | Tắt bộ lọc.
+- Ô tìm: "Tìm tên, mã KH, SĐT, email, mã thẻ, công ty…".
+- Bộ lọc: Chi nhánh; Nhóm (~28); Hạng; Lần đến (đến trong 30 ngày / 3 tháng / chưa quay lại > 3, > 6, > 12 tháng / chưa đến lần nào); Nguồn giới thiệu (~51 giá trị, lẫn kênh, CTV, nhân viên, khách cũ).
+- Cột: Khách hàng (avatar chữ, tên, mã) | Điện thoại (mã quốc gia + quốc gia) | Chi nhánh | Thẻ (số thẻ) | Phân hạng | Nhóm | Nguồn giới thiệu | Lần đến gần nhất (ngày + "N ngày/năm trước" / "Chưa đến") | Doanh thu | Thao tác.
+- Thao tác (menu ⋯): Sửa thông tin | Gộp hồ sơ | Lưu trữ.
+- Phân trang 50/100/200, ô nhập số trang.
 
-### 2.2 Các tab Nhóm KH, Gần đây, Thống kê, Nhập Excel, Thêm mới
-Chưa đọc được (popup/khung ngoài vùng chính). Chỉ suy ra: Nhóm KH = quản lý danh mục nhóm; Gần đây = khách mở/tạo gần đây; Thống kê = số liệu tổng; Nhập Excel = nhập hàng loạt (nguồn dữ liệu cũ có thể từ đây); Thêm mới = form tạo khách (trường nhập chưa thấy).
+### 2.2 Form "Thêm khách hàng mới"
+Mã khách (hệ thống tự sinh) | Họ tên* | Giới tính (Nam/Nữ/Khác) | Số điện thoại (mã quốc gia) | Mã thẻ | Ngày sinh (ngày/tháng/năm) | Số ĐT Zalo | Email | Facebook (ID) | Căn cước/Passport | Nghề nghiệp | Công ty | Hạng (Thường/Bạc/Vàng/VIP) | Người giới thiệu (nhập SĐT người giới thiệu) | Nguồn khách hàng (Facebook, Google, Zalo, Website, Walk-in, Bạn bè giới thiệu, CTV, Khác) | Website | Nhóm khách hàng (tích nhiều nhóm + "Tạo nhóm mới…") | Địa chỉ (tỉnh → quận → số nhà) | Quốc gia | Ghi chú. Nút Đóng / Lưu thông tin.
+
+### 2.3 Nhóm KH (hộp "Quản lý nhóm")
+Tìm nhóm; Tạo mới (tên + màu nhóm); bảng Tên nhóm | Số khách | Sửa / Xóa.
+
+### 2.4 Gần đây (hộp "Khách hàng gần đây")
+Lọc khoảng thời gian; Xuất CSV; tìm theo tên/SĐT/mã; cột Khách hàng | Số điện thoại | Hoạt động gần nhất (ngày giờ); phân trang 10 dòng.
+
+### 2.5 Thống kê (hộp "Thống kê khách hàng")
+Tổng khách hàng; Khách mới tuần này; biểu đồ lượng khách theo ngày (30 ngày); "Khách hàng đến từ đâu?" (theo tỉnh); Giới tính; Phân nhóm khách hàng; Xếp hạng khách hàng.
+
+### 2.6 Nhập Excel
+Tải file mẫu; hướng dẫn số điện thoại dạng +quốc tế hoặc cột "Vùng điện thoại" mã ISO; kéo thả .csv/.xlsx/.xls; chọn nhóm khách (tùy chọn); "Ghi đè dữ liệu nếu trùng số điện thoại"; nút Nhập dữ liệu.
+
+### 2.7 Hồ sơ khách (trang riêng `#/customers/<id>`)
+- Đầu trang: ← | Thông tin khách hàng | mã | nút Lưu trữ, Gộp hồ sơ. Thanh dưới cố định: In phiếu | Tạo đơn hàng | Đặt lịch | Điểm | Khóa gửi Zalo.
+- Thẻ tóm tắt: avatar, % hoàn thiện hồ sơ, tên, mã, "Khách từ <ngày>", hạng, chi nhánh, nhóm. Khối Thống kê: Chi nhánh, Điểm thưởng, Lần khám gần nhất, Ngày tạo hồ sơ, Tổng lịch hẹn, Hoàn thành, Sắp tới, Định kỳ sắp tới, Hủy / Vắng.
+- Tab Thông tin cá nhân: các trường của form 2.2; Lịch sử giao dịch (số đơn, tổng; cột Đơn hàng | Ngày | Giá trị | Nợ | Gửi email "Gửi hóa đơn"); Tài liệu đính kèm (Hợp đồng, Cam kết, Thẻ bảo hành, Passport, Căn cước…; PDF/ảnh ≤ 20 MB; "+ Tải lên").
+- Tab Lịch sử khám: "Phiếu khám & kê đơn thuốc" với bộ đếm Tất cả / Chưa gửi email / Nháp; nút Tạo phiếu khám, Kê đơn thuốc; bảng Ngày | Phiếu khám | Đơn thuốc. "Nhật ký điều trị" + Thêm nhật ký (nội dung + nhiều ảnh JPG/PNG/WebP); Xuất Excel; "Hóa đơn không ghi chú"; In nhật ký / PDF.
+  - Form Tạo phiếu khám: Thông tin bệnh nhân (lấy từ hồ sơ, ô trống nhập được và cập nhật ngược hồ sơ) · Chi nhánh, Bác sĩ khám · Lý do khám / Triệu chứng (500), Chẩn đoán (500), Ghi chú (300) · Khám trong miệng (sơ đồ răng) · Tình trạng sức khỏe toàn thân (10 ô tích: huyết áp, tim mạch, tiểu đường, chảy máu lâu, gan, dị ứng thuốc, thần kinh, thai/kinh nguyệt, bệnh đang điều trị, khám chuyên khoa) · Cận lâm sàng (X-Quang, Xét nghiệm, Khác) · Kế hoạch điều trị (ô tích) · CHỮ KÝ bác sĩ và bệnh nhân vẽ tay (bắt buộc đủ 2 chữ ký mới phát hành) · Lưu nháp / Tạo phiếu khám. Phiếu có trạng thái Nháp / Đã phát hành / Hết hạn.
+  - Kê đơn thuốc: "Kê đơn thuốc mới" (đơn trống) hoặc "Chọn từ đơn thuốc mẫu" (mẫu có thuốc, liều, lời dặn; tìm mẫu, sửa / xóa mẫu; tạo mẫu từ một đơn).
+- Tab Chăm sóc khách hàng: Ghi chú nhanh + Lưu ghi chú; "+ Tạo ghi chú CSKH"; danh sách Lịch hẹn sắp đến (giờ, dịch vụ, trạng thái, nút "📞 Gọi khách", "+ Tạo ghi chú CSKH" cho từng lịch); "Timeline chăm sóc khách hàng".
+- Tab Ảnh bệnh nhân: Tải ảnh lên (nhiều ảnh một lúc).
+- Tab Khách hàng liên quan: Quan hệ gia đình / Liên hệ khẩn cấp (+ Thêm); Khách hàng liên quan (cây giới thiệu).
+- Tab Thẻ dịch vụ: thẻ khách đang sở hữu.
+- Tab Thiết đặt thông báo: kênh theo SĐT (VN → Zalo/ZNS, nước ngoài → WhatsApp, email song song); ghi nhận yêu cầu dừng tin tự động của khách; tin ưu đãi / sinh nhật chỉ gửi khi có đồng ý kèm bằng chứng; STOP/DỪNG qua WhatsApp chỉ dừng WhatsApp; thẻ kênh Zalo (Đang kích hoạt / nút Khóa gửi Zalo), WhatsApp (Không khả dụng với số VN).
 
 ## 3. Quy tắc nghiệp vụ thấy được
-1. Một khách thuộc một chi nhánh gốc nhưng danh sách xem được toàn chuỗi (lọc theo chi nhánh).
-2. Có phân hạng thành viên (Thường/Vàng/Bạc) hiển thị ngay trên danh sách.
-3. "Lần đến" là bộ lọc chăm sóc lại: chia theo mốc 30 ngày, 3, 6, 12 tháng không quay lại. Dùng cho gọi nhắc.
-4. Khách có thể ở nhiều "nhóm" để phân bổ quyền lợi/bảo hiểm/đối tác.
-5. Doanh thu trọn đời nằm ngay danh sách (tính từ sổ thanh toán).
-6. Nhập từ hệ thống cũ giữ mã cũ nên có hai kiểu mã song song.
-7. Khách quốc tế phải hỗ trợ (mã quốc gia).
-8. Bài học dữ liệu bẩn trong demo: nguồn giới thiệu trùng do khác hoa/thường hoặc sai chính tả (nhiều cách viết "facebook", "telesale", "kh cũ Tây Sơn"); nhóm/đối tác chèn vào đầu tên khách (kiểu "(Đối tác) tên"); nhiều khách có tên rỗng hoặc chỉ một ký tự; nhiều bản ghi trùng SĐT hoặc không có SĐT. AMIA phải ràng buộc ngay từ form.
+1. Khách thuộc một chi nhánh gốc, xem được toàn chuỗi theo quyền.
+2. Hạng thành viên, nhóm (nhiều nhóm/khách), nguồn và người giới thiệu (theo SĐT) trên hồ sơ.
+3. "Lần đến" là bộ lọc chăm sóc lại theo mốc 30 ngày / 3 / 6 / 12 tháng.
+4. Gộp hồ sơ trùng và Lưu trữ (ẩn, không xóa) có sẵn trên danh sách và hồ sơ.
+5. Phiếu khám chỉ phát hành khi đủ chữ ký 2 bên; hóa đơn không gắn phiếu khám trong ±3 ngày thì không tính hoa hồng (xem pos.md).
+6. Đồng ý nhận tin quảng cáo phải có bằng chứng; khách có thể khóa từng kênh.
+7. Nhập Excel chuẩn hóa SĐT quốc tế, tùy chọn ghi đè theo SĐT.
+8. Dữ liệu demo vẫn bẩn (nguồn trùng do sai chính tả, tên đối tác chèn vào tên khách, hạng trùng) - bài học: danh mục nguồn chuẩn và ràng buộc ở form.
 
 ## 4. Điểm riêng nha khoa
-- [NHA KHOA] Nhóm theo hãng bảo hiểm sức khỏe (nhiều hãng) và chương trình đối tác niềng răng. AMIA (da liễu/spa) không cần bảo hiểm.
-- [NHA KHOA] Nhóm theo dịch vụ lớn (Chỉnh nha, Implant, Răng sứ) vì liệu trình dài tính theo đợt điều trị.
-- [NHA KHOA] "Khách hàng nợ xấu" vì nha khoa hay trả góp/tạm ứng theo đợt.
-- Hồ sơ y khoa (phiếu khám, sơ đồ răng, ảnh X-quang) không thấy ở danh sách; phần đó nằm ở hồ sơ bệnh án riêng, chưa chụp.
+- [NHA KHOA] Sơ đồ răng FDI, kế hoạch điều trị nha (nhổ, chữa, nha chu, phục hình, chỉnh hình, implant), nhóm theo hãng bảo hiểm, nhóm đối tác niềng răng.
+- Còn lại (phiếu khám có chữ ký, đơn thuốc mẫu, nhật ký điều trị có ảnh, tài liệu đính kèm, liên hệ khẩn cấp, cây giới thiệu, khóa kênh tin) dùng được cho da liễu.
 
 ## 5. Đề xuất cho AMIA
-Làm theo thứ tự:
-1. Bảng khách: họ tên, SĐT (chuẩn hóa, bắt buộc, chống trùng), chi nhánh, nhóm, nguồn, lần đến gần nhất, tổng doanh thu, số thẻ/liệu trình, hạng. Phân trang 50/100/200, tìm nhanh theo tên/SĐT.
-2. Bộ lọc: chi nhánh, nhóm, hạng, mốc "chưa quay lại" 30 ngày/3/6/12 tháng, nguồn. Nút "Tắt bộ lọc".
-3. Danh mục NGUỒN chuẩn (Facebook, TikTok, Zalo OA, Google Map, Giới thiệu, CTV, Khách cũ, Event) và trường "người giới thiệu" tách riêng thay vì gộp vào cùng một danh sách. Đây là chỗ BeDental làm kém nhất.
-4. Form Thêm mới + Nhập Excel có kiểm tra trùng SĐT. Tên chỉ là tên, không chèn đối tác vào tên.
-5. Hạng thành viên và thẻ liệu trình (thay "Zenyum/Implant" bằng: gói liệu trình da, laser, tiêm; đối tác bán voucher).
-6. Màn Thống kê khách (mới/cũ, theo nguồn) và danh sách "Gần đây".
-7. Hồ sơ da/ảnh trước-sau, đồng ý chụp ảnh bằng văn bản (liên quan luật AMIA).
-
-Bỏ: các nhóm bảo hiểm, hạng trùng lặp, mã khách hai kiểu, nhóm "nợ xấu" (thay bằng cờ công nợ).
+AMIA đã có: danh sách + bộ lọc rộng (nhiều hơn BeDental: sinh nhật, tuổi, doanh số, điểm, nợ, thẻ...), nhóm, gần đây, thống kê, nhập Excel có ghi đè, hồ sơ với ghi chú điều trị, ảnh, phiếu tư vấn, thẻ, điểm thưởng, người thân, nhắc nhở, khiếu nại/bảo hành, đồng ý dùng ảnh. Còn thiếu:
+1. Gộp hồ sơ trùng (chọn hồ sơ giữ lại, chuyển hóa đơn/lịch/thẻ/ảnh/ghi chú, ghi nhật ký).
+2. Lưu trữ khách (ẩn khỏi danh sách, không xóa; AMIA chỉ có xóa khách nhập nhầm).
+3. Phiếu khám da liễu có chữ ký điện tử bác sĩ + khách và trạng thái Nháp / Đã phát hành.
+4. Kê đơn thuốc + đơn thuốc mẫu (da liễu kê đơn thường xuyên), in đơn.
+5. Tài liệu đính kèm theo khách (cam kết, phiếu đồng ý, CCCD; PDF/ảnh).
+6. Thiết đặt thông báo theo khách: khóa gửi Zalo / dừng tin quảng cáo, lưu bằng chứng đồng ý.
+7. Cây giới thiệu (khách nào giới thiệu khách nào) trong hồ sơ.
+8. Gửi hóa đơn qua email từ lịch sử giao dịch; % hoàn thiện hồ sơ.

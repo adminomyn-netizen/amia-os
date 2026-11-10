@@ -6,28 +6,37 @@ import { VAI_TRO, quyenHieuLuc, type VaiTro } from "../../src/lib/quyen";
 const nguoi = (vaiTro: VaiTro, rieng?: string[] | null) => ({ vaiTro, quyen: quyenHieuLuc(vaiTro, rieng) });
 const ten = (v: VaiTro, r?: string[] | null) => locMenu(nguoi(v, r)).map((m) => m.ten);
 
-describe("menu theo vai trò", () => {
-  it("mọi vai trò (kể cả khi bị gỡ hết quyền) đều có Trang chủ và vào đó đầu tiên, không vòng lặp chuyển trang", () => {
-    for (const v of VAI_TRO) { expect(ten(v)[0]).toBe("Trang chủ"); expect(trangDau(nguoi(v))).toBe("/trang-chu"); }
+const dashboard = (v: VaiTro, r?: string[] | null) => locMenu(nguoi(v, r)).find((m) => m.ten === "Dashboard")?.duong_dan;
+
+describe("menu theo vai trò (12 mục như BeDental, chị Lâm 10/11/2026)", () => {
+  it("mọi vai trò (kể cả khi bị gỡ hết quyền) đều có Dashboard đứng đầu, không vòng lặp chuyển trang", () => {
+    for (const v of VAI_TRO) {
+      expect(ten(v)[0]).toBe("Dashboard");
+      expect(trangDau(nguoi(v))).toBe(nguoi(v).quyen.includes("tongquan.xem") ? "/tong-quan" : "/trang-chu");
+    }
     expect(trangDau(nguoi("ktv", []))).toBe("/trang-chu");
-    expect(ten("ktv", [])).toEqual(["Trang chủ"]);
+    expect(ten("ktv", [])).toEqual(["Dashboard"]);
   });
-  it("Tổng quan (dashboard) và Cài đặt theo quyền: bác sĩ không có Tổng quan, Quản lý có Tổng quan, Kỹ thuật có cả hai", () => {
-    expect(ten("bac_si")).not.toContain("Tổng quan");
-    expect(ten("quan_ly")).toContain("Tổng quan");
-    expect(ten("ky_thuat")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt"]));
-    expect(ten("chu")).toEqual(expect.arrayContaining(["Tổng quan", "Cài đặt"]));
-    // Nhân sự đã chuyển sang MSC Group OS (31/10/2026): không còn trong menu.
-    expect(ten("chu")).not.toContain("Nhân sự");
+  it("mỗi tên mục chỉ một lần, tối đa 12 mục, đúng thứ tự BeDental", () => {
+    const thuTu = ["Dashboard", "Lịch hẹn", "Nơi làm việc", "Khách hàng", "POS / Bán hàng", "Tài chính - Kế toán", "Kho & Mua sắm", "Nhân sự", "Văn bản & Hợp đồng", "Báo cáo", "Marketing", "Cài đặt"];
+    expect(ten("chu")).toEqual(thuTu);
+    for (const v of VAI_TRO) { const t = ten(v); expect(new Set(t).size).toBe(t.length); expect(t.length).toBeLessThanOrEqual(12); }
+  });
+  it("Dashboard theo quyền: bác sĩ ra Trang chủ, Quản lý ra Tổng quan; POS: Thu ngân ra màn bán, Lễ tân ra Hoá đơn", () => {
+    expect(dashboard("bac_si")).toBe("/trang-chu");
+    expect(dashboard("quan_ly")).toBe("/tong-quan");
+    expect(dashboard("ktv", ["tongquan.xem"])).toBe("/tong-quan");
+    expect(ten("ky_thuat")).toEqual(expect.arrayContaining(["Cài đặt", "Nhân sự"]));
     expect(ten("bac_si")).not.toContain("Tài chính - Kế toán");
-    expect(ten("ktv", ["tongquan.xem"])).toContain("Tổng quan");
+    expect(locMenu(nguoi("thu_ngan")).find((m) => m.ten === "POS / Bán hàng")?.duong_dan).toBe("/ban-hang");
+    expect(locMenu(nguoi("le_tan")).find((m) => m.ten === "POS / Bán hàng")?.duong_dan).toBe("/hoa-don");
   });
 });
 
 describe("vai trò Nhân viên (đăng ký tự do)", () => {
-  it("chỉ có quyền dùng Nơi làm việc: thấy Trang chủ và Nơi làm việc, không thấy mục lớn nào khác", () => {
+  it("chỉ có quyền dùng Nơi làm việc: thấy Dashboard (Trang chủ), Nơi làm việc, Nhân sự (thu nhập của tôi)", () => {
     expect(nguoi("nhan_vien").quyen).toEqual(["noibo.dung"]);
-    expect(ten("nhan_vien")).toEqual(["Trang chủ", "Nơi làm việc"]);
+    expect(ten("nhan_vien")).toEqual(["Dashboard", "Nơi làm việc", "Nhân sự"]);
   });
 });
 

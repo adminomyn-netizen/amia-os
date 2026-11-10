@@ -12,6 +12,7 @@ import type { timKhach } from "@/app/(app)/ban-hang/actions";
 import type { ganNhomKhachMoi, khungGioTrong, thongTinKhachDatLich } from "@/app/(app)/lich-hen/actions";
 import { TaoKhachNhanh } from "@/components/lich-hen/TaoKhachNhanh";
 import { KhachDiCungO } from "@/components/lich-hen/KhachDiCung";
+import { ChonNhieuDichVu } from "@/components/lich-hen/ChonNhieuDichVu";
 import type { KhachDiCung } from "@/lib/lich-hen-nhom";
 import { KIEU_LAP, laKieuLap, LUA_CHON_NGUON, LUA_CHON_TRANG_THAI_DAT, nhanNguon, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
 import { ngayVN } from "@/lib/dinh-dang";
@@ -71,7 +72,6 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   const dsNguon = nguon && !LUA_CHON_NGUON.some((x) => x.gia_tri === nguon) ? [...LUA_CHON_NGUON, { gia_tri: nguon, nhan: nhanNguon(nguon) }] : LUA_CHON_NGUON;
   const xemLap = laKieuLap(kieuLap) && Number(tongBuoi) >= 2 ? ngayLap(ngay, kieuLap, Math.max(1, Number(khoang) || 1), Math.min(Number(tongBuoi), TOI_DA_BUOI_LAP)) : [];
   const choCuaCn = cho.filter((c) => c.chiNhanhId === cn).map((c) => c.ten);
-  const [tim_, setTim] = useState("");
   const [loai, setLoai] = useState<"truoc" | "den">("truoc");
   const [moTaoKhach, setMoTaoKhach] = useState(false);
   const [gioKey, setGioKey] = useState(0);
@@ -97,8 +97,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     setNguon("WALKIN");
     setTrangThai("cho_phuc_vu");
   };
-  const doiDv = (id: string) => {
-    const moi = dvs.includes(id) ? dvs.filter((x) => x !== id) : [...dvs, id];
+  const doiDvs = (moi: string[]) => {
     setDvs(moi);
     setPhut(String(moi.reduce((s, d) => s + (dichVu.find((x) => x.id === d)?.thoiLuong ?? 0), 0) || 60));
   };
@@ -115,7 +114,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     bat(async () => { const kq = await action(fd); if (kq.loi) setLoi(kq.loi); else { setMo(false); router.refresh(); } });
   };
   // Dịch vụ ẩn ở đặt lịch hoặc không cung cấp ở chi nhánh đang chọn thì không hiện để chọn mới; dịch vụ đã có trong lịch vẫn hiện để bỏ chọn được.
-  const dsDv = dichVu.filter((d) => (dvs.includes(d.id) || (!d.an && coOChiNhanh(d.chiNhanhIds, cn))) && (!tim_ || `${d.ma} ${d.ten}`.toLowerCase().includes(tim_.toLowerCase())));
+  const dsDv = dichVu.filter((d) => (dvs.includes(d.id) || (!d.an && coOChiNhanh(d.chiNhanhIds, cn))));
   return (
     <>
       <button type="button" className={kieu === "chinh" ? NUT_CHINH : NUT_CHU} onClick={() => setMo(true)}>{nhan}</button>
@@ -163,15 +162,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
           )}
           <div>
             <label className={NHAN_O}>Dịch vụ <span className="text-loi">*</span></label>
-            <div className="rounded-nho border border-vien-dam">
-              <input value={tim_} onChange={(e) => setTim(e.target.value)} placeholder="Tìm dịch vụ" aria-label="Tìm dịch vụ" className="h-10 w-full border-b border-vien bg-transparent px-3 text-[14px] outline-none" />
-              <ul className="max-h-40 overflow-y-auto py-1">
-                {dsDv.map((d) => { const bat_ = dvs.includes(d.id); return (
-                  <li key={d.id}><button type="button" role="checkbox" aria-checked={bat_} onClick={() => doiDv(d.id)} className="flex w-full items-center gap-2.5 px-3 py-1.5 text-left text-[14px] hover:bg-giay-tram">
-                    <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[3px] border text-[11px] leading-none ${bat_ ? "border-nhan bg-nhan text-white" : "border-vien-dam"}`}>{bat_ ? "✓" : ""}</span><span className="truncate">{d.ma} · {d.ten}</span><span className="ml-auto text-[12px] text-muc-3">{d.thoiLuong} phút</span></button></li>); })}
-                {dsDv.length === 0 && <li className="px-3 py-2 text-[13px] text-muc-3">Không có dịch vụ nào.</li>}
-              </ul>
-            </div>
+            <ChonNhieuDichVu ds={dsDv} tatCa={dichVu} chon={dvs} onDoi={doiDvs} />
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div><label className={NHAN_O}>Người thực hiện</label><Chon trong="Chưa phân" ariaLabel="Người thực hiện" giaTri={nv} onDoi={setNv} luaChon={[{ gia_tri: "", nhan: "Chưa phân" }, ...nhanVien]} /></div>

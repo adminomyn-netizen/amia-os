@@ -2,6 +2,7 @@
 
 import { Chon, type LuaChon } from "@/components/ui/Chon";
 import { NHAN_O, NUT_CHU, O_NHAP } from "@/components/ui/dinh-dang";
+import { ChonNhieuDichVu } from "@/components/lich-hen/ChonNhieuDichVu";
 import { TOI_DA_KHACH_DI_CUNG, type KhachDiCung } from "@/lib/lich-hen-nhom";
 
 type DV = { id: string; ma: string; ten: string; thoiLuong: number };
@@ -10,17 +11,7 @@ type DV = { id: string; ma: string; ten: string; thoiLuong: number };
  *  Thanh toán: một hoá đơn cho cả nhóm, gắn khách chính. */
 export function KhachDiCungO({ ds, onDoi, dichVu, nhanVien }: { ds: KhachDiCung[]; onDoi: (ds: KhachDiCung[]) => void; dichVu: DV[]; nhanVien: LuaChon[] }) {
   const sua = (i: number, x: Partial<KhachDiCung>) => onDoi(ds.map((k, j) => (j === i ? { ...k, ...x } : k)));
-  const themDv = (i: number, id: string) => {
-    const k = ds[i];
-    if (!id || k.dichVuIds.includes(id)) return;
-    const moi = [...k.dichVuIds, id];
-    sua(i, { dichVuIds: moi, thoiLuong: moi.reduce((s, d) => s + (dichVu.find((x) => x.id === d)?.thoiLuong ?? 0), 0) || null });
-  };
-  const boDv = (i: number, id: string) => {
-    const moi = ds[i].dichVuIds.filter((x) => x !== id);
-    sua(i, { dichVuIds: moi, thoiLuong: moi.reduce((s, d) => s + (dichVu.find((x) => x.id === d)?.thoiLuong ?? 0), 0) || null });
-  };
-  const tenDv = (id: string) => dichVu.find((d) => d.id === id)?.ten ?? "Dịch vụ";
+  const doiDv = (i: number, moi: string[]) => sua(i, { dichVuIds: moi, thoiLuong: moi.reduce((s, d) => s + (dichVu.find((x) => x.id === d)?.thoiLuong ?? 0), 0) || null });
   return (
     <fieldset className="rounded-nho border border-vien px-3 pb-3 pt-1">
       <legend className="px-1 text-[13px] font-medium text-muc-2">Khách đi cùng{ds.length ? ` (${ds.length + 1} khách)` : ""}</legend>
@@ -34,13 +25,7 @@ export function KhachDiCungO({ ds, onDoi, dichVu, nhanVien }: { ds: KhachDiCung[
             </div>
             <div className="mb-2">
               <label className={NHAN_O}>Dịch vụ <span className="text-loi">*</span></label>
-              {k.dichVuIds.length > 0 && (
-                <ul className="mb-1.5 flex flex-wrap gap-1.5">
-                  {k.dichVuIds.map((d) => <li key={d} className="flex max-w-full items-center gap-1 rounded-nho bg-giay-tram px-2 py-1 text-[13px]"><span className="truncate">{tenDv(d)}</span><button type="button" aria-label={`Bỏ ${tenDv(d)}`} onClick={() => boDv(i, d)} className="px-1 text-muc-3 hover:text-loi">×</button></li>)}
-                </ul>
-              )}
-              <Chon id={`dc-dv-${i}`} giaTri="" onDoi={(x) => themDv(i, x)} trong="Thêm dịch vụ" ariaLabel={`Thêm dịch vụ cho khách ${i + 2}`}
-                luaChon={dichVu.filter((d) => !k.dichVuIds.includes(d.id)).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` }))} />
+              <ChonNhieuDichVu ds={dichVu} chon={k.dichVuIds} onDoi={(moi) => doiDv(i, moi)} nhan={`Dịch vụ khách ${i + 2}`} />
             </div>
             <div className="grid gap-3 sm:grid-cols-3">
               <div><label className={NHAN_O}>Người thực hiện</label><Chon id={`dc-nv-${i}`} trong="Chưa phân" ariaLabel={`Người thực hiện khách ${i + 2}`} giaTri={k.nhanVienId ?? ""} onDoi={(x) => sua(i, { nhanVienId: x || null })} luaChon={[{ gia_tri: "", nhan: "Chưa phân" }, ...nhanVien]} /></div>

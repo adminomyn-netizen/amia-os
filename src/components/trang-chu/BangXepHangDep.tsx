@@ -108,7 +108,7 @@ function CotTrong({ hang }: { hang: 2 | 3 }) {
 /** Bảng xếp hạng kiểu BeDental, làm sang hơn: sân khấu bục 1-2-3 (vương miện, vòng vàng/bạc/đồng, huy hiệu hạng, bục mọc lên),
  *  dòng "hạng 1 vượt hạng 2", rồi danh sách từ hạng 4 (số hạng mờ, ảnh, tên, dòng phụ, giá trị bên phải, thanh tỉ lệ so với người đứng đầu).
  *  Rê chuột hoặc Tab vào bất kỳ mục nào để xem chi tiết. */
-export function BangXepHangDep({ tieuDe, Icon, href, nhanHref, dong, trong, cls = "" }: { tieuDe: string; Icon: LucideIcon; href?: string; nhanHref?: string; dong: DongXepHang[]; trong: string; cls?: string }) {
+export function BangXepHangDep({ tieuDe, Icon, href, nhanHref, dong, trong, cls = "", gon = false }: { tieuDe: string; Icon: LucideIcon; href?: string; nhanHref?: string; dong: DongXepHang[]; trong: string; cls?: string; /** Trống thì chỉ một dòng nhỏ, không vẽ bục to. */ gon?: boolean }) {
   const max = Math.max(1, ...dong.map((x) => x.gt));
   const [mot, hai, ba] = dong;
   const conLai = dong.slice(3);
@@ -125,7 +125,9 @@ export function BangXepHangDep({ tieuDe, Icon, href, nhanHref, dong, trong, cls 
         {href && <Link href={href} className="shrink-0 text-[13px] font-medium text-nhan-dam hover:underline">{nhanHref ?? "Xem"}</Link>}
       </div>
 
-      {dong.length === 0 ? (
+      {dong.length === 0 && gon ? (
+        <p className="mt-3 text-[13.5px] text-muc-3">{trong}</p>
+      ) : dong.length === 0 ? (
         <div className="xh-san mt-4 flex flex-col items-center rounded-vua px-6 py-8 text-center">
           <span className="flex h-12 w-12 items-center justify-center" style={{ borderRadius: "50%", background: "var(--giay-sang)", boxShadow: "inset 0 0 0 1px var(--vien), 0 6px 14px -8px rgb(10 43 38 / 0.3)" }} aria-hidden>
             <Trophy strokeWidth={1.6} className="h-6 w-6 text-sac-cam" />

@@ -3,12 +3,13 @@ import { unstable_cache } from "next/cache";
 import { sb } from "@/lib/db";
 import { chiNhanhHoatDong } from "@/lib/chi-nhanh";
 import { locKhach } from "@/lib/khach-danh-sach";
+import { homNayHCM } from "@/lib/dinh-dang";
 
 // Bảng xếp hạng + sinh nhật của Dashboard (chị Lâm 10/11/2026). Mọi số TÍNH TRONG CSDL bằng đúng các hàm báo cáo đã có
 // (cùng số với Báo cáo › Theo nhân viên / Theo sản phẩm, dịch vụ / Theo khách hàng — cách SalonHero), không tự chế công thức:
 //   bc_nhan_vien_sh (0117: phục vụ / bán SP / bán thẻ / tư vấn, dịch vụ làm bằng thẻ lấy giá một buổi của thẻ, chia theo tỉ lệ người hưởng)
 //   bc_san_pham_dich_vu (0118) · bc_theo_khach_hang · bc_cham_diem_nv · xh_the_gia_han (0326, mua lại đúng gói thẻ đã có).
-// Giữ 2 phút dùng chung cho mọi người xem cùng chi nhánh/kỳ. Lỗi thì ném ra để KHÔNG bị lưu đệm.
+// Giữ đệm dùng chung cho mọi người xem cùng chi nhánh/kỳ. Lỗi thì ném ra để KHÔNG bị lưu đệm.
 
 /** Chủ / Kỹ thuật không gắn chi nhánh: nếu chỉ còn MỘT chi nhánh đang hoạt động (Vinh; Đà Lạt đã đóng) thì xếp hạng + sinh nhật lấy theo chi nhánh đó. */
 export async function cnXepHang(cn: string | null): Promise<{ id: string | null; ten: string | null }> {
@@ -82,7 +83,10 @@ async function tinhXepHang(tu: string, den: string, cn: string | null): Promise<
     khach: (kh.data ?? []).filter((r) => r.khach_id && Number(r.doanh_thu) > 0).map((r) => ({ ten: r.ho_ten, so: r.so_don, tien: Number(r.doanh_thu), phu: r.hang ?? undefined, chiTiet: [{ nhan: "Số đơn", gt: r.so_don }, { nhan: "Doanh thu", gt: Number(r.doanh_thu), tien: true }, { nhan: "Thực thu", gt: Number(r.thuc_thu), tien: true }] })),
   };
 }
-export const layXepHang = unstable_cache(tinhXepHang, ["xep-hang-dashboard-v1"], { revalidate: 120 });
+// Kỳ còn chạy (tới hôm nay) giữ 60 giây cho số mới; kỳ đã khép (tháng trước) không đổi nữa nên giữ 10 phút.
+const xhNgan = unstable_cache(tinhXepHang, ["xep-hang-ngan-v2"], { revalidate: 60 });
+const xhLau = unstable_cache(tinhXepHang, ["xep-hang-lau-v2"], { revalidate: 600 });
+export const layXepHang = (tu: string, den: string, cn: string | null) => (den >= homNayHCM() ? xhNgan : xhLau)(tu, den, cn);
 
 export type KhachSinhNhat = { id: string; ma: string; ten: string; sdt: string; ngaySinh: string; hang: string | null; chi12: number; theDangDung: number };
 

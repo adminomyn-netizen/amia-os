@@ -4,7 +4,7 @@ import { Suspense } from "react";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
-import { congNgay, gioVN, homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
+import { congNgay, gioVN, homNayHCM, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { locMenu } from "@/lib/nav";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -15,19 +15,20 @@ import { Tab } from "@/components/ui/Tab";
 import { BangDoanhThu, BangHeThong, BangKho, BangKhach, BangTheNo } from "./bang";
 import { CotDoanhThuNgay } from "@/components/trang-chu/CotDoanhThuNgay";
 import { KhoiXepHang } from "@/components/trang-chu/KhoiXepHang";
-import type { KyXh } from "@/lib/ky-xep-hang";
+import { docKy, khoangKy, type KyXh } from "@/lib/ky-xep-hang";
+import { ChonKy } from "@/components/trang-chu/ChonKy";
 import { KhoiSinhNhatThang } from "@/components/trang-chu/KhoiSinhNhatThang";
 import { cnXepHang } from "@/lib/xep-hang";
 
 const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { chu: "Bảng điều hành của Chủ", ky_thuat: "Bảng điều khiển kỹ thuật", quan_ly: "Bảng điều hành", ke_toan: "Bảng kế toán", thu_kho: "Bảng kho", thu_ngan: "Bảng thu ngân", marketing: "Bảng marketing", nha_dau_tu: "Bảng nhà đầu tư" };
 
-export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string; xh?: string }> }) {
+export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string; ky?: string }> }) {
   const nd = await yeuCauQuyen("tongquan.xem");
   const sp = await searchParams;
   const homNay = homNayHCM();
   const cn = nd.chiNhanhId;
   const TAB = [
-    { ma: "hom-nay", ten: "Hôm nay", co: true },
+    { ma: "hom-nay", ten: "Tổng quan", co: true },
     { ma: "doanh-thu", ten: "Doanh thu", co: coQuyen(nd, "baocao.tien") },
     { ma: "khach", ten: "Khách hàng", co: coQuyen(nd, "khach.xem") },
     { ma: "the-no", ten: "Thẻ & công nợ", co: coQuyen(nd, "the.xem") },
@@ -36,6 +37,7 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
   ].filter((t) => t.co);
   const tab = TAB.some((t) => t.ma === sp.tab) ? sp.tab! : "hom-nay";
   const coBaoCao = coQuyen(nd, "baocao.xem");
+  const ky = docKy(sp.ky);
   const coTien = coQuyen(nd, "baocao.tien");
   const banner = sp["khong-du-quyen"] ? <p role="alert" className="mb-5 rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p> : null;
 
@@ -44,9 +46,9 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
     <>
       <TieuDeNoi tieuDe={`Xin chào, ${nd.hoTen}`} phu={`${TIEU_DE_VAI_TRO[nd.vaiTro] ?? "Tổng quan"} · hôm nay ${ngayVN(homNay)}${cn ? "" : " · mọi chi nhánh"}`} />
       {banner}
-      {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" />}
+      {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" them={ky !== "hom-nay" ? `&ky=${ky}` : ""} />}
       {/* Mỗi tab tải riêng: đầu trang + dải tab hiện ngay, phần số liệu hiện khung chờ rồi đổ vào. */}
-      <Suspense key={tab} fallback={<KhungCho />}>{bang ?? <HomNay nd={nd} homNay={homNay} coBaoCao={coBaoCao} coTien={coTien} ky={sp.xh === "thang-truoc" ? "thang-truoc" : "thang-nay"} />}</Suspense>
+      <Suspense key={tab} fallback={<KhungCho />}>{bang ?? <HomNay nd={nd} homNay={homNay} coBaoCao={coBaoCao} coTien={coTien} ky={ky} />}</Suspense>
     </>
   );
 }
@@ -64,7 +66,7 @@ type Nd = Awaited<ReturnType<typeof yeuCauQuyen>>;
 type DongLich = { id: string; khach_id: string; bat_dau: string; trang_thai: string };
 const KHUNG = (nhan: string, cao: string) => <div aria-busy="true" aria-label={nhan} className={`${cao} animate-pulse rounded-hop bg-vien/50`} />;
 
-/** Tab Hôm nay: mọi truy vấn khởi chạy CÙNG LÚC ngay khi vào trang, mỗi khối một Suspense riêng — khối nào xong trước hiện trước
+/** Tab Tổng quan (mã hom-nay): mọi truy vấn khởi chạy CÙNG LÚC ngay khi vào trang, mỗi khối một Suspense riêng — khối nào xong trước hiện trước
  *  (trước đây cả tab chờ khối chậm nhất, rồi bảng xếp hạng + sinh nhật mới bắt đầu tải → nối tiếp). */
 function HomNay({ nd, homNay, coBaoCao, coTien, ky }: { nd: Nd; homNay: string; coBaoCao: boolean; coTien: boolean; ky: KyXh }) {
   const db = sb();
@@ -79,12 +81,23 @@ function HomNay({ nd, homNay, coBaoCao, coTien, ky }: { nd: Nd; homNay: string; 
   const dauThang = `${homNay.slice(0, 8)}01`, dThang = new Date(`${dauThang}T00:00:00Z`); dThang.setUTCMonth(dThang.getUTCMonth() - 1);
   const pNgay = coBaoCao ? bcDoanhThuNgayNho(dThang.toISOString().slice(0, 10), homNay, cn ?? null) : Promise.resolve([]);
   const pCnXh = cnXepHang(cn);
+  const khungXh = <div aria-busy="true" aria-label="Đang tải bảng xếp hạng" className="space-y-3"><div className="h-10 w-64 animate-pulse rounded-nho bg-vien/50" /><div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="h-72 animate-pulse rounded-hop bg-vien/50" />)}</div></div>;
+  // Thứ tự (chị Lâm 10/11/2026): chọn kỳ → chỉ số theo kỳ → BẢNG XẾP HẠNG theo kỳ (lên gần đầu cho dễ thấy) → doanh thu 14 ngày → việc cần xử lý + lịch hôm nay → sinh nhật tháng.
   return (
     <>
-      {coBaoCao && <Suspense fallback={<div aria-busy="true" aria-label="Đang tải doanh thu" className="space-y-6"><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 animate-pulse rounded-hop bg-vien/60" />)}</div>{coTien && KHUNG("Đang tải biểu đồ", "h-56")}</div>}>
-        <ChiSoHomNay pNgay={pNgay} homNay={homNay} coTien={coTien} />
+      {coBaoCao && <ChonKy dang={ky} goc="/tong-quan?tab=hom-nay" />}
+      {coBaoCao && <Suspense key={`so-${ky}`} fallback={<div aria-busy="true" aria-label="Đang tải doanh thu" className="grid grid-cols-2 gap-3 lg:grid-cols-4">{[0, 1, 2, 3].map((i) => <div key={i} className="h-24 animate-pulse rounded-hop bg-vien/60" />)}</div>}>
+        <ChiSoKy pNgay={pNgay} ky={ky} homNay={homNay} coTien={coTien} />
       </Suspense>}
-      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+      {coBaoCao && (
+        <div className="mt-8">
+          <Suspense key={`xh-${ky}`} fallback={khungXh}>
+            <XepHangHomNay pCnXh={pCnXh} ky={ky} homNay={homNay} xemTien={coTien} />
+          </Suspense>
+        </div>
+      )}
+      {coBaoCao && coTien && <div className="mt-8"><Suspense fallback={KHUNG("Đang tải biểu đồ", "h-56")}><BieuDo14Ngay pNgay={pNgay} homNay={homNay} /></Suspense></div>}
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
         <MucTrang noi tieuDe="Cần xử lý">
           <Suspense fallback={KHUNG("Đang tải việc cần xử lý", "h-24")}><CanXuLy nd={nd} pLich={pLich} coBaoCao={coBaoCao} coTien={coTien} /></Suspense>
         </MucTrang>
@@ -96,13 +109,6 @@ function HomNay({ nd, homNay, coBaoCao, coTien, ky }: { nd: Nd; homNay: string; 
           <MucTrang noi tieuDe="Lối tắt"><ul className="grid gap-2 sm:grid-cols-2">{locMenu(nd).filter((m) => m.duong_dan !== "/tong-quan").map((m) => <li key={m.duong_dan}><Link href={m.duong_dan} className="block rounded-nho border border-vien px-3 py-2 text-[14px] hover:border-nhan">{m.ten}</Link></li>)}</ul></MucTrang>
         )}
       </div>
-      {coBaoCao && (
-        <div className="mt-8">
-          <Suspense key={ky} fallback={<div aria-busy="true" aria-label="Đang tải bảng xếp hạng" className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">{[0, 1, 2].map((i) => <div key={i} className="h-80 animate-pulse rounded-hop bg-vien/50" />)}</div>}>
-            <XepHangHomNay pCnXh={pCnXh} ky={ky} homNay={homNay} xemTien={coTien} />
-          </Suspense>
-        </div>
-      )}
       {coQuyen(nd, "khach.xem") && (
         <div className="mt-8">
           <Suspense fallback={KHUNG("Đang tải khách sinh nhật", "h-64")}>
@@ -116,28 +122,30 @@ function HomNay({ nd, homNay, coBaoCao, coTien, ky }: { nd: Nd; homNay: string; 
 
 type DongNgay = Awaited<ReturnType<typeof bcDoanhThuNgayNho>>[number];
 
-async function ChiSoHomNay({ pNgay, homNay, coTien }: { pNgay: Promise<DongNgay[]>; homNay: string; coTien: boolean }) {
-  const ngayAll = await pNgay;
+/** Chỉ số theo kỳ đang chọn: cộng các ngày trong kỳ từ bản tính sẵn theo ngày (đã gồm đầu tháng trước → hôm nay, đủ cho mọi kỳ) — không thêm truy vấn. */
+async function ChiSoKy({ pNgay, ky, homNay, coTien }: { pNgay: Promise<DongNgay[]>; ky: KyXh; homNay: string; coTien: boolean }) {
+  const { tu, den, nhan } = khoangKy(ky, homNay);
+  const trong = (await pNgay).filter((n) => n.ngay >= tu && n.ngay <= den);
+  const tong = (k: "doanh_thu" | "thuc_thu" | "tien_mat" | "so_don" | "so_buoi" | "doanh_thu_buoi") => trong.reduce((s, n) => s + Number(n[k] ?? 0), 0);
+  const ten = ky === "hom-nay" ? "hôm nay" : nhan;
+  return <HangChiSo muc={coTien
+    ? [{ nhan: `Doanh thu ${ten}`, so: tienVN(tong("doanh_thu")) }, { nhan: `Thực thu ${ten}`, so: tienVN(tong("thuc_thu")), ghiChu: `tiền mặt ${tienVN(tong("tien_mat"))}` }, { nhan: "Đơn mới", so: soVN(tong("so_don")) }, { nhan: "Buổi đã làm", so: soVN(tong("so_buoi")), ghiChu: `doanh thu buổi ${tienVN(tong("doanh_thu_buoi"))}` }]
+    : [{ nhan: `Đơn mới ${ten}`, so: soVN(tong("so_don")) }, { nhan: `Buổi đã làm ${ten}`, so: soVN(tong("so_buoi")) }]} />;
+}
+
+/** Biểu đồ doanh thu 14 ngày gần nhất (giữ nguyên, không theo kỳ). */
+async function BieuDo14Ngay({ pNgay, homNay }: { pNgay: Promise<DongNgay[]>; homNay: string }) {
   const tuNgay = congNgay(homNay, -13);
-  const ngay = ngayAll.filter((n) => n.ngay >= tuNgay);
   // Đủ 14 ngày liên tiếp (ngày không có hoá đơn vẫn có cột 0) để trục ngày không bị nhảy.
-  const theoNgay = new Map(ngay.map((n) => [n.ngay, n]));
+  const theoNgay = new Map((await pNgay).filter((n) => n.ngay >= tuNgay).map((n) => [n.ngay, n]));
   const cot14 = Array.from({ length: 14 }, (_, i) => congNgay(tuNgay, i)).map((d) => {
     const n = theoNgay.get(d);
     return { ngay: d, doanhThu: Number(n?.doanh_thu ?? 0), thucThu: Number(n?.thuc_thu ?? 0), soDon: Number(n?.so_don ?? 0), soBuoi: Number(n?.so_buoi ?? 0) };
   });
-  const hn = ngay.find((n) => n.ngay === homNay);
   return (
-    <>
-      <HangChiSo muc={coTien
-        ? [{ nhan: "Doanh thu hôm nay", so: tienVN(hn?.doanh_thu) }, { nhan: "Thực thu hôm nay", so: tienVN(hn?.thuc_thu), ghiChu: `tiền mặt ${tienVN(hn?.tien_mat)}` }, { nhan: "Đơn mới", so: String(hn?.so_don ?? 0) }, { nhan: "Buổi đã làm", so: String(hn?.so_buoi ?? 0), ghiChu: `doanh thu buổi ${tienVN(hn?.doanh_thu_buoi)}` }]
-        : [{ nhan: "Đơn mới hôm nay", so: String(hn?.so_don ?? 0) }, { nhan: "Buổi đã làm hôm nay", so: String(hn?.so_buoi ?? 0) }]} />
-      {coTien && (
-        <div className="mt-6"><MucTrang noi tieuDe="Doanh thu 14 ngày gần nhất" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Xem báo cáo</Link>}>
-          <CotDoanhThuNgay du={cot14} homNay={homNay} />
-        </MucTrang></div>
-      )}
-    </>
+    <MucTrang noi tieuDe="Doanh thu 14 ngày gần nhất" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Xem báo cáo</Link>}>
+      <CotDoanhThuNgay du={cot14} homNay={homNay} />
+    </MucTrang>
   );
 }
 
@@ -182,7 +190,7 @@ async function LichHomNay({ pLich }: { pLich: Promise<DongLich[]> }) {
 type PCnXh = ReturnType<typeof cnXepHang>;
 async function XepHangHomNay({ pCnXh, ky, homNay, xemTien }: { pCnXh: PCnXh; ky: KyXh; homNay: string; xemTien: boolean }) {
   const c = await pCnXh;
-  return <KhoiXepHang cn={c.id} tenCn={c.ten} ky={ky} homNay={homNay} xemTien={xemTien} goc="/tong-quan?tab=hom-nay" />;
+  return <KhoiXepHang cn={c.id} tenCn={c.ten} ky={ky} homNay={homNay} xemTien={xemTien} />;
 }
 async function SinhNhatHomNay({ pCnXh, homNay, xemSdt, xemTien }: { pCnXh: PCnXh; homNay: string; xemSdt: boolean; xemTien: boolean }) {
   const c = await pCnXh;

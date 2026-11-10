@@ -16,6 +16,7 @@ import { BangDieuHanh } from "@/components/trang-chu/BangDieuHanh";
 import { BaoCaoNgayDangTai, BaoCaoSang } from "@/components/trang-chu/BaoCaoSang";
 import { BangSoLieu, type SoLieu } from "@/components/trang-chu/BangSoLieu";
 import type { CanhBao } from "@/lib/canh-bao";
+import { docBuoiCho } from "@/lib/buoi-cho-lam";
 
 const LOI_TAT = [
   { href: "/lich-hen", nhan: "Đặt lịch hẹn", q: "lich.sua" as const }, { href: "/ban-hang", nhan: "Bán hàng", q: "ban.tao" as const },
@@ -204,13 +205,14 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
   const coHieuSuat = nd.vaiTro !== "nhan_vien" && nd.vaiTro !== "nha_dau_tu";
   // Ô "Doanh số / hoa hồng tạm tính" chỉ hiện cho người được phép (xem phần tileNv bên dưới) → người khác không cần chạy báo cáo bc_nhan_vien (nặng nhất trang).
   const thayDoanhSo = coHieuSuat && (coQuyen(nd, "baocao.tien") || ["thu_ngan", "tu_van", "ktv", "bac_si"].includes(nd.vaiTro));
-  const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: ccThang }, { count: phieuCho }] = await Promise.all([
+  const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: ccThang }, { count: phieuCho }, choLam] = await Promise.all([
     layCanhBao(nd),
     thayDoanhSo ? bcNhanVienNho(dauThang, homNay, cn ?? null).then((data) => ({ data })) : Promise.resolve({ data: null }),
     db.from("buoi_thuc_hien").select("khach_id, doanh_thu_buoi").eq("nv_thuc_hien_id", nd.nhanVienId).eq("trang_thai", "da_lam").gte("ngay_lam", dauThang).lte("ngay_lam", homNay).limit(1000),
     db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8),
     db.from("cham_cong").select("ngay, vao, ra, cong, tre_phut").eq("nhan_vien_id", nd.nhanVienId).gte("ngay", dauThang).lte("ngay", homNay).limit(40),
     db.from("phieu_hr").select("id", { count: "exact", head: true }).eq("nhan_vien_id", nd.nhanVienId).eq("trang_thai", "cho_duyet"),
+    coQuyen(nd, "the.xem") ? docBuoiCho({ chiNhanhId: cn, ngay: homNay, nvId: nd.nhanVienId, chiMo: true, gioiHan: 20 }).catch(() => []) : Promise.resolve([]),
   ]);
   let lich = lichToi ?? [], tieuDeLich = "Lịch của tôi hôm nay";
   // Lịch hôm nay của chi nhánh khi bản thân chưa có lịch, rồi tên khách.
@@ -251,6 +253,22 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
               <p className="mt-1 whitespace-pre-line text-[14px] text-muc-2">{t.noi_dung}</p>
             </article>
           ))}
+        </section>
+      )}
+      {choLam.length > 0 && (
+        <section aria-label="Khách chờ làm" className="the-noi the-noi-thap border-l-[3px] border-nhan px-4 py-3.5">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-[16px] font-semibold text-muc">Khách chờ làm <span className="ml-1 text-nhan-dam">{choLam.length}</span></h2>
+            <Link href="/the/cho-lam?tab=toi" className="nut-vang inline-flex h-10 items-center rounded-nho px-4 text-[14px] font-medium">Mở danh sách</Link>
+          </div>
+          <ul className="mt-2 divide-y divide-vien text-[14px]">
+            {choLam.slice(0, 5).map((r) => (
+              <li key={r.id} className="flex flex-wrap items-baseline justify-between gap-x-3 py-1.5">
+                <span className="min-w-0 truncate"><b className="font-semibold text-muc">{r.khachTen}</b> <span className="text-muc-2">· {r.dichVuTen}</span></span>
+                <span className="text-[12.5px] text-muc-3">{r.trangThai === "dang_lam" ? "Đang làm" : `Chuyển ${gioVN(r.chuyenLuc)}`}{r.conBuoi != null ? ` · còn ${r.conBuoi} buổi` : ""}</span>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
       {sp["khong-du-quyen"] && <p role="alert" className="rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p>}

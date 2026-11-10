@@ -57,8 +57,12 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
   type DongThe = { id: string; ten: string; the_khach_sh_id: number | null; hoa_don: { id: string; ma: string; sh_ma: string | null; ngay_hd: string }; dong_nhan_vien: { vai: string; nhan_vien_id: string }[] };
   const dongThe = (the.data ?? []) as unknown as DongThe[];
 
+  // Người làm nhiều người của buổi (0321): buổi cũ không có dòng thì dùng người chính.
+  const idBt = (bt.data ?? []).map((b) => b.id);
+  const { data: bnv } = idBt.length ? await db.from("buoi_nhan_vien").select("buoi_id, nhan_vien_id, thu_tu").eq("vai", "thuc_hien").in("buoi_id", idBt).order("thu_tu") : { data: [] as { buoi_id: string; nhan_vien_id: string; thu_tu: number }[] };
+  const nguoiBt = (b: { id: string; nv_thuc_hien_id: string }) => { const ds = (bnv ?? []).filter((x) => x.buoi_id === b.id).map((x) => x.nhan_vien_id); return ds.length ? ds : [b.nv_thuc_hien_id]; };
   // Tên nhân viên (kể cả người đã nghỉ) và mã thẻ của đúng các dòng đang hiện.
-  const idNv = [...new Set([...dongThe.flatMap((d) => d.dong_nhan_vien.map((n) => n.nhan_vien_id)), ...(bt.data ?? []).map((b) => b.nv_thuc_hien_id), ...dongTt.map((x) => x.nguoi_id)])];
+  const idNv = [...new Set([...dongThe.flatMap((d) => d.dong_nhan_vien.map((n) => n.nhan_vien_id)), ...(bt.data ?? []).flatMap((b) => nguoiBt(b)), ...dongTt.map((x) => x.nguoi_id)])];
   const shThe = [...new Set(dongThe.map((d) => d.the_khach_sh_id).filter((x): x is number => x != null))];
   const [{ data: nv }, { data: theKh }] = await Promise.all([
     idNv.length ? db.from("nhan_vien").select("id, ho_ten").in("id", idNv) : Promise.resolve({ data: [] as { id: string; ho_ten: string }[] }),
@@ -131,7 +135,7 @@ export async function LichSuGiaoDich({ khachId, t }: { khachId: string; t: ThamS
 
       {((bt.count ?? 0) > 0 || pBt > 1) && <section><h3 className="mb-2 text-[15px] font-semibold text-muc">Buổi đã thực hiện</h3>
         <Bang duLieu={bt.data ?? []} khoa={(x) => x.id} trong="Không có buổi nào trong khoảng này." cot={[
-          { nhan: "Ngày", hienThi: (x) => ngayVN(x.ngay_lam) }, { nhan: "Dịch vụ", hienThi: (x) => tenDv.get(x.dich_vu_id) ?? "" }, { nhan: "Người làm", hienThi: (x) => tenNv.get(x.nv_thuc_hien_id) ?? "" },
+          { nhan: "Ngày", hienThi: (x) => ngayVN(x.ngay_lam) }, { nhan: "Dịch vụ", hienThi: (x) => tenDv.get(x.dich_vu_id) ?? "" }, { nhan: "Người làm", hienThi: (x) => nguoiBt(x).map((n) => tenNv.get(n) ?? "").filter(Boolean).join(", ") },
           { nhan: "Trạng thái", hienThi: (x) => (x.trang_thai === "da_lam" ? "Đã làm" : "Đã huỷ") }, { nhan: "Doanh thu buổi", hienThi: (x) => tienVN(x.doanh_thu_buoi), phai: true },
         ]} />
         {phanTrang("bt", pBt, bt.count, "buổi")}</section>}

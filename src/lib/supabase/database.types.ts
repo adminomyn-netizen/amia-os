@@ -1941,6 +1941,120 @@ export type Database = {
           },
         ]
       }
+      buoi_cho_lam: {
+        Row: {
+          bac_si_id: string | null
+          bat_dau_boi: string | null
+          bat_dau_luc: string | null
+          buoi_id: string | null
+          cap_nhat_luc: string
+          chi_nhanh_id: string
+          chuyen_boi: string | null
+          chuyen_luc: string
+          dich_vu_id: string
+          ghi_chu: string | null
+          id: string
+          ke_tiep_ngay: string | null
+          ke_tiep_noi_dung: string | null
+          khach_id: string
+          lich_hen_id: string | null
+          ly_do: string | null
+          ngay: string
+          nv_ids: string[]
+          tham_so: Json
+          the_id: string
+          trang_thai: string
+          tu_van_de_xuat: string | null
+          tu_van_ids: string[]
+          tu_van_tinh_trang: string | null
+          xong_luc: string | null
+          xu_ly_boi: string | null
+        }
+        Insert: {
+          bac_si_id?: string | null
+          bat_dau_boi?: string | null
+          bat_dau_luc?: string | null
+          buoi_id?: string | null
+          cap_nhat_luc?: string
+          chi_nhanh_id: string
+          chuyen_boi?: string | null
+          chuyen_luc?: string
+          dich_vu_id: string
+          ghi_chu?: string | null
+          id?: string
+          ke_tiep_ngay?: string | null
+          ke_tiep_noi_dung?: string | null
+          khach_id: string
+          lich_hen_id?: string | null
+          ly_do?: string | null
+          ngay?: string
+          nv_ids: string[]
+          tham_so?: Json
+          the_id: string
+          trang_thai?: string
+          tu_van_de_xuat?: string | null
+          tu_van_ids?: string[]
+          tu_van_tinh_trang?: string | null
+          xong_luc?: string | null
+          xu_ly_boi?: string | null
+        }
+        Update: {
+          bac_si_id?: string | null
+          bat_dau_boi?: string | null
+          bat_dau_luc?: string | null
+          buoi_id?: string | null
+          cap_nhat_luc?: string
+          chi_nhanh_id?: string
+          chuyen_boi?: string | null
+          chuyen_luc?: string
+          dich_vu_id?: string
+          ghi_chu?: string | null
+          id?: string
+          ke_tiep_ngay?: string | null
+          ke_tiep_noi_dung?: string | null
+          khach_id?: string
+          lich_hen_id?: string | null
+          ly_do?: string | null
+          ngay?: string
+          nv_ids?: string[]
+          tham_so?: Json
+          the_id?: string
+          trang_thai?: string
+          tu_van_de_xuat?: string | null
+          tu_van_ids?: string[]
+          tu_van_tinh_trang?: string | null
+          xong_luc?: string | null
+          xu_ly_boi?: string | null
+        }
+        Relationships: []
+      }
+      buoi_nhan_vien: {
+        Row: {
+          buoi_id: string
+          nhan_vien_id: string
+          tao_luc: string
+          thu_tu: number
+          ti_le: number
+          vai: string
+        }
+        Insert: {
+          buoi_id: string
+          nhan_vien_id: string
+          tao_luc?: string
+          thu_tu?: number
+          ti_le: number
+          vai: string
+        }
+        Update: {
+          buoi_id?: string
+          nhan_vien_id?: string
+          tao_luc?: string
+          thu_tu?: number
+          ti_le?: number
+          vai?: string
+        }
+        Relationships: []
+      }
       buoi_thuc_hien: {
         Row: {
           bac_si_id: string | null
@@ -10402,6 +10516,7 @@ export type Database = {
       }
       phieu_tu_van: {
         Row: {
+          buoi_id: string | null
           bao_gia: number
           chi_nhanh_id: string | null
           chung_minh: string | null
@@ -10422,6 +10537,7 @@ export type Database = {
           tu_van_vien_id: string
         }
         Insert: {
+          buoi_id?: string | null
           bao_gia?: number
           chi_nhanh_id?: string | null
           chung_minh?: string | null
@@ -10442,6 +10558,7 @@ export type Database = {
           tu_van_vien_id: string
         }
         Update: {
+          buoi_id?: string | null
           bao_gia?: number
           chi_nhanh_id?: string | null
           chung_minh?: string | null
@@ -13051,6 +13168,10 @@ export type Database = {
         Args: { p_dt: string }
         Returns: { tong_hh: number; da_chi: number; dang_cho: number; kha_dung: number }[]
       }
+      ghi_nguoi_buoi: {
+        Args: { p_buoi: string; p_de_xuat: string; p_nguoi: string; p_nv: string[]; p_tinh_trang: string; p_tu_van: string[] }
+        Returns: string
+      }
       ghi_but_toan_hh_gt: {
         Args: { p_hd: string }
         Returns: number
@@ -14391,6 +14512,10 @@ export type Database = {
       tuy_chon_loc_khach: { Args: never; Returns: Json }
       vai_tai_chi_nhanh: { Args: { p_cn: string; p_nv: string }; Returns: string }
       voucher_loai_dong: { Args: { p_gioi_han: string }; Returns: string[] }
+      xong_buoi_cho: {
+        Args: { p_bac_si: string; p_de_xuat: string; p_ghi_chu: string; p_id: string; p_nguoi: string; p_nv: string[]; p_tham_so: Json; p_tinh_trang: string; p_tu_van: string[] }
+        Returns: string
+      }
       xu_ly_lech_chuyen_kho: {
         Args: { p_cach: string; p_nguoi: string; p_phieu: string }
         Returns: undefined

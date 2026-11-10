@@ -34,6 +34,14 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
     db.from("goi_the_dich_vu").select("dich_vu_id").eq("goi_id", t.goi_id ?? ""),
     db.from("the_buoi_ke_tiep").select("id, ngay_hen, noi_dung, nguoi_id, tao_luc").eq("the_id", id).order("ngay_hen", { ascending: false }).limit(10),
   ]);
+  // Người làm (nhiều người) + tư vấn của từng buổi (0321). Buổi cũ không có dòng thì hiện người chính như trước.
+  const idsBuoi = (buoi ?? []).map((b) => b.id);
+  const [{ data: bnv }, { data: ptv }] = idsBuoi.length ? await Promise.all([
+    db.from("buoi_nhan_vien").select("buoi_id, nhan_vien_id, vai, thu_tu").in("buoi_id", idsBuoi).order("thu_tu"),
+    db.from("phieu_tu_van").select("buoi_id, ma, dat_van_de, phan_tich").in("buoi_id", idsBuoi),
+  ]) : [{ data: [] }, { data: [] }];
+  const nguoiBuoi = (buoiId: string, vai: string) => (bnv ?? []).filter((x) => x.buoi_id === buoiId && x.vai === vai).map((x) => x.nhan_vien_id);
+  const tvBuoi = new Map((ptv ?? []).map((p) => [p.buoi_id, p]));
   // Lịch hẹn của chủ thẻ (lich_hen không gắn thẻ; lịch nào đã trừ buổi của CHÍNH thẻ này thì đánh dấu theo buoi_thuc_hien.lich_hen_id).
   const xemLich = coQuyen(nd, "lich.xem"), bayGio = new Date().toISOString();
   const lichCuaThe = new Set((buoi ?? []).filter((b) => b.trang_thai !== "huy" && b.lich_hen_id).map((b) => b.lich_hen_id as string));
@@ -81,7 +89,9 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
         {t.loai === "lan" && (
           <MucTrang noi tieuDe="Các buổi đã làm">
             <Bang duLieu={buoi ?? []} khoa={(r) => r.id} trong="Chưa làm buổi nào." cot={[
-              { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_lam) }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" }, { nhan: "Người làm", hienThi: (r) => tenNv.get(r.nv_thuc_hien_id) ?? "" },
+              { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay_lam) }, { nhan: "Dịch vụ", hienThi: (r) => tenDv.get(r.dich_vu_id) ?? "" }, { nhan: "Người làm", hienThi: (r) => { const ds = nguoiBuoi(r.id, "thuc_hien"); return (ds.length ? ds : [r.nv_thuc_hien_id]).map((x) => tenNv.get(x) ?? "").filter(Boolean).join(", "); } },
+              { nhan: "Tư vấn", hienThi: (r) => { const ds = nguoiBuoi(r.id, "tu_van").map((x) => tenNv.get(x) ?? "").filter(Boolean), p = tvBuoi.get(r.id);
+                return ds.length || p ? <span className="block max-w-[280px] text-[13px]">{ds.join(", ")}{p && <span className="block text-muc-3">{[p.dat_van_de, p.phan_tich].filter(Boolean).join(" · ")}</span>}</span> : ""; } },
               { nhan: "Tham số", hienThi: (r) => Object.entries((r.tham_so ?? {}) as Record<string, unknown>).map(([a, b]) => `${a}: ${b}`).join(", ") },
               { nhan: "Doanh thu buổi", hienThi: (r) => (r.trang_thai === "huy" ? <s className="text-muc-3">{tienVN(r.doanh_thu_buoi)}</s> : tienVN(r.doanh_thu_buoi)), phai: true },
               { nhan: "", hienThi: (r) => (r.trang_thai === "huy" ? <span className="text-[13px] text-muc-3">Đã huỷ: {r.ly_do_huy}</span> : dieuChinh ? <NutHop kieu="chu" nguy nhan="Huỷ buổi" tieuDe="Huỷ buổi đã làm" moTa="Hoàn lại 1 buổi vào thẻ." an={{ buoi_id: r.id, the_id: id }} nhanLuu="Huỷ buổi" truong={[{ ten: "ly_do", nhan: "Lý do", loai: "chu", batBuoc: true, rong: true }]} action={huyBuoi} /> : null) },

@@ -11,9 +11,9 @@ beforeAll(async () => {
 });
 
 describe("chuông thông báo thời gian thực: tín hiệu từ DB", () => {
-  it("cả 8 bảng nghiệp vụ liên quan đều có trigger báo thay đổi", async () => {
+  it("cả 9 bảng nghiệp vụ liên quan đều có trigger báo thay đổi (thêm buoi_cho_lam 0321)", async () => {
     const r = await q(`select c.relname from pg_trigger t join pg_class c on c.oid = t.tgrelid where t.tgname = 'bao_canh_bao_doi' and not t.tgisinternal and c.relname <> 'thu_nghiem' order by 1`);
-    expect(r.map((x) => x.relname).sort()).toEqual(["buoi_thuc_hien", "hoa_don", "kho_so_cai", "lich_hen", "phieu_cap", "thanh_toan", "the_khach", "the_so_cai"]);
+    expect(r.map((x) => x.relname).sort()).toEqual(["buoi_cho_lam", "buoi_thuc_hien", "hoa_don", "kho_so_cai", "lich_hen", "phieu_cap", "thanh_toan", "the_khach", "the_so_cai"]);
   });
 
   it("Realtime chưa bật/lỗi thì việc ghi dữ liệu vẫn thành công (không bao giờ chặn nghiệp vụ)", async () => {

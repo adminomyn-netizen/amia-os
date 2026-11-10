@@ -85,9 +85,11 @@ export function ONhieu({ luaChon, giaTri, onDoi }: { luaChon: LuaChon[]; giaTri:
 
 /** Nút mở hộp thoại biểu mẫu. Không dùng <form> submit (tránh lỗi mất phiên của Server Action trên trang đã đăng nhập): gom giá trị vào FormData rồi gọi action. */
 export function NutHop({
-  nhan, tieuDe, moTa, truong = [], giaTri = {}, an = {}, action, kieu = "chinh", rong, nhanLuu = "Lưu", xacNhan, nguy, thongTin,
+  nhan, tieuDe, moTa, truong = [], giaTri = {}, an = {}, action, kieu = "chinh", rong, nhanLuu = "Lưu", xacNhan, nguy, thongTin, nutPhu,
 }: {
   thongTin?: ThongTinBieuMau;
+  /** Nút lưu thứ hai (kiểu phụ, nằm cạnh nút chính) gửi CÙNG các ô sang một hành động khác. Vd hộp Thực hiện buổi: "Chuyển cho chuyên viên trị liệu" (chính) + "Đã làm xong" (phụ). */
+  nutPhu?: { nhan: string; action: (fd: FormData) => Promise<KetQuaHD | void> };
   nhan: string; tieuDe: string; moTa?: string; truong?: Truong[]; giaTri?: GiaTri; an?: Record<string, string>;
   action: (fd: FormData) => Promise<KetQuaHD | void>; kieu?: "chinh" | "phu" | "chu"; rong?: boolean; nhanLuu?: string; xacNhan?: string; nguy?: boolean;
 }) {
@@ -118,7 +120,8 @@ export function NutHop({
     if (thongTin?.theoDoi.includes(ten)) hoiTin(moi);
   };
 
-  const gui = () => {
+  const [dangNut, setDangNut] = useState<"chinh" | "phu">("chinh");
+  const gui = (hanhDong = action, nut: "chinh" | "phu" = "chinh") => {
     setLoi("");
     for (const t of truong) {
       if ((t.chiKhiTao && !laTao) || !hien(t, v)) continue;
@@ -138,8 +141,9 @@ export function NutHop({
       else if (typeof gt === "boolean") fd.set(t.ten, gt ? "1" : "0");
       else fd.set(t.ten, gt == null ? "" : t.loai === "gio" ? String(gt).slice(0, 5) : String(gt));
     }
+    setDangNut(nut);
     bat(async () => {
-      const kq = await action(fd);
+      const kq = await hanhDong(fd);
       if (kq && kq.loi) setLoi(kq.loi);
       else {
         if (kq && typeof kq.canhBao === "string") window.alert(kq.canhBao);
@@ -155,7 +159,7 @@ export function NutHop({
       <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setDongTin([]); setMo(true); hoiTin(giaTri); if (coDiaBan && !diaBan) void taiDiaBan().then(setDiaBan); }}>{nhan}</button>
       <Hop mo={mo} dong={() => setMo(false)} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
         {xacNhan && <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p>}
-        <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
           {truong.filter((t) => (!t.chiKhiTao || laTao) && hien(t, v)).map((t) => {
             const gt = v[t.ten];
             const id = `f-${t.ten}`;
@@ -187,9 +191,10 @@ export function NutHop({
           </ul>
         )}
         {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
-        <div className="mt-6 flex justify-end gap-2.5">
+        <div className={`mt-6 flex gap-2.5 ${nutPhu ? "flex-col-reverse sm:flex-row sm:flex-wrap sm:justify-end [&>button]:w-full sm:[&>button]:w-auto" : "justify-end"}`}>
           <button type="button" className={NUT_PHU} onClick={() => setMo(false)}>Huỷ</button>
-          <button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : nhanLuu}</button>
+          {nutPhu && <button type="button" className={NUT_PHU} disabled={dang} onClick={() => gui(nutPhu.action, "phu")}>{dang && dangNut === "phu" ? "Đang lưu" : nutPhu.nhan}</button>}
+          <button type="button" className={NUT_CHINH} disabled={dang} onClick={() => gui()}>{dang && (dangNut === "chinh" || !nutPhu) ? "Đang lưu" : nhanLuu}</button>
         </div>
       </Hop>
     </>

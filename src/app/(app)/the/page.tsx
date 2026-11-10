@@ -70,7 +70,8 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <TieuDeNoi tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Thực hiện buổi để trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
+      <TieuDeNoi tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Thực hiện buổi, chuyển cho chuyên viên trị liệu; chuyên viên bấm Đã làm xong mới trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
+        <Link href="/the/cho-lam" className="inline-flex h-10 items-center rounded-nho border border-vien-dam px-4 text-[14px] font-medium text-muc-2 hover:bg-giay-tram">Khách chờ làm</Link>
         {coQuyen(nd, "the.dieuchinh") && (
           <NutHop kieu="phu" nhan="Cấp thẻ tay" tieuDe="Cấp thẻ tay" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Cấp thẻ tại màn hình này không tính vào doanh thu của chi nhánh; muốn tính doanh thu thì bán thẻ ở Thu ngân." rong
             thongTin={{ theoDoi: ["goi_id", "ngay_cap", "han_dung"], lay: duKienHanThe }}

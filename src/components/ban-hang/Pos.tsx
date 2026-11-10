@@ -432,7 +432,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
       if (!buoi || t.buoiCon <= 0) return null;
       const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
       return <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan={nhan}
-        onXong={(r) => setPhieuBuoi(r.phieuId && khach ? { kq: r, khachId: khach.id } : null)} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
+        onXong={(r) => setPhieuBuoi((r.phieuId || r.chuyenCho !== undefined) && khach ? { kq: r, khachId: khach.id } : null)} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
     }
     if (t.soDu <= 0) return null;
     const daCo = thu.some((x) => x.phuong_thuc === "the_tien" && x.the_id === t.id);

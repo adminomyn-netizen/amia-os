@@ -61,6 +61,7 @@ export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu }
             {O[loai].slice(2).map(([k, n]) => <Hop key={k} id={`in-${k}`} nhan={n} bat={c[k]} onDoi={(v) => dat({ [k]: v })} tat={tat} />)}
           </div>
           <div><label className={NHAN_O} htmlFor="in-cuoi">Nội dung kết thúc tờ in</label><textarea id="in-cuoi" disabled={tat} value={c.noiDungCuoi} onChange={(e) => dat({ noiDungCuoi: e.target.value })} className={O_NHIEU_DONG} /></div>
+          {loai === "hoa_don" && <div><label className={NHAN_O} htmlFor="in-khong-hoan">Câu cam kết dưới chữ ký (để trống thì không in)</label><textarea id="in-khong-hoan" disabled={tat} value={c.cauKhongHoanLai} onChange={(e) => dat({ cauKhongHoanLai: e.target.value })} className={O_NHIEU_DONG} /></div>}
           <Hop id="in-qr" nhan="Hiện thị QRCode cuối tờ in" bat={c.qr} onDoi={(v) => dat({ qr: v })} tat={tat} />
           {c.qr && (
             <div className="space-y-3 rounded-nho border border-vien p-3">

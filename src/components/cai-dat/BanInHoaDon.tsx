@@ -1,10 +1,20 @@
 import { ngayVN, tienVN } from "@/lib/dinh-dang";
+
+/** Số không kèm "đ" cho cột bảng (cột hẹp ở giấy cuộn 80 mm), như SalonHero; dòng tổng vẫn có "đ". */
+const soVN = (n: number) => Number(n ?? 0).toLocaleString("vi-VN");
 import type { CauHinhIn, KhoGiay } from "@/lib/thiet-lap-in";
 
 export type DuLieuIn = {
   loai: "hoa_don" | "lich_hen";
-  cuaHang: { ten: string; diaChi?: string | null; dienThoai?: string | null };
+  /** ten = tên chi nhánh. tenCoSo/phu (bản in hoá đơn thật): "AMIA Beauty Center" + "Phòng khám da liễu · Giấy phép …", khi có thì in "Chi nhánh: <ten>" như SalonHero. */
+  cuaHang: { ten: string; tenCoSo?: string | null; phu?: string | null; diaChi?: string | null; dienThoai?: string | null };
   tieuDe: string; ma: string; ngay: string; trangThai?: string;
+  /** Giờ lập đơn "HH:MM" in cạnh ngày; "(Đã thanh toán)" … dưới tiêu đề. */
+  gio?: string | null; trangThaiNhan?: string | null;
+  /** Số tiền bằng chữ của Tổng cộng (chỉ bản tiếng Việt). */
+  bangChu?: string | null;
+  /** Tổng tiền trừ vào thẻ + "Tình trạng thẻ sau khi thanh toán" (mỗi thẻ một dòng đã dựng sẵn). */
+  tienTruThe?: number; theSauTt?: string[]; nhanTheSauTt?: string;
   khach?: { ten: string; sdt?: string | null; gioiTinh?: string | null; namSinh?: string | null; diem?: number | null } | null;
   thuNgan?: string | null; ghiChu?: string | null;
   /** "HH:MM – HH:MM": giờ vào/ra của đơn (không có thì giờ lịch hẹn gắn với đơn). In khi bật "Hiện giờ vào/ra" (Thiết lập in). */
@@ -22,14 +32,18 @@ export type DuLieuIn = {
 export type NgonNguIn = "vi" | "en";
 /** Chữ cố định của bản in theo ngôn ngữ. */
 export const CHU_IN = {
-  vi: { dt: "Điện thoại", thuNgan: "Thu ngân", khach: "Khách", sinh: "sinh", muc: "Mục", sl: "SL", donGia: "Đơn giá", thanhTien: "Thành tiền", gioPv: "Giờ phục vụ", giam: "Giảm",
-    tienHang: "Tiền hàng", giamGia: "Giảm giá", phuPhi: "Phụ phí", tip: "Tip", phaiThu: "Phải thu", conNo: "Còn nợ", khachDua: "Tiền khách đưa", traLai: "Trả lại khách", diem: "Điểm tích luỹ", ghiChu: "Ghi chú",
-    daiDien: "Đại diện cửa hàng", khachHang: "Khách hàng", daThu: "Đã thu", hoan: "Hoàn", hoaDon: "Hoá đơn", tamTinh: "Hoá đơn tạm tính",
-    gioVaoRa: "Giờ vào/ra", nv: "NV", lichHen: "Lịch hẹn", chiTiet: "Thông tin chi tiết:", khachSo: "Khách", maQr: "Mã QR", chuaQr: "Chưa có mã QR" },
-  en: { dt: "Phone", thuNgan: "Cashier", khach: "Customer", sinh: "born", muc: "Item", sl: "Qty", donGia: "Unit price", thanhTien: "Amount", gioPv: "Service time", giam: "Discount",
+  vi: { dt: "Điện thoại", thuNgan: "Thu ngân", khach: "Khách", sinh: "sinh", muc: "Dịch vụ", sl: "SL", donGia: "Đ.Giá", thanhTien: "Thành tiền", gioPv: "Giờ phục vụ", giam: "Giảm",
+    chiNhanh: "Chi nhánh", maHd: "Mã HĐ", ngay: "Ngày", sdt: "SĐT", gioiTinh: "Giới tính", thanhToan: "Thanh toán", donViTinh: "Đơn vị tính: VND", bangChu: "Số tiền bằng chữ", truThe: "Tổng tiền trừ vào thẻ",
+    theSauTt: "Tình trạng thẻ sau khi thanh toán:", theDenNgay: "Tình trạng thẻ đến ngày",
+    tienHang: "Thành tiền", giamGia: "Giảm giá", phuPhi: "Phụ phí", tip: "Tip", phaiThu: "Tổng cộng", conNo: "Còn nợ", khachDua: "Tiền khách đưa", traLai: "Trả lại khách", diem: "Điểm tích luỹ", ghiChu: "Ghi chú",
+    daiDien: "Đại diện cửa hàng", khachHang: "Khách hàng", daThu: "Đã thu", hoan: "Hoàn tiền", hoaDon: "Hoá đơn dịch vụ", tamTinh: "Hoá đơn tạm tính",
+    gioVaoRa: "Giờ vào/ra", nv: "N. viên", lichHen: "Lịch hẹn", chiTiet: "Thông tin chi tiết:", khachSo: "Khách", maQr: "Mã QR", chuaQr: "Chưa có mã QR" },
+  en: { dt: "Phone", thuNgan: "Cashier", khach: "Customer", sinh: "born", muc: "Service", sl: "Qty", donGia: "Price", thanhTien: "Amount", gioPv: "Service time", giam: "Discount",
+    chiNhanh: "Branch", maHd: "Invoice No.", ngay: "Date", sdt: "Phone", gioiTinh: "Gender", thanhToan: "Payment", donViTinh: "Currency: VND", bangChu: "Amount in words", truThe: "Total charged to cards",
+    theSauTt: "Card status after payment:", theDenNgay: "Card status as of",
     tienHang: "Subtotal", giamGia: "Discount", phuPhi: "Surcharge", tip: "Tip", phaiThu: "Total", conNo: "Balance due", khachDua: "Cash received", traLai: "Change", diem: "Loyalty points", ghiChu: "Note",
-    daiDien: "Store representative", khachHang: "Customer", daThu: "Paid", hoan: "Refund", hoaDon: "Invoice", tamTinh: "Proforma invoice",
-    gioVaoRa: "In/out time", nv: "NV", lichHen: "Appointment", chiTiet: "Details:", khachSo: "Guest", maQr: "QR code", chuaQr: "No QR code" },
+    daiDien: "Store representative", khachHang: "Customer", daThu: "Paid", hoan: "Refund", hoaDon: "Service invoice", tamTinh: "Proforma invoice",
+    gioVaoRa: "In/out time", nv: "Staff", lichHen: "Appointment", chiTiet: "Details:", khachSo: "Guest", maQr: "QR code", chuaQr: "No QR code" },
 } as const;
 /** Tên hình thức thu tiền tiếng Anh cho bản in. */
 export const PHUONG_THUC_EN: Record<string, string> = { tien_mat: "Cash", chuyen_khoan: "Bank transfer", quet_the: "Card", vi_dien_tu: "E-wallet", ship_cod: "COD", the_tien: "Prepaid card" };
@@ -47,6 +61,19 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
   const tieuDe = !d.nn && cfg.ngonNgu === "en" ? (ph ? c.hoaDon : c.lichHen) : d.tieuDe;
   const nho = cuon ? "text-[11px]" : "text-[13px]";
   const lop = (k: string) => (cuon ? `${k} text-[11px]` : `${k} text-[13px]`);
+  const phu = cuon ? "text-[10px]" : "text-[12px]";
+  // Dòng "nhãn: giá trị" của khối thông tin đơn (như SalonHero: Mã HĐ, Ngày, Khách hàng, SĐT, Giờ vào/ra, Thu ngân).
+  const thongTin: [string, string][] = ph
+    ? ([
+        [c.maHd, d.ma],
+        [c.ngay, `${ngayVN(d.ngay)}${d.gio ? ` ${d.gio}` : ""}`],
+        [c.khachHang, d.khach?.ten ?? ""],
+        [c.sdt, cfg.sdtKhach ? d.khach?.sdt ?? "" : ""],
+        [c.gioiTinh, cfg.gioiTinhNamSinh && d.khach ? [d.khach.gioiTinh, d.khach.namSinh ? `${c.sinh} ${d.khach.namSinh}` : ""].filter(Boolean).join(" · ") : ""],
+        [c.gioVaoRa, cfg.gioVaoRa ? d.gioVaoRa ?? "" : ""],
+        [c.thuNgan, cfg.thuNgan ? d.thuNgan ?? "" : ""],
+      ] as [string, string][]).filter(([, v]) => v)
+    : [];
   return (
     <div className={`mx-auto bg-white text-muc ${nho} ${cuon ? "px-2 py-3" : "px-6 py-8"}`} style={{ width: "100%", maxWidth: BE_NGANG[cfg.khoGiay] }}>
       <header className="text-center">
@@ -54,41 +81,83 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
           // eslint-disable-next-line @next/next/no-img-element
           <img src="/logo-amia.png" alt="AMIA" style={{ height: cfg.coLogo || (cuon ? 36 : 56) }} className="mx-auto mb-2 w-auto" />
         )}
-        <h1 className={`chu-tieu-de ${cuon ? "text-[15px]" : "text-[22px]"}`}>{d.cuaHang.ten}</h1>
+        <h1 className={`chu-tieu-de ${cuon ? "text-[15px]" : "text-[22px]"}`}>{d.cuaHang.tenCoSo || d.cuaHang.ten}</h1>
+        {d.cuaHang.phu && <p className="text-muc-2">{d.cuaHang.phu}</p>}
+        {d.cuaHang.tenCoSo && <p className="text-muc-2">{c.chiNhanh}: {d.cuaHang.ten}</p>}
         {cfg.thongTinCuaHang && d.cuaHang.diaChi && <p className="text-muc-2">{d.cuaHang.diaChi}</p>}
         {cfg.thongTinCuaHang && d.cuaHang.dienThoai && <p className="text-muc-2">{c.dt}: {d.cuaHang.dienThoai}</p>}
-        <p className={`mt-3 font-semibold uppercase tracking-wide ${cuon ? "text-[12px]" : "text-[15px]"}`}>{tieuDe} {d.ma}</p>
-        <p className="text-muc-2">{ngayVN(d.ngay)}{ph && cfg.thuNgan && d.thuNgan ? ` · ${c.thuNgan}: ${d.thuNgan}` : ""}</p>
-        {ph && cfg.gioVaoRa && d.gioVaoRa && <p className="text-muc-2">{c.gioVaoRa}: {d.gioVaoRa}</p>}
-        {d.khach && <p className="text-muc-2">{c.khach}: {d.khach.ten}{cfg.sdtKhach && d.khach.sdt ? ` · ${d.khach.sdt}` : ""}</p>}
-        {d.khach && cfg.gioiTinhNamSinh && (d.khach.gioiTinh || d.khach.namSinh) && <p className="text-muc-2">{[d.khach.gioiTinh, d.khach.namSinh ? `${c.sinh} ${d.khach.namSinh}` : ""].filter(Boolean).join(" · ")}</p>}
+        {ph ? (
+          <>
+            <p className={`mt-3 font-bold uppercase tracking-wide ${cuon ? "text-[13px]" : "text-[17px]"}`}>{tieuDe}</p>
+            {d.trangThaiNhan && <p className="text-muc-2">({d.trangThaiNhan})</p>}
+          </>
+        ) : (
+          <>
+            <p className={`mt-3 font-semibold uppercase tracking-wide ${cuon ? "text-[12px]" : "text-[15px]"}`}>{tieuDe} {d.ma}</p>
+            <p className="text-muc-2">{ngayVN(d.ngay)}</p>
+            {d.khach && <p className="text-muc-2">{c.khach}: {d.khach.ten}{cfg.sdtKhach && d.khach.sdt ? ` · ${d.khach.sdt}` : ""}</p>}
+            {d.khach && cfg.gioiTinhNamSinh && (d.khach.gioiTinh || d.khach.namSinh) && <p className="text-muc-2">{[d.khach.gioiTinh, d.khach.namSinh ? `${c.sinh} ${d.khach.namSinh}` : ""].filter(Boolean).join(" · ")}</p>}
+          </>
+        )}
       </header>
       {ph && (
         <>
-          <table className="mt-4 w-full text-left">
-            <thead><tr className="border-b border-muc"><th className="py-1.5 font-medium">{c.muc}</th><th className="py-1.5 text-right font-medium">{c.sl}</th>{!cuon && <th className="py-1.5 text-right font-medium">{c.donGia}</th>}<th className="py-1.5 text-right font-medium">{c.thanhTien}</th></tr></thead>
-            <tbody>{d.dong.map((x, i) => (<tr key={i} className="border-b border-vien align-top"><td className="py-1.5 pr-2">{x.ten}{cfg.nhanVienPhucVu && x.nhanVien?.length ? <span className={`block text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>({c.nv}: {x.nhanVien.join(", ")})</span> : null}{x.gioPhucVu ? <span className={`block text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>{c.gioPv} {x.gioPhucVu}</span> : null}{x.giamGia ? <span className={`block text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>{c.giam} {tienVN(x.giamGia)}</span> : null}{x.ghiChu ? <span className={`block whitespace-pre-line text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>{x.ghiChu}</span> : null}</td><td className="py-1.5 text-right tabular-nums">{x.soLuong}</td>{!cuon && <td className="py-1.5 text-right tabular-nums">{tienVN(x.donGia)}</td>}<td className="py-1.5 text-right tabular-nums">{tienVN(x.thanhTien)}</td></tr>))}</tbody>
+          {thongTin.length > 0 && (
+            <dl className="mt-3 grid gap-x-2 gap-y-0.5" style={{ gridTemplateColumns: "auto 1fr" }}>
+              {thongTin.map(([n, v]) => <div key={n} className="contents"><dt className="text-muc-2">{n}:</dt><dd className={n === c.khachHang ? "font-semibold" : ""}>{v}</dd></div>)}
+            </dl>
+          )}
+          <table className="mt-3 w-full table-fixed text-left">
+            <colgroup><col /><col style={{ width: cuon ? "11%" : "8%" }} /><col style={{ width: cuon ? "24%" : "18%" }} /><col style={{ width: cuon ? "26%" : "20%" }} /></colgroup>
+            <thead><tr className="border-y border-muc"><th className="py-1 pr-1 font-semibold">{c.muc}</th><th className="py-1 text-right font-semibold">{c.sl}</th><th className="py-1 text-right font-semibold">{c.donGia}</th><th className="py-1 text-right font-semibold">{c.thanhTien}</th></tr></thead>
+            <tbody>{d.dong.map((x, i) => (
+              <tr key={i} className="border-b border-vien align-top">
+                <td className="break-words py-1 pr-1">{x.ten}
+                  {cfg.nhanVienPhucVu && x.nhanVien?.length ? <span className={`block text-muc-2 ${phu}`}>({c.nv}: {x.nhanVien.join(", ")})</span> : null}
+                  {x.gioPhucVu ? <span className={`block text-muc-3 ${phu}`}>{c.gioPv} {x.gioPhucVu}</span> : null}
+                  {x.giamGia ? <span className={`block text-muc-3 ${phu}`}>{c.giam} {tienVN(x.giamGia)}</span> : null}
+                  {x.ghiChu ? <span className={`block whitespace-pre-line text-muc-3 ${phu}`}>{x.ghiChu}</span> : null}
+                </td>
+                <td className="py-1 text-right tabular-nums">{x.soLuong}</td>
+                <td className="py-1 text-right tabular-nums">{soVN(x.donGia)}</td>
+                <td className="py-1 text-right tabular-nums">{soVN(x.thanhTien)}</td>
+              </tr>
+            ))}</tbody>
           </table>
-          <dl className="ml-auto mt-3 w-full space-y-1" style={{ maxWidth: cuon ? "100%" : 260 }}>
-            <div className="flex justify-between"><dt>{c.tienHang}</dt><dd className="tabular-nums">{tienVN(d.tongHang)}</dd></div>
-            {d.giamDon > 0 && <div className="flex justify-between"><dt>{c.giamGia}</dt><dd className="tabular-nums">− {tienVN(d.giamDon)}</dd></div>}
-            {d.vatTien > 0 && <div className="flex justify-between"><dt>VAT {d.vatPct}%</dt><dd className="tabular-nums">{tienVN(d.vatTien)}</dd></div>}
-            {d.phuPhi > 0 && <div className="flex justify-between"><dt>{c.phuPhi}</dt><dd className="tabular-nums">{tienVN(d.phuPhi)}</dd></div>}
-            {d.tip > 0 && <div className="flex justify-between"><dt>{c.tip}</dt><dd className="tabular-nums">{tienVN(d.tip)}</dd></div>}
-            <div className={`flex justify-between border-t border-muc pt-1 font-semibold ${cuon ? "text-[12px]" : "text-[15px]"}`}><dt>{c.phaiThu}</dt><dd className="tabular-nums">{tienVN(d.phaiThu)}</dd></div>
-            {d.thanhToan.map((t, i) => (<div key={i} className="flex justify-between text-muc-2"><dt>{t.nhan}</dt><dd className="tabular-nums">{tienVN(t.soTien)}</dd></div>))}
-            {d.conNo > 0 && <div className="flex justify-between font-semibold"><dt>{c.conNo}</dt><dd className="tabular-nums">{tienVN(d.conNo)}</dd></div>}
-            {d.khachDua != null && d.khachDua > 0 && <div className="flex justify-between text-muc-2"><dt>{c.khachDua}</dt><dd className="tabular-nums">{tienVN(d.khachDua)}</dd></div>}
-            {d.khachDua != null && d.khachDua > 0 && <div className="flex justify-between text-muc-2"><dt>{c.traLai}</dt><dd className="tabular-nums">{tienVN(d.traLai ?? 0)}</dd></div>}
+          <dl className="mt-2 w-full space-y-0.5">
+            <div className="flex justify-between gap-2"><dt>{c.tienHang}</dt><dd className="tabular-nums">{tienVN(d.tongHang)}</dd></div>
+            {d.giamDon > 0 && <div className="flex justify-between gap-2"><dt>{c.giamGia}</dt><dd className="tabular-nums">− {tienVN(d.giamDon)}</dd></div>}
+            {d.vatTien > 0 && <div className="flex justify-between gap-2"><dt>VAT {d.vatPct}%</dt><dd className="tabular-nums">{tienVN(d.vatTien)}</dd></div>}
+            {d.phuPhi > 0 && <div className="flex justify-between gap-2"><dt>{c.phuPhi}</dt><dd className="tabular-nums">{tienVN(d.phuPhi)}</dd></div>}
+            {d.tip > 0 && <div className="flex justify-between gap-2"><dt>{c.tip}</dt><dd className="tabular-nums">{tienVN(d.tip)}</dd></div>}
+            <div className={`flex justify-between gap-2 border-t border-muc pt-1 font-bold ${cuon ? "text-[13px]" : "text-[16px]"}`}><dt>{c.phaiThu}</dt><dd className="tabular-nums">{tienVN(d.phaiThu)}</dd></div>
+            {d.thanhToan.map((t, i) => (<div key={i} className="flex justify-between gap-2"><dt>{t.nhan}</dt><dd className="tabular-nums">{tienVN(t.soTien)}</dd></div>))}
+            {d.conNo > 0 && <div className="flex justify-between gap-2 font-semibold"><dt>{c.conNo}</dt><dd className="tabular-nums">{tienVN(d.conNo)}</dd></div>}
+            {d.khachDua != null && d.khachDua > 0 && <div className="flex justify-between gap-2 text-muc-2"><dt>{c.khachDua}</dt><dd className="tabular-nums">{tienVN(d.khachDua)}</dd></div>}
+            {d.khachDua != null && d.khachDua > 0 && <div className="flex justify-between gap-2 text-muc-2"><dt>{c.traLai}</dt><dd className="tabular-nums">{tienVN(d.traLai ?? 0)}</dd></div>}
           </dl>
+          <p className="mt-1 italic text-muc-2">{c.donViTinh}</p>
+          {d.bangChu && <p className="italic text-muc-2">{c.bangChu}: {d.bangChu}</p>}
+          {(d.tienTruThe || d.theSauTt?.length) ? (
+            <div className="mt-2 border-t border-dashed border-vien-dam pt-2">
+              <div className="flex justify-between gap-2 italic"><span>{c.truThe}:</span><span className="tabular-nums">{tienVN(d.tienTruThe ?? 0)}</span></div>
+              {d.theSauTt?.length ? (
+                <>
+                  <p className="mt-1 font-semibold italic">{d.nhanTheSauTt ?? c.theSauTt}</p>
+                  {d.theSauTt.map((t, i) => <p key={i} className="italic">{t}</p>)}
+                </>
+              ) : null}
+            </div>
+          ) : null}
           {cfg.diemTichLuy && d.khach?.diem != null && <p className={lop("mt-3 text-muc-2")}>{c.diem}: {d.khach.diem}</p>}
           {cfg.ghiChu && d.ghiChu && <p className={lop("mt-3 text-muc-2")}>{c.ghiChu}: {d.ghiChu}</p>}
           {cfg.chuKyKhach && (
-            <div className={`mt-6 grid grid-cols-2 gap-4 text-center ${cuon ? "text-[10px]" : "text-[12px]"}`}>
-              <div><p className="font-medium">{c.daiDien}</p><div className="h-12 border-b border-dashed border-vien-dam" /></div>
-              <div><p className="font-medium">{c.khachHang}</p><div className="h-12 border-b border-dashed border-vien-dam" /></div>
+            <div className={`mt-5 grid grid-cols-2 gap-4 text-center ${phu}`}>
+              <div><p className="font-medium">{c.khachHang}</p><div className="h-14 border-b border-dashed border-vien-dam" /></div>
+              <div><p className="font-medium">{c.daiDien}</p><div className="h-14 border-b border-dashed border-vien-dam" /></div>
             </div>
           )}
+          {cfg.cauKhongHoanLai?.trim() && <p className={`mt-4 whitespace-pre-line text-center ${phu}`}>{cfg.cauKhongHoanLai}</p>}
         </>
       )}
       {!ph && d.dong.length > 0 && (

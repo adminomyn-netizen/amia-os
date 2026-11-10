@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Nút Xoá ở khung "Chờ thanh toán" (chị Lâm 10/11/2026): đơn nháp xoá được bởi người lập hoặc người có quyền huỷ đơn (ban.huy = pos.void SalonHero),
+// Nút Xoá ở khung "Chờ thanh toán" (chị Lâm 10/11/2026): đơn nháp xoá được bởi người lập hoặc người có quyền huỷ đơn (ban.huy = pos.void SalonHero) hoặc Quản lý (ban.sua),
 // khoá chi nhánh, xoá xong ghi nhật ký kèm nguyên nội dung đơn. Hoá đơn đã mở lại để sửa: "Bỏ sửa" (ban.sua / ban.huy) gọi bo_sua_hoa_don.
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
@@ -67,6 +67,14 @@ describe("Xoá đơn nháp ở Chờ thanh toán", () => {
     nguoiDung = ta(VINH, ["ban.tao", "ban.huy"], "nv-b");
     const a = await import("../../src/app/(app)/ban-hang/actions");
     expect(await a.xoaDonCho(NHAP_A)).toEqual({ ok: true });
+  });
+  it("Quản lý (ban.sua, không ban.huy) xoá được đơn nháp của người khác (chị Lâm 10/11/2026)", async () => {
+    nguoiDung = ta(VINH, ["ban.tao", "ban.sua"], "nv-b");
+    const a = await import("../../src/app/(app)/ban-hang/actions");
+    expect(await a.xoaDonCho(NHAP_A)).toEqual({ ok: true });
+    const { QUYEN_THEO_VAI_TRO } = await import("../../src/lib/quyen");
+    const duoc = (v: keyof typeof QUYEN_THEO_VAI_TRO) => QUYEN_THEO_VAI_TRO[v].includes("ban.huy") || QUYEN_THEO_VAI_TRO[v].includes("ban.sua");
+    expect([duoc("quan_ly"), duoc("ke_toan"), duoc("chu"), duoc("thu_ngan"), duoc("tu_van"), duoc("ktv")]).toEqual([true, true, true, false, false, false]);
   });
   it("khoá chi nhánh: đơn chi nhánh khác coi như không có", async () => {
     nguoiDung = ta(VINH, ["ban.tao", "ban.huy"]);

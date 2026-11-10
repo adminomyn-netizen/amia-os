@@ -399,9 +399,13 @@ export async function xoaDonNhap(id: string): Promise<{ ok: true } | { ok?: fals
   return { ok: true };
 }
 
+/** Xoá đơn nháp của NGƯỜI KHÁC: quyền huỷ hoá đơn (ban.huy: Chủ, Kế toán) hoặc sửa hoá đơn đã chốt (ban.sua: thêm Quản lý).
+ *  Chị Lâm 10/11/2026: "quản lý được xóa đơn nháp của người khác nhé". Không cấp ban.huy cho Quản lý vì ban.huy còn là huỷ hoá đơn ĐÃ CHỐT. */
+const xoaNhapNguoiKhac = (nd: Parameters<typeof coQuyen>[0]) => coQuyen(nd, "ban.huy") || coQuyen(nd, "ban.sua");
+
 /** Nút "Xoá" ở khung Chờ thanh toán / Đơn nháp (chị Lâm 10/11/2026: "xoá đơn chứ em").
  *  SalonHero: đơn chờ là DRAFT, bỏ bằng "Huỷ đơn" (quyền pos.void: Chủ, Kế toán, Nhà đầu tư) có hỏi lại + ô lý do. AMIA: người lập xoá được đơn nháp của mình,
- *  đơn của người khác cần quyền ban.huy (= pos.void/pos.delete của SalonHero). Đơn nháp chỉ là bản dựng tạm (không thu tiền, không trừ kho/thẻ) nên xoá hẳn;
+ *  đơn của người khác cần quyền ban.huy (= pos.void/pos.delete của SalonHero) hoặc ban.sua (Quản lý, chị Lâm 10/11/2026). Đơn nháp chỉ là bản dựng tạm (không thu tiền, không trừ kho/thẻ) nên xoá hẳn;
  *  xoá xong ghi nhật ký kèm nguyên nội dung đơn để tra lại được. */
 export async function xoaDonCho(id: string, lyDo?: string): Promise<{ ok: true } | { ok?: false; loi: string }> {
   const nd = await kiemQuyen("ban.tao");
@@ -410,7 +414,7 @@ export async function xoaDonCho(id: string, lyDo?: string): Promise<{ ok: true }
   const db = sb();
   const { data: n } = await db.from("don_nhap").select("id, chi_nhanh_id, nguoi_lap_id, khach_id, tieu_de, dong, tao_luc, cap_nhat_luc").eq("id", id).maybeSingle();
   if (!n || (nd.chiNhanhId && n.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy đơn (có thể đã được chốt hoặc xoá ở máy khác). Tải lại danh sách." };
-  if (n.nguoi_lap_id !== nd.nhanVienId && !coQuyen(nd, "ban.huy")) return { loi: "Chỉ người lập đơn hoặc người có quyền huỷ đơn (Chủ, Kế toán) mới xoá được đơn này." };
+  if (n.nguoi_lap_id !== nd.nhanVienId && !xoaNhapNguoiKhac(nd)) return { loi: "Chỉ người lập đơn hoặc Quản lý, Kế toán, Chủ mới xoá được đơn nháp của người khác." };
   // Xoá trước (xác nhận đúng 1 dòng đã mất) rồi mới ghi nhật ký từ bản đã đọc, để không có dòng nhật ký "đã xoá" cho đơn vẫn còn.
   const { data: da, error } = await db.from("don_nhap").delete().eq("id", n.id).select("id");
   if (error) return { loi: thongBaoLoi(error) };
@@ -455,12 +459,13 @@ export async function dsDonCho(chiNhanhId: string): Promise<DonCho[]> {
   const ten = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
   const xemSdt = coQuyen(nd, "khach.sdt");
   const huy = coQuyen(nd, "ban.huy");
+  const xoaKhac = xoaNhapNguoiKhac(nd);
   return [
     ...(n ?? []).map((r) => {
       const k = r.khach_hang as unknown as { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string } | null;
       const khach = k ? { id: k.id, ma: k.ma, ho_ten: k.ho_ten, dien_thoai: xemSdt ? k.dien_thoai : "", nguoi_phu_trach_id: k.nguoi_phu_trach_id } : null;
       const dong = lamSachDongNhap(r.dong);
-      return { id: r.id, loai: "nhap" as const, khach: k?.ho_ten ?? "Khách lẻ", soDong: dong.length, nguoiLap: ten.get(r.nguoi_lap_id) ?? "", capNhat: r.cap_nhat_luc, coTheXoa: r.nguoi_lap_id === nd.nhanVienId || huy, nhap: { id: r.id, tieuDe: r.tieu_de ?? "", khach, dong, capNhat: r.cap_nhat_luc } };
+      return { id: r.id, loai: "nhap" as const, khach: k?.ho_ten ?? "Khách lẻ", soDong: dong.length, nguoiLap: ten.get(r.nguoi_lap_id) ?? "", capNhat: r.cap_nhat_luc, coTheXoa: r.nguoi_lap_id === nd.nhanVienId || xoaKhac, nhap: { id: r.id, tieuDe: r.tieu_de ?? "", khach, dong, capNhat: r.cap_nhat_luc } };
     }),
     ...(h ?? []).map((r) => ({ id: r.id, loai: "sua" as const, khach: (r.khach_hang as unknown as { ho_ten: string } | null)?.ho_ten ?? "Khách lẻ", soDong: 0, nguoiLap: ten.get(r.nguoi_lap_id ?? "") ?? "", capNhat: r.mo_lai_luc ?? "", ma: r.ma, coTheXoa: huy || coQuyen(nd, "ban.sua") })),
   ];

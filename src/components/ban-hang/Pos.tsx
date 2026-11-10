@@ -158,11 +158,26 @@ export function Pos(props: PropsPos) {
     nutTab.current.get(t.k)?.focus();
   };
   // Nút "Hủy đơn" như SalonHero: bỏ cả đơn đang mở (đơn duy nhất thì dựng lại đơn trống), có hỏi lại khi đã có dòng; bỏ ?lich=&khach= khỏi địa chỉ.
-  const huyDon = (k: number) => {
+  // Chị Lâm 10/11/2026: "hủy đơn là xóa luôn đơn nháp em nhé". Tab đã lưu nháp lên máy chủ → hỏi lại + lý do như nút Xoá ở Chờ thanh toán, xoá đơn nháp
+  // (cùng action xoaDonCho, ghi nhật ký xoa_don_nhap) rồi mới đóng tab; xoá không được (vd đơn người khác, không đủ quyền) thì báo lỗi, hỏi có đóng tab không (đơn nháp vẫn còn).
+  // Tab đang sửa hoá đơn đã chốt: chỉ đóng tab (có xoá bản nháp phụ nếu đã lưu), KHÔNG đụng hoá đơn; trả hoá đơn về đã chốt bằng "Bỏ sửa".
+  const huyDon = (k: number, p: { nhapId: string | null; suaMa?: string }) => {
     const t = ds.find((x) => x.k === k);
-    if (t && t.soDong > 0 && !window.confirm(`Hủy ${t.ten || "đơn này"}? Toàn bộ dòng đã chọn sẽ mất.`)) return;
-    bo(k);
-    if (window.location.search) window.history.replaceState(null, "", "/ban-hang");
+    const xong = () => { bo(k); if (window.location.search) window.history.replaceState(null, "", "/ban-hang"); };
+    const nhacSua = p.suaMa ? ` Hoá đơn ${p.suaMa} vẫn ở trạng thái đang sửa; muốn trả về đã chốt thì bấm "Bỏ sửa" ở Chờ thanh toán hoặc trang hoá đơn.` : "";
+    if (!p.nhapId) {
+      if (((t && t.soDong > 0) || p.suaMa) && !window.confirm(`Hủy ${t?.ten || "đơn này"}? Toàn bộ dòng đã chọn sẽ mất.${nhacSua}`)) return;
+      xong();
+      return;
+    }
+    const lyDo = window.prompt(`Hủy ${t?.ten || "đơn này"} và xoá đơn nháp đã lưu? Đơn nháp chưa thu tiền nên xoá hẳn, không khôi phục được.${nhacSua} Lý do huỷ (không bắt buộc):`, "");
+    if (lyDo === null) return;
+    const xoa = props.xoaCho ? props.xoaCho(p.nhapId, lyDo) : props.xoaNhap(p.nhapId);
+    void xoa.then((r) => {
+      if ("loi" in r && r.loi) { if (window.confirm(`${r.loi}\n\nĐơn nháp chưa được xoá. Vẫn đóng đơn này trên máy?`)) xong(); return; }
+      xong();
+      lamMoiNhap(); if (moCho) taiCho();
+    }).catch(() => window.alert("Chưa xoá được đơn nháp (mất kết nối?). Thử lại."));
   };
   const nhanTab = (t: Tab, i: number) => t.ten || `Đơn ${i + 1}`;
   return (
@@ -246,7 +261,7 @@ export function Pos(props: PropsPos) {
       )}
       {ds.map((t, i) => (
         <div key={t.k} role="tabpanel" id={`don-${t.k}`} aria-labelledby={`don-tab-${t.k}`} hidden={t.k !== dangXem}>
-          <DonPos {...props} k={t.k} kieu={t.kieu} nhapDau={t.nhap} onNhap={lamMoiNhap} dauTien={i === 0 && t.k === 1 && !t.nhap} dangXem={t.k === dangXem} onDonChoKhach={guiManHinhKhach} onDoi={capNhat} onHuy={() => huyDon(t.k)}
+          <DonPos {...props} k={t.k} kieu={t.kieu} nhapDau={t.nhap} onNhap={lamMoiNhap} dauTien={i === 0 && t.k === 1 && !t.nhap} dangXem={t.k === dangXem} onDonChoKhach={guiManHinhKhach} onDoi={capNhat} onHuy={(p) => huyDon(t.k, p)}
             onXong={(kq) => {
               setXong(kq); bo(t.k); guiManHinhKhach(null); setDsCho(null);
               // "Đặt lịch hẹn tiếp theo" (SalonHero, ô tick khi thanh toán): không còn đơn nào đang dở thì sang thẳng hộp đặt lịch cho khách; còn thì để link ở thanh "Đã chốt".
@@ -365,7 +380,7 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
 }
 
 function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, kieu, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
-  k: number; kieu: KieuDon; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: () => void;
+  k: number; kieu: KieuDon; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
   const router = useRouter();
@@ -895,7 +910,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
               <div className="grid grid-cols-2 gap-2">
                 <button type="button" disabled={dang || !dong.length} onClick={luuNhapDon} className={`${NUT_PHU} h-11 text-[14px]`}>Lưu nháp</button>
                 <button type="button" onClick={() => setMoHh(true)} disabled={!dong.length} className={`${NUT_PHU} h-11 text-[14px]`}>Hoa hồng &amp; doanh thu</button>
-                <button type="button" disabled={dang} onClick={onHuy} className={`${NUT_PHU} h-11 text-[14px]`}>Hủy đơn</button>
+                <button type="button" disabled={dang} onClick={() => onHuy({ nhapId, suaMa: sua?.ma })} className={`${NUT_PHU} h-11 text-[14px]`}>Hủy đơn</button>
                 <button type="button" disabled={!dong.length} onClick={inTamTinh} className={`${NUT_PHU} h-11 text-[14px]`}>In hoá đơn</button>
               </div>
             </div>

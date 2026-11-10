@@ -23,7 +23,8 @@ export async function docBuoiCho(o: { chiNhanhId: string | null; ngay: string; n
   q = o.chiMo ? q.in("trang_thai", ["cho_lam", "dang_lam"]) : q.or(`ngay.eq.${o.ngay},trang_thai.in.(cho_lam,dang_lam)`);
   if (o.chiNhanhId) q = q.eq("chi_nhanh_id", o.chiNhanhId);
   if (o.nvId) q = q.contains("nv_ids", [o.nvId]);
-  const { data } = await q;
+  const { data, error } = await q;
+  if (error) console.error("docBuoiCho:", error.message); // lỗi truy vấn đừng giả làm "không có khách"
   const ds = data ?? [];
   if (!ds.length) return [];
   const idsNv = [...new Set(ds.flatMap((r) => [...r.nv_ids, ...r.tu_van_ids, ...(r.chuyen_boi ? [r.chuyen_boi] : [])]))];

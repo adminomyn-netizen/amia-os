@@ -18,11 +18,11 @@ export default async function TrangBaoCaoNgay({ searchParams }: { searchParams: 
   const db = sb();
   let q = db.from("bao_cao_ngay").select("*").order("ngay", { ascending: false }).order("cap_nhat_luc", { ascending: false }).limit(200);
   if (tab === "cua-toi") q = q.eq("nhan_vien_id", nd.nhanVienId);
-  const [{ data: bc }, { data: nv }, { data: toi }] = await Promise.all([q, db.from("nhan_vien").select("id, ho_ten").order("ho_ten"), db.from("bao_cao_ngay").select("da_lam, vuong, ke_hoach").eq("nhan_vien_id", nd.nhanVienId).eq("ngay", hom).maybeSingle()]);
+  const [{ data: bc }, { data: nv }, { data: toi }] = await Promise.all([q, db.from("nhan_vien").select("id, ho_ten, hoat_dong").order("ho_ten"), db.from("bao_cao_ngay").select("da_lam, vuong, ke_hoach").eq("nhan_vien_id", nd.nhanVienId).eq("ngay", hom).maybeSingle()]);
   const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const truong: Truong[] = [
     { ten: "ngay", nhan: "Ngày báo cáo", loai: "ngay" },
-    ...(xemHet ? [{ ten: "thay_cho", nhan: "Nộp thay nhân viên", loai: "chon" as const, goiY: "Chính tôi", luaChon: (nv ?? []).filter((n) => n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten })) }] : []),
+    ...(xemHet ? [{ ten: "thay_cho", nhan: "Nộp thay nhân viên", loai: "chon" as const, goiY: "Chính tôi", luaChon: (nv ?? []).filter((n) => n.hoat_dong && n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten })) }] : []),
     { ten: "da_lam", nhan: "Đã làm hôm nay", loai: "nhieu_dong", batBuoc: true, rong: true },
     { ten: "vuong", nhan: "Vướng mắc", loai: "nhieu_dong", rong: true },
     { ten: "ke_hoach", nhan: "Kế hoạch hôm sau", loai: "nhieu_dong", rong: true },

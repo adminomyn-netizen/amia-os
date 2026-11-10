@@ -25,7 +25,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
   if (!p || (nd.chiNhanhId && p.chi_nhanh_id !== nd.chiNhanhId)) notFound();
   const [{ data: dong }, { data: k }, { data: dv }, { data: nv }, { data: nguong }, { data: spAll }] = await Promise.all([
     db.from("phieu_cap_dong").select("*").eq("phieu_id", id), db.from("khach_hang").select("id, ho_ten, ma").eq("id", p.khach_id).maybeSingle(),
-    db.from("dich_vu").select("ten").eq("id", p.dich_vu_id).maybeSingle(), db.from("nhan_vien").select("id, ho_ten, vai_tro"),
+    db.from("dich_vu").select("ten").eq("id", p.dich_vu_id).maybeSingle(), db.from("nhan_vien").select("id, ho_ten, vai_tro, hoat_dong"),
     db.from("cau_hinh").select("gia_tri").eq("khoa", "nguong_lech_pct").maybeSingle(), db.from("san_pham").select("id, ten, don_vi").eq("tieu_hao", true).eq("hoat_dong", true).order("ten"),
   ]);
   // Phiếu theo buổi (0310): chuyên viên trị liệu / kho / chính người làm buổi được sửa dòng khi chưa chốt; xác nhận chỉ chuyên viên trị liệu.
@@ -38,7 +38,7 @@ export default async function ChiTietPhieu({ params }: { params: Promise<{ id: s
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const ng = Number(nguong?.gia_tri ?? 5);
   const tt = nhanPhieuBuoi(p) ?? TT_PHIEU[p.trang_thai];
-  const bsLC = (nv ?? []).filter((n) => ["bac_si", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
+  const bsLC = (nv ?? []).filter((n) => n.hoat_dong && ["bac_si", "quan_ly"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }));
   const tongCap = (dong ?? []).reduce((s, d) => s + Number(d.so_cap) * Number(d.don_gia ?? 0), 0);
   const tongDung = (dong ?? []).reduce((s, d) => s + (d.so_tra == null ? 0 : (Number(d.so_cap) - Number(d.so_tra)) * Number(d.don_gia ?? 0)), 0);
   const lamXong = p.trang_thai === "da_lam" || p.trang_thai === "da_doi_chieu";

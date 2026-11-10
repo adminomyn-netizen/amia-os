@@ -10,6 +10,7 @@ import { homNayHCM, ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/di
 import { NHAN_NGUON, TRANG_THAI_KHACH, truongKhach } from "@/lib/khach";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
@@ -29,7 +30,7 @@ import { luuDanhGiaSauDieuTri } from "../../hoa-don/sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
 import { nhanHang, nhanTrangThaiGoi } from "@/lib/cham-soc-hang-doi";
 import { danhDauMat, luuGhiChu, suaGhiChu, luuKhach, luuNguoiThan, suaDiemKhach, xoaKhach, xoaNguoiThan } from "../actions";
-import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
+import { luaChonNhanVien, tenGonNv } from "@/lib/lua-chon-nhan-vien";
 import { moTaLapNhac } from "@/lib/nhac-cham-soc";
 import { dichVuChoNhac } from "@/lib/nhac-cham-soc-may-chu";
 import { HopTaoNhac } from "@/components/khach/HopTaoNhac";
@@ -85,7 +86,10 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   // Số ảnh trên nhãn tab: ảnh đã có trong kho + ảnh cũ còn ở kho lưu trữ (con số không đổi khi nhân viên bấm lấy ảnh cũ về xem).
   const tabHopLe = tabHopLe0.map((x) => (x.ma === "anh" ? { ...x, ten: `Ảnh khách hàng (${soAnhTab.toLocaleString("vi-VN")})` } : x));
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
-  const nvLC = luaChonNhanVien(nv ?? []);
+  // Ô chọn chỉ có nhân viên đang làm; người phụ trách cũ đã nghỉ vẫn giữ trong ô (ghi "đã nghỉ") để bấm Lưu không xoá mất.
+  const ptCu = k.nguoi_phu_trach_id && !(nv ?? []).some((n) => n.id === k.nguoi_phu_trach_id) ? (await db.from("nhan_vien").select("id, ho_ten").eq("id", k.nguoi_phu_trach_id).maybeSingle()).data : null;
+  if (ptCu) tenNv.set(ptCu.id, ptCu.ho_ten);
+  const nvLC = [...luaChonNhanVien(nv ?? []), ...(ptCu ? [{ gia_tri: ptCu.id, nhan: `${tenGonNv(ptCu.ho_ten)} (đã nghỉ)`, nhom: "Đã nghỉ" }] : [])];
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) });
   const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
   const tt = TRANG_THAI_KHACH[k.trang_thai ?? "lead"];
@@ -156,14 +160,13 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             { nhan: "Mã thẻ", chinh: true, hienThi: (r) => <Link className="font-medium text-nhan-dam underline underline-offset-2" href={`/the/${r.id}`}>{r.ma}</Link> }, { nhan: "Loại", hienThi: (r) => (r.loai === "lan" ? "Liệu trình" : "Thẻ tiền") },
             { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
             { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
-            { nhan: "Tình trạng", hienThi: (r) => <NhanTrangThai kieu={r.tinh_trang === "hoat_dong" ? "tot" : r.tinh_trang === "sap_het" ? "cho" : "tram"}>{({ hoat_dong: "Đang dùng", sap_het: "Sắp hết", het_han: "Hết hạn", hoan_thanh: "Đã dùng hết", khoa: "Đang khoá", thu_hoi: "Đã thu hồi" } as Record<string, string>)[r.tinh_trang ?? ""]}</NhanTrangThai> },
+            { nhan: "Tình trạng", hienThi: (r) => <NhanTinhTrangThe tt={r.tinh_trang} /> },
           ]} />
       </>
     );
   } else if (tab === "the") {
     // Như tab "Thẻ dịch vụ" của SalonHero: lọc theo tình trạng, đếm số thẻ, mỗi thẻ hiện mã, tên gói, hạn và "Sử dụng đã dùng / tổng".
     const LOC_THE = [["tat-ca", "Tất cả"], ["hoat_dong", "Sử dụng"], ["khoa", "Đã khoá"], ["thu_hoi", "Thu hồi"], ["het_han", "Hết hạn"], ["hoan_thanh", "Hoàn thành"]] as const;
-    const NHAN_TT: Record<string, string> = { hoat_dong: "Sử dụng", sap_het: "Sắp hết", het_han: "Hết hạn", hoan_thanh: "Hoàn thành", khoa: "Đã khoá", thu_hoi: "Thu hồi" };
     const loc = LOC_THE.some(([m]) => m === sp.loc) ? sp.loc! : "tat-ca";
     const dsThe = the ?? [];
     const khopLoc = (tt: string | null, l: string) => l === "tat-ca" || tt === l || (l === "hoat_dong" && tt === "sap_het");
@@ -191,7 +194,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
                     <span className="block text-[12px] text-muc-3">{x.han_dung ? `Ngày hết hạn ${ngayVN(x.han_dung)}` : "Không hết hạn"}</span></span>
                   <span className="flex shrink-0 flex-col items-end gap-1">
                     <span className="text-[13px] font-medium tabular-nums text-muc">{x.loai === "lan" ? (tong == null ? `Còn ${con} buổi` : `${Math.max(tong - con, 0)}/${tong}`) : tienVN(x.so_du_tien)}</span>
-                    <NhanTrangThai kieu={x.tinh_trang === "hoat_dong" ? "tot" : x.tinh_trang === "sap_het" ? "cho" : "tram"}>{NHAN_TT[x.tinh_trang ?? ""] ?? x.tinh_trang}</NhanTrangThai>
+                    <NhanTinhTrangThe tt={x.tinh_trang} />
                   </span>
                 </Link></li>
               );

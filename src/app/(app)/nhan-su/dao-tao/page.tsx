@@ -3,7 +3,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN } from "@/lib/dinh-dang";
-import { dsNvTrongPham, luaChonNv } from "@/lib/hr-pham-vi";
+import { dsNvTrongPham, luaChonNv, luaChonNvGiu } from "@/lib/hr-pham-vi";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -57,7 +57,7 @@ export default async function TrangDaoTao({ searchParams }: { searchParams: Prom
             { nhan: "Nhân viên", chinh: true, hienThi: (r) => ten.get(r.nhan_vien_id)?.ho_ten ?? "Đã nghỉ" }, { nhan: "Khoá học", hienThi: (r) => tenKhoa.get(r.khoa_id) },
             { nhan: "Ngày học", hienThi: (r) => (r.ngay_hoc ? ngayVN(r.ngay_hoc) : "—") }, { nhan: "Điểm", phai: true, hienThi: (r) => (r.diem == null ? "—" : Number(r.diem)) },
             { nhan: "Kết quả", hienThi: (r) => <NhanTrangThai kieu={TT[r.trang_thai as keyof typeof TT].kieu}>{TT[r.trang_thai as keyof typeof TT].ten}</NhanTrangThai> },
-            { nhan: "", hienThi: (r) => <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa kết quả học" truong={truong} action={luuKetQuaDaoTao} giaTri={{ nhan_vien_id: r.nhan_vien_id, khoa_id: r.khoa_id, trang_thai: r.trang_thai, ngay_hoc: r.ngay_hoc ?? "", diem: r.diem == null ? "" : String(Number(r.diem)), ghi_chu: r.ghi_chu ?? "" }} /> },
+            { nhan: "", hienThi: (r) => <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa kết quả học" truong={truong.map((t) => (t.ten === "nhan_vien_id" ? { ...t, luaChon: luaChonNvGiu(nv, r.nhan_vien_id) } : t))} action={luuKetQuaDaoTao} giaTri={{ nhan_vien_id: r.nhan_vien_id, khoa_id: r.khoa_id, trang_thai: r.trang_thai, ngay_hoc: r.ngay_hoc ?? "", diem: r.diem == null ? "" : String(Number(r.diem)), ghi_chu: r.ghi_chu ?? "" }} /> },
           ]} />
       </>
     );

@@ -16,13 +16,13 @@ export default async function TrangKiemKe() {
   const db = sb();
   let q = db.from("phieu_kiem_ke").select("*").order("tao_luc", { ascending: false }).limit(100);
   if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
-  const [{ data: ds }, { data: cn }, { data: nv }] = await Promise.all([q, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten")]);
+  const [{ data: ds }, { data: cn }, { data: nv }] = await Promise.all([q, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"), db.from("nhan_vien").select("id, ho_ten, hoat_dong").order("ho_ten")]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const truong: Truong[] = [
     ...(nd.chiNhanhId ? [] : [{ ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon" as const, batBuoc: true, luaChon: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) }]),
     { ten: "ngay", nhan: "Ngày kiểm kê", loai: "ngay", batBuoc: true },
     { ten: "loai", nhan: "Loại", loai: "chon", batBuoc: true, luaChon: [{ gia_tri: "thang", nhan: "Hằng tháng (cuối tháng)" }, { gia_tri: "dot_xuat", nhan: "Đột xuất" }] },
-    { ten: "nguoi_dem_2_id", nhan: "Người đếm thứ hai", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Chưa chọn" }, ...(nv ?? []).filter((n) => n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))] },
+    { ten: "nguoi_dem_2_id", nhan: "Người đếm thứ hai", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Chưa chọn" }, ...(nv ?? []).filter((n) => n.hoat_dong && n.id !== nd.nhanVienId).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))] },
     { ten: "ghi_chu", nhan: "Ghi chú (bắt buộc khi đột xuất: lý do)", loai: "nhieu_dong", rong: true },
   ];
   return (

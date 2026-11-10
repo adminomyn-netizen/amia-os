@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
 import { sb } from "@/lib/db";
 import { NHAN_VAI_TRO, VAI_TRO, laVaiTro, quyenHieuLuc } from "@/lib/quyen";
@@ -12,11 +13,16 @@ import { CHUC_DANH_TC } from "@/lib/de-xuat";
 import { KHUNG_LAM, TT_LAM } from "@/lib/nhan-su";
 import { giaTriVaiTheoChiNhanh, truongVaiTheoChiNhanh } from "./truong-chi-nhanh";
 
-export default async function TrangNhanVien() {
+export default async function TrangNhanVien({ searchParams }: { searchParams: Promise<{ nghi?: string }> }) {
   await yeuCauQuyen("hethong.phanquyen");
+  const hienNghi = (await searchParams).nghi === "1";
   const db = sb();
   const [{ data: moDk }, { data: ds }, { data: cn }] = await Promise.all([db.from("cau_hinh").select("gia_tri").eq("khoa", "dang_ky.mo").maybeSingle(), db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng, han_muc_duyet, chuc_danh_tai_chinh, ma_nv, ngay_vao_lam, ngay_vao_chinh_thuc, trang_thai_lam, khung_lam_viec, vai_tro_chuyen_mon, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
   const dangKyMo = (moDk?.gia_tri ?? "1") !== "0";
+  // Mặc định chỉ hiện nhân sự ĐANG LÀM (được đăng nhập + trạng thái Đang làm); người đã nghỉ / khoá / tài khoản thử giữ nguyên trong DB (hoá đơn, hoa hồng cũ trỏ tới), bấm "Hiện cả nhân sự đã nghỉ" mới thấy.
+  const dangLam = (r: { hoat_dong: boolean; trang_thai_lam: string }) => r.hoat_dong && r.trang_thai_lam === "dang_lam";
+  const soNghi = (ds ?? []).filter((r) => !dangLam(r)).length;
+  const dsHien = hienNghi ? ds ?? [] : (ds ?? []).filter(dangLam);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));
   const vaiTroLC = VAI_TRO.map((v) => ({ gia_tri: v, nhan: NHAN_VAI_TRO[v] }));
   const cnLC = [{ gia_tri: "", nhan: "Mọi chi nhánh" }, ...(cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }))];
@@ -46,7 +52,11 @@ export default async function TrangNhanVien() {
         <NutHop kieu="phu" nhan={dangKyMo ? "Đăng ký tự do: đang bật" : "Đăng ký tự do: đang tắt"} tieuDe="Đăng ký tự do" xacNhan={dangKyMo ? "Tắt đăng ký tự do? Người chưa có tài khoản sẽ không đăng ký được nữa." : "Bật đăng ký tự do? Ai vào /dang-ky cũng tạo được tài khoản vai trò Nhân viên, dùng được ngay."} action={datDangKyTuDo} an={{ mo: dangKyMo ? "0" : "1" }} nhanLuu={dangKyMo ? "Tắt" : "Bật"} />
         <NutHop nhan="Thêm nhân viên" tieuDe="Thêm nhân viên" truong={truongTao} giaTri={{ vai_tro: "le_tan", chi_nhanh_id: "" }} action={taoNhanVien} />
       </TieuDeNoi>
-      <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} cot={[
+      <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[14px]">
+        <span className="text-muc-2">{hienNghi ? `Tất cả ${(ds ?? []).length} hồ sơ` : `${dsHien.length} nhân sự đang làm`}</span>
+        {soNghi > 0 && <Link href={hienNghi ? "/nhan-vien" : "/nhan-vien?nghi=1"} scroll={false} className="font-medium text-nhan-dam hover:underline">{hienNghi ? "Chỉ nhân sự đang làm" : `Hiện cả nhân sự đã nghỉ (${soNghi})`}</Link>}
+      </div>
+      <Bang noi duLieu={dsHien} khoa={(r) => r.id} cot={[
         { nhan: "Họ tên", hienThi: (r) => <div><span className="text-muc">{r.ho_ten}</span><div className="text-[12.5px] text-muc-3">{r.ma_nv}{r.ngay_vao_lam ? ` · từ ${ngayVN(r.ngay_vao_lam)}` : ""}</div></div> }, { nhan: "Vai trò", hienThi: (r) => NHAN_VAI_TRO[r.vai_tro as keyof typeof NHAN_VAI_TRO] ?? r.vai_tro },
         { nhan: "Chi nhánh", hienThi: (r) => (r.chi_nhanh_id ? <span className="flex flex-col"><span>{tenCn.get(r.chi_nhanh_id) ?? ""}</span>{r.vai_tro !== "chu" && r.vai_tro !== "ky_thuat" && r.them.filter((g) => g.chi_nhanh_id !== r.chi_nhanh_id).map((g) => <span key={g.chi_nhanh_id} className="text-[12.5px] text-muc-3">+ {tenCn.get(g.chi_nhanh_id) ?? "Chi nhánh"}: {NHAN_VAI_TRO[g.vai_tro as keyof typeof NHAN_VAI_TRO] ?? g.vai_tro}</span>)}</span> : "Mọi chi nhánh") }, { nhan: "Email", hienThi: (r) => r.email ?? "Không có tài khoản" },
         { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={r.hoat_dong && r.trang_thai_lam === "dang_lam" ? "tot" : r.hoat_dong ? "cho" : "tram"}>{TT_LAM[r.trang_thai_lam] ?? (r.hoat_dong ? "Đang làm" : "Đã khoá")}</NhanTrangThai> },

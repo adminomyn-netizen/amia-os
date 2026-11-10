@@ -9,13 +9,13 @@ import { docLocDungThe, LOAI_DUNG_THE as LOAI, thamSoDiaChi, thamSoRpc, TINH_TRA
 import { NutXuatExcel } from "@/components/ui/NutXuatExcel";
 import { chiNhanhXem } from "@/lib/cham-soc-khach";
 import { Bang } from "@/components/ui/Table";
-import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { ThanhTrang } from "@/components/ui/ThanhTrang";
 import { NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
 import { Chon } from "@/components/ui/Chon";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { NutHop } from "@/components/ui/BieuMau";
-import { NHAN_TINH_TRANG, TRUONG_CAP_THE } from "../../the/page";
+import { TRUONG_CAP_THE } from "../../the/page";
+import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
 import { capTheTay, suaThe, thuHoiThe } from "../../the/actions";
 
 const MOI_TRANG = 50;
@@ -127,7 +127,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
             return <span className="tabular-nums">{soVN(Math.max(0, tongBuoi - con))} / {tongBuoi >= KHONG_GIOI_HAN ? "Không giới hạn" : soVN(tongBuoi)}</span>;
           } },
           { nhan: "Còn lại", phai: true, hienThi: (r) => <span className="tabular-nums">{r.loai === "tien" ? tienVN(r.so_du_tien) : (r.so_buoi_tong ?? 0) >= KHONG_GIOI_HAN ? "Không giới hạn" : tienVN(Math.max(0, (r.so_buoi_con ?? 0)) * Number(r.gia_tri_buoi ?? 0))}</span> },
-          { nhan: "Tình trạng", hienThi: (r) => { const t = NHAN_TINH_TRANG[r.tinh_trang ?? "hoat_dong"]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
+          { nhan: "Tình trạng", hienThi: (r) => <NhanTinhTrangThe tt={r.tinh_trang} /> },
           { nhan: "Lịch sử", hienThi: (r) => (
             <div className="flex flex-col items-start gap-1">
               <Link href={`/the/${r.id}`} className="whitespace-nowrap text-[13px] font-medium text-nhan-dam hover:underline">Lịch sử dùng thẻ</Link>

@@ -15,6 +15,12 @@ type KQ = { ok?: true; loi?: string; canhBao?: string };
 export type KQBuoi = KQ & { phieuId?: string; phieuMa?: string; xemPhieu?: boolean; /** Lịch đã có phiếu bác sĩ chỉ định nên không ra phiếu theo buổi. */ phieuBacSi?: boolean };
 const lamMoi = (id?: string) => { revalidatePath("/the"); if (id) revalidatePath(`/the/${id}`); };
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
+/** Thẻ có thuộc phạm vi chi nhánh của người dùng không (người khoá chi nhánh không được thao tác thẻ chi nhánh khác dù biết id). */
+async function theTrongPhamVi(nd: NguoiDung, theId: string): Promise<boolean> {
+  if (!theId) return false;
+  const { data } = await sb().from("the_khach").select("chi_nhanh_id").eq("id", theId).maybeSingle();
+  return !!data && (!nd.chiNhanhId || data.chi_nhanh_id === nd.chiNhanhId);
+}
 
 /** Kiểm "hẹn buổi kế tiếp" (ngày + nội dung, không bắt buộc) TRƯỚC khi trừ buổi, để lỗi nhập không xảy ra sau khi buổi đã trừ. */
 function docHenKeTiep(fd: FormData, ngayLam: string): { co: false } | { co: true; ngay: string; noiDung: string | null } | { loi: string } {
@@ -50,6 +56,7 @@ export async function thucHienBuoi(fd: FormData): Promise<KQBuoi> {
   const nd = (await kiemQuyen("the.thuchien")) ?? (await kiemQuyen("ban.tao"));
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const theId = chuoi(fd, "the_id");
+  if (!(await theTrongPhamVi(nd, theId))) return { loi: "Không tìm thấy thẻ." };
   const thamSo: Record<string, number | string> = {};
   for (const k of ["shot", "line"]) if (chuoi(fd, k)) thamSo[k] = so(fd, k);
   if (chuoi(fd, "vung")) thamSo.vung = chuoi(fd, "vung");
@@ -88,6 +95,7 @@ export async function henBuoiKeTiep(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("the.thuchien");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const theId = chuoi(fd, "the_id");
+  if (!(await theTrongPhamVi(nd, theId))) return { loi: "Không tìm thấy thẻ." };
   const hen = docHenKeTiep(fd, homNayHCM());
   if ("loi" in hen) return { loi: hen.loi };
   if (!hen.co) return { loi: "Chọn ngày hẹn buổi kế tiếp." };
@@ -99,6 +107,8 @@ export async function henBuoiKeTiep(fd: FormData): Promise<KQ> {
 export async function huyBuoi(fd: FormData): Promise<KQ> {
   const nd = await kiemQuyen("the.dieuchinh");
   if (!nd) return { loi: KHONG_DU_QUYEN };
+  const { data: b } = await sb().from("buoi_thuc_hien").select("the_id").eq("id", chuoi(fd, "buoi_id")).maybeSingle();
+  if (!b?.the_id || !(await theTrongPhamVi(nd, b.the_id))) return { loi: "Không tìm thấy buổi." };
   const { error } = await sb().rpc("huy_buoi", { p_buoi: chuoi(fd, "buoi_id"), p_ly_do: chuoi(fd, "ly_do"), p_nguoi: nd.nhanVienId });
   lamMoi(chuoi(fd, "the_id"));
   return error ? { loi: thongBaoLoi(error) } : { ok: true };
@@ -113,6 +123,7 @@ export async function dieuChinhThe(fd: FormData): Promise<KQ> {
   const lyDo = chuoi(fd, "ly_do");
   if (!lyDo) return { loi: "Điều chỉnh thẻ phải ghi lý do." };
   if (!buoi && !tien) return { loi: "Nhập số buổi hoặc số tiền cần cộng/trừ." };
+  if (!(await theTrongPhamVi(nd, theId))) return { loi: "Không tìm thấy thẻ." };
   const { data: v } = await sb().from("v_the_khach").select("so_buoi_con, so_du_tien, loai").eq("id", theId).maybeSingle();
   if (!v) return { loi: "Không tìm thấy thẻ." };
   if ((v.so_buoi_con ?? 0) + buoi < 0 || Number(v.so_du_tien ?? 0) + tien < 0) return { loi: "Điều chỉnh làm số dư âm." };
@@ -132,8 +143,8 @@ export async function doiTrangThaiThe(fd: FormData): Promise<KQ> {
   if (lyDo.length > 500) return { loi: "Lý do dài quá (tối đa 500 ký tự)." };
   const theId = chuoi(fd, "the_id");
   const db = sb();
-  const { data: the } = await db.from("the_khach").select("trang_thai").eq("id", theId).maybeSingle();
-  if (!the) return { loi: "Không tìm thấy thẻ." };
+  const { data: the } = await db.from("the_khach").select("trang_thai, chi_nhanh_id").eq("id", theId).maybeSingle();
+  if (!the || (nd.chiNhanhId && the.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy thẻ." };
   if (the.trang_thai === "thu_hoi") return { loi: "Thẻ đã thu hồi, không khoá hay mở khoá được." };
   if (the.trang_thai === tt) return { loi: tt === "khoa" ? "Thẻ đang khoá rồi." : "Thẻ đang dùng được, không cần mở khoá." };
   const { error } = await db.from("the_khach").update({ trang_thai: tt }).eq("id", theId).neq("trang_thai", "thu_hoi");

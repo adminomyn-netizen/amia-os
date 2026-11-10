@@ -2,7 +2,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN, tienVN } from "@/lib/dinh-dang";
-import { dsNvTrongPham, luaChonNv } from "@/lib/hr-pham-vi";
+import { dsNvTrongPham, luaChonNv, luaChonNvGiu } from "@/lib/hr-pham-vi";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -37,7 +37,7 @@ export default async function TrangKhenKyLuat() {
           { nhan: "Nội dung", hienThi: (r) => <span className="text-[13px]">{r.noi_dung}</span> },
           { nhan: "Số tiền", phai: true, hienThi: (r) => tienVN(Number(r.khoan_chi) > 0 ? r.khoan_chi : r.khoan_thu) },
           { nhan: "", hienThi: (r) => (r.nhan_vien_id && ids.has(r.nhan_vien_id) ? <span className="flex items-center gap-3">
-            <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa bản ghi" truong={truong} action={luuKhenKyLuat} an={{ id: r.id }} giaTri={{ id: r.id, nhan_vien_id: r.nhan_vien_id, loai: Number(r.khoan_chi) > 0 ? "thuong" : "phat", ngay_lap: r.ngay_lap ?? homNayHCM(), so_tien: String(Number(r.khoan_chi) > 0 ? r.khoan_chi : r.khoan_thu ?? 0), noi_dung: r.noi_dung ?? "", ghi_chu: r.ghi_chu ?? "" }} />
+            <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa bản ghi" truong={truong.map((t) => (t.ten === "nhan_vien_id" ? { ...t, luaChon: luaChonNvGiu(nv, r.nhan_vien_id) } : t))} action={luuKhenKyLuat} an={{ id: r.id }} giaTri={{ id: r.id, nhan_vien_id: r.nhan_vien_id, loai: Number(r.khoan_chi) > 0 ? "thuong" : "phat", ngay_lap: r.ngay_lap ?? homNayHCM(), so_tien: String(Number(r.khoan_chi) > 0 ? r.khoan_chi : r.khoan_thu ?? 0), noi_dung: r.noi_dung ?? "", ghi_chu: r.ghi_chu ?? "" }} />
             <NutHop kieu="chu" nguy nhan="Xoá" tieuDe="Xoá bản ghi" xacNhan="Xoá bản ghi này?" action={xoaKhenKyLuat} an={{ id: r.id }} nhanLuu="Xoá" />
           </span> : null) },
         ]} />

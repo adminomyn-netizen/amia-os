@@ -17,4 +17,6 @@ export async function dsNvTrongPham(chiNhanhId: string | null, chiConLam = true)
 }
 
 export const luaChonNv = (nv: { id: string; ho_ten: string; ma_nv: string | null }[]) => nv.map((n) => ({ gia_tri: n.id, nhan: `${n.ho_ten}${n.ma_nv ? ` (${n.ma_nv})` : ""}` }));
+/** Lựa chọn người đang làm; giữ người đang gắn sẵn trên bản ghi (kể cả đã nghỉ) để sửa không mất giá trị. */
+export const luaChonNvGiu = (nv: { id: string; ho_ten: string; ma_nv: string | null; hoat_dong: boolean | null }[], giu?: string | null) => nv.filter((n) => n.hoat_dong || n.id === giu).map((n) => ({ gia_tri: n.id, nhan: `${n.ho_ten}${n.ma_nv ? ` (${n.ma_nv})` : ""}${n.hoat_dong ? "" : " (đã nghỉ)"}` }));
 export const NGAY_ISO = /^\d{4}-\d{2}-\d{2}$/;

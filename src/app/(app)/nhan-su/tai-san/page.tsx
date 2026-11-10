@@ -2,7 +2,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
-import { dsNvTrongPham, luaChonNv } from "@/lib/hr-pham-vi";
+import { dsNvTrongPham, luaChonNv, luaChonNvGiu } from "@/lib/hr-pham-vi";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -39,7 +39,7 @@ export default async function TrangTaiSan() {
           { nhan: "Cấp / thu hồi", hienThi: (r) => <span className="text-[13px]">{r.ngay_cap ? ngayVN(r.ngay_cap) : "—"}{r.ngay_thu_hoi ? ` → ${ngayVN(r.ngay_thu_hoi)}` : ""}</span> },
           { nhan: "Trạng thái", hienThi: (r) => (r.ngay_thu_hoi ? <NhanTrangThai kieu="tram">Đã thu hồi</NhanTrangThai> : <NhanTrangThai kieu="tot">Đang giao</NhanTrangThai>) },
           { nhan: "", hienThi: (r) => <span className="flex items-center gap-3">
-            <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa tài sản" truong={truong} action={luuTaiSan} an={{ id: r.id }} giaTri={{ id: r.id, ten_tai_san: r.ten_tai_san, nhan_vien_id: r.nhan_vien_id ?? "", ngay_cap: r.ngay_cap ?? "", loai: r.loai ?? "", hang_model: r.hang_model ?? "", so_luong: String(r.so_luong ?? 1), don_vi_tinh: r.don_vi_tinh ?? "", tinh_trang: r.tinh_trang ?? "", ghi_chu: r.ghi_chu ?? "" }} />
+            <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa tài sản" truong={truong.map((t) => (t.ten === "nhan_vien_id" ? { ...t, luaChon: [{ gia_tri: "", nhan: "Chưa giao ai" }, ...luaChonNvGiu(nv, r.nhan_vien_id)] } : t))} action={luuTaiSan} an={{ id: r.id }} giaTri={{ id: r.id, ten_tai_san: r.ten_tai_san, nhan_vien_id: r.nhan_vien_id ?? "", ngay_cap: r.ngay_cap ?? "", loai: r.loai ?? "", hang_model: r.hang_model ?? "", so_luong: String(r.so_luong ?? 1), don_vi_tinh: r.don_vi_tinh ?? "", tinh_trang: r.tinh_trang ?? "", ghi_chu: r.ghi_chu ?? "" }} />
             {!r.ngay_thu_hoi && <NutNhanh nhan="Thu hồi" action={thuHoiTaiSan} du={{ id: r.id }} />}
           </span> },
         ]} />

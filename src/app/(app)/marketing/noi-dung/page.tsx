@@ -14,14 +14,16 @@ export default async function TrangNoiDung() {
   const sua = coQuyen(nd, "mkt.sua"), duyet = coQuyen(nd, "mkt.duyet");
   const db = sb(), hom = homNayHCM();
   const [{ data: ds }, { data: cd }, { data: nv }] = await Promise.all([
-    db.from("noi_dung_mkt").select("*").order("han", { ascending: true }).limit(300), db.from("chien_dich").select("id, ten, ma").order("tao_luc", { ascending: false }), db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten"),
+    db.from("noi_dung_mkt").select("*").order("han", { ascending: true }).limit(300), db.from("chien_dich").select("id, ten, ma").order("tao_luc", { ascending: false }), db.from("nhan_vien").select("id, ho_ten, hoat_dong").order("ho_ten"),
   ]);
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten])), tenCd = new Map((cd ?? []).map((c) => [c.id, c.ma]));
+  // Chỉ người đang làm; khi sửa giữ người đang gắn (kể cả đã nghỉ) để không mất giá trị.
+  const lcNv = (giu?: string | null) => (nv ?? []).filter((n) => n.hoat_dong || n.id === giu).map((n) => ({ gia_tri: n.id, nhan: n.hoat_dong ? n.ho_ten : `${n.ho_ten} (đã nghỉ)` }));
   const truong: Truong[] = [
     { ten: "tieu_de", nhan: "Tiêu đề", loai: "chu", batBuoc: true, rong: true },
     { ten: "loai", nhan: "Loại", loai: "chon", batBuoc: true, luaChon: Object.entries(LOAI_NOI_DUNG).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) }, { ten: "kenh", nhan: "Kênh đăng", loai: "chu" },
     { ten: "chien_dich_id", nhan: "Chiến dịch", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...(cd ?? []).map((c) => ({ gia_tri: c.id, nhan: `${c.ma} · ${c.ten}` }))] },
-    { ten: "nguoi_phu_trach_id", nhan: "Người làm", loai: "chon", luaChon: (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten })) },
+    { ten: "nguoi_phu_trach_id", nhan: "Người làm", loai: "chon", luaChon: lcNv() },
     { ten: "han", nhan: "Hạn hoàn thành", loai: "ngay", batBuoc: true }, { ten: "ngay_dang", nhan: "Ngày đăng", loai: "ngay" },
     { ten: "link_bai", nhan: "Link bài đã đăng", loai: "chu", rong: true }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong", rong: true },
   ];
@@ -42,7 +44,7 @@ export default async function TrangNoiDung() {
               {sua && ["nhap", "chua_dat"].includes(r.trang_thai_duyet) && <NutHop kieu="chu" nhan="Nộp duyệt" tieuDe="Nộp duyệt" xacNhan={`Nộp duyệt ${r.ma}?`} action={doiTrangThaiNoiDung} an={{ id: r.id, trang_thai: "cho_duyet" }} nhanLuu="Nộp" />}
               {duyet && r.trang_thai_duyet === "cho_duyet" && <NutHop kieu="chu" nhan="Duyệt" tieuDe="Duyệt nội dung" xacNhan={`Duyệt ${r.ma}?`} action={doiTrangThaiNoiDung} an={{ id: r.id, trang_thai: "da_duyet" }} nhanLuu="Duyệt" />}
               {duyet && r.trang_thai_duyet === "cho_duyet" && <NutHop kieu="chu" nguy nhan="Chưa đạt" tieuDe="Chưa đạt" xacNhan={`Trả ${r.ma} về làm lại?`} action={doiTrangThaiNoiDung} an={{ id: r.id, trang_thai: "chua_dat" }} nhanLuu="Trả về" />}
-              {sua && r.trang_thai_duyet !== "da_duyet" && <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa nội dung" truong={truong} action={luuNoiDung} giaTri={{ id: r.id, tieu_de: r.tieu_de, loai: r.loai, kenh: r.kenh ?? "", chien_dich_id: r.chien_dich_id ?? "", nguoi_phu_trach_id: r.nguoi_phu_trach_id, han: r.han, ngay_dang: r.ngay_dang ?? "", link_bai: r.link_bai ?? "", ghi_chu: r.ghi_chu ?? "" }} rong />}
+              {sua && r.trang_thai_duyet !== "da_duyet" && <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa nội dung" truong={truong.map((t) => (t.ten === "nguoi_phu_trach_id" ? { ...t, luaChon: lcNv(r.nguoi_phu_trach_id) } : t))} action={luuNoiDung} giaTri={{ id: r.id, tieu_de: r.tieu_de, loai: r.loai, kenh: r.kenh ?? "", chien_dich_id: r.chien_dich_id ?? "", nguoi_phu_trach_id: r.nguoi_phu_trach_id, han: r.han, ngay_dang: r.ngay_dang ?? "", link_bai: r.link_bai ?? "", ghi_chu: r.ghi_chu ?? "" }} rong />}
             </div>
           ) },
         ]} />

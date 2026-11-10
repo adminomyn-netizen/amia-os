@@ -3,7 +3,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN } from "@/lib/dinh-dang";
-import { luaChonNv } from "@/lib/hr-pham-vi";
+import { luaChonNv, luaChonNvGiu } from "@/lib/hr-pham-vi";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
@@ -48,7 +48,7 @@ export default async function TrangThuViec({ searchParams }: { searchParams: Pro
             { nhan: "Mục tiêu", hienThi: (r) => <div className="text-[13px]">{r.noi_dung}{r.tieu_chi && <div className="text-muc-3">Tiêu chí: {r.tieu_chi}</div>}</div> },
             { nhan: "Kết quả", hienThi: (r) => <NhanTrangThai kieu={KQ[r.ket_qua as keyof typeof KQ].kieu}>{KQ[r.ket_qua as keyof typeof KQ].ten}</NhanTrangThai> },
             { nhan: "", hienThi: (r) => <span className="flex items-center gap-3">
-              <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa mục tiêu" truong={truong.map((t) => (t.ten === "nhan_vien_id" ? { ...t, luaChon: luaChonNv(nv) } : t))} action={luuMucTieuThuViec} an={{ id: r.id }} giaTri={{ id: r.id, nhan_vien_id: r.nhan_vien_id, moc: String(r.moc), ket_qua: r.ket_qua, noi_dung: r.noi_dung, tieu_chi: r.tieu_chi ?? "" }} />
+              <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa mục tiêu" truong={truong.map((t) => (t.ten === "nhan_vien_id" ? { ...t, luaChon: luaChonNvGiu(nv, r.nhan_vien_id) } : t))} action={luuMucTieuThuViec} an={{ id: r.id }} giaTri={{ id: r.id, nhan_vien_id: r.nhan_vien_id, moc: String(r.moc), ket_qua: r.ket_qua, noi_dung: r.noi_dung, tieu_chi: r.tieu_chi ?? "" }} />
               <NutHop kieu="chu" nguy nhan="Xoá" tieuDe="Xoá mục tiêu" xacNhan="Xoá mục tiêu này?" action={xoaMucTieuThuViec} an={{ id: r.id }} nhanLuu="Xoá" />
             </span> },
           ]} />

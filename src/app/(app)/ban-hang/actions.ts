@@ -77,7 +77,7 @@ export async function layTheKhach(khachId: string) {
     hang: (k.hang as string | null) ?? "",
     the: (the ?? []).map((t) => ({
       id: t.id as string, ma: t.ma as string, goiId: t.goi_id as string, loai: t.loai as "lan" | "tien", ten: ten.get(t.goi_id as string) ?? "Thẻ",
-      buoiCon: Number(t.so_buoi_con ?? 0), buoiTong: t.so_buoi_tong == null ? null : Number(t.so_buoi_tong), soDu: Number(t.so_du_tien ?? 0), han: (t.han_dung as string | null) ?? null,
+      buoiCon: Number(t.so_buoi_con ?? 0), buoiTong: t.so_buoi_tong == null ? null : Number(t.so_buoi_tong), soDu: Number(t.so_du_tien ?? 0), han: (t.han_dung as string | null) ?? null, tinhTrang: (t.tinh_trang as string | null) ?? "hoat_dong",
       /** Dịch vụ của gói (nút "Dùng buổi" chọn sẵn); rỗng = gói không gắn dịch vụ, thu ngân chọn trong cả danh mục. */
       dichVu: dvGoi.get(t.goi_id as string) ?? [],
       /** Lần trước khách dùng thẻ này (để "Dùng buổi" điền sẵn); null = chưa có. */

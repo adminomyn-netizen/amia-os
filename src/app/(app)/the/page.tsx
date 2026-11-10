@@ -6,16 +6,12 @@ import { boDau, ngayVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
-import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
+import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { capTheTay, duKienHanThe, thucHienBuoi } from "./actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
-export const NHAN_TINH_TRANG: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
-  hoat_dong: { nhan: "Đang dùng", kieu: "tot" }, sap_het: { nhan: "Sắp hết", kieu: "cho" }, het_han: { nhan: "Hết hạn", kieu: "loi" },
-  hoan_thanh: { nhan: "Đã dùng hết", kieu: "tram" }, khoa: { nhan: "Đang khoá", kieu: "cho" }, thu_hoi: { nhan: "Đã thu hồi", kieu: "loi" },
-};
 /** Các ô của hộp Cấp thẻ tay (SalonHero "Cấp thẻ mới"): số lần / số tiền trong thẻ + đã dùng ban đầu, ngày cấp, hạn (trống = tự tính theo loại thẻ), số lượng cấp, lý do.
  *  Dùng chung ở /the và Khách dùng thẻ. Ô "Tại chi nhánh" cần danh sách chi nhánh nên thêm bằng truongCapThe(chiNhanh). */
 export const TRUONG_CAP_THE: Truong[] = [
@@ -91,7 +87,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
           { nhan: "Gói", hienThi: (r) => tenGoi.get(r.goi_id ?? "") ?? "" },
           { nhan: "Còn lại", hienThi: (r) => (r.loai === "lan" ? buoiConLai(r.so_buoi_con, r.so_buoi_tong) : tienVN(r.so_du_tien)), phai: true },
           { nhan: "Hạn", hienThi: (r) => ngayVN(r.han_dung) || "Không hạn" },
-          { nhan: "Tình trạng", hienThi: (r) => { const t = NHAN_TINH_TRANG[r.tinh_trang ?? "hoat_dong"]; return <NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai>; } },
+          { nhan: "Tình trạng", hienThi: (r) => <NhanTinhTrangThe tt={r.tinh_trang} /> },
           ...(tab === "lan" && coQuyen(nd, "the.thuchien") ? [{ nhan: "", hienThi: (r: NonNullable<typeof the>[number]) => (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? (
             <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} />) : null }] : []),
         ]} />

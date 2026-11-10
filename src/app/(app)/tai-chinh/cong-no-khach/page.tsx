@@ -24,11 +24,13 @@ export default async function TrangCongNoKhach() {
   const db = sb(), hom = homNayHCM();
   let q = db.from("hoa_don").select("id, ma, khach_id, chi_nhanh_id, ngay_hd, con_no, tong_phai_thu").eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd").limit(1000);
   if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
-  const [{ data: hd }, { data: xl }, { data: ch }, { data: nv }] = await Promise.all([q, db.from("cong_no_khach_xu_ly").select("*"), db.from("cau_hinh").select("gia_tri").eq("khoa", "no_khach.han_ngay").maybeSingle(), db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten")]);
+  const [{ data: hd }, { data: xl }, { data: ch }, { data: nv }] = await Promise.all([q, db.from("cong_no_khach_xu_ly").select("*"), db.from("cau_hinh").select("gia_tri").eq("khoa", "no_khach.han_ngay").maybeSingle(), db.from("nhan_vien").select("id, ho_ten, hoat_dong").order("ho_ten")]);
   const han = Number(ch?.gia_tri ?? 20);
   const ids = [...new Set((hd ?? []).map((h) => h.khach_id).filter(Boolean))] as string[];
   const { data: khach } = ids.length ? await db.from("khach_hang").select("id, ma, ho_ten").in("id", ids) : { data: [] as { id: string; ma: string; ho_ten: string }[] };
   const tenKhach = new Map((khach ?? []).map((k) => [k.id, k])), xuLy = new Map((xl ?? []).map((x) => [x.hoa_don_id, x])), tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
+  // Chỉ người đang làm; khi sửa giữ người đang gắn (kể cả đã nghỉ) để không mất giá trị.
+  const lcNv = (giu?: string | null) => [{ gia_tri: "", nhan: "—" }, ...(nv ?? []).filter((n) => n.hoat_dong || n.id === giu).map((n) => ({ gia_tri: n.id, nhan: n.hoat_dong ? n.ho_ten : `${n.ho_ten} (đã nghỉ)` }))];
   const dong = (hd ?? []).map((h) => {
     const denHan = congNgay(h.ngay_hd, han), tuoi = hom > denHan ? Math.round((new Date(`${hom}T00:00:00Z`).getTime() - new Date(`${denHan}T00:00:00Z`).getTime()) / 86400000) : 0;
     const nhom = tuoi === 0 ? NHOM[0] : NHOM.find((n, i) => i > 0 && tuoi <= n.den) ?? NHOM[5];
@@ -38,7 +40,7 @@ export default async function TrangCongNoKhach() {
   const tranhChap = dong.filter((d) => d.xl?.trang_thai === "tranh_chap");
   const truong: Truong[] = [
     { ten: "trang_thai", nhan: "Trạng thái", loai: "chon", batBuoc: true, luaChon: Object.entries(TT).map(([gia_tri, v]) => ({ gia_tri, nhan: v.ten })) },
-    { ten: "nguoi_phu_trach_id", nhan: "Người phụ trách", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...(nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))] },
+    { ten: "nguoi_phu_trach_id", nhan: "Người phụ trách", loai: "chon", luaChon: lcNv() },
     { ten: "hen_tra", nhan: "Hẹn trả (bắt buộc khi đã cam kết)", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú (bắt buộc khi tranh chấp)", loai: "nhieu_dong", rong: true },
   ];
   return (
@@ -56,7 +58,7 @@ export default async function TrangCongNoKhach() {
           { nhan: "Còn nợ", phai: true, hienThi: (r) => tienVN(r.con_no) },
           { nhan: "Đến hạn / tuổi nợ", hienThi: (r) => <div>{ngayVN(r.denHan)}<div className={`text-[12.5px] ${r.tuoi > 30 ? "text-canh-bao" : "text-muc-3"}`}>{r.tuoi === 0 ? "Chưa đến hạn" : `Quá ${r.tuoi} ngày · ${r.nhom.ten}`}</div></div> },
           { nhan: "Xử lý", hienThi: (r) => (r.xl ? <div><NhanTrangThai kieu={TT[r.xl.trang_thai].kieu}>{TT[r.xl.trang_thai].ten}</NhanTrangThai><div className="mt-1 text-[12.5px] text-muc-3">{r.xl.nguoi_phu_trach_id && `${tenNv.get(r.xl.nguoi_phu_trach_id)} · `}{r.xl.hen_tra && `hẹn ${ngayVN(r.xl.hen_tra)}`}</div>{r.xl.ghi_chu && <div className="text-[12.5px] text-muc-3">{r.xl.ghi_chu}</div>}</div> : <span className="text-[12.5px] text-muc-3">{r.nhom.chu}</span>) },
-          { nhan: "", hienThi: (r) => (sua ? <NutHop kieu="chu" nhan="Cập nhật xử lý" tieuDe={`Xử lý nợ ${r.ma}`} truong={truong} action={capNhatXuLyNo} an={{ hoa_don_id: r.id }} giaTri={{ trang_thai: r.xl?.trang_thai ?? "dang_nhac", nguoi_phu_trach_id: r.xl?.nguoi_phu_trach_id ?? "", hen_tra: r.xl?.hen_tra ?? "", ghi_chu: r.xl?.ghi_chu ?? "" }} /> : null) },
+          { nhan: "", hienThi: (r) => (sua ? <NutHop kieu="chu" nhan="Cập nhật xử lý" tieuDe={`Xử lý nợ ${r.ma}`} truong={truong.map((t) => (t.ten === "nguoi_phu_trach_id" ? { ...t, luaChon: lcNv(r.xl?.nguoi_phu_trach_id) } : t))} action={capNhatXuLyNo} an={{ hoa_don_id: r.id }} giaTri={{ trang_thai: r.xl?.trang_thai ?? "dang_nhac", nguoi_phu_trach_id: r.xl?.nguoi_phu_trach_id ?? "", hen_tra: r.xl?.hen_tra ?? "", ghi_chu: r.xl?.ghi_chu ?? "" }} /> : null) },
         ]} />
     </div>
   );

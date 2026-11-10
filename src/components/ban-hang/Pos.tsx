@@ -19,9 +19,10 @@ import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layT
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 import { BaoPhieuBuoi, NutBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
+import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
 
 type Nv = { id: string; ten: string; vaiTro: string };
-type TheKh = { id: string; ma: string; goiId: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
+type TheKh = { id: string; ma: string; goiId: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; tinhTrang?: string; dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
 type TheTien = { id: string; ma: string; soDu: number };
 /** Màu theo nhóm hàng (ổn định theo tên nhóm) lấy từ bảng màu thương hiệu: nhìn là phân biệt được nhóm, không còn một màu trắng đơn điệu. Cả sáng lẫn tối. */
 const SAC = [
@@ -320,7 +321,7 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
         {the === null ? <p className="text-muc-3">Đang tải</p> : the.length === 0 ? <p className="text-muc-3">Khách chưa có thẻ nào còn dùng được.</p> : (
           <ul className="space-y-1.5">
             {the.map((t) => (
-              <li key={t.id} className="flex items-start justify-between gap-3"><span className="min-w-0 text-muc-2">{giaHan?.(t) ? <button type="button" title="Thêm lại đúng gói này vào đơn (gia hạn)" className="text-left font-medium text-nhan-dam hover:underline" onClick={giaHan(t)!}>{t.ten}</button> : t.ten} <span className="text-muc-3">{t.ma}</span>{t.han && <span className="block text-[12px] text-muc-3">Hạn {han(t.han)}</span>}
+              <li key={t.id} className="flex items-start justify-between gap-3"><span className="min-w-0 text-muc-2">{giaHan?.(t) ? <button type="button" title="Thêm lại đúng gói này vào đơn (gia hạn)" className="text-left font-medium text-nhan-dam hover:underline" onClick={giaHan(t)!}>{t.ten}</button> : t.ten} <span className="text-muc-3">{t.ma}</span> <NhanTinhTrangThe tt={t.tinhTrang} />{t.han && <span className="block text-[12px] text-muc-3">Hạn {han(t.han)}</span>}
                 {dungDuoc(t).length > 0 && <span className="mt-0.5 block rounded-tag bg-sac-xanh-nen px-2 py-0.5 text-[12px] font-medium text-sac-xanh">Trừ buổi được cho: {dungDuoc(t).join(", ")}</span>}</span>
                 <span className="flex shrink-0 flex-col items-end gap-0.5"><span className="font-medium tabular-nums text-muc">{t.loai === "lan" ? `${t.buoiCon}${t.buoiTong ? `/${t.buoiTong}` : ""} buổi` : tienVN(t.soDu)}</span>{nut?.(t)}{giaHan?.(t) && <button type="button" className={NUT_CHU} onClick={giaHan(t)!}>Gia hạn</button>}</span></li>
             ))}

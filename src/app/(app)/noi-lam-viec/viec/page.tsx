@@ -30,14 +30,14 @@ export default async function TrangViec({ searchParams }: { searchParams: Promis
   if (tab === "cho-toi") q = q.eq("nguoi_nhan_id", nd.nhanVienId).in("trang_thai", ["moi", "dang_lam"]);
   else if (tab === "toi-giao") q = q.eq("nguoi_giao_id", nd.nhanVienId).in("trang_thai", ["moi", "dang_lam", "xong"]);
   else if (tab === "qua-han") { q = q.in("trang_thai", ["moi", "dang_lam"]).lte("han", hom); if (!xemHet) q = q.or(`nguoi_nhan_id.eq.${nd.nhanVienId},nguoi_giao_id.eq.${nd.nhanVienId}`); }
-  const [{ data: viec }, { data: nv }] = await Promise.all([q, db.from("nhan_vien").select("id, ho_ten").eq("hoat_dong", true).order("ho_ten")]);
-  const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
+  const [{ data: viec }, { data: nv }] = await Promise.all([q, db.from("nhan_vien").select("id, ho_ten, hoat_dong").order("ho_ten")]);
+  const ten = new Map((nv ?? []).map((n) => [n.id, n.ho_ten])), nvLam = (nv ?? []).filter((n) => n.hoat_dong);
   const bay = new Date();
   const hanCua = (r: NonNullable<typeof viec>[number]) => tinhTrangHan(thoiDiemHan(r.han_gio, r.han), r.trang_thai === "xong" ? r.hoan_thanh_luc : null, bay);
   const dsHien = tab === "qua-han" ? (viec ?? []).filter((r) => { const h = hanCua(r); return h.loai === "vua_qua" || h.loai === "tre"; }) : (viec ?? []);
   const truong: Truong[] = [
     { ten: "tieu_de", nhan: "Công việc", loai: "chu", batBuoc: true, rong: true },
-    { ten: "nguoi_nhan_id", nhan: "Giao cho", loai: "chon", luaChon: (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.id === nd.nhanVienId ? `${n.ho_ten} (tôi)` : n.ho_ten })), batBuoc: true },
+    { ten: "nguoi_nhan_id", nhan: "Giao cho", loai: "chon", luaChon: nvLam.map((n) => ({ gia_tri: n.id, nhan: n.id === nd.nhanVienId ? `${n.ho_ten} (tôi)` : n.ho_ten })), batBuoc: true },
     { ten: "han", nhan: "Hạn nộp (ngày)", loai: "ngay", batBuoc: true },
     { ten: "han_gio", nhan: "Hạn nộp (giờ)", loai: "gio", batBuoc: true },
     { ten: "tieu_chi_xong", nhan: "Tiêu chí xong", loai: "nhieu_dong", batBuoc: true, rong: true, goiY: "Làm được gì · xem ở đâu · đo bằng gì · dùng thế nào", ghiChu: "Làm được, thấy được, đo được, dùng được: ghi rõ sản phẩm sẽ nộp để người giao chấm Đạt." },
@@ -51,7 +51,7 @@ export default async function TrangViec({ searchParams }: { searchParams: Promis
     { ten: "tc_do_duoc", nhan: "Đo được: có số liệu", loai: "gat" }, { ten: "tc_dung_duoc", nhan: "Dùng được: người dùng thao tác được", loai: "gat" },
   ];
   const baoKet: Truong[] = [
-    { ten: "ket_nguoi_id", nhan: "Kẹt ở ai", loai: "chon", batBuoc: true, luaChon: (nv ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ho_ten })) },
+    { ten: "ket_nguoi_id", nhan: "Kẹt ở ai", loai: "chon", batBuoc: true, luaChon: nvLam.map((n) => ({ gia_tri: n.id, nhan: n.ho_ten })) },
     { ten: "ket_ly_do", nhan: "Lý do kẹt", loai: "nhieu_dong", batBuoc: true, rong: true },
   ];
   const chuaDat: Truong[] = [{ ten: "ghi_chu", nhan: "Lý do chưa đạt", loai: "nhieu_dong", batBuoc: true, rong: true }];

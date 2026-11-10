@@ -22,7 +22,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   let qSua = db.from("hoa_don").select("id", { count: "exact", head: true }).eq("trang_thai", "nhap").not("mo_lai_luc", "is", null).eq("la_lich_su", false);
   if (nd.chiNhanhId) { qNo = qNo.eq("chi_nhanh_id", nd.chiNhanhId); qSua = qSua.eq("chi_nhanh_id", nd.chiNhanhId); }
   // Mọi truy vấn không phụ thuộc nhau chạy CÙNG LÚC (trước đây xếp hàng nối đuôi): đếm chờ thanh toán, danh mục, ngân hàng nhận, đơn nháp.
-  let qTk = db.from("tai_khoan_ngan_hang").select("ngan_hang, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true);
+  let qTk = db.from("tai_khoan_ngan_hang").select("id, ngan_hang, chu_tai_khoan, so_tai_khoan, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true).order("tao_luc");
   if (nd.chiNhanhId) qTk = qTk.or(`chi_nhanh_id.is.null,chi_nhanh_id.eq.${nd.chiNhanhId}`);
   const [{ count: demNo }, { count: demSua }, { data: dv }, { data: nhomDv }, { data: goi }, { data: sp }, { data: nv }, { data: cn }, { data: dsTk }, nhapBanDau, { data: gt }, { data: goiDv }] = await Promise.all([
     qNo, qSua,
@@ -119,7 +119,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   if (khach && nd.chiNhanhId && khach.chi_nhanh_id !== nd.chiNhanhId) khach = null;
   if (khach && !coQuyen(nd, "khach.sdt")) khach = { ...khach, dien_thoai: "" };
   // Ngân hàng nhận tiền cho khoản chuyển khoản / quẹt thẻ: tài khoản đang hoạt động (Cài đặt › Ngân hàng); người gắn chi nhánh chỉ nhận tài khoản chung và của chi nhánh mình.
-  const taiKhoanNhan: TaiKhoanNhan[] = (dsTk ?? []).map((x) => ({ ten: x.ngan_hang, chiNhanhId: x.chi_nhanh_id, cx: x.dung_chuyen_khoan, qt: x.dung_quet_the, macDinh: x.mac_dinh }));
+  const taiKhoanNhan: TaiKhoanNhan[] = (dsTk ?? []).map((x) => ({ ten: x.ngan_hang, chiNhanhId: x.chi_nhanh_id, cx: x.dung_chuyen_khoan, qt: x.dung_quet_the, macDinh: x.mac_dinh, id: x.id, chu: x.chu_tai_khoan, so4: x.so_tai_khoan.replace(/\D/g, "").slice(-4) }));
   // Chi nhánh của đơn: người có chi nhánh cố định thì khoá theo đó; người xem mọi chi nhánh thì lấy theo lịch hẹn, rồi theo khách; không đoán, để trống bắt chọn.
   const chiNhanhId = nd.chiNhanhId ?? cnLich ?? khach?.chi_nhanh_id ?? "";
   return (

@@ -89,6 +89,9 @@ export async function xoaNganHang(fd: FormData): Promise<KQ> {
   const db = sb();
   const { data: tk } = await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, so_tai_khoan, mac_dinh").eq("id", id).maybeSingle();
   if (!tk) return { loi: "Không có tài khoản này." };
+  // Khoản thu đã ghi tài khoản này (0323, sổ chỉ-thêm) thì không xoá được — chỉ ẩn, để chi tiết hoá đơn vẫn hiện đúng tài khoản đã nhận tiền.
+  const { count: daDung } = await db.from("thanh_toan").select("id", { count: "exact", head: true }).eq("tai_khoan_id", id);
+  if (daDung) return { loi: `Tài khoản đã nhận ${daDung.toLocaleString("vi-VN")} khoản thu nên không xoá được. Bấm Ẩn để thôi dùng ở Thu ngân.` };
   const { error } = await db.from("tai_khoan_ngan_hang").delete().eq("id", id);
   if (error) return { loi: thongBaoLoi(error) };
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_tai_khoan_ngan_hang", doi_tuong: "tai_khoan_ngan_hang", doi_tuong_id: id, chi_tiet: { ngan_hang: tk.ngan_hang, so_cuoi: tk.so_tai_khoan.slice(-4), mac_dinh: tk.mac_dinh } });

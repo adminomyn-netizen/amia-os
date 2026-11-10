@@ -6,7 +6,8 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { gioVN, homNayHCM, ngayGioVN, ngayVN, tienVN } from "@/lib/dinh-dang";
 import { NUT_CHINH } from "@/components/ui/dinh-dang";
-import { LOAI_VI, nhanKhoanThu, PHUONG_THUC_TIEN, VAI } from "@/lib/ban-hang";
+import { LOAI_VI, luaChonTaiKhoanForm, nhanKhoanThu, PHUONG_THUC_TIEN, VAI } from "@/lib/ban-hang";
+import { chuanTenNganHang } from "@/lib/ngan-hang-ten";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { MucTrang } from "@/components/ui/MucTrang";
@@ -38,6 +39,15 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
     h.nguoi_gioi_thieu_id ? db.from("khach_hang").select("id, ma, ho_ten").eq("id", h.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
     db.from("chi_nhanh").select("ten").eq("id", h.chi_nhanh_id).maybeSingle(),
   ]);
+  // Tài khoản nhận tiền (0323): bảng nhỏ (vài chục dòng), đọc hết để hiện cả tài khoản đã ẩn của khoản thu cũ; ô chọn Thu nợ chỉ lấy tài khoản đang dùng.
+  const { data: dsTk } = await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, chu_tai_khoan, so_tai_khoan, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh, hoat_dong").order("tao_luc");
+  const tkTheoId = new Map((dsTk ?? []).map((x) => [x.id, x]));
+  const tkCuaTt = new Map((tt ?? []).map((x) => [x.id, x.tai_khoan_id]));
+  /** "Vietcombank · Chủ TK · số TK" của một khoản thu; khoản cũ chưa rõ tài khoản thì tên ngân hàng như trước. */
+  const taiKhoanNhan = (tkId: string | null | undefined, nganHang: string | null | undefined) => {
+    const x = tkId ? tkTheoId.get(tkId) : undefined;
+    return x ? [chuanTenNganHang(x.ngan_hang) ?? x.ngan_hang, x.chu_tai_khoan, x.so_tai_khoan].filter(Boolean).join(" · ") : nganHang ?? "";
+  };
   // "Chỉnh sửa lần cuối" như SalonHero: thao tác ghi gần nhất trên hoá đơn (nhật ký; bỏ lượt xuất Excel vì không sửa gì), so với lúc chốt / huỷ, lấy mốc muộn nhất.
   const { data: nkCuoi } = await db.from("nhat_ky_truy_cap").select("nguoi_id, hanh_dong, luc").eq("doi_tuong", "hoa_don").eq("doi_tuong_id", id).neq("hanh_dong", "xuat_excel").order("luc", { ascending: false }).limit(1).maybeSingle();
   // Lịch sử nợ (như hộp "Nợ của khách" SalonHero): các lần trả nợ sau khi chốt đơn và các lần xoá nợ; chỉ dòng cuối còn hiệu lực được huỷ.
@@ -118,7 +128,8 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         )}
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
-            truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC_TIEN, batBuoc: true }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
+            truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC_TIEN, batBuoc: true }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } },
+              { ten: "tai_khoan_id", nhan: "Tài khoản nhận", loai: "chon", luaChon: luaChonTaiKhoanForm((dsTk ?? []).filter((x) => x.hoat_dong), h.chi_nhanh_id), batBuoc: true, rong: true, hienKhi: { ten: "phuong_thuc", la: ["chuyen_khoan", "quet_the"] } }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
         )}
         {coNo && h.la_lich_su && coQuyen(nd, "no.xoa") && <button type="button" disabled title={KHOA_SH} className="h-10 cursor-not-allowed rounded-nho border border-vien px-4 text-[14px] font-medium text-muc-3">Điều chỉnh nợ (khoá)</button>}
         {coNo && !h.la_lich_su && coQuyen(nd, "no.xoa") && (
@@ -168,7 +179,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         <MucTrang noi tieuDe="Sổ thu tiền">
           <Bang duLieu={tt ?? []} khoa={(r) => r.id} trong="Chưa thu khoản nào." cot={[
             { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Số phiếu", hienThi: (r) => <span className="tabular-nums">{maPhieuThu(r.so_phieu)}</span> }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : r.dao_cua_id ? "Huỷ trả nợ" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => nhanKhoanThu(r.phuong_thuc, r.loai_vi) },
-            { nhan: "Ngân hàng nhận", hienThi: (r) => r.ngan_hang ?? "" }, { nhan: "Người thu", hienThi: (r) => nguoiThu(r.nguoi_id, r.ghi_chu) }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
+            { nhan: "Tài khoản nhận", hienThi: (r) => <span className="tabular-nums">{taiKhoanNhan(r.tai_khoan_id, r.ngan_hang)}</span> }, { nhan: "Người thu", hienThi: (r) => nguoiThu(r.nguoi_id, r.ghi_chu) }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
             { nhan: "Số tiền", hienThi: (r) => <span className={r.loai === "hoan" ? "text-loi" : ""}>{r.loai === "hoan" ? "− " : ""}{tienVN(r.so_tien)}</span>, phai: true },
           ]} />
         </MucTrang>
@@ -178,7 +189,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
               { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) },
               { nhan: "Loại", hienThi: (r) => <span className={r.da_huy ? "text-muc-3 line-through" : "text-muc"}>{r.loai === "xoa_no" ? "Xoá nợ" : "Trả nợ"}</span> },
               { nhan: "Số phiếu", hienThi: (r) => (r.loai === "tra_no" ? <span className="tabular-nums">{maPhieuThu(r.so_phieu)}</span> : "") },
-              { nhan: "Hình thức", hienThi: (r) => (r.phuong_thuc ? `${nhanKhoanThu(r.phuong_thuc, r.loai_vi)}${r.ngan_hang ? ` · ${r.ngan_hang}` : ""}` : "") },
+              { nhan: "Hình thức", hienThi: (r) => { if (!r.phuong_thuc) return ""; const tk = taiKhoanNhan(r.loai === "tra_no" ? tkCuaTt.get(r.ref) : null, r.ngan_hang); return `${nhanKhoanThu(r.phuong_thuc, r.loai_vi)}${tk ? ` · ${tk}` : ""}`; } },
               { nhan: "Người làm", hienThi: (r) => nguoiThu(r.nguoi_id, r.ly_do) },
               { nhan: "Ghi chú", hienThi: (r) => <span className="text-muc-2">{r.da_huy ? "Đã huỷ · " : ""}{r.ly_do ?? ""}</span> },
               { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={r.da_huy ? "text-muc-3 line-through" : ""}>{tienVN(r.so_tien)}</span> },

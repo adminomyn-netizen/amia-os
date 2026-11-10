@@ -5,7 +5,7 @@ import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { boDau, chuanSdt, homNayHCM } from "@/lib/dinh-dang";
-import { kiemGiaDong, kiemGioiThieuDong, kiemNgayLui, kiemNoDong, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, GIA_SUA_TOI_DA, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
+import { kiemGiaDong, kiemGioiThieuDong, kiemNgayLui, kiemNoDong, kiemTaiKhoanKhoan, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, GIA_SUA_TOI_DA, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
@@ -197,6 +197,11 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   const tongThu = (don.thu ?? []).reduce((s, t) => s + t.so_tien, 0);
   if ((don.thu ?? []).some((t) => !Number.isInteger(t.so_tien) || t.so_tien <= 0 || !PHUONG_THUC.some((p) => p.gia_tri === t.phuong_thuc))) return { loi: "Có khoản thu chưa hợp lệ." };
   if ((don.thu ?? []).some((t) => loaiViKhoanThu(t.phuong_thuc, t.loai_vi) === undefined)) return { loi: "Khoản thu bằng ví điện tử phải chọn loại ví." };
+  // Tài khoản nhận (0323): đọc một lần, kiểm từng khoản (đang dùng, đúng chi nhánh, đúng chức năng); tên ngân hàng ghi theo tài khoản để sổ quỹ / HĐĐT chạy nguyên.
+  const idsTk = [...new Set((don.thu ?? []).map((t) => t.tai_khoan_id).filter((x): x is string => typeof x === "string" && !!x))];
+  const { data: dsTk } = idsTk.length ? await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, hoat_dong, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the").in("id", idsTk) : { data: [] };
+  const tkTheoId = new Map((dsTk ?? []).map((x) => [x.id, x]));
+  for (const t of don.thu ?? []) if (t.tai_khoan_id) { const l = kiemTaiKhoanKhoan(t.phuong_thuc, tkTheoId.get(t.tai_khoan_id), don.chiNhanhId); if (l) return { loi: l }; }
   if (tongThu > phai) return { loi: "Tổng các khoản thu lớn hơn số phải thu." };
   if (tongThu < phai && !don.khachId) return { loi: "Còn nợ thì phải chọn khách hàng." };
   // Chia nợ theo dòng ("Xác nhận các mục còn nợ" của SalonHero): các phần cộng đúng số còn nợ.
@@ -278,7 +283,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
     h = hm;
   }
   // Lỗi giữa chừng: đơn mới thì xoá nháp; đơn đang sửa thì GIỮ nháp (sửa tiếp được), khoản thu mới ghi dở thì đảo lại từng dòng.
-  const thuMoi: { id: string; phuong_thuc: string; so_tien: number; the_id: string | null; ngan_hang: string | null; loai_vi: string | null; ngay: string }[] = [];
+  const thuMoi: { id: string; phuong_thuc: string; so_tien: number; the_id: string | null; ngan_hang: string | null; tai_khoan_id: string | null; loai_vi: string | null; ngay: string }[] = [];
   const huyNhap = async () => { if (!suaCu) await db.from("hoa_don").delete().eq("id", h.id); };
   const goDo = async (lyDo: string) => {
     if (!suaCu) {
@@ -286,7 +291,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
       if ((daCo.count ?? 0) === 0) await huyNhap(); else await db.rpc("huy_hoa_don", { p_id: h.id, p_ly_do: lyDo, p_nguoi: nd.nhanVienId });
       return;
     }
-    for (const t of thuMoi) await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "hoan", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.the_id, ngan_hang: t.ngan_hang, loai_vi: t.loai_vi, ngay: t.ngay, nguoi_id: nd.nhanVienId, ghi_chu: lyDo, dao_cua_id: t.id });
+    for (const t of thuMoi) await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "hoan", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.the_id, ngan_hang: t.ngan_hang, tai_khoan_id: t.tai_khoan_id, loai_vi: t.loai_vi, ngay: t.ngay, nguoi_id: nd.nhanVienId, ghi_chu: lyDo, dao_cua_id: t.id });
   };
 
   const ghiChuThe: { dongId: string; ghiChu: string }[] = [];
@@ -307,8 +312,8 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   }
 
   for (const t of don.thu ?? []) {
-    const { data: tm, error: et } = await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "thu", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.phuong_thuc === "the_tien" ? t.the_id ?? null : null, ngan_hang: nganHangKhoanThu(t.phuong_thuc, t.ngan_hang), loai_vi: loaiViKhoanThu(t.phuong_thuc, t.loai_vi), nguoi_id: nd.nhanVienId, ...(ngayThu ? { ngay: ngayThu } : {}) })
-      .select("id, phuong_thuc, so_tien, the_id, ngan_hang, loai_vi, ngay").single();
+    const { data: tm, error: et } = await db.from("thanh_toan").insert({ hoa_don_id: h.id, loai: "thu", phuong_thuc: t.phuong_thuc, so_tien: t.so_tien, the_id: t.phuong_thuc === "the_tien" ? t.the_id ?? null : null, ngan_hang: nganHangKhoanThu(t.phuong_thuc, t.tai_khoan_id ? tkTheoId.get(t.tai_khoan_id)?.ngan_hang : t.ngan_hang), tai_khoan_id: t.tai_khoan_id || null, loai_vi: loaiViKhoanThu(t.phuong_thuc, t.loai_vi), nguoi_id: nd.nhanVienId, ...(ngayThu ? { ngay: ngayThu } : {}) })
+      .select("id, phuong_thuc, so_tien, the_id, ngan_hang, tai_khoan_id, loai_vi, ngay").single();
     if (et || !tm) {
       await goDo("Tự huỷ do lỗi khi tạo đơn");
       return { loi: thongBaoLoi(et) };

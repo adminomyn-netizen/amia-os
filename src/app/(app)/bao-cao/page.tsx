@@ -3,6 +3,7 @@ import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { yeuCauQuyen } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
+import { luaChonTaiKhoanForm } from "@/lib/ban-hang";
 import { khoangNgay } from "@/lib/bao-cao";
 import { boDau, congNgay, gioVN, ngayVN, soVN, tienVN } from "@/lib/dinh-dang";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
@@ -318,6 +319,9 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
     );
   } else if (tab === "no") {
     const ds = await layDanhSachNo(db, { cn, tu: sp.tu || undefined, den: sp.den || undefined, q: sp.q?.trim() || undefined });
+    // Ô "Tài khoản nhận" của hộp Trả nợ (0323): tài khoản đang dùng của chi nhánh đang xem (hoặc dùng chung); máy chủ kiểm lại theo chi nhánh từng hoá đơn.
+    const { data: dsTkNo } = coQuyen(nd, "no.thu") ? await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, chu_tai_khoan, so_tai_khoan, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true).order("tao_luc") : { data: [] };
+    const tkThuNo = luaChonTaiKhoanForm(dsTkNo ?? [], nd.chiNhanhId ?? (cn || null));
     const gomKhach = sp.gom !== "hd";
     const linkGom = (g: string) => `/bao-cao?tab=no${them}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${g === "hd" ? "&gom=hd" : ""}`;
     noiDung = (
@@ -328,7 +332,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
         <nav aria-label="Cách xem" className="mb-3 mt-6 flex gap-2 overflow-x-auto pb-1">
           <Chip href={linkGom("khach")} dang={gomKhach} ten="Gom theo khách" /><Chip href={linkGom("hd")} dang={!gomKhach} ten="Từng hoá đơn" />
         </nav>
-        <BangNoKhach choPhepThu={coQuyen(nd, "no.thu")} homNay={kn.homNay} gom={gomKhach} coChiNhanh={coChiNhanh} dong={ds} />
+        <BangNoKhach choPhepThu={coQuyen(nd, "no.thu")} homNay={kn.homNay} gom={gomKhach} coChiNhanh={coChiNhanh} dong={ds} taiKhoan={tkThuNo} />
         <p className="mt-3 text-[12px] leading-relaxed text-muc-3">Mặc định hiện mọi khoản nợ; chọn ngày lập hoá đơn để thu hẹp. Số lần thanh toán = số khoản đã thu trên hoá đơn (tối thiểu 1, giống SalonHero); Ngày trả nợ cuối = ngày khoản thu gần nhất, chưa thu đồng nào thì là ngày lập hoá đơn. Mã phiếu thu chưa có vì SalonHero không có mã riêng cho từng khoản thu khi chuyển sang.</p>
       </>
     );

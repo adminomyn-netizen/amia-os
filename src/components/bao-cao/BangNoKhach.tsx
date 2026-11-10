@@ -17,12 +17,14 @@ export type DongNoKhach = { id: string; ma: string; maSh: string | null; khachId
 /** Danh sách khách hàng còn nợ. Mặc định gom theo khách (dòng khách có tổng, bên dưới là từng hoá đơn kèm số lần thanh toán và ngày trả nợ cuối); `gom=false` thì mỗi hoá đơn một dòng.
  *  Có quyền thu nợ thì mỗi hoá đơn có ô chọn và nút "Trả nợ" (như SalonHero): thu nốt toàn bộ số còn nợ của các hoá đơn đã chọn,
  *  ghi vào sổ thu tiền qua đúng hàm thu nợ của màn hoá đơn. */
-export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh = false }: { dong: DongNoKhach[]; choPhepThu: boolean; homNay: string; gom?: boolean; coChiNhanh?: boolean }) {
+export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh = false, taiKhoan = [] }: { dong: DongNoKhach[]; choPhepThu: boolean; homNay: string; gom?: boolean; coChiNhanh?: boolean;
+  /** Lựa chọn "Tài khoản nhận" cho chuyển khoản / quẹt thẻ (id tài khoản, "Khác"). */ taiKhoan?: { gia_tri: string; nhan: string }[] }) {
   const router = useRouter();
   const [chon, setChon] = useState<Set<string>>(new Set());
   const [mo, setMo] = useState(false);
   const [pt, setPt] = useState("tien_mat");
   const [vi, setVi] = useState("");
+  const [tk, setTk] = useState(taiKhoan[0]?.gia_tri ?? "");
   const [ngay, setNgay] = useState(homNay);
   const [loi, setLoi] = useState("");
   const [thanhCong, setThanhCong] = useState("");
@@ -51,7 +53,7 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
     setLoi("");
     const fd = new FormData();
     for (const d of dsChon) fd.append("hoa_don_id", d.id);
-    fd.set("phuong_thuc", pt); fd.set("ngay", ngay); if (pt === "vi_dien_tu") fd.set("loai_vi", vi);
+    fd.set("phuong_thuc", pt); fd.set("ngay", ngay); if (pt === "vi_dien_tu") fd.set("loai_vi", vi); if (pt === "chuyen_khoan" || pt === "quet_the") fd.set("tai_khoan_id", tk);
     bat(async () => {
       const kq = await thuNoNhieuDon(fd);
       if (kq.loi) { setLoi(kq.loi); return; }
@@ -129,6 +131,7 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
         <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
           <div><label htmlFor="no-pt" className={NHAN_O}>Phương thức</label><Chon id="no-pt" luaChon={PHUONG_THUC_TIEN} giaTri={pt} onDoi={setPt} /></div>
           {pt === "vi_dien_tu" && <div><label htmlFor="no-vi" className={NHAN_O}>Loại ví</label><Chon id="no-vi" trong="Chọn ví" luaChon={LOAI_VI} giaTri={vi} onDoi={setVi} /></div>}
+          {(pt === "chuyen_khoan" || pt === "quet_the") && <div className="sm:col-span-2"><label htmlFor="no-tk" className={NHAN_O}>Tài khoản nhận</label><Chon id="no-tk" trong="Chọn tài khoản" luaChon={taiKhoan} giaTri={tk} onDoi={setTk} /></div>}
           <div><label htmlFor="no-ngay" className={NHAN_O}>Ngày thu</label><NgayChon id="no-ngay" giaTri={ngay} onDoi={setNgay} /></div>
         </div>
         {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}

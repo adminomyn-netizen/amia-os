@@ -21,7 +21,7 @@ export default async function TrangNganHang({ searchParams }: { searchParams: Pr
   const nd = await yeuCauQuyen("danhmuc.xem");
   const sua = coQuyen(nd, "danhmuc.sua");
   const { q = "", trang: t } = await searchParams;
-  const { data: tk } = await sb().from("tai_khoan_ngan_hang").select("*").order("mac_dinh", { ascending: false }).order("tao_luc");
+  const { data: tk } = await sb().from("tai_khoan_ngan_hang").select("*").order("hoat_dong", { ascending: false }).order("mac_dinh", { ascending: false }).order("tao_luc");
   const k = boDau(q.trim());
   const ds = (tk ?? []).filter((r) => !k || boDau(`${r.so_tai_khoan} ${r.ngan_hang} ${r.chu_tai_khoan}`).includes(k));
   const cuoi = Math.max(1, Math.ceil(ds.length / MOI_TRANG));

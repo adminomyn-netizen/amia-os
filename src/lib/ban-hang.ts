@@ -139,15 +139,49 @@ export function lamSachDongNhap(v: unknown): DongDon[] {
   return ra;
 }
 
-export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string; /** Chỉ cho ví điện tử: mã ví (LOAI_VI). */ loai_vi?: string };
+export type KhoanThu = { phuong_thuc: string; so_tien: number; the_id?: string; /** Chỉ cho chuyển khoản / quẹt thẻ: ngân hàng nhận tiền (tên ngắn). */ ngan_hang?: string;
+  /** Chỉ cho chuyển khoản / quẹt thẻ: tài khoản nhận (Cài đặt › Tài khoản Ngân Hàng, 0323). Trống = "Khác" / chưa chọn. */ tai_khoan_id?: string; /** Chỉ cho ví điện tử: mã ví (LOAI_VI). */ loai_vi?: string };
 
-/** Tài khoản ngân hàng đang hoạt động (cài đặt › Ngân hàng) rút gọn cho ô "Ngân hàng nhận" ở Thu ngân. */
-export type TaiKhoanNhan = { ten: string; chiNhanhId: string | null; cx: boolean; qt: boolean; macDinh: boolean };
+/** Tài khoản ngân hàng đang hoạt động (cài đặt › Ngân hàng) rút gọn cho ô "Ngân hàng nhận" ở Thu ngân. Chỉ đưa 4 số cuối xuống trình duyệt. */
+export type TaiKhoanNhan = { ten: string; chiNhanhId: string | null; cx: boolean; qt: boolean; macDinh: boolean; /** id tài khoản (0323) */ id?: string; /** chủ tài khoản */ chu?: string; /** 4 số cuối */ so4?: string };
 /** Danh sách ngân hàng nhận cho khoản thu chuyển khoản / quẹt thẻ: tài khoản đang dùng của chi nhánh (tài khoản mặc định lên đầu) rồi "Khác"; bảng chưa có tài khoản nào dùng được thì danh sách mặc định. */
 export function dsNganHangNhan(tk: TaiKhoanNhan[], chiNhanhId: string, phuongThuc: string): string[] {
   const ap = tk.filter((x) => (x.chiNhanhId === null || x.chiNhanhId === chiNhanhId) && (phuongThuc === "quet_the" ? x.qt : x.cx));
   const ten = [...new Set(ap.sort((a, b) => Number(b.macDinh) - Number(a.macDinh)).map((x) => chuanTenNganHang(x.ten)).filter((t): t is string => !!t && t !== "Khác"))];
   return ten.length ? [...ten, "Khác"] : [...NGAN_HANG_MAC_DINH];
+}
+/** Ô "Tài khoản nhận" (chị Lâm 10/11/2026, như SalonHero chọn tài khoản khi thu chuyển khoản / quẹt thẻ): mỗi lựa chọn là MỘT tài khoản
+ *  (giá trị = id, nhãn "Vietcombank …1234 · Chủ TK"), tài khoản mặc định lên đầu, rồi "Khác". Chưa có tài khoản nào có id thì về danh sách tên ngân hàng như trước. */
+export type LuaChonNhan = { gia_tri: string; nhan: string; /** tên ngắn ngân hàng ghi vào thanh_toan.ngan_hang */ ten: string; tkId?: string };
+/** Nhãn ngắn: 4 số cuối đứng ngay sau tên ngân hàng để ô chọn hẹp (điện thoại) bị cắt chữ vẫn phân biệt được hai tài khoản cùng ngân hàng. */
+export const nhanTaiKhoan = (x: { ten: string; chu?: string | null; so4?: string | null }) => [[chuanTenNganHang(x.ten) ?? x.ten, x.so4 ? `…${x.so4}` : null].filter(Boolean).join(" "), x.chu || null].filter(Boolean).join(" · ");
+export function dsLuaChonNhan(tk: TaiKhoanNhan[], chiNhanhId: string, phuongThuc: string): LuaChonNhan[] {
+  const ap = tk.filter((x) => x.id && (x.chiNhanhId === null || x.chiNhanhId === chiNhanhId) && (phuongThuc === "quet_the" ? x.qt : x.cx)).sort((a, b) => Number(b.macDinh) - Number(a.macDinh));
+  if (!ap.length) return dsNganHangNhan(tk, chiNhanhId, phuongThuc).map((t) => ({ gia_tri: t, nhan: t, ten: t }));
+  return [...ap.map((x) => ({ gia_tri: x.id!, nhan: nhanTaiKhoan(x), ten: chuanTenNganHang(x.ten) ?? x.ten, tkId: x.id })), { gia_tri: "Khác", nhan: "Khác (ngoài danh sách)", ten: "Khác" }];
+}
+/** Giá trị ô chọn của một khoản thu: id tài khoản nếu có, không thì tên ngân hàng. */
+export const luaChonCuaKhoan = (t: Pick<KhoanThu, "tai_khoan_id" | "ngan_hang">) => t.tai_khoan_id ?? t.ngan_hang ?? "";
+/** Gán lựa chọn vào khoản thu: tài khoản → tai_khoan_id + tên ngắn; tên (Khác / danh sách cũ) → chỉ ngan_hang. */
+export function apLuaChonNhan<T extends KhoanThu>(t: T, v: string, ds: LuaChonNhan[]): T {
+  const x = ds.find((y) => y.gia_tri === v);
+  const { tai_khoan_id: _bo, ...con } = t; void _bo;
+  return (x?.tkId ? { ...con, tai_khoan_id: x.tkId, ngan_hang: x.ten } : { ...con, ngan_hang: x?.ten ?? v }) as T;
+}
+/** Máy chủ: kiểm tài khoản nhận của một khoản thu. null = hợp lệ; chuỗi = lỗi. tk = dòng tai_khoan_ngan_hang (đã đọc theo id) hoặc undefined nếu không thấy. */
+export function kiemTaiKhoanKhoan(phuongThuc: string, tk: { hoat_dong: boolean; chi_nhanh_id: string | null; dung_chuyen_khoan: boolean; dung_quet_the: boolean } | undefined, chiNhanhId: string): string | null {
+  if (!coNganHang(phuongThuc)) return "Chỉ khoản chuyển khoản / quẹt thẻ mới chọn tài khoản nhận.";
+  if (!tk || !tk.hoat_dong) return "Tài khoản nhận không còn dùng (đã ẩn hoặc xoá). Chọn lại tài khoản.";
+  if (tk.chi_nhanh_id && tk.chi_nhanh_id !== chiNhanhId) return "Tài khoản nhận thuộc chi nhánh khác. Chọn lại tài khoản.";
+  if (phuongThuc === "quet_the" ? !tk.dung_quet_the : !tk.dung_chuyen_khoan) return `Tài khoản này không dùng cho ${phuongThuc === "quet_the" ? "quẹt thẻ" : "chuyển khoản"}.`;
+  return null;
+}
+/** Dòng tai_khoan_ngan_hang (đang dùng) → lựa chọn cho hộp Thu nợ: tài khoản của chi nhánh hoá đơn hoặc dùng chung, mặc định lên đầu, ghi rõ nếu chỉ dùng một hình thức; cuối là "Khác". */
+export type DongTaiKhoan = { id: string; ngan_hang: string; chu_tai_khoan: string; so_tai_khoan: string; chi_nhanh_id: string | null; dung_chuyen_khoan: boolean; dung_quet_the: boolean; mac_dinh: boolean };
+export function luaChonTaiKhoanForm(tk: DongTaiKhoan[], chiNhanhId: string | null): { gia_tri: string; nhan: string }[] {
+  const ap = tk.filter((x) => !x.chi_nhanh_id || !chiNhanhId || x.chi_nhanh_id === chiNhanhId).sort((a, b) => Number(b.mac_dinh) - Number(a.mac_dinh));
+  return [...ap.map((x) => ({ gia_tri: x.id, nhan: nhanTaiKhoan({ ten: x.ngan_hang, chu: x.chu_tai_khoan, so4: x.so_tai_khoan.replace(/\D/g, "").slice(-4) }) + (x.dung_chuyen_khoan && !x.dung_quet_the ? " (chỉ chuyển khoản)" : !x.dung_chuyen_khoan && x.dung_quet_the ? " (chỉ quẹt thẻ)" : "") })),
+    { gia_tri: "Khác", nhan: "Khác (ngoài danh sách)" }];
 }
 /** Chọn sẵn: ngân hàng lần trước nếu còn trong danh sách, không thì ngân hàng đầu danh sách. */
 export const nganHangChonSan = (ds: string[], lanTruoc: string | null | undefined) => (lanTruoc && ds.includes(lanTruoc) ? lanTruoc : ds[0]);
@@ -161,17 +195,17 @@ export const HINH_THUC_NHANH = ["tien_mat", "quet_the", "chuyen_khoan"] as const
 /** Số tiền ô nhập sẵn của một hình thức = khoản thu ĐẦU TIÊN của hình thức đó (các khoản sau hiện ở danh sách bên dưới). */
 export const viTriNhanh = (thu: KhoanThu[], pt: string) => thu.findIndex((t) => t.phuong_thuc === pt);
 /** Gõ số tiền ở ô nhập sẵn: > 0 thì sửa / tạo khoản thu (tạo mới thì kèm ngân hàng chọn sẵn), 0 thì bỏ khoản thu (máy chủ không nhận khoản 0đ). */
-export function datTienNhanh(thu: KhoanThu[], pt: string, soTien: number, nganHang?: string): KhoanThu[] {
+export function datTienNhanh(thu: KhoanThu[], pt: string, soTien: number, nganHang?: string, taiKhoanId?: string): KhoanThu[] {
   const i = viTriNhanh(thu, pt);
   const n = Math.max(Math.floor(soTien) || 0, 0);
-  if (i < 0) return n > 0 ? [...thu, { phuong_thuc: pt, so_tien: n, ...(coNganHang(pt) && nganHang ? { ngan_hang: nganHang } : {}) }] : thu;
+  if (i < 0) return n > 0 ? [...thu, { phuong_thuc: pt, so_tien: n, ...(coNganHang(pt) && nganHang ? { ngan_hang: nganHang } : {}), ...(coNganHang(pt) && taiKhoanId ? { tai_khoan_id: taiKhoanId } : {}) }] : thu;
   return n > 0 ? thu.map((t, j) => (j === i ? { ...t, so_tien: n } : t)) : thu.filter((_, j) => j !== i);
 }
 /** Bấm tên hình thức: ô đó nhận nốt phần còn phải thu (cộng cả số đang có trong ô, vì số đó đã trừ vào phần còn lại). */
-export function dienPhanCon(thu: KhoanThu[], pt: string, phai: number, nganHang?: string): KhoanThu[] {
+export function dienPhanCon(thu: KhoanThu[], pt: string, phai: number, nganHang?: string, taiKhoanId?: string): KhoanThu[] {
   const i = viTriNhanh(thu, pt);
   const khac = thu.reduce((s, t, j) => (j === i ? s : s + t.so_tien), 0);
-  return datTienNhanh(thu, pt, Math.max(phai - khac, 0), nganHang);
+  return datTienNhanh(thu, pt, Math.max(phai - khac, 0), nganHang, taiKhoanId);
 }
 export const tinhTraLai =(khachDua: number, tienMat: number) => ({ traLai: khachDua > 0 ? Math.max(khachDua - tienMat, 0) : 0, thieu: khachDua > 0 ? Math.max(tienMat - khachDua, 0) : 0 });
 export type DonBan = {

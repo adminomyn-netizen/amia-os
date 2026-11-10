@@ -17,13 +17,14 @@ export type BuoiCho = {
 };
 
 /** Lượt chờ làm trong ngày của chi nhánh (hoặc chỉ của một chuyên viên). `chiMo` = chỉ lượt còn chờ / đang làm. */
-export async function docBuoiCho(o: { chiNhanhId: string | null; ngay: string; nvId?: string; chiMo?: boolean; gioiHan?: number }): Promise<BuoiCho[]> {
+export async function docBuoiCho(o: { chiNhanhId: string | null; ngay: string; nvId?: string; khachId?: string; chiMo?: boolean; gioiHan?: number }): Promise<BuoiCho[]> {
   const db = sb();
   let q = db.from("buoi_cho_lam").select("*").order("chuyen_luc", { ascending: true }).limit(o.gioiHan ?? 200);
   // Lượt còn mở thì hiện cả khi chuyển từ hôm trước (quên bấm); lượt đã đóng chỉ hiện trong ngày.
   q = o.chiMo ? q.in("trang_thai", ["cho_lam", "dang_lam"]) : q.or(`ngay.eq.${o.ngay},trang_thai.in.(cho_lam,dang_lam)`);
   if (o.chiNhanhId) q = q.eq("chi_nhanh_id", o.chiNhanhId);
   if (o.nvId) q = q.contains("nv_ids", [o.nvId]);
+  if (o.khachId) q = q.eq("khach_id", o.khachId);
   const { data, error } = await q;
   if (error) console.error("docBuoiCho:", error.message); // lỗi truy vấn đừng giả làm "không có khách"
   const ds = data ?? [];

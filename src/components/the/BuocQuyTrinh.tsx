@@ -6,7 +6,7 @@ import type { QuyTrinhKhach } from "@/lib/buoi-cho-lam";
 
 /** Danh sách bước quy trình hôm nay của một khách (gộp mọi dịch vụ đang làm): làm bước nào tích bước đó (0322).
  *  Ô tích to, dễ bấm trên điện thoại. Vật tư mỗi bước chỉ là gợi ý từ quy trình, phiếu vật tư thật vẫn ra khi Kết thúc. */
-export function BuocQuyTrinh({ khachId, qt, thaoTac }: { khachId: string; qt: QuyTrinhKhach; thaoTac: boolean }) {
+export function BuocQuyTrinh({ khachId, qt, thaoTac, onDoi }: { khachId: string; qt: QuyTrinhKhach; thaoTac: boolean; /** Nơi gọi tự tải lại dữ liệu (vd Hoá đơn dịch vụ ở Thu ngân). */ onDoi?: () => Promise<void> | void }) {
   const [daTich, datTich] = useOptimistic(new Set(qt.buoc.filter((b) => b.daTich).map((b) => b.id)), (s: Set<string>, [id, co]: [string, boolean]) => {
     const n = new Set(s); if (co) n.add(id); else n.delete(id); return n;
   });
@@ -28,7 +28,7 @@ export function BuocQuyTrinh({ khachId, qt, thaoTac }: { khachId: string; qt: Qu
               <li key={b.id}>
                 <label className={`flex min-h-11 items-start gap-3 rounded-nho px-1.5 py-1.5 ${thaoTac ? "cursor-pointer hover:bg-giay-sang" : ""}`}>
                   <input type="checkbox" className="mt-0.5 h-5 w-5 shrink-0 accent-[var(--color-nhan)]" checked={co} disabled={!thaoTac}
-                    onChange={(e) => { const moi = e.target.checked; setLoi(""); bat(async () => { datTich([b.id, moi]); const fd = new FormData(); fd.set("khach_id", khachId); fd.set("buoc_id", b.id); if (!moi) fd.set("bo", "1"); const r = await tichBuoc(fd); if (r.loi) setLoi(r.loi); }); }} />
+                    onChange={(e) => { const moi = e.target.checked; setLoi(""); bat(async () => { datTich([b.id, moi]); const fd = new FormData(); fd.set("khach_id", khachId); fd.set("buoc_id", b.id); if (!moi) fd.set("bo", "1"); const r = await tichBuoc(fd); if (r.loi) setLoi(r.loi); else await onDoi?.(); }); }} />
                   <span className="min-w-0 text-[13.5px]">
                     <span className={co ? "text-muc-3 line-through" : "text-muc"}>{i + 1}. {b.ten}</span>
                     {nhieuDv && <span className="ml-1 text-[12px] text-muc-3">({b.dichVu.join(", ")})</span>}

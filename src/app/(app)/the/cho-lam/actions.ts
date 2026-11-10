@@ -6,6 +6,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
 import { chuoi } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
+import { docBuoiCho, docQuyTrinh, type BuoiCho, type QuyTrinhKhach } from "@/lib/buoi-cho-lam";
 import { docHenKeTiep, docNguoiBuoi, docThamSo, ghiHenKeTiep, taoPhieuBuoi, theTrongPhamVi, type PhieuBuoi } from "@/lib/buoi-thuc-hien";
 import { guiChoNhanVien } from "@/lib/push";
 import { tenGonNv } from "@/lib/ten-nv";
@@ -100,6 +101,56 @@ export async function chuyenNhieuThe(fd: FormData): Promise<KQChuyen> {
   }
   if (!ok.length) return { loi: loi.join("\n") };
   return { ok: true, chuyenCho: nguoi, ...(loi.length ? { canhBao: `Đã chuyển ${ok.length} thẻ. Chưa chuyển được:\n${loi.join("\n")}` } : {}) };
+}
+
+/** Hoá đơn dịch vụ ở Thu ngân (chị Lâm 11/11/2026): các lượt làm dịch vụ hôm nay của MỘT khách (chờ làm / đang làm / đã xong / trả lại)
+ *  + quy trình bước. CHỈ ĐỌC. `thaoTacIds` = lượt người đang xem bấm được (Bắt đầu, tích bước, Sửa, Kết thúc). */
+export async function luotDvCuaKhach(khachId: string): Promise<{ ds: BuoiCho[]; quyTrinh: Record<string, QuyTrinhKhach>; thaoTacIds: string[] } | null> {
+  const nd = await nguoiThaoTac();
+  if (!nd || !khachId) return null;
+  const ngay = homNayHCM();
+  const ds = await docBuoiCho({ chiNhanhId: nd.chiNhanhId, ngay, khachId, gioiHan: 30 });
+  const quyTrinh = await docQuyTrinh(ds, ngay);
+  const chung = coQuyen(nd, "ban.tao") || coQuyen(nd, "the.dieuchinh");
+  return { ds, quyTrinh, thaoTacIds: ds.filter((r) => chung || r.nvIds.includes(nd.nhanVienId) || r.chuyenBoi === nd.nhanVienId).map((r) => r.id) };
+}
+
+/** Sửa dòng của hoá đơn dịch vụ TRƯỚC khi Kết thúc: đổi dịch vụ (trong thẻ), người làm, bác sĩ. Chỉ đổi bảng buoi_cho_lam
+ *  (chưa trừ buổi, không sổ cái, không tiền). Kết thúc sau đó trừ buổi đúng dịch vụ / người làm mới. */
+export async function suaLuotCho(fd: FormData): Promise<KQ> {
+  const nd = await nguoiThaoTac();
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const l = await docLuot(nd, chuoi(fd, "id"));
+  if (!l) return { loi: "Không tìm thấy lượt chờ làm." };
+  if (!duocThaoTac(nd, l)) return { loi: KHONG_DU_QUYEN };
+  if (!["cho_lam", "dang_lam"].includes(l.trang_thai)) return { loi: "Lượt này đã kết thúc hoặc đã trả lại, không sửa được." };
+  const dvId = chuoi(fd, "dich_vu_id");
+  if (!dvId) return { loi: "Chọn dịch vụ." };
+  const nguoi = docNguoiBuoi(fd);
+  if ("loi" in nguoi) return { loi: nguoi.loi };
+  const db = sb();
+  const [{ data: t }, { data: dv }, { data: nv }] = await Promise.all([
+    db.from("v_the_khach").select("goi_id").eq("id", l.the_id).maybeSingle(),
+    db.from("dich_vu").select("id, ten").eq("id", dvId).maybeSingle(),
+    db.from("nhan_vien").select("id, ho_ten").in("id", nguoi.nv),
+  ]);
+  if (!dv) return { loi: "Không tìm thấy dịch vụ." };
+  if (t?.goi_id) {
+    const { data: lk } = await db.from("goi_the_dich_vu").select("dich_vu_id").eq("goi_id", t.goi_id);
+    if ((lk ?? []).length && !(lk ?? []).some((x) => x.dich_vu_id === dvId)) return { loi: "Dịch vụ này không nằm trong thẻ." };
+  }
+  if ((nv ?? []).length !== nguoi.nv.length) return { loi: "Có người làm không còn trong danh sách nhân viên." };
+  const { data: doi, error } = await db.from("buoi_cho_lam").update({ dich_vu_id: dvId, nv_ids: nguoi.nv, bac_si_id: tuyChon(chuoi(fd, "bac_si_id")), cap_nhat_luc: new Date().toISOString() })
+    .eq("id", l.id).in("trang_thai", ["cho_lam", "dang_lam"]).select("id");
+  if (error) return { loi: error.code === "23505" ? "Thẻ này đã có một lượt đang chờ làm đúng dịch vụ đó." : thongBaoLoi(error) };
+  if (!doi?.length) return { loi: "Lượt này đã xử lý rồi." };
+  lamMoi(l.the_id);
+  const moi = nguoi.nv.filter((x) => !l.nv_ids.includes(x));
+  if (moi.length) {
+    const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", l.khach_id).maybeSingle();
+    await guiChoNhanVien(moi, { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${dv.ten}`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null);
+  }
+  return { ok: true };
 }
 
 /** Chuyên viên bấm Bắt đầu làm: ghi giờ bắt đầu; lượt gắn lịch hẹn thì mở ca ("Đang phục vụ") để chuông quá giờ đếm đúng. */

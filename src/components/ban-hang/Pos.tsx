@@ -23,6 +23,8 @@ import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 import { BaoPhieuBuoi, NutBuoi, NutNhieuThe, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
 import { KhoiThe } from "@/components/the/KhoiThe";
+import { KhachChoLam } from "@/components/the/KhachChoLam";
+import { luotDvCuaKhach } from "@/app/(app)/the/cho-lam/actions";
 
 type Nv = { id: string; ten: string; vaiTro: string };
 type TheKh = { id: string; ma: string; goiId: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; tinhTrang?: string; tongTien?: number | null; ngayCap?: string | null; lanGan?: { ngay: string; dv?: string | null; nv?: string | null } | null; lichToi?: string | null; phuTrach?: string | null; dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
@@ -459,6 +461,20 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
     layTheKh(khach.id).then((r) => con && setTheKh(r ? { khachId: khach.id, ...r } : null));
     return () => { con = false; };
   }, [khach, layThe, layDiem, layTheKh, taiLaiThe]);
+  // Hoá đơn dịch vụ (chị Lâm 11/11/2026): các dịch vụ khách làm hôm nay (lượt chuyển cho chuyên viên trị liệu) đọc lại từ máy chủ,
+  // tải lại sau mỗi thao tác (Làm buổi này, Sửa, Bắt đầu, tích bước, Kết thúc, Trả lại).
+  const [luotDv, setLuotDv] = useState<{ khachId: string } & NonNullable<Awaited<ReturnType<typeof luotDvCuaKhach>>> | null>(null);
+  const khachDvId = kieu === "dich_vu" ? khach?.id ?? null : null;
+  const docLuotDv = useCallback((id: string) => luotDvCuaKhach(id).catch(() => null).then((r) => ({ khachId: id, ...(r ?? { ds: [], quyTrinh: {}, thaoTacIds: [] }) })), []);
+  const taiLuotDv = useCallback(async () => { if (khachDvId) setLuotDv(await docLuotDv(khachDvId)); }, [khachDvId, docLuotDv]);
+  useEffect(() => {
+    if (!khachDvId) return;
+    let con = true;
+    docLuotDv(khachDvId).then((r) => con && setLuotDv(r));
+    return () => { con = false; };
+  }, [khachDvId, docLuotDv, taiLaiThe]);
+  const luotKhach = khachDvId && luotDv?.khachId === khachDvId ? luotDv : null;
+  const soLuotMo = luotKhach ? luotKhach.ds.filter((r) => r.trangThai === "cho_lam" || r.trangThai === "dang_lam").length : 0;
   useEffect(() => { onDoi(k, khach?.ho_ten ?? "", dong.length); }, [k, khach, dong.length, onDoi]);
 
   const theTien = khach ? theTienTai : [];
@@ -474,7 +490,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
       if (!buoi || t.buoiCon <= 0) return null;
       const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
       return <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan={nhan}
-        onXong={(r) => setPhieuBuoi((r.phieuId || r.chuyenCho !== undefined) && khach ? { kq: r, khachId: khach.id } : null)} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
+        onXong={(r) => { setPhieuBuoi((r.phieuId || r.chuyenCho !== undefined) && khach ? { kq: r, khachId: khach.id } : null); setTaiLaiThe((x) => x + 1); }} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
     }
     if (t.soDu <= 0) return null;
     const daCo = thu.some((x) => x.phuong_thuc === "the_tien" && x.the_id === t.id);
@@ -711,7 +727,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
       {/* Điện thoại: giỏ là bảng trượt từ đáy (mở bằng thanh giỏ dính đáy), có đầu bảng + chân bảng "Phải thu / Chốt đơn" luôn trong tầm ngón cái.
           Máy tính (lg+): cột phải dính như cũ, các lớp max-lg không áp. */}
       {moGio && <button type="button" aria-label="Đóng giỏ hàng" tabIndex={-1} className="fixed inset-0 z-50 bg-muc/45 lg:hidden" onClick={() => setMoGio(false)} />}
-      <aside aria-label="Đơn hàng" data-gio
+      <aside aria-label={kieu === "dich_vu" ? "Hoá đơn dịch vụ" : "Đơn hàng"} data-gio
         className={`min-w-0 lg:sticky lg:top-20 lg:self-start lg:max-h-[calc(100dvh-6rem)] lg:overflow-y-auto lg:overscroll-contain lg:rounded-hop ${moGio ? "max-lg:fixed max-lg:inset-x-0 max-lg:bottom-0 max-lg:top-[5dvh] max-lg:z-50 max-lg:flex max-lg:flex-col max-lg:overflow-hidden max-lg:rounded-t-[20px] max-lg:bg-giay max-lg:shadow-[0_-18px_40px_-12px_rgba(6,26,23,0.5)]" : "max-lg:hidden"}`}>
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-vien px-2 pb-1 pt-2 lg:hidden">
           <button type="button" onClick={() => setMoGio(false)} className="flex h-11 items-center gap-1.5 rounded-nho px-2 text-[15px] font-medium text-nhan-dam active:bg-giay-tram"><Plus aria-hidden strokeWidth={2} className="h-4 w-4" />Chọn thêm món</button>
@@ -726,10 +742,26 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         </div>
         <div className="overflow-hidden rounded-hop border border-vien bg-giay-sang shadow-md">
           <h2 className="flex items-center justify-between gap-3 bg-gradient-to-r from-espresso to-[#0d4a42] px-4 py-3.5 text-[15px] font-semibold text-white">
-            <span className="flex items-center gap-2"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Đơn hàng</span>
-            <span className="rounded-tag bg-white/15 px-2 py-0.5 text-[12px] font-medium tabular-nums">{dong.reduce((t, d) => t + d.sl, 0)} mục</span>
+            {kieu === "dich_vu"
+              ? <span className="flex items-center gap-2"><Sparkles aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Hoá đơn dịch vụ</span>
+              : <span className="flex items-center gap-2"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Đơn hàng</span>}
+            <span className="rounded-tag bg-white/15 px-2 py-0.5 text-[12px] font-medium tabular-nums">{kieu === "dich_vu" ? `${(luotKhach?.ds.length ?? 0) + dong.reduce((t, d) => t + d.sl, 0)} dịch vụ` : `${dong.reduce((t, d) => t + d.sl, 0)} mục`}</span>
           </h2>
-          {dong.length === 0 && <p className="px-4 py-8 text-center text-[14px] text-muc-3">Chọn dịch vụ, thẻ hoặc sản phẩm ở bên trái.</p>}
+          {/* Đơn làm dịch vụ (chị Thuý 10/11, chị Lâm 11/11): thu ngân lên đơn (Làm buổi này) → chuyên viên trị liệu Bắt đầu làm (xác nhận dịch vụ)
+              → tích từng bước quy trình → Kết thúc khi trả khách (lúc đó mới trừ 1 buổi, ghi doanh thu buổi, ra phiếu vật tư). Dịch vụ lẻ tính tiền ở phần dưới. */}
+          {kieu === "dich_vu" && (
+            <div className="border-b border-vien px-4 py-3">
+              <p className="mb-2 text-[13px] font-semibold text-muc">Dịch vụ dùng thẻ (trừ buổi)</p>
+              {!khach ? <p className="py-4 text-center text-[14px] text-muc-3">Chọn khách rồi bấm <b className="font-medium text-muc-2">Làm buổi này</b> ở dịch vụ khách đã mua bên trái.</p>
+                : !luotKhach ? <p className="py-4 text-center text-[14px] text-muc-3">Đang tải</p>
+                : luotKhach.ds.length === 0 ? <p className="py-4 text-center text-[14px] text-muc-3">Chưa lên dịch vụ nào hôm nay. Bấm <b className="font-medium text-muc-2">Làm buổi này</b> ở dịch vụ khách đã mua bên trái: khách vào danh sách chờ của chuyên viên trị liệu, chưa trừ buổi.</p>
+                : <KhachChoLam gon ds={luotKhach.ds} quyTrinh={luotKhach.quyTrinh} thaoTacIds={luotKhach.thaoTacIds} nhanVien={nvLC} bacSi={bacSiLC} onDoi={taiLuotDv}
+                    dvCuaThe={(theId) => { const t = theKhach?.the.find((x) => x.id === theId); const dv = t ? dvMuc.filter((d) => t.dichVu.includes(d.gia_tri)) : []; return dv.length ? dv : dvMuc; }} />}
+              {khach && <p className="mt-2.5 text-[12.5px] leading-relaxed text-muc-3">Chuyên viên trị liệu bấm Bắt đầu làm (xác nhận dịch vụ), tích từng bước, trả khách thì bấm <b className="font-medium text-muc-2">Kết thúc</b>: lúc đó mới trừ 1 buổi và ra phiếu vật tư.{soLuotMo > 0 && <> · <Link href="/the/cho-lam?tab=chi_nhanh" className="font-medium text-nhan-dam hover:underline">Khách chờ làm</Link></>}</p>}
+              {dong.length > 0 && <p className="mt-3 text-[13px] font-semibold text-muc">Dịch vụ lẻ (tính tiền)</p>}
+            </div>
+          )}
+          {dong.length === 0 && kieu !== "dich_vu" && <p className="px-4 py-8 text-center text-[14px] text-muc-3">Chọn dịch vụ, thẻ hoặc sản phẩm ở bên trái.</p>}
           <ul className="divide-y divide-vien">
             {dong.map((d, i) => {
               const m = tuMuc.get(khoaDong(d));
@@ -938,10 +970,10 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
           <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-nho bg-white/15"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-5 w-5" />
             {dong.length > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-tag bg-dat px-1 text-[12px] font-bold tabular-nums text-espresso">{dong.reduce((t, d) => t + d.sl, 0)}</span>}</span>
           <span className="min-w-0 flex-1">
-            <span className="block truncate text-[14px] font-medium">{dong.length ? `${dong.reduce((t, d) => t + d.sl, 0)} món · ${khach?.ho_ten ?? "Khách lẻ"}` : "Chưa chọn món"}</span>
+            <span className="block truncate text-[14px] font-medium">{dong.length ? `${dong.reduce((t, d) => t + d.sl, 0)} món · ${khach?.ho_ten ?? "Khách lẻ"}` : kieu === "dich_vu" ? (luotKhach?.ds.length ? `${luotKhach.ds.length} dịch vụ · ${khach?.ho_ten ?? ""}` : "Chưa lên dịch vụ") : "Chưa chọn món"}</span>
             {dong.length > 0 && <span className="block text-[16px] font-bold tabular-nums">{tienVN(phai)}</span>}
           </span>
-          <span className="shrink-0 text-[15px] font-semibold">Xem đơn</span>
+          <span className="shrink-0 text-[15px] font-semibold">{kieu === "dich_vu" ? "Xem hoá đơn" : "Xem đơn"}</span>
         </button>
       </div>
 

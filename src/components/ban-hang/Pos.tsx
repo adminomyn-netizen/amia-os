@@ -539,7 +539,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
       loai: "hoa_don", cuaHang: { ten: chiNhanh.find((x) => x.id === cnId)?.ten ?? "AMIA" }, tieuDe: c.tamTinh, ma: sua?.ma ?? "", ngay: sua ? sua.ngayHd : ngayHd || new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" }), gio,
       trangThai: "nhap", trangThaiNhan: nn === "en" ? "Unpaid" : "Chưa thanh toán", thuNgan, ghiChu, nn,
       gioVaoRa: [gioVao, gioRa].filter(Boolean).join(" – ") || null,
-      khach: khach ? { ten: khach.ho_ten, sdt: khach.dien_thoai, diem: diemKhach?.bat ? diemKhach.soDu : null } : null,
+      khach: khach ? { ten: khach.ho_ten, ma: khach.ma, sdt: khach.dien_thoai, diem: diemKhach?.bat ? diemKhach.soDu : null } : null,
       dong: dong.map((x) => { const m = tuMuc.get(khoaDong(x)); const g = giaDong(x, m); return { ten: m?.ten ?? "", ghiChu: x.ghiChu, soLuong: x.sl, donGia: g, giamGia: x.giam, thanhTien: g * x.sl - x.giam, nhanVien: nhanVienDongTamTinh(x.nv, (id) => tenNv.get(id)) }; }),
       tongHang: hang, giamDon: giamDon + tienDiem + tienVoucher, vatPct: Number(vatPct) || 0, vatTien: vat, phuPhi, tip, phaiThu: phai,
       thanhToan: tt.thanhToan, tienTruThe: tt.tienTruThe, theSauTt: tt.theSauTt,

@@ -29,7 +29,7 @@ export default async function TrangThietLapIn({ searchParams }: { searchParams: 
   const mau: DuLieuIn = {
     loai, xemMau: true, cuaHang: loai === "hoa_don" ? { ten: goc?.ten ?? "AMIA", tenCoSo: CO_SO.ten, phu: `${CO_SO.linhVuc} · Giấy phép ${CO_SO.giayPhep}`, diaChi: goc?.dia_chi, dienThoai: goc?.dien_thoai } : { ten: chon?.ten ?? ch?.ten_thuong_hieu ?? "AMIA", diaChi: goc?.dia_chi, dienThoai: goc?.dien_thoai },
     tieuDe: loai === "hoa_don" ? "Hoá đơn dịch vụ" : "Lịch hẹn", gio: "10:30", trangThaiNhan: "Thanh toán một phần", bangChu: docSoTien(1_950_000), tienTruThe: 0, theSauTt: ["Thẻ mẫu 10 buổi (#M00001): còn 9/10 buổi"], ma: "HD-MAU-0001", ngay: homNayHCM(), thuNgan: "Nhân viên mẫu",
-    khach: { ten: "Nguyễn Thị Mẫu", sdt: "0900 000 000", gioiTinh: "nữ", namSinh: "1990", diem: 120 }, ghiChu: loai === "hoa_don" ? "Nhắc khách tái khám sau 2 tuần." : "Khách đến sớm 10 phút.",
+    khach: { ten: "Nguyễn Thị Mẫu", ma: "KH000123", sdt: "0900 000 000", gioiTinh: "nữ", namSinh: "1990", diem: 120 }, ghiChu: loai === "hoa_don" ? "Nhắc khách tái khám sau 2 tuần." : "Khách đến sớm 10 phút.",
     gioVaoRa: loai === "hoa_don" ? "10:30 – 11:30" : null,
     dong: loai === "hoa_don" ? [{ ten: "Dịch vụ mẫu A", soLuong: 1, donGia: 1_500_000, giamGia: 0, thanhTien: 1_500_000, nhanVien: ["Nhân viên A", "Nhân viên B"] }, { ten: "Sản phẩm mẫu B", soLuong: 2, donGia: 250_000, giamGia: 50_000, thanhTien: 450_000 }] : [{ ten: "Dịch vụ mẫu A", soLuong: 1, donGia: 0, giamGia: 0, thanhTien: 0 }, { ten: "Dịch vụ mẫu B", soLuong: 1, donGia: 0, giamGia: 0, thanhTien: 0 }],
     tongHang: 2_000_000, giamDon: 50_000, vatPct: 0, vatTien: 0, phuPhi: 0, tip: 0, phaiThu: 1_950_000, thanhToan: [{ nhan: "Thanh toán - Chuyển khoản", soTien: 1_000_000 }], conNo: 950_000,

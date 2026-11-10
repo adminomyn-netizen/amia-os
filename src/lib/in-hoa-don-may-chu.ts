@@ -30,7 +30,7 @@ export async function dungToInHoaDon(db: Db, hds: Tables<"hoa_don">[], nnEp?: Ng
     db.from("hoa_don_dong").select("id, hoa_don_id, ten, loai, dich_vu_id, goi_id, so_luong, don_gia, giam_gia, thanh_tien, ghi_chu, the_khach_sh_id").in("hoa_don_id", coId(idsHd)).order("tao_luc"),
     db.from("thanh_toan").select("hoa_don_id, loai, phuong_thuc, loai_vi, so_tien, the_id").in("hoa_don_id", coId(idsHd)).order("tao_luc"),
     db.from("chi_nhanh").select("id, ten, dia_chi, dien_thoai").in("id", coId(idsCn)),
-    db.from("khach_hang").select("id, ho_ten, dien_thoai, gioi_tinh, ngay_sinh, diem_so_du").in("id", coId(idsKh)),
+    db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, gioi_tinh, ngay_sinh, diem_so_du").in("id", coId(idsKh)),
     db.from("nhan_vien").select("id, ho_ten").in("id", coId(idsNl)),
     db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "in.hoa_don.%"),
     db.from("lich_hen").select("id, bat_dau, ket_thuc").in("id", coId(idsLich)),
@@ -123,7 +123,7 @@ export async function dungToInHoaDon(db: Db, hds: Tables<"hoa_don">[], nnEp?: Ng
       cuaHang: { ten: c?.ten ?? "AMIA", tenCoSo: ch1?.ten_phap_nhan || CO_SO.ten, phu: `${CO_SO.linhVuc} · ${nn === "en" ? "License" : "Giấy phép"} ${CO_SO.giayPhep}`, diaChi: c?.dia_chi, dienThoai: c?.dien_thoai ?? ch1?.dien_thoai },
       // Đơn chuyển từ SalonHero: in tên thu ngân thật (thu_ngan_ten), không phải tài khoản hệ thống.
       thuNgan: h.la_lich_su ? h.thu_ngan_ten : mNl.get(h.nguoi_lap_id ?? ""), ghiChu: h.ghi_chu, gioVaoRa: gioPhucVu.replace("–", " – ") || null,
-      khach: k ? { ten: k.ho_ten, sdt: k.dien_thoai, gioiTinh: k.gioi_tinh, namSinh: k.ngay_sinh?.slice(0, 4) ?? null, diem: Number(k.diem_so_du) } : null,
+      khach: k ? { ten: k.ho_ten, ma: k.ma, sdt: k.dien_thoai, gioiTinh: k.gioi_tinh, namSinh: k.ngay_sinh?.slice(0, 4) ?? null, diem: Number(k.diem_so_du) } : null,
       dong: dongHd.map((x) => ({ ten: tenDongIn(x.ten, x.loai === "dich_vu" && x.the_khach_sh_id != null, nn), ghiChu: x.ghi_chu, soLuong: Number(x.so_luong), donGia: Number(x.don_gia), giamGia: Number(x.giam_gia), thanhTien: Number(x.thanh_tien ?? 0), nhanVien: nvTheoDong.get(x.id),
         gioPhucVu: x.loai === "dich_vu" && x.dich_vu_id && dvCoGio.has(x.dich_vu_id) && gioPhucVu ? gioPhucVu : undefined })),
       tongHang: Number(h.tong_hang), giamDon: Number(h.giam_gia_don), vatPct: Number(h.vat_pct), vatTien: Number(h.vat_tien), phuPhi: Number(h.phu_phi), tip: Number(h.tip), phaiThu: Number(h.tong_phai_thu),

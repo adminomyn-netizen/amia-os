@@ -15,7 +15,7 @@ export type DuLieuIn = {
   bangChu?: string | null;
   /** Tổng tiền trừ vào thẻ + "Tình trạng thẻ sau khi thanh toán" (mỗi thẻ một dòng đã dựng sẵn). */
   tienTruThe?: number; theSauTt?: string[]; nhanTheSauTt?: string;
-  khach?: { ten: string; sdt?: string | null; gioiTinh?: string | null; namSinh?: string | null; diem?: number | null } | null;
+  khach?: { ten: string; /** Mã khách hàng (chị Diệu Thuý 10/11: phiếu in phải có MÃ KHÁCH HÀNG). */ ma?: string | null; sdt?: string | null; gioiTinh?: string | null; namSinh?: string | null; diem?: number | null } | null;
   thuNgan?: string | null; ghiChu?: string | null;
   /** "HH:MM – HH:MM": giờ vào/ra của đơn (không có thì giờ lịch hẹn gắn với đơn). In khi bật "Hiện giờ vào/ra" (Thiết lập in). */
   gioVaoRa?: string | null;
@@ -34,13 +34,13 @@ export type NgonNguIn = "vi" | "en";
 /** Chữ cố định của bản in theo ngôn ngữ. */
 export const CHU_IN = {
   vi: { dt: "Điện thoại", thuNgan: "Thu ngân", khach: "Khách", sinh: "sinh", muc: "Dịch vụ", sl: "SL", donGia: "Đ.Giá", thanhTien: "Thành tiền", gioPv: "Giờ phục vụ", giam: "Giảm",
-    chiNhanh: "Chi nhánh", maHd: "Mã HĐ", ngay: "Ngày", sdt: "SĐT", gioiTinh: "Giới tính", thanhToan: "Thanh toán", donViTinh: "Đơn vị tính: VND", bangChu: "Số tiền bằng chữ", truThe: "Tổng tiền trừ vào thẻ",
+    chiNhanh: "Chi nhánh", maHd: "Mã HĐ", maKhach: "Mã KH", ngay: "Ngày", sdt: "SĐT", gioiTinh: "Giới tính", thanhToan: "Thanh toán", donViTinh: "Đơn vị tính: VND", bangChu: "Số tiền bằng chữ", truThe: "Tổng tiền trừ vào thẻ",
     theSauTt: "Tình trạng thẻ sau khi thanh toán:", theDenNgay: "Tình trạng thẻ đến ngày",
     tienHang: "Thành tiền", giamGia: "Giảm giá", phuPhi: "Phụ phí", tip: "Tip", phaiThu: "Tổng cộng", conNo: "Còn nợ", khachDua: "Tiền khách đưa", traLai: "Trả lại khách", diem: "Điểm tích luỹ", ghiChu: "Ghi chú",
     daiDien: "Đại diện cửa hàng", khachHang: "Khách hàng", daThu: "Đã thu", hoan: "Hoàn tiền", hoaDon: "Hoá đơn dịch vụ", tamTinh: "Hoá đơn tạm tính",
     gioVaoRa: "Giờ vào/ra", nv: "N. viên", lichHen: "Lịch hẹn", chiTiet: "Thông tin chi tiết:", khachSo: "Khách", maQr: "Mã QR", chuaQr: "Chưa có mã QR" },
   en: { dt: "Phone", thuNgan: "Cashier", khach: "Customer", sinh: "born", muc: "Service", sl: "Qty", donGia: "Price", thanhTien: "Amount", gioPv: "Service time", giam: "Discount",
-    chiNhanh: "Branch", maHd: "Invoice No.", ngay: "Date", sdt: "Phone", gioiTinh: "Gender", thanhToan: "Payment", donViTinh: "Currency: VND", bangChu: "Amount in words", truThe: "Total charged to cards",
+    chiNhanh: "Branch", maHd: "Invoice No.", maKhach: "Customer ID", ngay: "Date", sdt: "Phone", gioiTinh: "Gender", thanhToan: "Payment", donViTinh: "Currency: VND", bangChu: "Amount in words", truThe: "Total charged to cards",
     theSauTt: "Card status after payment:", theDenNgay: "Card status as of",
     tienHang: "Subtotal", giamGia: "Discount", phuPhi: "Surcharge", tip: "Tip", phaiThu: "Total", conNo: "Balance due", khachDua: "Cash received", traLai: "Change", diem: "Loyalty points", ghiChu: "Note",
     daiDien: "Store representative", khachHang: "Customer", daThu: "Paid", hoan: "Refund", hoaDon: "Service invoice", tamTinh: "Proforma invoice",
@@ -69,6 +69,7 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
         [c.maHd, d.ma],
         [c.ngay, `${ngayVN(d.ngay)}${d.gio ? ` ${d.gio}` : ""}`],
         [c.khachHang, d.khach?.ten ?? ""],
+        [c.maKhach, d.khach?.ma ?? ""],
         [c.sdt, cfg.sdtKhach ? d.khach?.sdt ?? "" : ""],
         [c.gioiTinh, cfg.gioiTinhNamSinh && d.khach ? [d.khach.gioiTinh, d.khach.namSinh ? `${c.sinh} ${d.khach.namSinh}` : ""].filter(Boolean).join(" · ") : ""],
         [c.gioVaoRa, cfg.gioVaoRa ? d.gioVaoRa ?? "" : ""],
@@ -96,7 +97,7 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
           <>
             <p className={`mt-3 font-semibold uppercase tracking-wide ${cuon ? "text-[12px]" : "text-[15px]"}`}>{tieuDe} {d.ma}</p>
             <p className="text-muc-2">{ngayVN(d.ngay)}</p>
-            {d.khach && <p className="text-muc-2">{c.khach}: {d.khach.ten}{cfg.sdtKhach && d.khach.sdt ? ` · ${d.khach.sdt}` : ""}</p>}
+            {d.khach && <p className="text-muc-2">{c.khach}: {d.khach.ten}{d.khach.ma ? ` (${d.khach.ma})` : ""}{cfg.sdtKhach && d.khach.sdt ? ` · ${d.khach.sdt}` : ""}</p>}
             {d.khach && cfg.gioiTinhNamSinh && (d.khach.gioiTinh || d.khach.namSinh) && <p className="text-muc-2">{[d.khach.gioiTinh, d.khach.namSinh ? `${c.sinh} ${d.khach.namSinh}` : ""].filter(Boolean).join(" · ")}</p>}
           </>
         )}

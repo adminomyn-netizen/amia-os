@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { boSuaHoaDon } from "../ban-hang/actions";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
@@ -196,6 +197,12 @@ export async function moLaiHoaDon(fd: FormData): Promise<KQ> {
   revalidatePath("/hoa-don");
   if (error) return { loi: thongBaoLoi(error) };
   redirect(`/ban-hang?sua=${id}`);
+}
+
+/** "Bỏ sửa" ở trang hoá đơn đang sửa: trả về đã chốt như cũ (cùng hàm với nút ở khung Chờ thanh toán, xem ban-hang/actions boSuaHoaDon). */
+export async function boSuaHoaDonForm(fd: FormData): Promise<KQ> {
+  const r = await boSuaHoaDon(chuoi(fd, "hoa_don_id"));
+  return "loi" in r && r.loi ? { loi: r.loi } : { ok: true };
 }
 
 export async function dieuChinhNo(fd: FormData): Promise<KQ> {

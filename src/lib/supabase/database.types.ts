@@ -13502,6 +13502,10 @@ export type Database = {
         Args: { p_id: string; p_ly_do: string; p_nguoi: string }
         Returns: undefined
       }
+      bo_sua_hoa_don: {
+        Args: { p_id: string; p_nguoi: string }
+        Returns: Json
+      }
       bc_doanh_thu_ngay: {
         Args: { p_cn?: string; p_den: string; p_tu: string }
         Returns: {

@@ -18,7 +18,7 @@ import { HopVoucher } from "./HopVoucher";
 import { CHU_IN, PHUONG_THUC_EN, type DuLieuIn, type NgonNguIn } from "@/components/cai-dat/BanInHoaDon";
 import { nhanVienDongTamTinh, thanhToanTamTinh } from "@/lib/in-hoa-don";
 import { docSoTien } from "@/lib/phieu-thu";
-import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, DonNhapRut } from "@/app/(app)/ban-hang/actions";
+import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, xoaDonCho, boSuaHoaDon, DonNhapRut } from "@/app/(app)/ban-hang/actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 import { BaoPhieuBuoi, NutBuoi, NutNhieuThe, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
@@ -43,7 +43,7 @@ const khoaDong = (d: { loai: string; ref: string }) => `${d.loai}:${d.ref}`;
 
 type PropsPos = {
   muc: MucBan[]; nhanVien: Nv[]; khachBanDau: KhachChon | null; dongBanDau: DongDon[]; chiNhanhId: string; chiNhanh: { id: string; ten: string }[]; khoaChiNhanh: boolean; lichId: string | null; /** Số khách của lịch nhóm (Thanh toán ngay từ lịch nhiều khách). */ soKhachLich?: number; choGiam?: boolean; choTip?: boolean; thuNgan?: string; nguonLich?: string; /** Phòng / chỗ ghi ở lịch hẹn của đơn (chỉ hiển thị). */ viTriLich?: string; taiKhoanNhan?: TaiKhoanNhan[];
-  tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher; luuNhap: typeof luuDonNhap; dsNhap: typeof dsDonNhap; xoaNhap: typeof xoaDonNhap; nhapBanDau?: DonNhapRut[];
+  tim: typeof timKhach; layThe: typeof layTheTien; choThanhToan?: number | null; denNgay?: string; layDiem: typeof layDiemKhach; layTheKh: typeof layTheKhach; chot: typeof chotDonBanHang; voucher: typeof layVoucher; dsVoucher: typeof dsVoucher; luuNhap: typeof luuDonNhap; dsNhap: typeof dsDonNhap; xoaNhap: typeof xoaDonNhap; /** Nút Xoá ở Đơn nháp / Chờ thanh toán (hỏi lại + lý do, ghi nhật ký). */ xoaCho?: typeof xoaDonCho; /** Bỏ sửa hoá đơn đã mở lại. */ boSua?: typeof boSuaHoaDon; nhapBanDau?: DonNhapRut[];
   /** Đang sửa một hoá đơn đã chốt (đã mở lại về nháp): chỉ áp vào đơn đầu tiên. */ suaHd?: SuaHoaDon | null;
   /** "Chờ thanh toán": đơn đang xử lý của chi nhánh. */ dsCho?: typeof dsDonCho;
   /** Có quyền sửa danh mục: hiện ô "Tạo thẻ / dịch vụ / sản phẩm mới" cuối lưới như SalonHero. */ taoMoi?: boolean;
@@ -109,9 +109,26 @@ export function Pos(props: PropsPos) {
     setDangXem(k);
     setMoNhap(false);
   };
-  const xoaMotNhap = (n: DonNhapRut) => {
-    if (!window.confirm(`Xoá đơn nháp${n.khach ? ` của ${n.khach.ho_ten}` : ""}?`)) return;
-    void props.xoaNhap(n.id).then((r) => { if ("loi" in r && r.loi) window.alert(r.loi); else lamMoiNhap(); });
+  // Xoá đơn nháp như SalonHero "Huỷ đơn": hộp hỏi lại có ô lý do (bấm Huỷ = thôi). Đơn đang mở ở tab thì đóng luôn tab đó.
+  const xoaMotNhap = (n: { id: string; khach: string; soDong: number }) => {
+    const lyDo = window.prompt(`Xoá đơn nháp của ${n.khach} (${n.soDong} dòng)? Đơn nháp chưa thu tiền nên xoá hẳn, không khôi phục được. Lý do xoá (không bắt buộc):`, "");
+    if (lyDo === null) return;
+    const xoa = props.xoaCho ? props.xoaCho(n.id, lyDo) : props.xoaNhap(n.id);
+    void xoa.then((r) => {
+      if ("loi" in r && r.loi) { window.alert(r.loi); return; }
+      const tab = ds.find((t) => t.nhap?.id === n.id);
+      if (tab) bo(tab.k);
+      lamMoiNhap(); if (moCho) taiCho();
+    });
+  };
+  // Hoá đơn đã mở lại để sửa: "Xoá" = bỏ sửa, hoá đơn về đã chốt như cũ (không xoá hoá đơn).
+  const boSuaMot = (n: { id: string; ma?: string; khach: string }) => {
+    if (!props.boSua || !window.confirm(`Bỏ sửa hoá đơn ${n.ma ?? ""} (${n.khach})? Hoá đơn trở về đã chốt như trước khi mở lại: khoản thu, xoá nợ, thẻ, kho ghi lại y như cũ. Những thay đổi chưa chốt sẽ bỏ.`)) return;
+    void props.boSua(n.id).then((r) => {
+      if ("loi" in r && r.loi) { window.alert(r.loi); return; }
+      taiCho();
+      if (props.suaHd?.id === n.id) router.push(`/hoa-don/${n.id}`);
+    });
   };
   const dong = (k: number) => {
     const t = ds.find((x) => x.k === k);
@@ -193,7 +210,7 @@ export function Pos(props: PropsPos) {
               {nhap.map((n) => (
                 <li key={n.id} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[14px]">
                   <span><span className="text-muc">{n.khach?.ho_ten ?? "Khách lẻ"}</span> <span className="text-muc-3">· {n.dong.length} dòng · {new Date(n.capNhat).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}</span></span>
-                  <span className="flex gap-4"><button type="button" onClick={() => moLaiNhap(n)} className={NUT_CHU}>Mở</button><button type="button" onClick={() => xoaMotNhap(n)} className="text-loi hover:underline">Xoá</button></span>
+                  <span className="flex gap-4"><button type="button" onClick={() => moLaiNhap(n)} className={NUT_CHU}>Mở</button><button type="button" onClick={() => xoaMotNhap({ id: n.id, khach: n.khach?.ho_ten ?? "Khách lẻ", soDong: n.dong.length })} className="text-loi hover:underline">Xoá</button></span>
                 </li>
               ))}
             </ul>
@@ -208,7 +225,12 @@ export function Pos(props: PropsPos) {
               {dsChoTai.map((n) => (
                 <li key={`${n.loai}-${n.id}`} className="flex flex-wrap items-center justify-between gap-2 py-2 text-[14px]">
                   <span><span className="text-muc">{n.khach}</span> <span className="text-muc-3">· {n.loai === "sua" ? `đang sửa ${n.ma}` : `${n.soDong} dòng`}{n.nguoiLap ? ` · ${n.nguoiLap}` : ""}{n.capNhat ? ` · ${new Date(n.capNhat).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })}` : ""}</span></span>
-                  {n.loai === "sua" ? <Link href={`/ban-hang?sua=${n.id}`} className={NUT_CHU}>Mở</Link> : n.nhap && <button type="button" onClick={() => { moLaiNhap(n.nhap!); setMoCho(false); }} className={NUT_CHU}>Mở</button>}
+                  <span className="flex gap-4">
+                    {n.loai === "sua" ? <Link href={`/ban-hang?sua=${n.id}`} className={NUT_CHU}>Mở</Link> : n.nhap && <button type="button" onClick={() => { moLaiNhap(n.nhap!); setMoCho(false); }} className={NUT_CHU}>Mở</button>}
+                    {n.coTheXoa && (n.loai === "sua"
+                      ? props.boSua && <button type="button" onClick={() => boSuaMot(n)} title="Bỏ sửa: hoá đơn về đã chốt như cũ" className="text-loi hover:underline">Bỏ sửa</button>
+                      : <button type="button" onClick={() => xoaMotNhap(n)} className="text-loi hover:underline">Xoá</button>)}
+                  </span>
                 </li>
               ))}
             </ul>

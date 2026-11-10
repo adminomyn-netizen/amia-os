@@ -14,7 +14,7 @@ import { MucTrang } from "@/components/ui/MucTrang";
 import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
-import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, moLaiHoaDon, thuNo, xacNhanKeToan, boXacNhanKeToan } from "../actions";
+import { dieuChinhNo, ghiNhanVat, huyHoaDon, huyLanTraNo, luuDanhGia, moLaiHoaDon, boSuaHoaDonForm, thuNo, xacNhanKeToan, boXacNhanKeToan } from "../actions";
 import { maPhieuThu } from "@/lib/phieu-thu";
 import { luuDanhGiaSauDieuTri } from "../sau-dieu-tri-actions";
 import { KET_QUA_DG, LY_DO_KHONG_HAI_LONG, truongSauDieuTri } from "@/lib/sau-dieu-tri";
@@ -150,6 +150,10 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         )}
         {h.trang_thai === "nhap" && h.mo_lai_luc && coQuyen(nd, "ban.tao") && (
           <Link href={`/ban-hang?sua=${id}`} className={`${NUT_CHINH} inline-flex items-center`}>Tiếp tục sửa ở Thu ngân</Link>
+        )}
+        {h.trang_thai === "nhap" && h.mo_lai_luc && !h.la_lich_su && (coQuyen(nd, "ban.sua") || coQuyen(nd, "ban.huy")) && (
+          <NutHop kieu="phu" nguy nhan="Bỏ sửa" tieuDe="Bỏ sửa hoá đơn" xacNhan={`Bỏ sửa hoá đơn ${h.ma}? Hoá đơn trở về đã chốt như trước khi mở lại: các khoản thu, lần xoá nợ, thẻ đã bán và kho được ghi lại y như cũ (sổ chỉ ghi thêm). Những thay đổi chưa chốt ở Thu ngân sẽ bỏ. Đã thu thêm tiền sau khi mở lại thì không bỏ sửa được.`}
+            an={{ hoa_don_id: id }} nhanLuu="Bỏ sửa" action={boSuaHoaDonForm} />
         )}
         {h.trang_thai !== "huy" && coQuyen(nd, "ban.huy") && (
           <NutHop kieu="phu" nhan="Huỷ hoá đơn" tieuDe="Huỷ hoá đơn" moTa="Huỷ sẽ hoàn lại các khoản đã thu (kể cả thẻ tiền), thu hồi thẻ đã bán và trả kho. Không huỷ được nếu thẻ đã được dùng." an={{ hoa_don_id: id }} nhanLuu="Huỷ hoá đơn"

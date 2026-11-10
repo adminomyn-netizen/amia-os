@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { layBoSungThe } from "@/lib/the-bo-sung";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
@@ -398,7 +399,49 @@ export async function xoaDonNhap(id: string): Promise<{ ok: true } | { ok?: fals
   return { ok: true };
 }
 
-export type DonCho = { id: string; loai: "nhap" | "sua"; khach: string; soDong: number; nguoiLap: string; capNhat: string; ma?: string; nhap?: DonNhapRut };
+/** Nút "Xoá" ở khung Chờ thanh toán / Đơn nháp (chị Lâm 10/11/2026: "xoá đơn chứ em").
+ *  SalonHero: đơn chờ là DRAFT, bỏ bằng "Huỷ đơn" (quyền pos.void: Chủ, Kế toán, Nhà đầu tư) có hỏi lại + ô lý do. AMIA: người lập xoá được đơn nháp của mình,
+ *  đơn của người khác cần quyền ban.huy (= pos.void/pos.delete của SalonHero). Đơn nháp chỉ là bản dựng tạm (không thu tiền, không trừ kho/thẻ) nên xoá hẳn;
+ *  xoá xong ghi nhật ký kèm nguyên nội dung đơn để tra lại được. */
+export async function xoaDonCho(id: string, lyDo?: string): Promise<{ ok: true } | { ok?: false; loi: string }> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  if (!UUID_RE.test(id)) return { loi: "Đơn nháp không hợp lệ." };
+  const db = sb();
+  const { data: n } = await db.from("don_nhap").select("id, chi_nhanh_id, nguoi_lap_id, khach_id, tieu_de, dong, tao_luc, cap_nhat_luc").eq("id", id).maybeSingle();
+  if (!n || (nd.chiNhanhId && n.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy đơn (có thể đã được chốt hoặc xoá ở máy khác). Tải lại danh sách." };
+  if (n.nguoi_lap_id !== nd.nhanVienId && !coQuyen(nd, "ban.huy")) return { loi: "Chỉ người lập đơn hoặc người có quyền huỷ đơn (Chủ, Kế toán) mới xoá được đơn này." };
+  // Xoá trước (xác nhận đúng 1 dòng đã mất) rồi mới ghi nhật ký từ bản đã đọc, để không có dòng nhật ký "đã xoá" cho đơn vẫn còn.
+  const { data: da, error } = await db.from("don_nhap").delete().eq("id", n.id).select("id");
+  if (error) return { loi: thongBaoLoi(error) };
+  if (!da?.length) return { loi: "Đơn này đã được chốt hoặc xoá ở máy khác. Tải lại danh sách." };
+  const dong = lamSachDongNhap(n.dong);
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_don_nhap", doi_tuong: "don_nhap", doi_tuong_id: n.id,
+    chi_tiet: { ly_do: (lyDo ?? "").trim().slice(0, 300) || null, nguoi_lap_id: n.nguoi_lap_id, chi_nhanh_id: n.chi_nhanh_id, khach_id: n.khach_id, tieu_de: n.tieu_de, so_dong: dong.length, tao_luc: n.tao_luc, cap_nhat_luc: n.cap_nhat_luc, dong: n.dong } });
+  return { ok: true };
+}
+
+/** "Xoá" một hoá đơn đã mở lại để sửa trong khung Chờ thanh toán = BỎ SỬA: trả hoá đơn về đã chốt y như trước khi mở (không xoá hoá đơn đã chốt).
+ *  DB (bo_sua_hoa_don, 0328) ghi lại các khoản thu và lần xoá nợ mà lúc mở lại đã đảo, rồi chốt lại; sổ chỉ ghi thêm. Đã có khoản thu mới sau lúc mở thì DB chặn.
+ *  Quyền: ai được mở lại để sửa (ban.sua) hoặc được huỷ hoá đơn (ban.huy). */
+export async function boSuaHoaDon(id: string): Promise<{ ok: true; ma: string } | { ok?: false; loi: string }> {
+  const nd = await kiemQuyen("ban.tao");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  if (!coQuyen(nd, "ban.sua") && !coQuyen(nd, "ban.huy")) return { loi: "Chỉ người có quyền sửa hoặc huỷ hoá đơn (Quản lý, Kế toán, Chủ) mới bỏ sửa được." };
+  if (!UUID_RE.test(id)) return { loi: "Hoá đơn không hợp lệ." };
+  const db = sb();
+  const { data: h } = await db.from("hoa_don").select("chi_nhanh_id, ma").eq("id", id).maybeSingle();
+  if (!h || (nd.chiNhanhId && h.chi_nhanh_id !== nd.chiNhanhId)) return { loi: "Không tìm thấy hoá đơn." };
+  const { error } = await db.rpc("bo_sua_hoa_don", { p_id: id, p_nguoi: nd.nhanVienId });
+  if (error) return { loi: thongBaoLoi(error) };
+  revalidatePath(`/hoa-don/${id}`);
+  revalidatePath("/hoa-don");
+  revalidatePath("/ban-hang");
+  revalidatePath("/bao-cao");
+  return { ok: true, ma: h.ma };
+}
+
+export type DonCho = { id: string; loai: "nhap" | "sua"; khach: string; soDong: number; nguoiLap: string; capNhat: string; ma?: string; nhap?: DonNhapRut; /** Người đang xem được bấm Xoá / Bỏ sửa (tính ở máy chủ). */ coTheXoa: boolean };
 /** "Chờ thanh toán" như SalonHero: các đơn đang xử lý (chưa thanh toán) của chi nhánh — đơn nháp của mọi thu ngân + hoá đơn đã mở lại để sửa. */
 export async function dsDonCho(chiNhanhId: string): Promise<DonCho[]> {
   const nd = await kiemQuyen("ban.tao");
@@ -411,13 +454,14 @@ export async function dsDonCho(chiNhanhId: string): Promise<DonCho[]> {
   const [{ data: n }, { data: h }, { data: nv }] = await Promise.all([qn, qh, db.from("nhan_vien").select("id, ho_ten")]);
   const ten = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
   const xemSdt = coQuyen(nd, "khach.sdt");
+  const huy = coQuyen(nd, "ban.huy");
   return [
     ...(n ?? []).map((r) => {
       const k = r.khach_hang as unknown as { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string } | null;
       const khach = k ? { id: k.id, ma: k.ma, ho_ten: k.ho_ten, dien_thoai: xemSdt ? k.dien_thoai : "", nguoi_phu_trach_id: k.nguoi_phu_trach_id } : null;
       const dong = lamSachDongNhap(r.dong);
-      return { id: r.id, loai: "nhap" as const, khach: k?.ho_ten ?? "Khách lẻ", soDong: dong.length, nguoiLap: ten.get(r.nguoi_lap_id) ?? "", capNhat: r.cap_nhat_luc, nhap: { id: r.id, tieuDe: r.tieu_de ?? "", khach, dong, capNhat: r.cap_nhat_luc } };
+      return { id: r.id, loai: "nhap" as const, khach: k?.ho_ten ?? "Khách lẻ", soDong: dong.length, nguoiLap: ten.get(r.nguoi_lap_id) ?? "", capNhat: r.cap_nhat_luc, coTheXoa: r.nguoi_lap_id === nd.nhanVienId || huy, nhap: { id: r.id, tieuDe: r.tieu_de ?? "", khach, dong, capNhat: r.cap_nhat_luc } };
     }),
-    ...(h ?? []).map((r) => ({ id: r.id, loai: "sua" as const, khach: (r.khach_hang as unknown as { ho_ten: string } | null)?.ho_ten ?? "Khách lẻ", soDong: 0, nguoiLap: ten.get(r.nguoi_lap_id ?? "") ?? "", capNhat: r.mo_lai_luc ?? "", ma: r.ma })),
+    ...(h ?? []).map((r) => ({ id: r.id, loai: "sua" as const, khach: (r.khach_hang as unknown as { ho_ten: string } | null)?.ho_ten ?? "Khách lẻ", soDong: 0, nguoiLap: ten.get(r.nguoi_lap_id ?? "") ?? "", capNhat: r.mo_lai_luc ?? "", ma: r.ma, coTheXoa: huy || coQuyen(nd, "ban.sua") })),
   ];
 }

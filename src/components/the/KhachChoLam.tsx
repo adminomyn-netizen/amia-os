@@ -35,11 +35,13 @@ function NutBatDau({ id, onDoi }: { id: string; onDoi?: () => Promise<void> | vo
 }
 
 /** Một khách chờ làm: thông tin thu ngân chuyển + các nút của chuyên viên trị liệu. */
-function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe, qt, hienQt, dvCuaThe, onDoi, anKhach }: { r: BuoiCho; nhanVien: LuaChon[]; bacSi: LuaChon[]; thaoTac: boolean; coLienKetThe: boolean; /** Quy trình hôm nay của khách (gộp mọi lượt). */ qt?: QuyTrinhKhach; /** Lượt này hiện khối quy trình (chỉ một lượt mỗi khách). */ hienQt?: boolean;
+function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hienQt, dvCuaThe, onDoi, anKhach }: { r: BuoiCho; nhanVien: LuaChon[]; bacSi: LuaChon[]; thaoTac: boolean; /** Bấm được Kết thúc (chỉ chuyên viên trị liệu / Chủ). */ ketThuc: boolean; coLienKetThe: boolean; /** Quy trình hôm nay của khách (gộp mọi lượt). */ qt?: QuyTrinhKhach; /** Lượt này hiện khối quy trình (chỉ một lượt mỗi khách). */ hienQt?: boolean;
   /** Dịch vụ đổi được của thẻ: có thì hiện nút "Sửa dịch vụ / người làm". */ dvCuaThe?: (theId: string) => LuaChon[]; onDoi?: () => Promise<void> | void; /** Ẩn tên khách (đã biết khách, vd Hoá đơn dịch vụ). */ anKhach?: boolean }) {
   const [kq, setKq] = useState<KetQuaBuoi | null>(null);
   const mo = r.trangThai === "cho_lam" || r.trangThai === "dang_lam";
-  const nhan = NHAN[r.trangThai] ?? { chu: r.trangThai, kieu: "tram" as const };
+  const nhanGoc = NHAN[r.trangThai] ?? { chu: r.trangThai, kieu: "tram" as const };
+  // Thu ngân nhìn trạng thái sống: "Đang làm · bước 2/5" (chị Lâm 11/11/2026).
+  const nhan = r.trangThai === "dang_lam" && qt?.buoc.length ? { ...nhanGoc, chu: `${nhanGoc.chu} · bước ${qt.buoc.filter((b) => b.daTich).length}/${qt.buoc.length}` } : nhanGoc;
   return (
     <li className={`rounded-hop border bg-giay-sang px-4 py-3.5 ${r.trangThai === "dang_lam" ? "border-nhan" : "border-vien"} ${mo ? "" : "opacity-80"}`}>
       <div className="flex items-start justify-between gap-3">
@@ -68,12 +70,13 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe, qt, hienQt, dvCua
       {mo && thaoTac && (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           {r.trangThai === "cho_lam" && <NutBatDau id={r.id} onDoi={onDoi} />}
-          <NutHop kieu={r.trangThai === "dang_lam" ? "chinh" : "phu"} nhan="Kết thúc (trả khách)" tieuDe={`Kết thúc · ${r.khachTen}`} rong nhanLuu="Kết thúc, trừ 1 buổi"
+          {ketThuc ? <NutHop kieu={r.trangThai === "dang_lam" ? "chinh" : "phu"} nhan="Kết thúc (trả khách)" tieuDe={`Kết thúc · ${r.khachTen}`} rong nhanLuu="Kết thúc, trừ 1 buổi"
             moTa={`${r.dichVuTen} · thẻ ${r.theMa}. Bấm khi đã làm xong và trả khách: trừ 1 buổi của thẻ, ghi doanh thu của buổi và ra phiếu vật tư theo định mức để chuyên viên kiểm.${qt && qt.buoc.some((b) => !b.daTich) ? ` Còn ${qt.buoc.filter((b) => !b.daTich).length} bước quy trình chưa tích.` : ""}`}
             an={{ id: r.id }} truong={truongBuoi({ nhanVien, bacSi })}
             giaTri={{ nv_ids: r.nvIds, bac_si_id: r.bacSiId ?? "", tu_van_ids: r.tuVanIds, tu_van_tinh_trang: r.tuVanTinhTrang ?? "", tu_van_de_xuat: r.tuVanDeXuat ?? "", vung: r.vung, shot: r.shot, line: r.line,
               ghi_chu: r.ghiChu ?? "", ke_tiep_ngay: r.keTiepNgay ?? "", ke_tiep_noi_dung: r.keTiepNoiDung ?? "" }}
             action={async (fd) => { const k = await xongBuoiCho(fd); if (k.ok) { setKq(k); await onDoi?.(); } return k; }} />
+            : <span className="text-[13px] text-muc-3">Chuyên viên trị liệu bấm Kết thúc khi trả khách.</span>}
           {dvCuaThe && (() => { const dv = dvCuaThe(r.theId); const ds = dv.some((d) => d.gia_tri === r.dichVuId) ? dv : [{ gia_tri: r.dichVuId, nhan: r.dichVuTen }, ...dv]; return (
             <NutHop kieu="chu" nhan="Sửa dịch vụ / chuyên viên" tieuDe={`Sửa · ${r.dichVuTen}`} rong nhanLuu="Lưu"
               moTa="Đổi dịch vụ (trong thẻ), chuyên viên trị liệu hoặc bác sĩ trước khi làm. Chưa trừ buổi; Kết thúc mới trừ buổi theo nội dung đã sửa."
@@ -96,8 +99,8 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, coLienKetThe, qt, hienQt, dvCua
 }
 
 /** Danh sách khách thu ngân đã chuyển cho chuyên viên trị liệu. `thaoTac(r)` = người đang xem bấm được nút của dòng đó. */
-export function KhachChoLam({ ds, nhanVien, bacSi, thaoTacIds, coLienKetThe = true, trong, quyTrinh, dvCuaThe, onDoi, gon }: {
-  ds: BuoiCho[]; nhanVien: LuaChon[]; bacSi: LuaChon[]; /** id các lượt người đang xem thao tác được. */ thaoTacIds: string[]; coLienKetThe?: boolean; trong?: string;
+export function KhachChoLam({ ds, nhanVien, bacSi, thaoTacIds, ketThuc, coLienKetThe = true, trong, quyTrinh, dvCuaThe, onDoi, gon }: {
+  ds: BuoiCho[]; nhanVien: LuaChon[]; bacSi: LuaChon[]; /** id các lượt người đang xem thao tác được. */ thaoTacIds: string[]; /** Người đang xem bấm được Kết thúc (duocKetThucBuoi). */ ketThuc: boolean; coLienKetThe?: boolean; trong?: string;
   /** Quy trình hôm nay theo khách (0322). */ quyTrinh?: Record<string, QuyTrinhKhach>;
   /** Hoá đơn dịch vụ ở Thu ngân: sửa dòng, tải lại sau mỗi thao tác, một cột, ẩn tên khách. */ dvCuaThe?: (theId: string) => LuaChon[]; onDoi?: () => Promise<void> | void; gon?: boolean;
 }) {
@@ -106,5 +109,5 @@ export function KhachChoLam({ ds, nhanVien, bacSi, thaoTacIds, coLienKetThe = tr
   // Khối quy trình hiện ở MỘT lượt mỗi khách (ưu tiên lượt đang làm): khách làm nhiều thẻ thì bước chung không lặp.
   const hienO = new Map<string, string>();
   for (const r of [...ds].sort((a, b) => Number(b.trangThai === "dang_lam") - Number(a.trangThai === "dang_lam"))) if (!hienO.has(r.khachId)) hienO.set(r.khachId, r.id);
-  return <ul className={gon ? "grid gap-3" : "grid gap-3 lg:grid-cols-2"}>{ds.map((r) => <TheKhach key={r.id} r={r} nhanVien={nhanVien} bacSi={bacSi} thaoTac={cho.has(r.id)} coLienKetThe={coLienKetThe} qt={quyTrinh?.[r.khachId]} hienQt={hienO.get(r.khachId) === r.id} dvCuaThe={dvCuaThe} onDoi={onDoi} anKhach={gon} />)}</ul>;
+  return <ul className={gon ? "grid gap-3" : "grid gap-3 lg:grid-cols-2"}>{ds.map((r) => <TheKhach key={r.id} r={r} nhanVien={nhanVien} bacSi={bacSi} thaoTac={cho.has(r.id)} ketThuc={ketThuc} coLienKetThe={coLienKetThe} qt={quyTrinh?.[r.khachId]} hienQt={hienO.get(r.khachId) === r.id} dvCuaThe={dvCuaThe} onDoi={onDoi} anKhach={gon} />)}</ul>;
 }

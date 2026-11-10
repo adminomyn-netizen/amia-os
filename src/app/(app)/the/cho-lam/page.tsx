@@ -1,5 +1,5 @@
 import { yeuCauQuyen } from "@/lib/auth";
-import { coQuyen } from "@/lib/quyen";
+import { coQuyen, duocKetThucBuoi } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
@@ -42,13 +42,13 @@ export default async function TrangKhachChoLam({ searchParams }: { searchParams:
         {dem("tra_lai") + dem("huy") > 0 && <span>Trả lại / không làm <b className="font-semibold text-loi">{dem("tra_lai") + dem("huy")}</b></span>}
       </p>
       <section aria-label="Khách đang chờ và đang làm" className="space-y-3">
-        <KhachChoLam ds={mo} nhanVien={nvLC} bacSi={bacSiLC} thaoTacIds={thaoTacIds} quyTrinh={quyTrinh}
+        <KhachChoLam ds={mo} nhanVien={nvLC} bacSi={bacSiLC} thaoTacIds={thaoTacIds} ketThuc={duocKetThucBuoi(nd)} quyTrinh={quyTrinh}
           trong={tab === "toi" ? "Chưa có khách nào chuyển cho bạn. Khi thu ngân chuyển, khách hiện ở đây và chuông thông báo sẽ báo." : "Chưa có khách nào đang chờ làm."} />
       </section>
       {dong.length > 0 && (
         <section aria-label="Đã xử lý hôm nay" className="mt-8 space-y-3">
           <h2 className="text-[15px] font-semibold text-muc">Đã xử lý hôm nay</h2>
-          <KhachChoLam ds={dong} nhanVien={nvLC} bacSi={bacSiLC} thaoTacIds={[]} />
+          <KhachChoLam ds={dong} nhanVien={nvLC} bacSi={bacSiLC} thaoTacIds={[]} ketThuc={false} />
         </section>
       )}
     </>

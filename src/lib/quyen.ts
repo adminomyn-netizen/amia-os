@@ -98,6 +98,11 @@ export type CoQuyen = { vaiTro: VaiTro; quyen: readonly Quyen[] };
 export const coQuyen = (nd: CoQuyen | null | undefined, q: Quyen) => !!nd && nd.quyen.includes(q);
 export const laVaiTro = (v: unknown): v is VaiTro => (VAI_TRO as readonly unknown[]).includes(v);
 
+/** Ai được bấm "Kết thúc (trả khách)" — bước trừ 1 buổi + ghi doanh thu buổi + ra phiếu vật tư (chị Lâm 11/11/2026: "để chuyên viên trị liệu kết thúc thôi").
+ *  Chỉ chuyên viên trị liệu (vai "ktv"); Chủ và Kỹ thuật giữ quyền để gỡ lượt kẹt. Thu ngân, Lễ tân, Tư vấn, Kế toán, Quản lý… không bấm được. */
+export const VAI_TRO_KET_THUC_BUOI: readonly VaiTro[] = ["ktv", "chu", "ky_thuat"];
+export const duocKetThucBuoi = (nd: { vaiTro: VaiTro } | null | undefined) => !!nd && VAI_TRO_KET_THUC_BUOI.includes(nd.vaiTro);
+
 /** Danh sách quyền Kỹ thuật được tích chọn cho từng người (không gồm quyền hệ thống), gom theo nhóm cho dễ đọc. */
 export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] = [
   { nhom: "Tổng quan", muc: [{ ma: "tongquan.xem", nhan: "Có dashboard (Tổng quan)" }] },

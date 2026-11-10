@@ -465,7 +465,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   // tải lại sau mỗi thao tác (Làm buổi này, Sửa, Bắt đầu, tích bước, Kết thúc, Trả lại).
   const [luotDv, setLuotDv] = useState<{ khachId: string } & NonNullable<Awaited<ReturnType<typeof luotDvCuaKhach>>> | null>(null);
   const khachDvId = kieu === "dich_vu" ? khach?.id ?? null : null;
-  const docLuotDv = useCallback((id: string) => luotDvCuaKhach(id).catch(() => null).then((r) => ({ khachId: id, ...(r ?? { ds: [], quyTrinh: {}, thaoTacIds: [] }) })), []);
+  const docLuotDv = useCallback((id: string) => luotDvCuaKhach(id).catch(() => null).then((r) => ({ khachId: id, ...(r ?? { ds: [], quyTrinh: {}, thaoTacIds: [], ketThuc: false }) })), []);
   const taiLuotDv = useCallback(async () => { if (khachDvId) setLuotDv(await docLuotDv(khachDvId)); }, [khachDvId, docLuotDv]);
   useEffect(() => {
     if (!khachDvId) return;
@@ -475,6 +475,15 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   }, [khachDvId, docLuotDv, taiLaiThe]);
   const luotKhach = khachDvId && luotDv?.khachId === khachDvId ? luotDv : null;
   const soLuotMo = luotKhach ? luotKhach.ds.filter((r) => r.trangThai === "cho_lam" || r.trangThai === "dang_lam").length : 0;
+  // Trạng thái sống của Hoá đơn dịch vụ (chị Lâm 11/11/2026): còn lượt chờ / đang làm thì 20 giây đọc lại một lần, chỉ khi tab đang mở.
+  useEffect(() => {
+    if (!khachDvId || soLuotMo === 0) return;
+    let t: ReturnType<typeof setInterval> | undefined;
+    const chay = () => { clearInterval(t); if (document.visibilityState === "visible") { taiLuotDv(); t = setInterval(taiLuotDv, 20_000); } };
+    const tre = setTimeout(chay, 20_000);
+    document.addEventListener("visibilitychange", chay);
+    return () => { clearTimeout(tre); clearInterval(t); document.removeEventListener("visibilitychange", chay); };
+  }, [khachDvId, soLuotMo, taiLuotDv]);
   useEffect(() => { onDoi(k, khach?.ho_ten ?? "", dong.length); }, [k, khach, dong.length, onDoi]);
 
   const theTien = khach ? theTienTai : [];
@@ -755,7 +764,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
               {!khach ? <p className="py-4 text-center text-[14px] text-muc-3">Chọn khách rồi bấm <b className="font-medium text-muc-2">Làm buổi này</b> ở dịch vụ khách đã mua bên trái.</p>
                 : !luotKhach ? <p className="py-4 text-center text-[14px] text-muc-3">Đang tải</p>
                 : luotKhach.ds.length === 0 ? <p className="py-4 text-center text-[14px] text-muc-3">Chưa lên dịch vụ nào hôm nay. Bấm <b className="font-medium text-muc-2">Làm buổi này</b> ở dịch vụ khách đã mua bên trái: khách vào danh sách chờ của chuyên viên trị liệu, chưa trừ buổi.</p>
-                : <KhachChoLam gon ds={luotKhach.ds} quyTrinh={luotKhach.quyTrinh} thaoTacIds={luotKhach.thaoTacIds} nhanVien={nvLC} bacSi={bacSiLC} onDoi={taiLuotDv}
+                : <KhachChoLam gon ds={luotKhach.ds} quyTrinh={luotKhach.quyTrinh} thaoTacIds={luotKhach.thaoTacIds} ketThuc={luotKhach.ketThuc} nhanVien={nvLC} bacSi={bacSiLC} onDoi={taiLuotDv}
                     dvCuaThe={(theId) => { const t = theKhach?.the.find((x) => x.id === theId); const dv = t ? dvMuc.filter((d) => t.dichVu.includes(d.gia_tri)) : []; return dv.length ? dv : dvMuc; }} />}
               {khach && <p className="mt-2.5 text-[12.5px] leading-relaxed text-muc-3">Chuyên viên trị liệu bấm Bắt đầu làm (xác nhận dịch vụ), tích từng bước, trả khách thì bấm <b className="font-medium text-muc-2">Kết thúc</b>: lúc đó mới trừ 1 buổi và ra phiếu vật tư.{soLuotMo > 0 && <> · <Link href="/the/cho-lam?tab=chi_nhanh" className="font-medium text-nhan-dam hover:underline">Khách chờ làm</Link></>}</p>}
               {dong.length > 0 && <p className="mt-3 text-[13px] font-semibold text-muc">Dịch vụ lẻ (tính tiền)</p>}

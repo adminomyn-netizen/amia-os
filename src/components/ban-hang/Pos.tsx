@@ -485,6 +485,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   const them = (m: MucBan) => {
     if (m.loai === "goi_the" && m.dichVu?.length) setLoc({ loai: "goi_the", id: m.id, ten: m.ten, dv: m.dichVu });
     else if (m.loai === "dich_vu") setLoc({ loai: "dich_vu", id: m.id, ten: m.ten, dv: [] });
+    else if (m.loai === "goi_the") setLoc(null); // thẻ mới không gắn danh sách dịch vụ: bỏ lọc của thẻ cũ
     setDong((ds) => {
       const i = ds.findIndex((d) => khoaDong(d) === khoaDong({ loai: m.loai, ref: m.id }));
       if (i >= 0) return ds.map((d, j) => (j === i ? { ...d, sl: d.sl + 1 } : d));
@@ -506,8 +507,14 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
   // Sắp xếp như SalonHero (Tên A-Z, giá thấp-cao, giá cao-thấp); xếp trong từng nhóm vì danh mục hiện theo nhóm.
   // Ô chọn mục chỉ hiện mục "Nơi hiển thị" có Thu ngân và cung cấp ở chi nhánh đang bán (dòng đã có trong đơn vẫn giữ).
   const mucHien = useMemo(() => muc.filter((m) => hienOThuNgan(m, cnId)), [muc, cnId]);
-  const locTab = loc && ((tab === "dich_vu" && loc.loai === "goi_the") || (tab === "goi_the" && loc.loai === "dich_vu")) ? loc : null;
-  const hopLoc = (m: MucBan) => !locTab || (locTab.loai === "goi_the" ? locTab.dv.includes(m.id) : !!m.dichVu?.includes(locTab.id));
+  // Lọc theo thẻ/dịch vụ chỉ còn hiệu lực khi mục đó VẪN nằm trong giỏ (bỏ khỏi giỏ / đổi đơn là tự hết lọc).
+  const locCon = loc && dong.some((d) => d.loai === loc.loai && d.ref === loc.id) ? loc : null;
+  const locCho = (t: string) => (locCon && ((t === "dich_vu" && locCon.loai === "goi_the") || (t === "goi_the" && locCon.loai === "dich_vu")) ? locCon : null);
+  const locTab = locCho(tab);
+  const hopLocTab = (t: string, m: MucBan) => { const l = locCho(t); return !l || (l.loai === "goi_the" ? l.dv.includes(m.id) : !!m.dichVu?.includes(l.id)); };
+  const hopLoc = (m: MucBan) => hopLocTab(tab, m);
+  // Số trên mỗi tab = số mục đang hiện được (theo ô tìm + lọc thẻ), không phải tổng cố định.
+  const demTab = (t: string) => mucHien.filter((m) => m.loai === t && hopLocTab(t, m) && khopMuc(m, tu)).length;
   const dsMuc = mucHien.filter((m) => m.loai === tab && hopLoc(m) && khopMuc(m, tu))
     .sort((a, b) => (sapXep === "gia_tang" ? a.gia - b.gia : sapXep === "gia_giam" ? b.gia - a.gia : sapXep === "moi_nhat" ? (b.tao ?? "").localeCompare(a.tao ?? "") : 0) || a.ten.localeCompare(b.ten, "vi"));
   const nhomMuc = [...new Set(dsMuc.map((m) => m.nhom))];
@@ -601,7 +608,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
         <div className="flex gap-1 overflow-x-auto border-b border-vien [scrollbar-width:none] lg:mt-5 [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Danh mục bán">
           {LOAI_TAB.map((t) => (
             <button key={t.ma} type="button" role="tab" aria-selected={tab === t.ma} onClick={() => setTab(t.ma)}
-              className={`-mb-px flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-2.5 py-2.5 text-[14px] lg:gap-2 lg:px-4 ${tab === t.ma ? "border-nhan font-semibold text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}><span className="lg:hidden">{t.ngan}</span><span className="max-lg:hidden">{t.ten}</span><span className={`rounded-tag px-1.5 py-0.5 text-[11px] tabular-nums ${tab === t.ma ? "bg-nhan-dam text-giay" : "bg-giay-tram text-muc-3"}`}>{mucHien.filter((m) => m.loai === t.ma).length}</span></button>
+              className={`-mb-px flex shrink-0 items-center gap-1 whitespace-nowrap border-b-2 px-2.5 py-2.5 text-[14px] lg:gap-2 lg:px-4 ${tab === t.ma ? "border-nhan font-semibold text-nhan-dam" : "border-transparent text-muc-3 hover:text-muc"}`}><span className="lg:hidden">{t.ngan}</span><span className="max-lg:hidden">{t.ten}</span><span className={`rounded-tag px-1.5 py-0.5 text-[11px] tabular-nums ${tab === t.ma ? "bg-nhan-dam text-giay" : "bg-giay-tram text-muc-3"}`}>{demTab(t.ma)}</span></button>
           ))}
         </div>
         <div className="mt-2 grid grid-cols-[1fr_auto] items-center gap-2 lg:mt-4">

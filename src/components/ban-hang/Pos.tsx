@@ -745,7 +745,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
             {kieu === "dich_vu"
               ? <span className="flex items-center gap-2"><Sparkles aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Hoá đơn dịch vụ</span>
               : <span className="flex items-center gap-2"><ShoppingBag aria-hidden strokeWidth={1.7} className="h-[18px] w-[18px]" />Đơn hàng</span>}
-            <span className="rounded-tag bg-white/15 px-2 py-0.5 text-[12px] font-medium tabular-nums">{kieu === "dich_vu" ? `${(luotKhach?.ds.length ?? 0) + dong.reduce((t, d) => t + d.sl, 0)} dịch vụ` : `${dong.reduce((t, d) => t + d.sl, 0)} mục`}</span>
+            <span className="rounded-tag bg-white/15 px-2 py-0.5 text-[12px] font-medium tabular-nums">{kieu === "dich_vu" ? `${(luotKhach?.ds.filter((r) => r.trangThai !== "tra_lai" && r.trangThai !== "huy").length ?? 0) + dong.reduce((t, d) => t + d.sl, 0)} dịch vụ` : `${dong.reduce((t, d) => t + d.sl, 0)} mục`}</span>
           </h2>
           {/* Đơn làm dịch vụ (chị Thuý 10/11, chị Lâm 11/11): thu ngân lên đơn (Làm buổi này) → chuyên viên trị liệu Bắt đầu làm (xác nhận dịch vụ)
               → tích từng bước quy trình → Kết thúc khi trả khách (lúc đó mới trừ 1 buổi, ghi doanh thu buổi, ra phiếu vật tư). Dịch vụ lẻ tính tiền ở phần dưới. */}

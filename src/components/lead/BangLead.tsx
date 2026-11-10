@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Chon, type LuaChon } from "@/components/ui/Chon";
@@ -38,14 +38,15 @@ function OSua({ id, truong, giaTri, sua, so, nhan }: { id: string; truong: strin
 }
 
 /** Chế độ Bảng như Excel: dòng xanh đầu bảng gõ rồi Enter để tạo lead; sửa ô rồi rời ô là lưu. Bảng cuộn ngang trong khung trên màn hẹp. */
-export function BangLead({ dong, cot, lyDoThua, nguon, chiNhanh, ghi, them }: {
-  dong: DongLead[]; cot: CotNho[]; lyDoThua: LuaChon[]; nguon: LuaChon[]; chiNhanh: LuaChon[] | null; ghi: boolean; them: string;
+export function BangLead({ dong, cot, lyDoThua, nguon, nguonMoi, chiNhanh, ghi, them }: {
+  dong: DongLead[]; cot: CotNho[]; lyDoThua: LuaChon[]; nguon: LuaChon[]; nguonMoi: LuaChon[]; chiNhanh: LuaChon[] | null; ghi: boolean; them: string;
 }) {
   const router = useRouter();
   const gd = useDoiGiaiDoan(cot, lyDoThua);
   const [dang, bat] = useTransition();
   const [loi, setLoi] = useState("");
-  const trong = { ho_ten: "", sdt: "", email: "", gia_tri_du_kien: "", nguon_id: nguon[0]?.gia_tri ?? "", chi_nhanh_id: chiNhanh?.[0]?.gia_tri ?? "" };
+  const oTen = useRef<HTMLInputElement>(null);
+  const trong = { ho_ten: "", sdt: "", email: "", gia_tri_du_kien: "", nguon_id: nguonMoi[0]?.gia_tri ?? "", chi_nhanh_id: chiNhanh?.[0]?.gia_tri ?? "" };
   const [moi, setMoi] = useState(trong);
   const [nguonSua, setNguonSua] = useState<Record<string, string>>({});
   const tao = () => {
@@ -57,7 +58,7 @@ export function BangLead({ dong, cot, lyDoThua, nguon, chiNhanh, ghi, them }: {
       fd.set("nhan_ngay", "0");
       const kq = await taoLead(fd);
       if (kq.loi) setLoi(kq.loi);
-      else { setMoi({ ...trong, nguon_id: moi.nguon_id, chi_nhanh_id: moi.chi_nhanh_id }); router.refresh(); }
+      else { setMoi({ ...trong, nguon_id: moi.nguon_id, chi_nhanh_id: moi.chi_nhanh_id }); oTen.current?.focus(); router.refresh(); }
     });
   };
   const enter = (e: React.KeyboardEvent) => { if (e.key === "Enter") { e.preventDefault(); tao(); } };
@@ -81,14 +82,14 @@ export function BangLead({ dong, cot, lyDoThua, nguon, chiNhanh, ghi, them }: {
             {ghi && (
               <tr className="border-b border-vien bg-nhan-nhat/40" aria-label="Dòng nhập nhanh">
                 <td className="px-2 py-1.5 text-[12px] text-nhan-dam">Mới</td>
-                <td className="px-1 py-1.5"><input value={moi.ho_ten} onChange={(e) => setMoi({ ...moi, ho_ten: e.target.value })} onKeyDown={enter} placeholder="Họ tên" aria-label="Họ tên lead mới" className={O_MOI} /></td>
+                <td className="px-1 py-1.5"><input ref={oTen} value={moi.ho_ten} onChange={(e) => setMoi({ ...moi, ho_ten: e.target.value })} onKeyDown={enter} placeholder="Họ tên" aria-label="Họ tên lead mới" className={O_MOI} /></td>
                 <td className="px-1 py-1.5"><input value={moi.sdt} onChange={(e) => setMoi({ ...moi, sdt: e.target.value })} onKeyDown={enter} placeholder="Số điện thoại" inputMode="tel" aria-label="SĐT lead mới" className={O_MOI} /></td>
                 <td className="px-1 py-1.5"><input value={moi.email} onChange={(e) => setMoi({ ...moi, email: e.target.value })} onKeyDown={enter} placeholder="Email" type="email" aria-label="Email lead mới" className={O_MOI} /></td>
                 <td className="px-1 py-1.5">{chiNhanh ? <Chon nho ariaLabel="Chi nhánh lead mới" luaChon={chiNhanh} giaTri={moi.chi_nhanh_id} onDoi={(v) => setMoi({ ...moi, chi_nhanh_id: v })} /> : <span className="px-2 text-muc-3">—</span>}</td>
                 <td className="px-2 py-1.5 text-muc-3">{cot[0]?.ten}</td>
                 <td className="px-2 py-1.5 text-muc-3">—</td>
                 <td className="px-1 py-1.5"><input value={moi.gia_tri_du_kien} onChange={(e) => setMoi({ ...moi, gia_tri_du_kien: e.target.value })} onKeyDown={enter} placeholder="0" inputMode="numeric" aria-label="Giá trị dự kiến lead mới" className={`${O_MOI} text-right`} /></td>
-                <td className="px-1 py-1.5"><Chon nho ariaLabel="Nguồn lead mới" luaChon={nguon} giaTri={moi.nguon_id} onDoi={(v) => setMoi({ ...moi, nguon_id: v })} /></td>
+                <td className="px-1 py-1.5"><Chon nho ariaLabel="Nguồn lead mới" luaChon={nguonMoi} giaTri={moi.nguon_id} onDoi={(v) => setMoi({ ...moi, nguon_id: v })} /></td>
                 <td className="px-1 py-1.5" colSpan={2}><button type="button" disabled={dang} onClick={tao} className="nut-vang h-9 rounded-nho px-3 text-[13px] disabled:opacity-60">{dang ? "Đang lưu" : "Tạo (Enter)"}</button></td>
               </tr>
             )}

@@ -118,11 +118,22 @@ describe("Hộp Lead pipeline (0313)", () => {
     // Xong ở Nơi làm việc → tác vụ lead xong
     await q(`update cong_viec set trang_thai='xong' where id=$1`, [cv]);
     expect((await one<{ trang_thai: string }>(`select trang_thai from lead_tac_vu where id=$1`, [tv])).trang_thai).toBe("xong");
+    // Mở lại ở Nơi làm việc (nút Mở lại → moi, chấm Chưa đạt → dang_lam) → tác vụ lead mở lại (0315), có dòng thời gian
+    await q(`update cong_viec set trang_thai='moi' where id=$1`, [cv]);
+    expect(await one(`select trang_thai, dong_luc, dong_boi from lead_tac_vu where id=$1`, [tv])).toMatchObject({ trang_thai: "mo", dong_luc: null, dong_boi: null });
+    await q(`update cong_viec set trang_thai='xong' where id=$1`, [cv]);
+    await q(`update cong_viec set trang_thai='dang_lam' where id=$1`, [cv]);
+    expect((await one<{ trang_thai: string }>(`select trang_thai from lead_tac_vu where id=$1`, [tv])).trang_thai).toBe("mo");
+    await q(`update cong_viec set trang_thai='xong' where id=$1`, [cv]);
+    expect((await one<{ trang_thai: string }>(`select trang_thai from lead_tac_vu where id=$1`, [tv])).trang_thai).toBe("xong");
+    const nk = async () => (await q<{ noi_dung: string }>(`select noi_dung from lead_hoat_dong where lead_id=$1 and noi_dung like '%(ở Việc cần làm)%' order by tao_luc, id`, [id])).map((x) => x.noi_dung.split(" (")[0]);
+    expect((await nk()).sort()).toEqual(["Hoàn thành tác vụ", "Hoàn thành tác vụ", "Hoàn thành tác vụ", "Mở lại tác vụ", "Mở lại tác vụ"]);
     // Huỷ ở lead → việc huỷ
     const cv2 = (await one<{ id: string }>(`insert into cong_viec (tieu_de, nguoi_giao_id, nguoi_nhan_id) values ('Nhắn Zalo',$1,$2) returning id`, [NV.a, NV.b])).id;
     const tv2 = (await one<{ id: string }>(`insert into lead_tac_vu (lead_id, ten, giao_cho_id, cong_viec_id) values ($1,'Nhắn Zalo',$2,$3) returning id`, [id, NV.b, cv2])).id;
     await q(`update lead_tac_vu set trang_thai='huy' where id=$1`, [tv2]);
     expect((await one<{ trang_thai: string }>(`select trang_thai from cong_viec where id=$1`, [cv2])).trang_thai).toBe("huy");
+    expect(await nk()).toHaveLength(5); // đóng từ khung lead: không ghi trùng dòng "(ở Việc cần làm)"
     await q(`delete from lead_nguoi_ho_tro where lead_id=$1 and nhan_vien_id=$2`, [id, NV.b]);
   });
 

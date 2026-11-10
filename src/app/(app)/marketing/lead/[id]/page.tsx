@@ -166,7 +166,8 @@ export default async function TrangLeadChiTiet({ params, searchParams }: { param
       </The>
     );
   } else if (tab === "tac-vu") {
-    const { data: tv } = await db.from("lead_tac_vu").select("id, ten, giao_cho_id, han, trang_thai, nguon, cong_viec_id, tao_luc").eq("lead_id", id).order("trang_thai").order("tao_luc", { ascending: false });
+    const { data: tvDb } = await db.from("lead_tac_vu").select("id, ten, giao_cho_id, han, trang_thai, nguon, cong_viec_id, tao_luc").eq("lead_id", id).order("tao_luc", { ascending: false });
+    const tv = (tvDb ?? []).sort((a, b) => Number(a.trang_thai !== "mo") - Number(b.trang_thai !== "mo")); // tác vụ đang mở lên đầu (sắp theo chữ thì "huy" đứng trước "mo")
     noiDung = (
       <The tieuDe="Tác vụ" hanhDong={sua && <NutHop kieu="chu" nhan="Thêm tác vụ" tieuDe="Thêm tác vụ" moTa="Tác vụ hiện cả ở Nơi làm việc › Việc cần làm của người được giao."
         truong={[{ ten: "ten", nhan: "Tên tác vụ", loai: "chu", batBuoc: true, rong: true }, { ten: "giao_cho_id", nhan: "Giao cho", loai: "chon", batBuoc: true, luaChon: nguoiLead, ghiChu: "Chỉ người phụ trách hoặc người hỗ trợ lead." }, { ten: "han", nhan: "Hạn", loai: "ngay" }]}

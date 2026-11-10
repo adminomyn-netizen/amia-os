@@ -66,6 +66,7 @@ export default async function TrangLead({ searchParams }: { searchParams: Promis
       <>
         <BangLead dong={dong} cot={cot} lyDoThua={(lyDo ?? []).map((l) => ({ gia_tri: l.id, nhan: l.ten }))} ghi={ghi} them=""
           nguon={(nguon ?? []).map((n) => ({ gia_tri: n.id, nhan: n.hoat_dong ? n.ten : `${n.ten} (ngừng)` }))}
+          nguonMoi={(nguon ?? []).filter((n) => n.hoat_dong).map((n) => ({ gia_tri: n.id, nhan: n.ten }))}
           chiNhanh={nd.chiNhanhId ? null : (cn ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }))} />
         <ThanhTrang trang={trang} tong={count ?? 0} moi={MOI_TRANG} don="lead" luonHien gan={(t) => { const v = new URLSearchParams(u); if (t) v.set("trang", String(t)); return `/marketing/lead${v.size ? `?${v}` : ""}`; }} />
       </>

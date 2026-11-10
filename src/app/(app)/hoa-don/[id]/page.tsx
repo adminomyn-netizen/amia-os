@@ -44,6 +44,8 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   const idsDong = (dong ?? []).map((d) => d.id);
   const { data: chia } = idsDong.length ? await db.from("dong_nhan_vien").select("*").in("dong_id", idsDong) : { data: [] };
   const tenNv = new Map((nv ?? []).map((x) => [x.id, x.ho_ten]));
+  // Khoản thu chuyển từ SalonHero ghi người làm là tài khoản hệ thống, tên thu ngân thật nằm sau dấu "·" của ghi chú ("SalonHero PAYMENT · Trần Thị Thùy Dương"): in tên thật như SalonHero.
+  const nguoiThu = (id: string | null | undefined, ghiChu: string | null | undefined) => { const ten = tenNv.get(id ?? "") ?? ""; const m = ten.normalize("NFC").includes("SalonHero") ? /[·•]\s*([^·•]+)$/.exec(ghiChu ?? "") : null; return m ? m[1].trim() : ten; };
   // Đánh giá nhân viên: người đứng vai Phục vụ ở bất kỳ dòng nào của hoá đơn đã hoàn thành.
   const idPhucVu = [...new Set((chia ?? []).filter((c) => c.vai === "phuc_vu").map((c) => c.nhan_vien_id))];
   const { data: dgia } = h.trang_thai === "hoan_thanh" && idPhucVu.length ? await db.from("danh_gia_nhan_vien").select("nhan_vien_id, diem, y_kien").eq("hoa_don_id", id) : { data: [] };
@@ -93,7 +95,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
 
   return (
     <>
-      <TieuDeNoi tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)}{h.tao_luc ? ` ${gioVN(h.tao_luc)}` : ""} · lập bởi {nguoiLap}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}</span>}>
+      <TieuDeNoi tieuDe={h.ma} phu={<span className="flex flex-wrap items-center gap-2"><NhanTrangThai kieu={t.kieu}>{t.nhan}</NhanTrangThai><span>{ngayVN(h.ngay_hd)}{h.tao_luc ? ` ${gioVN(h.tao_luc)}` : ""} · lập bởi {nguoiLap}</span>{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{k?.dien_thoai && <a href={`tel:${k.dien_thoai}`} className="tabular-nums text-muc-2 hover:underline">{k.dien_thoai}</a>}</span>}>
         <Link href={`/in/hoa-don/${id}`} target="_blank" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In hoá đơn</Link>
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
@@ -147,7 +149,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         <MucTrang noi tieuDe="Sổ thu tiền">
           <Bang duLieu={tt ?? []} khoa={(r) => r.id} trong="Chưa thu khoản nào." cot={[
             { nhan: "Ngày", hienThi: (r) => ngayVN(r.ngay) }, { nhan: "Số phiếu", hienThi: (r) => <span className="tabular-nums">{maPhieuThu(r.so_phieu)}</span> }, { nhan: "Loại", hienThi: (r) => (r.loai === "thu" ? "Thu" : r.dao_cua_id ? "Huỷ trả nợ" : "Hoàn") }, { nhan: "Phương thức", hienThi: (r) => nhanKhoanThu(r.phuong_thuc, r.loai_vi) },
-            { nhan: "Ngân hàng nhận", hienThi: (r) => r.ngan_hang ?? "" }, { nhan: "Người thu", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
+            { nhan: "Ngân hàng nhận", hienThi: (r) => r.ngan_hang ?? "" }, { nhan: "Người thu", hienThi: (r) => nguoiThu(r.nguoi_id, r.ghi_chu) }, { nhan: "Ghi chú", hienThi: (r) => r.ghi_chu ?? "" },
             { nhan: "Số tiền", hienThi: (r) => <span className={r.loai === "hoan" ? "text-loi" : ""}>{r.loai === "hoan" ? "− " : ""}{tienVN(r.so_tien)}</span>, phai: true },
           ]} />
         </MucTrang>
@@ -158,7 +160,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
               { nhan: "Loại", hienThi: (r) => <span className={r.da_huy ? "text-muc-3 line-through" : "text-muc"}>{r.loai === "xoa_no" ? "Xoá nợ" : "Trả nợ"}</span> },
               { nhan: "Số phiếu", hienThi: (r) => (r.loai === "tra_no" ? <span className="tabular-nums">{maPhieuThu(r.so_phieu)}</span> : "") },
               { nhan: "Hình thức", hienThi: (r) => (r.phuong_thuc ? `${nhanKhoanThu(r.phuong_thuc, r.loai_vi)}${r.ngan_hang ? ` · ${r.ngan_hang}` : ""}` : "") },
-              { nhan: "Người làm", hienThi: (r) => tenNv.get(r.nguoi_id) ?? "" },
+              { nhan: "Người làm", hienThi: (r) => nguoiThu(r.nguoi_id, r.ly_do) },
               { nhan: "Ghi chú", hienThi: (r) => <span className="text-muc-2">{r.da_huy ? "Đã huỷ · " : ""}{r.ly_do ?? ""}</span> },
               { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={r.da_huy ? "text-muc-3 line-through" : ""}>{tienVN(r.so_tien)}</span> },
               { nhan: "", hienThi: (r) => (

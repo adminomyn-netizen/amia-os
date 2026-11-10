@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LinkNhe } from "@/components/ui/LinkNhe";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChevronLeft, CircleHelp, Search, X } from "lucide-react";
@@ -26,11 +26,11 @@ export function DauTrang({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, caiDat
             <ChevronLeft strokeWidth={1.8} className="h-5 w-5" aria-hidden />
           </button>
         )}
-        <Link href="/trang-chu" className="min-w-0 flex-1 truncate text-[17px] font-semibold text-muc">{tieuDe}</Link>
+        <LinkNhe href="/trang-chu" className="min-w-0 flex-1 truncate text-[17px] font-semibold text-muc">{tieuDe}</LinkNhe>
         <button type="button" onClick={() => setTim((x) => !x)} aria-label={tim ? "Đóng tìm kiếm" : "Tìm kiếm"} aria-expanded={tim} className="flex h-10 w-10 shrink-0 items-center justify-center rounded-vua text-muc-2 hover:bg-giay-tram">
           {tim ? <X strokeWidth={1.7} className="h-5 w-5" aria-hidden /> : <Search strokeWidth={1.7} className="h-5 w-5" aria-hidden />}
         </button>
-        <Link href="/huong-dan" aria-label="Hướng dẫn sử dụng" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-vua text-muc-2 hover:bg-giay-tram"><CircleHelp strokeWidth={1.7} className="h-5 w-5" aria-hidden /></Link>
+        <LinkNhe href="/huong-dan" aria-label="Hướng dẫn sử dụng" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-vua text-muc-2 hover:bg-giay-tram"><CircleHelp strokeWidth={1.7} className="h-5 w-5" aria-hidden /></LinkNhe>
         <ChuongThongBao />
         <MenuNguoiDung hoTen={hoTen} vaiTro={NHAN_VAI_TRO[vaiTro]} chucDanh={chucDanh} email={email} chiNhanh={chiNhanh} anh={anh} caiDat={caiDat} coSo={coSo} />
       </div>

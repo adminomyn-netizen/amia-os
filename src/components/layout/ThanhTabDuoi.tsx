@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LinkNhe } from "@/components/ui/LinkNhe";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Grid2x2, X } from "lucide-react";
@@ -37,10 +37,10 @@ export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
         {chinh.map((m) => {
           const Icon = m.icon;
           return (
-            <Link key={m.duong_dan} href={m.duong_dan} aria-current={dang(m.duong_dan) ? "page" : undefined}>
+            <LinkNhe key={m.duong_dan} href={m.duong_dan} aria-current={dang(m.duong_dan) ? "page" : undefined}>
               <Icon strokeWidth={1.7} className="h-[22px] w-[22px]" />
               <span>{m.ten.length > 11 ? m.ten.split(" ")[0] : m.ten}</span>
-            </Link>
+            </LinkNhe>
           );
         })}
         <button type="button" onClick={() => setMo(true)} aria-haspopup="dialog" aria-expanded={mo}>
@@ -74,11 +74,11 @@ export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
                         const Icon = m.icon, chon = dang(m.duong_dan);
                         return (
                           <li key={m.duong_dan}>
-                            <Link href={m.duong_dan} aria-current={chon ? "page" : undefined}
+                            <LinkNhe href={m.duong_dan} aria-current={chon ? "page" : undefined}
                               className={`flex h-full min-h-[92px] flex-col items-center justify-center gap-2 rounded-the border px-1.5 py-3 text-center text-[12.5px] font-medium leading-tight transition-colors active:scale-[0.98] ${chon ? "border-nhan bg-nhan-nhat text-nhan-dam" : "border-vien bg-giay-sang text-muc shadow-[0_1px_2px_rgba(6,26,23,0.05)]"}`}>
                               <span className={`flex h-10 w-10 items-center justify-center rounded-the ${chon ? "bg-nhan text-white" : `${SAC[0]} ${SAC[1]}`}`}><Icon strokeWidth={1.7} className="h-5 w-5" /></span>
                               {m.ten}
-                            </Link>
+                            </LinkNhe>
                           </li>
                         );
                       })}

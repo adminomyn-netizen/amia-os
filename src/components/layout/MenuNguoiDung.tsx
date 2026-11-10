@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { LinkNhe } from "@/components/ui/LinkNhe";
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, LogOut, Settings, UserCog } from "lucide-react";
 import { dangXuat } from "@/app/dang-nhap/actions";
@@ -82,9 +82,9 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
                 <span className="ml-auto text-muc-3" aria-hidden>›</span>
               </button>
             )}
-            <Link href="/tai-khoan" role="menuitem" onClick={() => setMo(false)} className="flex items-center gap-3 rounded-nho px-3 py-2.5 text-[14px] text-muc hover:bg-giay-tram">
+            <LinkNhe href="/tai-khoan" role="menuitem" onClick={() => setMo(false)} className="flex items-center gap-3 rounded-nho px-3 py-2.5 text-[14px] text-muc hover:bg-giay-tram">
               <UserCog strokeWidth={1.6} className="h-[18px] w-[18px] text-muc-3" aria-hidden />Thông tin cá nhân & đổi mật khẩu
-            </Link>
+            </LinkNhe>
           </div>
           <form action={dangXuat} className="border-t border-vien p-2">
             <button type="submit" role="menuitem" className="flex w-full items-center gap-3 rounded-nho px-3 py-2.5 text-left text-[14px] text-loi hover:bg-loi-nen">
@@ -107,7 +107,7 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
                   {g.the.map((t) => (
                     <li key={t.ten}>
                       {t.duongDan ? (
-                        <Link href={t.duongDan} onClick={() => setMoCD(false)} title={t.moTa} className="block rounded-nho px-2.5 py-2 text-[14px] text-muc hover:bg-giay-tram">{t.ten}</Link>
+                        <LinkNhe href={t.duongDan} onClick={() => setMoCD(false)} title={t.moTa} className="block rounded-nho px-2.5 py-2 text-[14px] text-muc hover:bg-giay-tram">{t.ten}</LinkNhe>
                       ) : (
                         <span className="flex flex-wrap items-center justify-between gap-x-2 rounded-nho px-2.5 py-2 text-[14px] text-muc-3"><span className="min-w-0">{t.ten}</span><span className="text-[11px]">Sắp có</span></span>
                       )}

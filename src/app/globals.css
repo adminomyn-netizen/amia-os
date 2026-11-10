@@ -192,7 +192,8 @@ body {
 }
 .the-noi-nang:hover { transform: translateY(-3px); box-shadow: var(--sang-vien), var(--bong-3); border-color: var(--the-vien-nang); }
 .the-noi-thap { box-shadow: var(--sang-vien), var(--bong-1); }
-.vao { animation: nang-len 480ms cubic-bezier(0.2, 0.7, 0.2, 1) both; }
+/* backwards (không giữ sau khi chạy xong): giữ "both" làm khung có transform mãi, hộp thoại fixed bên trong bị giam nhỏ (hộp đổi mật khẩu 10/11). */
+.vao { animation: nang-len 480ms cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
 @keyframes nang-len { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
 
 /* Thanh menu ngang (máy tính): nền tối thương hiệu, mục đang chọn gạch chân vàng đồng; bảng thả xuống là thẻ sáng. */

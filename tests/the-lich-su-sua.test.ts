@@ -25,6 +25,11 @@ describe("Lịch sử sửa thẻ (từ sổ cái)", () => {
     expect(kq[0]).toMatchObject({ nguoiId: "nv1", lyDo: "tranh chấp", thayDoi: [{ truong: "Tình trạng", cu: "Đang dùng", moi: "Đang khoá" }] });
     expect(kq[1].thayDoi[0]).toEqual({ truong: "Số buổi", cu: null, moi: "+2" });
   });
+
+  it("dòng điều chỉnh do đồng bộ SalonHero ghi rõ là máy ghi, không phải người sửa tay", () => {
+    const kq = lichSuSuaThe([{ id: 9, loai: "dieu_chinh", tao_luc: "2026-11-06T03:00:00Z", nguoi_id: "nv1", ghi_chu: "Đồng bộ số dư với SalonHero (đợt SH-DB-20261106)", so_buoi: -1, so_tien: 0 }], "lan");
+    expect(kq[0].viec).toBe("Đồng bộ từ SalonHero (máy ghi)");
+  });
 });
 
 describe("Màu tình trạng thẻ", () => {

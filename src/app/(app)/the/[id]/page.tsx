@@ -11,7 +11,8 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
-import { dieuChinhThe, doiTrangThaiThe, henBuoiKeTiep, huyBuoi, suaThe, thucHienBuoi, thuHoiThe } from "../actions";
+import { NutSuaThe } from "@/components/the/NutSuaThe";
+import { dieuChinhThe, doiTrangThaiThe, henBuoiKeTiep, huyBuoi, thucHienBuoi, thuHoiThe } from "../actions";
 import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
 import { lichSuSuaThe } from "@/lib/lich-su-sua-the";
 import { MAU_TRANG_THAI, NHAN_TRANG_THAI } from "@/lib/lich-hen";
@@ -44,6 +45,11 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
   const thieu = [...lichCuaThe].filter((x) => !(lichQua ?? []).some((l) => l.id === x) && !(lichToi ?? []).some((l) => l.id === x));
   const { data: lichThem } = thieu.length && xemLich ? await qLich().in("id", thieu) : { data: [] };
   const dsLich = [...(lichToi ?? []).map((l) => ({ ...l, toi: true })), ...[...(lichQua ?? []), ...(lichThem ?? [])].sort((a, b) => b.bat_dau.localeCompare(a.bat_dau)).map((l) => ({ ...l, toi: false }))];
+  // Lịch không ghi sẵn tên dịch vụ thì lấy từ lich_hen_dich_vu (như hồ sơ khách).
+  const idsThieuDv = dsLich.filter((l) => !l.dich_vu_ten).map((l) => l.id);
+  const { data: lhdv } = idsThieuDv.length ? await db.from("lich_hen_dich_vu").select("lich_id, dich_vu(ten)").in("lich_id", idsThieuDv) : { data: [] as { lich_id: string; dich_vu: { ten: string } | null }[] };
+  const dvLich = new Map<string, string[]>();
+  for (const d of lhdv ?? []) { const ten = (d.dich_vu as unknown as { ten: string } | null)?.ten; if (ten) dvLich.set(d.lich_id, [...(dvLich.get(d.lich_id) ?? []), ten]); }
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const dsSua = lichSuSuaThe(so ?? [], t.loai ?? "lan");
   const tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten]));
@@ -59,12 +65,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
       <TieuDeNoi tieuDe={t.ma ?? ""} phu={<span className="flex flex-wrap items-center gap-2"><span>{g?.ten}</span><NhanTinhTrangThe tt={t.tinh_trang} />{k && <Link href={`/khach-hang/${k.id}`} className="font-medium text-nhan-dam hover:underline">{k.ho_ten} · {k.ma}</Link>}{t.cap_tay && <NhanTrangThai kieu="cho">Cấp tay, không tính doanh thu</NhanTrangThai>}</span>}>
         {t.loai === "lan" && coQuyen(nd, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutBuoi theId={id} nhanVien={nvLC} bacSi={bsLC} dichVu={dvLC} action={thucHienBuoi} nhan="Thực hiện buổi" />}
         {t.loai === "lan" && coQuyen(nd, "the.thuchien") && (t.tinh_trang === "hoat_dong" || t.tinh_trang === "sap_het") && <NutHop kieu="phu" nhan="Hẹn buổi kế tiếp" tieuDe="Hẹn buổi kế tiếp" moTa="Ghi ngày + nội dung buổi sau và tạo nhắc ở hồ sơ khách. Không trừ buổi, không đổi tiền." an={{ the_id: id }} truong={[{ ten: "ke_tiep_ngay", nhan: "Ngày hẹn", loai: "ngay", batBuoc: true }, { ten: "ke_tiep_noi_dung", nhan: "Nội dung buổi kế tiếp", loai: "nhieu_dong", goiY: "Vd: làm vùng cổ, kiểm tra sau 2 tuần" }]} action={henBuoiKeTiep} />}
-        {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop nhan="Sửa thẻ" tieuDe={`Sửa thẻ ${t.ma ?? ""}`} rong
-          moTa="Như SalonHero: sửa hạn thẻ, đổi chủ thẻ, giá 1 buổi làm dịch vụ, ghi chú. Không đổi số buổi / số dư (muốn cộng trừ thì dùng Điều chỉnh số dư). Mỗi lần sửa ghi vào Lịch sử thẻ: ai sửa, lúc nào, cũ → mới."
-          an={{ the_id: id }} giaTri={{ han_dung: t.han_dung ?? "", khach: k?.ma ?? "", gia_tri_buoi: t.loai === "lan" ? Number(t.gia_tri_buoi ?? 0) : "", ghi_chu: t.ghi_chu ?? "" }}
-          truong={[{ ten: "han_dung", nhan: "Hạn thẻ", loai: "ngay", ghiChu: "Để trống = thẻ không hạn." }, { ten: "khach", nhan: "Chủ thẻ (mã khách hoặc số điện thoại)", loai: "chu", batBuoc: true, rong: true, ghiChu: "Đổi sang khách khác cùng chi nhánh để chuyển chủ thẻ." },
-            ...(t.loai === "lan" ? [{ ten: "gia_tri_buoi", nhan: "Giá 1 buổi làm dịch vụ", loai: "tien" as const, ghiChu: "Doanh thu ghi cho mỗi buổi làm từ nay về sau; buổi đã làm giữ nguyên." }] : []),
-            { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong", rong: true }, { ten: "ly_do", nhan: "Lý do sửa (không bắt buộc)", loai: "chu", rong: true }]} action={suaThe} />}
+        {dieuChinh && t.trang_thai !== "thu_hoi" && <NutSuaThe kieu="chinh" t={{ id, ma: t.ma ?? "", loai: t.loai ?? "lan", han_dung: t.han_dung, gia_tri_buoi: t.gia_tri_buoi, ghi_chu: t.ghi_chu }} maKhach={k?.ma ?? ""} />}
         {dieuChinh && <NutHop kieu="phu" nhan="Điều chỉnh số dư" tieuDe="Điều chỉnh thẻ" moTa="Cộng hoặc trừ (dùng số âm). Mọi điều chỉnh đều ghi lý do vào lịch sử." an={{ the_id: id }} truong={[{ ten: t.loai === "lan" ? "so_buoi" : "so_tien", nhan: t.loai === "lan" ? "Số buổi cộng/trừ (VD 2 hoặc -1)" : "Số tiền cộng/trừ (VD 500000 hoặc -200000)", loai: "chu", batBuoc: true, rong: true }, { ten: "ly_do", nhan: "Lý do", loai: "nhieu_dong", batBuoc: true }]} action={dieuChinhThe} />}
         {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="phu" nhan={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} tieuDe={t.trang_thai === "khoa" ? "Mở khoá thẻ" : "Khoá thẻ"} moTa={t.trang_thai === "khoa" ? "Cho phép dùng thẻ trở lại. Lý do được ghi vào lịch sử thẻ." : "Thẻ khoá không dùng được cho tới khi mở lại. Lý do được ghi vào lịch sử thẻ."} an={{ the_id: id, trang_thai: t.trang_thai === "khoa" ? "hoat_dong" : "khoa" }} truong={[{ ten: "ly_do", nhan: t.trang_thai === "khoa" ? "Lý do mở khoá" : "Lý do khoá", loai: "nhieu_dong", batBuoc: true, goiY: t.trang_thai === "khoa" ? "Vd: khách đã thanh toán đủ, xác nhận lại" : "Vd: khách tranh chấp hoá đơn, chờ chị Dung xác nhận" }]} nhanLuu="Xác nhận" action={doiTrangThaiThe} />}
         {dieuChinh && t.trang_thai !== "thu_hoi" && <NutHop kieu="chu" nguy nhan="Thu hồi thẻ" tieuDe={`Thu hồi thẻ ${t.ma ?? ""}`}
@@ -99,7 +100,7 @@ export default async function HoSoThe({ params }: { params: Promise<{ id: string
           <MucTrang noi tieuDe="Lịch hẹn của khách">
             <Bang duLieu={dsLich} khoa={(r) => r.id} trong="Khách chưa có lịch hẹn nào." cot={[
               { nhan: "Giờ hẹn", chinh: true, hienThi: (r) => <span className="tabular-nums">{ngayGioVN(r.bat_dau)}{r.toi && <span className="ml-2 text-[12px] font-medium text-nhan-dam">Sắp tới</span>}</span> },
-              { nhan: "Dịch vụ", hienThi: (r) => <span>{r.dich_vu_ten ?? ""}{lichCuaThe.has(r.id) && <span className="ml-2 inline-block rounded-tag bg-sac-luc-nen px-1.5 text-[12px] font-medium text-sac-luc">Đã trừ buổi thẻ này</span>}</span> },
+              { nhan: "Dịch vụ", hienThi: (r) => <span>{r.dich_vu_ten || (dvLich.get(r.id) ?? []).join(", ")}{lichCuaThe.has(r.id) && <span className="ml-2 inline-block rounded-tag bg-sac-luc-nen px-1.5 text-[12px] font-medium text-sac-luc">Đã trừ buổi thẻ này</span>}</span> },
               { nhan: "Người làm", hienThi: (r) => tenNv.get(r.nhan_vien_id ?? "") ?? r.nhan_vien_ten ?? "" },
               { nhan: "Trạng thái", hienThi: (r) => <span className={`inline-block rounded-tag px-2 py-0.5 text-[12px] font-medium ${MAU_TRANG_THAI[r.trang_thai]?.chip ?? "bg-giay-tram text-muc-2"}`}>{NHAN_TRANG_THAI[r.trang_thai] ?? r.trang_thai}</span> },
               { nhan: "", hienThi: (r) => { const d = ngayCuaIso(r.bat_dau); return <Link href={`/lich-hen?tu=${d}&den=${d}&ngay=${d}&cn=${r.chi_nhanh_id}&q=${encodeURIComponent(r.ma_dat_lich ?? "")}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Mở lịch</Link>; } },

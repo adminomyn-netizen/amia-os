@@ -34,7 +34,7 @@ function ThanhTienDo({ t }: { t: DuLieuKhoiThe }) {
 }
 
 /** Một thẻ khách dạng khối: hiện NGAY đủ thông tin chính + nút thao tác, không phải bấm vào mới thấy (chị Lâm 10/11).
- *  Dùng ở /the, hồ sơ khách (tab Thẻ dịch vụ); `nut` là các nút thao tác (Dùng buổi, Gia hạn…), luôn kèm "Sửa · Lịch sử" mở hồ sơ thẻ. */
+ *  Dùng ở /the, hồ sơ khách (tab Thẻ dịch vụ); `nut` là các nút thao tác (Dùng buổi, Gia hạn…), luôn kèm "Lịch sử thẻ" mở hồ sơ thẻ. */
 export function KhoiThe({ t, nut, an }: { t: DuLieuKhoiThe; nut?: React.ReactNode; an?: { khach?: boolean } }) {
   const dong = (nhan: string, giaTri: React.ReactNode) => <div className="flex justify-between gap-3"><dt className="text-muc-3">{nhan}</dt><dd className="min-w-0 text-right text-muc [overflow-wrap:anywhere]">{giaTri}</dd></div>;
   return (
@@ -51,13 +51,13 @@ export function KhoiThe({ t, nut, an }: { t: DuLieuKhoiThe; nut?: React.ReactNod
       <dl className="space-y-1 text-[12.5px]">
         {dong("Ngày mua", ngayVN(t.ngayCap) || "—")}
         {dong("Hạn dùng", ngayVN(t.han) || "Không hạn")}
-        {t.loai === "lan" && dong("Lần làm gần nhất", t.lanGan ? <>{ngayVN(t.lanGan.ngay)}{t.lanGan.dv ? ` · ${t.lanGan.dv}` : ""}{t.lanGan.nv ? ` · ${t.lanGan.nv}` : ""}</> : "Chưa làm")}
+        {t.loai === "lan" && dong("Lần làm gần nhất", t.lanGan ? <>{ngayVN(t.lanGan.ngay)}{t.lanGan.dv ? ` · ${t.lanGan.dv}` : ""}{t.lanGan.nv ? ` · ${t.lanGan.nv}` : ""}</> : (t.buoiTong ?? 0) > t.buoiCon ? "Trước khi chuyển sang AMIA OS" : "Chưa làm")}
         {dong("Lịch hẹn kế tiếp", t.lichToi ? ngayGioVN(t.lichToi) : "Chưa có")}
         {dong("Người phụ trách", t.phuTrach || "—")}
       </dl>
       <div className="mt-auto flex flex-wrap items-center justify-end gap-x-4 gap-y-1 border-t border-vien pt-2">
         {nut}
-        <Link href={`/the/${t.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Sửa · Lịch sử</Link>
+        <Link href={`/the/${t.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Lịch sử thẻ</Link>
       </div>
     </article>
   );

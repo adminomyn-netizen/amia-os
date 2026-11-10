@@ -27,6 +27,8 @@ export function tachSuaThe(ghiChu: string): { thayDoi: ThayDoi[]; lyDo: string |
   return { thayDoi, lyDo };
 }
 
+/** Dòng điều chỉnh do đợt chuyển / đồng bộ dữ liệu SalonHero ghi (không phải người sửa tay). */
+const DONG_BO = ["Số buổi đã dùng trước khi chuyển từ SalonHero", "Số buổi gốc chuyển từ SalonHero", "Đồng bộ số dư với SalonHero"];
 const dau = (n: number) => (n > 0 ? `+${n}` : String(n));
 const tien = (n: number) => `${n > 0 ? "+" : ""}${n.toLocaleString("vi-VN")}đ`;
 
@@ -41,7 +43,7 @@ export function lichSuSuaThe(so: DongSoCai[], loaiThe: string): DongSua[] {
       case "mo_khoa": return { ...goc, viec: "Mở khoá thẻ", thayDoi: [{ truong: "Tình trạng", cu: "Đang khoá", moi: "Đang dùng" }], lyDo: gc };
       case "thu_hoi": return { ...goc, viec: "Thu hồi thẻ", thayDoi: [{ truong: "Tình trạng", cu: null, moi: "Đã thu hồi" }], lyDo: gc };
       case "hoan_buoi": return { ...goc, viec: "Huỷ buổi, hoàn buổi", thayDoi: [{ truong: "Số buổi", cu: null, moi: dau(r.so_buoi) }], lyDo: gc };
-      default: return { ...goc, viec: "Điều chỉnh số dư", thayDoi: [loaiThe === "lan" ? { truong: "Số buổi", cu: null, moi: dau(r.so_buoi) } : { truong: "Số tiền", cu: null, moi: tien(Number(r.so_tien)) }], lyDo: gc };
+      default: return { ...goc, viec: DONG_BO.some((x) => (gc ?? "").startsWith(x)) ? "Đồng bộ từ SalonHero (máy ghi)" : "Điều chỉnh số dư", thayDoi: [loaiThe === "lan" ? { truong: "Số buổi", cu: null, moi: dau(r.so_buoi) } : { truong: "Số tiền", cu: null, moi: tien(Number(r.so_tien)) }], lyDo: gc };
     }
   });
 }

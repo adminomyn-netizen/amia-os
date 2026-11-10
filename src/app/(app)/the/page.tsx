@@ -7,6 +7,7 @@ import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { KhoiThe, LuoiThe } from "@/components/the/KhoiThe";
 import { layBoSungThe } from "@/lib/the-bo-sung";
+import { NutSuaThe } from "@/components/the/NutSuaThe";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { capTheTay, duKienHanThe, thucHienBuoi } from "./actions";
@@ -56,6 +57,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const tenK = new Map((ks ?? []).map((k) => [k.id, k]));
   const tenGoi = new Map((goi ?? []).map((g) => [g.id, g.ten]));
   const conNua = (the ?? []).length > so, ds = (the ?? []).slice(0, so);
+  const suaDuoc = coQuyen(nd, "the.dieuchinh");
   const bs = await layBoSungThe(ds.map((r) => ({ id: r.id ?? "", khach_id: r.khach_id, loai: r.loai })), nd.chiNhanhId);
   const lienKetThem = `/the?${new URLSearchParams({ tab, ...(sp.q ? { q: sp.q } : {}), ...(sp.het === "1" ? { het: "1" } : {}), so: String(so + 50) })}`;
   const nvLC = luaChonNhanVien(nv ?? []);
@@ -87,7 +89,8 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
             <KhoiThe key={r.id} t={{ id: r.id ?? "", ma: r.ma ?? "", ten: tenGoi.get(r.goi_id ?? "") ?? (r.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình"), loai: r.loai ?? "lan", tinhTrang: r.tinh_trang,
               buoiCon: Number(r.so_buoi_con ?? 0), buoiTong: r.so_buoi_tong == null ? null : Number(r.so_buoi_tong), soDu: Number(r.so_du_tien ?? 0), tongTien: r.tong_tien == null ? null : Number(r.tong_tien),
               ngayCap: r.ngay_cap, han: r.han_dung, khach: k ? { id: k.id, ten: k.ho_ten, ma: k.ma } : null, lanGan: bs.lanGan(r.id ?? ""), lichToi: bs.lichToi(r.khach_id), phuTrach: bs.phuTrach(r.khach_id) }}
-              nut={tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null} />
+              nut={<>{tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null}
+              {suaDuoc && r.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: r.id ?? "", ma: r.ma ?? "", loai: r.loai ?? "lan", han_dung: r.han_dung, gia_tri_buoi: r.gia_tri_buoi, ghi_chu: r.ghi_chu }} maKhach={k?.ma ?? ""} nhan="Sửa" />}</>} />
           ); })}
         </LuoiThe>
       )}

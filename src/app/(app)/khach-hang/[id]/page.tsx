@@ -14,6 +14,7 @@ import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
 import { KhoiThe, LuoiThe } from "@/components/the/KhoiThe";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { layBoSungThe } from "@/lib/the-bo-sung";
+import { NutSuaThe } from "@/components/the/NutSuaThe";
 import { thucHienBuoi } from "../../the/actions";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { TaiAnh } from "@/components/khach/TaiAnh";
@@ -179,7 +180,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     const tenGoi = new Map((goiTen ?? []).map((g) => [g.id as string, g.ten as string]));
     const hien = dsThe.filter((x) => khopLoc(x.tinh_trang, loc));
     // Mỗi thẻ hiện ra ngoài luôn (chị Lâm 10/11): tiến độ buổi, ngày mua, hạn, lần làm gần nhất, lịch kế tiếp, phụ trách + nút Dùng buổi ngay trên thẻ.
-    const dungBuoi = coQuyen(nd, "the.thuchien");
+    const dungBuoi = coQuyen(nd, "the.thuchien"), suaThe = coQuyen(nd, "the.dieuchinh");
     const [bsThe, { data: lkGoi }, { data: dvBuoi0 }] = await Promise.all([
       layBoSungThe(hien.map((x) => ({ id: x.id ?? "", khach_id: x.khach_id, loai: x.loai })), nd.chiNhanhId),
       dungBuoi && idsGoi.length ? db.from("goi_the_dich_vu").select("goi_id, dich_vu_id").in("goi_id", idsGoi) : Promise.resolve({ data: [] as { goi_id: string; dich_vu_id: string }[] }),
@@ -205,7 +206,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
               <KhoiThe key={x.id} an={{ khach: true }} t={{ id: x.id ?? "", ma: x.ma ?? "", ten: tenGoi.get(x.goi_id ?? "") ?? (x.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình"), loai: x.loai ?? "lan", tinhTrang: x.tinh_trang,
                 buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), soDu: Number(x.so_du_tien ?? 0), tongTien: x.tong_tien == null ? null : Number(x.tong_tien),
                 ngayCap: x.ngay_cap, han: x.han_dung, lanGan: bsThe.lanGan(x.id ?? ""), lichToi: bsThe.lichToi(x.khach_id), phuTrach: bsThe.phuTrach(x.khach_id) }}
-                nut={dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null} />
+                nut={<>{dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null}
+                {suaThe && x.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: x.id ?? "", ma: x.ma ?? "", loai: x.loai ?? "lan", han_dung: x.han_dung, gia_tri_buoi: x.gia_tri_buoi, ghi_chu: x.ghi_chu }} maKhach={k.ma ?? ""} nhan="Sửa" />}</>} />
             ))}
           </LuoiThe>
         )}

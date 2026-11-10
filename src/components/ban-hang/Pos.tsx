@@ -318,7 +318,7 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
       <div className="rounded-nho border border-vien px-3 py-2.5">
         <p className="mb-1.5 font-semibold text-muc">Thẻ khách đang có</p>
         {the === null ? <p className="text-muc-3">Đang tải</p> : the.length === 0 ? <p className="text-muc-3">Khách chưa có thẻ nào còn dùng được.</p> : (
-          <ul className="space-y-1.5">
+          <ul className="space-y-2 sm:max-h-[640px] sm:overflow-y-auto sm:pr-1" aria-label="Thẻ khách đang có">
             {the.map((t) => (
               <li key={t.id}>
                 {dungDuoc(t).length > 0 && <span className="mb-1 block rounded-tag bg-sac-xanh-nen px-2 py-0.5 text-[12px] font-medium text-sac-xanh">Trừ buổi được cho: {dungDuoc(t).join(", ")}</span>}

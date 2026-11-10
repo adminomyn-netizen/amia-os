@@ -317,7 +317,8 @@ export const xoaChiNhanh = async (fd: FormData) => xoaMuc("nhanvien.quanly", "ch
 
 /** Chỗ làm (giường/phòng) theo chi nhánh, như SalonHero: thuộc một khu, có sức chứa. Tên chỗ được ghi vào lich_hen.phong khi đặt lịch; tổng sức chứa các chỗ đang dùng là số khách tối đa cùng lúc để tính giờ trống. */
 export async function luuChoLam(fd: FormData): Promise<KQ> {
-  if (!(await kiemQuyen("danhmuc.sua"))) return { loi: KHONG_DU_QUYEN };
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
   const id = chuoi(fd, "id");
   const row = { chi_nhanh_id: chuoi(fd, "chi_nhanh_id"), ten: chuoi(fd, "ten").replace(/\s+/g, " "), khu: chuoi(fd, "khu").replace(/\s+/g, " ") || null, suc_chua: Math.trunc(so(fd, "suc_chua")) || 1, thu_tu: so(fd, "thu_tu") || 100, hoat_dong: bat(fd, "hoat_dong") };
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
@@ -330,7 +331,7 @@ export async function luuChoLam(fd: FormData): Promise<KQ> {
   if (error) return { loi: thongBaoLoi(error) };
   // Đổi tên chỗ: các lịch chưa diễn ra dùng tên cũ được đổi theo để lưới không tách thành hai hàng.
   const cu = chuoi(fd, "ten_cu");
-  if (id && cu && cu !== row.ten) await db.from("lich_hen").update({ phong: row.ten }).eq("chi_nhanh_id", row.chi_nhanh_id).eq("phong", cu).gte("bat_dau", new Date().toISOString());
+  if (id && cu && cu !== row.ten) await db.from("lich_hen").update({ phong: row.ten, sua_boi: nd.nhanVienId }).eq("chi_nhanh_id", row.chi_nhanh_id).eq("phong", cu).gte("bat_dau", new Date().toISOString());
   return xong();
 }
 export async function xoaChoLam(fd: FormData): Promise<KQ> {

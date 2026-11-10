@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Hop } from "@/components/ui/Hop";
 import { Chon, type LuaChon } from "@/components/ui/Chon";
@@ -17,9 +17,14 @@ import type { KhachDiCung } from "@/lib/lich-hen-nhom";
 import { KIEU_LAP, laKieuLap, LUA_CHON_NGUON, LUA_CHON_TRANG_THAI_DAT, nhanNguon, ngayLap, TOI_DA_BUOI_LAP } from "@/lib/lich-hen";
 import { ngayVN } from "@/lib/dinh-dang";
 import { coOChiNhanh } from "@/lib/ban-hang";
+import { goiYLoaiLich, LOAI_LICH, LUA_CHON_LOAI_LICH, type KhoaSua } from "@/lib/lich-hen-sua";
 
 type DV = { id: string; ma: string; ten: string; thoiLuong: number; /** "Nơi hiển thị" = chỉ thu ngân / ẩn. */ an?: boolean; /** "Địa điểm cung cấp": null = mọi chi nhánh. */ chiNhanhIds?: string[] | null };
-export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string; thoiLuong: number; nhanVienId: string; phong: string; nguon: string; ghiChu: string; dichVuIds: string[]; chiNhanhId: string; /** Khách 2, 3… của lịch nhiều khách. */ khachDiCung?: KhachDiCung[] };
+export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string; thoiLuong: number; nhanVienId: string; phong: string; nguon: string; ghiChu: string; dichVuIds: string[]; chiNhanhId: string; /** Khách 2, 3… của lịch nhiều khách. */ khachDiCung?: KhachDiCung[];
+  /** Loại lịch đang ghi (null với lịch cũ). */ loaiLich?: string;
+  /** Trường bị khoá theo trạng thái / hoá đơn (máy chủ tính, máy chủ cũng giữ nguyên các trường này). */ khoa?: KhoaSua;
+  /** Tên dịch vụ dạng chữ của lịch chuyển từ SalonHero chưa có dòng dịch vụ. */ dichVuTen?: string;
+  /** Tên chi nhánh / tên dịch vụ để hiện khi trường bị khoá. */ tenDichVu?: string };
 const LUA_CHON_LAP = [{ gia_tri: "", nhan: "Không lặp" }, ...Object.entries(KIEU_LAP).map(([gia_tri, k]) => ({ gia_tri, nhan: k.nhan }))];
 
 /** Ngày giờ hiện tại theo giờ Việt Nam, làm tròn lên 5 phút. */
@@ -58,13 +63,23 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   const [diCung, setDiCung] = useState<KhachDiCung[]>(sua?.khachDiCung ?? []);
   const [kieuLap, setKieuLap] = useState("");
   const [trangThai, setTrangThai] = useState("chua_xac_nhan");
-  const [ttk, setTtk] = useState<{ khachId: string; soLanDen: number; gioiThieu: string; maThe: string[] } | null>(null);
+  // Loại lịch (chị Lâm 10/11): bắt buộc khi đặt mới; tự gợi ý theo khách (còn thẻ liệu trình → Khách liệu trình; chưa từng có hoá đơn → Tư vấn khách mới) đến khi người dùng tự chọn.
+  const [loaiLich, setLoaiLich] = useState(sua?.loaiLich ?? "");
+  const [loaiGoiY, setLoaiGoiY] = useState(false);
+  const loaiTay = useRef(!!sua);
+  const khoa = sua?.khoa;
+  const [ttk, setTtk] = useState<{ khachId: string; soLanDen: number; gioiThieu: string; maThe: string[]; coTheLieuTrinh: boolean } | null>(null);
   useEffect(() => {
     if (!mo || !khach || !ttKhach) return;
     let huy = false;
-    ttKhach(khach.id).then((r) => { if (!huy && r) setTtk({ khachId: khach.id, ...r }); }).catch(() => undefined);
+    ttKhach(khach.id).then((r) => {
+      if (huy || !r) return;
+      setTtk({ khachId: khach.id, ...r });
+      if (!loaiTay.current) { const g = goiYLoaiLich(r); setLoaiLich(g); setLoaiGoiY(!!g); }
+    }).catch(() => undefined);
     return () => { huy = true; };
   }, [mo, khach, ttKhach]);
+  const chonLoai = (v: string) => { loaiTay.current = true; setLoaiGoiY(false); setLoaiLich(v); };
   const thongTinKhach = khach && ttk?.khachId === khach.id ? ttk : null;
   const [khoang, setKhoang] = useState("1");
   const [tongBuoi, setTongBuoi] = useState("4");
@@ -103,10 +118,11 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   };
   const gui = () => {
     setLoi("");
+    if (!sua && !loaiLich) { setLoi("Chọn loại lịch: tư vấn khách mới, khách liệu trình, dịch vụ lẻ, tái khám hay bảo hành."); return; }
     const fd = new FormData();
     if (sua) fd.set("id", sua.id);
     fd.set("khach_id", khach?.id ?? ""); fd.set("ngay", ngay); fd.set("gio", gio); fd.set("thoi_luong", phut); fd.set("nhan_vien_id", nv); fd.set("chi_nhanh_id", cn);
-    fd.set("phong", phong); fd.set("nguon", nguon); fd.set("ghi_chu", ghiChu);
+    fd.set("phong", phong); fd.set("nguon", nguon); fd.set("ghi_chu", ghiChu); fd.set("loai_lich", loaiLich);
     if (!sua) fd.set("trang_thai", trangThai);
     if (!sua && kieuLap) { fd.set("kieu_lap", kieuLap); fd.set("lap_khoang", khoang || "1"); fd.set("lap_tong", tongBuoi); }
     dvs.forEach((d) => fd.append("dich_vu_ids", d));
@@ -118,8 +134,15 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   return (
     <>
       <button type="button" className={kieu === "chinh" ? NUT_CHINH : NUT_CHU} onClick={() => setMo(true)}>{nhan}</button>
-      <Hop mo={mo} dong={() => setMo(false)} tieuDe={sua ? "Đổi lịch hẹn" : "Đặt lịch hẹn"} rong="rong">
+      <Hop mo={mo} dong={() => setMo(false)} tieuDe={sua ? "Sửa lịch hẹn" : "Đặt lịch hẹn"} rong="rong">
         <div className="space-y-4">
+          {khoa && khoa.lyDo.length > 0 && (
+            <div className="rounded-nho border border-canh-bao/40 bg-canh-bao-nen px-3 py-2.5 text-[13px] leading-snug text-canh-bao" role="note">
+              <p className="font-semibold">Một số trường đang khoá</p>
+              <ul className="mt-0.5 list-disc pl-4">{khoa.lyDo.map((x) => <li key={x}>{x}</li>)}</ul>
+              <p className="mt-0.5">Vẫn sửa được: người thực hiện, phòng / giường, nguồn, loại lịch, ghi chú.</p>
+            </div>
+          )}
           {!sua && (
             <div className="flex overflow-hidden rounded-nho border border-vien-dam" role="group" aria-label="Loại đặt lịch">
               {([["truoc", "Đặt lịch trước"], ["den", "Đến trực tiếp"]] as const).map(([ma, chu]) => (
@@ -130,7 +153,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
           <div>
             <div className="mb-1.5 flex items-center justify-between gap-3"><label className="block text-[13px] font-medium text-muc-2">Khách hàng <span className="text-loi">*</span></label>
               {taoKhach && !khach && !sua && <button type="button" className={NUT_CHU} onClick={() => setMoTaoKhach(!moTaoKhach)} aria-expanded={moTaoKhach}>{moTaoKhach ? "Đóng ô tạo khách" : "Tạo khách mới"}</button>}</div>
-            <ChonKhach khach={khach} onDoi={setKhach} tim={tim} />
+            {khoa?.khach ? <p className="rounded-nho border border-vien bg-giay-tram px-3 py-2 text-[14px] text-muc">{khach?.ho_ten}{khach?.ma ? ` · ${khach.ma}` : ""} <span className="text-[12px] text-muc-3">(khoá)</span></p> : <ChonKhach khach={khach} onDoi={setKhach} tim={tim} />}
             {thongTinKhach && (
               <p className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-muc-2" aria-live="polite">
                 {thongTinKhach.soLanDen > 0
@@ -141,9 +164,20 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
               </p>
             )}
           </div>
+          <fieldset>
+            <legend className="mb-1.5 text-[13px] font-medium text-muc-2">Loại lịch {!sua && <span className="text-loi">*</span>}{loaiGoiY && <span className="ml-2 text-[12px] font-normal text-muc-3">đã chọn sẵn theo khách, đổi được</span>}</legend>
+            <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Loại lịch">
+              {LUA_CHON_LOAI_LICH.map((l) => (
+                <button key={l.gia_tri} type="button" role="radio" aria-checked={loaiLich === l.gia_tri} onClick={() => chonLoai(l.gia_tri)}
+                  className={`min-h-10 rounded-nho border px-3 py-2 text-[13px] font-medium ${loaiLich === l.gia_tri ? "border-nhan bg-nhan text-white" : "border-vien-dam bg-giay-sang text-muc-2 hover:bg-giay-tram"}`}>{l.nhan}</button>
+              ))}
+            </div>
+            {loaiLich === "lieu_trinh" && <p className="mt-1 text-[12px] text-muc-3">{LOAI_LICH.lieu_trinh.nhan}: làm buổi theo thẻ liệu trình của khách.</p>}
+          </fieldset>
           {taoKhach && !khach && !sua && moTaoKhach && (
             <TaoKhachNhanh chiNhanhId={cn} nhanVien={nhanVien} macDinhNv={taoKhach.macDinhNv} tim={tim} action={taoKhach.action} nhom={taoKhach.nhom} ganNhom={taoKhach.ganNhom} onDong={() => setMoTaoKhach(false)} onXong={(k) => { setKhach(k); setMoTaoKhach(false); }} />
           )}
+          {khoa?.gio ? <p className="rounded-nho border border-vien bg-giay-tram px-3 py-2 text-[14px] text-muc">Giờ hẹn: <b className="font-medium">{gio} ngày {ngayVN(ngay)}</b> · {phut} phút <span className="text-[12px] text-muc-3">(khoá)</span></p> : <>
           <div className="grid gap-4 sm:grid-cols-3">
             <div><label className={NHAN_O}>Ngày</label><NgayChon giaTri={ngay} onDoi={setNgay} /></div>
             <div><label className={NHAN_O}>Giờ bắt đầu</label><GioChon key={gioKey} ariaLabel="Giờ bắt đầu" giaTriMacDinh={gio} onDoi={setGio} /></div>
@@ -160,20 +194,23 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
               {goiY?.gio.length && goiY.ghiChu ? <p className="mt-1.5 text-[12px] text-muc-3">{goiY.ghiChu}</p> : null}
             </div>
           )}
+          </>}
           <div>
             <label className={NHAN_O}>Dịch vụ <span className="text-loi">*</span></label>
-            <ChonNhieuDichVu ds={dsDv} tatCa={dichVu} chon={dvs} onDoi={doiDvs} />
+            {khoa?.dichVu
+              ? <p className="rounded-nho border border-vien bg-giay-tram px-3 py-2 text-[14px] text-muc">{dvs.map((d) => dichVu.find((x) => x.id === d)?.ten).filter(Boolean).join(", ") || sua?.dichVuTen || "Chưa ghi dịch vụ"} <span className="text-[12px] text-muc-3">(khoá)</span></p>
+              : <>{sua?.dichVuTen && dvs.length === 0 && <p className="mb-1.5 text-[12px] text-muc-3">Lịch chuyển từ SalonHero ghi: {sua.dichVuTen}</p>}<ChonNhieuDichVu ds={dsDv} tatCa={dichVu} chon={dvs} onDoi={doiDvs} /></>}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div><label className={NHAN_O}>Người thực hiện</label><Chon trong="Chưa phân" ariaLabel="Người thực hiện" giaTri={nv} onDoi={setNv} luaChon={[{ gia_tri: "", nhan: "Chưa phân" }, ...nhanVien]} /></div>
-            <div><label className={NHAN_O}>Chi nhánh</label><Chon ariaLabel="Chi nhánh" giaTri={cn} onDoi={setCn} luaChon={chiNhanh} /></div>
+            <div><label className={NHAN_O}>Chi nhánh</label>{khoa?.khach ? <p className="rounded-nho border border-vien bg-giay-tram px-3 py-2 text-[14px] text-muc">{chiNhanh.find((c) => c.gia_tri === cn)?.nhan ?? "—"}</p> : <Chon ariaLabel="Chi nhánh" giaTri={cn} onDoi={setCn} luaChon={chiNhanh} />}</div>
             {choCuaCn.length > 0
               ? <div><label className={NHAN_O}>Phòng / giường</label><Chon trong="Chưa xếp chỗ" ariaLabel="Phòng / giường" giaTri={phong} onDoi={setPhong} luaChon={[{ gia_tri: "", nhan: "Chưa xếp chỗ" }, ...(phong && !choCuaCn.includes(phong) ? [phong] : []).concat(choCuaCn).map((t) => ({ gia_tri: t, nhan: t }))]} /></div>
               : <div><label htmlFor="lh-phong" className={NHAN_O}>Phòng / giường</label><input id="lh-phong" value={phong} onChange={(e) => setPhong(e.target.value)} className={O_NHAP} /></div>}
             {!sua && <div><label className={NHAN_O}>Trạng thái</label><Chon ariaLabel="Trạng thái lúc tạo" giaTri={trangThai} onDoi={setTrangThai} luaChon={LUA_CHON_TRANG_THAI_DAT} /></div>}
             <div><label className={NHAN_O}>Nguồn đặt lịch</label><Chon trong="Chọn nguồn" ariaLabel="Nguồn đặt lịch" giaTri={nguon} onDoi={setNguon} luaChon={[{ gia_tri: "", nhan: "Không ghi" }, ...dsNguon]} /></div>
           </div>
-          <KhachDiCungO ds={diCung} onDoi={setDiCung} dichVu={dichVu.filter((d) => !d.an && coOChiNhanh(d.chiNhanhIds, cn) || diCung.some((k) => k.dichVuIds.includes(d.id)))} nhanVien={nhanVien} />
+          {khoa?.diCung ? (diCung.length > 0 && <p className="text-[13px] text-muc-3">Khách đi cùng (khoá): {diCung.map((k) => k.ten).join(", ")}</p>) : <KhachDiCungO ds={diCung} onDoi={setDiCung} dichVu={dichVu.filter((d) => !d.an && coOChiNhanh(d.chiNhanhIds, cn) || diCung.some((k) => k.dichVuIds.includes(d.id)))} nhanVien={nhanVien} />}
           {!sua && (
             <fieldset className="rounded-nho border border-vien px-3 pb-3 pt-1">
               <legend className="px-1 text-[13px] font-medium text-muc-2">Lặp định kì</legend>

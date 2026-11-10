@@ -89,16 +89,17 @@ export const NV_CHUA_PHAN = "_";
 export const dsNvLoc = (v: string | undefined) =>
   [...new Set((v ?? "").split(",").map((x) => x.trim()).filter((x) => x === NV_CHUA_PHAN || /^[0-9a-f-]{36}$/i.test(x)))].slice(0, 60);
 
-/** Màu thẻ lịch theo trạng thái (theo SalonHero: chưa xác nhận cam, đã xác nhận xanh dương, chờ phục vụ đỏ cam, đang phục vụ xanh lá, hoàn thành xanh ngọc, huỷ/không đến đỏ), dùng màu của bộ nhận diện AMIA.
+/** Màu thẻ lịch theo trạng thái. `luoi` = thẻ trên lưới lịch (nền đậm chữ trắng, chị Lâm 10/11), `dac` = nhãn trạng thái đậm trong khung chi tiết.
+ *  Cũ: (theo SalonHero: chưa xác nhận cam, đã xác nhận xanh dương, chờ phục vụ đỏ cam, đang phục vụ xanh lá, hoàn thành xanh ngọc, huỷ/không đến đỏ), dùng màu của bộ nhận diện AMIA.
  *  `the` = thẻ trong lưới, `chip` = chấm màu ở chú thích và nhãn trạng thái. Viết nguyên chữ để Tailwind quét thấy. */
-export const MAU_TRANG_THAI: Record<string, { the: string; chip: string }> = {
-  chua_xac_nhan: { the: "border-l-sac-cam bg-sac-cam-nen", chip: "bg-sac-cam-nen text-sac-cam" },
-  da_xac_nhan: { the: "border-l-sac-xanh bg-sac-xanh-nen", chip: "bg-sac-xanh-nen text-sac-xanh" },
-  cho_phuc_vu: { the: "border-l-canh-bao bg-canh-bao-nen", chip: "bg-canh-bao-nen text-canh-bao" },
-  dang_phuc_vu: { the: "border-l-sac-luc bg-sac-luc-nen", chip: "bg-sac-luc-nen text-sac-luc" },
-  hoan_thanh: { the: "border-l-nhan bg-nhan-nhat", chip: "bg-nhan-nhat text-nhan-dam" },
-  huy: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi" },
-  khong_den: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi" },
+export const MAU_TRANG_THAI: Record<string, { the: string; chip: string; luoi: string; dac: string }> = {
+  chua_xac_nhan: { the: "border-l-sac-cam bg-sac-cam-nen", chip: "bg-sac-cam-nen text-sac-cam", luoi: "border-l-lich-chua-vien bg-lich-chua", dac: "bg-lich-chua text-white" },
+  da_xac_nhan: { the: "border-l-sac-xanh bg-sac-xanh-nen", chip: "bg-sac-xanh-nen text-sac-xanh", luoi: "border-l-lich-da-vien bg-lich-da", dac: "bg-lich-da text-white" },
+  cho_phuc_vu: { the: "border-l-canh-bao bg-canh-bao-nen", chip: "bg-canh-bao-nen text-canh-bao", luoi: "border-l-lich-cho-vien bg-lich-cho", dac: "bg-lich-cho text-white" },
+  dang_phuc_vu: { the: "border-l-sac-luc bg-sac-luc-nen", chip: "bg-sac-luc-nen text-sac-luc", luoi: "border-l-lich-dang-vien bg-lich-dang", dac: "bg-lich-dang text-white" },
+  hoan_thanh: { the: "border-l-nhan bg-nhan-nhat", chip: "bg-nhan-nhat text-nhan-dam", luoi: "border-l-lich-xong-vien bg-lich-xong", dac: "bg-lich-xong text-white" },
+  huy: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi", luoi: "border-l-lich-huy-vien bg-lich-huy", dac: "bg-lich-huy text-white" },
+  khong_den: { the: "border-l-loi bg-loi-nen", chip: "bg-loi-nen text-loi", luoi: "border-l-lich-huy-vien bg-lich-huy", dac: "bg-lich-huy text-white" },
 };
 
 /** Nhãn trạng thái lịch hẹn (mã trong DB → chữ hiển thị), theo thứ tự quy trình: dùng ở bảng Lịch sử và lọc trạng thái. */

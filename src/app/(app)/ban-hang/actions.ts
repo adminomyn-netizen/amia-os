@@ -325,7 +325,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   for (const g of ghiChuThe) await db.from("the_khach").update({ ghi_chu: g.ghiChu }).eq("hoa_don_dong_id", g.dongId).is("ghi_chu", null);
   if (suaCu) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "chot_lai_hoa_don_sua", doi_tuong: "hoa_don", doi_tuong_id: h.id, chi_tiet: { ma, ngay_hd: suaCu.ngay_hd, bam_luc: new Date().toISOString() } });
   if (lui.lui) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "lui_ngay_hoa_don", doi_tuong: "hoa_don", doi_tuong_id: h.id, chi_tiet: { ma, ngay_hd: lui.lui.ngay, tao_luc: lui.lui.iso, bam_luc: new Date().toISOString() } });
-  if (don.lichId) await db.from("lich_hen").update({ trang_thai: "hoan_thanh" }).eq("id", don.lichId).eq("chi_nhanh_id", don.chiNhanhId).in("trang_thai", ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan", "chua_xac_nhan"]);
+  if (don.lichId) await db.from("lich_hen").update({ trang_thai: "hoan_thanh", sua_boi: nd.nhanVienId }).eq("id", don.lichId).eq("chi_nhanh_id", don.chiNhanhId).in("trang_thai", ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan", "chua_xac_nhan"]);
   return { ok: true, id: h.id, ma };
 }
 

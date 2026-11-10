@@ -8097,6 +8097,7 @@ export type Database = {
           lap_nhom: string | null
           lap_thu_tu: number | null
           lap_tong: number | null
+          loai_lich: string | null
           ly_do_huy: string | null
           ma_dat_lich: string | null
           nguoi_tao_ten: string | null
@@ -8108,6 +8109,7 @@ export type Database = {
           phong: string | null
           sh_id: number | null
           so_khach: number | null
+          sua_boi: string | null
           tao_boi: string | null
           tao_luc: string
           trang_thai: string
@@ -8135,6 +8137,7 @@ export type Database = {
           lap_nhom?: string | null
           lap_thu_tu?: number | null
           lap_tong?: number | null
+          loai_lich?: string | null
           ly_do_huy?: string | null
           ma_dat_lich?: string | null
           nguoi_tao_ten?: string | null
@@ -8146,6 +8149,7 @@ export type Database = {
           phong?: string | null
           sh_id?: number | null
           so_khach?: number | null
+          sua_boi?: string | null
           tao_boi?: string | null
           tao_luc?: string
           trang_thai?: string
@@ -8173,6 +8177,7 @@ export type Database = {
           lap_nhom?: string | null
           lap_thu_tu?: number | null
           lap_tong?: number | null
+          loai_lich?: string | null
           ly_do_huy?: string | null
           ma_dat_lich?: string | null
           nguoi_tao_ten?: string | null
@@ -8184,6 +8189,7 @@ export type Database = {
           phong?: string | null
           sh_id?: number | null
           so_khach?: number | null
+          sua_boi?: string | null
           tao_boi?: string | null
           tao_luc?: string
           trang_thai?: string
@@ -8294,6 +8300,42 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lich_hen_lich_su: {
+        Row: {
+          chi_nhanh_id: string | null
+          hanh_dong: string
+          id: number
+          khach_id: string | null
+          lich_id: string
+          luc: string
+          nguoi_id: string | null
+          nguoi_ten: string
+          thay_doi: Json
+        }
+        Insert: {
+          chi_nhanh_id?: string | null
+          hanh_dong: string
+          id?: never
+          khach_id?: string | null
+          lich_id: string
+          luc?: string
+          nguoi_id?: string | null
+          nguoi_ten: string
+          thay_doi?: Json
+        }
+        Update: {
+          chi_nhanh_id?: string | null
+          hanh_dong?: string
+          id?: never
+          khach_id?: string | null
+          lich_id?: string
+          luc?: string
+          nguoi_id?: string | null
+          nguoi_ten?: string
+          thay_doi?: Json
+        }
+        Relationships: []
       }
       lich_hen_dich_vu: {
         Row: {

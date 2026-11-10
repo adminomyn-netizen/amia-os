@@ -38,6 +38,13 @@
   --sac-tim: #6b2f5e; --sac-tim-nen: #f3e5f0; --sac-tim-mau: #a85c97; --sac-tim-1: #84407a; --sac-tim-2: #6b2f5e;
   --sac-cam: #7d5f22; --sac-cam-nen: #f6efdf; --sac-cam-mau: #ba9551; --sac-cam-1: #8c6a24; --sac-cam-2: #7d5f22;
   --sac-hong: #a12a46; --sac-hong-nen: #fde6ec; --sac-hong-mau: #d35a77; --sac-hong-1: #b83a58; --sac-hong-2: #a12a46;
+  /* Thẻ lịch hẹn trên lưới (chị Lâm 10/11: màu đậm, dễ phân biệt trạng thái): nền đậm + chữ trắng ≥ 5:1; -vien = viền trái đậm hơn. Dùng chung cho sáng và tối. */
+  --lich-chua: #8a6418; --lich-chua-vien: #5e4410;
+  --lich-da: #1f5f8b; --lich-da-vien: #133d5a;
+  --lich-cho: #b4410f; --lich-cho-vien: #7a2c0a;
+  --lich-dang: #2e7d32; --lich-dang-vien: #1b5e20;
+  --lich-xong: #00675b; --lich-xong-vien: #003f37;
+  --lich-huy: #b42318; --lich-huy-vien: #7a1710;
 
   --menu: #0a2b26;
   --menu-chu: #cfe0dc;
@@ -129,6 +136,18 @@
   --color-sac-cam-nen: var(--sac-cam-nen);
   --color-sac-hong: var(--sac-hong);
   --color-sac-hong-nen: var(--sac-hong-nen);
+  --color-lich-chua: var(--lich-chua);
+  --color-lich-chua-vien: var(--lich-chua-vien);
+  --color-lich-da: var(--lich-da);
+  --color-lich-da-vien: var(--lich-da-vien);
+  --color-lich-cho: var(--lich-cho);
+  --color-lich-cho-vien: var(--lich-cho-vien);
+  --color-lich-dang: var(--lich-dang);
+  --color-lich-dang-vien: var(--lich-dang-vien);
+  --color-lich-xong: var(--lich-xong);
+  --color-lich-xong-vien: var(--lich-xong-vien);
+  --color-lich-huy: var(--lich-huy);
+  --color-lich-huy-vien: var(--lich-huy-vien);
   --font-sans: var(--font-roboto), "Helvetica Neue", Helvetica, ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-roboto), "Helvetica Neue", Helvetica, ui-sans-serif, system-ui, sans-serif;
   --radius-tag: 5px;

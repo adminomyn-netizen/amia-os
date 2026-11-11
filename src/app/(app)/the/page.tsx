@@ -66,7 +66,9 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   // đúng mảng đó cho mọi dòng — trước đây mỗi dòng dựng mảng mới ~230 dịch vụ × 200 thẻ, làm trang nặng ~5 MB.
   const dvDu = (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten })), dvTheoGoi = new Map<string, typeof dvDu>();
   for (const l of lk ?? []) { const d = (dv ?? []).find((x) => x.id === l.dich_vu_id); if (d) dvTheoGoi.set(l.goi_id, [...(dvTheoGoi.get(l.goi_id) ?? []), { gia_tri: d.id, nhan: d.ten }]); }
-  const dvCuaGoi = (goiId: string | null) => (goiId && dvTheoGoi.get(goiId)) || dvDu;
+  // Thẻ có gói: CHỈ dịch vụ của gói (rỗng = gói chưa gắn dịch vụ → hộp gửi chính thẻ, chị Lâm 11/11/2026). Thẻ không có gói mới dùng cả danh mục.
+  const KHONG_DV: typeof dvDu = [];
+  const dvCuaGoi = (goiId: string | null) => (goiId ? dvTheoGoi.get(goiId) ?? KHONG_DV : dvDu);
 
   return (
     <>
@@ -90,7 +92,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
             <KhoiThe key={r.id} t={{ id: r.id ?? "", ma: r.ma ?? "", ten: tenGoi.get(r.goi_id ?? "") ?? (r.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình"), loai: r.loai ?? "lan", tinhTrang: r.tinh_trang,
               buoiCon: Number(r.so_buoi_con ?? 0), buoiTong: r.so_buoi_tong == null ? null : Number(r.so_buoi_tong), soDu: Number(r.so_du_tien ?? 0), tongTien: r.tong_tien == null ? null : Number(r.tong_tien),
               ngayCap: r.ngay_cap, han: r.han_dung, khach: k ? { id: k.id, ten: k.ho_ten, ma: k.ma } : null, lanGan: bs.lanGan(r.id ?? ""), lichToi: bs.lichToi(r.khach_id), phuTrach: bs.phuTrach(r.khach_id) }}
-              nut={<>{tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
+              nut={<>{tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} goiId={r.goi_id} tenThe={tenGoi.get(r.goi_id ?? "") ?? r.ma ?? ""} buoiCon={Number(r.so_buoi_con ?? 0)} buoiTong={r.so_buoi_tong == null ? null : Number(r.so_buoi_tong)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
               {suaDuoc && r.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: r.id ?? "", ma: r.ma ?? "", loai: r.loai ?? "lan", han_dung: r.han_dung, gia_tri_buoi: r.gia_tri_buoi, ghi_chu: r.ghi_chu }} maKhach={k?.ma ?? ""} nhan="Sửa" />}</>} />
           ); })}
         </LuoiThe>

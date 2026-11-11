@@ -14,6 +14,17 @@ export const dvTheoGoi = (goiId: string) => `goi:${goiId}`;
 /** id gói nếu dvId là dòng "chính thẻ", ngược lại null. */
 export const goiCuaDv = (dvId: string): string | null => (dvId.startsWith("goi:") && UUID.test(dvId.slice(4)) ? dvId.slice(4) : null);
 
+/** Hộp "Gửi chuyên viên làm" của MỘT thẻ (chị Lâm 11/11/2026: "cái nào có dịch vụ thì hiển thị thẳng dịch vụ, cái nào là thẻ không có dịch vụ thì
+ *  cho cái thẻ hiện ra và ẩn ô dịch vụ đi"). `dichVu` = CHỈ dịch vụ gắn với gói của thẻ.
+ *  - không dịch vụ + có gói → gửi chính thẻ (goi:<id gói>), ẩn ô dịch vụ;  - đúng 1 dịch vụ → gửi thẳng dịch vụ đó, ẩn ô;
+ *  - nhiều dịch vụ (hoặc thẻ không có gói) → ô chọn trong đúng danh sách đó. */
+export type CheDoDvThe = { kieu: "the"; dvId: string } | { kieu: "mot"; dvId: string; ten: string } | { kieu: "chon" };
+export function cheDoDvThe(dichVu: { gia_tri: string; nhan: string }[], goiId?: string | null): CheDoDvThe {
+  if (!dichVu.length && goiId && UUID.test(goiId)) return { kieu: "the", dvId: dvTheoGoi(goiId) };
+  if (dichVu.length === 1) return { kieu: "mot", dvId: dichVu[0].gia_tri, ten: dichVu[0].nhan };
+  return { kieu: "chon" };
+}
+
 /** Đọc ô `dong` (JSON) của biểu mẫu: bỏ dòng hỏng, gộp dòng trùng (cùng thẻ + dịch vụ). */
 export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string } {
   let x: unknown;

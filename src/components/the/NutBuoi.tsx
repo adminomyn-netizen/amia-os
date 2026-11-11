@@ -6,6 +6,7 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import type { LuaChon } from "@/components/ui/Chon";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { chuyenNhieuThe, chuyenTriLieu } from "@/app/(app)/the/cho-lam/actions";
+import { cheDoDvThe, dvTheoGoi } from "@/lib/don-nhieu-dich-vu";
 
 export type KetQuaBuoi = { ok?: boolean; loi?: string; canhBao?: string; phieuId?: string; phieuMa?: string; xemPhieu?: boolean; phieuBacSi?: boolean; /** Đã chuyển cho chuyên viên trị liệu (chưa trừ buổi). */ chuyenCho?: string; luotId?: string };
 
@@ -48,22 +49,31 @@ export function truongBuoi({ nhanVien, bacSi, coNgay }: { nhanVien: LuaChon[]; b
 /** Nút "Gửi chuyên viên làm" dùng ở danh sách thẻ, hồ sơ thẻ, hồ sơ khách và Bán hàng (chị Thuý 10/11, chị Lâm 11/11/2026).
  *  Nút chính: khách vào hàng Chờ làm của chuyên viên trị liệu, CHƯA trừ buổi — chuyên viên bấm Kết thúc mới trừ.
  *  Nút phụ "Trừ buổi trực tiếp (chỉnh sửa)" CHỈ hiện khi `truTrucTiep` (Chủ / Kỹ thuật — duocTruBuoiTrucTiep), có hỏi lại trước khi trừ. */
-export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, truTrucTiep, lichId, nhan = "Gửi chuyên viên làm", onXong, macDinh }: {
-  theId: string; nhanVien: LuaChon[]; bacSi: LuaChon[]; dichVu: LuaChon[]; action: (fd: FormData) => Promise<KetQuaBuoi>; lichId?: string; nhan?: string;
+export function NutBuoi({ theId, nhanVien, bacSi, dichVu, goiId, tenThe, buoiCon, buoiTong, action, truTrucTiep, lichId, nhan = "Gửi chuyên viên làm", onXong, macDinh }: {
+  theId: string; nhanVien: LuaChon[]; bacSi: LuaChon[];
+  /** CHỈ dịch vụ gắn với gói của thẻ (rỗng = gói chưa gắn dịch vụ → gửi chính thẻ, ẩn ô dịch vụ). Thẻ không có gói thì nơi gọi đưa cả danh mục. */ dichVu: LuaChon[];
+  goiId?: string | null; tenThe?: string; buoiCon?: number; buoiTong?: number | null; action: (fd: FormData) => Promise<KetQuaBuoi>; lichId?: string; nhan?: string;
   /** Người đang xem được trừ buổi trực tiếp (duocTruBuoiTrucTiep). Máy chủ (thucHienBuoi) vẫn tự chặn. */ truTrucTiep?: boolean;
   /** Điền sẵn theo lần trước khách dùng thẻ (dịch vụ, người làm, bác sĩ). */ macDinh?: { dv?: string; nv?: string; bs?: string } | null;
   /** Nơi gọi tự hiện phiếu (vd màn Bán hàng, nút có thể biến mất khi thẻ hết buổi); có thì NutBuoi không tự hiện. */ onXong?: (kq: KetQuaBuoi) => void;
 }) {
   const [phieu, setPhieu] = useState<KetQuaBuoi | null>(null);
   const xong = (r: KetQuaBuoi) => { if (onXong) onXong(r); else setPhieu(r.phieuId || r.chuyenCho !== undefined ? r : null); };
+  // Thẻ chưa gắn dịch vụ: hiện chính thẻ, ẩn ô dịch vụ (máy chủ đổi sang dịch vụ mang tên gói); 1 dịch vụ: hiện thẳng; nhiều: chọn trong đúng các dịch vụ của thẻ.
+  const cd = cheDoDvThe(dichVu, goiId);
+  const con = buoiCon != null ? ` · còn ${buoiCon}${buoiTong != null && buoiTong < 999_999 ? `/${buoiTong}` : ""} buổi` : "";
+  const dongThe = cd.kieu === "the" ? `Thẻ: ${tenThe || "Thẻ liệu trình"} · 1 buổi${con}. Thẻ chưa gắn dịch vụ: chuyên viên trị liệu làm theo thẻ.`
+    : cd.kieu === "mot" ? `Dịch vụ: ${cd.ten}${tenThe ? ` · thẻ ${tenThe}${con}` : ""}` : tenThe ? `Thẻ: ${tenThe}${con}` : undefined;
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
       <NutHop kieu="chu" nhan={nhan} tieuDe="Gửi chuyên viên làm" rong
         moTa={`Khách vào danh sách Chờ làm của chuyên viên trị liệu, CHƯA trừ buổi. Chuyên viên bấm Bắt đầu làm, tích từng bước, bấm Kết thúc mới trừ 1 buổi, ghi doanh thu buổi và ra phiếu vật tư theo định mức.${truTrucTiep ? " Trừ buổi trực tiếp chỉ dùng để chỉnh sửa / ghi bù buổi đã làm (bỏ qua chuyên viên); nhập nhầm thì huỷ buổi để hoàn lại." : ""}`}
         nhanLuu="Gửi chuyên viên làm"
-        an={{ the_id: theId, ...(lichId ? { lich_id: lichId } : {}) }} giaTri={{ dich_vu_id: dichVu.length === 1 ? dichVu[0].gia_tri : macDinh?.dv && dichVu.some((d) => d.gia_tri === macDinh.dv) ? macDinh.dv : "", ngay: homNayHCM(),
+        xacNhan={dongThe}
+        an={{ the_id: theId, ...(lichId ? { lich_id: lichId } : {}), ...(cd.kieu !== "chon" ? { dich_vu_id: cd.dvId } : {}) }}
+        giaTri={{ ...(cd.kieu === "chon" ? { dich_vu_id: macDinh?.dv && dichVu.some((d) => d.gia_tri === macDinh.dv) ? macDinh.dv : "" } : {}), ngay: homNayHCM(),
           nv_ids: macDinh?.nv && nhanVien.some((n) => n.gia_tri === macDinh.nv) ? [macDinh.nv] : [], tu_van_ids: [], ...(macDinh?.bs && bacSi.some((n) => n.gia_tri === macDinh.bs) ? { bac_si_id: macDinh.bs } : {}) }}
-        truong={[{ ten: "dich_vu_id", nhan: "Dịch vụ khách làm hôm nay", loai: "chon", luaChon: dichVu, batBuoc: true, rong: true, ghiChu: "Phiếu vật tư lấy định mức của dịch vụ này." }, ...truongBuoi({ nhanVien, bacSi, coNgay: true })]}
+        truong={[...(cd.kieu === "chon" ? [{ ten: "dich_vu_id", nhan: "Dịch vụ khách làm hôm nay", loai: "chon", luaChon: dichVu, batBuoc: true, rong: true, ghiChu: "Phiếu vật tư lấy định mức của dịch vụ này." } as Truong] : []), ...truongBuoi({ nhanVien, bacSi, coNgay: true })]}
         action={async (fd) => { const r: KetQuaBuoi = await chuyenTriLieu(fd); if (r.ok) xong({ ...r, chuyenCho: r.chuyenCho ?? "" }); return r; }}
         nutPhu={truTrucTiep ? { nhan: "Trừ buổi trực tiếp (chỉnh sửa)", action: async (fd) => {
           if (!window.confirm("Trừ 1 buổi NGAY, bỏ qua chuyên viên trị liệu? Chỉ dùng để chỉnh sửa / ghi bù buổi đã làm.")) return { loi: "Chưa trừ buổi." };
@@ -74,13 +84,15 @@ export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, truTrucTiep, l
   );
 }
 
-export type TheChuyen = { id: string; ten: string; ma: string; buoiCon: number; buoiTong: number | null; dichVu: LuaChon[] };
+export type TheChuyen = { id: string; ten: string; ma: string; buoiCon: number; buoiTong: number | null; dichVu: LuaChon[]; /** Gói của thẻ: thẻ chưa gắn dịch vụ thì chọn được "làm theo thẻ". */ goiId?: string | null };
+/** Lựa chọn dịch vụ của một thẻ trong "Làm nhiều thẻ": dịch vụ của gói, hoặc chính thẻ khi gói chưa gắn dịch vụ. */
+const dvChonThe = (t: TheChuyen): LuaChon[] => t.dichVu.length ? t.dichVu : t.goiId ? [{ gia_tri: dvTheoGoi(t.goiId), nhan: `${t.ten} · 1 buổi (làm theo thẻ)` }] : [];
 
 /** "Làm nhiều thẻ cùng lúc": khách làm nhiều dịch vụ ở nhiều thẻ trong một lần đến. Mỗi thẻ chọn dịch vụ (để trống = không làm),
  *  người làm / bác sĩ / tư vấn viên dùng chung; chuyển hết cho chuyên viên trị liệu một lần (chưa trừ buổi). */
 export function NutNhieuThe({ the, nhanVien, bacSi, lichId, onXong }: { the: TheChuyen[]; nhanVien: LuaChon[]; bacSi: LuaChon[]; lichId?: string; onXong?: (kq: KetQuaBuoi) => void }) {
   const [phieu, setPhieu] = useState<KetQuaBuoi | null>(null);
-  const ds = the.filter((t) => t.buoiCon > 0 && t.dichVu.length).slice(0, 10);
+  const ds = the.filter((t) => t.buoiCon > 0 && dvChonThe(t).length).slice(0, 10);
   if (ds.length < 2) return null;
   return (
     <span className="inline-flex flex-col items-start gap-0.5">
@@ -91,7 +103,7 @@ export function NutNhieuThe({ the, nhanVien, bacSi, lichId, onXong }: { the: The
         giaTri={{ nv_ids: [], tu_van_ids: [], ...Object.fromEntries(ds.map((t) => [`dv__${t.id}`, ""])) }}
         truong={[
           ...ds.map((t): Truong => ({ ten: `dv__${t.id}`, nhan: `${t.ten}${t.ma ? ` (#${t.ma})` : ""} · còn ${t.buoiCon}${t.buoiTong != null && t.buoiTong < 999_999 ? `/${t.buoiTong}` : ""} buổi`, loai: "chon", rong: true,
-            luaChon: [{ gia_tri: "", nhan: "Không làm thẻ này" }, ...t.dichVu] })),
+            luaChon: [{ gia_tri: "", nhan: "Không làm thẻ này" }, ...dvChonThe(t)] })),
           ...truongBuoi({ nhanVien, bacSi }),
         ]}
         action={async (fd) => { const r: KetQuaBuoi = await chuyenNhieuThe(fd); if (r.ok) { const k = { ...r, chuyenCho: r.chuyenCho ?? "" }; if (onXong) onXong(k); else setPhieu(k); } return r; }} />

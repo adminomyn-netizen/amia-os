@@ -562,8 +562,9 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
   const nutThe = (t: TheKh, nhan = "Gửi chuyên viên làm") => {
     if (t.loai === "lan") {
       if (!buoi || t.buoiCon <= 0) return null;
+      // Chỉ dịch vụ của thẻ; thẻ chưa gắn dịch vụ thì hộp hiện chính thẻ, ẩn ô dịch vụ (chị Lâm 11/11/2026). Thẻ không có gói mới chọn cả danh mục.
       const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
-      return <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan={nhan} truTrucTiep={truBuoiTrucTiep}
+      return <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length || t.goiId ? dvThe : dvMuc} goiId={t.goiId} tenThe={t.ten} buoiCon={t.buoiCon} buoiTong={t.buoiTong} lichId={lichId ?? undefined} nhan={nhan} truTrucTiep={truBuoiTrucTiep}
         onXong={(r) => { setPhieuBuoi((r.phieuId || r.chuyenCho !== undefined) && khach ? { kq: r, khachId: khach.id } : null); setTaiLaiThe((x) => x + 1); }} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
     }
     if (t.soDu <= 0) return null;

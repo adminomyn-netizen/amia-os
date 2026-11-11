@@ -1,5 +1,8 @@
 import "server-only";
 import { sb, thongBaoLoi } from "@/lib/db";
+import type { NguoiDung } from "@/lib/auth";
+import { theTrongPhamVi } from "@/lib/buoi-thuc-hien";
+import { goiCuaDv } from "@/lib/don-nhieu-dich-vu";
 
 // Gói thẻ liệu trình CHƯA gắn dịch vụ nào (chị Lâm 11/11/2026, thẻ EXION của khách KHAVI18002448: "chọn mà nó không tự động ra dịch vụ").
 // SalonHero ghi mỗi lần dùng thẻ thành một dòng dịch vụ MANG TÊN GÓI; AMIA làm giống vậy: lượt làm buổi của thẻ đó dùng dịch vụ tên gói.
@@ -51,4 +54,17 @@ export async function dichVuCuaGoi(goiId: string): Promise<{ id: string } | { lo
   }).select("id").maybeSingle();
   if (error || !moi) return { loi: `${ten}: chưa tạo được dịch vụ cho thẻ (${thongBaoLoi(error) || "lỗi"}).` };
   return { id: moi.id };
+}
+
+/** Dịch vụ thật cho một lượt làm buổi của thẻ (dùng chung: Gửi chuyên viên làm một thẻ, nhiều thẻ, đơn nhiều dịch vụ, trừ buổi trực tiếp).
+ *  `dvId` = id dịch vụ thường → giữ nguyên. `dvId` = "goi:<id gói>" (thu ngân gửi CHÍNH THẺ, gói chưa gắn dịch vụ) → kiểm thẻ trong phạm vi,
+ *  đúng gói của thẻ, rồi đổi sang dịch vụ mang tên gói (dichVuCuaGoi). */
+export async function dvThucCuaThe(nd: NguoiDung, theId: string, dvId: string): Promise<{ dvId: string } | { loi: string }> {
+  const goiId = goiCuaDv(dvId);
+  if (!goiId) return { dvId };
+  if (!(await theTrongPhamVi(nd, theId))) return { loi: "Không tìm thấy thẻ." };
+  const { data: t } = await sb().from("the_khach").select("goi_id").eq("id", theId).maybeSingle();
+  if (t?.goi_id !== goiId) return { loi: "Thẻ không thuộc gói này, tải lại trang rồi chọn lại." };
+  const dv = await dichVuCuaGoi(goiId);
+  return "loi" in dv ? { loi: dv.loi } : { dvId: dv.id };
 }

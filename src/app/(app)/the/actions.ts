@@ -8,6 +8,7 @@ import { chuoi, so } from "@/lib/form";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
 import { timKhachMaSdt } from "@/lib/tim-khach-ma-sdt";
 import { tinhHanThe } from "@/lib/danh-muc";
+import { dvThucCuaThe } from "@/lib/dich-vu-theo-the";
 import { docHenKeTiep, docNguoiBuoi, docThamSo, ghiHenKeTiep, taoPhieuBuoi, theTrongPhamVi, type PhieuBuoi } from "@/lib/buoi-thuc-hien";
 
 type KQ = { ok?: true; loi?: string; canhBao?: string };
@@ -26,11 +27,14 @@ export async function thucHienBuoi(fd: FormData): Promise<KQBuoi> {
   if (!(await theTrongPhamVi(nd, theId))) return { loi: "Không tìm thấy thẻ." };
   const nguoi = docNguoiBuoi(fd);
   if ("loi" in nguoi) return { loi: nguoi.loi };
+  const dvThuc = await dvThucCuaThe(nd, theId, chuoi(fd, "dich_vu_id"));
+  if ("loi" in dvThuc) return { loi: dvThuc.loi };
+  fd.set("dich_vu_id", dvThuc.dvId); // thẻ chưa gắn dịch vụ: "goi:<id gói>" → dịch vụ mang tên gói
   const ngayLam = chuoi(fd, "ngay") || homNayHCM();
   const hen = docHenKeTiep(fd, ngayLam);
   if ("loi" in hen) return { loi: hen.loi };
   const { data: buoiId, error } = await sb().rpc("thuc_hien_buoi", {
-    p_the: theId, p_dich_vu: chuoi(fd, "dich_vu_id"), p_nv: nguoi.nv[0], p_bac_si: tuyChon(chuoi(fd, "bac_si_id")), p_lich: tuyChon(chuoi(fd, "lich_id")),
+    p_the: theId, p_dich_vu: dvThuc.dvId, p_nv: nguoi.nv[0], p_bac_si: tuyChon(chuoi(fd, "bac_si_id")), p_lich: tuyChon(chuoi(fd, "lich_id")),
     p_ngay: ngayLam, p_tham_so: docThamSo(fd), p_ghi_chu: tuyChon(chuoi(fd, "ghi_chu")), p_nguoi: nd.nhanVienId,
   });
   lamMoi(theId); revalidatePath("/lich-hen");

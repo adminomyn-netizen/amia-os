@@ -16,6 +16,7 @@ import { NutInLich } from "@/components/lich-hen/NutInLich";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
 import { chuyenTriLieu } from "../the/cho-lam/actions";
+import { NutBuoi } from "@/components/the/NutBuoi";
 import { doiTrangThaiLich, duyetYeuCauOnline, ganNhomKhachMoi, khungGioTrong, luuLichHen, thongTinKhachDatLich, tuChoiYeuCauOnline } from "./actions";
 import { XacNhanDen } from "@/components/lich-hen/XacNhanDen";
 import { XemLich } from "@/components/lich-hen/XemLich";
@@ -124,7 +125,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     theoLo(idsK, (lo) => db.rpc("khach_cho_lich", { p_ids: lo })), // hàm riêng thay cho view v_khach_hang (nặng): cùng 6 cột, cùng luật hạng
     theoLo(idsN, (lo) => db.from("lich_hen_dich_vu").select("lich_id, dich_vu_id").in("lich_id", lo)),
     theoLo(idsN, (lo) => db.from("phieu_cap").select("lich_hen_id, trang_thai, ma").in("lich_hen_id", lo).neq("trang_thai", "huy")),
-    theoLo(idsKN, (lo) => db.from("v_the_khach").select("id, ma, khach_id, goi_id, so_buoi_con").eq("loai", "lan").in("khach_id", lo).in("tinh_trang", ["hoat_dong", "sap_het"])),
+    theoLo(idsKN, (lo) => db.from("v_the_khach").select("id, ma, khach_id, goi_id, so_buoi_con, so_buoi_tong").eq("loai", "lan").in("khach_id", lo).in("tinh_trang", ["hoat_dong", "sap_het"])),
     Promise.all([
       theoLo(shIds.map(String), (lo) => db.from("hoa_don").select("id, ma, sh_id, sh_ma, lich_hen_id").in("sh_id", lo.map(Number))),
       theoLo(idsN, (lo) => db.from("hoa_don").select("id, ma, sh_id, sh_ma, lich_hen_id").in("lich_hen_id", lo)),
@@ -145,6 +146,12 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   const tenNv = new Map((nv ?? []).map((n) => [n.id, n.ho_ten]));
   const tenDv = new Map((dv ?? []).map((d) => [d.id, d.ten]));
   const nvLC = luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"));
+  // Hộp "Gửi chuyên viên làm" từng thẻ: tên gói + dịch vụ của gói (gói chưa gắn dịch vụ → gửi chính thẻ).
+  const idsGoiThe = [...new Set(the.map((x) => x.goi_id).filter((x): x is string => !!x))];
+  const { data: goiThe } = idsGoiThe.length ? await db.from("goi_the").select("id, ten").in("id", idsGoiThe) : { data: [] as { id: string; ten: string }[] };
+  const tenGoiThe = new Map((goiThe ?? []).map((g) => [g.id, g.ten]));
+  const dvDuLich = (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten }));
+  const dvTen = new Map(dvDuLich.map((d) => [d.gia_tri, d]));
   const bsLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
   // "Nơi hiển thị" / "Địa điểm cung cấp": hộp đặt lịch chỉ ẩn khỏi danh sách chọn; lịch cũ đã có dịch vụ đó vẫn giữ và hiện tên.
   const dichVu = (dv ?? []).map((d) => ({ id: d.id, ma: d.ma, ten: d.ten, thoiLuong: d.thoi_luong_phut, an: !hienDatLich(d.noi_hien_thi), chiNhanhIds: d.chi_nhanh_ids }));
@@ -238,12 +245,15 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         {coQuyen(nd, "phieu.xem") && ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan"].includes(l.trang_thai) && <Link href={`/phieu-cap?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Phiếu cấp vật tư</Link>}
         {["chua_xac_nhan", "da_xac_nhan", "dang_phuc_vu", "hoan_thanh", "cho_phuc_vu"].includes(l.trang_thai) && coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Thanh toán ngay</Link>}
         {sua && ["cho_phuc_vu", "dang_phuc_vu"].includes(l.trang_thai) && theKhach.length > 0 && coQuyen(nd, "the.thuchien") && (
-          <NutHop kieu="chu" nhan="Gửi chuyên viên làm" tieuDe="Dùng thẻ liệu trình: gửi chuyên viên làm" moTa="Khách vào danh sách Chờ làm của chuyên viên trị liệu, CHƯA trừ buổi. Chuyên viên bấm Bắt đầu làm, tích từng bước, bấm Kết thúc mới trừ 1 buổi của thẻ cho lịch hẹn này." rong nhanLuu="Gửi chuyên viên làm" an={{ lich_id: l.id }}
-            giaTri={{ nv_id: nvDefault, the_id: theKhach.length === 1 ? theKhach[0].id ?? "" : "", dich_vu_id: dvIds.length === 1 ? dvIds[0] : "", ngay }}
-            truong={[{ ten: "the_id", nhan: "Thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: theKhach.map((x) => ({ gia_tri: x.id ?? "", nhan: `${x.ma} · còn ${x.so_buoi_con} buổi` })) },
-              { ten: "dich_vu_id", nhan: "Dịch vụ đã làm", loai: "chon", batBuoc: true, rong: true, luaChon: (dv ?? []).filter((d) => !(lk ?? []).some((x) => theKhach.some((tk) => tk.goi_id === x.goi_id)) || (lk ?? []).some((x) => x.dich_vu_id === d.id && theKhach.some((tk) => tk.goi_id === x.goi_id))).map((d) => ({ gia_tri: d.id, nhan: d.ten })) },
-              { ten: "nv_id", nhan: "Người thực hiện", loai: "chon", luaChon: nvLC, batBuoc: true }, { ten: "bac_si_id", nhan: "Bác sĩ chỉ định", loai: "chon", luaChon: bsLC },
-              { ten: "vung", nhan: "Vùng làm", loai: "chu" }, { ten: "shot", nhan: "Số shot thực tế", loai: "so" }, { ten: "line", nhan: "Số line thực tế", loai: "so" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong" }]} action={chuyenTriLieu} />
+          // Mỗi thẻ một nút, cùng hộp với Thu ngân / thẻ / hồ sơ khách (chị Lâm 11/11/2026): thẻ có dịch vụ thì hiện thẳng dịch vụ,
+          // thẻ chưa gắn dịch vụ thì hiện chính thẻ và ẩn ô dịch vụ.
+          <>{theKhach.map((tk) => {
+            const dvTk = (lk ?? []).filter((x) => x.goi_id === tk.goi_id).map((x) => dvTen.get(x.dich_vu_id)).filter((d): d is { gia_tri: string; nhan: string } => !!d);
+            const ten = tenGoiThe.get(tk.goi_id ?? "") ?? tk.ma ?? "Thẻ";
+            return <NutBuoi key={tk.id} theId={tk.id ?? ""} lichId={l.id} nhan={theKhach.length > 1 ? `Gửi chuyên viên làm: ${ten}` : "Gửi chuyên viên làm"} nhanVien={nvLC} bacSi={bsLC}
+              dichVu={dvTk.length || tk.goi_id ? dvTk : dvDuLich} goiId={tk.goi_id} tenThe={ten} buoiCon={Number(tk.so_buoi_con ?? 0)} buoiTong={tk.so_buoi_tong == null ? null : Number(tk.so_buoi_tong)}
+              macDinh={{ dv: dvIds.find((d) => dvTk.some((x) => x.gia_tri === d)) ?? "", nv: nvDefault, bs: "" }} action={chuyenTriLieu} />;
+          })}</>
         )}
         {!ngang && nutSua(l, k, dvIds, "chu")}
         {sua && ["da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && <NutNhanh nhan="Không đến" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "khong_den" }} />}

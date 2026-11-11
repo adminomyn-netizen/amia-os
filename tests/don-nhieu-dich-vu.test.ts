@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { docDongGui, dvTheoGoi, goiCuaDv, kiemBuoiThe, nguoiLamDong, TOI_DA_DONG_GUI } from "@/lib/don-nhieu-dich-vu";
+import { cheDoDvThe, docDongGui, dvTheoGoi, goiCuaDv, kiemBuoiThe, nguoiLamDong, TOI_DA_DONG_GUI } from "@/lib/don-nhieu-dich-vu";
 
 // Chị Thuý / chị Lâm 11/11/2026: một Đơn làm dịch vụ gửi NHIỀU dịch vụ (kể cả nhiều dịch vụ của cùng một thẻ) cho chuyên viên trị liệu một lần.
 const T1 = "11111111-1111-4111-8111-111111111111", T2 = "22222222-2222-4222-8222-222222222222";
@@ -43,4 +43,17 @@ describe("kiemBuoiThe — chọn quá số buổi còn của thẻ thì chặn",
 it("người làm: riêng của dòng, không có thì người chung", () => {
   expect(nguoiLamDong({ theId: T1, dvId: A }, [NV])).toEqual([NV]);
   expect(nguoiLamDong({ theId: T1, dvId: A, nvIds: [C] }, [NV])).toEqual([C]);
+});
+
+describe("cheDoDvThe (hộp Gửi chuyên viên làm một thẻ)", () => {
+  it("thẻ chưa gắn dịch vụ: gửi chính thẻ, ẩn ô dịch vụ", () => {
+    expect(cheDoDvThe([], C)).toEqual({ kieu: "the", dvId: `goi:${C}` });
+  });
+  it("đúng một dịch vụ: gửi thẳng, không cần chọn", () => {
+    expect(cheDoDvThe([{ gia_tri: A, nhan: "Peel" }], C)).toEqual({ kieu: "mot", dvId: A, ten: "Peel" });
+  });
+  it("nhiều dịch vụ hoặc thẻ không có gói: chọn trong danh sách", () => {
+    expect(cheDoDvThe([{ gia_tri: A, nhan: "a" }, { gia_tri: B, nhan: "b" }], C)).toEqual({ kieu: "chon" });
+    expect(cheDoDvThe([], null)).toEqual({ kieu: "chon" });
+  });
 });

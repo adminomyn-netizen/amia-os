@@ -211,7 +211,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
       dungBuoi ? db.from("dich_vu").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] as { id: string; ten: string }[] }),
     ]);
     const dvDu = (dvBuoi0 ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten }));
-    const dvCuaGoi = (goiId: string | null) => { const ds = (lkGoi ?? []).filter((l) => l.goi_id === goiId).map((l) => dvDu.find((d) => d.gia_tri === l.dich_vu_id)).filter((d): d is { gia_tri: string; nhan: string } => !!d); return ds.length ? ds : dvDu; };
+    const dvCuaGoi = (goiId: string | null) => { const ds = (lkGoi ?? []).filter((l) => l.goi_id === goiId).map((l) => dvDu.find((d) => d.gia_tri === l.dich_vu_id)).filter((d): d is { gia_tri: string; nhan: string } => !!d); return ds.length || goiId ? ds : dvDu; }; // thẻ có gói: chỉ dịch vụ của gói (rỗng = gửi chính thẻ, chị Lâm 11/11/2026)
     const nvBuoi = luaChonNhanVien((nv ?? []).filter((n) => n.vai_tro !== "nha_dau_tu"));
     const bsBuoi = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
     noiDung = (
@@ -225,7 +225,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         </div>
         <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
           <p className="text-[13px] text-muc-3">Tổng số thẻ: <span className="font-medium tabular-nums text-muc">{hien.length}</span></p>
-          {dungBuoi && <NutNhieuThe nhanVien={nvBuoi} bacSi={bsBuoi} the={dsThe.filter((x) => x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het")).map((x) => ({ id: x.id ?? "", ten: tenThe(x), ma: x.ma ?? "", buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), dichVu: dvCuaGoi(x.goi_id) }))} />}
+          {dungBuoi && <NutNhieuThe nhanVien={nvBuoi} bacSi={bsBuoi} the={dsThe.filter((x) => x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het")).map((x) => ({ id: x.id ?? "", ten: tenThe(x), ma: x.ma ?? "", buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), dichVu: dvCuaGoi(x.goi_id), goiId: x.goi_id }))} />}
         </div>
         {hien.length === 0 ? <p className="py-10 text-center text-[14px] text-muc-3">Không có thẻ nào.</p> : (
           <LuoiThe>
@@ -233,7 +233,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
               <KhoiThe key={x.id} an={{ khach: true }} t={{ id: x.id ?? "", ma: x.ma ?? "", ten: tenThe(x), loai: x.loai ?? "lan", tinhTrang: x.tinh_trang,
                 buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), soDu: Number(x.so_du_tien ?? 0), tongTien: x.tong_tien == null ? null : Number(x.tong_tien),
                 ngayCap: x.ngay_cap, han: x.han_dung, lanGan: bsThe.lanGan(x.id ?? ""), lichToi: bsThe.lichToi(x.khach_id), phuTrach: bsThe.phuTrach(x.khach_id) }}
-                nut={<>{dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
+                nut={<>{dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} goiId={x.goi_id} tenThe={tenThe(x)} buoiCon={Number(x.so_buoi_con ?? 0)} buoiTong={x.so_buoi_tong == null ? null : Number(x.so_buoi_tong)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
                 {suaThe && x.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: x.id ?? "", ma: x.ma ?? "", loai: x.loai ?? "lan", han_dung: x.han_dung, gia_tri_buoi: x.gia_tri_buoi, ghi_chu: x.ghi_chu }} maKhach={k.ma ?? ""} nhan="Sửa" />}</>} />
             ))}
           </LuoiThe>

@@ -12,7 +12,7 @@ import { guiChoNhanVien } from "@/lib/push";
 import { tenGonNv } from "@/lib/ten-nv";
 import { nhacBuocTiep, tienDoBuoc, tinKetQuaLuot, type TienDoBuoc } from "@/lib/quy-trinh-buoc";
 import { docDongGui, goiCuaDv, kiemBuoiThe, nguoiLamDong, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
-import { dichVuCuaGoi } from "@/lib/dich-vu-theo-the";
+import { dvThucCuaThe } from "@/lib/dich-vu-theo-the";
 
 // Luồng thu ngân → chuyên viên trị liệu (0321). Chuyển / Bắt đầu / Trả lại / Huỷ CHỈ đổi bảng buoi_cho_lam (không sổ cái, không doanh thu, không phiếu).
 // Chỉ "Đã làm xong" mới trừ buổi: hàm xong_buoi_cho gọi đúng thuc_hien_buoi có sẵn, khoá lượt chờ để bấm hai lần không trừ hai buổi.
@@ -123,6 +123,10 @@ const LOI_TRUNG = "Khách này đã được chuyển làm dịch vụ này và 
 export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
   const nd = await nguoiThaoTac();
   if (!nd) return { loi: KHONG_DU_QUYEN };
+  // Thẻ chưa gắn dịch vụ: hộp gửi "chính thẻ" (goi:<id gói>) → dịch vụ mang tên gói, như đơn nhiều dịch vụ.
+  const dv = await dvThucCuaThe(nd, chuoi(fd, "the_id"), chuoi(fd, "dich_vu_id"));
+  if ("loi" in dv) return { loi: dv.loi };
+  fd.set("dich_vu_id", dv.dvId);
   const p = await chuanBiLuot(nd, fd);
   if ("loi" in p) return { loi: p.loi };
   // Thẻ còn N buổi mà đã có N lượt đang chờ / đang làm thì gửi thêm sẽ không Kết thúc được.
@@ -143,19 +147,11 @@ export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
  *  Gói phải đúng gói của thẻ. Có thể tạo một dịch vụ trong danh mục TRƯỚC khi lệnh gửi chạy: vô hại, lần sau dùng lại đúng dịch vụ đó. */
 async function doiDongTheoGoi(nd: NguoiDung, dong: DongGuiCv[]): Promise<{ dong: DongGuiCv[] } | { loi: string }> {
   if (!dong.some((d) => goiCuaDv(d.dvId))) return { dong };
-  const daDoi = new Map<string, string>(), ra: DongGuiCv[] = [];
+  const ra: DongGuiCv[] = [];
   for (const d of dong) {
-    const goiId = goiCuaDv(d.dvId);
-    if (!goiId) { ra.push(d); continue; }
-    if (!(await theTrongPhamVi(nd, d.theId))) return { loi: "Không tìm thấy thẻ." };
-    const { data: t } = await sb().from("the_khach").select("goi_id").eq("id", d.theId).maybeSingle();
-    if (t?.goi_id !== goiId) return { loi: "Thẻ không thuộc gói này, tải lại trang rồi chọn lại." };
-    if (!daDoi.has(goiId)) {
-      const dv = await dichVuCuaGoi(goiId);
-      if ("loi" in dv) return { loi: dv.loi };
-      daDoi.set(goiId, dv.id);
-    }
-    ra.push({ ...d, dvId: daDoi.get(goiId)! });
+    const r = await dvThucCuaThe(nd, d.theId, d.dvId);
+    if ("loi" in r) return { loi: r.loi };
+    ra.push({ ...d, dvId: r.dvId });
   }
   // Thu ngân tick cả dòng chính thẻ lẫn đúng dịch vụ đó trong danh mục: gộp thành một dòng.
   return { dong: ra.filter((d, i) => ra.findIndex((o) => o.theId === d.theId && o.dvId === d.dvId) === i) };

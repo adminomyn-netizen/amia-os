@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-type DV = { id: string; ma: string; ten: string; thoiLuong: number };
+type DV = { id: string; ma?: string; ten: string; /** 0 / không có = không hiện số phút (vd dịch vụ ở Thu ngân). */ thoiLuong?: number };
 
 /** Chọn NHIỀU dịch vụ một lúc cho lịch hẹn (chị Lâm 10/11: tick được nhiều dịch vụ cùng lúc).
  *  Tick thoải mái trong danh sách; dịch vụ đã chọn hiện thành thẻ ở trên (bấm × để bỏ), kèm tổng số và tổng phút.
@@ -10,7 +10,7 @@ type DV = { id: string; ma: string; ten: string; thoiLuong: number };
 export function ChonNhieuDichVu({ ds, tatCa = ds, chon, onDoi, nhan = "Dịch vụ" }: { ds: DV[]; tatCa?: DV[]; chon: string[]; onDoi: (ids: string[]) => void; nhan?: string }) {
   const [tim, setTim] = useState("");
   const tim_ = tim.trim().toLowerCase();
-  const hien = ds.filter((d) => !tim_ || `${d.ma} ${d.ten}`.toLowerCase().includes(tim_));
+  const hien = ds.filter((d) => !tim_ || `${d.ma ?? ""} ${d.ten}`.toLowerCase().includes(tim_));
   const dv = (id: string) => tatCa.find((d) => d.id === id);
   const tongPhut = chon.reduce((s, id) => s + (dv(id)?.thoiLuong ?? 0), 0);
   const doi = (id: string) => onDoi(chon.includes(id) ? chon.filter((x) => x !== id) : [...chon, id]);
@@ -43,8 +43,8 @@ export function ChonNhieuDichVu({ ds, tatCa = ds, chon, onDoi, nhan = "Dịch v�
             <button type="button" role="checkbox" aria-checked={bat} onClick={() => doi(d.id)}
               className={`flex min-h-11 w-full items-center gap-3 px-3 py-2 text-left text-[14px] hover:bg-giay-tram ${bat ? "bg-nhan/5" : ""}`}>
               <span aria-hidden className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border text-[12px] leading-none ${bat ? "border-nhan bg-nhan text-white" : "border-vien-dam bg-giay-sang"}`}>{bat ? "✓" : ""}</span>
-              <span className={`min-w-0 flex-1 ${bat ? "font-medium text-muc" : ""}`}><span className="text-muc-3">{d.ma} · </span>{d.ten}</span>
-              <span className="shrink-0 text-[12px] tabular-nums text-muc-3">{d.thoiLuong} phút</span>
+              <span className={`min-w-0 flex-1 ${bat ? "font-medium text-muc" : ""}`}>{d.ma && <span className="text-muc-3">{d.ma} · </span>}{d.ten}</span>
+              {!!d.thoiLuong && <span className="shrink-0 text-[12px] tabular-nums text-muc-3">{d.thoiLuong} phút</span>}
             </button>
           </li>); })}
         {hien.length === 0 && <li className="px-3 py-2 text-[13px] text-muc-3">Không có dịch vụ nào.</li>}

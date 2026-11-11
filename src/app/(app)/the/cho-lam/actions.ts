@@ -11,6 +11,7 @@ import { docHenKeTiep, docNguoiBuoi, docThamSo, ghiHenKeTiep, taoPhieuBuoi, theT
 import { guiChoNhanVien } from "@/lib/push";
 import { tenGonNv } from "@/lib/ten-nv";
 import { nhacBuocTiep, tienDoBuoc, tinKetQuaLuot, type TienDoBuoc } from "@/lib/quy-trinh-buoc";
+import { docDongGui, kiemBuoiThe, nguoiLamDong } from "@/lib/don-nhieu-dich-vu";
 
 // Luồng thu ngân → chuyên viên trị liệu (0321). Chuyển / Bắt đầu / Trả lại / Huỷ CHỈ đổi bảng buoi_cho_lam (không sổ cái, không doanh thu, không phiếu).
 // Chỉ "Đã làm xong" mới trừ buổi: hàm xong_buoi_cho gọi đúng thuc_hien_buoi có sẵn, khoá lượt chờ để bấm hai lần không trừ hai buổi.
@@ -66,10 +67,17 @@ async function nhacChuyenVien(nd: NguoiDung, nvIds: string[], khachId: string, k
 /** Chuyên viên được giao, người đã chuyển, thu ngân (ban.tao) hoặc người được điều chỉnh thẻ thì thao tác được lượt này. */
 const duocThaoTac = (nd: NguoiDung, l: Luot) => l.nv_ids.includes(nd.nhanVienId) || l.chuyen_boi === nd.nhanVienId || coQuyen(nd, "ban.tao") || coQuyen(nd, "the.dieuchinh");
 
-/** Thu ngân / lễ tân chuyển khách cho chuyên viên trị liệu: tạo lượt "Chờ làm". Chưa trừ buổi, chưa ghi doanh thu, chưa ra phiếu vật tư. */
-export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
-  const nd = await nguoiThaoTac();
-  if (!nd) return { loi: KHONG_DU_QUYEN };
+/** Số lượt đang chờ / đang làm của từng thẻ (mọi ngày, khớp chỉ mục một-lượt-mở). Mỗi lượt Kết thúc trừ 1 buổi nên phải chừa buổi cho chúng. */
+async function luotMoCuaThe(theIds: string[]): Promise<Map<string, number>> {
+  const m = new Map<string, number>();
+  if (!theIds.length) return m;
+  const { data } = await sb().from("buoi_cho_lam").select("the_id").in("the_id", theIds).in("trang_thai", ["cho_lam", "dang_lam"]);
+  for (const r of data ?? []) m.set(r.the_id, (m.get(r.the_id) ?? 0) + 1);
+  return m;
+}
+
+/** Kiểm đủ một lượt chuyển (thẻ, dịch vụ trong thẻ, người làm, lịch hẹn) và dựng dòng ghi — CHƯA ghi gì. */
+async function chuanBiLuot(nd: NguoiDung, fd: FormData) {
   const theId = chuoi(fd, "the_id"), dvId = chuoi(fd, "dich_vu_id");
   if (!(await theTrongPhamVi(nd, theId))) return { loi: "Không tìm thấy thẻ." };
   if (!dvId) return { loi: "Chọn dịch vụ khách làm hôm nay." };
@@ -90,7 +98,7 @@ export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
   if (!dv) return { loi: "Không tìm thấy dịch vụ." };
   if (t.goi_id) {
     const { data: lk } = await db.from("goi_the_dich_vu").select("dich_vu_id").eq("goi_id", t.goi_id);
-    if ((lk ?? []).length && !(lk ?? []).some((x) => x.dich_vu_id === dvId)) return { loi: "Dịch vụ này không nằm trong thẻ." };
+    if ((lk ?? []).length && !(lk ?? []).some((x) => x.dich_vu_id === dvId)) return { loi: `${dv.ten}: dịch vụ này không nằm trong thẻ.` };
   }
   if ((nv ?? []).length !== new Set([...nguoi.nv, ...nguoi.tuVan]).size) return { loi: "Có người thực hiện / tư vấn không còn trong danh sách nhân viên." };
   const lichId = chuoi(fd, "lich_id");
@@ -101,19 +109,75 @@ export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
     if (!l || l.khach_id !== t.khach_id) return { loi: "Lịch hẹn không thuộc khách của thẻ." };
     if (["huy", "khong_den", "hoan_thanh"].includes(l.trang_thai)) return { loi: "Lịch hẹn đã huỷ / khách không đến / đã hoàn thành." };
   }
-  const { data: moi, error } = await db.from("buoi_cho_lam").insert({
+  const dong = {
     the_id: theId, khach_id: t.khach_id, chi_nhanh_id: t.chi_nhanh_id, dich_vu_id: dvId, nv_ids: nguoi.nv, bac_si_id: tuyChon(chuoi(fd, "bac_si_id")), lich_hen_id: tuyChon(lichId),
     ngay: homNayHCM(), tham_so: docThamSo(fd), ghi_chu: chuoi(fd, "ghi_chu").slice(0, 1000) || null, tu_van_ids: nguoi.tuVan, tu_van_tinh_trang: nguoi.tinhTrang, tu_van_de_xuat: nguoi.deXuat,
     ke_tiep_ngay: hen.co ? hen.ngay : null, ke_tiep_noi_dung: hen.co ? hen.noiDung : null, chuyen_boi: nd.nhanVienId,
-  }).select("id").maybeSingle();
-  if (error) return { loi: error.code === "23505" ? "Khách này đã được chuyển làm dịch vụ này và đang chờ chuyên viên trị liệu. Xem ở mục Khách chờ làm." : thongBaoLoi(error) };
-  lamMoi(theId);
-  const tenNv = new Map((nv ?? []).map((n) => [n.id, tenGonNv(n.ho_ten)]));
-  const chuyenCho = nguoi.nv.map((x) => tenNv.get(x) ?? "").filter(Boolean).join(", ");
-  const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", t.khach_id).maybeSingle();
+  };
+  return { dong, buoiCon: Number(t.so_buoi_con ?? 0), dvTen: dv.ten as string, phong, tenNv: new Map((nv ?? []).map((n) => [n.id as string, tenGonNv(n.ho_ten)])) };
+}
+const LOI_TRUNG = "Khách này đã được chuyển làm dịch vụ này và đang chờ chuyên viên trị liệu. Xem ở mục Khách chờ làm.";
+
+/** Thu ngân / lễ tân chuyển khách cho chuyên viên trị liệu: tạo lượt "Chờ làm". Chưa trừ buổi, chưa ghi doanh thu, chưa ra phiếu vật tư. */
+export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
+  const nd = await nguoiThaoTac();
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const p = await chuanBiLuot(nd, fd);
+  if ("loi" in p) return { loi: p.loi };
+  // Thẻ còn N buổi mà đã có N lượt đang chờ / đang làm thì gửi thêm sẽ không Kết thúc được.
+  const mo = (await luotMoCuaThe([p.dong.the_id])).get(p.dong.the_id) ?? 0;
+  if (mo >= p.buoiCon) return { loi: `Thẻ còn ${p.buoiCon} buổi và đã có ${mo} lượt đang chờ / đang làm. Hết buổi để gửi thêm.` };
+  const db = sb();
+  const { data: moi, error } = await db.from("buoi_cho_lam").insert(p.dong).select("id").maybeSingle();
+  if (error) return { loi: error.code === "23505" ? LOI_TRUNG : thongBaoLoi(error) };
+  lamMoi(p.dong.the_id);
+  const chuyenCho = p.dong.nv_ids.map((x) => p.tenNv.get(x) ?? "").filter(Boolean).join(", ");
+  const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", p.dong.khach_id).maybeSingle();
   // Báo đẩy tới điện thoại chuyên viên (chuông trong app tự cập nhật qua canh-bao). Lỗi đẩy không làm hỏng việc chuyển.
-  await guiChoNhanVien(nguoi.nv, { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${dv.ten}${phong ? ` · ${phong}` : ""}${nd.hoTen ? ` (${tenGonNv(nd.hoTen)} chuyển)` : ""}. Bấm Bắt đầu làm.`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null);
+  await guiChoNhanVien(p.dong.nv_ids, { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${p.dvTen}${p.phong ? ` · ${p.phong}` : ""}${nd.hoTen ? ` (${tenGonNv(nd.hoTen)} chuyển)` : ""}. Bấm Bắt đầu làm.`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null);
   return { ok: true, chuyenCho, luotId: moi?.id };
+}
+
+/** Một đơn làm dịch vụ gửi NHIỀU dịch vụ cho chuyên viên trị liệu MỘT lần (chị Thuý / chị Lâm 11/11/2026).
+ *  Ô `dong` = JSON [{ theId, dvId, nvIds? }] (thẻ gồm nhiều dịch vụ thì mỗi dịch vụ một dòng); người làm / bác sĩ / tư vấn chung ở các ô thường,
+ *  dòng có nvIds thì dùng người làm riêng. Kiểm HẾT các dòng trước (kể cả số buổi còn của từng thẻ trừ lượt đang mở), rồi ghi tất cả trong MỘT lệnh:
+ *  có dòng lỗi thì không dòng nào được gửi. Chưa trừ buổi — chuyên viên Kết thúc từng dòng mới trừ. */
+export async function chuyenNhieuDichVu(fd: FormData): Promise<KQChuyen & { soDong?: number }> {
+  const nd = await nguoiThaoTac();
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const doc = docDongGui(chuoi(fd, "dong"));
+  if ("loi" in doc) return { loi: doc.loi };
+  const chung = [...new Set([...fd.getAll("nv_ids").map(String).filter(Boolean)])];
+  if (doc.dong.some((d) => !nguoiLamDong(d, chung).length)) return { loi: "Chọn người làm (chuyên viên trị liệu) chung, hoặc người làm riêng cho từng dịch vụ." };
+  const chuanBi = await Promise.all(doc.dong.map((d) => {
+    const f = new FormData();
+    for (const [k, v] of fd.entries()) if (!["dong", "the_id", "dich_vu_id", "nv_ids", "nv_id"].includes(k)) f.append(k, v);
+    f.set("the_id", d.theId); f.set("dich_vu_id", d.dvId);
+    for (const id of nguoiLamDong(d, chung)) f.append("nv_ids", id);
+    return chuanBiLuot(nd, f);
+  }));
+  const loi = chuanBi.flatMap((p) => ("loi" in p ? [p.loi] : []));
+  if (loi.length) return { loi: `Chưa gửi dịch vụ nào:\n${[...new Set(loi)].join("\n")}` };
+  const ok = chuanBi.filter((p): p is Exclude<typeof p, { loi: string }> => !("loi" in p));
+  if (new Set(ok.map((p) => p.dong.khach_id)).size > 1) return { loi: "Các thẻ phải cùng một khách." };
+  const mo = await luotMoCuaThe([...new Set(ok.map((p) => p.dong.the_id))]);
+  const tenThe = (theId: string) => chuoi(fd, `ten__${theId}`) || "Thẻ";
+  const loiBuoi = kiemBuoiThe(doc.dong, new Map(ok.map((p) => [p.dong.the_id, { ten: tenThe(p.dong.the_id), buoiCon: p.buoiCon, dangMo: mo.get(p.dong.the_id) ?? 0 }])));
+  if (loiBuoi.length) return { loi: `Chưa gửi dịch vụ nào:\n${loiBuoi.join("\n")}` };
+  const db = sb();
+  // Một lệnh insert nhiều dòng = một giao dịch: trùng / lỗi ở bất kỳ dòng nào thì không dòng nào được ghi.
+  const { error } = await db.from("buoi_cho_lam").insert(ok.map((p) => p.dong));
+  if (error) return { loi: error.code === "23505" ? `Chưa gửi dịch vụ nào: có dịch vụ đã đang chờ chuyên viên trị liệu (bỏ tick dịch vụ ghi "đang chờ").` : thongBaoLoi(error) };
+  for (const id of new Set(ok.map((p) => p.dong.the_id))) lamMoi(id);
+  const tenNv = new Map(ok.flatMap((p) => [...p.tenNv]));
+  const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", ok[0].dong.khach_id).maybeSingle();
+  // Mỗi chuyên viên một báo đẩy gom các dịch vụ của mình.
+  const theoNv = new Map<string, string[]>();
+  for (const p of ok) for (const id of p.dong.nv_ids) theoNv.set(id, [...(theoNv.get(id) ?? []), p.dvTen]);
+  const phong = ok.find((p) => p.phong)?.phong ?? "";
+  await Promise.all([...theoNv].map(([id, dv]) => guiChoNhanVien([id], { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${dv.join(", ")}${phong ? ` · ${phong}` : ""}${nd.hoTen ? ` (${tenGonNv(nd.hoTen)} chuyển)` : ""}. Bấm Bắt đầu làm.`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null)));
+  const chuyenCho = [...new Set(ok.flatMap((p) => p.dong.nv_ids))].map((x) => tenNv.get(x) ?? "").filter(Boolean).join(", ");
+  return { ok: true, chuyenCho, soDong: ok.length };
 }
 
 /** Một lần chuyển NHIỀU thẻ của cùng khách cho chuyên viên trị liệu (chị Diệu Thuý 10/11 mục 8: một hoá đơn làm dịch vụ chọn được nhiều thẻ).

@@ -20,7 +20,9 @@ import { nhanVienDongTamTinh, thanhToanTamTinh } from "@/lib/in-hoa-don";
 import { docSoTien } from "@/lib/phieu-thu";
 import type { chotDonBanHang, dsDonCho, dsDonNhap, dsVoucher, layDiemKhach, layTheKhach, layTheTien, layVoucher, luuDonNhap, timKhach, xoaDonNhap, xoaDonCho, boSuaHoaDon, DonNhapRut } from "@/app/(app)/ban-hang/actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
-import { BaoPhieuBuoi, NutBuoi, NutNhieuThe, type KetQuaBuoi } from "@/components/the/NutBuoi";
+import { BaoPhieuBuoi, NutBuoi, type KetQuaBuoi } from "@/components/the/NutBuoi";
+import { ChonDvDaMua } from "./ChonDvDaMua";
+import { ChonNhieuDichVu } from "@/components/lich-hen/ChonNhieuDichVu";
 import type { thucHienBuoi } from "@/app/(app)/the/actions";
 import { KhoiThe } from "@/components/the/KhoiThe";
 import { KhachChoLam } from "@/components/the/KhachChoLam";
@@ -321,35 +323,6 @@ function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu,
 /** Số dòng sẵn có lúc dựng đơn (nháp mở lại / đơn đầu từ lịch hẹn): có dòng thì hiện danh mục ngay. */
 const dong0 = (nhapDau: DonNhapRut | undefined, dauTien: boolean, dongBanDau: DongDon[]) => (nhapDau ? nhapDau.dong.length : dauTien ? dongBanDau.length : 0);
 
-/** Đơn làm dịch vụ: các dịch vụ khách ĐÃ MUA còn buổi (thẻ liệu trình), mỗi thẻ một nút "Làm buổi này" (đúng luồng Dùng buổi). */
-function DvDaMua({ khach, the, nut, coQuyen }: { khach: boolean; the: TheKh[] | null; nut: (t: TheKh) => React.ReactNode; coQuyen: boolean }) {
-  const han = (d: string) => new Date(d).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
-  return (
-    <section aria-label="Dịch vụ khách đã mua" className="mt-4 rounded-the border border-vien bg-sac-xanh-nen px-3 py-3">
-      <p className="mb-2 flex items-center gap-2 text-[15px] font-semibold text-muc"><Sparkles aria-hidden strokeWidth={1.7} className="h-4 w-4 text-sac-xanh" />Dịch vụ khách đã mua</p>
-      {!khach ? <p className="text-[14px] text-muc-2">Chọn khách ở ô trên trước để hiện các dịch vụ khách đã mua còn buổi.</p>
-        : the === null ? <p className="text-[14px] text-muc-3">Đang tải</p>
-        : the.length === 0 ? <p className="text-[14px] text-muc-2">Khách chưa có thẻ liệu trình nào còn buổi. Khách làm dịch vụ lẻ thì bấm Thêm dịch vụ lẻ bên dưới.</p> : (
-          <ul className="divide-y divide-vien">
-            {the.map((t) => (
-              <li key={t.id} className="flex items-center justify-between gap-3 py-2.5">
-                <span className="min-w-0 text-[14px]">
-                  <span className="block font-medium text-muc">{t.ten}</span>
-                  <span className="block text-[13px] text-muc-3">{t.ma}{t.han ? ` · Hạn ${han(t.han)}` : ""}</span>
-                </span>
-                <span className="flex shrink-0 flex-col items-end gap-1">
-                  <span className="text-[14px] font-semibold tabular-nums text-sac-xanh">Còn {t.buoiCon}{t.buoiTong ? `/${t.buoiTong}` : ""} buổi</span>
-                  {nut(t)}
-                </span>
-              </li>
-            ))}
-          </ul>
-        )}
-      {khach && !coQuyen && <p className="mt-2 text-[13px] text-muc-3">Tài khoản này chưa có quyền trừ buổi thẻ.</p>}
-    </section>
-  );
-}
-
 /** Hai danh sách thẻ như SalonHero: "Thẻ khách đang có" (liệu trình còn buổi, thẻ tiền còn số dư) và "Thẻ bán cho khách hàng" (thẻ đang nằm trong đơn này). */
 function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] | null; theBan: { ten: string; sl: number }[]; nut?: (t: TheKh) => React.ReactNode; dvDon?: Map<string, string>; giaHan?: (t: TheKh) => (() => void) | null }) {
   // Dịch vụ đang có trong đơn mà thẻ liệu trình của khách trừ được: đưa thẻ đó lên đầu và ghi rõ (trừ buổi thay vì thu tiền).
@@ -405,6 +378,8 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
   const [tab, setTab] = useState<MucBan["loai"]>(kieu === "dich_vu" ? "dich_vu" : "goi_the");
   const [moLe, setMoLe] = useState(kieu !== "dich_vu" || dong0(nhapDau, dauTien, dongBanDau) > 0);
   const [tu, setTu] = useState("");
+  /** Đơn làm dịch vụ: ô tick nhiều dịch vụ lẻ (thay cho mở cả danh mục). */
+  const [moLeNhanh, setMoLeNhanh] = useState(false);
   // Lọc hai chiều như SalonHero: vừa chọn thẻ liệu trình → tab Dịch vụ chỉ còn dịch vụ của thẻ; vừa chọn dịch vụ → tab Thẻ chỉ còn thẻ có dịch vụ đó.
   const [loc, setLoc] = useState<{ loai: "dich_vu" | "goi_the"; id: string; ten: string; dv: string[] } | null>(null);
   const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam" | "moi_nhat">("ten");
@@ -570,6 +545,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
   // Sắp xếp như SalonHero (Tên A-Z, giá thấp-cao, giá cao-thấp); xếp trong từng nhóm vì danh mục hiện theo nhóm.
   // Ô chọn mục chỉ hiện mục "Nơi hiển thị" có Thu ngân và cung cấp ở chi nhánh đang bán (dòng đã có trong đơn vẫn giữ).
   const mucHien = useMemo(() => muc.filter((m) => hienOThuNgan(m, cnId)), [muc, cnId]);
+  const dvLe = useMemo(() => mucHien.filter((m) => m.loai === "dich_vu").map((m) => ({ id: m.id, ma: m.ma, ten: `${m.ten} · ${tienVN(m.gia)}` })), [mucHien]);
   // Lọc theo thẻ/dịch vụ chỉ còn hiệu lực khi mục đó VẪN nằm trong giỏ (bỏ khỏi giỏ / đổi đơn là tự hết lọc).
   const locCon = loc && dong.some((d) => d.loai === loc.loai && d.ref === loc.id) ? loc : null;
   const locCho = (t: string) => (locCon && ((t === "dich_vu" && locCon.loai === "goi_the") || (t === "goi_the" && locCon.loai === "dich_vu")) ? locCon : null);
@@ -645,11 +621,11 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
           <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
         </div>
         <ChonKhach tuFocus={kieu === "dich_vu" && !dauTien} khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
-        {/* Đơn làm dịch vụ: danh sách dịch vụ đã mua còn buổi đứng ngay dưới ô khách (danh mục chính của đơn này). */}
-        {kieu === "dich_vu" && buoi && khach && theKhach && <div className="mt-2"><NutNhieuThe nhanVien={nvLC} bacSi={bacSiLC} lichId={lichId ?? undefined}
-          the={theKhach.the.filter((t) => t.loai === "lan").map((t) => { const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri)); return { id: t.id, ten: t.ten, ma: t.ma, buoiCon: t.buoiCon, buoiTong: t.buoiTong, dichVu: dvThe.length ? dvThe : dvMuc }; })}
-          onXong={(r) => { setTaiLaiThe((x) => x + 1); setPhieuBuoi({ kq: r, khachId: khach.id }); }} /></div>}
-        {kieu === "dich_vu" && <DvDaMua khach={!!khach} the={theKhach ? theKhach.the.filter((t) => t.loai === "lan" && t.buoiCon > 0) : null} nut={(t) => nutThe(t, "Làm buổi này")} coQuyen={!!buoi} />}
+        {/* Đơn làm dịch vụ: dịch vụ đã mua còn buổi đứng ngay dưới ô khách — tick nhiều dịch vụ / nhiều thẻ, gửi chuyên viên trị liệu một lần (chị Thuý / chị Lâm 11/11/2026). */}
+        {kieu === "dich_vu" && <ChonDvDaMua key={khach?.id ?? ""} khach={!!khach} coQuyen={!!buoi} nhanVien={nvLC} bacSi={bacSiLC} lichId={lichId ?? undefined} dvMuc={dvMuc}
+          the={theKhach ? theKhach.the.filter((t) => t.loai === "lan" && t.buoiCon > 0).map((t) => ({ id: t.id, ten: t.ten, ma: t.ma, han: t.han, buoiCon: t.buoiCon, buoiTong: t.buoiTong, dichVu: t.dichVu.filter((d) => dvMuc.some((x) => x.gia_tri === d)), lanTruoc: t.lanTruoc })) : null}
+          dangMo={(luotKhach?.ds ?? []).filter((r) => r.trangThai === "cho_lam" || r.trangThai === "dang_lam").map((r) => ({ theId: r.theId, dvId: r.dichVuId }))}
+          onXong={(r) => { setTaiLaiThe((x) => x + 1); if (khach) setPhieuBuoi({ kq: r, khachId: khach.id }); }} />}
         {sua && <p role="status" className="mt-2 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Đang sửa hoá đơn <b>{sua.ma}</b> (đã mở lại về nháp). Chốt đơn sẽ ghi lại vào chính hoá đơn này, giữ mã và ngày {ngayVN(sua.ngayHd)}.</p>}
         <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />
         {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} nut={nutThe} dvDon={dvDon} giaHan={giaHan} />}
@@ -658,8 +634,23 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
           <p className="mt-2 text-[13px] text-muc-3">Điểm thưởng: <span className="font-medium tabular-nums text-muc">{diemKhach.soDu.toLocaleString("vi-VN")} điểm</span>
             {diemKhach.bat ? ` · 1 điểm = ${tienVN(diemKhach.tienMoiDiem)}` : " · đổi điểm đang tắt"}</p>
         )}
-        {!moLe && (
-          <button type="button" onClick={() => setMoLe(true)} className="mt-4 flex h-11 w-full items-center justify-center gap-1.5 rounded-nho border border-dashed border-vien-dam text-[14px] font-medium text-nhan-dam hover:bg-giay-tram">
+        {!moLe && kieu === "dich_vu" && moLeNhanh && (
+          // Dịch vụ lẻ (tính tiền): tick nhiều dịch vụ một lúc như chọn dịch vụ ở Lịch hẹn; tick là vào đơn, bỏ tick là ra khỏi đơn.
+          <div className="mt-4 space-y-2">
+            <p className="text-[14px] font-semibold text-muc">Dịch vụ lẻ (khách làm thêm, tính tiền)</p>
+            <ChonNhieuDichVu nhan="Dịch vụ lẻ" ds={dvLe} tatCa={dvMuc.map((d) => ({ id: d.gia_tri, ten: d.nhan }))}
+              chon={dong.filter((d) => d.loai === "dich_vu").map((d) => d.ref)}
+              onDoi={(ids) => {
+                const co = dong.filter((d) => d.loai === "dich_vu").map((d) => d.ref);
+                for (const id of ids) if (!co.includes(id)) { const m = mucHien.find((x) => x.loai === "dich_vu" && x.id === id); if (m) them(m); }
+                const bo = co.filter((id) => !ids.includes(id));
+                if (bo.length) setDong((ds) => ds.filter((d) => d.loai !== "dich_vu" || !bo.includes(d.ref)));
+              }} />
+            <button type="button" onClick={() => setMoLe(true)} className={NUT_CHU}>Mở danh mục đầy đủ (sản phẩm, thẻ)</button>
+          </div>
+        )}
+        {!moLe && !(kieu === "dich_vu" && moLeNhanh) && (
+          <button type="button" onClick={() => (kieu === "dich_vu" ? setMoLeNhanh(true) : setMoLe(true))} className="mt-4 flex h-11 w-full items-center justify-center gap-1.5 rounded-nho border border-dashed border-vien-dam text-[14px] font-medium text-nhan-dam hover:bg-giay-tram">
             <Plus aria-hidden strokeWidth={2} className="h-4 w-4" />Thêm dịch vụ lẻ (khách làm thêm, tính tiền)
           </button>
         )}
@@ -762,9 +753,9 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
           {kieu === "dich_vu" && (
             <div className="border-b border-vien px-4 py-3">
               <p className="mb-2 text-[13px] font-semibold text-muc">Dịch vụ dùng thẻ (trừ buổi)</p>
-              {!khach ? <p className="py-4 text-center text-[14px] text-muc-3">Chọn khách rồi bấm <b className="font-medium text-muc-2">Làm buổi này</b> ở dịch vụ khách đã mua bên trái.</p>
+              {!khach ? <p className="py-4 text-center text-[14px] text-muc-3">Chọn khách, tick các dịch vụ khách đã mua bên trái rồi bấm <b className="font-medium text-muc-2">Gửi chuyên viên làm</b>.</p>
                 : !luotKhach ? <p className="py-4 text-center text-[14px] text-muc-3">Đang tải</p>
-                : luotKhach.ds.length === 0 ? <p className="py-4 text-center text-[14px] text-muc-3">Chưa lên dịch vụ nào hôm nay. Bấm <b className="font-medium text-muc-2">Làm buổi này</b> ở dịch vụ khách đã mua bên trái: khách vào danh sách chờ của chuyên viên trị liệu, chưa trừ buổi.</p>
+                : luotKhach.ds.length === 0 ? <p className="py-4 text-center text-[14px] text-muc-3">Chưa lên dịch vụ nào hôm nay. Tick một hoặc nhiều dịch vụ khách đã mua bên trái rồi bấm <b className="font-medium text-muc-2">Gửi chuyên viên làm</b>: khách vào danh sách chờ của chuyên viên trị liệu, chưa trừ buổi.</p>
                 : <KhachChoLam gon ds={luotKhach.ds} quyTrinh={luotKhach.quyTrinh} thaoTacIds={luotKhach.thaoTacIds} ketThuc={luotKhach.ketThuc} nhanVien={nvLC} bacSi={bacSiLC} onDoi={taiLuotDv}
                     dvCuaThe={(theId) => { const t = theKhach?.the.find((x) => x.id === theId); const dv = t ? dvMuc.filter((d) => t.dichVu.includes(d.gia_tri)) : []; return dv.length ? dv : dvMuc; }} />}
               {khach && <p className="mt-2.5 text-[12.5px] leading-relaxed text-muc-3">Chuyên viên trị liệu bấm Bắt đầu làm (xác nhận dịch vụ), tích từng bước, trả khách thì bấm <b className="font-medium text-muc-2">Kết thúc</b>: lúc đó mới trừ 1 buổi và ra phiếu vật tư.{soLuotMo > 0 && <> · <Link href="/the/cho-lam?tab=chi_nhanh" className="font-medium text-nhan-dam hover:underline">Khách chờ làm</Link></>}</p>}

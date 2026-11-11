@@ -4,7 +4,7 @@ import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { yeuCauQuyen } from "@/lib/auth";
-import { coQuyen } from "@/lib/quyen";
+import { coQuyen, duocTruBuoiTrucTiep } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayGioVN, ngayVN, soVN, tienVN, buoiConLai } from "@/lib/dinh-dang";
 import { ngaySinhVN } from "@/lib/ngay-sinh";
@@ -233,7 +233,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
               <KhoiThe key={x.id} an={{ khach: true }} t={{ id: x.id ?? "", ma: x.ma ?? "", ten: tenThe(x), loai: x.loai ?? "lan", tinhTrang: x.tinh_trang,
                 buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), soDu: Number(x.so_du_tien ?? 0), tongTien: x.tong_tien == null ? null : Number(x.tong_tien),
                 ngayCap: x.ngay_cap, han: x.han_dung, lanGan: bsThe.lanGan(x.id ?? ""), lichToi: bsThe.lichToi(x.khach_id), phuTrach: bsThe.phuTrach(x.khach_id) }}
-                nut={<>{dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null}
+                nut={<>{dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
                 {suaThe && x.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: x.id ?? "", ma: x.ma ?? "", loai: x.loai ?? "lan", han_dung: x.han_dung, gia_tri_buoi: x.gia_tri_buoi, ghi_chu: x.ghi_chu }} maKhach={k.ma ?? ""} nhan="Sửa" />}</>} />
             ))}
           </LuoiThe>

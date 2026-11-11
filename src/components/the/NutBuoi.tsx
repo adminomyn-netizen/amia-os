@@ -13,7 +13,7 @@ export type KetQuaBuoi = { ok?: boolean; loi?: string; canhBao?: string; phieuId
 export function BaoPhieuBuoi({ phieu }: { phieu: KetQuaBuoi | null }) {
   if (phieu?.chuyenCho !== undefined) return (
     <span className="text-[12.5px] text-muc-3">
-      Đã chuyển cho {phieu.chuyenCho || "chuyên viên trị liệu"}, chờ làm (chưa trừ buổi) · <Link href="/the/cho-lam" className="font-medium text-nhan-dam hover:underline">Xem khách chờ làm</Link>
+      Đã gửi chuyên viên trị liệu{phieu.chuyenCho ? ` (${phieu.chuyenCho})` : ""} — chờ Kết thúc (chưa trừ buổi) · <Link href="/the/cho-lam" className="font-medium text-nhan-dam hover:underline">Xem khách chờ làm</Link>
       {phieu.luotId && <> · <Link href={`/in/phieu-lam/${phieu.luotId}`} target="_blank" className="font-medium text-nhan-dam hover:underline">In phiếu làm dịch vụ</Link></>}
     </span>
   );
@@ -30,7 +30,7 @@ export function BaoPhieuBuoi({ phieu }: { phieu: KetQuaBuoi | null }) {
 export const luaChonNhieu = (ds: LuaChon[], uuTien?: string): LuaChon[] =>
   [...ds].filter((n) => n.gia_tri).sort((a, b) => Number(b.nhom === uuTien) - Number(a.nhom === uuTien)).map((n) => ({ gia_tri: n.gia_tri, nhan: n.nhom ? `${n.nhan} · ${n.nhom}` : n.nhan }));
 
-/** Các ô người làm + tư vấn + thông số ca, dùng chung cho hộp Thực hiện buổi và hộp Đã làm xong của chuyên viên (/the/cho-lam). */
+/** Các ô người làm + tư vấn + thông số ca, dùng chung cho hộp Gửi chuyên viên làm và hộp Kết thúc của chuyên viên (/the/cho-lam). */
 export function truongBuoi({ nhanVien, bacSi, coNgay }: { nhanVien: LuaChon[]; bacSi: LuaChon[]; coNgay?: boolean }): Truong[] {
   return [
     { ten: "nv_ids", nhan: "Người làm (chuyên viên trị liệu)", loai: "nhieu", luaChon: luaChonNhieu(nhanVien, "Chuyên viên trị liệu"), batBuoc: true, rong: true, ghiChu: "Chọn được nhiều người (vd bác sĩ + chuyên viên cùng làm). Người chọn đầu tiên là người chính, doanh thu / hoa hồng buổi tính cho người chính." },
@@ -45,10 +45,12 @@ export function truongBuoi({ nhanVien, bacSi, coNgay }: { nhanVien: LuaChon[]; b
   ];
 }
 
-/** Nút "Thực hiện buổi" dùng ở danh sách thẻ, hồ sơ thẻ, hồ sơ khách và Bán hàng.
- *  Nút chính: "Chuyển cho chuyên viên trị liệu" (khách vào hàng Chờ làm, CHƯA trừ buổi). Nút phụ: "Đã làm xong" (trừ buổi ngay như cũ). */
-export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, lichId, nhan = "Thực hiện buổi", onXong, macDinh }: {
+/** Nút "Gửi chuyên viên làm" dùng ở danh sách thẻ, hồ sơ thẻ, hồ sơ khách và Bán hàng (chị Thuý 10/11, chị Lâm 11/11/2026).
+ *  Nút chính: khách vào hàng Chờ làm của chuyên viên trị liệu, CHƯA trừ buổi — chuyên viên bấm Kết thúc mới trừ.
+ *  Nút phụ "Trừ buổi trực tiếp (chỉnh sửa)" CHỈ hiện khi `truTrucTiep` (Chủ / Kỹ thuật — duocTruBuoiTrucTiep), có hỏi lại trước khi trừ. */
+export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, truTrucTiep, lichId, nhan = "Gửi chuyên viên làm", onXong, macDinh }: {
   theId: string; nhanVien: LuaChon[]; bacSi: LuaChon[]; dichVu: LuaChon[]; action: (fd: FormData) => Promise<KetQuaBuoi>; lichId?: string; nhan?: string;
+  /** Người đang xem được trừ buổi trực tiếp (duocTruBuoiTrucTiep). Máy chủ (thucHienBuoi) vẫn tự chặn. */ truTrucTiep?: boolean;
   /** Điền sẵn theo lần trước khách dùng thẻ (dịch vụ, người làm, bác sĩ). */ macDinh?: { dv?: string; nv?: string; bs?: string } | null;
   /** Nơi gọi tự hiện phiếu (vd màn Bán hàng, nút có thể biến mất khi thẻ hết buổi); có thì NutBuoi không tự hiện. */ onXong?: (kq: KetQuaBuoi) => void;
 }) {
@@ -56,14 +58,17 @@ export function NutBuoi({ theId, nhanVien, bacSi, dichVu, action, lichId, nhan =
   const xong = (r: KetQuaBuoi) => { if (onXong) onXong(r); else setPhieu(r.phieuId || r.chuyenCho !== undefined ? r : null); };
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
-      <NutHop kieu="chu" nhan={nhan} tieuDe="Thực hiện buổi" rong
-        moTa="Chuyển cho chuyên viên trị liệu: khách vào danh sách Chờ làm của chuyên viên, CHƯA trừ buổi. Chuyên viên tích từng bước khi làm, bấm Kết thúc mới trừ 1 buổi, ghi doanh thu buổi và ra phiếu vật tư theo định mức. Khách đã làm xong rồi thì bấm Đã làm xong ngay tại đây. Nhập nhầm thì huỷ buổi để hoàn lại."
-        nhanLuu="Chuyển cho chuyên viên trị liệu"
+      <NutHop kieu="chu" nhan={nhan} tieuDe="Gửi chuyên viên làm" rong
+        moTa={`Khách vào danh sách Chờ làm của chuyên viên trị liệu, CHƯA trừ buổi. Chuyên viên bấm Bắt đầu làm, tích từng bước, bấm Kết thúc mới trừ 1 buổi, ghi doanh thu buổi và ra phiếu vật tư theo định mức.${truTrucTiep ? " Trừ buổi trực tiếp chỉ dùng để chỉnh sửa / ghi bù buổi đã làm (bỏ qua chuyên viên); nhập nhầm thì huỷ buổi để hoàn lại." : ""}`}
+        nhanLuu="Gửi chuyên viên làm"
         an={{ the_id: theId, ...(lichId ? { lich_id: lichId } : {}) }} giaTri={{ dich_vu_id: dichVu.length === 1 ? dichVu[0].gia_tri : macDinh?.dv && dichVu.some((d) => d.gia_tri === macDinh.dv) ? macDinh.dv : "", ngay: homNayHCM(),
           nv_ids: macDinh?.nv && nhanVien.some((n) => n.gia_tri === macDinh.nv) ? [macDinh.nv] : [], tu_van_ids: [], ...(macDinh?.bs && bacSi.some((n) => n.gia_tri === macDinh.bs) ? { bac_si_id: macDinh.bs } : {}) }}
         truong={[{ ten: "dich_vu_id", nhan: "Dịch vụ khách làm hôm nay", loai: "chon", luaChon: dichVu, batBuoc: true, rong: true, ghiChu: "Phiếu vật tư lấy định mức của dịch vụ này." }, ...truongBuoi({ nhanVien, bacSi, coNgay: true })]}
         action={async (fd) => { const r: KetQuaBuoi = await chuyenTriLieu(fd); if (r.ok) xong({ ...r, chuyenCho: r.chuyenCho ?? "" }); return r; }}
-        nutPhu={{ nhan: "Đã làm xong", action: async (fd) => { const r = await action(fd); if (r.ok) xong(r); return r; } }} />
+        nutPhu={truTrucTiep ? { nhan: "Trừ buổi trực tiếp (chỉnh sửa)", action: async (fd) => {
+          if (!window.confirm("Trừ 1 buổi NGAY, bỏ qua chuyên viên trị liệu? Chỉ dùng để chỉnh sửa / ghi bù buổi đã làm.")) return { loi: "Chưa trừ buổi." };
+          const r = await action(fd); if (r.ok) xong(r); return r;
+        } } : undefined} />
       {!onXong && <BaoPhieuBuoi phieu={phieu} />}
     </span>
   );

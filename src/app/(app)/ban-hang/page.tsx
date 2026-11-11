@@ -1,4 +1,4 @@
-import { coQuyen } from "@/lib/quyen";
+import { coQuyen, duocTruBuoiTrucTiep } from "@/lib/quyen";
 import { yeuCauQuyen } from "@/lib/auth";
 import { dsChiNhanhRutGon } from "@/lib/chi-nhanh";
 import { sb } from "@/lib/db";
@@ -127,7 +127,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
       {/* Điện thoại: đầu trang đã ghi "POS / Bán hàng", bỏ khối tiêu đề lớn để danh mục lên sớm. */}
       <div className="max-lg:hidden"><TieuDeNoi tieuDe="Bán hàng" icon={ShoppingBag} phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." /></div>
       <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} soKhachLich={suaHd ? undefined : soKhachLich} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
-        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} buoi={thucHienBuoi} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} dsCho={dsDonCho} nguonGt={nguonGt} taoMoi={coQuyen(nd, "danhmuc.sua")} xoaNhap={xoaDonNhap} xoaCho={xoaDonCho} boSua={boSuaHoaDon} nhapBanDau={nhapBanDau} suaHd={suaHd} />
+        tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} buoi={thucHienBuoi} truBuoiTrucTiep={duocTruBuoiTrucTiep(nd)} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} dsCho={dsDonCho} nguonGt={nguonGt} taoMoi={coQuyen(nd, "danhmuc.sua")} xoaNhap={xoaDonNhap} xoaCho={xoaDonCho} boSua={boSuaHoaDon} nhapBanDau={nhapBanDau} suaHd={suaHd} />
     </>
   );
 }

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
-import { coQuyen } from "@/lib/quyen";
+import { coQuyen, duocTruBuoiTrucTiep } from "@/lib/quyen";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
 import { chuoi, so } from "@/lib/form";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
@@ -15,10 +15,13 @@ type KQ = { ok?: true; loi?: string; canhBao?: string };
 export type KQBuoi = KQ & { phieuId?: string; phieuMa?: string; xemPhieu?: boolean; /** Lịch đã có phiếu bác sĩ chỉ định nên không ra phiếu theo buổi. */ phieuBacSi?: boolean };
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
 const lamMoi = (id?: string) => { revalidatePath("/the"); if (id) revalidatePath(`/the/${id}`); };
+const LOI_TRU_TRUC_TIEP = "Không trừ buổi trực tiếp được. Bấm \"Gửi chuyên viên làm\": chuyên viên trị liệu bấm Kết thúc mới trừ 1 buổi.";
 export async function thucHienBuoi(fd: FormData): Promise<KQBuoi> {
-  // Thu ngân (ban.tao) trừ buổi ngay ở màn Bán hàng như SalonHero (dùng thẻ khi lên đơn).
+  // Trừ buổi TRỰC TIẾP (bỏ qua hàng Chờ làm) chỉ để Chủ / Kỹ thuật chỉnh sửa, ghi bù (chị Lâm 11/11/2026).
+  // Thu ngân / lễ tân / chuyên viên trị liệu: "Gửi chuyên viên làm" (chuyenTriLieu) → chuyên viên bấm Kết thúc mới trừ buổi.
   const nd = (await kiemQuyen("the.thuchien")) ?? (await kiemQuyen("ban.tao"));
   if (!nd) return { loi: KHONG_DU_QUYEN };
+  if (!duocTruBuoiTrucTiep(nd)) return { loi: LOI_TRU_TRUC_TIEP };
   const theId = chuoi(fd, "the_id");
   if (!(await theTrongPhamVi(nd, theId))) return { loi: "Không tìm thấy thẻ." };
   const nguoi = docNguoiBuoi(fd);

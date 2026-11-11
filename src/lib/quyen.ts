@@ -103,6 +103,12 @@ export const laVaiTro = (v: unknown): v is VaiTro => (VAI_TRO as readonly unknow
 export const VAI_TRO_KET_THUC_BUOI: readonly VaiTro[] = ["ktv", "chu", "ky_thuat"];
 export const duocKetThucBuoi = (nd: { vaiTro: VaiTro } | null | undefined) => !!nd && VAI_TRO_KET_THUC_BUOI.includes(nd.vaiTro);
 
+/** Ai được TRỪ BUỔI TRỰC TIẾP (thucHienBuoi, bỏ qua hàng Chờ làm) — chỉ để chỉnh sửa / ghi bù buổi (chị Lâm 11/11/2026: "cứ theo cái luồng hôm qua mà làm").
+ *  Mọi người khác (kể cả chuyên viên trị liệu) đi đúng luồng: Gửi chuyên viên làm → Bắt đầu làm → tích bước → Kết thúc mới trừ 1 buổi.
+ *  Luôn là tập con của VAI_TRO_KET_THUC_BUOI. */
+export const VAI_TRO_TRU_BUOI_TRUC_TIEP: readonly VaiTro[] = ["chu", "ky_thuat"];
+export const duocTruBuoiTrucTiep = (nd: { vaiTro: VaiTro } | null | undefined) => !!nd && VAI_TRO_TRU_BUOI_TRUC_TIEP.includes(nd.vaiTro) && duocKetThucBuoi(nd);
+
 /** Danh sách quyền Kỹ thuật được tích chọn cho từng người (không gồm quyền hệ thống), gom theo nhóm cho dễ đọc. */
 export const NHOM_QUYEN: { nhom: string; muc: { ma: Quyen; nhan: string }[] }[] = [
   { nhom: "Tổng quan", muc: [{ ma: "tongquan.xem", nhan: "Có dashboard (Tổng quan)" }] },

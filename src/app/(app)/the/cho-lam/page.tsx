@@ -8,7 +8,7 @@ import { KhachChoLam } from "@/components/the/KhachChoLam";
 import { docBuoiCho, docQuyTrinh } from "@/lib/buoi-cho-lam";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
-/** Khách chờ làm: thu ngân / lễ tân chuyển khách cho chuyên viên trị liệu ở hộp Thực hiện buổi.
+/** Khách chờ làm: thu ngân / lễ tân chuyển khách cho chuyên viên trị liệu bằng nút Gửi chuyên viên làm.
  *  Tab "Của tôi" = khách chuyển cho chính người đang xem; tab "Cả chi nhánh" = bảng theo dõi trong ngày cho thu ngân / quản lý. */
 export default async function TrangKhachChoLam({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauQuyen("the.xem");
@@ -33,7 +33,7 @@ export default async function TrangKhachChoLam({ searchParams }: { searchParams:
   return (
     <>
       <TieuDeNoi tieuDe="Khách chờ làm" quayLai={{ href: "/the", nhan: "Thẻ liệu trình" }}
-        phu={`Thu ngân bấm "Chuyển cho chuyên viên trị liệu" ở hộp Thực hiện buổi thì khách hiện ở đây. Chuyên viên bấm Bắt đầu làm (xác nhận dịch vụ), làm bước nào tích bước đó, trả khách thì bấm Kết thúc: lúc đó mới trừ 1 buổi, ghi doanh thu và ra phiếu vật tư. Hôm nay ${ngayVN(homNay)}.`} />
+        phu={`Thu ngân bấm "Gửi chuyên viên làm" (Thu ngân, thẻ, hồ sơ khách, lịch hẹn) thì khách hiện ở đây. Chuyên viên bấm Bắt đầu làm (xác nhận dịch vụ), làm bước nào tích bước đó, trả khách thì bấm Kết thúc: lúc đó mới trừ 1 buổi, ghi doanh thu và ra phiếu vật tư. Hôm nay ${ngayVN(homNay)}.`} />
       <Tab goc="/the/cho-lam" dang={tab} muc={[{ ma: "toi", ten: "Của tôi" }, { ma: "chi_nhanh", ten: "Cả chi nhánh hôm nay" }]} />
       <p className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-muc-3" aria-live="polite">
         <span>Chờ làm <b className="font-semibold text-canh-bao">{dem("cho_lam")}</b></span>

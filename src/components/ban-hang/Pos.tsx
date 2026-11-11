@@ -50,7 +50,8 @@ type PropsPos = {
   /** "Chờ thanh toán": đơn đang xử lý của chi nhánh. */ dsCho?: typeof dsDonCho;
   /** Có quyền sửa danh mục: hiện ô "Tạo thẻ / dịch vụ / sản phẩm mới" cuối lưới như SalonHero. */ taoMoi?: boolean;
   /** Nguồn giới thiệu cho người giới thiệu từng dòng. */ nguonGt?: NguonGt[];
-  /** Có quyền trừ buổi thẻ: hiện nút "Dùng buổi" ở "Thẻ khách đang có". */ buoi?: typeof thucHienBuoi;
+  /** Có quyền làm buổi thẻ: hiện nút "Gửi chuyên viên làm" ở "Thẻ khách đang có" / "Làm buổi này" (đưa vào hàng Chờ làm, chưa trừ buổi). */ buoi?: typeof thucHienBuoi;
+  /** Được trừ buổi trực tiếp (Chủ / Kỹ thuật, duocTruBuoiTrucTiep): hiện thêm nút phụ "Trừ buổi trực tiếp (chỉnh sửa)". */ truBuoiTrucTiep?: boolean;
 };
 /** Loại đơn (chị Thuý 10/11): "ban" = bán mới (thẻ, liệu trình, sản phẩm, dịch vụ lẻ trả tiền); "dich_vu" = khách làm các dịch vụ đã mua (dùng buổi thẻ), thêm dịch vụ lẻ nếu làm thêm.
  *  Chỉ là điểm bắt đầu của màn (giữ ở trình duyệt, không lưu DB); đơn nào cũng chứa được mọi loại món. */
@@ -381,7 +382,7 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
   );
 }
 
-function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, kieu, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, kieu, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; kieu: KieuDon; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
 }) {
   const lichId = dauTien ? lichGoc : null;
@@ -488,17 +489,17 @@ function DonPos({ suaHd, nguonGt = [], buoi, muc, nhanVien, khachBanDau, dongBan
 
   const theTien = khach ? theTienTai : [];
   const theKhach = khach && theKh?.khachId === khach.id ? theKh : null;
-  // Bấm nhanh ở "Thẻ khách đang có": thẻ liệu trình → "Dùng buổi" chọn sẵn dịch vụ của gói (trừ 1 buổi ngay, không phải tìm lại dịch vụ);
+  // Bấm nhanh ở "Thẻ khách đang có": thẻ liệu trình → "Gửi chuyên viên làm" chọn sẵn dịch vụ của gói (vào hàng Chờ làm; chuyên viên bấm Kết thúc mới trừ buổi);
   // thẻ tiền → thêm khoản thu "Trừ thẻ tiền" đúng thẻ đó, số tiền = phần còn phải thu (không quá số dư).
   const dvMuc = useMemo(() => muc.filter((m) => m.loai === "dich_vu").map((m) => ({ gia_tri: m.id, nhan: m.ten })), [muc]);
   const nvLC = useMemo(() => luaChonNhanVien(nhanVien.map((n) => ({ id: n.id, ho_ten: n.ten, vai_tro: n.vaiTro }))), [nhanVien]);
   const bacSiLC = useMemo(() => [{ gia_tri: "", nhan: "Không có" }, ...nhanVien.filter((n) => n.vaiTro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ten }))], [nhanVien]);
   const dvDon = useMemo(() => new Map(dong.filter((d) => d.loai === "dich_vu").map((d) => [d.ref, tuMuc.get(khoaDong(d))?.ten ?? ""])), [dong, tuMuc]);
-  const nutThe = (t: TheKh, nhan = "Dùng buổi") => {
+  const nutThe = (t: TheKh, nhan = "Gửi chuyên viên làm") => {
     if (t.loai === "lan") {
       if (!buoi || t.buoiCon <= 0) return null;
       const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
-      return <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan={nhan}
+      return <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length ? dvThe : dvMuc} lichId={lichId ?? undefined} nhan={nhan} truTrucTiep={truBuoiTrucTiep}
         onXong={(r) => { setPhieuBuoi((r.phieuId || r.chuyenCho !== undefined) && khach ? { kq: r, khachId: khach.id } : null); setTaiLaiThe((x) => x + 1); }} action={async (fd) => { const r = await buoi(fd); if (r.ok) setTaiLaiThe((x) => x + 1); return r; }} />;
     }
     if (t.soDu <= 0) return null;

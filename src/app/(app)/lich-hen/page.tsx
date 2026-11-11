@@ -15,7 +15,7 @@ import { hienDatLich } from "@/lib/ban-hang";
 import { NutInLich } from "@/components/lich-hen/NutInLich";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
-import { thucHienBuoi } from "../the/actions";
+import { chuyenTriLieu } from "../the/cho-lam/actions";
 import { doiTrangThaiLich, duyetYeuCauOnline, ganNhomKhachMoi, khungGioTrong, luuLichHen, thongTinKhachDatLich, tuChoiYeuCauOnline } from "./actions";
 import { XacNhanDen } from "@/components/lich-hen/XacNhanDen";
 import { XemLich } from "@/components/lich-hen/XemLich";
@@ -238,12 +238,12 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         {coQuyen(nd, "phieu.xem") && ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan"].includes(l.trang_thai) && <Link href={`/phieu-cap?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Phiếu cấp vật tư</Link>}
         {["chua_xac_nhan", "da_xac_nhan", "dang_phuc_vu", "hoan_thanh", "cho_phuc_vu"].includes(l.trang_thai) && coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?lich=${l.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Thanh toán ngay</Link>}
         {sua && ["cho_phuc_vu", "dang_phuc_vu"].includes(l.trang_thai) && theKhach.length > 0 && coQuyen(nd, "the.thuchien") && (
-          <NutHop kieu="chu" nhan="Dùng thẻ" tieuDe="Dùng thẻ liệu trình" moTa="Trừ 1 buổi của thẻ cho lịch hẹn này." rong nhanLuu="Đã làm xong" an={{ lich_id: l.id }}
+          <NutHop kieu="chu" nhan="Gửi chuyên viên làm" tieuDe="Dùng thẻ liệu trình: gửi chuyên viên làm" moTa="Khách vào danh sách Chờ làm của chuyên viên trị liệu, CHƯA trừ buổi. Chuyên viên bấm Bắt đầu làm, tích từng bước, bấm Kết thúc mới trừ 1 buổi của thẻ cho lịch hẹn này." rong nhanLuu="Gửi chuyên viên làm" an={{ lich_id: l.id }}
             giaTri={{ nv_id: nvDefault, the_id: theKhach.length === 1 ? theKhach[0].id ?? "" : "", dich_vu_id: dvIds.length === 1 ? dvIds[0] : "", ngay }}
             truong={[{ ten: "the_id", nhan: "Thẻ", loai: "chon", batBuoc: true, rong: true, luaChon: theKhach.map((x) => ({ gia_tri: x.id ?? "", nhan: `${x.ma} · còn ${x.so_buoi_con} buổi` })) },
               { ten: "dich_vu_id", nhan: "Dịch vụ đã làm", loai: "chon", batBuoc: true, rong: true, luaChon: (dv ?? []).filter((d) => !(lk ?? []).some((x) => theKhach.some((tk) => tk.goi_id === x.goi_id)) || (lk ?? []).some((x) => x.dich_vu_id === d.id && theKhach.some((tk) => tk.goi_id === x.goi_id))).map((d) => ({ gia_tri: d.id, nhan: d.ten })) },
               { ten: "nv_id", nhan: "Người thực hiện", loai: "chon", luaChon: nvLC, batBuoc: true }, { ten: "bac_si_id", nhan: "Bác sĩ chỉ định", loai: "chon", luaChon: bsLC },
-              { ten: "vung", nhan: "Vùng làm", loai: "chu" }, { ten: "shot", nhan: "Số shot thực tế", loai: "so" }, { ten: "line", nhan: "Số line thực tế", loai: "so" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong" }]} action={thucHienBuoi} />
+              { ten: "vung", nhan: "Vùng làm", loai: "chu" }, { ten: "shot", nhan: "Số shot thực tế", loai: "so" }, { ten: "line", nhan: "Số line thực tế", loai: "so" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "nhieu_dong" }]} action={chuyenTriLieu} />
         )}
         {!ngang && nutSua(l, k, dvIds, "chu")}
         {sua && ["da_xac_nhan", "cho_phuc_vu"].includes(l.trang_thai) && <NutNhanh nhan="Không đến" action={doiTrangThaiLich} du={{ id: l.id, trang_thai: "khong_den" }} />}

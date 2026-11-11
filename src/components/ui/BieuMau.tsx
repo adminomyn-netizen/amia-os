@@ -89,7 +89,7 @@ export function NutHop({
   nhan, tieuDe, moTa, truong = [], giaTri = {}, an = {}, action, kieu = "chinh", rong, nhanLuu = "Lưu", xacNhan, nguy, thongTin, nutPhu,
 }: {
   thongTin?: ThongTinBieuMau;
-  /** Nút lưu thứ hai (kiểu phụ, nằm cạnh nút chính) gửi CÙNG các ô sang một hành động khác. Vd hộp Thực hiện buổi: "Chuyển cho chuyên viên trị liệu" (chính) + "Đã làm xong" (phụ). */
+  /** Nút lưu thứ hai (kiểu phụ, nằm cạnh nút chính) gửi CÙNG các ô sang một hành động khác. Vd hộp Gửi chuyên viên làm: "Gửi chuyên viên làm" (chính) + "Trừ buổi trực tiếp (chỉnh sửa)" (phụ, chỉ Chủ / Kỹ thuật). */
   nutPhu?: { nhan: string; action: (fd: FormData) => Promise<KetQuaHD | void> };
   nhan: string; tieuDe: string; moTa?: string; truong?: Truong[]; giaTri?: GiaTri; an?: Record<string, string>;
   action: (fd: FormData) => Promise<KetQuaHD | void>; kieu?: "chinh" | "phu" | "chu"; rong?: boolean; nhanLuu?: string; xacNhan?: string; nguy?: boolean;

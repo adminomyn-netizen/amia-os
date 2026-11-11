@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { yeuCauQuyen } from "@/lib/auth";
-import { coQuyen } from "@/lib/quyen";
+import { coQuyen, duocTruBuoiTrucTiep } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { boDau } from "@/lib/dinh-dang";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
@@ -62,7 +62,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const lienKetThem = `/the?${new URLSearchParams({ tab, ...(sp.q ? { q: sp.q } : {}), ...(sp.het === "1" ? { het: "1" } : {}), so: String(so + 50) })}`;
   const nvLC = luaChonNhanVien(nv ?? []);
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
-  // Danh sách dịch vụ cho nút "Thực hiện buổi": dựng MỘT lần cho mỗi gói (gói không gắn dịch vụ thì dùng chung một danh sách đủ) và dùng lại
+  // Danh sách dịch vụ cho nút "Gửi chuyên viên làm": dựng MỘT lần cho mỗi gói (gói không gắn dịch vụ thì dùng chung một danh sách đủ) và dùng lại
   // đúng mảng đó cho mọi dòng — trước đây mỗi dòng dựng mảng mới ~230 dịch vụ × 200 thẻ, làm trang nặng ~5 MB.
   const dvDu = (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: d.ten })), dvTheoGoi = new Map<string, typeof dvDu>();
   for (const l of lk ?? []) { const d = (dv ?? []).find((x) => x.id === l.dich_vu_id); if (d) dvTheoGoi.set(l.goi_id, [...(dvTheoGoi.get(l.goi_id) ?? []), { gia_tri: d.id, nhan: d.ten }]); }
@@ -70,7 +70,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
 
   return (
     <>
-      <TieuDeNoi tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Thực hiện buổi, chuyển cho chuyên viên trị liệu; chuyên viên bấm Đã làm xong mới trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
+      <TieuDeNoi tieuDe="Thẻ liệu trình" phu="Mỗi lần khách làm: bấm Gửi chuyên viên làm; chuyên viên trị liệu bấm Bắt đầu làm, tích bước, bấm Kết thúc mới trừ 1 buổi và ghi doanh thu của buổi. Mọi thay đổi đều có dòng lịch sử, không sửa số trực tiếp.">
         <Link href="/the/cho-lam" className="inline-flex h-10 items-center rounded-nho border border-vien-dam px-4 text-[14px] font-medium text-muc-2 hover:bg-giay-tram">Khách chờ làm</Link>
         {coQuyen(nd, "the.dieuchinh") && (
           <NutHop kieu="phu" nhan="Cấp thẻ tay" tieuDe="Cấp thẻ tay" moTa="Dùng khi tặng thẻ hoặc chuyển thẻ còn buổi từ phần mềm cũ. Cấp thẻ tại màn hình này không tính vào doanh thu của chi nhánh; muốn tính doanh thu thì bán thẻ ở Thu ngân." rong
@@ -90,7 +90,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
             <KhoiThe key={r.id} t={{ id: r.id ?? "", ma: r.ma ?? "", ten: tenGoi.get(r.goi_id ?? "") ?? (r.loai === "tien" ? "Thẻ tiền" : "Thẻ liệu trình"), loai: r.loai ?? "lan", tinhTrang: r.tinh_trang,
               buoiCon: Number(r.so_buoi_con ?? 0), buoiTong: r.so_buoi_tong == null ? null : Number(r.so_buoi_tong), soDu: Number(r.so_du_tien ?? 0), tongTien: r.tong_tien == null ? null : Number(r.tong_tien),
               ngayCap: r.ngay_cap, han: r.han_dung, khach: k ? { id: k.id, ten: k.ho_ten, ma: k.ma } : null, lanGan: bs.lanGan(r.id ?? ""), lichToi: bs.lichToi(r.khach_id), phuTrach: bs.phuTrach(r.khach_id) }}
-              nut={<>{tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} nhan="Dùng buổi" /> : null}
+              nut={<>{tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
               {suaDuoc && r.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: r.id ?? "", ma: r.ma ?? "", loai: r.loai ?? "lan", han_dung: r.han_dung, gia_tri_buoi: r.gia_tri_buoi, ghi_chu: r.ghi_chu }} maKhach={k?.ma ?? ""} nhan="Sửa" />}</>} />
           ); })}
         </LuoiThe>

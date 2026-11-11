@@ -8,6 +8,12 @@ export type DongGuiCv = { theId: string; dvId: string; nvIds?: string[] };
 export const TOI_DA_DONG_GUI = 20;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** Thẻ của gói CHƯA gắn dịch vụ nào (vd EXION, chị Lâm 11/11/2026): dòng tick là chính thẻ, dvId = "goi:<id gói>".
+ *  Máy chủ đổi sang dịch vụ mang tên gói (tạo một lần nếu danh mục chưa có) rồi mới gửi chuyên viên trị liệu. */
+export const dvTheoGoi = (goiId: string) => `goi:${goiId}`;
+/** id gói nếu dvId là dòng "chính thẻ", ngược lại null. */
+export const goiCuaDv = (dvId: string): string | null => (dvId.startsWith("goi:") && UUID.test(dvId.slice(4)) ? dvId.slice(4) : null);
+
 /** Đọc ô `dong` (JSON) của biểu mẫu: bỏ dòng hỏng, gộp dòng trùng (cùng thẻ + dịch vụ). */
 export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string } {
   let x: unknown;
@@ -16,7 +22,7 @@ export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string }
   const dong: DongGuiCv[] = [];
   for (const d of x as Record<string, unknown>[]) {
     const theId = String(d?.theId ?? ""), dvId = String(d?.dvId ?? "");
-    if (!UUID.test(theId) || !UUID.test(dvId)) continue;
+    if (!UUID.test(theId) || !(UUID.test(dvId) || goiCuaDv(dvId))) continue;
     if (dong.some((o) => o.theId === theId && o.dvId === dvId)) continue;
     const nvIds = Array.isArray(d?.nvIds) ? [...new Set((d.nvIds as unknown[]).map(String).filter((v) => UUID.test(v)))].slice(0, 7) : [];
     dong.push({ theId, dvId, ...(nvIds.length ? { nvIds } : {}) });

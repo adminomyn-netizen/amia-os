@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { docDongGui, kiemBuoiThe, nguoiLamDong, TOI_DA_DONG_GUI } from "@/lib/don-nhieu-dich-vu";
+import { docDongGui, dvTheoGoi, goiCuaDv, kiemBuoiThe, nguoiLamDong, TOI_DA_DONG_GUI } from "@/lib/don-nhieu-dich-vu";
 
 // Chị Thuý / chị Lâm 11/11/2026: một Đơn làm dịch vụ gửi NHIỀU dịch vụ (kể cả nhiều dịch vụ của cùng một thẻ) cho chuyên viên trị liệu một lần.
 const T1 = "11111111-1111-4111-8111-111111111111", T2 = "22222222-2222-4222-8222-222222222222";
@@ -10,6 +10,12 @@ describe("docDongGui", () => {
   it("đọc nhiều dịch vụ của cùng thẻ, gộp dòng trùng, bỏ dòng hỏng", () => {
     const r = docDongGui(JSON.stringify([{ theId: T1, dvId: A }, { theId: T1, dvId: B, nvIds: [NV, NV, "x"] }, { theId: T1, dvId: A }, { theId: "x", dvId: A }]));
     expect(r).toEqual({ dong: [{ theId: T1, dvId: A }, { theId: T1, dvId: B, nvIds: [NV] }] });
+  });
+  it("thẻ gói chưa gắn dịch vụ (EXION): nhận dòng chính thẻ goi:<id>, bỏ goi: hỏng", () => {
+    const r = docDongGui(JSON.stringify([{ theId: T1, dvId: dvTheoGoi(C) }, { theId: T1, dvId: "goi:x" }, { theId: T2, dvId: "goi:" }]));
+    expect(r).toEqual({ dong: [{ theId: T1, dvId: `goi:${C}` }] });
+    expect(goiCuaDv(`goi:${C}`)).toBe(C);
+    expect(goiCuaDv(A)).toBeNull();
   });
   it("rỗng / JSON hỏng / quá giới hạn thì báo lỗi", () => {
     expect(docDongGui("[]")).toHaveProperty("loi");

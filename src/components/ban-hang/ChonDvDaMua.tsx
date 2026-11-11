@@ -8,15 +8,16 @@ import { NUT_CHINH, NUT_CHU } from "@/components/ui/dinh-dang";
 import { ChonNhieuDichVu } from "@/components/lich-hen/ChonNhieuDichVu";
 import { luaChonNhieu, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import { chuyenNhieuDichVu } from "@/app/(app)/the/cho-lam/actions";
-import { kiemBuoiThe, TOI_DA_DONG_GUI, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
+import { dvTheoGoi, kiemBuoiThe, TOI_DA_DONG_GUI, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
 
-export type TheDv = { id: string; ten: string; ma: string; han: string | null; buoiCon: number; buoiTong: number | null; /** Dịch vụ của gói; rỗng = gói không gắn dịch vụ (chọn trong cả danh mục). */ dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
+export type TheDv = { id: string; /** Gói của thẻ: gói chưa gắn dịch vụ thì chính thẻ thành dòng tick (goi:<id>). */ goiId: string; ten: string; ma: string; han: string | null; buoiCon: number; buoiTong: number | null; /** Dịch vụ của gói; rỗng = gói không gắn dịch vụ (chọn trong cả danh mục). */ dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
 
 const khoa = (theId: string, dvId: string) => `${theId}:${dvId}`;
 const han = (d: string) => new Date(d).toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
 
 /** "Dịch vụ khách đã mua" của Đơn làm dịch vụ (chị Thuý / chị Lâm 11/11/2026: một đơn làm NHIỀU dịch vụ một lúc).
- *  Mỗi thẻ liệu trình còn buổi liệt kê TỪNG dịch vụ của thẻ để tick (thẻ không gắn dịch vụ thì tìm trong cả danh mục).
+ *  Mỗi thẻ liệu trình còn buổi liệt kê TỪNG dịch vụ của thẻ để tick. Thẻ của gói chưa gắn dịch vụ (vd EXION, chị Lâm 11/11/2026)
+ *  thì chính thẻ là một dòng tick "<tên gói> · 1 buổi" (máy chủ dùng dịch vụ mang tên gói); "Đổi / thêm dịch vụ" mở tìm trong cả danh mục.
  *  Người làm chung cho cả đơn, dòng nào khác người thì đổi riêng. Một nút gửi hết cho chuyên viên trị liệu (chưa trừ buổi; Kết thúc mới trừ).
  *  Chọn quá số buổi còn của thẻ (tính cả lượt đang chờ / đang làm) thì chặn và báo rõ. */
 export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId, coQuyen, onXong }: {
@@ -27,9 +28,14 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
   const [nvChung, setNvChung] = useState<string[] | null>(null);
   const [bs, setBs] = useState<string | null>(null);
   const [tim, setTim] = useState("");
+  const [moDoi, setMoDoi] = useState<Set<string>>(new Set());
   const [loi, setLoi] = useState("");
   const [dang, bat] = useTransition();
   const tenDv = useMemo(() => new Map(dvMuc.map((d) => [d.gia_tri, d.nhan])), [dvMuc]);
+  // Dòng "chính thẻ": danh mục đã có dịch vụ trùng tên gói (tạo ở lần gửi trước) thì dùng luôn id đó để nhận ra lượt "đang chờ".
+  const idTheoTen = useMemo(() => { const m = new Map<string, string>(); for (const d of dvMuc) { const k = d.nhan.trim().toLowerCase(); if (!m.has(k)) m.set(k, d.gia_tri); } return m; }, [dvMuc]);
+  const dongThe = (t: TheDv) => idTheoTen.get(t.ten.trim().toLowerCase()) ?? dvTheoGoi(t.goiId);
+  const nhanDong = (t: TheDv, dvId: string) => (dvId === dongThe(t) ? `${t.ten} · 1 buổi` : tenDv.get(dvId) ?? "Dịch vụ");
   const nvLC = useMemo(() => luaChonNhieu(nhanVien, "Chuyên viên trị liệu"), [nhanVien]);
   const ds = the ?? [];
   // Mặc định người làm / bác sĩ theo lần trước khách dùng thẻ (thẻ đầu tiên có ghi), thu ngân đổi được.
@@ -69,18 +75,19 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
   };
 
   const dongDv = (t: TheDv, dvId: string) => {
+    const nhan = nhanDong(t, dvId);
     const k = khoa(t.id, dvId), d = chon.get(k), dangCho = dangMo.some((x) => x.theId === t.id && x.dvId === dvId);
     return (
       <li key={k}>
         <button type="button" role="checkbox" aria-checked={!!d} disabled={dangCho || !coQuyen} onClick={() => doi(t.id, dvId)}
           className={`flex min-h-11 w-full items-center gap-3 rounded-nho px-2 py-2 text-left text-[14px] hover:bg-giay-sang disabled:cursor-not-allowed disabled:opacity-60 ${d ? "bg-giay-sang" : ""}`}>
           <span aria-hidden className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border text-[12px] leading-none ${d ? "border-nhan bg-nhan text-white" : "border-vien-dam bg-giay-sang"}`}>{d ? "✓" : ""}</span>
-          <span className={`min-w-0 flex-1 ${d ? "font-medium text-muc" : "text-muc-2"}`}>{tenDv.get(dvId) ?? "Dịch vụ"}</span>
+          <span className={`min-w-0 flex-1 ${d ? "font-medium text-muc" : "text-muc-2"}`}>{nhan}</span>
           {dangCho && <span className="shrink-0 rounded-tag bg-canh-bao-nen px-1.5 py-0.5 text-[12px] text-canh-bao">đang chờ</span>}
         </button>
         {d && (
           <div className="mb-1 ml-10 mr-1">
-            <Chon nho ariaLabel={`Người làm ${tenDv.get(dvId) ?? ""}`} giaTri={d.nv} onDoi={(v) => datNv(k, v)}
+            <Chon nho ariaLabel={`Người làm ${nhan}`} giaTri={d.nv} onDoi={(v) => datNv(k, v)}
               luaChon={[{ gia_tri: "", nhan: "Người làm chung của đơn" }, ...nvLC]} />
           </div>
         )}
@@ -115,13 +122,13 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
                   {t.dichVu.length > 0
                     ? <ul className="mt-1">{dvThe.map((dv) => dongDv(t, dv))}</ul>
                     : (
-                      <div className="mt-2 space-y-1">
-                        <p className="px-1 text-[12.5px] text-muc-3">Thẻ không gắn sẵn dịch vụ: tìm và tick dịch vụ khách làm.</p>
-                        {coQuyen && <ChonNhieuDichVu ds={dvMuc.filter((d) => !dangMo.some((x) => x.theId === t.id && x.dvId === d.gia_tri)).map((d) => ({ id: d.gia_tri, ten: d.nhan }))}
+                      <div className="mt-1 space-y-1">
+                        <ul>{dongDv(t, dongThe(t))}{dong.filter((d) => d.theId === t.id && d.dvId !== dongThe(t)).map((d) => dongDv(t, d.dvId))}</ul>
+                        {coQuyen && !moDoi.has(t.id) && <button type="button" className={`${NUT_CHU} px-1 text-[13px]`} onClick={() => setMoDoi((s) => new Set(s).add(t.id))}>Đổi / thêm dịch vụ</button>}
+                        {coQuyen && moDoi.has(t.id) && <ChonNhieuDichVu ds={dvMuc.filter((d) => d.gia_tri !== dongThe(t) && !dangMo.some((x) => x.theId === t.id && x.dvId === d.gia_tri)).map((d) => ({ id: d.gia_tri, ten: d.nhan }))}
                           tatCa={dvMuc.map((d) => ({ id: d.gia_tri, ten: d.nhan }))} nhan={`Dịch vụ thẻ ${t.ma}`}
-                          chon={dong.filter((d) => d.theId === t.id).map((d) => d.dvId)}
-                          onDoi={(ids) => setChon((m) => { const n = new Map([...m].filter(([, v]) => v.theId !== t.id || ids.includes(v.dvId))); for (const id of ids) if (!n.has(khoa(t.id, id))) n.set(khoa(t.id, id), { theId: t.id, dvId: id, nv: "" }); return n; })} />}
-                        <ul>{dong.filter((d) => d.theId === t.id).map((d) => dongDv(t, d.dvId))}</ul>
+                          chon={dong.filter((d) => d.theId === t.id && d.dvId !== dongThe(t)).map((d) => d.dvId)}
+                          onDoi={(ids) => setChon((m) => { const n = new Map([...m].filter(([, v]) => v.theId !== t.id || v.dvId === dongThe(t) || ids.includes(v.dvId))); for (const id of ids) if (!n.has(khoa(t.id, id))) n.set(khoa(t.id, id), { theId: t.id, dvId: id, nv: "" }); return n; })} />}
                       </div>
                     )}
                 </li>

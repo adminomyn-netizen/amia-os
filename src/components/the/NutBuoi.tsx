@@ -62,8 +62,18 @@ export function NutBuoi({ theId, nhanVien, bacSi, dichVu, goiId, tenThe, buoiCon
   // Thẻ chưa gắn dịch vụ: hiện chính thẻ, ẩn ô dịch vụ (máy chủ đổi sang dịch vụ mang tên gói); 1 dịch vụ: hiện thẳng; nhiều: chọn trong đúng các dịch vụ của thẻ.
   const cd = cheDoDvThe(dichVu, goiId);
   const con = buoiCon != null ? ` · còn ${buoiCon}${buoiTong != null && buoiTong < 999_999 ? `/${buoiTong}` : ""} buổi` : "";
-  const dongThe = cd.kieu === "the" ? `Thẻ: ${tenThe || "Thẻ liệu trình"} · 1 buổi${con}. Thẻ chưa gắn dịch vụ: chuyên viên trị liệu làm theo thẻ.`
-    : cd.kieu === "mot" ? `Dịch vụ: ${cd.ten}${tenThe ? ` · thẻ ${tenThe}${con}` : ""}` : tenThe ? `Thẻ: ${tenThe}${con}` : undefined;
+  // Dòng thẻ / dịch vụ sẽ làm: khung nổi bật cho thu ngân nhận ra ngay (chị Lâm 11/11: "làm nổi bật cái này lên cho dễ nhận biết").
+  const tieuDong = cd.kieu === "the" ? (tenThe || "Thẻ liệu trình") : cd.kieu === "mot" ? cd.ten : tenThe;
+  const nhanDong = cd.kieu === "mot" ? "Dịch vụ" : "Thẻ";
+  const phuDong = cd.kieu === "the" ? `1 buổi${con}` : cd.kieu === "mot" ? (tenThe ? `Thẻ ${tenThe}${con}` : "") : con.replace(/^ · /, "");
+  const dongThe = tieuDong ? (
+    <div className="rounded-the border-2 border-nhan bg-nhan/10 px-4 py-3">
+      <p className="text-[12px] font-semibold uppercase tracking-wide text-nhan-dam">{nhanDong} sẽ làm</p>
+      <p className="mt-0.5 text-[18px] font-bold leading-snug text-muc">{tieuDong}</p>
+      {phuDong && <p className="mt-0.5 text-[15px] font-semibold text-nhan-dam">{phuDong}</p>}
+      {cd.kieu === "the" && <p className="mt-1 text-[13px] text-muc-2">Thẻ chưa gắn dịch vụ: chuyên viên trị liệu làm theo thẻ.</p>}
+    </div>
+  ) : undefined;
   return (
     <span className="inline-flex flex-col items-end gap-0.5">
       <NutHop kieu="chu" nhan={nhan} tieuDe="Gửi chuyên viên làm" rong

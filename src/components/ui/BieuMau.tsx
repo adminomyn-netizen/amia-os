@@ -92,7 +92,7 @@ export function NutHop({
   /** Nút lưu thứ hai (kiểu phụ, nằm cạnh nút chính) gửi CÙNG các ô sang một hành động khác. Vd hộp Gửi chuyên viên làm: "Gửi chuyên viên làm" (chính) + "Trừ buổi trực tiếp (chỉnh sửa)" (phụ, chỉ Chủ / Kỹ thuật). */
   nutPhu?: { nhan: string; action: (fd: FormData) => Promise<KetQuaHD | void> };
   nhan: string; tieuDe: string; moTa?: string; truong?: Truong[]; giaTri?: GiaTri; an?: Record<string, string>;
-  action: (fd: FormData) => Promise<KetQuaHD | void>; kieu?: "chinh" | "phu" | "chu"; rong?: boolean; nhanLuu?: string; xacNhan?: string; nguy?: boolean;
+  action: (fd: FormData) => Promise<KetQuaHD | void>; kieu?: "chinh" | "phu" | "chu"; rong?: boolean; nhanLuu?: string; xacNhan?: React.ReactNode; nguy?: boolean;
 }) {
   const router = useRouter();
   const [mo, setMo] = useState(false);
@@ -159,7 +159,7 @@ export function NutHop({
     <>
       <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setDongTin([]); setMo(true); hoiTin(giaTri); if (coDiaBan && !diaBan) void taiDiaBan().then(setDiaBan); }}>{nhan}</button>
       <Hop mo={mo} dong={() => setMo(false)} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
-        {xacNhan && <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p>}
+        {xacNhan && (typeof xacNhan === "string" ? <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p> : <div className="mb-4">{xacNhan}</div>)}
         <div className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
           {truong.filter((t) => (!t.chiKhiTao || laTao) && hien(t, v)).map((t) => {
             const gt = v[t.ten];

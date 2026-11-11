@@ -164,6 +164,7 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
             <Chon nho ariaLabel="Tỉnh/thành" giaTri={loc.tinh} onDoi={(v) => datLoc("tinh", v)} luaChon={tinhLC} />
             <Chon nho ariaLabel="Quận/huyện" giaTri={loc.quan} onDoi={(v) => datLoc("quan", v)} luaChon={quanLC} voHieu={!loc.tinh} />
             <label className="col-span-2 flex items-center gap-2 text-[13px]"><input type="checkbox" checked={loc.nhieu_cn === "1"} onChange={(e) => datLoc("nhieu_cn", e.target.checked ? "1" : "")} className="h-4 w-4 accent-nhan" />Khách đến nhiều chi nhánh</label>
+            <label className="col-span-2 flex items-center gap-2 text-[13px]"><input type="checkbox" checked={loc.hien_sh_xoa === "1"} onChange={(e) => datLoc("hien_sh_xoa", e.target.checked ? "1" : "")} className="h-4 w-4 accent-nhan" />Hiện khách đã xoá bên SalonHero</label>
             <Chon nho ariaLabel="Người phụ trách" trong="Người phụ trách" giaTri={loc.phu_trach} onDoi={(v) => datLoc("phu_trach", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi người phụ trách" }, ...nhanVien]} className="col-span-2" />
             <Chon nho ariaLabel="Nhân viên từng phục vụ" giaTri={loc.nhan_vien} onDoi={(v) => datLoc("nhan_vien", v)} luaChon={[{ ...TAT_CA, nhan: "Mọi nhân viên phục vụ" }, ...nhanVien]} className="col-span-2" />
             <input list="ds-dich-vu-da-ban" aria-label="Dịch vụ đã dùng" placeholder="Dịch vụ đã dùng (gõ tên)" value={loc.dich_vu} onChange={(e) => datLoc("dich_vu", e.target.value.slice(0, 120))} className={`${O_SO} col-span-2`} />

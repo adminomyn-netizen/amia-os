@@ -108,8 +108,8 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
   // Các truy vấn của khối số liệu kinh doanh chạy NGAY (song song với phần trên) nhưng chỉ khối đó chờ chúng.
   const khoiDong = <T,>(q: PromiseLike<T>) => Promise.resolve(q); // PostgREST chỉ gửi yêu cầu khi được `then` → ép chạy ngay
   let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).order("bat_dau").limit(500);
-  let kq = db.from("khach_hang").select("nguon", { count: "exact" }).gte("tao_luc", new Date(`${dauThang}T00:00:00+07:00`).toISOString()).limit(2000);
-  let tk = db.from("khach_hang").select("id", { count: "exact", head: true });
+  let kq = db.from("khach_hang").select("nguon", { count: "exact" }).eq("an_sh_xoa", false).gte("tao_luc", new Date(`${dauThang}T00:00:00+07:00`).toISOString()).limit(2000);
+  let tk = db.from("khach_hang").select("id", { count: "exact", head: true }).eq("an_sh_xoa", false);  // 0330: không đếm hồ sơ khách đã xoá bên SalonHero
   let no = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0).limit(3000);
   const tc = db.from("cham_cong").select("id", { count: "exact", head: true }).eq("ngay", homNay).not("vao", "is", null);
   let nvq = db.from("nhan_vien").select("id", { count: "exact", head: true }).eq("hoat_dong", true).eq("trang_thai_lam", "dang_lam");

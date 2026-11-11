@@ -94,6 +94,8 @@ try {
   });
 
   // ── 2. Thêm khách mới ──
+  // Hồ sơ dựng lại từ thẻ (ghi_chu "Khách đã bị xoá khỏi danh sách SalonHero…") được trigger khach_an_sh_xoa (0330) tự gắn an_sh_xoa = true → ẩn khỏi danh sách/thống kê.
+  // Bước cập nhật ở trên không ghi cột an_sh_xoa nên không bao giờ gỡ ẩn.
   const khMoi = moi.map(({ c, d }) => {
     const ct = chiTiet.get(d.sh_id)?.chi_tiet ?? {};
     let p = sdt(c.mobile) || sdt(ct.mobile); let ghiMa = "";

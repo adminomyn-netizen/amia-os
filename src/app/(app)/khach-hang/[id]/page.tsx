@@ -82,7 +82,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     k.nguoi_gioi_thieu_id ? db.from("khach_hang").select("ma, ho_ten").eq("id", k.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
     xemAnh ? demAnhKhach(id) : Promise.resolve(0),
     // Trường chuyển từ SalonHero (0055/0065) chưa có trong v_khach_hang: đọc thẳng bảng khách.
-    db.from("khach_hang").select("nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc, lan_den_cuoi").eq("id", id).maybeSingle(),
+    db.from("khach_hang").select("nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc, lan_den_cuoi, an_sh_xoa").eq("id", id).maybeSingle(),
     db.from("khach_nhom").select("nhom_khach!inner(id, ten, mau)").eq("khach_id", id).eq("nhom_khach.hoat_dong", true),
     coQuyen(nd, "the.xem") ? docTaiKham(null, undefined, undefined, id, 1).catch(() => []) : Promise.resolve([]),
     coQuyen(nd, "the.xem") ? docTheSapHet(null, undefined, undefined, id, 5).catch(() => []) : Promise.resolve([]),
@@ -518,9 +518,15 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     <>
       <Link href="/khach-hang" className="mb-3 inline-block py-1 text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách khách</Link>
       <div className="the-noi p-4 pt-5 sm:p-5 sm:pt-6">
+        {kx?.an_sh_xoa && (
+          <p role="note" className="mb-4 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">
+            Hồ sơ này được dựng lại cho một khách <b>đã bị xoá bên SalonHero</b> (tên lưu trên hồ sơ: “{k.ho_ten}”) để giữ thẻ và hoá đơn cũ. Hồ sơ đang ẩn khỏi danh sách khách, ô tìm khách, số liệu và danh sách chăm sóc;
+            thẻ, hoá đơn và doanh thu vẫn giữ nguyên. Muốn xem lại các hồ sơ này: ở Khách hàng, mở bộ lọc, bật “Hiện khách đã xoá bên SalonHero”.
+          </p>
+        )}
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
           <div className="min-w-0">
-            <h1 className="chu-tieu-de text-[20px] font-bold uppercase leading-tight text-muc [overflow-wrap:anywhere]">{k.ho_ten}</h1>
+            <h1 className="chu-tieu-de text-[20px] font-bold uppercase leading-tight text-muc [overflow-wrap:anywhere]">{kx?.an_sh_xoa ? "Khách đã xoá bên SalonHero" : k.ho_ten}</h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-muc-3"><span className="tabular-nums">{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai>
               {theSapHet.length > 0 && <Link href="/khach-hang/the-sap-het" title={theSapHet.map((t) => t.ten_goi).join(", ")}><NhanTrangThai kieu="cho">Thẻ sắp hết{theSapHet.length > 1 ? ` (${theSapHet.length})` : ""}</NhanTrangThai></Link>}
               {taiKham.length > 0 && <Link href="/khach-hang/tai-kham" title={`Hẹn tái khám ${ngayVN(taiKham[0].den_han)}`}><NhanTrangThai kieu="cho">{taiKham[0].so_ngay_tre > 0 ? `Quá hẹn tái khám ${taiKham[0].so_ngay_tre} ngày` : "Đến hẹn tái khám"}</NhanTrangThai></Link>}</div>

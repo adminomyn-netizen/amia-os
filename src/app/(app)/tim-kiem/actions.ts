@@ -39,7 +39,7 @@ export async function timChung(tu: string): Promise<KqTim[]> {
     coQuyen(nd, "khach.xem") ? (() => {
       let q = db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, email").or([`ho_ten_khong_dau.ilike.%${boDau(an)}%`, `ma.ilike.%${an}%`, `email.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("lan_den_cuoi", { ascending: false, nullsFirst: false }).limit(6);
       if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
-      return q;
+      return q.eq("an_sh_xoa", false);  // 0330: ẩn hồ sơ khách đã xoá bên SalonHero
     })() : Promise.resolve({ data: null }),
     coQuyen(nd, "ban.xem") ? (() => {
       let q = db.from("hoa_don").select("id, ma, ngay_hd, tong_phai_thu, trang_thai").ilike("ma", `%${an}%`).order("ngay_hd", { ascending: false }).limit(4);

@@ -41,7 +41,7 @@ export default async function KhachGanDay({ searchParams }: { searchParams: Prom
   const db = sb();
   const [kqDen, { data: moi }, tong] = await Promise.all([
     docDen(cn ?? "", trang, tu, den, q).then((data) => ({ data, loi: null as string | null }), (e: Error) => ({ data: [] as Awaited<ReturnType<typeof docDen>>, loi: e.message })),
-    db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, tao_luc").match(cn ? { chi_nhanh_id: cn } : {}).order("tao_luc", { ascending: false }).limit(MOI_TRANG),
+    db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, tao_luc").match(cn ? { chi_nhanh_id: cn } : {}).eq("an_sh_xoa", false).order("tao_luc", { ascending: false }).limit(MOI_TRANG),
     docTong(cn ?? "", tu, den, q).catch(() => null as number | null),
   ]);
   const loiHd = kqDen.loi;

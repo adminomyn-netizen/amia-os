@@ -25,7 +25,7 @@ try {
     }
   }
   console.log(`Khách có đơn nhưng chưa có ở AMIA: ${moi.size}; số đơn của họ trong tệp: ${donCua.size}`);
-  // 2. Thêm khách
+  // 2. Thêm khách (ghi_chu "Khách đã bị xoá khỏi danh sách SalonHero…" → trigger khach_an_sh_xoa, 0330, tự gắn an_sh_xoa = true: ẩn khỏi danh sách/thống kê, giữ hoá đơn)
   let them = 0, khongSdt = 0, trung = 0;
   for (const k of moi.values()) {
     let p = k.dt; let ghi = "Khách đã bị xoá khỏi danh sách SalonHero nhưng còn đơn — hồ sơ dựng lại từ dữ liệu đơn, cần rà lại thông tin.";

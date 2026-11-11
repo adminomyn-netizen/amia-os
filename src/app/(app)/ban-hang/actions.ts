@@ -18,7 +18,7 @@ export async function timKhach(q: string) {
   if (an.length < 2) return [];
   const so = chuanSdt(an);
   let q2 = sb().from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, ngay_sinh, doi_tac_id")
-    .or([`ho_ten_khong_dau.ilike.%${boDau(an)}%`, `ma.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).order("ho_ten").limit(8);
+    .or([`ho_ten_khong_dau.ilike.%${boDau(an)}%`, `ma.ilike.%${an}%`, so.length >= 3 ? `dien_thoai.like.%${so}%` : ""].filter(Boolean).join(",")).eq("an_sh_xoa", false).order("ho_ten").limit(8);  // 0330: không gợi ý hồ sơ khách đã xoá bên SalonHero
   if (nd.chiNhanhId) q2 = q2.eq("chi_nhanh_id", nd.chiNhanhId);  // luật 29/10: chỉ khách của chi nhánh được gán
   const { data } = await q2;
   // Không có quyền xem SĐT thì ô gợi ý cũng không được lộ số (SalonHero: customer.phone).

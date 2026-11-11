@@ -15,7 +15,7 @@ const KIEU: Partial<Record<KhoaLoc, RegExp>> = {
   phu_trach: UUID, chi_nhanh: UUID, nhan_vien: UUID, nhom: /^(khong|[0-9a-f-]{36}(,[0-9a-f-]{36}){0,49})$/i, nhom_kieu: /^(mot|tat_ca)$/,
   diem_tu: SO, diem_den: SO, tuoi_tu: /^\d{1,3}$/, tuoi_den: /^\d{1,3}$/, ds_tu: SO, ds_den: SO,
   den_tu: NGAY, den_den: NGAY, tao_tu: NGAY, tao_den: NGAY,
-  the: /^(co|khong)$/, no: /^(co|khong)$/, nhieu_cn: /^1$/, sinh_nhat: /^(hom_nay|7_ngay|thang|[1-9]|1[0-2])$/, sinh_ngay: /^([1-9]|[12]\d|3[01])$/,
+  the: /^(co|khong)$/, no: /^(co|khong)$/, nhieu_cn: /^1$/, hien_sh_xoa: /^1$/, sinh_nhat: /^(hom_nay|7_ngay|thang|[1-9]|1[0-2])$/, sinh_ngay: /^([1-9]|[12]\d|3[01])$/,
 };
 
 /** Luật chị Lâm 29/10: mọi vai trừ Chủ chỉ thấy khách của chi nhánh được gán. Ghi đè tham số lọc (người dùng không tự đổi được). */
@@ -38,6 +38,8 @@ export type DongKhach = {
   dia_chi: string | null; nguon: string | null; nguon_chi_tiet: string | null; trang_thai: string | null; hang: string | null; nguoi_phu_trach_id: string | null;
   chi_nhanh_id: string | null; so_the_dang_dung: number | null; chi_12_thang: number | null; tao_luc: string; tinh_thanh: string | null; quan_huyen: string | null;
   diem_so_du: number; facebook: string | null; co_so_goc: string | null; nhom: { ten: string; mau: string | null }[];
+  /** 0330: hồ sơ dựng lại cho khách đã bị xoá bên SalonHero (ho_ten đã đổi thành "Khách đã xoá bên SalonHero"). */
+  an_sh_xoa?: boolean;
 };
 
 /** Lọc + sắp xếp + phân trang ở CSDL (hàm loc_khach, migration 0066, bản tải nhanh 0230). Trả `tong` = số khách khớp toàn bộ bộ lọc. */

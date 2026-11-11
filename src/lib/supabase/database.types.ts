@@ -6872,6 +6872,7 @@ export type Database = {
       khach_hang: {
         Row: {
           doi_tac_id: string | null
+          an_sh_xoa: boolean
           anh_dai_dien_url: string | null
           can_nang_kg: number | null
           cap_nhat_luc: string
@@ -6925,6 +6926,7 @@ export type Database = {
         }
         Insert: {
           doi_tac_id?: string | null
+          an_sh_xoa?: boolean
           anh_dai_dien_url?: string | null
           can_nang_kg?: number | null
           cap_nhat_luc?: string
@@ -6978,6 +6980,7 @@ export type Database = {
         }
         Update: {
           doi_tac_id?: string | null
+          an_sh_xoa?: boolean
           anh_dai_dien_url?: string | null
           can_nang_kg?: number | null
           cap_nhat_luc?: string

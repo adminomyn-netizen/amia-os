@@ -315,6 +315,8 @@ try {
     const nguon = Number(ct.refer_by_cust_id) > 0 || /bạn bè|giới thiệu|người quen/.test(s) ? "khach_cu_gioi_thieu" : /page|facebook|fb|voucher|tiktok|zalo|google|website|quảng cáo|ads/.test(s) ? "mkt" : "khac";
     return { ...d, ma: dedupe(sach(c.code) || `SH${c.id}`, maDaCo, c.id), dien_thoai: p, cn: cnK, nguon, nguon_chi_tiet: sach(ct.refer_source) || null, tao_luc: ct.createdAt ?? null, ghi_chu: ghiMa || null };
   });
+  // Cột khach_hang.an_sh_xoa (0330) KHÔNG nằm trong câu cập nhật/thêm ở đây: hồ sơ đã ẩn (khách đã xoá bên SalonHero) không bao giờ bị gỡ ẩn;
+  // hồ sơ dựng lại mới (ghi_chu "Khách đã bị xoá khỏi danh sách SalonHero…") được trigger khach_an_sh_xoa tự gắn cờ.
   let nMoiK = 0;
   await theoLo(khMoi, 1000, async (l) => {
     nMoiK += (await q(`insert into public.khach_hang (sh_id, ma, ho_ten, dien_thoai, zalo, email, gioi_tinh, ngay_sinh, dia_chi, chi_nhanh_id, nguon, nguon_chi_tiet, nguoi_phu_trach_id, ghi_chu, tao_luc,

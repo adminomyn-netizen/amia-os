@@ -96,6 +96,9 @@ export function quyenHieuLuc(vt: VaiTro, rieng: readonly string[] | null | undef
 
 export type CoQuyen = { vaiTro: VaiTro; quyen: readonly Quyen[] };
 export const coQuyen = (nd: CoQuyen | null | undefined, q: Quyen) => !!nd && nd.quyen.includes(q);
+/** Thêm ghi chú điều trị (chị Lâm 11/11/2026, nhân viên: "chỗ điện thoại thấy dấu cộng thêm note"): như SalonHero, ai xem được ghi chú và được sửa khách
+ *  (chuyên viên trị liệu…) thì ghi thêm được. Sửa ghi chú người khác vẫn cần "hoso.sua"; ghi chú của chính mình thì tự sửa được. Vai Chỉ xem không có khach.sua. */
+export const duocThemGhiChu = (nd: CoQuyen | null | undefined) => coQuyen(nd, "hoso.sua") || (coQuyen(nd, "hoso.xem") && coQuyen(nd, "khach.sua"));
 export const laVaiTro = (v: unknown): v is VaiTro => (VAI_TRO as readonly unknown[]).includes(v);
 
 /** Ai được bấm "Kết thúc (trả khách)" — bước trừ 1 buổi + ghi doanh thu buổi + ra phiếu vật tư (chị Lâm 11/11/2026: "để chuyên viên trị liệu kết thúc thôi").

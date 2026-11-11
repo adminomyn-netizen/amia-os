@@ -7,7 +7,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { randomUUID } from "node:crypto";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
-import { coQuyen } from "@/lib/quyen";
+import { coQuyen, duocThemGhiChu } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
@@ -171,8 +171,8 @@ export async function suaGhiChuChung(fd: FormData): Promise<KQ> {
 }
 
 export async function luuGhiChu(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("hoso.sua");
-  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const nd = await kiemQuyen("hoso.xem");
+  if (!nd || !duocThemGhiChu(nd)) return { loi: KHONG_DU_QUYEN };
   const row = { khach_id: chuoi(fd, "khach_id"), tinh_trang: chuoiHoacNull(fd, "tinh_trang"), yeu_cau: chuoiHoacNull(fd, "yeu_cau"), phuong_an: chuoiHoacNull(fd, "phuong_an"), ket_qua: chuoiHoacNull(fd, "ket_qua"), bac_si_id: chuoiHoacNull(fd, "bac_si_id") ?? (nd.vaiTro === "bac_si" ? nd.nhanVienId : null), tao_boi: nd.nhanVienId };
   if (!row.tinh_trang && !row.yeu_cau && !row.phuong_an && !row.ket_qua) return { loi: "Nhập ít nhất một mục: tình trạng, yêu cầu, phương án hoặc kết quả." };
   const { error } = await sb().from("khach_ghi_chu").insert(row);
@@ -182,14 +182,15 @@ export async function luuGhiChu(fd: FormData): Promise<KQ> {
 
 /** Sửa một ghi chú (kể cả ghi chú lấy từ SalonHero). Ghi chú SalonHero đã sửa trong app đổi nhap_dot thành APP-SUA để đồng bộ hằng đêm không ghi đè. */
 export async function suaGhiChu(fd: FormData): Promise<KQ> {
-  const nd = await kiemQuyen("hoso.sua");
-  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const nd = await kiemQuyen("hoso.xem");
+  if (!nd || !duocThemGhiChu(nd)) return { loi: KHONG_DU_QUYEN };
   const id = chuoi(fd, "id"), khachId = chuoi(fd, "khach_id");
   const moi = { tinh_trang: chuoiHoacNull(fd, "tinh_trang"), yeu_cau: chuoiHoacNull(fd, "yeu_cau"), phuong_an: chuoiHoacNull(fd, "phuong_an"), ket_qua: chuoiHoacNull(fd, "ket_qua") };
   if (!moi.tinh_trang && !moi.yeu_cau && !moi.phuong_an && !moi.ket_qua) return { loi: "Ghi chú không được để trống cả bốn mục." };
   const db = sb();
-  const { data: cu } = await db.from("khach_ghi_chu").select("id, nhap_dot").eq("id", id).eq("khach_id", khachId).maybeSingle();
+  const { data: cu } = await db.from("khach_ghi_chu").select("id, nhap_dot, tao_boi").eq("id", id).eq("khach_id", khachId).maybeSingle();
   if (!cu) return { loi: "Không tìm thấy ghi chú." };
+  if (!coQuyen(nd, "hoso.sua") && cu.tao_boi !== nd.nhanVienId) return { loi: "Chỉ sửa được ghi chú do chính bạn ghi." };
   const { error } = await db.from("khach_ghi_chu").update({ ...moi, ...(String(cu.nhap_dot ?? "").startsWith("SH-") ? { nhap_dot: "APP-SUA" } : {}) }).eq("id", id);
   if (error) return { loi: thongBaoLoi(error) };
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "sua_ghi_chu", doi_tuong: "khach_ghi_chu", doi_tuong_id: id });

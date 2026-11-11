@@ -214,7 +214,8 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
   const [canhBao, { data: ban }, { data: buoi }, { data: lichToi }, { data: ccThang }, { count: phieuCho }, choLam] = await Promise.all([
     layCanhBao(nd),
     thayDoanhSo ? bcNhanVienNho(dauThang, homNay, cn ?? null).then((data) => ({ data })) : Promise.resolve({ data: null }),
-    db.from("buoi_thuc_hien").select("khach_id, doanh_thu_buoi").eq("nv_thuc_hien_id", nd.nhanVienId).eq("trang_thai", "da_lam").gte("ngay_lam", dauThang).lte("ngay_lam", homNay).limit(1000),
+    // Buổi đã làm của tôi: luồng mới (buoi_thuc_hien) + dòng dùng thẻ SalonHero tôi phục vụ (0329) — cùng định nghĩa "Buổi đã làm" ở Tổng quan.
+    db.rpc("buoi_da_lam_nv", { p_nv: nd.nhanVienId, p_tu: dauThang, p_den: homNay }),
     db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8),
     db.from("cham_cong").select("ngay, vao, ra, cong, tre_phut").eq("nhan_vien_id", nd.nhanVienId).gte("ngay", dauThang).lte("ngay", homNay).limit(40),
     db.from("phieu_hr").select("id", { count: "exact", head: true }).eq("nhan_vien_id", nd.nhanVienId).eq("trang_thai", "cho_duyet"),
@@ -233,7 +234,7 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
 
   const toi = (ban ?? []).filter((r) => r.nhan_vien_id === nd.nhanVienId);
   const doanhSo = toi.reduce((s, r) => s + Number(r.doanh_so), 0), hoaHong = toi.reduce((s, r) => s + Number(r.hoa_hong), 0);
-  const soBuoi = (buoi ?? []).length, soKhach = new Set((buoi ?? []).map((b) => b.khach_id)).size;
+  const soBuoi = Number(buoi?.[0]?.so_buoi ?? 0), soKhach = Number(buoi?.[0]?.so_khach ?? 0);
   const ccHom = (ccThang ?? []).find((c) => c.ngay === homNay);
   const congThangNay = (ccThang ?? []).reduce((x, c) => x + Number(c.cong ?? 0), 0), lanTre = (ccThang ?? []).filter((c) => Number(c.tre_phut) > 0).length;
   const tileNv = [

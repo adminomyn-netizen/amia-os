@@ -14006,6 +14006,13 @@ export type Database = {
         }[]
       }
       bo_dau: { Args: { s: string }; Returns: string }
+      buoi_da_lam_nv: {
+        Args: { p_den: string; p_nv: string; p_tu: string }
+        Returns: {
+          so_buoi: number
+          so_khach: number
+        }[]
+      }
       cap_phieu: { Args: { p_id: string; p_nguoi: string }; Returns: undefined }
       cap_them_phieu: {
         Args: {

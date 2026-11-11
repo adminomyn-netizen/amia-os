@@ -198,7 +198,7 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
           { nhan: "Tổng tiền tip", so: tienVN(cs.tip) },
           { nhan: "Tổng thuế (VAT)", so: tienVN(cs.vat) },
           { nhan: "Tổng khoản chi", so: tienVN(kc.tong), ghiChu: `Phiếu chi ở Sổ quỹ · tiền mặt ${tienVN(kc.tienMat)} · ngân hàng ${tienVN(kc.nganHang)}` },
-          { nhan: "Doanh thu buổi đã làm", so: tienVN(tongDtBuoi), ghiChu: `${soVN(tongBuoi)} buổi (phần thêm của AMIA OS)` },
+          { nhan: "Doanh thu buổi đã làm", so: tienVN(tongDtBuoi), ghiChu: `${soVN(tongBuoi)} buổi trừ thẻ (gồm dòng dùng thẻ SalonHero)` },
         ]} />
         <nav aria-label="Gom số liệu theo" className="mb-3 mt-6 flex gap-2 overflow-x-auto pb-1">
           {KIEU_GOM.map((k) => (

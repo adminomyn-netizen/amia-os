@@ -27,6 +27,7 @@ import type { thucHienBuoi } from "@/app/(app)/the/actions";
 import { KhoiThe } from "@/components/the/KhoiThe";
 import { KhachChoLam } from "@/components/the/KhachChoLam";
 import { luotDvCuaKhach } from "@/app/(app)/the/cho-lam/actions";
+import { CN_TTL_MS, docBoNhoPos, docCnNho, khoaCn, khoaPos, lamSachDon, POS_TTL_MS, TIEN_TO_POS, tabCoNoiDung, type DonLuuTam, type TabLuu } from "@/lib/pos-luu-tam";
 
 type Nv = { id: string; ten: string; vaiTro: string };
 type TheKh = { id: string; ma: string; goiId: string; loai: "lan" | "tien"; ten: string; buoiCon: number; buoiTong: number | null; soDu: number; han: string | null; tinhTrang?: string; tongTien?: number | null; ngayCap?: string | null; lanGan?: { ngay: string; dv?: string | null; nv?: string | null } | null; lichToi?: string | null; phuTrach?: string | null; dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
@@ -54,11 +55,14 @@ type PropsPos = {
   /** Nguồn giới thiệu cho người giới thiệu từng dòng. */ nguonGt?: NguonGt[];
   /** Có quyền làm buổi thẻ: hiện nút "Gửi chuyên viên làm" ở "Thẻ khách đang có" / "Làm buổi này" (đưa vào hàng Chờ làm, chưa trừ buổi). */ buoi?: typeof thucHienBuoi;
   /** Được trừ buổi trực tiếp (Chủ / Kỹ thuật, duocTruBuoiTrucTiep): hiện thêm nút phụ "Trừ buổi trực tiếp (chỉnh sửa)". */ truBuoiTrucTiep?: boolean;
+  /** Tài khoản đang đăng nhập: khoá bộ nhớ tạm đơn đang mở (mỗi người một bộ nhớ). */ nguoiId?: string;
 };
 /** Loại đơn (chị Thuý 10/11): "ban" = bán mới (thẻ, liệu trình, sản phẩm, dịch vụ lẻ trả tiền); "dich_vu" = khách làm các dịch vụ đã mua (dùng buổi thẻ), thêm dịch vụ lẻ nếu làm thêm.
  *  Chỉ là điểm bắt đầu của màn (giữ ở trình duyệt, không lưu DB); đơn nào cũng chứa được mọi loại món. */
 type KieuDon = "ban" | "dich_vu";
-type Tab = { k: number; ten: string; soDong: number; nhap?: DonNhapRut; kieu: KieuDon };
+type Tab = { k: number; ten: string; soDong: number; nhap?: DonNhapRut; kieu: KieuDon; khoiPhuc?: DonLuuTam };
+/** Chữ ký đơn dựng từ địa chỉ (?lich= / ?khach= / ?sua=), rỗng = không có. Mở lại cùng địa chỉ thì không dựng thêm bản lưu tạm của chính đơn đó. */
+const chuKyUrl = (p: Pick<PropsPos, "lichId" | "khachBanDau" | "dongBanDau" | "suaHd">) => (p.lichId || p.khachBanDau || p.dongBanDau.length || p.suaHd ? [p.lichId ?? "", p.khachBanDau?.id ?? "", p.suaHd?.id ?? "", p.dongBanDau.length].join("|") : "");
 /** Đơn nháp mở lại không có loại: toàn dòng dịch vụ thì coi là đơn làm dịch vụ. */
 const kieuTuDong = (dong: DongDon[]): KieuDon => (dong.length > 0 && dong.every((d) => d.loai === "dich_vu") ? "dich_vu" : "ban");
 const TOI_DA_DON = 8;
@@ -84,6 +88,78 @@ export function Pos(props: PropsPos) {
   const [moNhap, setMoNhap] = useState(false);
   const lamMoiNhap = useCallback(() => { void props.dsNhap().then(setNhap).catch(() => undefined); }, [props]);
   const nutTab = useRef(new Map<number, HTMLButtonElement | null>());
+  // Bộ nhớ tạm theo tài khoản (chị Lâm 11/11/2026): các đơn đang mở giữ 1 giờ kể từ lần sửa cuối; tải lại trang, sang trang khác rồi quay lại,
+  // tắt mở trình duyệt vẫn còn. Đơn chỉ mất khi bấm × / Hủy đơn, chốt xong hoặc xoá. Mở lại sau khi trang đã dựng (không lệch hydrate).
+  const khoaLuu = props.nguoiId ? khoaPos(props.nguoiId) : null;
+  const banChup = useRef(new Map<number, TabLuu>());
+  const [daMo, setDaMo] = useState(false);
+  const [cnNho, setCnNho] = useState<string | null>(null);
+  const hen = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const dsRef = useRef(ds);
+  const xemRef = useRef(dangXem);
+  const daMoRef = useRef(false);
+  useEffect(() => { dsRef.current = ds; xemRef.current = dangXem; }, [ds, dangXem]);
+  const ghiBoNho = useCallback(() => {
+    if (!khoaLuu) return;
+    const tabs = dsRef.current.map((t) => banChup.current.get(t.k)).filter((t): t is TabLuu => !!t && tabCoNoiDung(t));
+    try {
+      if (!tabs.length) localStorage.removeItem(khoaLuu);
+      else localStorage.setItem(khoaLuu, JSON.stringify({ luc: Date.now(), xem: Math.max(0, dsRef.current.filter((t) => { const b = banChup.current.get(t.k); return !!b && tabCoNoiDung(b); }).findIndex((t) => t.k === xemRef.current)), tabs }));
+    } catch { /* trình duyệt chặn lưu / đầy: bỏ qua */ }
+  }, [khoaLuu]);
+  const henGhi = useCallback(() => { clearTimeout(hen.current); hen.current = setTimeout(ghiBoNho, 400); }, [ghiBoNho]);
+  const onLuuTam = useCallback((k: number, t: TabLuu | null) => { if (t) banChup.current.set(k, t); else banChup.current.delete(k); if (daMoRef.current) henGhi(); }, [henGhi]);
+  useEffect(() => { if (daMo) henGhi(); }, [daMo, ds, dangXem, henGhi]);
+  useEffect(() => () => { clearTimeout(hen.current); }, []);
+  const onChonCn = useCallback((id: string) => { if (!props.nguoiId) return; try { localStorage.setItem(khoaCn(props.nguoiId), JSON.stringify({ id, luc: Date.now() })); } catch { /* bỏ qua */ } setCnNho(id); }, [props.nguoiId]);
+  useEffect(() => {
+    let con = true;
+    // Chạy sau khi trang đã dựng (bất đồng bộ), một lần lúc mở trang: đọc bộ nhớ của ĐÚNG tài khoản này, dọn bộ nhớ hết hạn (của mọi tài khoản trên máy).
+    void Promise.resolve().then(() => {
+    if (!con) return;
+    const bayGio = Date.now();
+    let bn = null as ReturnType<typeof docBoNhoPos>, cn: string | null = null;
+    try {
+      for (let i = localStorage.length - 1; i >= 0; i--) {
+        const key = localStorage.key(i);
+        if (!key) continue;
+        if (key.startsWith(TIEN_TO_POS) && key !== khoaLuu) { const x = JSON.parse(localStorage.getItem(key) ?? "null") as { luc?: number } | null; if (!x?.luc || bayGio - x.luc > POS_TTL_MS) localStorage.removeItem(key); }
+        if (key.startsWith("amia-pos-cn:v1:")) { const x = JSON.parse(localStorage.getItem(key) ?? "null") as { luc?: number } | null; if (!x?.luc || bayGio - x.luc > CN_TTL_MS) localStorage.removeItem(key); }
+      }
+      if (khoaLuu) { bn = docBoNhoPos(localStorage.getItem(khoaLuu), bayGio); if (!bn) localStorage.removeItem(khoaLuu); }
+      if (props.nguoiId) cn = docCnNho(localStorage.getItem(khoaCn(props.nguoiId)), bayGio, (id) => props.chiNhanh.some((c) => c.id === id));
+    } catch { /* trình duyệt chặn đọc: mở như mới */ }
+    if (cn) setCnNho(cn);
+    if (bn) {
+      const urlKy = chuKyUrl(props);
+      const mucCo = new Set(props.muc.map((m) => `${m.loai}:${m.id}`));
+      const cnMd = props.chiNhanhId || cn || "";
+      const moi: Tab[] = [];
+      let xem = -1;
+      bn.tabs.forEach((t, i) => {
+        if (urlKy && t.tuUrl === urlKy) return; // đơn của chính địa chỉ đang mở: đã dựng lại từ địa chỉ
+        if (t.nhapId) {
+          // Đơn đã lưu nháp: lấy đúng bản trên máy chủ; nháp đã chốt / bị xoá thì bỏ.
+          const n = (props.nhapBanDau ?? []).find((x) => x.id === t.nhapId);
+          if (!n) return;
+          dem.current += 1; moi.push({ k: dem.current, ten: n.khach?.ho_ten ?? "", soDong: n.dong.length, nhap: n, kieu: t.kieu });
+        } else if (t.don) {
+          const d = lamSachDon(t.don, (x) => mucCo.has(x), (id) => props.chiNhanh.some((c) => c.id === id), cnMd);
+          dem.current += 1; moi.push({ k: dem.current, ten: d.khach?.ho_ten ?? "", soDong: d.dong.length, kieu: t.kieu, khoiPhuc: d });
+        } else return;
+        if (i === bn.xem) xem = moi[moi.length - 1].k;
+      });
+      if (moi.length) {
+        setDs((x) => (urlKy ? [...x, ...moi].slice(0, TOI_DA_DON) : moi.slice(0, TOI_DA_DON)));
+        if (!urlKy) setDangXem(xem > 0 ? xem : moi[0].k);
+      }
+    }
+    daMoRef.current = true;
+    setDaMo(true);
+    });
+    return () => { con = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- chỉ mở lại một lần lúc vào trang
+  }, []);
   // Màn hình khách: đơn đang xem được phát qua BroadcastChannel cho cửa sổ phụ; cửa sổ mới mở thì hỏi lại ("hoi") và nhận bản mới nhất.
   const kenh = useRef<BroadcastChannel | null>(null);
   const donCuoi = useRef<DonChoKhach | null>(null);
@@ -266,7 +342,7 @@ export function Pos(props: PropsPos) {
       )}
       {ds.map((t, i) => (
         <div key={t.k} role="tabpanel" id={`don-${t.k}`} aria-labelledby={`don-tab-${t.k}`} hidden={t.k !== dangXem}>
-          <DonPos {...props} k={t.k} kieu={t.kieu} nhapDau={t.nhap} onNhap={lamMoiNhap} dauTien={i === 0 && t.k === 1 && !t.nhap} dangXem={t.k === dangXem} onDonChoKhach={guiManHinhKhach} onDoi={capNhat} onHuy={(p) => huyDon(t.k, p)}
+          <DonPos {...props} k={t.k} kieu={t.kieu} nhapDau={t.nhap} khoiPhuc={t.khoiPhuc} cnNho={cnNho} onLuuTam={onLuuTam} onChonCn={onChonCn} onNhap={lamMoiNhap} dauTien={i === 0 && t.k === 1 && !t.nhap} dangXem={t.k === dangXem} onDonChoKhach={guiManHinhKhach} onDoi={capNhat} onHuy={(p) => huyDon(t.k, p)}
             onXong={(kq) => {
               setXong(kq); bo(t.k); guiManHinhKhach(null); setDsCho(null);
               // "Đặt lịch hẹn tiếp theo" (SalonHero, ô tick khi thanh toán): không còn đơn nào đang dở thì sang thẳng hộp đặt lịch cho khách; còn thì để link ở thanh "Đã chốt".
@@ -355,17 +431,23 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
   );
 }
 
-function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, kieu, nhapDau, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
-  k: number; kieu: KieuDon; nhapDau?: DonNhapRut; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
+function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, kieu, nhapDau, khoiPhuc: kp, cnNho, onLuuTam, onChonCn, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
+  k: number; kieu: KieuDon; nhapDau?: DonNhapRut;
+  /** Đơn mở lại từ bộ nhớ tạm của trình duyệt (chưa lưu nháp). */ khoiPhuc?: DonLuuTam; /** Chi nhánh người dùng chọn lần trước (nhớ 30 ngày). */ cnNho?: string | null;
+  onLuuTam?: (k: number, t: TabLuu | null) => void; onChonCn?: (id: string) => void; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
 }) {
-  const lichId = dauTien ? lichGoc : null;
+  const lichId = dauTien ? lichGoc : kp?.lichId ?? null;
+  const dauUrl = dauTien ? chuKyUrl({ lichId: lichGoc, khachBanDau, dongBanDau, suaHd }) : "";
   const router = useRouter();
   const [dang, bat] = useTransition();
   const sua = dauTien && !nhapDau ? suaHd ?? null : null;
-  const [khach, setKhach] = useState<KhachChon | null>(nhapDau ? nhapDau.khach : dauTien ? khachBanDau : null);
+  const [khach, setKhach] = useState<KhachChon | null>(nhapDau ? nhapDau.khach : kp ? kp.khach : dauTien ? khachBanDau : null);
   const [nhapId, setNhapId] = useState<string | null>(nhapDau?.id ?? null);
   const [tinNhap, setTinNhap] = useState("");
-  const [cnId, setCnId] = useState(chiNhanhId);
+  const [cnId, setCnId] = useState(kp?.cnId || chiNhanhId);
+  // Chưa có chi nhánh (tài khoản không gắn chi nhánh) thì lấy chi nhánh người dùng chọn lần trước.
+  const cnDung = cnId || (!khoaChiNhanh && cnNho && chiNhanh.some((c) => c.id === cnNho) ? cnNho : "");
+  if (cnDung !== cnId) setCnId(cnDung);
   // Ngân hàng nhận tiền của khoản chuyển khoản / quẹt thẻ: chọn sẵn ngân hàng lần trước (nhớ trong trình duyệt), đổi một chạm.
   const KHOA_NH = "amia-pos-ngan-hang-";
   const doc = (pt: string) => { try { return localStorage.getItem(KHOA_NH + pt); } catch { return null; } };
@@ -375,26 +457,26 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
   const nhMacDinh = (pt: string) => { const ds = dsNh(pt); const v = nganHangChonSan(ds.map((x) => x.gia_tri), doc(pt)); return ds.find((x) => x.gia_tri === v); };
   const oChonNh = (t: KhoanThu, pt: string) => { const ds = dsNh(pt); const v = luaChonCuaKhoan(t); return v && !ds.some((x) => x.gia_tri === v) ? [...ds, { gia_tri: v, nhan: t.ngan_hang ?? v, ten: t.ngan_hang ?? v }] : ds; };
   // Đơn bán mở sẵn tab Thẻ và liệu trình; đơn làm dịch vụ mở tab Dịch vụ (danh mục dịch vụ lẻ ẩn sau nút "Thêm dịch vụ lẻ").
-  const [tab, setTab] = useState<MucBan["loai"]>(kieu === "dich_vu" ? "dich_vu" : "goi_the");
-  const [moLe, setMoLe] = useState(kieu !== "dich_vu" || dong0(nhapDau, dauTien, dongBanDau) > 0);
+  const [tab, setTab] = useState<MucBan["loai"]>(kp ? kp.tab : kieu === "dich_vu" ? "dich_vu" : "goi_the");
+  const [moLe, setMoLe] = useState(kp ? kp.moLe : kieu !== "dich_vu" || dong0(nhapDau, dauTien, dongBanDau) > 0);
   const [tu, setTu] = useState("");
   /** Đơn làm dịch vụ: ô tick nhiều dịch vụ lẻ (thay cho mở cả danh mục). */
   const [moLeNhanh, setMoLeNhanh] = useState(false);
   // Lọc hai chiều như SalonHero: vừa chọn thẻ liệu trình → tab Dịch vụ chỉ còn dịch vụ của thẻ; vừa chọn dịch vụ → tab Thẻ chỉ còn thẻ có dịch vụ đó.
   const [loc, setLoc] = useState<{ loai: "dich_vu" | "goi_the"; id: string; ten: string; dv: string[] } | null>(null);
   const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam" | "moi_nhat">("ten");
-  const [dong, setDong] = useState<DongDon[]>(nhapDau ? nhapDau.dong : dauTien ? dongBanDau : []);
-  const [giamDon, setGiamDon] = useState(sua?.giamDon ?? 0);
-  const [giamPct, setGiamPct] = useState("");
-  const [vatPct, setVatPct] = useState(String(sua?.vatPct ?? 0));
-  const [phuPhi, setPhuPhi] = useState(sua?.phuPhi ?? 0);
-  const [tip, setTip] = useState(sua?.tip ?? 0);
-  const [ghiChu, setGhiChu] = useState(sua?.ghiChu ?? "");
-  const [gioVao, setGioVao] = useState(sua?.gioVao ?? "");
-  const [gioRa, setGioRa] = useState(sua?.gioRa ?? "");
-  const [soKhach, setSoKhach] = useState(String(sua?.soKhach ?? (dauTien && !nhapDau && soKhachLich ? soKhachLich : 1)));
+  const [dong, setDong] = useState<DongDon[]>(nhapDau ? nhapDau.dong : kp ? kp.dong : dauTien ? dongBanDau : []);
+  const [giamDon, setGiamDon] = useState(sua?.giamDon ?? kp?.giamDon ?? 0);
+  const [giamPct, setGiamPct] = useState(kp?.giamPct ?? "");
+  const [vatPct, setVatPct] = useState(sua ? String(sua.vatPct ?? 0) : kp?.vatPct ?? "0");
+  const [phuPhi, setPhuPhi] = useState(sua?.phuPhi ?? kp?.phuPhi ?? 0);
+  const [tip, setTip] = useState(sua?.tip ?? kp?.tip ?? 0);
+  const [ghiChu, setGhiChu] = useState(sua?.ghiChu ?? kp?.ghiChu ?? "");
+  const [gioVao, setGioVao] = useState(sua?.gioVao ?? kp?.gioVao ?? "");
+  const [gioRa, setGioRa] = useState(sua?.gioRa ?? kp?.gioRa ?? "");
+  const [soKhach, setSoKhach] = useState(sua ? String(sua.soKhach ?? 1) : kp?.soKhach ?? String(dauTien && !nhapDau && soKhachLich ? soKhachLich : 1));
   /** Lùi ngày hoá đơn ("YYYY-MM-DDTHH:MM" giờ VN), trống = lúc chốt. */
-  const [ngayHd, setNgayHd] = useState("");
+  const [ngayHd, setNgayHd] = useState(kp?.ngayHd ?? "");
   const [thu, setThu] = useState<KhoanThu[]>([]);
   /** Tiền khách đưa (chỉ hiển thị để tính tiền thối, không gửi lên máy chủ). */
   const [khachDua, setKhachDua] = useState(0);
@@ -461,6 +543,13 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
     return () => { clearTimeout(tre); clearInterval(t); document.removeEventListener("visibilitychange", chay); };
   }, [khachDvId, soLuotMo, taiLuotDv]);
   useEffect(() => { onDoi(k, khach?.ho_ten ?? "", dong.length); }, [k, khach, dong.length, onDoi]);
+  // Lưu tạm đơn đang mở vào trình duyệt (chị Lâm 11/11/2026, 1 giờ theo tài khoản). Đang sửa hoá đơn đã chốt thì không lưu (máy chủ là gốc);
+  // đã lưu nháp thì chỉ nhớ id nháp. Không lưu khoản thu, tiền khách đưa.
+  useEffect(() => {
+    if (!onLuuTam) return;
+    if (sua) { onLuuTam(k, null); return; }
+    onLuuTam(k, nhapId ? { kieu, nhapId } : { kieu, ...(dauTien && dauUrl ? { tuUrl: dauUrl } : {}), don: { khach, cnId, dong, lichId, giamDon, giamPct, vatPct, phuPhi, tip, ghiChu, gioVao, gioRa, soKhach, ngayHd, moLe, tab } });
+  }, [onLuuTam, k, kieu, sua, nhapId, dauTien, dauUrl, khach, cnId, dong, lichId, giamDon, giamPct, vatPct, phuPhi, tip, ghiChu, gioVao, gioRa, soKhach, ngayHd, moLe, tab]);
 
   const theTien = khach ? theTienTai : [];
   const theKhach = khach && theKh?.khachId === khach.id ? theKh : null;
@@ -618,7 +707,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
     <div className="grid gap-6 lg:grid-cols-[1.35fr_1fr]">
       <section className="pos-chu-lon min-w-0">
         <div className="mb-4 text-[13px] text-muc-2"><span className="mb-1 block">Chi nhánh bán</span>
-          <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
+          <Chon ariaLabel="Chi nhánh bán" luaChon={chiNhanh.map((c) => ({ gia_tri: c.id, nhan: c.ten }))} giaTri={cnId} onDoi={(id) => { setCnId(id); setVc(null); onChonCn?.(id); }} trong="Chọn chi nhánh" voHieu={khoaChiNhanh} />
         </div>
         <ChonKhach tuFocus={kieu === "dich_vu" && !dauTien} khach={khach} onDoi={(k) => { setKhach(k); setDiemNhap(""); setVc(null); setThu((t) => t.filter((x) => x.phuong_thuc !== "the_tien")); }} tim={tim} />
         {/* Đơn làm dịch vụ: dịch vụ đã mua còn buổi đứng ngay dưới ô khách — tick nhiều dịch vụ / nhiều thẻ, gửi chuyên viên trị liệu một lần (chị Thuý / chị Lâm 11/11/2026). */}

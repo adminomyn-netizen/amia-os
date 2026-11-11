@@ -121,12 +121,14 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   // Ngân hàng nhận tiền cho khoản chuyển khoản / quẹt thẻ: tài khoản đang hoạt động (Cài đặt › Ngân hàng); người gắn chi nhánh chỉ nhận tài khoản chung và của chi nhánh mình.
   const taiKhoanNhan: TaiKhoanNhan[] = (dsTk ?? []).map((x) => ({ ten: x.ngan_hang, chiNhanhId: x.chi_nhanh_id, cx: x.dung_chuyen_khoan, qt: x.dung_quet_the, macDinh: x.mac_dinh, id: x.id, chu: x.chu_tai_khoan, so: x.so_tai_khoan.replace(/\D/g, "") }));
   // Chi nhánh của đơn: người có chi nhánh cố định thì khoá theo đó; người xem mọi chi nhánh thì lấy theo lịch hẹn, rồi theo khách; không đoán, để trống bắt chọn.
-  const chiNhanhId = nd.chiNhanhId ?? cnLich ?? khach?.chi_nhanh_id ?? "";
+  // Không bao giờ để trống "Chi nhánh bán" (chị Lâm 11/11/2026): chỉ còn một chi nhánh hoạt động (Vinh) thì chọn sẵn chi nhánh đó;
+  // nhiều chi nhánh thì trình duyệt lấy chi nhánh người dùng chọn lần trước.
+  const chiNhanhId = nd.chiNhanhId ?? cnLich ?? khach?.chi_nhanh_id ?? ((cn ?? []).length === 1 ? cn![0].id : "");
   return (
     <>
       {/* Điện thoại: đầu trang đã ghi "POS / Bán hàng", bỏ khối tiêu đề lớn để danh mục lên sớm. */}
       <div className="max-lg:hidden"><TieuDeNoi tieuDe="Bán hàng" icon={ShoppingBag} phu="Mở nhiều đơn cùng lúc, chọn khách, thêm dịch vụ, thẻ hoặc sản phẩm, đổi điểm thưởng, ghi người hưởng, thu tiền rồi chốt đơn." /></div>
-      <Pos muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} soKhachLich={suaHd ? undefined : soKhachLich} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
+      <Pos nguoiId={nd.userId} muc={muc} nhanVien={(nv ?? []).map((n) => ({ id: n.id, ten: n.ho_ten, vaiTro: n.vai_tro }))} khachBanDau={khach} choThanhToan={choThanhToan} denNgay={homNayHCM()} dongBanDau={dongBanDau} chiNhanhId={chiNhanhId} chiNhanh={cn ?? []} khoaChiNhanh={!!nd.chiNhanhId} choGiam={coQuyen(nd, "ban.giamgia")} choTip={coQuyen(nd, "ban.tip")} lichId={lichDung} soKhachLich={suaHd ? undefined : soKhachLich} thuNgan={nd.hoTen} nguonLich={nguonLich} viTriLich={viTriLich} taiKhoanNhan={taiKhoanNhan}
         tim={timKhach} layThe={layTheTien} layDiem={layDiemKhach} layTheKh={layTheKhach} chot={chotDonBanHang} buoi={thucHienBuoi} truBuoiTrucTiep={duocTruBuoiTrucTiep(nd)} voucher={layVoucher} dsVoucher={dsVoucher} luuNhap={luuDonNhap} dsNhap={dsDonNhap} dsCho={dsDonCho} nguonGt={nguonGt} taoMoi={coQuyen(nd, "danhmuc.sua")} xoaNhap={xoaDonNhap} xoaCho={xoaDonCho} boSua={boSuaHoaDon} nhapBanDau={nhapBanDau} suaHd={suaHd} />
     </>
   );

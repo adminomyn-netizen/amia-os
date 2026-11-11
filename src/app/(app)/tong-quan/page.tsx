@@ -15,14 +15,15 @@ import { Tab } from "@/components/ui/Tab";
 import { BangDoanhThu, BangHeThong, BangKho, BangKhach, BangTheNo } from "./bang";
 import { CotDoanhThuNgay } from "@/components/trang-chu/CotDoanhThuNgay";
 import { KhoiXepHang } from "@/components/trang-chu/KhoiXepHang";
-import { docKy, khoangKy, type KyXh } from "@/lib/ky-xep-hang";
+import { DS_KY_DT, docKy, docKyDt, khoangKy, khoangKyDt, type KyXh } from "@/lib/ky-xep-hang";
+import { ChonKhoangNgay } from "@/components/trang-chu/ChonKhoangNgay";
 import { ChonKy } from "@/components/trang-chu/ChonKy";
 import { KhoiSinhNhatThang } from "@/components/trang-chu/KhoiSinhNhatThang";
 import { cnXepHang } from "@/lib/xep-hang";
 
 const TIEU_DE_VAI_TRO: Partial<Record<string, string>> = { chu: "Bảng điều hành của Chủ", ky_thuat: "Bảng điều khiển kỹ thuật", quan_ly: "Bảng điều hành", ke_toan: "Bảng kế toán", thu_kho: "Bảng kho", thu_ngan: "Bảng thu ngân", marketing: "Bảng marketing", nha_dau_tu: "Bảng nhà đầu tư" };
 
-export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string; ky?: string }> }) {
+export default async function TongQuan({ searchParams }: { searchParams: Promise<{ "khong-du-quyen"?: string; tab?: string; ky?: string; tu?: string; den?: string }> }) {
   const nd = await yeuCauQuyen("tongquan.xem");
   const sp = await searchParams;
   const homNay = homNayHCM();
@@ -39,16 +40,22 @@ export default async function TongQuan({ searchParams }: { searchParams: Promise
   const coBaoCao = coQuyen(nd, "baocao.xem");
   const ky = docKy(sp.ky);
   const coTien = coQuyen(nd, "baocao.tien");
+  // Tab Doanh thu có bộ kỳ riêng (mặc định Tháng này, thêm Hôm qua / 90 ngày qua / Tùy chỉnh) — chị Lâm 11/11/2026.
+  const kyDt = docKyDt(sp.ky);
+  const khoangDt = khoangKyDt(kyDt, homNay, sp.tu, sp.den);
+  const themTc = `&tu=${khoangDt.tu}&den=${khoangDt.den}`;
   const banner = sp["khong-du-quyen"] ? <p role="alert" className="mb-5 rounded-nho bg-canh-bao-nen px-3 py-2.5 text-[14px] text-canh-bao">Vai trò của bạn không mở được trang vừa chọn.</p> : null;
 
-  const bang = tab === "doanh-thu" ? <BangDoanhThu cn={cn} /> : tab === "khach" ? <BangKhach cn={cn} /> : tab === "the-no" ? <BangTheNo cn={cn} xemTien={coTien} /> : tab === "kho" ? <BangKho cn={cn} /> : tab === "he-thong" ? <><TongQuanKyThuat /><BangHeThong /></> : null;
+  const bang = tab === "doanh-thu" ? <BangDoanhThu cn={cn} ky={kyDt} khoang={khoangDt} homNay={homNay} /> : tab === "khach" ? <BangKhach cn={cn} /> : tab === "the-no" ? <BangTheNo cn={cn} xemTien={coTien} /> : tab === "kho" ? <BangKho cn={cn} /> : tab === "he-thong" ? <><TongQuanKyThuat /><BangHeThong /></> : null;
   return (
     <>
       <TieuDeNoi tieuDe={`Xin chào, ${nd.hoTen}`} phu={`${TIEU_DE_VAI_TRO[nd.vaiTro] ?? "Tổng quan"} · hôm nay ${ngayVN(homNay)}${cn ? "" : " · mọi chi nhánh"}`} />
       {banner}
-      {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" them={ky !== "hom-nay" ? `&ky=${ky}` : ""} />}
+      {TAB.length > 1 && <Tab muc={TAB} dang={tab} goc="/tong-quan" them={tab === "doanh-thu" ? (sp.ky ? `&ky=${kyDt}${kyDt === "tuy-chinh" ? themTc : ""}` : "") : ky !== "hom-nay" ? `&ky=${ky}` : ""} />}
+      {tab === "doanh-thu" && <ChonKy dang={kyDt} goc="/tong-quan?tab=doanh-thu" ds={DS_KY_DT} them={{ "tuy-chinh": themTc }} luoi />}
+      {tab === "doanh-thu" && kyDt === "tuy-chinh" && <ChonKhoangNgay goc="/tong-quan?tab=doanh-thu" tu={khoangDt.tu} den={khoangDt.den} />}
       {/* Mỗi tab tải riêng: đầu trang + dải tab hiện ngay, phần số liệu hiện khung chờ rồi đổ vào. */}
-      <Suspense key={tab} fallback={<KhungCho />}>{bang ?? <HomNay nd={nd} homNay={homNay} coBaoCao={coBaoCao} coTien={coTien} ky={ky} />}</Suspense>
+      <Suspense key={tab === "doanh-thu" ? `${tab}-${khoangDt.tu}-${khoangDt.den}-${kyDt}` : tab} fallback={<KhungCho />}>{bang ?? <HomNay nd={nd} homNay={homNay} coBaoCao={coBaoCao} coTien={coTien} ky={ky} />}</Suspense>
     </>
   );
 }

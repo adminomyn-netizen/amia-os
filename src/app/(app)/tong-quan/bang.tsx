@@ -10,6 +10,7 @@ import { CotDung } from "@/components/bieu-do/CotDung";
 import { DuongMien } from "@/components/bieu-do/DuongMien";
 import { VongTienDo } from "@/components/bieu-do/VongTienDo";
 import { NHAN_VAI_TRO, VAI_TRO } from "@/lib/quyen";
+import { kyTruoc, soNgayGom, type KyDt } from "@/lib/ky-xep-hang";
 
 /** Các bảng điều hành (mỗi tab một bảng, vẽ bằng SVG ở máy chủ). Số liệu gom ở DB; `cn` = chi nhánh của người xem (null = mọi chi nhánh). */
 const cnArg = (cn: string | null) => (cn ?? undefined) as string;
@@ -41,46 +42,80 @@ const NHAN_LOAI_BAN = { dich_vu: "Dịch vụ", san_pham: "Sản phẩm", goi_th
 const luoi = "grid gap-6 lg:grid-cols-2";
 const ngayNganVN = (d: string) => d.slice(8) + "/" + d.slice(5, 7);
 
-export async function BangDoanhThu({ cn }: { cn: string | null }) {
+/** % thay đổi so với kỳ trước, gọn cho dòng ghi chú ô số ("▲ 12% so với kỳ trước (560,8 tr)"); kỳ trước nêu ở dòng "Kỳ đang xem" phía trên. */
+function soSanh(nay: number, truoc: number, dd: (n: number) => string) {
+  if (!truoc) return nay ? "kỳ trước chưa có" : "kỳ trước cũng 0";
+  const p = Math.round(((nay - truoc) / Math.abs(truoc)) * 100);
+  return `${p > 0 ? "▲" : p < 0 ? "▼" : "="} ${Math.abs(p)}% so với kỳ trước (${dd(truoc)})`;
+}
+
+/** Tab Doanh thu: MỌI ô / biểu đồ đi theo kỳ đang chọn (chị Lâm 11/11/2026). Số lấy từ đúng các hàm báo cáo mà Tổng quan và Báo cáo › Doanh thu
+ *  dùng (bc_doanh_thu_ngay, bc_doanh_thu_ngay_vi, bc_muc_ban, bc_nhan_vien — vốn nhận khoảng ngày, gồm hai đầu) nên cùng kỳ ra cùng số. */
+export async function BangDoanhThu({ cn, ky, khoang, homNay }: { cn: string | null; ky: KyDt; khoang: { tu: string; den: string; nhan: string; catBot?: boolean }; homNay: string }) {
   const db = sb();
-  const homNay = homNayHCM(), dauThang = `${homNay.slice(0, 8)}01`;
-  const [{ data: ngay30 }, { data: thang }, { data: mucBan }, { data: nv }, { data: viThang }] = await Promise.all([
-    db.rpc("bc_doanh_thu_ngay", { p_tu: congNgay(homNay, -29), p_den: homNay, p_cn: cnArg(cn) }),
-    db.rpc("bc_doanh_thu_ngay", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
-    db.rpc("bc_muc_ban", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
-    db.rpc("bc_nhan_vien", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
-    db.rpc("bc_doanh_thu_ngay_vi", { p_tu: dauThang, p_den: homNay, p_cn: cnArg(cn) }),
+  const { tu, den, nhan } = khoang;
+  const truoc = kyTruoc(ky, tu, den);
+  const motNgay = tu === den;
+  // Biểu đồ: kỳ một ngày thì vẽ 14 ngày đến ngày đó (một cột thì không xem được xu hướng) — cùng một lần gọi với các ô số.
+  const tuBd = motNgay ? congNgay(den, -13) : tu;
+  const [rNgay, rTruoc, rMuc, rNv, rVi] = await Promise.all([
+    db.rpc("bc_doanh_thu_ngay", { p_tu: tuBd, p_den: den, p_cn: cnArg(cn) }),
+    db.rpc("bc_doanh_thu_ngay", { p_tu: truoc.tu, p_den: truoc.den, p_cn: cnArg(cn) }),
+    db.rpc("bc_muc_ban", { p_tu: tu, p_den: den, p_cn: cnArg(cn) }),
+    db.rpc("bc_nhan_vien", { p_tu: tu, p_den: den, p_cn: cnArg(cn) }),
+    db.rpc("bc_doanh_thu_ngay_vi", { p_tu: tu, p_den: den, p_cn: cnArg(cn) }),
   ]);
-  // Ví điện tử (Momo, VNPay, Shopee Pay, GrabPay, ví khác) và Ship COD tháng này — hình thức thu như SalonHero (0199).
-  const tVi = (viThang ?? []).reduce((s, r) => s + Number(r.momo) + Number(r.vnpay) + Number(r.shopee) + Number(r.grab) + Number(r.vi_khac), 0);
-  const tCod = (viThang ?? []).reduce((s, r) => s + Number(r.ship_cod), 0);
-  const t = (k: "doanh_thu" | "thuc_thu" | "so_don" | "so_buoi" | "no_moi" | "tien_mat" | "chuyen_khoan" | "quet_the" | "tru_the_tien") => (thang ?? []).reduce((s, r) => s + Number(r[k]), 0);
-  const ids = [...new Set((nv ?? []).map((r) => r.nhan_vien_id).filter((x): x is string => !!x))];
+  for (const r of [rNgay, rTruoc, rMuc, rNv, rVi]) if (r.error) throw new Error(`Doanh thu: ${r.error.message}`);
+  const ngayBd = rNgay.data ?? [];
+  const ngayKy = ngayBd.filter((r) => r.ngay >= tu && r.ngay <= den);
+  const mucBan = rMuc.data ?? [], nv = rNv.data ?? [], viKy = rVi.data ?? [];
+  // Ví điện tử (Momo, VNPay, Shopee Pay, GrabPay, ví khác) và Ship COD — hình thức thu như SalonHero (0199).
+  const tVi = viKy.reduce((s, r) => s + Number(r.momo) + Number(r.vnpay) + Number(r.shopee) + Number(r.grab) + Number(r.vi_khac), 0);
+  const tCod = viKy.reduce((s, r) => s + Number(r.ship_cod), 0);
+  type K = "doanh_thu" | "thuc_thu" | "so_don" | "so_buoi" | "no_moi" | "tien_mat" | "chuyen_khoan" | "quet_the" | "tru_the_tien" | "doanh_thu_buoi";
+  const cong = (ds: typeof ngayBd, k: K) => ds.reduce((s, r) => s + Number(r[k]), 0);
+  const t = (k: K) => cong(ngayKy, k), tt = (k: K) => cong(rTruoc.data ?? [], k);
+  const ids = [...new Set(nv.map((r) => r.nhan_vien_id).filter((x): x is string => !!x))];
   const { data: ten } = ids.length ? await db.from("nhan_vien").select("id, ho_ten").in("id", ids) : { data: [] };
   const tenNv = new Map((ten ?? []).map((x) => [x.id, x.ho_ten]));
   const theoNv = new Map<string, number>();
-  for (const r of nv ?? []) theoNv.set(r.nhan_vien_id, (theoNv.get(r.nhan_vien_id) ?? 0) + Number(r.doanh_so));
+  for (const r of nv) theoNv.set(r.nhan_vien_id, (theoNv.get(r.nhan_vien_id) ?? 0) + Number(r.doanh_so));
   const theoLoai = new Map<string, number>();
-  for (const r of mucBan ?? []) theoLoai.set(r.loai, (theoLoai.get(r.loai) ?? 0) + Number(r.doanh_so));
-  const bc = (tab: string) => `/bao-cao?tab=${tab}&tu=${dauThang}&den=${homNay}`;
+  for (const r of mucBan) theoLoai.set(r.loai, (theoLoai.get(r.loai) ?? 0) + Number(r.doanh_so));
+  const bc = (tab: string) => `/bao-cao?tab=${tab}&tu=${tu}&den=${den}`;
   const tr = (n: number) => (n >= 1e6 ? `${(n / 1e6).toLocaleString("vi-VN", { maximumFractionDigits: 1 })} tr` : tienVN(n));
+  const khoangChu = tu === den ? ngayVN(tu) : `${ngayNganVN(tu)}–${ngayNganVN(den)}`;
+  const nhanTruoc = truoc.tu === truoc.den ? ngayNganVN(truoc.tu) : `${ngayNganVN(truoc.tu)}–${ngayNganVN(truoc.den)}`;
+  const kyChu = `(${nhan})`;
+  // Biểu đồ: tới 92 ngày vẽ từng ngày; dài hơn (tùy chỉnh, tối đa 366 ngày) gom theo tháng cho dễ đọc.
+  const theoThang = soNgayGom(tuBd, den) > 92;
+  const diem = theoThang
+    ? [...ngayBd.reduce((m, r) => { const k = r.ngay.slice(0, 7), c = m.get(k) ?? { tu: r.ngay, den: r.ngay, dt: 0, tt: 0 }; c.den = r.ngay; c.dt += Number(r.doanh_thu); c.tt += Number(r.thuc_thu); return m.set(k, c); }, new Map<string, { tu: string; den: string; dt: number; tt: number }>())]
+        .map(([k, c]) => ({ nhan: `${k.slice(5)}/${k.slice(0, 4)}`, tu: c.tu, den: c.den, dt: c.dt, tt: c.tt }))
+    : ngayBd.map((r) => ({ nhan: ngayNganVN(r.ngay), tu: r.ngay, den: r.ngay, dt: Number(r.doanh_thu), tt: Number(r.thuc_thu) }));
+  const tieuDeBd = motNgay ? `Doanh thu 14 ngày đến ${ngayNganVN(den)}` : `Doanh thu ${theoThang ? "theo tháng" : "theo ngày"} ${khoangChu}`;
   return (
     <div className="space-y-6">
+      {khoang.catBot && <p role="status" className="text-[12px] text-muc-3">Khoảng tùy chỉnh dài quá 366 ngày nên chỉ tính 366 ngày cuối ({ngayVN(tu)} – {ngayVN(den)}).</p>}
+      <p className="text-[13px] text-muc-3">Kỳ đang xem: <span className="font-medium text-muc">{khoangChu}</span>{den === homNay && !motNgay ? " (đến hôm nay)" : ""} · so với {nhanTruoc}</p>
       <HangChiSo muc={[
-        { nhan: "Doanh thu tháng này", so: tienVN(t("doanh_thu")), ghiChu: `${soVN(t("so_don"))} đơn` },
-        { nhan: "Thực thu tháng này", so: tienVN(t("thuc_thu")), ghiChu: "tiền mặt, chuyển khoản, quẹt thẻ, ví điện tử" },
-        { nhan: "Công nợ mới trong tháng", so: tienVN(t("no_moi")) },
-        { nhan: "Buổi đã làm", so: soVN(t("so_buoi")) },
+        { nhan: `Doanh thu ${nhan}`, so: tienVN(t("doanh_thu")), ghiChu: `${soVN(t("so_don"))} đơn · ${soSanh(t("doanh_thu"), tt("doanh_thu"), tr)}` },
+        { nhan: `Thực thu ${nhan}`, so: tienVN(t("thuc_thu")), ghiChu: soSanh(t("thuc_thu"), tt("thuc_thu"), tr) },
+        { nhan: `Công nợ mới ${nhan}`, so: tienVN(t("no_moi")), ghiChu: soSanh(t("no_moi"), tt("no_moi"), tr) },
+        { nhan: `Buổi đã làm ${nhan}`, so: soVN(t("so_buoi")), ghiChu: `doanh thu buổi ${tienVN(t("doanh_thu_buoi"))} · kỳ trước ${soVN(tt("so_buoi"))}` },
       ]} />
-      <MucTrang noi tieuDe="Doanh thu 30 ngày gần nhất" phai={<Link href="/bao-cao" className="font-medium text-nhan-dam hover:underline">Báo cáo chi tiết</Link>}>
-        <DuongMien ten="Doanh thu và thực thu 30 ngày" nhan={(ngay30 ?? []).map((r) => ngayNganVN(r.ngay))} lienKet={(ngay30 ?? []).map((r) => `/hoa-don?tu=${r.ngay}&den=${r.ngay}&tt=hoan_thanh`)} dinhDang={tienVN} dinhDangTruc={tienGon}
-          chuoi={[{ ten: "Doanh thu", gia_tri: (ngay30 ?? []).map((r) => Number(r.doanh_thu)), mau: "var(--sac-luc-mau)" }, { ten: "Thực thu", gia_tri: (ngay30 ?? []).map((r) => Number(r.thuc_thu)), mau: "var(--dat)" }]} />
+      <MucTrang noi tieuDe={tieuDeBd} phai={<Link href={bc("doanh-thu")} className="font-medium text-nhan-dam hover:underline">Báo cáo chi tiết</Link>}>
+        <DuongMien ten={tieuDeBd} nhan={diem.map((d) => d.nhan)} lienKet={diem.map((d) => `/hoa-don?tu=${d.tu}&den=${d.den}&tt=hoan_thanh`)} dinhDang={tienVN} dinhDangTruc={tienGon}
+          chuoi={[{ ten: "Doanh thu", gia_tri: diem.map((d) => d.dt), mau: "var(--sac-luc-mau)" }, { ten: "Thực thu", gia_tri: diem.map((d) => d.tt), mau: "var(--dat)" }]} />
       </MucTrang>
       <div className={luoi}>
-        <MucTrang noi tieuDe="Thực thu theo hình thức (tháng này)"><BieuDoTron ten="Thực thu theo hình thức" kieu="vong" nhanTam="đồng" dinhDang={tienVN} dinhDangGon={tr} dinhDangTam={tienGon} duLieu={[{ nhan: "Tiền mặt", gia_tri: t("tien_mat"), href: bc("thu-ngan") }, { nhan: "Chuyển khoản", gia_tri: t("chuyen_khoan"), href: bc("thu-ngan") }, { nhan: "Quẹt thẻ", gia_tri: t("quet_the"), href: bc("thu-ngan") }, ...(tVi ? [{ nhan: "Ví điện tử", gia_tri: tVi }] : []), ...(tCod ? [{ nhan: "Ship COD", gia_tri: tCod }] : []), { nhan: "Trừ thẻ tiền", gia_tri: t("tru_the_tien"), href: bc("thu-ngan") }]} /></MucTrang>
-        <MucTrang noi tieuDe="Cơ cấu doanh số (tháng này)"><BieuDoTron ten="Cơ cấu doanh số" kieu="banh" dinhDang={tienVN} dinhDangGon={tr} duLieu={[...theoLoai].map(([k, v]) => ({ nhan: NHAN_LOAI_BAN[k as keyof typeof NHAN_LOAI_BAN] ?? k, gia_tri: v, href: bc("dich-vu") }))} /></MucTrang>
-        <MucTrang noi tieuDe="Top dịch vụ / sản phẩm bán chạy (tháng này)"><CotNgang dinhDang={tr} duLieu={(mucBan ?? []).slice(0, 8).map((r) => ({ nhan: r.ten, gia_tri: Number(r.doanh_so), href: bc("dich-vu") }))} trong="Tháng này chưa có đơn nào." /></MucTrang>
-        <MucTrang noi tieuDe="Doanh số theo nhân viên (tháng này)"><CotNgang mau="var(--sac-xanh-mau)" dinhDang={tr} duLieu={DAY([...theoNv].map(([id, v]) => ({ nhan: tenNv.get(id) ?? "Không rõ", gia_tri: v, href: bc("nhan-vien") }))).slice(0, 8)} trong="Tháng này chưa có doanh số theo nhân viên." /></MucTrang>
+        <MucTrang noi tieuDe={`Thực thu theo hình thức ${kyChu}`}><BieuDoTron ten="Thực thu theo hình thức" kieu="vong" nhanTam="đồng" dinhDang={tienVN} dinhDangGon={tr} dinhDangTam={tienGon} duLieu={[{ nhan: "Tiền mặt", gia_tri: t("tien_mat"), href: bc("thu-ngan") }, { nhan: "Chuyển khoản", gia_tri: t("chuyen_khoan"), href: bc("thu-ngan") }, { nhan: "Quẹt thẻ", gia_tri: t("quet_the"), href: bc("thu-ngan") }, ...(tVi ? [{ nhan: "Ví điện tử", gia_tri: tVi }] : []), ...(tCod ? [{ nhan: "Ship COD", gia_tri: tCod }] : []), { nhan: "Trừ thẻ tiền", gia_tri: t("tru_the_tien"), href: bc("thu-ngan") }]} /></MucTrang>
+        <MucTrang noi tieuDe={`Cơ cấu doanh số ${kyChu}`}>
+          <BieuDoTron ten="Cơ cấu doanh số" kieu="banh" dinhDang={tienVN} dinhDangGon={tr} duLieu={[...theoLoai].filter(([, v]) => v !== 0).map(([k, v]) => ({ nhan: NHAN_LOAI_BAN[k as keyof typeof NHAN_LOAI_BAN] ?? k, gia_tri: v, href: bc("dich-vu") }))} />
+          {t("tru_the_tien") > 0 && <p className="mt-2 text-[12px] text-muc-3">Doanh số tính cả phần khách trả bằng thẻ tiền ({tr(t("tru_the_tien"))}); ô Doanh thu đã trừ phần này.</p>}
+        </MucTrang>
+        <MucTrang noi tieuDe={`Top dịch vụ / sản phẩm bán chạy ${kyChu}`}><CotNgang dinhDang={tr} duLieu={mucBan.slice(0, 8).map((r) => ({ nhan: r.ten, gia_tri: Number(r.doanh_so), href: bc("dich-vu") }))} trong="Kỳ này chưa có đơn nào." /></MucTrang>
+        <MucTrang noi tieuDe={`Doanh số theo nhân viên ${kyChu}`}><CotNgang mau="var(--sac-xanh-mau)" dinhDang={tr} duLieu={DAY([...theoNv].map(([id, v]) => ({ nhan: tenNv.get(id) ?? "Không rõ", gia_tri: v, href: bc("nhan-vien") }))).slice(0, 8)} trong="Kỳ này chưa có doanh số theo nhân viên." /></MucTrang>
       </div>
     </div>
   );

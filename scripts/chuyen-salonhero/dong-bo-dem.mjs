@@ -354,8 +354,9 @@ try {
   const chiTietThe = new Set(theCt.map((c) => Number(c.id)));
   const theCan = [...theSh.values()].filter((c) => !c.is_deleted && (!theCoIds.has(Number(c.id)) || sauMocS(c) || chiTietThe.has(Number(c.id)))); // thẻ mới / vừa đổi / vừa lấy chi tiết
   const khachTheMap = await mapIds("khach_hang", theCan.map((c) => c.customer_id));
+  // "app" = dòng sổ cái nhân viên tạo trong app. Dòng nhập thẻ 25/10/2026 không mang nhãn SH-… nên trước đây bị tính là dòng app → 114 thẻ bị bỏ qua, không trừ buổi đã dùng bên SalonHero (sửa 12/11/2026, đợt SH-DC-20261112).
   const theCo = new Map((await q(`select t.sh_id, t.id, t.loai, t.trang_thai, coalesce(s.b,0)::int buoi, coalesce(s.t,0)::bigint tien, coalesce(s.app,0)::int app
-      from public.the_khach t left join lateral (select sum(so_buoi) b, sum(so_tien) t, count(*) filter (where nhap_dot is null or nhap_dot not like 'SH-%') app from public.the_so_cai where the_id = t.id) s on true where t.sh_id = any($1::bigint[])`,
+      from public.the_khach t left join lateral (select sum(so_buoi) b, sum(so_tien) t, count(*) filter (where (nhap_dot is null or nhap_dot not like 'SH-%') and tao_luc >= '2026-10-27') app from public.the_so_cai where the_id = t.id) s on true where t.sh_id = any($1::bigint[])`,
     [theCan.map((c) => Number(c.id))])).map((r) => [Number(r.sh_id), r]));
   const moiThe = theCan.some((c) => !theCoIds.has(Number(c.id)));
   const maThe = new Set(moiThe ? (await q(`select ma from public.the_khach`)).map((r) => r.ma) : []);

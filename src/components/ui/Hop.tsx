@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
 /** Hộp thoại (popup) dùng chung: đóng bằng Esc, bấm nền hoặc nút X; giữ tiêu điểm trong hộp và
@@ -21,6 +21,22 @@ export function Hop({
   children: React.ReactNode;
 }) {
   const hopRef = useRef<HTMLDivElement>(null);
+  // Điện thoại (iPhone): bàn phím mở không làm co khung fixed inset-0 → thanh nút Lưu dính đáy nằm dưới bàn phím,
+  // người dùng không thấy chỗ bấm lưu (chị Thuý 13/11/2026). Bám khung theo visualViewport (phần màn hình còn nhìn thấy).
+  const [vung, setVung] = useState<{ top: number; height: number } | null>(null);
+  useEffect(() => {
+    const vv = typeof window !== "undefined" ? window.visualViewport : null;
+    if (!mo || !vv) return;
+    const cap = () => setVung(vv.height < window.innerHeight - 1 ? { top: vv.offsetTop, height: vv.height } : null);
+    cap();
+    vv.addEventListener("resize", cap);
+    vv.addEventListener("scroll", cap);
+    return () => {
+      vv.removeEventListener("resize", cap);
+      vv.removeEventListener("scroll", cap);
+      setVung(null);
+    };
+  }, [mo]);
   const truocDo = useRef<Element | null>(null);
   // `dong` thường là hàm mới mỗi lần render: giữ trong ref để hiệu ứng focus chỉ chạy khi hộp mở/đóng,
   // không chạy lại mỗi lần gõ phím (trước đây focus bị kéo khỏi ô nhập về nút khác giữa lúc gõ).
@@ -64,7 +80,9 @@ export function Hop({
   if (!mo) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain px-2 py-3 sm:px-4 sm:py-14">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain px-2 py-3 sm:px-4 sm:py-14"
+      style={vung ? { top: vung.top, height: vung.height, bottom: "auto" } : undefined}
+    >
       <button aria-label="Đóng" tabIndex={-1} data-dong className="fixed inset-0 bg-muc/35" onClick={dong} />
       <div
         ref={hopRef}

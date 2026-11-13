@@ -1,8 +1,9 @@
 // Lớp CSS dùng chung cho biểu mẫu/nút (Phụ lục E): ô cao 44, viền --vien-dam, bo 4 px, nút chính dải vàng.
+// Ô nhập 16px trên điện thoại: nhỏ hơn 16px thì iPhone tự phóng to trang khi chạm vào ô (chị Lâm 13/11/2026: "màn hình điện thoại nó bị bé so với màn hình").
 export const O_NHAP =
-  "h-11 w-full rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] text-muc outline-none placeholder:text-muc-3 focus:border-nhan focus:ring-2 focus:ring-nhan/25 disabled:opacity-60";
+  "h-11 w-full rounded-nho border border-vien-dam bg-giay-sang px-3 text-[16px] sm:text-[15px] text-muc outline-none placeholder:text-muc-3 focus:border-nhan focus:ring-2 focus:ring-nhan/25 disabled:opacity-60";
 export const O_NHIEU_DONG =
-  "min-h-[96px] w-full rounded-nho border border-vien-dam bg-giay-sang px-3 py-2.5 text-[15px] text-muc outline-none placeholder:text-muc-3 focus:border-nhan focus:ring-2 focus:ring-nhan/25";
+  "min-h-[80px] sm:min-h-[96px] w-full rounded-nho border border-vien-dam bg-giay-sang px-3 py-2.5 text-[16px] sm:text-[15px] text-muc outline-none placeholder:text-muc-3 focus:border-nhan focus:ring-2 focus:ring-nhan/25";
 export const NHAN_O = "mb-1.5 block text-[13px] font-medium text-muc-2";
 export const NUT_CHINH = "nut-vang h-10 rounded-nho px-4 text-[14px] disabled:opacity-60";
 export const NUT_PHU =

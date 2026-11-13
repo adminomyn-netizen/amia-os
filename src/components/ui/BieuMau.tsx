@@ -154,11 +154,14 @@ export function NutHop({
     });
   };
 
+  // Đã gõ dở mà lỡ chạm ra ngoài / bấm X / Huỷ thì hỏi lại trước khi đóng, không mất chữ (chị Lâm 13/11/2026: ghi chú gõ rồi không lưu được).
+  const daGo = truong.some((t) => { const a = v[t.ten], b = giaTri[t.ten]; return JSON.stringify(a ?? "") !== JSON.stringify(b ?? ""); });
+  const dongHop = () => { if (dang) return; if (daGo && !window.confirm("Bỏ nội dung đang nhập? Bấm Huỷ để quay lại và bấm Lưu.")) return; setMo(false); };
   const lopNut = kieu === "chinh" ? NUT_CHINH : kieu === "phu" ? NUT_PHU : nguy ? NUT_CHU_NGUY : NUT_CHU;
   return (
     <>
       <button type="button" className={lopNut} onClick={() => { setV(giaTri); setLoi(""); setDongTin([]); setMo(true); hoiTin(giaTri); if (coDiaBan && !diaBan) void taiDiaBan().then(setDiaBan); }}>{nhan}</button>
-      <Hop mo={mo} dong={() => setMo(false)} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
+      <Hop mo={mo} dong={dongHop} tieuDe={tieuDe} moTa={moTa} rong={rong ? "rong" : "vua"}>
         {xacNhan && (typeof xacNhan === "string" ? <p className="mb-4 text-[14px] text-muc-2">{xacNhan}</p> : <div className="mb-4">{xacNhan}</div>)}
         <div className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2">
           {truong.filter((t) => (!t.chiKhiTao || laTao) && hien(t, v)).map((t) => {
@@ -193,8 +196,8 @@ export function NutHop({
           </ul>
         )}
         {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
-        <div className={`mt-6 flex gap-2.5 ${nutPhu ? "flex-col-reverse sm:flex-row sm:flex-wrap sm:justify-end [&>button]:w-full sm:[&>button]:w-auto" : "justify-end"}`}>
-          <button type="button" className={NUT_PHU} onClick={() => setMo(false)}>Huỷ</button>
+        <div className={`sticky bottom-0 z-10 -mx-4 -mb-4 mt-5 flex gap-2.5 rounded-b-hop border-t border-vien bg-giay-sang px-4 py-3 sm:-mx-7 sm:-mb-6 sm:mt-6 sm:px-7 sm:py-4 ${nutPhu ? "flex-col-reverse sm:flex-row sm:flex-wrap sm:justify-end [&>button]:w-full sm:[&>button]:w-auto" : "justify-end"}`}>
+          <button type="button" className={NUT_PHU} onClick={dongHop}>Huỷ</button>
           {nutPhu && <button type="button" className={NUT_PHU} disabled={dang} onClick={() => gui(nutPhu.action, "phu")}>{dang && dangNut === "phu" ? "Đang lưu" : nutPhu.nhan}</button>}
           <button type="button" className={NUT_CHINH} disabled={dang} onClick={() => gui()}>{dang && (dangNut === "chinh" || !nutPhu) ? "Đang lưu" : nhanLuu}</button>
         </div>

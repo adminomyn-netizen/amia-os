@@ -64,7 +64,7 @@ export function Hop({
   if (!mo) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto px-4 py-8 sm:py-14">
+    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain px-2 py-3 sm:px-4 sm:py-14">
       <button aria-label="Đóng" tabIndex={-1} data-dong className="fixed inset-0 bg-muc/35" onClick={dong} />
       <div
         ref={hopRef}
@@ -75,10 +75,10 @@ export function Hop({
           rong === "rong" ? "max-w-3xl" : "max-w-xl"
         }`}
       >
-        <div className="flex items-start justify-between gap-4 rounded-t-hop border-b border-vien px-7 pb-4 pt-5" style={{ background: "linear-gradient(90deg, var(--nhan-nhat), transparent 72%)" }}>
+        <div className="flex items-start justify-between gap-4 rounded-t-hop border-b border-vien px-4 pb-3 pt-4 sm:px-7 sm:pb-4 sm:pt-5" style={{ background: "linear-gradient(90deg, var(--nhan-nhat), transparent 72%)" }}>
           <div>
-            <h2 className="chu-tieu-de text-[30px] text-muc">{tieuDe}</h2>
-            {moTa && <p className="mt-1 text-[14px] text-muc-2">{moTa}</p>}
+            <h2 className="chu-tieu-de text-[22px] leading-tight text-muc sm:text-[30px]">{tieuDe}</h2>
+            {moTa && <p className="mt-1 text-[13px] text-muc-2 sm:text-[14px]">{moTa}</p>}
           </div>
           <button
             type="button"
@@ -90,7 +90,7 @@ export function Hop({
             <X strokeWidth={1.5} className="h-5 w-5" />
           </button>
         </div>
-        <div className="px-7 py-6">{children}</div>
+        <div className="px-4 py-4 sm:px-7 sm:py-6">{children}</div>
       </div>
     </div>
   );

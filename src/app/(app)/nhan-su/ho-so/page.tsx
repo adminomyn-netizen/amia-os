@@ -21,7 +21,7 @@ export default async function TrangDanhSachHoSo({ searchParams }: { searchParams
   const nd = await yeuCauQuyen("hr.hoso");
   const sp = await searchParams;
   const db = sb(), hom = homNayHCM(), nam = hom.slice(0, 4);
-  let qn = db.from("nhan_vien").select("id, ho_ten, ma_nv, email, dien_thoai, chuc_danh, chi_nhanh_id, phong_ban_id, ngay_vao_lam, ngay_nghi_viec, trang_thai_lam, vai_tro, vai_tro_chuyen_mon, hoat_dong").order("ho_ten");
+  let qn = db.from("nhan_vien").select("id, ho_ten, ma_nv, email, dien_thoai, chuc_danh, chi_nhanh_id, phong_ban_id, ngay_vao_lam, ngay_nghi_viec, trang_thai_lam, vai_tro, vai_tro_chuyen_mon, hoat_dong").not("ho_ten", "like", "[THỬ]%").order("ho_ten");
   if (nd.chiNhanhId) qn = qn.eq("chi_nhanh_id", nd.chiNhanhId);
   const [{ data: ds }, { data: cn }, { data: pb }, { data: hd }, { data: ch }, tomTat, { data: nghiCho }] = await Promise.all([
     qn, db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu"), db.from("phong_ban").select("id, ten").eq("hoat_dong", true).order("thu_tu"),

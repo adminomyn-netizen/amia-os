@@ -22,7 +22,7 @@ export default async function TrangTaiKhoanDangNhap({ searchParams }: { searchPa
   const sp = await searchParams;
   const db = sb();
   const [{ data: ds }, { data: cn }] = await Promise.all([
-    db.from("nhan_vien").select("id, ma_nv, ho_ten, email, dien_thoai, vai_tro, chi_nhanh_id, la_phuc_vu, hoat_dong, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").not("user_id", "is", null).order("ho_ten"),
+    db.from("nhan_vien").select("id, ma_nv, ho_ten, email, dien_thoai, vai_tro, chi_nhanh_id, la_phuc_vu, hoat_dong, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").not("ho_ten", "like", "[THỬ]%").not("user_id", "is", null).order("ho_ten"),
     db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma"),
   ]);
   const tenCn = new Map((cn ?? []).map((c) => [c.id, c.ten]));

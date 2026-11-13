@@ -23,7 +23,7 @@ export default async function TrangNghiViec({ searchParams }: { searchParams: Pr
   const db = sb();
   const [{ data: ds }, { data: nv }] = await Promise.all([
     db.from("nghi_viec").select("*").order("tao_luc", { ascending: false }).limit(300),
-    db.from("nhan_vien").select("id, ho_ten, ma_nv, chi_nhanh_id, hoat_dong, vai_tro").order("ho_ten"),
+    db.from("nhan_vien").select("id, ho_ten, ma_nv, chi_nhanh_id, hoat_dong, vai_tro").not("ho_ten", "like", "[THỬ]%").order("ho_ten"),
   ]);
   const ten = new Map((nv ?? []).map((n) => [n.id, n]));
   const trongPham = (ds ?? []).filter((p) => !nd.chiNhanhId || ten.get(p.nhan_vien_id)?.chi_nhanh_id === nd.chiNhanhId);

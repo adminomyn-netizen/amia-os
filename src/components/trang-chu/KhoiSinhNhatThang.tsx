@@ -38,7 +38,7 @@ export async function KhoiSinhNhatThang({ cn, tenCn, homNay, xemSdt, xemTien }: 
         <span>sắp tới {sapToi.length} · đã qua {daQua.length}{tenCn ? ` · ${tenCn}` : ""}</span>
       </p>
       {ds.length === 0 ? <p className="py-4 text-center text-[14px] text-muc-3">Tháng này chưa có khách nào có ngày sinh.</p> : (
-        <div className="max-h-[420px] overflow-y-auto pr-1">
+        <div className="lg:max-h-[420px] lg:overflow-y-auto lg:pr-1">
           {homNayDs.length > 0 && <><h3 className="px-2 pb-1 text-[12px] font-semibold uppercase tracking-wide text-sac-hong">Hôm nay</h3><ul>{homNayDs.map((k) => dong(k, true))}</ul></>}
           {sapToi.length > 0 && <><h3 className="mt-2 px-2 pb-1 text-[12px] font-semibold uppercase tracking-wide text-muc-3">Sắp tới</h3><ul className="divide-y divide-vien">{sapToi.map((k) => dong(k, false))}</ul></>}
           {daQua.length > 0 && <><h3 className="mt-2 px-2 pb-1 text-[12px] font-semibold uppercase tracking-wide text-muc-3">Đã qua trong tháng</h3><ul className="divide-y divide-vien opacity-80">{daQua.map((k) => dong(k, false))}</ul></>}

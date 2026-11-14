@@ -187,7 +187,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
             <div aria-live="polite">
               <p className="mb-1.5 text-[13px] font-medium text-muc-2">Chọn tham khảo các khung giờ sau:</p>
               {goiY?.gio.length ? (
-                <ul className="flex max-h-[84px] flex-wrap gap-1.5 overflow-y-auto">
+                <ul className="flex flex-wrap gap-1.5">
                   {goiY.gio.map((g) => <li key={g}><button type="button" aria-pressed={gio === g} onClick={() => chonGio(g)} className={`h-8 rounded-nho border px-2.5 text-[13px] tabular-nums ${gio === g ? "border-nhan bg-nhan text-white" : "border-vien-dam bg-giay-sang text-muc-2 hover:bg-giay-tram"}`}>{g}</button></li>)}
                 </ul>
               ) : <p className="text-[13px] text-muc-3">{goiY ? (goiY.loi ?? goiY.ghiChu ?? "Không có khung giờ trống.") : "Đang tìm giờ trống…"}</p>}

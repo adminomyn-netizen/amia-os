@@ -151,7 +151,7 @@ export function BangXepHangDep({ tieuDe, Icon, href, nhanHref, dong, trong, cls 
           )}
 
           {conLai.length > 0 && (
-            <ol className="mt-3 max-h-[300px] space-y-0.5 overflow-y-auto border-t border-vien pt-2 pr-0.5" start={4} aria-label={`Các hạng tiếp theo: ${tieuDe}`}>
+            <ol className="mt-3 space-y-0.5 border-t lg:max-h-[300px] lg:overflow-y-auto border-vien pt-2 pr-0.5" start={4} aria-label={`Các hạng tiếp theo: ${tieuDe}`}>
               {conLai.map((x, j) => {
                 const i = j + 3;
                 const { ma, ten } = tachMa(x.ten);

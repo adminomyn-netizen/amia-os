@@ -71,7 +71,7 @@ export function HopSinhNhat({ nhan, so, tab: tabDau, hang }: { nhan: string; so:
         </div>
         <p className="mb-2 text-[13px] text-muc-3" aria-live="polite">{dang && ds.length === 0 ? "Đang tải…" : `${tong.toLocaleString("vi-VN")} khách`}</p>
         {loi && <div role="alert" className="mb-2 rounded-nho bg-loi-nen px-3 py-2 text-[14px] text-loi">{loi}</div>}
-        <ul className="max-h-[55vh] divide-y divide-vien overflow-y-auto rounded-nho border border-vien">
+        <ul className="divide-y divide-vien rounded-nho border border-vien">
           {ds.map((k) => (
             <li key={k.id}>
               <Link href={`/khach-hang/${k.id}`} onClick={() => setMo(false)} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-0.5 px-3 py-2.5 hover:bg-giay-sang">

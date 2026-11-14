@@ -51,7 +51,7 @@ function KhungSinhNhat({ tong, ds, tenDuPhong }: { tong: number; ds: KhachSn[]; 
       {tong === 0 ? (
         <p className="px-4 py-5 text-center text-[13px] text-muc-3">Hôm nay chưa có khách sinh nhật.</p>
       ) : (
-        <ul className="grid max-h-[300px] gap-2.5 overflow-y-auto p-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <ul className="grid gap-2.5 p-3 lg:max-h-[300px] lg:overflow-y-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {ds.length > 0 ? ds.map((k, i) => {
             const m = MAU_VONG[i % MAU_VONG.length];
             return (

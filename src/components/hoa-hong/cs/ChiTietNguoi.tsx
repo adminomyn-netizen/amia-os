@@ -31,7 +31,7 @@ export function ChiTietNguoi({ r, b, toiDaCa = 300 }: { r: DongNv; b: BangThang;
       </The>
       {ca.length > 0 && (
         <The icon={Receipt} mau="xanh" tieuDe={`Ca tính phí trị liệu (${ca.length})`} moTa="Số đơn vị × đơn giá theo PL01 / PL02, chưa nhân hệ số trần (nếu vượt trần)">
-          <div className="max-h-[520px] overflow-auto">
+          <div className="overflow-x-auto lg:max-h-[520px] lg:overflow-auto">
             <table className="w-full min-w-[620px] text-[13px]">
               <thead className="sticky top-0 bg-giay-sang"><tr className="nhan-muc border-b border-vien text-left"><th className="py-2 pr-3 font-medium">Ngày</th><th className="py-2 pr-3 font-medium">Dịch vụ</th><th className="py-2 pr-3 font-medium">Dòng đơn giá</th><th className="py-2 pr-3 text-right font-medium">SL</th><th className="py-2 text-right font-medium">Tiền</th></tr></thead>
               <tbody className="divide-y divide-vien">

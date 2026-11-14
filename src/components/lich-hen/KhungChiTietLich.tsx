@@ -72,8 +72,8 @@ export function KhungChiTietLich({ lichId, chiTiet, children }: { lichId: string
           {hep && <button type="button" aria-label="Đóng chi tiết lịch hẹn" tabIndex={-1} className="fixed inset-0 z-[69] bg-muc/35" onClick={dong} />}
           <div ref={khungRef} role="dialog" aria-label="Chi tiết lịch hẹn"
             className={hep
-              ? "fixed inset-x-0 bottom-0 z-[70] max-h-[86vh] overflow-y-auto rounded-t-hop border-t border-vien bg-giay-sang pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_32px_rgba(5,40,36,0.22)]"
-              : "fixed z-[70] max-h-[calc(100vh-24px)] w-[400px] overflow-y-auto rounded-hop border border-vien bg-giay-sang shadow-[0_18px_44px_rgba(5,40,36,0.24)]"}
+              ? "fixed inset-x-0 bottom-0 z-[70] max-h-[86dvh] overflow-y-auto rounded-t-hop border-t border-vien bg-giay-sang pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_32px_rgba(5,40,36,0.22)]"
+              : "fixed z-[70] max-h-[calc(100dvh-24px)] w-[400px] overflow-y-auto rounded-hop border border-vien bg-giay-sang shadow-[0_18px_44px_rgba(5,40,36,0.24)]"}
             style={hep ? undefined : { visibility: "hidden" }}>
             {hep && <div className="mx-auto mt-2 h-1.5 w-10 rounded-nho bg-vien-dam" aria-hidden />}
             <button type="button" onClick={dong} aria-label="Đóng" className="absolute right-2 top-2 z-10 flex h-10 w-10 items-center justify-center rounded-nho text-muc-3 hover:bg-giay-tram hover:text-muc"><X className="h-5 w-5" aria-hidden /></button>

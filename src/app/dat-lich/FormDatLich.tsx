@@ -447,7 +447,7 @@ export function FormDatLich(p: Props) {
                   ))}
                 </div>
               )}
-              <div className="grid max-h-[460px] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+              <div className="grid gap-2 sm:grid-cols-2 lg:max-h-[460px] lg:overflow-y-auto lg:pr-1">
                 {dvHien.map((d) => {
                   const chon = dv.includes(d.id), khoa = !chon && dv.length >= 5;
                   return (

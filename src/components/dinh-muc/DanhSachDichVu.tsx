@@ -22,7 +22,7 @@ export function DanhSachDichVu({ nhom, chon, chiChuaCo = false }: { nhom: NhomDi
         <input value={tim} onChange={(e) => setTim(e.target.value)} placeholder="Tìm kiếm" aria-label="Tìm dịch vụ" className={`${O_NHAP} pr-9`} autoComplete="off" />
         <Search aria-hidden strokeWidth={1.6} className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muc-3" />
       </div>
-      <div className="max-h-[320px] overflow-y-auto lg:max-h-[68vh]">
+      <div className="lg:max-h-[68dvh] lg:overflow-y-auto">
         {loc.map((n) => (
           <section key={n.ten}>
             <h2 className="sticky top-0 bg-giay-sang px-2 py-1.5 text-[11.5px] font-semibold uppercase tracking-wide text-muc-3">{n.ten}</h2>

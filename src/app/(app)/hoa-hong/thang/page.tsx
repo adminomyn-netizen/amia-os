@@ -78,7 +78,7 @@ export default async function TrangHoaHongThang({ searchParams }: { searchParams
 
       {tab === "phi" && (
         <The icon={Stethoscope} mau="xanh" tieuDe={`Ca tính phí trị liệu (${b.phi.ca.length})`} moTa={`Giám đốc chi nhánh rà soát và đánh dấu ca không tính phí (Điều 4). ${b.phi.loaiTru.length} ca đã đánh dấu không tính.`}>
-          <div className="max-h-[640px] overflow-auto">
+          <div className="overflow-x-auto lg:max-h-[640px] lg:overflow-auto">
             <table className="w-full min-w-[760px] text-[13px]">
               <thead className="sticky top-0 z-10 bg-giay-sang"><tr className="nhan-muc border-b border-vien text-left"><th className="py-2 pr-3 font-medium">Ngày</th><th className="py-2 pr-3 font-medium">Dịch vụ · khách</th><th className="py-2 pr-3 font-medium">Người tính</th><th className="py-2 pr-3 font-medium">Dòng đơn giá</th><th className="py-2 pr-3 text-right font-medium">Tiền</th>{sua && <th className="py-2" />}</tr></thead>
               <tbody className="divide-y divide-vien">

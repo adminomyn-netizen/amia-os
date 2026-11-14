@@ -166,7 +166,7 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
             })}
           </div>
           {ds === null ? <p className="px-5 py-6 text-[14px] text-muc-3">Đang tải…</p> : hienThi.length === 0 ? <p className="px-5 py-6 text-[14px] text-muc-3">{tab === "tat_ca" ? "Không có việc nào đang chờ." : "Không có việc nào trong mục này."}</p> : (
-            <ul className="max-h-[60vh] divide-y divide-vien overflow-y-auto">
+            <ul className="max-h-[60dvh] divide-y divide-vien overflow-y-auto">
               {hienThi.map((m) => {
                 const chua = m.trang === "chua_doc";
                 const { Icon, nen, chu } = KIEU_NHOM[m.nhom] ?? KIEU_NHOM.khac;

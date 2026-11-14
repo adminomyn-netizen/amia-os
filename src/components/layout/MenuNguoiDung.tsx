@@ -43,7 +43,7 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
         <ChevronDown strokeWidth={1.8} className={`h-4 w-4 ${toi ? "text-menu-chu-phu" : "text-muc-3"} transition-transform ${mo ? "rotate-180" : ""}`} aria-hidden />
       </button>
       {mo && (
-        <div role="menu" aria-label="Tài khoản" style={{ position: "absolute" }} className="the-noi the-noi-thap vao right-0 top-full z-50 mt-2.5 w-[312px] max-w-[calc(100vw-24px)] overflow-hidden">
+        <div role="menu" aria-label="Tài khoản" style={{ position: "absolute" }} className="the-noi the-noi-thap vao right-0 top-full z-50 mt-2.5 max-h-[calc(100dvh-96px)] overflow-y-auto overscroll-contain w-[312px] max-w-[calc(100vw-24px)] overflow-hidden">
           <div className="flex items-center gap-4 px-5 pb-4 pt-6">
             <AnhDaiDien hoTen={hoTen} anh={anh} kichCo={56} />
             <div className="min-w-0">
@@ -94,7 +94,7 @@ export function MenuNguoiDung({ hoTen, vaiTro, chucDanh, email, chiNhanh, anh, t
         </div>
       )}
       {moCD && (
-        <div role="dialog" aria-label="Cài đặt hệ thống" style={{ position: "fixed" }} className="the-noi the-noi-thap vao fixed left-3 right-3 top-[80px] z-50 max-h-[calc(100vh-100px)] overflow-y-auto overflow-x-hidden p-5 sm:left-6 sm:right-6 lg:left-[268px] lg:right-6 lg:p-6">
+        <div role="dialog" aria-label="Cài đặt hệ thống" style={{ position: "fixed" }} className="the-noi the-noi-thap vao fixed left-3 right-3 top-[80px] z-50 max-h-[calc(100dvh-100px)] overflow-y-auto overflow-x-hidden p-5 sm:left-6 sm:right-6 lg:left-[268px] lg:right-6 lg:p-6">
           <div className="mb-4 flex items-center justify-between gap-3 border-b border-vien pb-3">
             <h2 className="flex items-center gap-2.5 text-[16px] font-semibold text-muc"><Settings strokeWidth={1.6} className="h-[19px] w-[19px] text-nhan" aria-hidden />Cài đặt hệ thống</h2>
             <button type="button" onClick={() => setMoCD(false)} className="rounded-nho px-3 py-1.5 text-[13px] text-muc-2 hover:bg-giay-tram">Đóng</button>

@@ -138,7 +138,7 @@ export function CanhBaoQuaGio() {
             {tatTieng ? "Bật tiếng" : "Tắt tiếng"}
           </button>
         </div>
-        <ul className="max-h-[50vh] divide-y divide-vien overflow-y-auto">
+        <ul className="max-h-[50dvh] divide-y divide-vien overflow-y-auto">
           {hien.map((c) => (
             <li key={c.id} className="px-4 py-3">
               <p className="text-[14px] font-medium leading-snug text-muc">{c.khach}<span className="font-normal text-muc-2"> · {c.dichVu}</span></p>

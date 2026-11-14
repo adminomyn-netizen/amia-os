@@ -50,7 +50,7 @@ export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
       {mo && (
         <div className="fixed inset-0 z-50 lg:hidden khong-in" role="dialog" aria-modal="true" aria-label="Thêm chức năng">
           <button type="button" aria-label="Đóng" className="absolute inset-0 bg-muc/45" onClick={() => setMo(false)} />
-          <div className="bang-duoi vao absolute inset-x-0 bottom-0 flex max-h-[86vh] flex-col overflow-hidden rounded-t-[20px] bg-giay shadow-[0_-18px_40px_-12px_rgba(6,26,23,0.5)]">
+          <div className="bang-duoi vao absolute inset-x-0 bottom-0 flex max-h-[86dvh] flex-col overflow-hidden rounded-t-[20px] bg-giay shadow-[0_-18px_40px_-12px_rgba(6,26,23,0.5)]">
             <div className="nen-toi relative shrink-0 px-4 pb-4 pt-3 text-white">
               <div className="mx-auto mb-3 h-1 w-10 rounded-[3px] bg-white/30" aria-hidden />
               <div aria-hidden className="pointer-events-none absolute -right-10 -top-16 h-[180px] w-[180px]" style={{ background: "radial-gradient(closest-side, rgb(217 184 119 / 0.35), transparent)" }} />

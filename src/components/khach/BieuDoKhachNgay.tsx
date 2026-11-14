@@ -46,7 +46,7 @@ export function BieuDoKhachNgay({ dong }: { dong: DongKhachNgay[] }) {
       </svg>
       <details className="mt-2 text-[12px] text-muc-3">
         <summary className="cursor-pointer select-none hover:text-muc">Xem bảng số theo ngày</summary>
-        <div className="mt-2 max-h-64 overflow-auto">
+        <div className="mt-2 overflow-x-auto lg:max-h-64 lg:overflow-auto">
           <table className="w-full min-w-[320px] text-right tabular-nums">
             <thead className="sticky top-0 bg-giay-sang text-muc-3"><tr><th className="py-1 pr-3 text-left font-medium">Ngày</th><th className="pr-3 font-medium">Tổng</th><th className="pr-3 font-medium">Cũ</th><th className="pr-3 font-medium">Lần đầu</th><th className="font-medium">Lẻ</th></tr></thead>
             <tbody>{[...dong].reverse().map((d) => <tr key={d.ngay} className="border-t border-vien text-muc-2"><td className="py-1 pr-3 text-left">{ddmm(d.ngay)}</td><td className="pr-3">{d.tong}</td><td className="pr-3">{d.cu}</td><td className="pr-3">{d.moi}</td><td>{d.le}</td></tr>)}</tbody>

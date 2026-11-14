@@ -29,7 +29,7 @@ export default async function TrangTaiKhoan({ searchParams }: { searchParams: Pr
           </dl>
           <p className="mt-4 text-[13px] text-muc-3">Ai cũng tự đổi được mật khẩu của chính mình, không cần xin Kỹ thuật.</p>
           <div className="mt-4">
-            <NutHop nhan="Đổi mật khẩu" tieuDe="Đổi mật khẩu" truong={[{ ten: "mat_khau_cu", nhan: "Mật khẩu hiện tại", loai: "mat_khau_an", batBuoc: true, rong: true }, { ten: "mat_khau_moi", nhan: "Mật khẩu mới (≥ 8 ký tự)", loai: "mat_khau_an", batBuoc: true, rong: true }]} action={doiMatKhau} />
+            <NutHop nhan="Đổi mật khẩu" tieuDe="Đổi mật khẩu" truong={[{ ten: "mat_khau_moi", nhan: "Mật khẩu mới (≥ 8 ký tự)", loai: "mat_khau_an", batBuoc: true, rong: true }]} action={doiMatKhau} />
           </div>
         </section>
       </div>

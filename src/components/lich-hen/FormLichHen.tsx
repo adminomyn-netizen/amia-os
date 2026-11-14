@@ -227,7 +227,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
           <div><label htmlFor="lh-gc" className={NHAN_O}>Ghi chú</label><textarea id="lh-gc" value={ghiChu} onChange={(e) => setGhiChu(e.target.value)} className={O_NHIEU_DONG} style={{ minHeight: 64 }} /></div>
         </div>
         {loi && <div role="alert" className="mt-4 rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">{loi}</div>}
-        <div className="mt-6 flex justify-end gap-2.5"><button type="button" className={NUT_PHU} onClick={() => setMo(false)}>Huỷ</button><button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : "Lưu lịch hẹn"}</button></div>
+        <div className="sticky bottom-0 z-10 -mx-4 -mb-4 mt-6 flex justify-end gap-2.5 rounded-b-hop border-t border-vien bg-giay-sang px-4 py-3 sm:-mx-7 sm:-mb-6 sm:px-7 sm:py-4"><button type="button" className={NUT_PHU} onClick={() => setMo(false)}>Huỷ</button><button type="button" className={NUT_CHINH} disabled={dang} onClick={gui}>{dang ? "Đang lưu" : "Lưu lịch hẹn"}</button></div>
       </Hop>
     </>
   );

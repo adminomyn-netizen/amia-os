@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 
 /** Hộp thoại (popup) dùng chung: đóng bằng Esc, bấm nền hoặc nút X; giữ tiêu điểm trong hộp và
@@ -77,9 +78,11 @@ export function Hop({
     };
   }, [mo]);
 
-  if (!mo) return null;
+  if (!mo || typeof document === "undefined") return null;
 
-  return (
+  // Gắn thẳng vào <body>: trên iPhone vùng cuộn <main> (-webkit-overflow-scrolling) tạo lớp xếp chồng riêng → thanh tab dưới (z-40)
+  // đè lên hộp, che mất nút Lưu (Thương 14/11/2026: "đặt lịch hẹn k lưu được"; chị Thuý 13/11 ghi chú khách).
+  return createPortal(
     <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain px-2 py-3 sm:px-4 sm:py-14"
       style={vung ? { top: vung.top, height: vung.height, bottom: "auto" } : undefined}
     >
@@ -110,6 +113,7 @@ export function Hop({
         </div>
         <div className="px-4 py-4 sm:px-7 sm:py-6">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

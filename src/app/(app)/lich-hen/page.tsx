@@ -12,7 +12,9 @@ import { baoBienChung } from "../khieu-nai/actions";
 import { truongBaoBatThuong } from "@/lib/khieu-nai-form";
 import { FormLichHen } from "@/components/lich-hen/FormLichHen";
 import { hienDatLich } from "@/lib/ban-hang";
-import { NutInLich } from "@/components/lich-hen/NutInLich";
+import { NutInLich, type MauInLich } from "@/components/lich-hen/NutInLich";
+import { docIn } from "@/lib/thiet-lap-in";
+import { CO_SO } from "@/lib/in-hoa-don";
 import { NutNhanh } from "@/components/lich-hen/NutNhanh";
 import { timKhach } from "../ban-hang/actions";
 import { chuyenTriLieu } from "../the/cho-lam/actions";
@@ -158,6 +160,14 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   // Ô của hộp "Báo bất thường" dựng MỘT lần và dùng lại cho mọi lịch (trước đây mỗi lịch dựng lại ~230 dịch vụ → trang nặng hàng trăm KB).
   const truongBBT = truongBaoBatThuong((dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), false);
   const cnLC = (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
+  // Mẫu in phiếu lịch hẹn theo Cài đặt › Thiết lập in › Lịch hẹn (SalonHero Vinh: 80mm, logo, câu cuối "Xin cảm ơn quý khách!").
+  const [{ data: cauHinhIn }, { data: cnIn }] = await Promise.all([
+    db.from("cau_hinh").select("khoa, gia_tri").like("khoa", "in.%"),
+    cnId ? db.from("chi_nhanh").select("ten, dia_chi, dien_thoai").eq("id", cnId).maybeSingle() : Promise.resolve({ data: null }),
+  ]);
+  const cfgLich = docIn("lich_hen", cauHinhIn, cnId || "tat_ca").cauHinh;
+  const mauInLich: MauInLich = { kho: cfgLich.khoGiay, logo: cfgLich.logo, cuoi: cfgLich.noiDungCuoi,
+    cuaHang: cfgLich.thongTinCuaHang ? { ten: CO_SO.ten, phu: `${CO_SO.linhVuc} · Giấy phép ${CO_SO.giayPhep}`, diaChi: cnIn?.dia_chi ?? "", dienThoai: cnIn?.dien_thoai ?? "" } : null };
   const choDm = (choLam ?? []).filter((c) => c.hoat_dong).map((c) => ({ chiNhanhId: c.chi_nhanh_id, ten: c.ten }));
   const choCn = choDm.filter((c) => c.chiNhanhId === cnId);
   const nvLocLC = (nv ?? []).filter((n) => n.chi_nhanh_id === cnId && ["bac_si", "ktv", "tu_van", "le_tan"].includes(n.vai_tro)).map((n) => ({ gia_tri: n.id, nhan: tenNvHoa(n.ho_ten) }));
@@ -315,7 +325,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
           {dong.filter(([, v]) => v).map(([n, v]) => <div key={n} className="contents"><dt className="text-muc-3">{n}</dt><dd className="min-w-0 break-words tabular-nums text-muc">{v}</dd></div>)}
         </dl>
         <div className="mt-4 space-y-3 border-t border-vien pt-3">
-          {sua && <div className="flex flex-wrap items-center gap-2.5">{nutSua(l, k, dvIds, "chinh")}<NutInLich tieuDe={`Lịch hẹn #${maLich}`} phu={cnLC.find((c) => c.gia_tri === l.chi_nhanh_id)?.nhan} dong={[["Khách hàng", k?.ho_ten ?? ""], ["Điện thoại", k?.dien_thoai ?? ""], ["Mã khách", k?.ma ?? ""], ["Trạng thái", TT[l.trang_thai].nhan], ["Loại lịch", nhanLoaiLich(l.loai_lich)],
+          {sua && <div className="flex flex-wrap items-center gap-2.5">{nutSua(l, k, dvIds, "chinh")}<NutInLich mau={mauInLich} tieuDe={`Lịch hẹn #${maLich}`} phu={cnLC.find((c) => c.gia_tri === l.chi_nhanh_id)?.nhan} dong={[["Khách hàng", k?.ho_ten ?? ""], ["Điện thoại", k?.dien_thoai ?? ""], ["Mã khách", k?.ma ?? ""], ["Trạng thái", TT[l.trang_thai].nhan], ["Loại lịch", nhanLoaiLich(l.loai_lich)],
             ...dong.map(([n, v]): [string, string] => [n, typeof v === "string" ? v : ""]), ...nhomCua(l.id).map((x): [string, string] => [x.ten, [(x.dich_vu_ids ?? []).map((d) => tenDv.get(d)).filter(Boolean).join(", "), x.nhan_vien_id ? tenNv.get(x.nhan_vien_id) ?? "" : "", x.phong ?? ""].filter(Boolean).join(" · ")]), ["Hoá đơn", hoaDon ? `#${hoaDon.sh_ma ?? hoaDon.ma}` : ""]].filter(([, v]) => v) as [string, string][]} /></div>}
           {hanhDong(l, k, dvIds, true)}
         </div>
@@ -477,7 +487,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
                       {hoaDon && <div className="mt-1 text-[12px]"><span className="text-muc-3">Có hoá đơn </span><Link href={`/hoa-don/${hoaDon.id}`} className="font-medium text-nhan-dam hover:underline">#{hoaDon.sh_ma ?? hoaDon.ma}</Link></div>}
                       <div className="mt-2 flex items-center gap-1.5">
                         <XemLich tieuDe={`Lịch hẹn #${maLich}`} dong={chiTiet} khachId={l.khach_id} hoaDon={hoaDon ? { id: hoaDon.id, ma: hoaDon.sh_ma ?? hoaDon.ma } : null} />
-                        <NutInLich tieuDe={`Lịch hẹn #${maLich}`} phu={cnLC.find((c) => c.gia_tri === l.chi_nhanh_id)?.nhan}
+                        <NutInLich mau={mauInLich} tieuDe={`Lịch hẹn #${maLich}`} phu={cnLC.find((c) => c.gia_tri === l.chi_nhanh_id)?.nhan}
                           dong={chiTiet} />
                         <details className="group relative">
                           <summary className="flex h-8 w-8 cursor-pointer list-none items-center justify-center rounded-nho border border-vien-dam text-muc-2 hover:bg-giay-tram" aria-label="Thao tác với lịch hẹn"><ChevronDown className="h-4 w-4" aria-hidden /></summary>

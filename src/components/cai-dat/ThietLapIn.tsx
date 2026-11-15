@@ -85,7 +85,7 @@ export function ThietLapInForm({ loai, cn, chiNhanh, dau, nguon, mau, sua, luu, 
             </div>
           )}
           <div className="sm:w-1/2"><label className={NHAN_O}>Ngôn ngữ</label><Chon ariaLabel="Ngôn ngữ" luaChon={[{ gia_tri: "vi", nhan: "Tiếng Việt" }, { gia_tri: "en", nhan: "English" }]} giaTri={c.ngonNgu} onDoi={(v) => dat({ ngonNgu: v as "vi" | "en" })} voHieu={tat} /><p className="mt-1.5 text-[12px] text-muc-3">English: đổi nhãn trên tờ in (Invoice, Cashier, Total…); tên dịch vụ và nội dung cuối tờ giữ nguyên như đã nhập.</p></div>
-          {loai === "lich_hen" && <p className="text-[12.5px] leading-snug text-muc-3">Phiếu lịch hẹn: AMIA chưa có nút in phiếu lịch hẹn, phần này mới chỉ là cấu hình để dùng khi có.</p>}
+          {loai === "lich_hen" && <p className="text-[12.5px] leading-snug text-muc-3">Phiếu lịch hẹn: nút "In lịch hẹn" ở màn Lịch hẹn in theo khổ giấy, logo, thông tin cửa hàng và nội dung kết thúc ở đây.</p>}
           {loai === "hoa_don" && <p className="text-[12.5px] leading-snug text-muc-3">Nhân viên phục vụ in dưới từng dòng “(NV: …)” theo người được gán ở Thu ngân; giờ vào/ra lấy giờ ghi trên hoá đơn, không có thì giờ lịch hẹn gắn với đơn.</p>}
         </section>
         <section className="the-noi the-noi-thap p-4 sm:p-5" aria-label="Bản in mẫu">

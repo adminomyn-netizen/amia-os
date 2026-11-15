@@ -6,7 +6,7 @@ Nguồn đối chiếu: đọc thẳng SalonHero (chỉ gọi hàm đọc `getSe
 | Tờ in | SalonHero (chi nhánh Vinh) | AMIA OS | Kết luận |
 |---|---|---|---|
 | Hoá đơn | **A5**, 0 bản sao, có logo, thông tin cửa hàng, nhân viên phục vụ, SĐT khách, chữ ký, thu ngân, giờ vào/ra, ghi chú; chân trang "Số tiền thanh toán hoá đơn sẽ KHÔNG HOÀN LẠI…" | Mặc định A5, cùng các ô bật/tắt, cùng câu chân trang | Khớp |
-| Lịch hẹn | **80mm**, chân trang "Xin cảm ơn quý khách!…" | Có nút In ở Lịch hẹn nhưng tờ in đơn giản, **chưa theo khổ 80mm / logo / chân trang** của Thiết lập in | Đang làm |
+| Lịch hẹn | **80mm**, chân trang "Xin cảm ơn quý khách!…" | Nút In lịch hẹn in theo Thiết lập in (80mm, logo, câu cuối) | Đã làm |
 
 ## 2. Nút In cuối hoá đơn (anh Nam báo đã có) — đã kiểm
 - Có: Danh sách hoá đơn › mở hoá đơn › nút **In** → trang `/in/hoa-don/<id>`, khổ theo Cài đặt › Thiết lập in.
@@ -19,7 +19,7 @@ Nguồn đối chiếu: đọc thẳng SalonHero (chỉ gọi hàm đọc `getSe
 | In hoá đơn (57/58/80mm, A4/A5) | Có |
 | In tạm tính ở Thu ngân | Có |
 | In phiếu thu nợ (payment debt) | Có (`/in/phieu-thu`, A5) — chưa theo khổ Thiết lập in |
-| In phiếu lịch hẹn (58/80mm/A4) | Có nút, chưa theo mẫu 80mm (đang làm) |
+| In phiếu lịch hẹn (58/80mm/A4) | Có, theo khổ Thiết lập in |
 | In mã vạch khách hàng | Có (In mã khách) |
 | In mã vạch sản phẩm | Có (Danh mục › In mã vạch) |
 | In thông tin khách hàng (customer print) | Có trang in hồ sơ khách — cần so lại cột |
@@ -43,3 +43,4 @@ Nguồn đối chiếu: đọc thẳng SalonHero (chỉ gọi hàm đọc `getSe
 - 08:0x Nút **Gia hạn thẻ**: hàng loạt ở Khách hàng › Khách dùng thẻ (tích chọn như SalonHero); từng thẻ ở hồ sơ thẻ, tab Thẻ dịch vụ của khách, danh sách Thẻ. Chỉ đổi hạn, ghi Lịch sử thẻ, không đụng buổi/tiền (chị Lâm hỏi 07:4x).
 - 08:1x Nút **In** có bước **Kết nối máy in** lần đầu trên mỗi máy quầy: hướng dẫn chọn máy in quầy, khổ giấy, lề mặc định, tỉ lệ 100%; ghi tên máy in, lần sau bấm In ra hộp in ngay; nút "Máy in: … · Đổi". Muốn bấm là ra giấy không hiện hộp in: Chrome máy quầy chạy --kiosk-printing (cần cài 1 lần tại máy) (chị Lâm 07:4x).
 - 07:55 Đã lên hosting (bản d56a3e09) và kiểm trên trang thật (tài khoản Kỹ thuật, chỉ xem): Khách dùng thẻ có 50 ô tích + nút Gia hạn thẻ; hồ sơ thẻ có Gia hạn thẻ; trang in hoá đơn hiện "Kết nối máy in & In", khổ A5. In thử ra PDF: đúng trang A5 (148×210mm), lề trái/phải đều, chữ không bị thu nhỏ.
+- 08:0x **In lịch hẹn** theo mẫu SalonHero: khổ 80mm (theo Cài đặt › Thiết lập in › Lịch hẹn), logo, câu cuối "Xin cảm ơn quý khách! Hân hạnh được phục vụ quý khách!".

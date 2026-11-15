@@ -37,7 +37,7 @@ export type DongKhach = {
   id: string; ma: string; ho_ten: string; dien_thoai: string; zalo: string | null; email: string | null; gioi_tinh: string | null; ngay_sinh: string | null;
   dia_chi: string | null; nguon: string | null; nguon_chi_tiet: string | null; trang_thai: string | null; hang: string | null; nguoi_phu_trach_id: string | null;
   chi_nhanh_id: string | null; so_the_dang_dung: number | null; chi_12_thang: number | null; tao_luc: string; tinh_thanh: string | null; quan_huyen: string | null;
-  diem_so_du: number; facebook: string | null; co_so_goc: string | null; nhom: { ten: string; mau: string | null }[];
+  diem_so_du: number; facebook: string | null; co_so_goc: string | null; anh?: string | null; nhom: { ten: string; mau: string | null }[];
   /** 0330: hồ sơ dựng lại cho khách đã bị xoá bên SalonHero (ho_ten đã đổi thành "Khách đã xoá bên SalonHero"). */
   an_sh_xoa?: boolean;
 };

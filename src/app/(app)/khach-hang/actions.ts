@@ -14,8 +14,9 @@ import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
 import { docKhachTuExcel } from "@/lib/nhap-khach";
 import { cotDoi } from "@/lib/lich-su-sua-khach";
 import { ngaySinhHopLe } from "@/lib/ngay-sinh";
+import { ANH_TOI_DA, DANH_DAU_HOSTING, ghiAnhDaiDien, loaiAnh, xoaAnhDaiDien } from "@/lib/anh-dai-dien-khach";
 
-type KQ = { ok?: true; loi?: string; id?: string };
+type KQ = { ok?: true; loi?: string; id?: string; canhBao?: string };
 const NGUON_HOP_LE = ["mkt", "telesale", "tu_van", "khach_cu_gioi_thieu", "khac"];
 
 export async function luuKhach(fd: FormData): Promise<KQ> {
@@ -92,11 +93,36 @@ export async function luuKhach(fd: FormData): Promise<KQ> {
       if (loiNhom) console.error("[luuKhach] gán nhóm", loiNhom.message);
     }
   }
+  const canhBao = await luuAnhDaiDien(fd, khachId, nd.nhanVienId);
   await db.from("khach_quan_tam").delete().eq("khach_id", khachId);
   const qt = mang(fd, "quan_tam");
   if (qt.length) await db.from("khach_quan_tam").insert(qt.map((d) => ({ khach_id: khachId, dich_vu_id: d })));
   revalidatePath("/khach-hang");
-  return { ok: true, id: khachId };
+  return { ok: true, id: khachId, ...(canhBao ? { canhBao } : {}) };
+}
+
+/** Ảnh đại diện gửi kèm form khách: lưu tệp trên ổ hosting, Supabase chỉ ghi dấu "hosting:<mốc>". "xoa" = bỏ ảnh. Lỗi ảnh không chặn việc lưu hồ sơ, chỉ báo lại. */
+async function luuAnhDaiDien(fd: FormData, khachId: string, nguoi: string): Promise<string | null> {
+  const a = fd.get("anh_dai_dien");
+  if (a === "xoa") {
+    await xoaAnhDaiDien(khachId);
+    await sb().from("khach_hang").update({ anh_dai_dien_url: null }).eq("id", khachId);
+    await sb().from("nhat_ky_truy_cap").insert({ nguoi_id: nguoi, hanh_dong: "xoa_anh_dai_dien", doi_tuong: "khach_hang", doi_tuong_id: khachId });
+    return null;
+  }
+  if (!(a instanceof File) || a.size === 0) return null;
+  if (a.size > ANH_TOI_DA) return "Đã lưu hồ sơ nhưng ảnh đại diện quá 1 MB, chọn ảnh khác.";
+  const buf = Buffer.from(await a.arrayBuffer());
+  if (!loaiAnh(buf)) return "Đã lưu hồ sơ nhưng tệp ảnh đại diện không phải JPG/PNG/WebP.";
+  try {
+    await ghiAnhDaiDien(khachId, buf);
+  } catch (e) {
+    console.error("[luuAnhDaiDien]", e);
+    return "Đã lưu hồ sơ nhưng chưa lưu được ảnh đại diện. Thử lại.";
+  }
+  await sb().from("khach_hang").update({ anh_dai_dien_url: `${DANH_DAU_HOSTING}${Date.now()}` }).eq("id", khachId);
+  await sb().from("nhat_ky_truy_cap").insert({ nguoi_id: nguoi, hanh_dong: "doi_anh_dai_dien", doi_tuong: "khach_hang", doi_tuong_id: khachId });
+  return null;
 }
 
 async function soTiep(khoa: string) {

@@ -10,11 +10,22 @@ import { OTien } from "./OTien";
 import { Gat } from "./Gat";
 import { NHAN_O, NUT_CHINH, NUT_CHU, NUT_CHU_NGUY, NUT_PHU, O_NHAP, O_NHIEU_DONG, CHON_HET } from "./dinh-dang";
 import { NutTraCuuMst } from "@/components/ui/NutTraCuuMst";
+import { OAnhDaiDien } from "@/components/khach/OAnhDaiDien";
+
+/** Ảnh đã thu nhỏ (data URL) → tệp để gửi kèm FormData. */
+function tepTuDataUrl(d: string): Blob {
+  const [dau, du] = d.split(",");
+  const nhi = atob(du), b = new Uint8Array(nhi.length);
+  for (let i = 0; i < nhi.length; i++) b[i] = nhi.charCodeAt(i);
+  return new Blob([b], { type: dau.slice(5, dau.indexOf(";")) });
+}
 
 export type Truong = {
   ten: string;
   nhan: string;
-  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "ngay_sinh" | "gio" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "mat_khau_an" | "email";
+  loai: "chu" | "so" | "tien" | "chon" | "ngay" | "ngay_sinh" | "gio" | "nhieu_dong" | "gat" | "nhieu" | "mat_khau" | "mat_khau_an" | "email" | "anh";
+  /** Ô ảnh (loai "anh"): đường ảnh đang có để xem trước. */
+  anhHienTai?: string | null;
   luaChon?: LuaChon[];
   batBuoc?: boolean;
   goiY?: string;
@@ -138,7 +149,11 @@ export function NutHop({
     for (const t of truong) {
       if (!hien(t, v)) continue;
       const gt = v[t.ten];
-      if (Array.isArray(gt)) gt.forEach((x) => fd.append(t.ten, x));
+      if (t.loai === "anh") {
+        // "" = giữ ảnh cũ (không gửi gì); "xoa" = bỏ ảnh; "data:…" = ảnh mới.
+        if (typeof gt === "string" && gt.startsWith("data:")) fd.set(t.ten, tepTuDataUrl(gt), "anh.jpg");
+        else if (gt === "xoa") fd.set(t.ten, "xoa");
+      } else if (Array.isArray(gt)) gt.forEach((x) => fd.append(t.ten, x));
       else if (typeof gt === "boolean") fd.set(t.ten, gt ? "1" : "0");
       else fd.set(t.ten, gt == null ? "" : t.loai === "gio" ? String(gt).slice(0, 5) : String(gt));
     }
@@ -169,8 +184,9 @@ export function NutHop({
             const id = `f-${t.ten}`;
             const { nhan: nhanO, ghiChu: ghiChuO } = tachNhan(t);
             return (
-              <div key={t.ten} className={t.rong || t.loai === "nhieu_dong" || t.loai === "nhieu" ? "sm:col-span-2" : ""}>
+              <div key={t.ten} className={t.rong || t.loai === "nhieu_dong" || t.loai === "nhieu" || t.loai === "anh" ? "sm:col-span-2" : ""}>
                 {t.loai !== "gat" && <label htmlFor={id} className={NHAN_O}>{nhanO}{t.batBuoc && <span className="text-loi"> *</span>}</label>}
+                {t.loai === "anh" && <OAnhDaiDien id={id} giaTri={String(gt ?? "")} hienTai={t.anhHienTai ?? null} onDoi={(x) => dat(t.ten, x)} />}
                 {t.loai === "chu" && <input id={id} value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
                 {t.loai === "email" && <input id={id} type="email" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}
                 {t.loai === "mat_khau" && <input id={id} type="text" value={String(gt ?? "")} onChange={(e) => dat(t.ten, e.target.value)} placeholder={t.goiY} className={O_NHAP} autoComplete="off" />}

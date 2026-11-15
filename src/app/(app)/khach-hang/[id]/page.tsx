@@ -22,6 +22,8 @@ import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
 import { LuoiAnh } from "@/components/khach/LuoiAnh";
 import { NhanNhom } from "@/components/khach/DanhSachKhach";
+import { AnhDaiDien } from "@/components/khach/AnhDaiDien";
+import { srcAnhKhach } from "@/lib/anh-dai-dien-src";
 import { LichSuGiaoDich, type ThamSoLichSu } from "@/components/khach/LichSuGiaoDich";
 import { LichHenKhach } from "@/components/khach/LichHenKhach";
 import { thamSoBaoHanh, thangTron, tinhBaoHanh, LOAI_KN, TT_BC, TT_KN } from "@/lib/khieu-nai";
@@ -83,7 +85,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     k.nguoi_gioi_thieu_id ? db.from("khach_hang").select("ma, ho_ten").eq("id", k.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
     xemAnh ? demAnhKhach(id) : Promise.resolve(0),
     // Trường chuyển từ SalonHero (0055/0065) chưa có trong v_khach_hang: đọc thẳng bảng khách.
-    db.from("khach_hang").select("nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc, lan_den_cuoi, an_sh_xoa").eq("id", id).maybeSingle(),
+    db.from("khach_hang").select("anh_dai_dien_url, nghe_nghiep, cong_ty, facebook, website, chieu_cao_cm, can_nang_kg, ma_so_thue, tinh_thanh, quan_huyen, quoc_gia, sdt_phu, ma_the_giay, co_so_goc, diem_so_du, tong_dat_lich_goc, tong_checkin_goc, tong_huy_lich_goc, lan_den_cuoi, an_sh_xoa").eq("id", id).maybeSingle(),
     db.from("khach_nhom").select("nhom_khach!inner(id, ten, mau)").eq("khach_id", id).eq("nhom_khach.hoat_dong", true),
     coQuyen(nd, "the.xem") ? docTaiKham(null, undefined, undefined, id, 1).catch(() => []) : Promise.resolve([]),
     coQuyen(nd, "the.xem") ? docTheSapHet(null, undefined, undefined, id, 5).catch(() => []) : Promise.resolve([]),
@@ -105,6 +107,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   if (ptCu) tenNv.set(ptCu.id, ptCu.ho_ten);
   const nvLC = [...luaChonNhanVien(nv ?? []), ...(ptCu ? [{ gia_tri: ptCu.id, nhan: `${tenGonNv(ptCu.ho_ten)} (đã nghỉ)`, nhom: "Đã nghỉ" }] : [])];
   const truong = truongKhach({ dichVu: (dv ?? []).map((d) => ({ gia_tri: d.id, nhan: `${d.ma} · ${d.ten}` })), nhanVien: nvLC, chiNhanh: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })) });
+  const truongSua = truong.map((t) => (t.loai === "anh" ? { ...t, anhHienTai: srcAnhKhach(id, kx?.anh_dai_dien_url) } : t));
   const tongNo = (no ?? []).reduce((s, r) => s + Number(r.con_no), 0);
   const tt = TRANG_THAI_KHACH[k.trang_thai ?? "lead"];
   const sua = coQuyen(nd, "khach.sua");
@@ -529,6 +532,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
           </p>
         )}
         <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+          <div className="flex min-w-0 items-start gap-4">
+          <AnhDaiDien id={id} anh={kx?.anh_dai_dien_url} ten={k.ho_ten ?? ""} co={72} />
           <div className="min-w-0">
             <h1 className="chu-tieu-de text-[20px] font-bold uppercase leading-tight text-muc [overflow-wrap:anywhere]">{kx?.an_sh_xoa ? "Khách đã xoá bên SalonHero" : k.ho_ten}</h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-2 text-muc-3"><span className="tabular-nums">{k.ma}</span><NhanTrangThai kieu={tt.kieu}>{tt.nhan}</NhanTrangThai><NhanTrangThai kieu="tram">Hạng {k.hang}</NhanTrangThai>
@@ -541,8 +546,9 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
               </div>
             )}
           </div>
+          </div>
           <div className="flex flex-wrap items-center gap-2">
-            {sua && <NutHop kieu="phu" nhan="Sửa" tieuDe="Sửa hồ sơ khách" rong truong={truong} giaTri={giaTriSua} action={luuKhach} />}
+            {sua && <NutHop kieu="phu" nhan="Sửa" tieuDe="Sửa hồ sơ khách" rong truong={truongSua} giaTri={giaTriSua} action={luuKhach} />}
             {coQuyen(nd, "lich.sua") && <Link href={`/lich-hen?khach=${id}`} className={NUT_LIEN_KET}>Đặt lịch</Link>}
             {coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?khach=${id}`} className="nut-vang flex h-9 items-center rounded-nho px-3.5 text-[13px]">Tạo đơn</Link>}
             <Link href={`/in-ma-khach/${id}`} target="_blank" className={NUT_LIEN_KET}>In mã</Link>

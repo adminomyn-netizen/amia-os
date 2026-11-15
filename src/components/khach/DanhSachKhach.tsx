@@ -9,8 +9,9 @@ import { NgayChon } from "@/components/ui/NgayChon";
 import { ONhieu } from "@/components/ui/BieuMau";
 import { O_NHAP } from "@/components/ui/dinh-dang";
 import { KHOA_LOC, SAP_XEP_KHACH, TRANG_THAI_KHACH, type KhoaLoc } from "@/lib/khach";
+import { AnhDaiDien } from "./AnhDaiDien";
 
-type Dong = { id: string; ma: string; ho_ten: string; dien_thoai: string; trang_thai: string | null; hang: string | null; diem: number; nhom: { ten: string; mau: string | null }[] };
+type Dong = { id: string; ma: string; ho_ten: string; dien_thoai: string; trang_thai: string | null; hang: string | null; diem: number; nhom: { ten: string; mau: string | null }[]; anh?: string | null };
 type Loc = Record<KhoaLoc, string>;
 export type DanhMucLoc = { nhom: { id: string; ten: string; mau: string | null; so: number }[]; chiNhanh: LuaChon[]; tinh: { tinh: string; so: number; quan: string[] | null }[]; dichVu: string[]; sanPham?: string[] };
 const MOI_LAN = 40;
@@ -197,7 +198,10 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
           const tt = TRANG_THAI_KHACH[r.trang_thai ?? "lead"];
           return (
             <Link key={r.id} href={`/khach-hang/${r.id}`} aria-current={r.id === dangChon ? "true" : undefined} className="ds-khach-dong">
-              <span className="ds-khach-ten">{r.ho_ten}</span>
+              <span className="flex items-start gap-2.5">
+              <AnhDaiDien id={r.id} anh={r.anh} ten={r.ho_ten} co={40} />
+              <span className="block min-w-0 flex-1">
+              <span className="ds-khach-ten block">{r.ho_ten}</span>
               <span className="mt-0.5 flex flex-wrap items-center justify-between gap-x-2 gap-y-0.5">
                 <span className="tabular-nums">{xemSdt ? `${r.dien_thoai} – ${r.ma}` : r.ma}</span>
                 <span className="flex gap-1">{tt && <span className="nhan-nho">{tt.nhan}</span>}{r.hang && <span className="nhan-nho">{r.hang}</span>}</span>
@@ -208,6 +212,8 @@ export function DanhSachKhach({ nhanVien, nguon, hang, moc, choXuat, xemSdt = tr
                   {r.diem !== 0 && <span className="text-[11px] tabular-nums">{r.diem.toLocaleString("vi-VN")} điểm</span>}
                 </span>
               )}
+              </span>
+              </span>
             </Link>
           );
         })}

@@ -67,7 +67,7 @@ export default async function InPhieuLam({ params }: { params: Promise<{ id: str
 
   return (
     <main data-theme="light" className="mx-auto bg-white text-muc">
-      <style>{`@media print{@page{size:${cuon ? `${giay.replace("mm", "")}mm auto` : giay};margin:${cuon ? "2mm" : "12mm"}}}`}</style>
+      <style>{`@media print{@page{size:${cuon ? `${giay.replace("mm", "")}mm auto` : giay};margin:${cuon ? "2mm" : "8mm 8mm 8mm 14mm"}}}`}</style>
       <div className="khong-in mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-3 px-6 pt-8">
         <p className="text-[12.5px] text-muc-3">Phiếu làm dịch vụ · khổ giấy {giay} (đổi ở Cài đặt › Thiết lập in)</p>
         <NutIn kho={giay} />

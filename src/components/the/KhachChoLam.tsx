@@ -35,8 +35,8 @@ function NutBatDau({ id, onDoi }: { id: string; onDoi?: () => Promise<void> | vo
 }
 
 /** Một khách chờ làm: thông tin thu ngân chuyển + các nút của chuyên viên trị liệu. */
-function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hienQt, dvCuaThe, onDoi, anKhach }: { r: BuoiCho; nhanVien: LuaChon[]; bacSi: LuaChon[]; thaoTac: boolean; /** Bấm được Kết thúc (chỉ chuyên viên trị liệu / Chủ). */ ketThuc: boolean; coLienKetThe: boolean; /** Quy trình hôm nay của khách (gộp mọi lượt). */ qt?: QuyTrinhKhach; /** Lượt này hiện khối quy trình (chỉ một lượt mỗi khách). */ hienQt?: boolean;
-  /** Dịch vụ đổi được của thẻ: có thì hiện nút "Sửa dịch vụ / người làm". */ dvCuaThe?: (theId: string) => LuaChon[]; onDoi?: () => Promise<void> | void; /** Ẩn tên khách (đã biết khách, vd Hoá đơn dịch vụ). */ anKhach?: boolean }) {
+function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hienQt, dvCuaThe, onDoi, anKhach, inChung }: { r: BuoiCho; nhanVien: LuaChon[]; bacSi: LuaChon[]; thaoTac: boolean; /** Bấm được Kết thúc (chỉ chuyên viên trị liệu / Chủ). */ ketThuc: boolean; coLienKetThe: boolean; /** Quy trình hôm nay của khách (gộp mọi lượt). */ qt?: QuyTrinhKhach; /** Lượt này hiện khối quy trình (chỉ một lượt mỗi khách). */ hienQt?: boolean;
+  /** Dịch vụ đổi được của thẻ: có thì hiện nút "Sửa dịch vụ / người làm". */ dvCuaThe?: (theId: string) => LuaChon[]; onDoi?: () => Promise<void> | void; /** Ẩn tên khách (đã biết khách, vd Hoá đơn dịch vụ). */ anKhach?: boolean; /** Các lượt của khách để in chung một phiếu (chỉ lượt đại diện, khách có từ 2 dịch vụ). */ inChung?: string[] }) {
   const [kq, setKq] = useState<KetQuaBuoi | null>(null);
   const mo = r.trangThai === "cho_lam" || r.trangThai === "dang_lam";
   const nhanGoc = NHAN[r.trangThai] ?? { chu: r.trangThai, kieu: "tram" as const };
@@ -99,7 +99,10 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hien
           </div>
         </div>
       )}
-      {r.theId && <p className="mt-2"><Link href={`/in/phieu-lam/${r.id}`} target="_blank" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu làm dịch vụ</Link></p>}
+      {(r.theId || (inChung && !anKhach)) && <p className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+        {r.theId && <Link href={`/in/phieu-lam/${r.id}`} target="_blank" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu làm dịch vụ</Link>}
+        {inChung && !anKhach && <Link href={`/in/phieu-lam-nhieu?ids=${inChung.join(",")}`} target="_blank" className="text-[13px] font-semibold text-nhan-dam hover:underline">In 1 phiếu chung ({inChung.length} dịch vụ)</Link>}
+      </p>}
       {kq && <p className="mt-2"><BaoPhieuBuoi phieu={kq} /></p>}
     </li>
   );
@@ -116,5 +119,13 @@ export function KhachChoLam({ ds, nhanVien, bacSi, thaoTacIds, ketThuc, coLienKe
   // Khối quy trình hiện ở MỘT lượt mỗi khách (ưu tiên lượt đang làm): khách làm nhiều thẻ thì bước chung không lặp.
   const hienO = new Map<string, string>();
   for (const r of [...ds].sort((a, b) => Number(b.trangThai === "dang_lam") - Number(a.trangThai === "dang_lam"))) if (!hienO.has(r.khachId)) hienO.set(r.khachId, r.id);
-  return <ul className={gon ? "grid gap-3" : "grid gap-3 lg:grid-cols-2"}>{ds.map((r) => <TheKhach key={r.id} r={r} nhanVien={nhanVien} bacSi={bacSi} thaoTac={cho.has(r.id)} ketThuc={ketThuc} coLienKetThe={coLienKetThe} qt={quyTrinh?.[r.khachId]} hienQt={hienO.get(r.khachId) === r.id} dvCuaThe={dvCuaThe} onDoi={onDoi} anKhach={gon} />)}</ul>;
+  // Khách làm nhiều dịch vụ cùng lúc: in MỘT phiếu chung (chị Diệu Thuý 15/11/2026). Gom lượt chưa huỷ / trả lại theo khách.
+  const theoKhach = new Map<string, string[]>();
+  for (const r of ds) if (r.trangThai !== "huy" && r.trangThai !== "tra_lai") theoKhach.set(r.khachId, [...(theoKhach.get(r.khachId) ?? []), r.id]);
+  const chung = (khachId: string) => { const x = theoKhach.get(khachId); return x && x.length > 1 ? x : undefined; };
+  const gonChung = gon ? chung(ds[0].khachId) : undefined;
+  return <>
+    {gonChung && <Link href={`/in/phieu-lam-nhieu?ids=${gonChung.join(",")}`} target="_blank" className="nut-vang mb-3 flex h-10 items-center justify-center rounded-nho px-4 text-[14px] font-medium">In 1 phiếu chung cho {gonChung.length} dịch vụ</Link>}
+    <ul className={gon ? "grid gap-3" : "grid gap-3 lg:grid-cols-2"}>{ds.map((r) => <TheKhach key={r.id} r={r} nhanVien={nhanVien} bacSi={bacSi} thaoTac={cho.has(r.id)} ketThuc={ketThuc} coLienKetThe={coLienKetThe} qt={quyTrinh?.[r.khachId]} hienQt={hienO.get(r.khachId) === r.id} dvCuaThe={dvCuaThe} onDoi={onDoi} anKhach={gon} inChung={hienO.get(r.khachId) === r.id ? chung(r.khachId) : undefined} />)}</ul>
+  </>;
 }

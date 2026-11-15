@@ -104,3 +104,51 @@ Thứ tự làm tiếp: phiếu thu nợ theo khổ → phiếu nhập kho còn 
 - 08:1x Nút **In** có bước **Kết nối máy in** lần đầu trên mỗi máy quầy: hướng dẫn chọn máy in quầy, khổ giấy, lề mặc định, tỉ lệ 100%; ghi tên máy in, lần sau bấm In ra hộp in ngay; nút "Máy in: … · Đổi". Muốn bấm là ra giấy không hiện hộp in: Chrome máy quầy chạy --kiosk-printing (cần cài 1 lần tại máy) (chị Lâm 07:4x).
 - 07:55 Đã lên hosting (bản d56a3e09) và kiểm trên trang thật (tài khoản Kỹ thuật, chỉ xem): Khách dùng thẻ có 50 ô tích + nút Gia hạn thẻ; hồ sơ thẻ có Gia hạn thẻ; trang in hoá đơn hiện "Kết nối máy in & In", khổ A5. In thử ra PDF: đúng trang A5 (148×210mm), lề trái/phải đều, chữ không bị thu nhỏ.
 - 08:0x **In lịch hẹn** theo mẫu SalonHero: khổ 80mm (theo Cài đặt › Thiết lập in › Lịch hẹn), logo, câu cuối "Xin cảm ơn quý khách! Hân hạnh được phục vụ quý khách!".
+
+## CHÉP DỮ LIỆU SalonHero → AMIA OS (ưu tiên số 1, từ 08:10 — SalonHero hết hạn 14:57 hôm nay)
+Cách làm: (1) chạy lại đồng bộ tăng dần SalonHero → AMIA (script đồng bộ đã chạy 2 lượt/ngày từ 28/10, đối chiếu tự động, chỉ ghi khi lệch 0; sao lưu 16 bảng trước khi ghi); (2) song song chép THÔ toàn bộ dữ liệu SalonHero (chỉ gọi hàm đọc) vào `amia-os/du-phong-salonhero-15-11/` làm bản dự phòng sau khi mất quyền.
+
+### Đợt 0 — lượt đồng bộ 07:00 sáng nay (đã ghi thật, đối chiếu tự động)
+| Mục | SalonHero | AMIA OS | Lệch |
+|---|---|---|---|
+| Khách có ở SalonHero mà thiếu ở AMIA | 0 | 0 | 0 |
+| Số hoá đơn hoàn thành 10/10 → 15/11 | 847 | 847 | 0 |
+| Tổng tiền hoá đơn (sau trừ thẻ) 10/10 → 15/11 | 1.699.744.000 | 1.699.744.000 | 0 |
+| Ngày lệch (số HĐ / huỷ / tiền / nợ) 01/11 → 14/11 | 0 | 0 | 0 |
+| Lịch hẹn (tháng × trạng thái) lệch | 0 | 0 | 0 |
+| Thẻ lệch số dư | 0 | 0 | 0 |
+| Thẻ mới thiếu gói/khách | 0 | 0 | 0 |
+| Khách thiếu chi tiết | 0 | 0 | 0 |
+
+### Số bản ghi gốc SalonHero đang có trong AMIA OS (08:15)
+| Mục | AMIA OS (dòng mang mã SalonHero) |
+|---|---|
+| Khách hàng | 13.686 |
+| Thẻ khách | 21.456 |
+| Hoá đơn / dòng hoá đơn | 82.697 / 127.005 |
+| Lịch hẹn | 82.236 |
+| Nhắc chăm sóc | 60.236 |
+| Ghi chú khách (ghi chú riêng CS) | 141.731 |
+| Điểm thưởng (sổ điểm) | 39.183 |
+| Nhóm khách / khách trong nhóm | 26 / 4.555 |
+| Sổ quỹ thu chi | 4.296 |
+| Kho: dòng nhập / xuất lịch sử | 2.182 / 474 (SalonHero 498; 24 dòng của sản phẩm đã xoá bên SalonHero, liệt kê riêng) |
+| Dịch vụ / sản phẩm / gói thẻ | 247 / 423 / 584 |
+| Nhân viên | 23 |
+| Đối tác giới thiệu | 78 |
+
+### Đợt 1 — lượt đồng bộ 08:10 (đã ghi thật, kết thúc 08:12)
+Sao lưu trước khi ghi: 16 bảng (695.042 dòng) → `sao-luu/db-20261115-0810-…-sang-a`, `…0811-…-sang-b`.
+| Mục | SalonHero | AMIA OS | Lệch |
+|---|---|---|---|
+| Khách có ở SalonHero mà thiếu ở AMIA | 0 | 0 | 0 |
+| Số hoá đơn hoàn thành 11/10 → 15/11 | 798 | 798 | 0 |
+| Tổng tiền hoá đơn (sau trừ thẻ) 11/10 → 15/11 | 1.447.904.000 | 1.447.904.000 | 0 |
+| Ngày lệch (HĐ / huỷ / tiền / nợ) | 0 | 0 | 0 |
+| Lịch hẹn (tháng × trạng thái) lệch | 0 | 0 | 0 |
+| Thẻ lệch số dư / thẻ mới thiếu gói | 0 / 0 | 0 / 0 | 0 |
+| Số dư thẻ tính sẵn phải sửa | — | 0 | 0 |
+| Xung đột với dữ liệu nhập trong app | 0 | 0 | 0 |
+Ghi chú: thẻ M24820 có ở AMIA nhưng không còn trên SalonHero (đã biết, đang chờ kế toán xem).
+- 08:13 đang chạy: làm mới TOÀN BỘ ghi chú khách SalonHero (bình thường chỉ chạy đêm).
+- 08:13 đang chạy: chép thô toàn bộ SalonHero ra `du-phong-salonhero-15-11/` (kho, voucher, hoa hồng, nhân viên, cài đặt, mẫu in…), xong sẽ so số với AMIA.

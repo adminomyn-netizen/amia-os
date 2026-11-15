@@ -72,7 +72,7 @@ export default async function InPhieuLam({ params }: { params: Promise<{ id: str
         <p className="text-[12.5px] text-muc-3">Phiếu làm dịch vụ · khổ giấy {giay} (đổi ở Cài đặt › Thiết lập in)</p>
         <NutIn />
       </div>
-      <div className={`mx-auto bg-white ${cuon ? "px-2 py-3 text-[11px]" : "px-6 py-8 text-[13px]"}`} style={{ width: "100%", maxWidth: BE_NGANG[giay] }}>
+      <div className={`to-in mx-auto bg-white ${cuon ? "px-2 py-3 text-[11px]" : "px-6 py-8 text-[13px]"}`} style={{ width: "100%", maxWidth: BE_NGANG[giay] }}>
         <header className="text-center">
           <h1 className={`chu-tieu-de ${cuon ? "text-[15px]" : "text-[20px]"}`}>{CO_SO.ten}</h1>
           <p className="text-muc-2">{CO_SO.linhVuc} · Giấy phép {CO_SO.giayPhep}</p>

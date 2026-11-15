@@ -79,7 +79,7 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
       ] as [string, string][]).filter(([, v]) => v)
     : [];
   return (
-    <div className={`mx-auto bg-white text-muc ${nho} ${cuon ? "px-2 py-3" : "px-6 py-8"}`} style={{ width: "100%", maxWidth: BE_NGANG[cfg.khoGiay] }}>
+    <div className={`to-in mx-auto bg-white text-muc ${nho} ${cuon ? "px-2 py-3" : "px-6 py-8"}`} style={{ width: "100%", maxWidth: BE_NGANG[cfg.khoGiay] }}>
       <header className="text-center">
         {cfg.logo && (
           // eslint-disable-next-line @next/next/no-img-element

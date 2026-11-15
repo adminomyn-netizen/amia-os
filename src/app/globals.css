@@ -486,6 +486,9 @@ body {
   .khong-in { display: none !important; }
   body { background: #fff !important; }
   @page { size: A4; margin: 14mm; }
+  /* Tờ in (hoá đơn, tạm tính, phiếu làm): bề ngang trên màn hình là khung xem trước (A5 560px, 80mm 302px) rộng hơn vùng in thật
+     (A5 trừ lề 12mm ≈ 469px, 80mm trừ lề 2mm ≈ 287px) → trình duyệt tự thu nhỏ cả tờ, chữ bé và lệch. Khi in: phủ đúng vùng in, bỏ đệm hai bên (lề do @page lo). */
+  .to-in { width: 100% !important; max-width: none !important; padding-left: 0 !important; padding-right: 0 !important; padding-top: 0 !important; }
 }
 
 /* Lịch tổng quan trang đặt lịch (React Big Calendar), theo bảng màu AMIA. */

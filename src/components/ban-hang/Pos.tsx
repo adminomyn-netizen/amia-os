@@ -877,6 +877,8 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
                     <span className="ml-auto text-[15px] font-medium tabular-nums text-muc">{tienVN(giaDong(d, m) * d.sl - d.giam)}</span>
                   </div>
                   <button type="button" onClick={() => setSuaNv(i)} className={`mt-2 flex items-center gap-1.5 text-[13px] ${NUT_CHU}`}><UserRound strokeWidth={1.6} className="h-3.5 w-3.5" />{VAI.some((v) => d.nv[v.ma].length) ? "Sửa nhân viên" : "Chọn người phục vụ, tư vấn, bán"}</button>
+                  {/* SalonHero "Áp nhân viên cho toàn bộ đơn": chép người phục vụ / tư vấn / bán của dòng này sang mọi dòng (sửa lại từng dòng sau được). */}
+                  {dong.length > 1 && VAI.some((v) => d.nv[v.ma].length) && <button type="button" onClick={() => setDong((ds) => ds.map((x) => ({ ...x, nv: JSON.parse(JSON.stringify(d.nv)) as DongDon["nv"] })))} className={`mt-1 text-[12px] ${NUT_CHU}`}>Áp nhân viên này cho toàn bộ đơn</button>}
                   <ul className="mt-1 space-y-0.5 text-[12px] text-muc-3">
                     {VAI.filter((v) => d.nv[v.ma].length).map((v) => (
                       <li key={v.ma}><span className="text-muc-2">{v.ten}:</span> {d.nv[v.ma].map((x) => `${nhanVien.find((n) => n.id === x.id)?.ten ?? ""}${d.nv[v.ma].length > 1 ? ` ${x.ti}%` : ""}`).join(", ")}</li>

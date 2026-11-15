@@ -175,3 +175,25 @@ Dự phòng thô SalonHero (897MB JSON, chỉ đọc): `amia-os/du-phong-salonhe
 | Tồn kho, sổ quỹ, điểm, hoa hồng, cài đặt in, đặt lịch online, ảnh khách | xem Excel | | đang soát | cập nhật đợt 2 lúc 09:40 |
 Sao lưu trước khi ghi: `sao-luu/db-20261115-0900-bang-truoc-bu-lich-15-11`, `…0901…-truoc-bu-nhac-15-11`, `…0903…-truoc-bu-nhom-sp-nv-15-11`, `…0905…-truoc-kh-xoa-15-11`.
 Excel dự phòng: 81 tệp trong `amia-os/du-phong-salonhero-15-11/excel/` (99MB, mỗi mảng 1 tệp: khách, thẻ, hoá đơn từng năm, lịch hẹn từng năm, nhắc, kho, nhân viên, cài đặt in…).
+
+### ĐỢT 2 (09:25)
+**Công nợ lệch 6.000.000 — ĐÃ SỬA (chị Flora duyệt 09:2x)**
+- Hoá đơn SH 26060591 (20/06/2026), khách Hà Thị Mỹ Anh (AVI26006336). **Gốc lỗi:** ngày 14/11 SalonHero SỬA giảm giá dòng "Radiant Booster" (12.500.000 → 18.500.000, thành tiền 7.500.000 → 1.500.000), hoá đơn từ 12.000.000 còn 6.000.000. Lúc đó hoá đơn đã chuyển sang AMIA (25/10), mà đồng bộ đêm chỉ lấy hoá đơn theo ngày tạo, nên không thấy bản sửa → AMIA vẫn ghi 12.000.000, đã thu 6.000.000, còn nợ 6.000.000. Không phải lỗi "trả nhiều lần".
+- Đã sửa AMIA đúng SalonHero: dòng Radiant Booster giảm 18.500.000 / thành tiền 1.500.000; hoá đơn 6.000.000, đã thu 6.000.000, nợ 0. Lần thu 6.000.000 chuyển khoản giữ nguyên, sổ quỹ không đổi.
+- Sao lưu dòng trước khi sửa: `sao-luu/sua-hd-26060591-truoc-15-11.json`. Ảnh chứng cứ: `anh-nut-moi-15-11/cong-no-myanh-1-salonhero-phieu.png`, `…-2-amia-truoc-sua.png`, `…-3-amia-sau-sua.png`.
+- **Quét TOÀN BỘ 82.697 hoá đơn** (tổng, nợ, từng dòng thành tiền, số đã thu):
+  - Hoá đơn trả nhiều lần: 543/543 khớp.
+  - 4.254 hoá đơn "lệch tổng" chỉ do cách tính: SalonHero không cộng phần trừ thẻ vào tổng, AMIA có cộng. Đã kiểm từng cái: tổng SH = tổng AMIA − tiền trừ thẻ; dòng hàng và nợ khớp.
+  - 38 hoá đơn SH ghi "khách trả" lớn hơn tổng (tiền khách đưa, đã trả lại tiền thừa); AMIA ghi đúng số thu, nợ khớp.
+  - **Số hoá đơn bị ảnh hưởng như vụ Mỹ Anh: 1 (chính hoá đơn 26060591).** Sau sửa: tổng nợ AMIA 1.401.142.500 = SalonHero 1.401.142.500, khớp từng khách.
+
+| Mục | SalonHero | AMIA OS | Lệch | Ghi chú |
+|---|---|---|---|---|
+| Công nợ khách (tiền) | 1.401.142.500 | 1.401.142.500 | 0 | **xong 09:19** |
+| Điểm thưởng (số dư từng khách) | 13.589 khách | 13.589 | 0 | **xong 09:10**: 45 khách có điểm từ HĐ tháng 11 chưa vào sổ → thêm dòng điều chỉnh (+7.444 điểm). Hạng + ngưỡng điểm khớp (200/350/500/1.000; 100.000đ = 1 điểm) |
+| Tồn kho từng SP × cơ sở | 782 cặp | 782 | 0 | 647 khớp; 135 theo luật đã chốt (67 SP đã xoá trên SH, 67 tồn âm trên SH không ghi, 1 quy đổi đơn vị) |
+| Cài đặt hoa hồng | 7 tuỳ chọn | 7 | 0 | khớp từng cái; SH không có hoa hồng riêng theo NV/SP |
+| Cài đặt in hoá đơn + lịch hẹn | 36 ô | 36 | 0 | mặc định AMIA = ô tích SH (A5 / 80mm) |
+| Sổ quỹ (dòng thu chi tay, gộp mã) | 3.228 | 3.227 | 1 | thiếu 1 dòng (mã SH 616168, tiền mặt Vinh) → đang lấy chi tiết để chép |
+| Ảnh đại diện khách | 3.486 | 3.485 tải về máy | 1 | ảnh nằm trên S3 của SalonHero, sắp mất quyền → đã tải về `du-phong-salonhero-15-11/anh-khach/` (264MB); 1 ảnh lỗi |
+| Ảnh liệu trình (album khách) | ? | 259.990 (tới 11/08/2026) | đang soát | đã có ở máy + Lark; đang kiểm ảnh SH chụp sau 11/08 |

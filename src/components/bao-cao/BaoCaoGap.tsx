@@ -49,7 +49,7 @@ export async function BaoCaoTheoChiNhanh({ tu, den, cn, q, so = 20, trang = 1 }:
   return (
     <>
       <HangChiSo muc={[
-        { nhan: "Tổng doanh thu", so: tienVN(tong.daThu), ghiChu: `${soVN(tong.soDon)} đơn · tiền đã thu trong kỳ` },
+        { nhan: "Đã thu", so: tienVN(tong.daThu), ghiChu: `${soVN(tong.soDon)} đơn · tiền đã thu trong kỳ` },
         { nhan: "Nợ phải thu", so: tienVN(tong.conNo), ghiChu: "còn nợ của các đơn trong kỳ" },
         { nhan: "Thu tiền mặt · bán hàng", so: tienVN(tong.tmBan), ghiChu: `thu nợ ${tienVN(tong.tmNo)}` },
         { nhan: "Quẹt thẻ và chuyển khoản · bán hàng", so: tienVN(tong.ckBan), ghiChu: `thu nợ ${tienVN(tong.ckNo)}` },
@@ -67,7 +67,7 @@ export async function BaoCaoTheoChiNhanh({ tu, den, cn, q, so = 20, trang = 1 }:
           { nhan: "Doanh thu", hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.doanhThu)}</span>, phai: true },
         ]} />
       <ThanhTrang trang={trang} tong={locTen.length} moi={so} gan={gan(goc)} />
-      <GhiChu>Tổng doanh thu ở đầu trang = tổng tiền đã thu trong kỳ của mọi chi nhánh (như SalonHero). Đã thu = tiền mặt + chuyển khoản + quẹt thẻ thu trong kỳ, kể cả thu nợ; Còn nợ = nợ của các đơn lập trong kỳ; Doanh thu = tổng đơn hoàn thành (tiền hàng − giảm giá + VAT + phụ phí + tip) trừ phần trả bằng thẻ tiền, cùng cách tính với Doanh thu theo ngày. Bán hàng = thu cùng ngày với đơn, thu nợ = thu sau ngày đơn. Số nhân viên = nhân viên đang làm gắn với chi nhánh (SalonHero đếm theo danh sách người làm của chi nhánh nên có thể lệch).</GhiChu>
+      <GhiChu>Đã thu ở đầu trang = tổng tiền đã thu trong kỳ của mọi chi nhánh (như SalonHero). Đã thu = tiền mặt + chuyển khoản + quẹt thẻ thu trong kỳ, kể cả thu nợ; Còn nợ = nợ của các đơn lập trong kỳ; Doanh thu = tổng đơn hoàn thành (tiền hàng − giảm giá + VAT + phụ phí + tip) trừ phần trả bằng thẻ tiền, cùng cách tính với Doanh thu theo ngày. Bán hàng = thu cùng ngày với đơn, thu nợ = thu sau ngày đơn. Số nhân viên = nhân viên đang làm gắn với chi nhánh (SalonHero đếm theo danh sách người làm của chi nhánh nên có thể lệch).</GhiChu>
       <DoiChieu dong={dongDc} ghiChu="Đọc trực tiếp từ SalonHero (Báo cáo → Theo chi nhánh) cho tháng đã đóng, đơn vị đồng. Với tháng đang chạy, Đà Lạt trong app nhiều hơn SalonHero một hoá đơn tạo thẳng trong app (HD000003, 900.000 đ, 26/10/2026) nên số lệch đúng bằng hoá đơn đó." />
     </>
   );

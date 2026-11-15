@@ -152,3 +152,4 @@ Sao lưu trước khi ghi: 16 bảng (695.042 dòng) → `sao-luu/db-20261115-08
 Ghi chú: thẻ M24820 có ở AMIA nhưng không còn trên SalonHero (đã biết, đang chờ kế toán xem).
 - 08:13 đang chạy: làm mới TOÀN BỘ ghi chú khách SalonHero (bình thường chỉ chạy đêm).
 - 08:13 đang chạy: chép thô toàn bộ SalonHero ra `du-phong-salonhero-15-11/` (kho, voucher, hoa hồng, nhân viên, cài đặt, mẫu in…), xong sẽ so số với AMIA.
+- 08:2x XONG ghi chú khách (ghi chú riêng CS): SalonHero 13.686 khách / 141.731 ghi chú — AMIA thiếu 0, lệch 0, khách lấy lỗi 0 → **khớp 100%**.

@@ -107,7 +107,7 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
   const congThang = (ngay: string, n: number) => { const d = new Date(`${ngay}T00:00:00Z`); d.setUTCMonth(d.getUTCMonth() + n); return d.toISOString().slice(0, 10); };
   // Các truy vấn của khối số liệu kinh doanh chạy NGAY (song song với phần trên) nhưng chỉ khối đó chờ chúng.
   const khoiDong = <T,>(q: PromiseLike<T>) => Promise.resolve(q); // PostgREST chỉ gửi yêu cầu khi được `then` → ép chạy ngay
-  let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).order("bat_dau").limit(500);
+  let lq = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai, so_khach").gte("bat_dau", tu).lt("bat_dau", den).order("bat_dau").limit(500);
   let kq = db.from("khach_hang").select("nguon", { count: "exact" }).eq("an_sh_xoa", false).gte("tao_luc", new Date(`${dauThang}T00:00:00+07:00`).toISOString()).limit(2000);
   let tk = db.from("khach_hang").select("id", { count: "exact", head: true }).eq("an_sh_xoa", false);  // 0330: không đếm hồ sơ khách đã xoá bên SalonHero
   let no = db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0).limit(3000);
@@ -163,7 +163,7 @@ async function ThanDieuHanh({ nd, sp, batDau }: { nd: Nd; sp: Sp; batDau: number
 
 /** Khối "Số liệu kinh doanh" của bảng điều hành (biểu đồ 14/30 ngày, cơ cấu thu, top dịch vụ/sản phẩm/khách…). Nạp riêng nên bảng điều hành hiện trước. */
 async function KhoiSoLieu({ nd, homNay, dauThang, rows, ds, canhBao, dsNo, pKhMoi, pTk, pTc, pNv, pTopBan, pTopKh, pVi }: {
-  nd: Nd; homNay: string; dauThang: string; rows: BcNgay[]; ds: { khach_id: string; bat_dau: string; trang_thai: string }[]; canhBao: CanhBao[]; dsNo: { con_no: number }[];
+  nd: Nd; homNay: string; dauThang: string; rows: BcNgay[]; ds: { khach_id: string; bat_dau: string; trang_thai: string; so_khach?: number | null }[]; canhBao: CanhBao[]; dsNo: { con_no: number }[];
   pKhMoi: PromiseLike<{ data: { nguon: string | null }[] | null; count: number | null }>; pTk: PromiseLike<{ count: number | null }>; pTc: PromiseLike<{ count: number | null }>; pNv: PromiseLike<{ count: number | null }>;
   pTopBan: PromiseLike<{ data: { nhom: string; ten: string; so: number; tien: number }[] | null }>; pTopKh: PromiseLike<{ data: { ho_ten: string; chi: number }[] | null }>;
   pVi: PromiseLike<{ data: { momo: number; vnpay: number; shopee: number; grab: number; vi_khac: number; ship_cod: number }[] | null }>;
@@ -176,7 +176,7 @@ async function KhoiSoLieu({ nd, homNay, dauThang, rows, ds, canhBao, dsNo, pKhMo
     pKhMoi, pTk, pTc, pNv, pTopBan, pTopKh, pVi,
   ]);
   const tenKL = new Map((ksL ?? []).map((k) => [k.id, k.ho_ten]));
-  const lichDs = ds.slice(0, 6).map((l) => ({ gio: gioVN(l.bat_dau), ten: tenKL.get(l.khach_id) ?? "Khách", tt: NHAN_LICH[l.trang_thai] ?? l.trang_thai }));
+  const lichDs = ds.slice(0, 6).map((l) => ({ gio: gioVN(l.bat_dau), ten: `${tenKL.get(l.khach_id) ?? "Khách"}${(l.so_khach ?? 1) > 1 ? ` · ${l.so_khach} khách` : ""}`, tt: NHAN_LICH[l.trang_thai] ?? l.trang_thai }));
   const dauTruoc = congThang(dauThang, -1);
   const thangNay = rows.filter((r) => r.ngay >= dauThang), thangTruoc = rows.filter((r) => r.ngay >= dauTruoc && r.ngay < dauThang);
   const tong = (a: typeof rows, k: "doanh_thu" | "so_don" | "so_buoi" | "tien_mat" | "chuyen_khoan" | "quet_the") => a.reduce((x, r) => x + Number(r[k] ?? 0), 0);
@@ -216,7 +216,7 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
     thayDoanhSo ? bcNhanVienNho(dauThang, homNay, cn ?? null).then((data) => ({ data })) : Promise.resolve({ data: null }),
     // Buổi đã làm của tôi: luồng mới (buoi_thuc_hien) + dòng dùng thẻ SalonHero tôi phục vụ (0329) — cùng định nghĩa "Buổi đã làm" ở Tổng quan.
     db.rpc("buoi_da_lam_nv", { p_nv: nd.nhanVienId, p_tu: dauThang, p_den: homNay }),
-    db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8),
+    db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai, so_khach").eq("nhan_vien_id", nd.nhanVienId).gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(8),
     db.from("cham_cong").select("ngay, vao, ra, cong, tre_phut").eq("nhan_vien_id", nd.nhanVienId).gte("ngay", dauThang).lte("ngay", homNay).limit(40),
     db.from("phieu_hr").select("id", { count: "exact", head: true }).eq("nhan_vien_id", nd.nhanVienId).eq("trang_thai", "cho_duyet"),
     coQuyen(nd, "the.xem") ? docBuoiCho({ chiNhanhId: cn, ngay: homNay, nvId: nd.nhanVienId, chiMo: true, gioiHan: 20 }).catch(() => []) : Promise.resolve([]),
@@ -224,7 +224,7 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
   let lich = lichToi ?? [], tieuDeLich = "Lịch của tôi hôm nay";
   // Lịch hôm nay của chi nhánh khi bản thân chưa có lịch, rồi tên khách.
   if (lich.length === 0 && coQuyen(nd, "lich.xem")) {
-    let q = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(6);
+    let q = db.from("lich_hen").select("id, khach_id, bat_dau, trang_thai, so_khach").gte("bat_dau", tu).lt("bat_dau", den).not("trang_thai", "in", "(huy,khong_den)").order("bat_dau").limit(6);
     if (cn) q = q.eq("chi_nhanh_id", cn);
     lich = (await q).data ?? []; tieuDeLich = "Lịch hôm nay của chi nhánh";
   }
@@ -300,7 +300,7 @@ async function ThanNhanVien({ nd, sp }: { nd: Nd; sp: Sp }) {
         {(coQuyen(nd, "lich.xem") || lich.length > 0) && (
           <MucTrang noi tieuDe={tieuDeLich} phai={<Link href="/lich-hen" className="font-medium text-nhan-dam hover:underline">Mở lịch</Link>}>
             {lich.length === 0 ? <p className="text-[14px] text-muc-3">Chưa có lịch hẹn nào.</p> : (
-              <ul className="divide-y divide-vien">{lich.map((l) => <li key={l.id} className="flex items-center justify-between gap-3 py-2.5 text-[14px]"><span><span className="tabular-nums text-muc-3">{gioVN(l.bat_dau)}</span> · {tenK.get(l.khach_id)}</span>{l.trang_thai === "dang_phuc_vu" ? <NhanTrangThai kieu="tot">Đang phục vụ</NhanTrangThai> : l.trang_thai === "hoan_thanh" ? <NhanTrangThai kieu="tram">Xong</NhanTrangThai> : null}</li>)}</ul>
+              <ul className="divide-y divide-vien">{lich.map((l) => <li key={l.id} className="flex items-center justify-between gap-3 py-2.5 text-[14px]"><span><span className="tabular-nums text-muc-3">{gioVN(l.bat_dau)}</span> · {tenK.get(l.khach_id)}{(l.so_khach ?? 1) > 1 && <span className="ml-1.5 rounded-tag bg-nhan-nhat px-1.5 py-0.5 text-[12px] font-medium text-nhan-dam">{l.so_khach} khách</span>}</span>{l.trang_thai === "dang_phuc_vu" ? <NhanTrangThai kieu="tot">Đang phục vụ</NhanTrangThai> : l.trang_thai === "hoan_thanh" ? <NhanTrangThai kieu="tram">Xong</NhanTrangThai> : null}</li>)}</ul>
             )}
           </MucTrang>
         )}

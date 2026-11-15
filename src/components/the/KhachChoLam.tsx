@@ -47,16 +47,23 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hien
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           {!anKhach && <p className="truncate text-[16px] font-semibold text-muc">{r.khachTen}{r.khachMa && <span className="ml-1.5 text-[12.5px] font-normal text-muc-3">{r.khachMa}</span>}</p>}
-          <p className={anKhach ? "text-[15px] font-semibold text-muc" : "mt-0.5 text-[14.5px] text-muc-2"}>{r.dichVuTen}</p>
+          <p className={anKhach ? "text-[15px] font-semibold text-muc" : "mt-0.5 text-[14.5px] text-muc-2"}>{r.dichVuTen}{r.soLuong > 1 && <span className="ml-1.5 rounded-tag bg-nhan-nhat px-1.5 py-0.5 text-[12.5px] font-semibold text-nhan-dam">× {r.soLuong} {r.theId ? "buổi" : "lượt"}</span>}</p>
         </div>
         <NhanTrangThai kieu={nhan.kieu}>{nhan.chu}</NhanTrangThai>
       </div>
       <dl className="mt-2.5 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[13.5px]">
-        <dt className="text-muc-3">{anKhach ? "Trừ thẻ" : "Thẻ"}</dt>
-        <dd className="min-w-0 text-muc-2">
-          {coLienKetThe ? <Link href={`/the/${r.theId}`} className="font-medium text-nhan-dam hover:underline">{r.theMa}</Link> : r.theMa}
-          {r.goiTen && ` · ${r.goiTen}`}{r.conBuoi != null && <> · còn <b className="font-semibold text-muc">{r.conBuoi}</b>{r.tongBuoi != null && `/${r.tongBuoi}`} buổi</>}
-        </dd>
+        {r.theId ? <>
+          <dt className="text-muc-3">{anKhach ? "Trừ thẻ" : "Thẻ"}</dt>
+          <dd className="min-w-0 text-muc-2">
+            {coLienKetThe ? <Link href={`/the/${r.theId}`} className="font-medium text-nhan-dam hover:underline">{r.theMa}</Link> : r.theMa}
+            {r.goiTen && ` · ${r.goiTen}`}{r.conBuoi != null && <> · còn <b className="font-semibold text-muc">{r.conBuoi}</b>{r.tongBuoi != null && `/${r.tongBuoi}`} buổi</>}
+          </dd>
+        </> : <>
+          <dt className="text-muc-3">Hoá đơn</dt>
+          <dd className="min-w-0 text-muc-2">
+            {r.hoaDonId ? <Link href={`/hoa-don/${r.hoaDonId}`} className="font-medium text-nhan-dam hover:underline">{r.hoaDonMa || "Xem hoá đơn"}</Link> : "Dịch vụ lẻ"} · dịch vụ lẻ đã thu tiền, không trừ thẻ
+          </dd>
+        </>}
         <dt className="text-muc-3">{anKhach ? "Chuyên viên" : "Người làm"}</dt><dd className="text-muc-2">{r.nvTen.join(", ")}</dd>
         {r.tuVanTen.length > 0 && <><dt className="text-muc-3">Tư vấn</dt><dd className="text-muc-2">{r.tuVanTen.join(", ")}</dd></>}
         <dt className="text-muc-3">Chuyển lúc</dt>
@@ -70,16 +77,16 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hien
       {mo && thaoTac && (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
           {r.trangThai === "cho_lam" && <NutBatDau id={r.id} onDoi={onDoi} />}
-          {ketThuc ? <NutHop kieu={r.trangThai === "dang_lam" ? "chinh" : "phu"} nhan="Kết thúc (trả khách)" tieuDe={`Kết thúc · ${r.khachTen}`} rong nhanLuu="Kết thúc, trừ 1 buổi"
-            moTa={`${r.dichVuTen} · thẻ ${r.theMa}. Bấm khi đã làm xong và trả khách: trừ 1 buổi của thẻ, ghi doanh thu của buổi và ra phiếu vật tư theo định mức để chuyên viên kiểm.${qt && qt.buoc.some((b) => !b.daTich) ? ` Còn ${qt.buoc.filter((b) => !b.daTich).length} bước quy trình chưa tích.` : ""}`}
+          {ketThuc ? <NutHop kieu={r.trangThai === "dang_lam" ? "chinh" : "phu"} nhan="Kết thúc (trả khách)" tieuDe={`Kết thúc · ${r.khachTen}`} rong nhanLuu={r.theId ? `Kết thúc, trừ ${r.soLuong} buổi` : "Kết thúc, xác nhận đã làm"}
+            moTa={`${r.theId ? `${r.dichVuTen} · thẻ ${r.theMa}. Bấm khi đã làm xong và trả khách: trừ ${r.soLuong} buổi của thẻ${r.soLuong > 1 ? ` (${r.soLuong} người cùng làm)` : ""}, ghi doanh thu của buổi và ra phiếu vật tư theo định mức để chuyên viên kiểm.` : `${r.dichVuTen}${r.hoaDonMa ? ` · hoá đơn ${r.hoaDonMa}` : ""}. Bấm khi đã làm xong và trả khách để xác nhận đã làm dịch vụ của hoá đơn. Không trừ thẻ, không đổi tiền.`}${qt && qt.buoc.some((b) => !b.daTich) ? ` Còn ${qt.buoc.filter((b) => !b.daTich).length} bước quy trình chưa tích.` : ""}`}
             an={{ id: r.id }} truong={truongBuoi({ nhanVien, bacSi })}
             giaTri={{ nv_ids: r.nvIds, bac_si_id: r.bacSiId ?? "", tu_van_ids: r.tuVanIds, tu_van_tinh_trang: r.tuVanTinhTrang ?? "", tu_van_de_xuat: r.tuVanDeXuat ?? "", vung: r.vung, shot: r.shot, line: r.line,
               ghi_chu: r.ghiChu ?? "", ke_tiep_ngay: r.keTiepNgay ?? "", ke_tiep_noi_dung: r.keTiepNoiDung ?? "" }}
             action={async (fd) => { const k = await xongBuoiCho(fd); if (k.ok) { setKq(k); await onDoi?.(); } return k; }} />
             : <span className="text-[13px] text-muc-3">Chuyên viên trị liệu bấm Kết thúc khi trả khách.</span>}
-          {dvCuaThe && (() => { const dv = dvCuaThe(r.theId); const ds = dv.some((d) => d.gia_tri === r.dichVuId) ? dv : [{ gia_tri: r.dichVuId, nhan: r.dichVuTen }, ...dv]; return (
+          {dvCuaThe && (() => { const dv = r.theId ? dvCuaThe(r.theId) : []; const ds = dv.some((d) => d.gia_tri === r.dichVuId) ? dv : [{ gia_tri: r.dichVuId, nhan: r.dichVuTen }, ...dv]; return (
             <NutHop kieu="chu" nhan="Sửa dịch vụ / chuyên viên" tieuDe={`Sửa · ${r.dichVuTen}`} rong nhanLuu="Lưu"
-              moTa="Đổi dịch vụ (trong thẻ), chuyên viên trị liệu hoặc bác sĩ trước khi làm. Chưa trừ buổi; Kết thúc mới trừ buổi theo nội dung đã sửa."
+              moTa={r.theId ? "Đổi dịch vụ (trong thẻ), chuyên viên trị liệu hoặc bác sĩ trước khi làm. Chưa trừ buổi; Kết thúc mới trừ buổi theo nội dung đã sửa." : "Lượt theo hoá đơn: chỉ đổi chuyên viên trị liệu / bác sĩ, dịch vụ giữ theo hoá đơn. Không đổi tiền."}
               an={{ id: r.id }} giaTri={{ dich_vu_id: r.dichVuId, nv_ids: r.nvIds, bac_si_id: r.bacSiId ?? "" }}
               truong={[{ ten: "dich_vu_id", nhan: "Dịch vụ", loai: "chon", luaChon: ds, batBuoc: true, rong: true }, ...truongBuoi({ nhanVien, bacSi }).filter((t) => t.ten === "nv_ids" || t.ten === "bac_si_id")]}
               action={async (fd) => { const k = await suaLuotCho(fd); if (k.ok) await onDoi?.(); return k; }} />
@@ -92,7 +99,7 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hien
           </div>
         </div>
       )}
-      <p className="mt-2"><Link href={`/in/phieu-lam/${r.id}`} target="_blank" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu làm dịch vụ</Link></p>
+      {r.theId && <p className="mt-2"><Link href={`/in/phieu-lam/${r.id}`} target="_blank" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu làm dịch vụ</Link></p>}
       {kq && <p className="mt-2"><BaoPhieuBuoi phieu={kq} /></p>}
     </li>
   );

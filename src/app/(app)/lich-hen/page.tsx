@@ -211,7 +211,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       <TheLich key={l.id} id={l.id} href={url({ ngay: d })} tom={{ ten: k?.ho_ten ?? "", gio: `${gioVN(l.bat_dau)} ~ ${gioVN(l.ket_thuc)}`, trangThai: TT[l.trang_thai].nhan, mau: mau?.dac ?? "bg-giay-tram text-muc" }}
         title={`${k?.ho_ten ?? ""}${(l.so_khach ?? 1) > 1 ? ` (+${(l.so_khach ?? 1) - 1} khách)` : ""} · Hạng ${k?.hang ?? "Thường"} · ${gioVN(l.bat_dau)}–${gioVN(l.ket_thuc)} · ${TT[l.trang_thai].nhan}${loaiNgan ? ` · ${nhanLoaiLich(l.loai_lich)}` : ""}`}
         className={`block rounded-nho border-l-4 px-1.5 py-1 text-white shadow-[0_1px_2px_rgb(10_43_38/0.18)] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-nhan ${mau?.luoi ?? "border-l-nhan bg-lich-xong"} ${lichMo === l.id ? "outline-2 outline-offset-1 outline-muc" : ""}`}>
-        <div className="truncate text-[11.5px] font-semibold uppercase leading-tight">{k?.ho_ten}{(l.so_khach ?? 1) > 1 ? <span className="ml-1 normal-case">+{(l.so_khach ?? 1) - 1}</span> : null}</div>
+        <div className="truncate text-[11.5px] font-semibold uppercase leading-tight">{k?.ho_ten}{(l.so_khach ?? 1) > 1 ? <span className="ml-1 rounded-tag bg-white/25 px-1 normal-case">{l.so_khach} khách</span> : null}</div>
         <div className="text-[11px] font-semibold leading-tight tabular-nums">{gioVN(l.bat_dau)} ~ {gioVN(l.ket_thuc)}</div>
         <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10.5px] leading-tight">
           <span className="truncate">Hạng {k?.hang ?? "Thường"}</span>
@@ -240,7 +240,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     return (
       <FormLichHen kieu={kieuNut} nhan="Sửa lịch hẹn" cho={choDm} khungGio={khungGioTrong} ttKhach={thongTinKhachDatLich} dichVu={dichVu} nhanVien={nvLC} chiNhanh={cnLC} tim={timKhach} action={luuLichHen} homNay={ngay}
         sua={{ id: l.id, khach: { id: l.khach_id, ma: k?.ma ?? "", ho_ten: k?.ho_ten ?? "", dien_thoai: k?.dien_thoai ?? "", nguoi_phu_trach_id: k?.nguoi_phu_trach_id ?? "" }, ngay: ngayCuaIso(l.bat_dau), gio: gioVN(l.bat_dau), thoiLuong: Math.round((new Date(l.ket_thuc).getTime() - new Date(l.bat_dau).getTime()) / 60000), nhanVienId: l.nhan_vien_id ?? "", phong: l.phong ?? "", nguon: l.nguon ?? "", ghiChu: l.ghi_chu ?? "", dichVuIds: dvIds, chiNhanhId: l.chi_nhanh_id,
-          khachDiCung: nhomCua(l.id).map((x) => ({ ten: x.ten, dichVuIds: x.dich_vu_ids ?? [], nhanVienId: x.nhan_vien_id, phong: x.phong, thoiLuong: x.thoi_luong_phut })), loaiLich: l.loai_lich ?? "", khoa: khoaSuaLich(l.trang_thai, !!hoaDonCua(l)), dichVuTen: l.dich_vu_ten ?? "" }} />
+          soKhach: l.so_khach ?? 1, khachDiCung: nhomCua(l.id).map((x) => ({ ten: x.ten, dichVuIds: x.dich_vu_ids ?? [], nhanVienId: x.nhan_vien_id, phong: x.phong, thoiLuong: x.thoi_luong_phut })), loaiLich: l.loai_lich ?? "", khoa: khoaSuaLich(l.trang_thai, !!hoaDonCua(l)), dichVuTen: l.dich_vu_ten ?? "" }} />
     );
   };
   const hanhDong = (l: Tables<"lich_hen">, k: KhachGon, dvIds: string[], ngang = false) => {
@@ -295,6 +295,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
       ["Người thực hiện", l.nhan_vien_id ? tenNv.get(l.nhan_vien_id) ?? "" : "Chưa phân"],
       ["Phòng / giường", l.phong ?? "Chưa xếp chỗ"],
       ["Nguồn đặt", nhanNguon(l.nguon)],
+      ["Số khách", `${l.so_khach ?? 1} khách`],
       ["Khách đi cùng", nhomCua(l.id).length ? <ul key="kdc" className="space-y-0.5">{nhomCua(l.id).map((x) => <li key={x.thu_tu}><b className="font-medium">{x.ten}</b>{(x.dich_vu_ids ?? []).length ? `: ${(x.dich_vu_ids ?? []).map((d) => tenDv.get(d)).filter(Boolean).join(", ")}` : ""}{x.nhan_vien_id ? ` · ${tenNv.get(x.nhan_vien_id) ?? ""}` : ""}{x.phong ? ` · ${x.phong}` : ""}</li>)}</ul> : (l.so_khach ?? 1) > 1 ? `${l.so_khach} khách` : ""],
       ["Lặp", moTaLap(l)],
       ["Giờ đến", l.checkin_luc ? `${gioVN(l.checkin_luc)} ${ngayVN(ngayCuaIso(l.checkin_luc))}` : ""],

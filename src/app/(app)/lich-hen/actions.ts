@@ -113,12 +113,17 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   // Trạng thái lúc tạo (SalonHero: Chưa xác nhận / Đã xác nhận / Chờ phục vụ trong hộp đặt lịch); chỉ khi đặt mới, sai giá trị thì về "Chưa xác nhận".
   const ttDau = id ? "" : TRANG_THAI_DAT.includes(chuoi(fd, "trang_thai") as (typeof TRANG_THAI_DAT)[number]) ? chuoi(fd, "trang_thai") : "chua_xac_nhan";
   const mocDau = ttDau === "cho_phuc_vu" ? { xac_nhan_luc: new Date().toISOString(), checkin_luc: new Date().toISOString() } : ttDau === "da_xac_nhan" ? { xac_nhan_luc: new Date().toISOString() } : {};
-  const row = { so_khach: 1 + diCung.length, khach_id: khachId, chi_nhanh_id: cu && khoa.khach ? cu.chi_nhanh_id : nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu"), sua_boi: nd.nhanVienId, ...(loaiLich ? { loai_lich: loaiLich } : {}) };
+  // Số khách (quản lý cơ sở 15/11/2026): ô "Số khách" nhập thẳng, không nhỏ hơn 1 + số khách đi cùng đã ghi tên; không gửi ô này thì như cũ.
+  const soKhachNhap = fd.has("so_khach") ? Math.floor(so(fd, "so_khach")) : NaN;
+  const coSoKhach = Number.isFinite(soKhachNhap) && soKhachNhap >= 1;
+  const row = { so_khach: Math.min(99, Math.max(1 + diCung.length, coSoKhach ? soKhachNhap : 1)), khach_id: khachId, chi_nhanh_id: cu && khoa.khach ? cu.chi_nhanh_id : nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id"), nhan_vien_id: nv, phong: chuoiHoacNull(fd, "phong"), nguon: chuoiHoacNull(fd, "nguon"), ghi_chu: chuoiHoacNull(fd, "ghi_chu"), sua_boi: nd.nhanVienId, ...(loaiLich ? { loai_lich: loaiLich } : {}) };
   if (!row.chi_nhanh_id) return { loi: "Chọn chi nhánh." };
   let ids: string[];
   if (id && cu) {
     // Lịch nhóm chuyển từ SalonHero chỉ có so_khach, chưa có dòng khách đi cùng: đổi lịch không có khách đi cùng thì giữ nguyên so_khach. Khách đi cùng bị khoá cũng giữ nguyên.
-    const giuSoKhach = khoa.diCung || (diCung.length === 0 && diCungCu.length === 0);
+    // Ô "Số khách" gửi lên thì luôn ghi theo ô đó (khách đi cùng bị khoá: không nhỏ hơn số khách đi cùng cũ).
+    const giuSoKhach = !coSoKhach && (khoa.diCung || (diCung.length === 0 && diCungCu.length === 0));
+    if (coSoKhach && khoa.diCung) row.so_khach = Math.max(row.so_khach, 1 + diCungCu.length);
     const { so_khach: _sk, ...rowGiu } = row; void _sk;
     // Chỉ ghi khi trạng thái vẫn như lúc đọc (người khác vừa đổi trạng thái thì báo tải lại, không ghi nhầm chế độ khoá). cap_nhat_luc do trigger đặt = now() → đồng bộ đêm không ghi đè.
     const { data: xong, error } = await db.from("lich_hen").update({ ...(giuSoKhach ? rowGiu : row), ...(khoa.gio ? {} : { bat_dau: buoi[0].bd.toISOString(), ket_thuc: buoi[0].kt.toISOString() }), cap_nhat_luc: new Date().toISOString() })

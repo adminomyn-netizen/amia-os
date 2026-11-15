@@ -21,6 +21,7 @@ import { goiYLoaiLich, LOAI_LICH, LUA_CHON_LOAI_LICH, type KhoaSua } from "@/lib
 
 type DV = { id: string; ma: string; ten: string; thoiLuong: number; /** "Nơi hiển thị" = chỉ thu ngân / ẩn. */ an?: boolean; /** "Địa điểm cung cấp": null = mọi chi nhánh. */ chiNhanhIds?: string[] | null };
 export type LichSua = { id: string; khach: KhachChon; ngay: string; gio: string; thoiLuong: number; nhanVienId: string; phong: string; nguon: string; ghiChu: string; dichVuIds: string[]; chiNhanhId: string; /** Khách 2, 3… của lịch nhiều khách. */ khachDiCung?: KhachDiCung[];
+  /** Số khách của lịch (lich_hen.so_khach, gồm khách chính). */ soKhach?: number;
   /** Loại lịch đang ghi (null với lịch cũ). */ loaiLich?: string;
   /** Trường bị khoá theo trạng thái / hoá đơn (máy chủ tính, máy chủ cũng giữ nguyên các trường này). */ khoa?: KhoaSua;
   /** Tên dịch vụ dạng chữ của lịch chuyển từ SalonHero chưa có dòng dịch vụ. */ dichVuTen?: string;
@@ -61,6 +62,11 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   const [nguon, setNguon] = useState(sua?.nguon ?? "");
   const [ghiChu, setGhiChu] = useState(sua?.ghiChu ?? "");
   const [diCung, setDiCung] = useState<KhachDiCung[]>(sua?.khachDiCung ?? []);
+  // Số khách đi cùng lịch (quản lý cơ sở 15/11/2026: thẻ chị Phùng Hà đi 2 người → thu ngân thấy "2 khách" để xếp chuyên viên trị liệu).
+  // Nhập thẳng được, không cần ghi tên từng người; không nhỏ hơn 1 + số khách đi cùng đã ghi tên.
+  const [soKhach, setSoKhach] = useState(String(Math.max(sua?.soKhach ?? 1, 1 + (sua?.khachDiCung?.length ?? 0))));
+  const toiThieuKhach = 1 + diCung.length;
+  const doiDiCung = (ds: KhachDiCung[]) => { setDiCung(ds); setSoKhach((s) => String(Math.max(Number(s) || 1, 1 + ds.length))); };
   const [kieuLap, setKieuLap] = useState("");
   const [trangThai, setTrangThai] = useState("chua_xac_nhan");
   // Loại lịch (chị Lâm 10/11): bắt buộc khi đặt mới; tự gợi ý theo khách (còn thẻ liệu trình → Khách liệu trình; chưa từng có hoá đơn → Tư vấn khách mới) đến khi người dùng tự chọn.
@@ -127,6 +133,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
     if (!sua && kieuLap) { fd.set("kieu_lap", kieuLap); fd.set("lap_khoang", khoang || "1"); fd.set("lap_tong", tongBuoi); }
     dvs.forEach((d) => fd.append("dich_vu_ids", d));
     fd.set("khach_di_cung", JSON.stringify(diCung));
+    fd.set("so_khach", String(Math.min(99, Math.max(toiThieuKhach, Number(soKhach) || 1))));
     bat(async () => { const kq = await action(fd); if (kq.loi) setLoi(kq.loi); else { setMo(false); router.refresh(); } });
   };
   // Dịch vụ ẩn ở đặt lịch hoặc không cung cấp ở chi nhánh đang chọn thì không hiện để chọn mới; dịch vụ đã có trong lịch vẫn hiện để bỏ chọn được.
@@ -210,7 +217,18 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
             {!sua && <div><label className={NHAN_O}>Trạng thái</label><Chon ariaLabel="Trạng thái lúc tạo" giaTri={trangThai} onDoi={setTrangThai} luaChon={LUA_CHON_TRANG_THAI_DAT} /></div>}
             <div><label className={NHAN_O}>Nguồn đặt lịch</label><Chon trong="Chọn nguồn" ariaLabel="Nguồn đặt lịch" giaTri={nguon} onDoi={setNguon} luaChon={[{ gia_tri: "", nhan: "Không ghi" }, ...dsNguon]} /></div>
           </div>
-          {khoa?.diCung ? (diCung.length > 0 && <p className="text-[13px] text-muc-3">Khách đi cùng (khoá): {diCung.map((k) => k.ten).join(", ")}</p>) : <KhachDiCungO ds={diCung} onDoi={setDiCung} dichVu={dichVu.filter((d) => !d.an && coOChiNhanh(d.chiNhanhIds, cn) || diCung.some((k) => k.dichVuIds.includes(d.id)))} nhanVien={nhanVien} />}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor="lh-so-khach" className={NHAN_O}>Số khách</label>
+              <div className="flex items-center gap-2">
+                <button type="button" className={NUT_PHU} aria-label="Bớt một khách" disabled={(Number(soKhach) || 1) <= toiThieuKhach} onClick={() => setSoKhach((s) => String(Math.max(toiThieuKhach, (Number(s) || 1) - 1)))}>−</button>
+                <input id="lh-so-khach" inputMode="numeric" value={soKhach} onChange={(e) => setSoKhach(e.target.value.replace(/\D/g, "").slice(0, 2))} onBlur={() => setSoKhach((s) => String(Math.min(99, Math.max(toiThieuKhach, Number(s) || 1))))} className={`${O_NHAP} w-20 text-center`} />
+                <button type="button" className={NUT_PHU} aria-label="Thêm một khách" disabled={(Number(soKhach) || 1) >= 99} onClick={() => setSoKhach((s) => String(Math.min(99, (Number(s) || 1) + 1)))}>+</button>
+              </div>
+              <p className="mt-1 text-[12px] text-muc-3">Gồm cả khách chính. Khách đi cùng không cần ghi tên, thu ngân thấy số khách để xếp chuyên viên trị liệu.</p>
+            </div>
+          </div>
+          {khoa?.diCung ? (diCung.length > 0 && <p className="text-[13px] text-muc-3">Khách đi cùng (khoá): {diCung.map((k) => k.ten).join(", ")}</p>) : <KhachDiCungO ds={diCung} onDoi={doiDiCung} dichVu={dichVu.filter((d) => !d.an && coOChiNhanh(d.chiNhanhIds, cn) || diCung.some((k) => k.dichVuIds.includes(d.id)))} nhanVien={nhanVien} />}
           {!sua && (
             <fieldset className="rounded-nho border border-vien px-3 pb-3 pt-1">
               <legend className="px-1 text-[13px] font-medium text-muc-2">Lặp định kì</legend>

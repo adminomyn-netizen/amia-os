@@ -2,10 +2,15 @@
 // Mỗi dòng = một dịch vụ của một thẻ liệu trình (thẻ gồm nhiều dịch vụ thì tick được từng dịch vụ); mỗi dòng thành một lượt Chờ làm,
 // Kết thúc mới trừ 1 buổi. Hàm ở đây thuần (không DB) để dùng chung trình duyệt + máy chủ và kiểm thử được.
 
-/** Một dòng gửi chuyên viên: thẻ + dịch vụ, người làm riêng (rỗng = dùng người làm chung của đơn). */
-export type DongGuiCv = { theId: string; dvId: string; nvIds?: string[] };
+/** Một dòng gửi chuyên viên: thẻ + dịch vụ, người làm riêng (rỗng = dùng người làm chung của đơn).
+ *  `soLuong` = số buổi trừ của dòng (nhiều người cùng làm một dịch vụ trên một thẻ, quản lý cơ sở 15/11/2026); không ghi = 1. */
+export type DongGuiCv = { theId: string; dvId: string; nvIds?: string[]; soLuong?: number };
 
 export const TOI_DA_DONG_GUI = 20;
+/** Số buổi tối đa một dòng (một lượt) — khớp ràng buộc buoi_cho_lam.so_luong (0333) với biên an toàn. */
+export const TOI_DA_SO_LUONG_DONG = 20;
+/** Số buổi của một dòng: số nguyên 1..TOI_DA_SO_LUONG_DONG, sai thì 1. */
+export const soLuongDong = (v: unknown) => { const n = Math.floor(Number(v)); return Number.isFinite(n) && n >= 1 ? Math.min(n, TOI_DA_SO_LUONG_DONG) : 1; };
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Thẻ của gói CHƯA gắn dịch vụ nào (vd EXION, chị Lâm 11/11/2026): dòng tick là chính thẻ, dvId = "goi:<id gói>".
@@ -25,7 +30,7 @@ export function cheDoDvThe(dichVu: { gia_tri: string; nhan: string }[], goiId?: 
   return { kieu: "chon" };
 }
 
-/** Đọc ô `dong` (JSON) của biểu mẫu: bỏ dòng hỏng, gộp dòng trùng (cùng thẻ + dịch vụ). */
+/** Đọc ô `dong` (JSON) của biểu mẫu: bỏ dòng hỏng, gộp dòng trùng (cùng thẻ + dịch vụ, giữ dòng đầu), số buổi của dòng ở `soLuong`. */
 export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string } {
   let x: unknown;
   try { x = JSON.parse(tho || "[]"); } catch { return { loi: "Danh sách dịch vụ không đọc được, tải lại trang rồi chọn lại." }; }
@@ -34,9 +39,10 @@ export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string }
   for (const d of x as Record<string, unknown>[]) {
     const theId = String(d?.theId ?? ""), dvId = String(d?.dvId ?? "");
     if (!UUID.test(theId) || !(UUID.test(dvId) || goiCuaDv(dvId))) continue;
-    if (dong.some((o) => o.theId === theId && o.dvId === dvId)) continue;
+    const sl = soLuongDong(d?.soLuong ?? 1);
+    if (dong.some((o) => o.theId === theId && o.dvId === dvId)) continue; // gửi trùng (bấm hai lần) không cộng dồn: số buổi nằm ở soLuong
     const nvIds = Array.isArray(d?.nvIds) ? [...new Set((d.nvIds as unknown[]).map(String).filter((v) => UUID.test(v)))].slice(0, 7) : [];
-    dong.push({ theId, dvId, ...(nvIds.length ? { nvIds } : {}) });
+    dong.push({ theId, dvId, ...(nvIds.length ? { nvIds } : {}), ...(sl > 1 ? { soLuong: sl } : {}) });
   }
   if (!dong.length) return { loi: "Tick ít nhất một dịch vụ khách làm hôm nay." };
   if (dong.length > TOI_DA_DONG_GUI) return { loi: `Mỗi lần gửi tối đa ${TOI_DA_DONG_GUI} dịch vụ.` };
@@ -44,15 +50,15 @@ export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string }
 }
 
 /** Thẻ được chọn quá số buổi còn lại (đã trừ các lượt đang chờ / đang làm của thẻ đó) → mỗi thẻ một câu báo. Rỗng = hợp lệ. */
-export function kiemBuoiThe(dong: Pick<DongGuiCv, "theId">[], the: Map<string, { ten: string; buoiCon: number; dangMo: number }>): string[] {
+export function kiemBuoiThe(dong: Pick<DongGuiCv, "theId" | "soLuong">[], the: Map<string, { ten: string; buoiCon: number; dangMo: number }>): string[] {
   const dem = new Map<string, number>();
-  for (const d of dong) dem.set(d.theId, (dem.get(d.theId) ?? 0) + 1);
+  for (const d of dong) dem.set(d.theId, (dem.get(d.theId) ?? 0) + soLuongDong(d.soLuong ?? 1));
   const loi: string[] = [];
   for (const [theId, n] of dem) {
     const t = the.get(theId);
     if (!t) { loi.push("Có thẻ không còn dùng được, tải lại rồi chọn lại."); continue; }
     const con = Math.max(0, t.buoiCon - t.dangMo);
-    if (n > con) loi.push(`${t.ten}: chọn ${n} dịch vụ nhưng thẻ chỉ còn ${con} buổi${t.dangMo ? ` (còn ${t.buoiCon}, ${t.dangMo} lượt đang chờ / đang làm)` : ""}. Bỏ bớt ${n - con} dịch vụ.`);
+    if (n > con) loi.push(`${t.ten}: chọn ${n} buổi nhưng thẻ chỉ còn ${con} buổi${t.dangMo ? ` (còn ${t.buoiCon}, ${t.dangMo} buổi đang chờ / đang làm)` : ""}. Bỏ bớt ${n - con} buổi.`);
   }
   return loi;
 }

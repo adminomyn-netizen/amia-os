@@ -10,7 +10,10 @@ export const TRANG_THAI_CHO: Record<string, { nhan: string; kieu: "cho" | "dang"
 };
 
 export type BuoiCho = {
-  id: string; trangThai: string; khachId: string; khachTen: string; khachMa: string; theId: string; theMa: string; goiTen: string; conBuoi: number | null; tongBuoi: number | null;
+  id: string; trangThai: string; khachId: string; khachTen: string; khachMa: string;
+  /** null = lượt từ hoá đơn dịch vụ (khách trả tiền, không trừ thẻ — 0333). */ theId: string | null; theMa: string;
+  /** Số buổi trừ khi Kết thúc (nhiều người cùng làm trên một thẻ); lượt hoá đơn = số lượng của dòng. */ soLuong: number;
+  hoaDonId: string | null; hoaDonMa: string; goiTen: string; conBuoi: number | null; tongBuoi: number | null;
   dichVuId: string; dichVuTen: string; nvIds: string[]; nvTen: string[]; bacSiId: string | null; tuVanIds: string[]; tuVanTen: string[]; tuVanTinhTrang: string | null; tuVanDeXuat: string | null;
   ghiChu: string | null; vung: string; shot: string; line: string; keTiepNgay: string | null; keTiepNoiDung: string | null;
   chuyenLuc: string; chuyenBoiTen: string; batDauLuc: string | null; xongLuc: string | null; lyDo: string | null; lichHenId: string | null; chuyenBoi: string | null;
@@ -32,19 +35,24 @@ export async function docBuoiCho(o: { chiNhanhId: string | null; ngay: string; n
   const idsNv = [...new Set(ds.flatMap((r) => [...r.nv_ids, ...r.tu_van_ids, ...(r.chuyen_boi ? [r.chuyen_boi] : [])]))];
   const [{ data: kh }, { data: the }, { data: dv }, { data: nv }] = await Promise.all([
     db.from("khach_hang").select("id, ho_ten, ma").in("id", [...new Set(ds.map((r) => r.khach_id))]),
-    db.from("v_the_khach").select("id, ma, goi_id, so_buoi_con, so_buoi_tong").in("id", [...new Set(ds.map((r) => r.the_id))]),
+    db.from("v_the_khach").select("id, ma, goi_id, so_buoi_con, so_buoi_tong").in("id", [...new Set(ds.map((r) => r.the_id).filter((x): x is string => !!x))]),
     db.from("dich_vu").select("id, ten").in("id", [...new Set(ds.map((r) => r.dich_vu_id))]),
     db.from("nhan_vien").select("id, ho_ten").in("id", idsNv),
   ]);
   const goiIds = [...new Set((the ?? []).map((t) => t.goi_id).filter((x): x is string => !!x))];
-  const { data: goi } = goiIds.length ? await db.from("goi_the").select("id, ten").in("id", goiIds) : { data: [] };
+  const hdIds = [...new Set(ds.map((r) => r.hoa_don_id).filter((x): x is string => !!x))];
+  const [{ data: goi }, { data: hd }] = await Promise.all([
+    goiIds.length ? db.from("goi_the").select("id, ten").in("id", goiIds) : Promise.resolve({ data: [] as { id: string; ten: string }[] }),
+    hdIds.length ? db.from("hoa_don").select("id, ma").in("id", hdIds) : Promise.resolve({ data: [] as { id: string; ma: string }[] }),
+  ]);
+  const mH = new Map((hd ?? []).map((h) => [h.id, h.ma]));
   const mK = new Map((kh ?? []).map((k) => [k.id, k])), mT = new Map((the ?? []).map((t) => [t.id, t])), mD = new Map((dv ?? []).map((d) => [d.id, d.ten]));
   const mN = new Map((nv ?? []).map((n) => [n.id, tenGonNv(n.ho_ten)])), mG = new Map((goi ?? []).map((g) => [g.id, g.ten]));
   return ds.map((r) => {
-    const t = mT.get(r.the_id), ts = (r.tham_so ?? {}) as Record<string, unknown>;
+    const t = r.the_id ? mT.get(r.the_id) : undefined, ts = (r.tham_so ?? {}) as Record<string, unknown>;
     return {
       id: r.id, trangThai: r.trang_thai, khachId: r.khach_id, khachTen: mK.get(r.khach_id)?.ho_ten ?? "Khách", khachMa: mK.get(r.khach_id)?.ma ?? "",
-      theId: r.the_id, theMa: t?.ma ?? "", goiTen: (t?.goi_id && mG.get(t.goi_id)) || "", conBuoi: t?.so_buoi_con ?? null, tongBuoi: t?.so_buoi_tong ?? null,
+      theId: r.the_id, theMa: t?.ma ?? "", soLuong: Math.max(1, r.so_luong ?? 1), hoaDonId: r.hoa_don_id, hoaDonMa: (r.hoa_don_id && mH.get(r.hoa_don_id)) || "", goiTen: (t?.goi_id && mG.get(t.goi_id)) || "", conBuoi: t?.so_buoi_con ?? null, tongBuoi: t?.so_buoi_tong ?? null,
       dichVuId: r.dich_vu_id, dichVuTen: mD.get(r.dich_vu_id) ?? "", nvIds: r.nv_ids, nvTen: r.nv_ids.map((x) => mN.get(x) ?? "?"), bacSiId: r.bac_si_id,
       tuVanIds: r.tu_van_ids, tuVanTen: r.tu_van_ids.map((x) => mN.get(x) ?? "?"), tuVanTinhTrang: r.tu_van_tinh_trang, tuVanDeXuat: r.tu_van_de_xuat,
       ghiChu: r.ghi_chu, vung: ts.vung == null ? "" : String(ts.vung), shot: ts.shot == null ? "" : String(ts.shot), line: ts.line == null ? "" : String(ts.line),

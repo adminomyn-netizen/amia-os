@@ -78,7 +78,7 @@ export function Pos(props: PropsPos) {
   const [ds, setDs] = useState<Tab[]>(() => [{ k: 1, ten: "", soDong: props.dongBanDau.length, kieu: props.lichId ? "dich_vu" : props.dongBanDau.length ? kieuTuDong(props.dongBanDau) : "ban" }]);
   const [dangXem, setDangXem] = useState(1);
   const dem = useRef(1);
-  const [xong, setXong] = useState<{ id: string; ma: string; datLichKhach?: string | null } | null>(null);
+  const [xong, setXong] = useState<{ id: string; ma: string; datLichKhach?: string | null; guiCv?: string } | null>(null);
   // "Chờ thanh toán" (như SalonHero): đơn đang xử lý của cả chi nhánh — đơn nháp của mọi thu ngân + hoá đơn mở lại để sửa.
   const [moCho, setMoCho] = useState(false);
   const [dsChoTai, setDsCho] = useState<Awaited<ReturnType<typeof dsDonCho>> | null>(null);
@@ -335,7 +335,7 @@ export function Pos(props: PropsPos) {
       )}
       {xong && (
         <p role="status" className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-nho bg-nhan-nhat px-3 py-2.5 text-[14px] text-nhan-dam">
-          <span>Đã chốt đơn {xong.ma}.</span>
+          <span>Đã chốt đơn {xong.ma}.{xong.guiCv && <span className="ml-1">{xong.guiCv}</span>}</span>
           <span className="flex gap-4"><Link href={`/hoa-don/${xong.id}`} className="font-medium underline">Xem hoá đơn</Link><Link href={`/in/hoa-don/${xong.id}`} target="_blank" className="font-medium underline">In</Link>
             {xong.datLichKhach && <Link href={`/lich-hen?khach=${xong.datLichKhach}`} target="_blank" className="font-medium underline">Đặt lịch hẹn tiếp theo</Link>}</span>
         </p>
@@ -360,7 +360,7 @@ export function Pos(props: PropsPos) {
 /** Dải thông tin đơn như SalonHero: nguồn đặt lịch, ngày hoá đơn, giờ vào, nhân viên thu ngân, thẻ của khách. */
 /** "YYYY-MM-DDTHH:MM" theo giờ Việt Nam (giá trị cho ô datetime-local). */
 const gioVNChuoi = (d: Date) => d.toLocaleString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh", hour12: false }).slice(0, 16).replace(" ", "T");
-function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu, hang, ngayLui, onNgayLui, ngayCoDinh }: { thuNgan: string; nguonLich: string; viTri: string; khach: KhachChon | null; coTheTien: boolean; coTheDichVu: boolean; hang: string; ngayLui: string; onNgayLui: (v: string) => void; /** Đang sửa hoá đơn cũ: ngày giữ nguyên, không lùi được. */ ngayCoDinh?: string }) {
+function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu, hang, ngayLui, onNgayLui, ngayCoDinh, soKhach = 1 }: { /** Số khách của lịch hẹn đang mở (gồm khách chính). */ soKhach?: number; thuNgan: string; nguonLich: string; viTri: string; khach: KhachChon | null; coTheTien: boolean; coTheDichVu: boolean; hang: string; ngayLui: string; onNgayLui: (v: string) => void; /** Đang sửa hoá đơn cũ: ngày giữ nguyên, không lùi được. */ ngayCoDinh?: string }) {
   const [vao] = useState(() => new Date());
   const [suaNgay, setSuaNgay] = useState(false);
   const gio = (d: Date) => d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: "Asia/Ho_Chi_Minh" });
@@ -371,6 +371,7 @@ function ThongTinDon({ thuNgan, nguonLich, viTri, khach, coTheTien, coTheDichVu,
   if (thuNgan) muc.push(["Nhân viên thu ngân", thuNgan]);
   return (
     <dl className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-[13px]">
+      {soKhach > 1 && <div className="flex gap-1.5"><dt className="text-muc-3">Lịch hẹn:</dt><dd><span className="rounded-tag bg-nhan-nhat px-2 py-0.5 text-[12.5px] font-semibold text-nhan-dam">{soKhach} khách</span></dd></div>}
       {nguonLich && <div className="flex gap-1.5"><dt className="text-muc-3">Đặt lịch từ:</dt><dd className="font-medium text-muc">{nguonLich}</dd></div>}
       {/* SalonHero: "Ngày tạo" có cây bút, chọn ngày + giờ, chỉ lùi không tiến. Doanh thu và tiền thu của đơn ghi về ngày đã chọn. */}
       <div className="flex flex-wrap items-center gap-1.5">
@@ -434,7 +435,7 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
 function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, kieu, nhapDau, khoiPhuc: kp, cnNho, onLuuTam, onChonCn, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; kieu: KieuDon; nhapDau?: DonNhapRut;
   /** Đơn mở lại từ bộ nhớ tạm của trình duyệt (chưa lưu nháp). */ khoiPhuc?: DonLuuTam; /** Chi nhánh người dùng chọn lần trước (nhớ 30 ngày). */ cnNho?: string | null;
-  onLuuTam?: (k: number, t: TabLuu | null) => void; onChonCn?: (id: string) => void; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
+  onLuuTam?: (k: number, t: TabLuu | null) => void; onChonCn?: (id: string) => void; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null; guiCv?: string }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
 }) {
   const lichId = dauTien ? lichGoc : kp?.lichId ?? null;
   const dauUrl = dauTien ? chuKyUrl({ lichId: lichGoc, khachBanDau, dongBanDau, suaHd }) : "";
@@ -666,7 +667,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
       else if ("id" in kq) {
         if (cuaSoIn) cuaSoIn.location.href = `/in/hoa-don/${kq.id}${inSau.nn === "en" ? "?nn=en" : ""}`;
         if (nhapId) { await xoaNhap(nhapId); onNhap(); }
-        onXong({ id: kq.id, ma: kq.ma, datLichKhach: datLichTiep && khach ? khach.id : null });
+        onXong({ id: kq.id, ma: kq.ma, datLichKhach: datLichTiep && khach ? khach.id : null, guiCv: kq.guiCv });
       }
     });
   };
@@ -714,10 +715,10 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
         {/* Đơn làm dịch vụ: dịch vụ đã mua còn buổi đứng ngay dưới ô khách — tick nhiều dịch vụ / nhiều thẻ, gửi chuyên viên trị liệu một lần (chị Thuý / chị Lâm 11/11/2026). */}
         {kieu === "dich_vu" && <ChonDvDaMua key={khach?.id ?? ""} khach={!!khach} coQuyen={!!buoi} nhanVien={nvLC} bacSi={bacSiLC} lichId={lichId ?? undefined} dvMuc={dvMuc}
           the={theKhach ? theKhach.the.filter((t) => t.loai === "lan" && t.buoiCon > 0).map((t) => ({ id: t.id, goiId: t.goiId, ten: t.ten, ma: t.ma, han: t.han, buoiCon: t.buoiCon, buoiTong: t.buoiTong, dichVu: t.dichVu.filter((d) => dvMuc.some((x) => x.gia_tri === d)), lanTruoc: t.lanTruoc })) : null}
-          dangMo={(luotKhach?.ds ?? []).filter((r) => r.trangThai === "cho_lam" || r.trangThai === "dang_lam").map((r) => ({ theId: r.theId, dvId: r.dichVuId }))}
+          dangMo={(luotKhach?.ds ?? []).filter((r) => r.theId && (r.trangThai === "cho_lam" || r.trangThai === "dang_lam")).map((r) => ({ theId: r.theId!, dvId: r.dichVuId, soLuong: r.soLuong }))}
           onXong={(r) => { setTaiLaiThe((x) => x + 1); if (khach) setPhieuBuoi({ kq: r, khachId: khach.id }); }} />}
         {sua && <p role="status" className="mt-2 rounded-nho bg-canh-bao-nen px-3 py-2 text-[13px] text-canh-bao">Đang sửa hoá đơn <b>{sua.ma}</b> (đã mở lại về nháp). Chốt đơn sẽ ghi lại vào chính hoá đơn này, giữ mã và ngày {ngayVN(sua.ngayHd)}.</p>}
-        <ThongTinDon thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />
+        <ThongTinDon soKhach={lichId && lichId === lichGoc ? soKhachLich ?? 1 : 1} thuNgan={thuNgan} nguonLich={nguonLich} viTri={viTriLich} khach={khach} coTheTien={theTien.length > 0} coTheDichVu={!!theKhach?.the.some((t) => t.loai === "lan")} hang={theKhach?.hang ?? ""} ngayLui={ngayHd} onNgayLui={setNgayHd} ngayCoDinh={sua ? `${ngayVN(sua.ngayHd)} (giữ ngày hoá đơn cũ)` : undefined} />
         {khach && <TheCuaKhach the={theKhach?.the ?? null} theBan={theBan} nut={nutThe} dvDon={dvDon} giaHan={giaHan} />}
         {khach && phieuBuoi?.khachId === khach.id && <p className="mt-1.5"><BaoPhieuBuoi phieu={phieuBuoi.kq} /></p>}
         {diemKhach && (

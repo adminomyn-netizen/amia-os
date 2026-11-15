@@ -9,6 +9,8 @@ import { boDau, chuanSdt, homNayHCM } from "@/lib/dinh-dang";
 import { kiemGiaDong, kiemGioiThieuDong, kiemNgayLui, kiemNoDong, kiemTaiKhoanKhoan, lamSachDongNhap, loaiViKhoanThu, nganHangKhoanThu, PHUONG_THUC, tinhDon, GIA_SUA_TOI_DA, TOI_DA_NGUOI_HUONG, type DonBan, type DongDon } from "@/lib/ban-hang";
 import type { TablesInsert } from "@/lib/supabase/database.types";
 import { cauHinhDiem } from "@/lib/diem-thuong";
+import { guiChoNhanVien } from "@/lib/push";
+import { tenGonNv } from "@/lib/ten-nv";
 import { chuanMaVoucher, dsVoucherThuNgan, giamTheoDong, timVoucher, type VoucherTim } from "@/lib/voucher";
 
 export async function timKhach(q: string) {
@@ -115,7 +117,7 @@ export async function dsVoucher(chiNhanhId: string, khachId: string | null, lich
   return dsVoucherThuNgan(sb(), { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId, lichId });
 }
 
-type KQ = { ok: true; id: string; ma: string } | { ok?: false; loi: string };
+type KQ = { ok: true; id: string; ma: string; /** Kết quả gửi dòng dịch vụ cho chuyên viên trị liệu xác nhận (đơn đã chốt, chỉ để báo). */ guiCv?: string } | { ok?: false; loi: string };
 
 /** Tạo hoá đơn + dòng + người hưởng + thanh toán rồi chốt. Giá lấy từ DB (không tin giá gửi lên). Lỗi trước khi có thanh toán thì xoá nháp; sau đó thì huỷ có hoàn tiền. */
 export async function chotDonBanHang(json: string): Promise<KQ> {
@@ -296,6 +298,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   };
 
   const ghiChuThe: { dongId: string; ghiChu: string }[] = [];
+  const idDong: string[] = [];
   for (const [i, d] of don.dong.entries()) {
     const m = gia.get(`${d.loai}:${d.ref}`)!;
     const row: TablesInsert<"hoa_don_dong"> = { hoa_don_id: h.id, loai: d.loai, ten: m.ten, so_luong: d.sl, don_gia: donGia[i], giam_gia: d.giam,
@@ -304,6 +307,7 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
       gt_doi_tac_id: gtDong[i]?.id ?? null, gt_kieu: gtDong[i]?.kieu ?? null, gt_gia_tri: gtDong[i]?.giaTri ?? null, no_dong: kn.no ? kn.no[i] : null };
     const { data: dg, error: ed } = await db.from("hoa_don_dong").insert(row).select("id").single();
     if (ed || !dg) { await huyNhap(); return { loi: thongBaoLoi(ed) }; }
+    idDong.push(dg.id);
     if (row.ghi_chu && d.loai === "goi_the") ghiChuThe.push({ dongId: dg.id, ghiChu: row.ghi_chu });
     const chia = (["phuc_vu", "tu_van", "ban"] as const).flatMap((vai) => (d.nv?.[vai] ?? []).map((x) => ({ dong_id: dg.id, nhan_vien_id: x.id, vai, ti_le: x.ti })));
     if (chia.length) {
@@ -335,7 +339,44 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   if (suaCu) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "chot_lai_hoa_don_sua", doi_tuong: "hoa_don", doi_tuong_id: h.id, chi_tiet: { ma, ngay_hd: suaCu.ngay_hd, bam_luc: new Date().toISOString() } });
   if (lui.lui) await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "lui_ngay_hoa_don", doi_tuong: "hoa_don", doi_tuong_id: h.id, chi_tiet: { ma, ngay_hd: lui.lui.ngay, tao_luc: lui.lui.iso, bam_luc: new Date().toISOString() } });
   if (don.lichId) await db.from("lich_hen").update({ trang_thai: "hoan_thanh", sua_boi: nd.nhanVienId }).eq("id", don.lichId).eq("chi_nhanh_id", don.chiNhanhId).in("trang_thai", ["cho_phuc_vu", "dang_phuc_vu", "da_xac_nhan", "chua_xac_nhan"]);
-  return { ok: true, id: h.id, ma };
+  // Đơn đã chốt. Gửi dòng dịch vụ cho chuyên viên trị liệu xác nhận — lỗi ở đây chỉ báo, không đụng hoá đơn / tiền.
+  // Không gửi khi lùi ngày (nhập đơn cũ) hoặc sửa hoá đơn của ngày trước (dịch vụ đã làm từ hôm đó).
+  const guiCv = lui.lui || (suaCu && suaCu.ngay_hd !== homNayHCM()) ? "" : await guiDongDichVuChoCv(nd, { hoaDonId: h.id, ma, khachId: don.khachId, chiNhanhId: don.chiNhanhId, lichId: don.lichId, sua: !!suaCu },
+    don.dong.map((d, i) => ({ loai: d.loai, ref: d.ref, sl: d.sl, ten: gia.get(`${d.loai}:${d.ref}`)?.ten ?? "Dịch vụ", dongId: idDong[i], phucVu: (d.nv?.phuc_vu ?? []).map((x) => x.id) })))
+    .catch(() => "Chưa gửi được dịch vụ cho chuyên viên trị liệu (lỗi kết nối). Hoá đơn đã chốt bình thường.");
+  return { ok: true, id: h.id, ma, ...(guiCv ? { guiCv } : {}) };
+}
+
+/** Hoá đơn dịch vụ → chuyên viên trị liệu xác nhận (quản lý cơ sở 15/11/2026: "tạo hoá đơn dịch vụ không đẩy về chuyên viên trị liệu xác nhận").
+ *  Mỗi dòng DỊCH VỤ của hoá đơn (khách trả tiền, không trừ thẻ) thành một lượt "Khách chờ làm" của người Phục vụ trên dòng (0333: the_id = null,
+ *  gắn hoa_don_id / hoa_don_dong_id, so_luong = số lượng). Chuyên viên Bắt đầu làm / Kết thúc như lượt thẻ; Kết thúc chỉ xác nhận, KHÔNG trừ thẻ,
+ *  không sổ cái, không tiền. Bỏ qua: hoá đơn lùi ngày (nhập đơn cũ), khách lẻ (lượt cần khách), hoá đơn sửa lại đã có lượt.
+ *  Trả câu báo cho thu ngân (rỗng = không có dòng dịch vụ). */
+async function guiDongDichVuChoCv(nd: { nhanVienId: string; hoTen?: string | null },
+  hd: { hoaDonId: string; ma: string; khachId: string | null; chiNhanhId: string; lichId: string | null; sua: boolean },
+  dong: { loai: string; ref: string; sl: number; ten: string; dongId: string; phucVu: string[] }[]): Promise<string> {
+  const dv = dong.filter((d) => d.loai === "dich_vu");
+  if (!dv.length) return "";
+  if (!hd.khachId) return "Khách lẻ (chưa chọn khách) nên dịch vụ chưa gửi chuyên viên trị liệu xác nhận.";
+  const db = sb();
+  if (hd.sua) {
+    const { count } = await db.from("buoi_cho_lam").select("id", { count: "exact", head: true }).eq("hoa_don_id", hd.hoaDonId);
+    if ((count ?? 0) > 0) return "";
+  }
+  const coNguoi = dv.filter((d) => d.phucVu.length > 0), thieu = dv.filter((d) => d.phucVu.length === 0);
+  const baoThieu = thieu.length ? `Chưa gửi chuyên viên vì dòng chưa có người Phục vụ: ${thieu.map((d) => d.ten).join(", ")}.` : "";
+  if (!coNguoi.length) return baoThieu;
+  const { error } = await db.from("buoi_cho_lam").insert(coNguoi.map((d) => ({
+    the_id: null, khach_id: hd.khachId!, chi_nhanh_id: hd.chiNhanhId, dich_vu_id: d.ref, nv_ids: [...new Set(d.phucVu)].slice(0, 7), lich_hen_id: hd.lichId,
+    hoa_don_id: hd.hoaDonId, hoa_don_dong_id: d.dongId, so_luong: Math.min(99, Math.max(1, d.sl)), chuyen_boi: nd.nhanVienId,
+  })));
+  if (error) return `Chưa gửi được dịch vụ cho chuyên viên trị liệu (${thongBaoLoi(error)}). Hoá đơn đã chốt bình thường.`;
+  revalidatePath("/the/cho-lam"); revalidatePath("/trang-chu");
+  const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", hd.khachId).maybeSingle();
+  const theoNv = new Map<string, string[]>();
+  for (const d of coNguoi) for (const id of new Set(d.phucVu)) theoNv.set(id, [...(theoNv.get(id) ?? []), d.sl > 1 ? `${d.ten} × ${d.sl}` : d.ten]);
+  await Promise.all([...theoNv].map(([id, ds]) => guiChoNhanVien([id], { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${ds.join(", ")} (hoá đơn ${hd.ma}${nd.hoTen ? `, ${tenGonNv(nd.hoTen)} chuyển` : ""}). Bấm Bắt đầu làm, xong bấm Kết thúc để xác nhận.`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null)));
+  return `Đã gửi ${coNguoi.length} dịch vụ cho chuyên viên trị liệu xác nhận.${baoThieu ? ` ${baoThieu}` : ""}`;
 }
 
 // ─── Đơn nháp (như SalonHero DRAFT) ─────────────────────────────────────────

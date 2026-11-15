@@ -1947,6 +1947,10 @@ export type Database = {
           bat_dau_boi: string | null
           bat_dau_luc: string | null
           buoi_id: string | null
+          buoi_ids: string[]
+          hoa_don_dong_id: string | null
+          hoa_don_id: string | null
+          so_luong: number
           cap_nhat_luc: string
           chi_nhanh_id: string
           chuyen_boi: string | null
@@ -1962,7 +1966,7 @@ export type Database = {
           ngay: string
           nv_ids: string[]
           tham_so: Json
-          the_id: string
+          the_id: string | null
           trang_thai: string
           tu_van_de_xuat: string | null
           tu_van_ids: string[]
@@ -1975,6 +1979,10 @@ export type Database = {
           bat_dau_boi?: string | null
           bat_dau_luc?: string | null
           buoi_id?: string | null
+          buoi_ids?: string[]
+          hoa_don_dong_id?: string | null
+          hoa_don_id?: string | null
+          so_luong?: number
           cap_nhat_luc?: string
           chi_nhanh_id: string
           chuyen_boi?: string | null
@@ -1990,7 +1998,7 @@ export type Database = {
           ngay?: string
           nv_ids: string[]
           tham_so?: Json
-          the_id: string
+          the_id?: string | null
           trang_thai?: string
           tu_van_de_xuat?: string | null
           tu_van_ids?: string[]
@@ -2003,6 +2011,10 @@ export type Database = {
           bat_dau_boi?: string | null
           bat_dau_luc?: string | null
           buoi_id?: string | null
+          buoi_ids?: string[]
+          hoa_don_dong_id?: string | null
+          hoa_don_id?: string | null
+          so_luong?: number
           cap_nhat_luc?: string
           chi_nhanh_id?: string
           chuyen_boi?: string | null
@@ -2018,7 +2030,7 @@ export type Database = {
           ngay?: string
           nv_ids?: string[]
           tham_so?: Json
-          the_id?: string
+          the_id?: string | null
           trang_thai?: string
           tu_van_de_xuat?: string | null
           tu_van_ids?: string[]

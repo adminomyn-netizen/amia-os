@@ -11,7 +11,7 @@ import { docHenKeTiep, docNguoiBuoi, docThamSo, ghiHenKeTiep, taoPhieuBuoi, theT
 import { guiChoNhanVien } from "@/lib/push";
 import { tenGonNv } from "@/lib/ten-nv";
 import { nhacBuocTiep, tienDoBuoc, tinKetQuaLuot, type TienDoBuoc } from "@/lib/quy-trinh-buoc";
-import { docDongGui, goiCuaDv, kiemBuoiThe, nguoiLamDong, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
+import { docDongGui, goiCuaDv, kiemBuoiThe, nguoiLamDong, soLuongDong, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
 import { dvThucCuaThe } from "@/lib/dich-vu-theo-the";
 
 // Luồng thu ngân → chuyên viên trị liệu (0321). Chuyển / Bắt đầu / Trả lại / Huỷ CHỈ đổi bảng buoi_cho_lam (không sổ cái, không doanh thu, không phiếu).
@@ -21,7 +21,7 @@ type KQ = { ok?: true; loi?: string; canhBao?: string };
 export type KQChuyen = KQ & { chuyenCho?: string; /** id lượt chờ vừa tạo, để in phiếu làm dịch vụ. */ luotId?: string };
 export type KQXong = KQ & Partial<PhieuBuoi> & { xemPhieu?: boolean };
 
-const lamMoi = (theId?: string) => {
+const lamMoi = (theId?: string | null) => {
   revalidatePath("/the/cho-lam"); revalidatePath("/trang-chu"); revalidatePath("/the");
   if (theId) revalidatePath(`/the/${theId}`);
 };
@@ -68,12 +68,12 @@ async function nhacChuyenVien(nd: NguoiDung, nvIds: string[], khachId: string, k
 /** Chuyên viên được giao, người đã chuyển, thu ngân (ban.tao) hoặc người được điều chỉnh thẻ thì thao tác được lượt này. */
 const duocThaoTac = (nd: NguoiDung, l: Luot) => l.nv_ids.includes(nd.nhanVienId) || l.chuyen_boi === nd.nhanVienId || coQuyen(nd, "ban.tao") || coQuyen(nd, "the.dieuchinh");
 
-/** Số lượt đang chờ / đang làm của từng thẻ (mọi ngày, khớp chỉ mục một-lượt-mở). Mỗi lượt Kết thúc trừ 1 buổi nên phải chừa buổi cho chúng. */
+/** Số BUỔI đang giữ bởi các lượt chờ / đang làm của từng thẻ (mọi ngày, khớp chỉ mục một-lượt-mở). Mỗi lượt Kết thúc trừ so_luong buổi (0333) nên phải chừa buổi cho chúng. */
 async function luotMoCuaThe(theIds: string[]): Promise<Map<string, number>> {
   const m = new Map<string, number>();
   if (!theIds.length) return m;
-  const { data } = await sb().from("buoi_cho_lam").select("the_id").in("the_id", theIds).in("trang_thai", ["cho_lam", "dang_lam"]);
-  for (const r of data ?? []) m.set(r.the_id, (m.get(r.the_id) ?? 0) + 1);
+  const { data } = await sb().from("buoi_cho_lam").select("the_id, so_luong").in("the_id", theIds).in("trang_thai", ["cho_lam", "dang_lam"]);
+  for (const r of data ?? []) if (r.the_id) m.set(r.the_id, (m.get(r.the_id) ?? 0) + Math.max(1, r.so_luong ?? 1));
   return m;
 }
 
@@ -96,6 +96,9 @@ async function chuanBiLuot(nd: NguoiDung, fd: FormData) {
   if (t.loai !== "lan") return { loi: "Chỉ thẻ liệu trình (thẻ lần) mới chuyển làm buổi." };
   if (t.trang_thai !== "hoat_dong") return { loi: "Thẻ đang bị khoá hoặc đã thu hồi." };
   if ((t.so_buoi_con ?? 0) < 1) return { loi: "Thẻ đã hết buổi." };
+  // Số buổi trừ của lượt (nhiều người cùng làm một dịch vụ trên một thẻ, quản lý cơ sở 15/11/2026).
+  const soLuong = soLuongDong(chuoi(fd, "so_luong") || 1);
+  if (soLuong > (t.so_buoi_con ?? 0)) return { loi: `Thẻ chỉ còn ${t.so_buoi_con ?? 0} buổi, không trừ ${soLuong} buổi được.` };
   if (!dv) return { loi: "Không tìm thấy dịch vụ." };
   if (t.goi_id) {
     const { data: lk } = await db.from("goi_the_dich_vu").select("dich_vu_id").eq("goi_id", t.goi_id);
@@ -113,7 +116,7 @@ async function chuanBiLuot(nd: NguoiDung, fd: FormData) {
   const dong = {
     the_id: theId, khach_id: t.khach_id, chi_nhanh_id: t.chi_nhanh_id, dich_vu_id: dvId, nv_ids: nguoi.nv, bac_si_id: tuyChon(chuoi(fd, "bac_si_id")), lich_hen_id: tuyChon(lichId),
     ngay: homNayHCM(), tham_so: docThamSo(fd), ghi_chu: chuoi(fd, "ghi_chu").slice(0, 1000) || null, tu_van_ids: nguoi.tuVan, tu_van_tinh_trang: nguoi.tinhTrang, tu_van_de_xuat: nguoi.deXuat,
-    ke_tiep_ngay: hen.co ? hen.ngay : null, ke_tiep_noi_dung: hen.co ? hen.noiDung : null, chuyen_boi: nd.nhanVienId,
+    ke_tiep_ngay: hen.co ? hen.ngay : null, ke_tiep_noi_dung: hen.co ? hen.noiDung : null, chuyen_boi: nd.nhanVienId, so_luong: soLuong,
   };
   return { dong, buoiCon: Number(t.so_buoi_con ?? 0), dvTen: dv.ten as string, phong, tenNv: new Map((nv ?? []).map((n) => [n.id as string, tenGonNv(n.ho_ten)])) };
 }
@@ -131,7 +134,7 @@ export async function chuyenTriLieu(fd: FormData): Promise<KQChuyen> {
   if ("loi" in p) return { loi: p.loi };
   // Thẻ còn N buổi mà đã có N lượt đang chờ / đang làm thì gửi thêm sẽ không Kết thúc được.
   const mo = (await luotMoCuaThe([p.dong.the_id])).get(p.dong.the_id) ?? 0;
-  if (mo >= p.buoiCon) return { loi: `Thẻ còn ${p.buoiCon} buổi và đã có ${mo} lượt đang chờ / đang làm. Hết buổi để gửi thêm.` };
+  if (mo + p.dong.so_luong > p.buoiCon) return { loi: `Thẻ còn ${p.buoiCon} buổi và đã có ${mo} buổi đang chờ / đang làm. Không đủ buổi để gửi thêm ${p.dong.so_luong} buổi.` };
   const db = sb();
   const { data: moi, error } = await db.from("buoi_cho_lam").insert(p.dong).select("id").maybeSingle();
   if (error) return { loi: error.code === "23505" ? LOI_TRUNG : thongBaoLoi(error) };
@@ -153,8 +156,13 @@ async function doiDongTheoGoi(nd: NguoiDung, dong: DongGuiCv[]): Promise<{ dong:
     if ("loi" in r) return { loi: r.loi };
     ra.push({ ...d, dvId: r.dvId });
   }
-  // Thu ngân tick cả dòng chính thẻ lẫn đúng dịch vụ đó trong danh mục: gộp thành một dòng.
-  return { dong: ra.filter((d, i) => ra.findIndex((o) => o.theId === d.theId && o.dvId === d.dvId) === i) };
+  // Thu ngân tick cả dòng chính thẻ lẫn đúng dịch vụ đó trong danh mục: gộp thành một dòng (cộng số buổi).
+  const gop: DongGuiCv[] = [];
+  for (const d of ra) {
+    const o = gop.find((x) => x.theId === d.theId && x.dvId === d.dvId);
+    if (o) o.soLuong = soLuongDong((o.soLuong ?? 1) + (d.soLuong ?? 1)); else gop.push({ ...d });
+  }
+  return { dong: gop };
 }
 
 /** Một đơn làm dịch vụ gửi NHIỀU dịch vụ cho chuyên viên trị liệu MỘT lần (chị Thuý / chị Lâm 11/11/2026).
@@ -172,8 +180,8 @@ export async function chuyenNhieuDichVu(fd: FormData): Promise<KQChuyen & { soDo
   if ("loi" in doi) return { loi: `Chưa gửi dịch vụ nào:\n${doi.loi}` };
   const chuanBi = await Promise.all(doi.dong.map((d) => {
     const f = new FormData();
-    for (const [k, v] of fd.entries()) if (!["dong", "the_id", "dich_vu_id", "nv_ids", "nv_id"].includes(k)) f.append(k, v);
-    f.set("the_id", d.theId); f.set("dich_vu_id", d.dvId);
+    for (const [k, v] of fd.entries()) if (!["dong", "the_id", "dich_vu_id", "nv_ids", "nv_id", "so_luong"].includes(k)) f.append(k, v);
+    f.set("the_id", d.theId); f.set("dich_vu_id", d.dvId); f.set("so_luong", String(soLuongDong(d.soLuong ?? 1)));
     for (const id of nguoiLamDong(d, chung)) f.append("nv_ids", id);
     return chuanBiLuot(nd, f);
   }));
@@ -183,7 +191,7 @@ export async function chuyenNhieuDichVu(fd: FormData): Promise<KQChuyen & { soDo
   if (new Set(ok.map((p) => p.dong.khach_id)).size > 1) return { loi: "Các thẻ phải cùng một khách." };
   const mo = await luotMoCuaThe([...new Set(ok.map((p) => p.dong.the_id))]);
   const tenThe = (theId: string) => chuoi(fd, `ten__${theId}`) || "Thẻ";
-  const loiBuoi = kiemBuoiThe(doi.dong, new Map(ok.map((p) => [p.dong.the_id, { ten: tenThe(p.dong.the_id), buoiCon: p.buoiCon, dangMo: mo.get(p.dong.the_id) ?? 0 }])));
+  const loiBuoi = kiemBuoiThe(ok.map((p) => ({ theId: p.dong.the_id, soLuong: p.dong.so_luong })), new Map(ok.map((p) => [p.dong.the_id, { ten: tenThe(p.dong.the_id), buoiCon: p.buoiCon, dangMo: mo.get(p.dong.the_id) ?? 0 }])));
   if (loiBuoi.length) return { loi: `Chưa gửi dịch vụ nào:\n${loiBuoi.join("\n")}` };
   const db = sb();
   // Một lệnh insert nhiều dòng = một giao dịch: trùng / lỗi ở bất kỳ dòng nào thì không dòng nào được ghi.
@@ -194,7 +202,7 @@ export async function chuyenNhieuDichVu(fd: FormData): Promise<KQChuyen & { soDo
   const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", ok[0].dong.khach_id).maybeSingle();
   // Mỗi chuyên viên một báo đẩy gom các dịch vụ của mình.
   const theoNv = new Map<string, string[]>();
-  for (const p of ok) for (const id of p.dong.nv_ids) theoNv.set(id, [...(theoNv.get(id) ?? []), p.dvTen]);
+  for (const p of ok) for (const id of p.dong.nv_ids) theoNv.set(id, [...(theoNv.get(id) ?? []), p.dong.so_luong > 1 ? `${p.dvTen} × ${p.dong.so_luong}` : p.dvTen]);
   const phong = ok.find((p) => p.phong)?.phong ?? "";
   await Promise.all([...theoNv].map(([id, dv]) => guiChoNhanVien([id], { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${dv.join(", ")}${phong ? ` · ${phong}` : ""}${nd.hoTen ? ` (${tenGonNv(nd.hoTen)} chuyển)` : ""}. Bấm Bắt đầu làm.`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null)));
   const chuyenCho = [...new Set(ok.flatMap((p) => p.dong.nv_ids))].map((x) => tenNv.get(x) ?? "").filter(Boolean).join(", ");
@@ -245,11 +253,13 @@ export async function suaLuotCho(fd: FormData): Promise<KQ> {
   if (!["cho_lam", "dang_lam"].includes(l.trang_thai)) return { loi: "Lượt này đã kết thúc hoặc đã trả lại, không sửa được." };
   const dvId = chuoi(fd, "dich_vu_id");
   if (!dvId) return { loi: "Chọn dịch vụ." };
+  // Lượt từ hoá đơn dịch vụ: dịch vụ đã thu tiền theo hoá đơn, chỉ đổi người làm / bác sĩ.
+  if (!l.the_id && dvId !== l.dich_vu_id) return { loi: "Lượt từ hoá đơn: dịch vụ theo hoá đơn, muốn đổi dịch vụ thì sửa hoá đơn." };
   const nguoi = docNguoiBuoi(fd);
   if ("loi" in nguoi) return { loi: nguoi.loi };
   const db = sb();
   const [{ data: t }, { data: dv }, { data: nv }] = await Promise.all([
-    db.from("v_the_khach").select("goi_id").eq("id", l.the_id).maybeSingle(),
+    l.the_id ? db.from("v_the_khach").select("goi_id").eq("id", l.the_id).maybeSingle() : Promise.resolve({ data: null as { goi_id: string | null } | null }),
     db.from("dich_vu").select("id, ten").eq("id", dvId).maybeSingle(),
     db.from("nhan_vien").select("id, ho_ten").in("id", nguoi.nv),
   ]);
@@ -316,6 +326,17 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
   const db = sb();
   // Tiến độ bước đọc TRƯỚC khi đóng lượt (sau đó lượt không còn mở) — chỉ khi cần báo thu ngân.
   const td = l.chuyen_boi && l.chuyen_boi !== nd.nhanVienId ? await tienDoKhach(l.chi_nhanh_id, l.khach_id) : null;
+  if (!l.the_id) {
+    // Lượt từ hoá đơn dịch vụ (0333): chuyên viên xác nhận đã làm; không trừ thẻ, không sổ cái, không buổi.
+    const { error: eHd } = await db.rpc("xong_buoi_cho", {
+      p_id: l.id, p_nv: nguoi.nv, p_bac_si: tuyChon(chuoi(fd, "bac_si_id")), p_tham_so: docThamSo(fd), p_ghi_chu: tuyChon(chuoi(fd, "ghi_chu").slice(0, 1000)),
+      p_tu_van: nguoi.tuVan, p_tinh_trang: tuyChon(nguoi.tinhTrang), p_de_xuat: tuyChon(nguoi.deXuat), p_nguoi: nd.nhanVienId,
+    });
+    lamMoi(); revalidatePath("/lich-hen");
+    if (eHd) return { loi: thongBaoLoi(eHd) };
+    await baoThuNgan(nd, l, "xong", td);
+    return { ok: true, ...(hen.co ? { canhBao: "Đã xác nhận làm xong. Lượt theo hoá đơn không gắn thẻ nên CHƯA lưu hẹn buổi kế tiếp: đặt lịch hẹn cho khách ở Lịch hẹn." } : {}) };
+  }
   const { data: buoiId, error } = await db.rpc("xong_buoi_cho", {
     p_id: l.id, p_nv: nguoi.nv, p_bac_si: tuyChon(chuoi(fd, "bac_si_id")), p_tham_so: docThamSo(fd), p_ghi_chu: tuyChon(chuoi(fd, "ghi_chu").slice(0, 1000)),
     p_tu_van: nguoi.tuVan, p_tinh_trang: tuyChon(nguoi.tinhTrang), p_de_xuat: tuyChon(nguoi.deXuat), p_nguoi: nd.nhanVienId,
@@ -332,6 +353,11 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
   }
   let phieu: PhieuBuoi | undefined;
   if (buoi) { const r = await taoPhieuBuoi(nd, buoi); phieu = r.phieu; if (r.canhBao) canhBao.push(r.canhBao); }
+  // Lượt nhiều buổi (0333): mỗi buổi thêm một phiếu vật tư theo định mức (mỗi người làm dùng vật tư riêng).
+  if (buoi && (l.so_luong ?? 1) > 1) {
+    const { data: lx } = await db.from("buoi_cho_lam").select("buoi_ids").eq("id", l.id).maybeSingle();
+    for (const b of (lx?.buoi_ids ?? []).filter((x) => x !== buoi)) { const r = await taoPhieuBuoi(nd, b); if (r.canhBao) canhBao.push(r.canhBao); }
+  }
   return { ok: true, ...(phieu ? { ...phieu, xemPhieu: coQuyen(nd, "phieu.xem") } : {}), ...(canhBao.length ? { canhBao: `Đã trừ buổi, nhưng ${canhBao.join(" ")}` } : {}) };
 }
 

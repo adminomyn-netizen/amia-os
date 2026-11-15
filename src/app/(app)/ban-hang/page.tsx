@@ -64,7 +64,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   let soKhachLich = 1;
   let gtLich: string | null = null;
   if (lichId) {
-    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id, nguon, phong, doi_tac_id").eq("id", lichId).maybeSingle();
+    const { data: l } = await db.from("lich_hen").select("id, khach_id, nhan_vien_id, chi_nhanh_id, nguon, phong, doi_tac_id, so_khach").eq("id", lichId).maybeSingle();
     if (l && (!nd.chiNhanhId || l.chi_nhanh_id === nd.chiNhanhId)) {
       lichDung = l.id; cnLich = l.chi_nhanh_id; nguonLich = nhanNguon(l.nguon); viTriLich = l.phong ?? "";
       if (!khach) khach = (await db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id, chi_nhanh_id, doi_tac_id").eq("id", l.khach_id).maybeSingle()).data;
@@ -77,7 +77,8 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
       // Lịch nhiều khách (Khách 2, 3… ở lich_hen_khach): gom dịch vụ của CẢ NHÓM vào MỘT hoá đơn của khách chính như SalonHero createOrderBooking;
       // mỗi dòng giữ người thực hiện của khách đó; số khách của hoá đơn = số người trong nhóm.
       const nhom = await docNhomLich(l.id);
-      soKhachLich = Math.max(1, nhom.length);
+      // Số khách ghi ở lịch (ô "Số khách", có thể không ghi tên từng người) cũng tính (quản lý cơ sở 15/11/2026).
+      soKhachLich = Math.max(1, nhom.length, l.so_khach ?? 1);
       for (const tv of nhom.filter((x) => !x.laKhachChinh)) {
         const dem = new Map<string, number>();
         for (const d of tv.dichVuIds) if (muc.some((m) => m.loai === "dich_vu" && m.id === d)) dem.set(d, (dem.get(d) ?? 0) + 1);

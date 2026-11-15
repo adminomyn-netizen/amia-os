@@ -1,14 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Send, Sparkles } from "lucide-react";
+import { Minus, Plus, Send, Sparkles } from "lucide-react";
 import { Chon, type LuaChon } from "@/components/ui/Chon";
 import { ONhieu } from "@/components/ui/BieuMau";
 import { NUT_CHINH, NUT_CHU } from "@/components/ui/dinh-dang";
 import { ChonNhieuDichVu } from "@/components/lich-hen/ChonNhieuDichVu";
 import { luaChonNhieu, type KetQuaBuoi } from "@/components/the/NutBuoi";
 import { chuyenNhieuDichVu } from "@/app/(app)/the/cho-lam/actions";
-import { dvTheoGoi, kiemBuoiThe, TOI_DA_DONG_GUI, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
+import { dvTheoGoi, kiemBuoiThe, TOI_DA_DONG_GUI, TOI_DA_SO_LUONG_DONG, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
 
 export type TheDv = { id: string; /** Gói của thẻ: gói chưa gắn dịch vụ thì chính thẻ thành dòng tick (goi:<id>). */ goiId: string; ten: string; ma: string; han: string | null; buoiCon: number; buoiTong: number | null; /** Dịch vụ của gói; rỗng = gói không gắn dịch vụ (chọn trong cả danh mục). */ dichVu: string[]; lanTruoc: { dv: string; nv: string; bs: string } | null };
 
@@ -21,10 +21,11 @@ const han = (d: string) => new Date(d).toLocaleDateString("vi-VN", { day: "2-dig
  *  Người làm chung cho cả đơn, dòng nào khác người thì đổi riêng. Một nút gửi hết cho chuyên viên trị liệu (chưa trừ buổi; Kết thúc mới trừ).
  *  Chọn quá số buổi còn của thẻ (tính cả lượt đang chờ / đang làm) thì chặn và báo rõ. */
 export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId, coQuyen, onXong }: {
-  khach: boolean; the: TheDv[] | null; dvMuc: LuaChon[]; /** Lượt hôm nay đang chờ / đang làm của khách (đọc ở Hoá đơn dịch vụ). */ dangMo: { theId: string; dvId: string }[];
+  khach: boolean; the: TheDv[] | null; dvMuc: LuaChon[]; /** Lượt hôm nay đang chờ / đang làm của khách (đọc ở Hoá đơn dịch vụ); soLuong = số buổi lượt đó sẽ trừ. */ dangMo: { theId: string; dvId: string; soLuong?: number }[];
   nhanVien: LuaChon[]; bacSi: LuaChon[]; lichId?: string; coQuyen: boolean; onXong: (kq: KetQuaBuoi) => void;
 }) {
-  const [chon, setChon] = useState<Map<string, { theId: string; dvId: string; nv: string }>>(new Map());
+  // sl = số buổi trừ của dòng: nhiều người cùng làm một dịch vụ trên một thẻ (quản lý cơ sở 15/11/2026: 3 người làm "chăm sóc da AC" → trừ 3 buổi).
+  const [chon, setChon] = useState<Map<string, { theId: string; dvId: string; nv: string; sl: number }>>(new Map());
   const [nvChung, setNvChung] = useState<string[] | null>(null);
   const [bs, setBs] = useState<string | null>(null);
   const [tim, setTim] = useState("");
@@ -42,26 +43,29 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
   const lanTruoc = ds.find((t) => t.lanTruoc?.nv)?.lanTruoc;
   const nvC = nvChung ?? (lanTruoc?.nv && nhanVien.some((n) => n.gia_tri === lanTruoc.nv) ? [lanTruoc.nv] : []);
   const bsC = bs ?? (lanTruoc?.bs && bacSi.some((n) => n.gia_tri === lanTruoc.bs) ? lanTruoc.bs : "");
-  const moCua = (theId: string) => dangMo.filter((x) => x.theId === theId).length;
+  const moCua = (theId: string) => dangMo.filter((x) => x.theId === theId).reduce((s, x) => s + Math.max(1, x.soLuong ?? 1), 0);
   const dong = [...chon.values()];
-  const loiBuoi = kiemBuoiThe(dong, new Map(ds.map((t) => [t.id, { ten: `${t.ten}${t.ma ? ` (#${t.ma})` : ""}`, buoiCon: t.buoiCon, dangMo: moCua(t.id) }])));
+  const loiBuoi = kiemBuoiThe(dong.map((d) => ({ theId: d.theId, soLuong: d.sl })), new Map(ds.map((t) => [t.id, { ten: `${t.ten}${t.ma ? ` (#${t.ma})` : ""}`, buoiCon: t.buoiCon, dangMo: moCua(t.id) }])));
   const thieuNguoi = dong.some((d) => !d.nv) && nvC.length === 0;
   const tongDong = ds.reduce((s, t) => s + (t.dichVu.length || 1), 0);
   const tim_ = tim.trim().toLowerCase();
 
   const doi = (theId: string, dvId: string) => setChon((m) => {
     const n = new Map(m), k = khoa(theId, dvId);
-    if (n.has(k)) n.delete(k); else n.set(k, { theId, dvId, nv: "" });
+    if (n.has(k)) n.delete(k); else n.set(k, { theId, dvId, nv: "", sl: 1 });
     return n;
   });
   const datNv = (k: string, nv: string) => setChon((m) => { const n = new Map(m), d = n.get(k); if (d) n.set(k, { ...d, nv }); return n; });
+  const datSl = (k: string, sl: number) => setChon((m) => { const n = new Map(m), d = n.get(k); if (d) n.set(k, { ...d, sl: Math.min(TOI_DA_SO_LUONG_DONG, Math.max(1, sl)) }); return n; });
+  /** Buổi còn chọn thêm được cho thẻ: còn − đang chờ − các dòng đã chọn của thẻ. */
+  const conChon = (theId: string) => { const t = ds.find((x) => x.id === theId); return t ? t.buoiCon - moCua(theId) - dong.filter((d) => d.theId === theId).reduce((s, d) => s + d.sl, 0) : 0; };
   const gui = () => {
     setLoi("");
     if (!dong.length) return setLoi("Tick ít nhất một dịch vụ khách làm hôm nay.");
     if (loiBuoi.length) return setLoi(loiBuoi.join("\n"));
     if (thieuNguoi) return setLoi("Chọn người làm (chuyên viên trị liệu) chung, hoặc đổi người làm riêng cho từng dịch vụ.");
     const fd = new FormData();
-    fd.set("dong", JSON.stringify(dong.map((d): DongGuiCv => ({ theId: d.theId, dvId: d.dvId, ...(d.nv ? { nvIds: [d.nv] } : {}) }))));
+    fd.set("dong", JSON.stringify(dong.map((d): DongGuiCv => ({ theId: d.theId, dvId: d.dvId, ...(d.nv ? { nvIds: [d.nv] } : {}), ...(d.sl > 1 ? { soLuong: d.sl } : {}) }))));
     for (const id of nvC) fd.append("nv_ids", id);
     if (bsC) fd.set("bac_si_id", bsC);
     if (lichId) fd.set("lich_id", lichId);
@@ -86,9 +90,18 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
           {dangCho && <span className="shrink-0 rounded-tag bg-canh-bao-nen px-1.5 py-0.5 text-[12px] text-canh-bao">đang chờ</span>}
         </button>
         {d && (
-          <div className="mb-1 ml-10 mr-1">
-            <Chon nho ariaLabel={`Người làm ${nhan}`} giaTri={d.nv} onDoi={(v) => datNv(k, v)}
-              luaChon={[{ gia_tri: "", nhan: "Người làm chung của đơn" }, ...nvLC]} />
+          <div className="mb-1 ml-10 mr-1 flex flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1.5" role="group" aria-label={`Số buổi trừ ${nhan}`}>
+              <button type="button" aria-label="Bớt một buổi" disabled={d.sl <= 1} onClick={() => datSl(k, d.sl - 1)}
+                className="flex h-9 w-9 items-center justify-center rounded-nho border border-vien-dam bg-giay-sang text-muc-2 hover:bg-giay-tram disabled:opacity-40"><Minus aria-hidden className="h-4 w-4" /></button>
+              <span className="min-w-[5.5rem] text-center text-[13.5px] font-medium tabular-nums text-muc" aria-live="polite">{d.sl} buổi{d.sl > 1 ? ` (${d.sl} người)` : ""}</span>
+              <button type="button" aria-label="Thêm một buổi" disabled={conChon(d.theId) <= 0 || d.sl >= TOI_DA_SO_LUONG_DONG} onClick={() => datSl(k, d.sl + 1)}
+                className="flex h-9 w-9 items-center justify-center rounded-nho border border-vien-dam bg-giay-sang text-muc-2 hover:bg-giay-tram disabled:opacity-40"><Plus aria-hidden className="h-4 w-4" /></button>
+            </span>
+            <span className="min-w-[12rem] flex-1">
+              <Chon nho ariaLabel={`Người làm ${nhan}`} giaTri={d.nv} onDoi={(v) => datNv(k, v)}
+                luaChon={[{ gia_tri: "", nhan: "Người làm chung của đơn" }, ...nvLC]} />
+            </span>
           </div>
         )}
       </li>
@@ -101,19 +114,19 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
       {!khach ? <p className="text-[14px] text-muc-2">Chọn khách ở ô trên trước để hiện các dịch vụ khách đã mua còn buổi.</p>
         : the === null ? <p className="text-[14px] text-muc-3">Đang tải</p>
         : ds.length === 0 ? <p className="text-[14px] text-muc-2">Khách chưa có thẻ liệu trình nào còn buổi. Khách làm dịch vụ lẻ thì bấm Thêm dịch vụ lẻ bên dưới.</p> : (<>
-          <p className="mb-2 text-[13px] text-muc-3">Tick được nhiều dịch vụ, nhiều thẻ cùng lúc. Mỗi dịch vụ là một lượt cho chuyên viên trị liệu, Kết thúc mới trừ 1 buổi.</p>
+          <p className="mb-2 text-[13px] text-muc-3">Tick được nhiều dịch vụ, nhiều thẻ cùng lúc. Nhiều người cùng làm một dịch vụ trên một thẻ thì bấm + để trừ nhiều buổi. Kết thúc mới trừ buổi.</p>
           {tongDong > 8 && <input value={tim} onChange={(e) => setTim(e.target.value)} placeholder="Tìm dịch vụ trong thẻ của khách" aria-label="Tìm dịch vụ khách đã mua" className="mb-2 h-11 w-full rounded-nho border border-vien-dam bg-giay-sang px-3 text-[14px] outline-none" />}
           <ul className="space-y-2">
             {ds.map((t) => {
               const dvThe = t.dichVu.filter((d) => tenDv.has(d) && (!tim_ || (tenDv.get(d) ?? "").toLowerCase().includes(tim_)));
               if (tim_ && t.dichVu.length && dvThe.length === 0) return null;
-              const daChon = dong.filter((d) => d.theId === t.id).length, mo = moCua(t.id), con = Math.max(0, t.buoiCon - mo);
+              const daChon = dong.filter((d) => d.theId === t.id).reduce((s, d) => s + d.sl, 0), mo = moCua(t.id), con = Math.max(0, t.buoiCon - mo);
               return (
                 <li key={t.id} className="rounded-nho border border-vien bg-giay px-2 py-2">
                   <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-0.5 px-1">
                     <span className="min-w-0 text-[14px]">
                       <span className="block font-medium text-muc">{t.ten}</span>
-                      <span className="block text-[12.5px] text-muc-3">{t.ma}{t.han ? ` · Hạn ${han(t.han)}` : ""}{mo ? ` · ${mo} lượt đang chờ` : ""}</span>
+                      <span className="block text-[12.5px] text-muc-3">{t.ma}{t.han ? ` · Hạn ${han(t.han)}` : ""}{mo ? ` · ${mo} buổi đang chờ` : ""}</span>
                     </span>
                     <span className={`shrink-0 text-[14px] font-semibold tabular-nums ${daChon > con ? "text-loi" : "text-sac-xanh"}`}>
                       {daChon ? `Chọn ${daChon} / ` : ""}Còn {t.buoiCon}{t.buoiTong && t.buoiTong < 999_999 ? `/${t.buoiTong}` : ""} buổi
@@ -128,7 +141,7 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
                         {coQuyen && moDoi.has(t.id) && <ChonNhieuDichVu ds={dvMuc.filter((d) => d.gia_tri !== dongThe(t) && !dangMo.some((x) => x.theId === t.id && x.dvId === d.gia_tri)).map((d) => ({ id: d.gia_tri, ten: d.nhan }))}
                           tatCa={dvMuc.map((d) => ({ id: d.gia_tri, ten: d.nhan }))} nhan={`Dịch vụ thẻ ${t.ma}`}
                           chon={dong.filter((d) => d.theId === t.id && d.dvId !== dongThe(t)).map((d) => d.dvId)}
-                          onDoi={(ids) => setChon((m) => { const n = new Map([...m].filter(([, v]) => v.theId !== t.id || v.dvId === dongThe(t) || ids.includes(v.dvId))); for (const id of ids) if (!n.has(khoa(t.id, id))) n.set(khoa(t.id, id), { theId: t.id, dvId: id, nv: "" }); return n; })} />}
+                          onDoi={(ids) => setChon((m) => { const n = new Map([...m].filter(([, v]) => v.theId !== t.id || v.dvId === dongThe(t) || ids.includes(v.dvId))); for (const id of ids) if (!n.has(khoa(t.id, id))) n.set(khoa(t.id, id), { theId: t.id, dvId: id, nv: "", sl: 1 }); return n; })} />}
                       </div>
                     )}
                 </li>
@@ -146,7 +159,7 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
               <div className="flex flex-wrap items-center gap-2">
                 <button type="button" onClick={gui} disabled={dang || dong.length === 0 || loiBuoi.length > 0 || dong.length > TOI_DA_DONG_GUI}
                   className={`${NUT_CHINH} w-full justify-center sm:w-auto`}>
-                  <Send aria-hidden strokeWidth={1.8} className="h-4 w-4" />{dang ? "Đang gửi" : `Gửi chuyên viên làm (${dong.length} dịch vụ)`}
+                  <Send aria-hidden strokeWidth={1.8} className="h-4 w-4" />{dang ? "Đang gửi" : `Gửi chuyên viên làm (${dong.length} dịch vụ${dong.some((d) => d.sl > 1) ? `, ${dong.reduce((s, d) => s + d.sl, 0)} buổi` : ""})`}
                 </button>
                 {dong.length > 0 && <button type="button" className={NUT_CHU} onClick={() => { setChon(new Map()); setLoi(""); }}>Bỏ chọn hết</button>}
               </div>

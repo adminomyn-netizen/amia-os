@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cheDoDvThe, docDongGui, dvTheoGoi, goiCuaDv, kiemBuoiThe, nguoiLamDong, TOI_DA_DONG_GUI } from "@/lib/don-nhieu-dich-vu";
+import { cheDoDvThe, docDongGui, dvTheoGoi, goiCuaDv, kiemBuoiThe, nguoiLamDong, TOI_DA_DONG_GUI, TOI_DA_SO_LUONG_DONG } from "@/lib/don-nhieu-dich-vu";
 
 // Chị Thuý / chị Lâm 11/11/2026: một Đơn làm dịch vụ gửi NHIỀU dịch vụ (kể cả nhiều dịch vụ của cùng một thẻ) cho chuyên viên trị liệu một lần.
 const T1 = "11111111-1111-4111-8111-111111111111", T2 = "22222222-2222-4222-8222-222222222222";
@@ -35,9 +35,22 @@ describe("kiemBuoiThe — chọn quá số buổi còn của thẻ thì chặn",
     expect(loi[0]).toContain("còn 2 buổi");
   });
   it("tính cả lượt đang chờ / đang làm của thẻ", () => {
-    expect(kiemBuoiThe([{ theId: T2 }, { theId: T2 }], the)[0]).toContain("1 lượt đang chờ");
+    expect(kiemBuoiThe([{ theId: T2 }, { theId: T2 }], the)[0]).toContain("1 buổi đang chờ");
   });
   it("thẻ lạ thì báo", () => expect(kiemBuoiThe([{ theId: C }], the)).toHaveLength(1));
+  // Quản lý cơ sở 15/11/2026: 3 người cùng làm một dịch vụ trên một thẻ → một dòng trừ 3 buổi.
+  it("dòng nhiều buổi: tính theo soLuong", () => {
+    expect(kiemBuoiThe([{ theId: T1, soLuong: 2 }], the)).toEqual([]);
+    expect(kiemBuoiThe([{ theId: T1, soLuong: 3 }], the)[0]).toContain("chọn 3 buổi");
+    expect(kiemBuoiThe([{ theId: T2, soLuong: 2 }], the)).toHaveLength(1);
+  });
+});
+
+describe("docDongGui — số buổi của dòng", () => {
+  it("giữ soLuong hợp lệ, kẹp trần, sai thì 1", () => {
+    const r = docDongGui(JSON.stringify([{ theId: T1, dvId: A, soLuong: 3 }, { theId: T1, dvId: B, soLuong: 0 }, { theId: T2, dvId: A, soLuong: 500 }]));
+    expect(r).toEqual({ dong: [{ theId: T1, dvId: A, soLuong: 3 }, { theId: T1, dvId: B }, { theId: T2, dvId: A, soLuong: TOI_DA_SO_LUONG_DONG }] });
+  });
 });
 
 it("người làm: riêng của dòng, không có thì người chung", () => {

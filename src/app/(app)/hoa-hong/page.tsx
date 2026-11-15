@@ -74,11 +74,17 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
             <button type="submit" className={`${NUT_PHU} h-10 shrink-0`}>Tìm kiếm</button>
           </form>
           <NutTinhLai />
+          <form id="hh-chon" method="get" action="/api/xuat/hoa-hong-chi-tiet" className="flex flex-wrap gap-2">
+            <input type="hidden" name="tu" value={tu} /><input type="hidden" name="den" value={den} />{sp.cn && <input type="hidden" name="cn" value={sp.cn} />}
+            <a href={`/api/xuat/hoa-hong-chi-tiet?tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className={`${NUT_PHU} inline-flex h-10 items-center`}>Chi tiết toàn bộ nhân viên</a>
+            <button type="submit" className={`${NUT_PHU} h-10`} title="Tích ô ở cột đầu để chọn nhân viên">Chi tiết nhân viên được chọn</button>
+          </form>
         </div>
         <HangChiSo muc={[{ nhan: "Tổng hoa hồng", so: tienVN(tongHh), ghiChu: tongHh === 0 ? "chưa cài tỉ lệ nào nên đang tính 0" : undefined }, { nhan: "Tổng doanh số có gán người hưởng", so: tienVN(tongDs) }]} />
         <div className="mt-6" />
         <Bang duLieu={ds} khoa={(r) => r.id} trong="Chưa có doanh số nào có gán người hưởng trong khoảng này."
-          cot={[{ nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="block"><span className="text-muc">{nvMap.get(r.id)?.ho_ten}</span><span className="block text-[12px] text-muc-3">{nvMap.get(r.id)?.chuc_danh ?? ""}</span></span> },
+          cot={[{ nhan: "", hienThi: (r) => <input type="checkbox" name="nv" value={r.id} form="hh-chon" aria-label={`Chọn ${nvMap.get(r.id)?.ho_ten ?? "nhân viên"}`} className="h-4 w-4 accent-[var(--nhan)]" /> },
+            { nhan: "Nhân viên", chinh: true, hienThi: (r) => <span className="block"><span className="text-muc">{nvMap.get(r.id)?.ho_ten}</span><span className="block text-[12px] text-muc-3">{nvMap.get(r.id)?.chuc_danh ?? ""}</span></span> },
             ...cotNhom,
             ...(coKhac ? [{ nhan: "Doanh số khác", phai: true, hienThi: (g: (typeof ds)[number]) => hienDs(g, "khac") }, { nhan: "Hoa hồng khác", phai: true, hienThi: (g: (typeof ds)[number]) => tienVN(o(g, "khac").hh) }] : []),
             { nhan: "Tổng hoa hồng", phai: true, hienThi: (r) => <span className="font-medium text-muc">{tienVN(r.tong)}</span> },
@@ -219,6 +225,7 @@ export default async function TrangHoaHong({ searchParams }: { searchParams: Pro
         {(tl ?? []).length === 0 && <div role="status" className="mb-4 border-l-2 border-nhan bg-giay-tram px-3 py-2.5 text-[14px] text-muc">Chưa cài tỉ lệ nào nên hoa hồng của mọi đơn đang tính 0. {sua && !nd.chiNhanhId ? "Bấm Nhập từ Excel để cài cả bảng một lần." : "Nhờ quản trị cài bảng tỉ lệ."}</div>}
         {canhBao.length > 0 && <ul className="mb-4 space-y-1 text-[13px] text-muc-2">{canhBao.map((c) => <li key={c}>{c}</li>)}</ul>}
         {sua && <div className="mb-4 flex flex-wrap gap-2.5">{!nd.chiNhanhId && <NhapTiLeHoaHong xemTruoc={xemTruocNhapTiLe} apDung={apDungNhapTiLe} />}<NutHop nhan="Thêm tỉ lệ" tieuDe="Thêm tỉ lệ hoa hồng" moTa="Tỉ lệ riêng cho một dịch vụ, sản phẩm hoặc gói thắng tỉ lệ mặc định của loại đó; cài cho nhân viên hoặc nhóm thì thắng cài đặt chung." truong={truong} giaTri={{ doi_tuong: "", loai: "dich_vu", vai: "ban", muc_id: "" }} action={luuTiLe} />
+          <NutHop kieu="phu" nhan="Cài đặt nhanh cho toàn bộ" tieuDe="Cài đặt nhanh cho toàn bộ" moTa="Một tỉ lệ áp cho TẤT CẢ dịch vụ / sản phẩm / gói của loại đã chọn (mặc định loại), như SalonHero “Cài đặt cho toàn bộ”. Mục nào đã cài riêng vẫn giữ tỉ lệ riêng." truong={truong.filter((t) => t.ten !== "muc_id")} an={{ muc_id: "" }} giaTri={{ doi_tuong: "", loai: "dich_vu", vai: "ban" }} action={luuTiLe} nhanLuu="Áp cho toàn bộ" />
           <SaoChepHoaHong luaChon={doiTuongLC.map((l) => (l.gia_tri === "" ? { gia_tri: "chung", nhan: l.nhan } : l))} tenMuc={Object.fromEntries(ten)} xemTruoc={xemTruocSaoChep} apDung={apDungSaoChep} /></div>}
         {locTl}
         {xem === "nv" ? (

@@ -20,7 +20,7 @@ const dauThang = (d: string) => d.slice(0, 8) + "01";
 const cuoiThang = (d: string) => { const [y, m] = d.split("-").map(Number); return new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10); };
 
 /** Tham số bộ lọc nâng cao: có cái nào đang bật thì mở sẵn khung "Lọc thêm". */
-const THAM_SO_NANG_CAO = ["cn", "lap", "nv", "vai", "tra", "tien_tu", "tien_den", "gc", "the", "kt", "vc", "ht", "pp", "tip", "mhd", "cx"];
+const THAM_SO_NANG_CAO = ["cn", "lap", "nv", "vai", "tra", "tien_tu", "tien_den", "gc", "kgc", "the", "kt", "vc", "ht", "pp", "tip", "mhd", "cx"];
 
 function useDoiUrl() {
   const router = useRouter();
@@ -111,6 +111,8 @@ export function LocHoaDon({ tu, den, chiNhanh, nhanVien }: { tu: string; den: st
           <OGo tham="tien_tu" nhan="Tổng tiền từ (đ)" ariaLabel="Tổng tiền hoá đơn từ" soTien />
           <OGo tham="tien_den" nhan="Tổng tiền đến (đ)" ariaLabel="Tổng tiền hoá đơn đến" soTien />
           <OGo tham="gc" nhan="Ghi chú có chữ" ariaLabel="Lọc theo ghi chú" />
+          <label className="flex h-10 items-center gap-1.5 text-[13px] text-muc-2">
+            <input type="checkbox" className="h-4 w-4 cursor-pointer accent-[var(--nhan)]" checked={sp.get("kgc") === "1"} onChange={(e) => doi({ kgc: e.target.checked ? "1" : "", gc: "" })} />Hoá đơn không ghi chú</label>
           <Chon ariaLabel="Mua hoặc sử dụng thẻ dịch vụ" giaTri={sp.get("the") ?? ""} onDoi={(v) => doi({ the: v })} luaChon={[{ gia_tri: "", nhan: "Mua/sử dụng thẻ: tất cả" }, ...LOC_THE.map((x) => ({ gia_tri: x.gia_tri, nhan: x.nhan }))]} />
           <Chon ariaLabel="Xác nhận với kế toán" giaTri={sp.get("kt") ?? ""} onDoi={(v) => doi({ kt: v })} luaChon={[{ gia_tri: "", nhan: "Xác nhận kế toán: tất cả" }, { gia_tri: "co", nhan: "Đã xác nhận với kế toán" }, { gia_tri: "chua", nhan: "Chưa xác nhận với kế toán" }]} />
           <Chon ariaLabel="Sử dụng voucher" giaTri={sp.get("vc") ?? ""} onDoi={(v) => doi({ vc: v })} luaChon={[{ gia_tri: "", nhan: "Voucher: tất cả" }, { gia_tri: "co", nhan: "Có dùng voucher" }, { gia_tri: "khong", nhan: "Không dùng voucher" }]} />

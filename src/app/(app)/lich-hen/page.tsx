@@ -318,6 +318,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         </div>
         <div className="mt-0.5 flex flex-wrap items-center gap-x-3 text-[14px] text-muc-2">
           {k?.dien_thoai && <a href={`tel:${k.dien_thoai}`} className="inline-flex min-h-10 items-center font-medium tabular-nums text-nhan-dam hover:underline">{k.dien_thoai}</a>}
+          {k?.dien_thoai && /^0\d{8,10}$/.test(k.dien_thoai) && <a href={`https://zalo.me/${k.dien_thoai}`} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-10 items-center font-medium text-nhan-dam hover:underline">Nhắn Zalo</a>}
           {k?.ma && <span className="text-[13px] text-muc-3">{k.ma}</span>}
           <span className="text-[13px] text-muc-3">Hạng {k?.hang ?? "Thường"}</span>
         </div>

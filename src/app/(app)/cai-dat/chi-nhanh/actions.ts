@@ -46,3 +46,20 @@ export async function xoaChiNhanhCaiDat(fd: FormData): Promise<KQ> {
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "xoa_chi_nhanh", doi_tuong: "chi_nhanh", doi_tuong_id: id, chi_tiet: { truoc: cu } });
   return XONG();
 }
+
+/** SalonHero "Đóng tạm thời" / "Đóng vĩnh viễn" chi nhánh (rà nút 15/11/2026), AMIA không thêm cột mới:
+ *  tam = ẩn khỏi web đặt lịch, vẫn hoạt động (vẫn bán, xem lịch cũ) · vinh_vien = tắt hoạt động + ẩn web đặt lịch (dữ liệu giữ nguyên) · mo_lai = bật lại cả hai. Ghi nhật ký trước/sau. */
+export async function dongChiNhanh(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("nhanvien.quanly");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), kieu = chuoi(fd, "kieu");
+  const doi = kieu === "tam" ? { hien_dat_lich: false } : kieu === "vinh_vien" ? { hien_dat_lich: false, hoat_dong: false } : kieu === "mo_lai" ? { hien_dat_lich: true, hoat_dong: true } : null;
+  if (!doi) return { loi: "Thao tác không hợp lệ." };
+  const db = sb();
+  const { data: cu } = await db.from("chi_nhanh").select("id, hien_dat_lich, hoat_dong").eq("id", id).maybeSingle();
+  if (!cu) return { loi: "Không có chi nhánh này." };
+  const { error } = await db.from("chi_nhanh").update(doi).eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: `dong_chi_nhanh_${kieu}`, doi_tuong: "chi_nhanh", doi_tuong_id: id, chi_tiet: { truoc: cu, sau: doi } });
+  return XONG();
+}

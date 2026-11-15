@@ -110,3 +110,36 @@ export async function luuVoucher(fd: FormData): Promise<KQ> {
   revalidatePath("/cai-dat/voucher");
   return { ok: true };
 }
+
+/** Khoá / Mở khoá voucher nhanh (SalonHero: Khoá voucher / Mở khoá voucher). Ghi nhật ký. */
+export async function khoaVoucher(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), khoa = chuoi(fd, "khoa") === "1";
+  const db = sb();
+  const { data: v } = await db.from("voucher").select("id, bi_khoa, chi_nhanh_ids").eq("id", id).maybeSingle();
+  if (!v || (nd.chiNhanhId && v.chi_nhanh_ids && !v.chi_nhanh_ids.includes(nd.chiNhanhId))) return { loi: "Không tìm thấy voucher." };
+  if (v.bi_khoa === khoa) return { loi: khoa ? "Voucher đang khoá rồi." : "Voucher đang mở." };
+  const { error } = await db.from("voucher").update({ bi_khoa: khoa, sua_luc: new Date().toISOString() }).eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: khoa ? "khoa_voucher" : "mo_khoa_voucher", doi_tuong: "voucher", doi_tuong_id: id });
+  revalidatePath("/cai-dat/voucher");
+  return { ok: true };
+}
+
+/** Gia hạn voucher (SalonHero: Gia hạn voucher): chỉ đổi ngày kết thúc, không đổi giá trị hay điều kiện. Ghi nhật ký cũ → mới. */
+export async function giaHanVoucher(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("danhmuc.sua");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const id = chuoi(fd, "id"), den = chuoi(fd, "den_ngay");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(den)) return { loi: "Chọn ngày kết thúc mới." };
+  const db = sb();
+  const { data: v } = await db.from("voucher").select("id, tu_ngay, den_ngay, chi_nhanh_ids").eq("id", id).maybeSingle();
+  if (!v || (nd.chiNhanhId && v.chi_nhanh_ids && !v.chi_nhanh_ids.includes(nd.chiNhanhId))) return { loi: "Không tìm thấy voucher." };
+  if (den < v.tu_ngay) return { loi: "Ngày kết thúc không được trước ngày bắt đầu." };
+  const { error } = await db.from("voucher").update({ den_ngay: den, sua_luc: new Date().toISOString() }).eq("id", id);
+  if (error) return { loi: thongBaoLoi(error) };
+  await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "gia_han_voucher", doi_tuong: "voucher", doi_tuong_id: id, chi_tiet: { truoc: v.den_ngay, sau: den } });
+  revalidatePath("/cai-dat/voucher");
+  return { ok: true };
+}

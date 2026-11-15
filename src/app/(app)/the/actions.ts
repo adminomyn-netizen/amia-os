@@ -276,3 +276,32 @@ export async function giaHanNhieuThe(fd: FormData): Promise<KQ & { soThe?: numbe
   revalidatePath("/the"); revalidatePath("/khach-hang/dung-the");
   return { ok: true, soThe };
 }
+
+/** Khoá / Mở khoá HÀNG LOẠT (SalonHero "Khách hàng dùng thẻ" › Khoá thẻ / Mở khoá thẻ): như doiTrangThaiThe cho từng thẻ đã tích, bắt buộc lý do; mỗi thẻ ghi 1 dòng sổ cái (0 buổi, 0 tiền). Bỏ qua thẻ thu hồi hoặc đã đúng trạng thái. */
+export async function khoaNhieuThe(fd: FormData): Promise<KQ & { soThe?: number }> {
+  const nd = await kiemQuyen("the.dieuchinh");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const ids = [...new Set(fd.getAll("ids").map(String).filter(Boolean))].slice(0, 200);
+  if (!ids.length) return { loi: "Bạn chưa tích chọn thẻ nào." };
+  const tt = chuoi(fd, "trang_thai");
+  if (!["hoat_dong", "khoa"].includes(tt)) return { loi: "Trạng thái không hợp lệ." };
+  const lyDo = chuoi(fd, "ly_do");
+  if (lyDo.length < 3) return { loi: tt === "khoa" ? "Nhập lý do khoá thẻ (ít nhất 3 ký tự)." : "Nhập lý do mở khoá thẻ (ít nhất 3 ký tự)." };
+  if (lyDo.length > 500) return { loi: "Lý do dài quá (tối đa 500 ký tự)." };
+  const db = sb();
+  let q = db.from("the_khach").select("id, chi_nhanh_id, trang_thai").in("id", ids);
+  if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  const { data: ds, error: e0 } = await q;
+  if (e0) return { loi: thongBaoLoi(e0) };
+  let soThe = 0;
+  for (const t of ds ?? []) {
+    if (t.trang_thai === "thu_hoi" || t.trang_thai === tt) continue;
+    const { error } = await db.from("the_khach").update({ trang_thai: tt }).eq("id", t.id).neq("trang_thai", "thu_hoi");
+    if (error) return { loi: `Đã xử lý ${soThe} thẻ, lỗi ở thẻ tiếp theo: ${thongBaoLoi(error)}` };
+    const { error: eSc } = await db.from("the_so_cai").insert({ the_id: t.id, loai: tt === "khoa" ? "khoa" : "mo_khoa", so_buoi: 0, so_tien: 0, ghi_chu: lyDo, nguoi_id: nd.nhanVienId });
+    if (eSc) return { loi: `Đã xử lý ${soThe} thẻ, lỗi ghi sổ thẻ: ${thongBaoLoi(eSc)}` };
+    soThe++; revalidatePath(`/the/${t.id}`);
+  }
+  revalidatePath("/the"); revalidatePath("/khach-hang/dung-the");
+  return { ok: true, soThe };
+}

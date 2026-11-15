@@ -16,7 +16,7 @@ import { NgayChon } from "@/components/ui/NgayChon";
 import { NutHop } from "@/components/ui/BieuMau";
 import { TRUONG_CAP_THE } from "../../the/page";
 import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
-import { capTheTay, giaHanNhieuThe, suaThe, thuHoiThe } from "../../the/actions";
+import { capTheTay, giaHanNhieuThe, khoaNhieuThe, suaThe, thuHoiThe } from "../../the/actions";
 import { GiaHanHangLoat, OChonThe } from "@/components/the/GiaHanHangLoat";
 
 const MOI_TRANG = 50;
@@ -115,7 +115,7 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
 
       {loiDs && <p role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Chưa tải được danh sách (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
       <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ{ttHienTai && f.tt ? ` · ${ttHienTai}` : " đang dùng"}{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}{f.nhom ? ` · nhóm ${tenNhom.get(f.nhom) ?? ""}` : ""}</p>
-      {choCap && ds.length > 0 && <GiaHanHangLoat action={giaHanNhieuThe} />}
+      {choCap && ds.length > 0 && <GiaHanHangLoat action={giaHanNhieuThe} khoa={khoaNhieuThe} />}
       <Bang noi duLieu={ds} khoa={(r) => r.id ?? ""} trong="Không có thẻ nào với điều kiện này."
         cot={[
           ...(choCap ? [{ nhan: "", hienThi: (r: (typeof ds)[number]) => (r.trang_thai !== "thu_hoi" && r.id ? <OChonThe id={r.id} ma={r.ma ?? ""} /> : null) }] : []),

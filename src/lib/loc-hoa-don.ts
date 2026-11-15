@@ -33,6 +33,7 @@ export type LocHoaDon = {
   /** Khoảng "Tổng tiền hoá đơn" (phải thu), số nguyên đồng; trống = không giới hạn. */
   tienTu: string; tienDen: string;
   gc: string;
+  /** SalonHero lọc "Hoá đơn không ghi chú": chỉ đơn ghi chú trống. */ kgc: boolean;
   the: "" | (typeof LOC_THE)[number]["gia_tri"];
   vc: "" | "co" | "khong";
   /** Xác nhận với kế toán: co = đã xác nhận, chua = hoá đơn hoàn thành chưa xác nhận. */ kt: "" | "co" | "chua";
@@ -72,7 +73,7 @@ export function docLocHoaDon(sp: Record<string, string | undefined>): LocHoaDon 
     // Đường dẫn cũ ?no=1 (Còn nợ) vẫn dùng được: coi như tình trạng trả tiền = còn nợ.
     tra: (sp.no === "1" ? "no" : trong(sp.tra, TRA_TIEN.map((x) => x.gia_tri))) as LocHoaDon["tra"],
     tienTu: so(sp.tien_tu), tienDen: so(sp.tien_den),
-    gc: (sp.gc ?? "").trim().slice(0, 80),
+    gc: (sp.gc ?? "").trim().slice(0, 80), kgc: sp.kgc === "1",
     the: trong(sp.the, LOC_THE.map((x) => x.gia_tri)) as LocHoaDon["the"],
     vc: sp.vc === "co" || sp.vc === "khong" ? sp.vc : "",
     kt: sp.kt === "co" || sp.kt === "chua" ? sp.kt : "",
@@ -130,6 +131,7 @@ export function apLocHoaDon<T extends BoLoc<T>>(q: T, loc: LocHoaDon, chiNhanhId
   if (loc.tienTu) r = r.gte("tong_phai_thu", Number(loc.tienTu));
   if (loc.tienDen) r = r.lte("tong_phai_thu", Number(loc.tienDen));
   if (loc.gc) r = r.ilike("ghi_chu", `%${loc.gc.replace(/[%_\\]/g, " ")}%`);
+  if (loc.kgc) r = r.or("ghi_chu.is.null,ghi_chu.eq.");
   if (loc.kt === "co") r = r.not("ke_toan_xac_nhan_luc", "is", null);
   if (loc.kt === "chua") r = r.is("ke_toan_xac_nhan_luc", null).eq("trang_thai", "hoan_thanh");
   if (loc.vc === "co") r = r.gt("giam_voucher", 0);

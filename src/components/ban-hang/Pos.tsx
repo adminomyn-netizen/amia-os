@@ -464,7 +464,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
   const [moLeNhanh, setMoLeNhanh] = useState(false);
   // Lọc hai chiều như SalonHero: vừa chọn thẻ liệu trình → tab Dịch vụ chỉ còn dịch vụ của thẻ; vừa chọn dịch vụ → tab Thẻ chỉ còn thẻ có dịch vụ đó.
   const [loc, setLoc] = useState<{ loai: "dich_vu" | "goi_the"; id: string; ten: string; dv: string[] } | null>(null);
-  const [sapXep, setSapXep] = useState<"ten" | "gia_tang" | "gia_giam" | "moi_nhat">("ten");
+  const [sapXep, setSapXep] = useState<"ten" | "ma" | "gia_tang" | "gia_giam" | "moi_nhat">("ten");
   const [dong, setDong] = useState<DongDon[]>(nhapDau ? nhapDau.dong : kp ? kp.dong : dauTien ? dongBanDau : []);
   const [giamDon, setGiamDon] = useState(sua?.giamDon ?? kp?.giamDon ?? 0);
   const [giamPct, setGiamPct] = useState(kp?.giamPct ?? "");
@@ -645,7 +645,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
   // Số trên mỗi tab = số mục đang hiện được (theo ô tìm + lọc thẻ), không phải tổng cố định.
   const demTab = (t: string) => mucHien.filter((m) => m.loai === t && hopLocTab(t, m) && khopMuc(m, tu)).length;
   const dsMuc = mucHien.filter((m) => m.loai === tab && hopLoc(m) && khopMuc(m, tu))
-    .sort((a, b) => (sapXep === "gia_tang" ? a.gia - b.gia : sapXep === "gia_giam" ? b.gia - a.gia : sapXep === "moi_nhat" ? (b.tao ?? "").localeCompare(a.tao ?? "") : 0) || a.ten.localeCompare(b.ten, "vi"));
+    .sort((a, b) => (sapXep === "gia_tang" ? a.gia - b.gia : sapXep === "gia_giam" ? b.gia - a.gia : sapXep === "moi_nhat" ? (b.tao ?? "").localeCompare(a.tao ?? "") : sapXep === "ma" ? (a.ma ?? "\uffff").localeCompare(b.ma ?? "\uffff", "vi", { numeric: true }) : 0) || a.ten.localeCompare(b.ten, "vi"));
   const nhomMuc = [...new Set(dsMuc.map((m) => m.nhom))];
 
   const gui = () => {
@@ -760,7 +760,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
             <Search aria-hidden strokeWidth={1.6} className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muc-3" />
             <input value={tu} onChange={(e) => setTu(e.target.value)} placeholder="Tìm tên, mã hoặc mã vạch" aria-label="Tìm trong danh mục" className={`${O_NHAP} pl-9`} />
           </div>
-          <div className="w-32 lg:w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }, { gia_tri: "moi_nhat", nhan: "Mới nhất" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
+          <div className="w-32 lg:w-40"><Chon nho ariaLabel="Sắp xếp danh mục" giaTri={sapXep} luaChon={[{ gia_tri: "ten", nhan: "Tên A-Z" }, { gia_tri: "ma", nhan: "Theo mã" }, { gia_tri: "gia_tang", nhan: "Giá thấp-cao" }, { gia_tri: "gia_giam", nhan: "Giá cao-thấp" }, { gia_tri: "moi_nhat", nhan: "Mới nhất" }]} onDoi={(v) => setSapXep(v as typeof sapXep)} /></div>
         </div>
         {locTab && <p role="status" className="mt-2 lg:mt-3 flex flex-wrap items-center gap-2 rounded-nho bg-sac-xanh-nen px-3 py-2 text-[13px] text-sac-xanh">{locTab.loai === "goi_the" ? "Chỉ hiện dịch vụ của thẻ" : "Chỉ hiện thẻ có dịch vụ"} <b>{locTab.ten}</b><button type="button" className={`ml-auto ${NUT_CHU}`} onClick={() => setLoc(null)}>Hiện tất cả</button></p>}
         </div>

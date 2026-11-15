@@ -11,7 +11,7 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { O_NHAP, NUT_PHU } from "@/components/ui/dinh-dang";
 import { gioBaThu, tomTatGio } from "@/lib/gio-lam-viec";
 import { luaChonQuocGia, tenQuocGia } from "@/lib/quoc-gia";
-import { luuChiNhanhCaiDat, xoaChiNhanhCaiDat } from "./actions";
+import { luuChiNhanhCaiDat, xoaChiNhanhCaiDat, dongChiNhanh } from "./actions";
 
 /** Quản lý chi nhánh dạng thẻ, đối chiếu SalonHero #/locations: tên, địa chỉ, điện thoại, nhãn "Hiện thị ở web đặt lịch", Xem bản đồ, Giờ làm việc, Sửa, Xoá. Quốc gia chọn từ danh sách như SalonHero; Thành phố / Phường-Quận nhập tay (AMIA chưa có danh mục địa giới). */
 export default async function TrangChiNhanh({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
@@ -60,6 +60,9 @@ export default async function TrangChiNhanh({ searchParams }: { searchParams: Pr
               {c.dia_chi && <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([c.dia_chi, c.phuong_quan, c.thanh_pho, tenQuocGia(c.quoc_gia || "VN")].filter(Boolean).join(", "))}`} target="_blank" rel="noopener noreferrer" className="text-[13px] font-medium text-nhan-dam underline-offset-4 hover:underline">Xem bản đồ</a>}
               <Link href="/cai-dat/gio-lam-viec" className="text-[13px] font-medium text-nhan-dam underline-offset-4 hover:underline">Giờ làm việc</Link>
               {quanLy && <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa thông tin chi nhánh" truong={truong} rong giaTri={{ id: c.id, ma: c.ma, ten: c.ten, mo_ta: c.mo_ta ?? "", dien_thoai: c.dien_thoai ?? "", dia_chi: c.dia_chi ?? "", thanh_pho: c.thanh_pho ?? "", phuong_quan: c.phuong_quan ?? "", quoc_gia: c.quoc_gia || "VN", hien_dat_lich: c.hien_dat_lich ? "hien" : "an", thu_tu: c.thu_tu, hoat_dong: c.hoat_dong }} action={luuChiNhanhCaiDat} />}
+              {quanLy && c.hoat_dong && c.hien_dat_lich && <NutHop kieu="chu" nhan="Đóng tạm thời" tieuDe={`Đóng tạm thời: ${c.ten}`} xacNhan="Ẩn chi nhánh khỏi web đặt lịch (khách không đặt online được). Chi nhánh vẫn hoạt động: bán hàng, lịch hẹn cũ, kho giữ nguyên. Mở lại bất cứ lúc nào." an={{ id: c.id, kieu: "tam" }} action={dongChiNhanh} nhanLuu="Đóng tạm thời" />}
+              {quanLy && c.hoat_dong && <NutHop kieu="chu" nguy nhan="Đóng vĩnh viễn" tieuDe={`Đóng vĩnh viễn: ${c.ten}`} xacNhan="Tắt hoạt động chi nhánh và ẩn khỏi web đặt lịch. Dữ liệu (hoá đơn, thẻ, khách, kho) giữ nguyên để tra cứu. Có thể Mở lại sau." an={{ id: c.id, kieu: "vinh_vien" }} action={dongChiNhanh} nhanLuu="Đóng vĩnh viễn" />}
+              {quanLy && (!c.hoat_dong || !c.hien_dat_lich) && <NutHop kieu="chu" nhan="Mở lại" tieuDe={`Mở lại: ${c.ten}`} xacNhan="Bật hoạt động và hiện lại ở web đặt lịch?" an={{ id: c.id, kieu: "mo_lai" }} action={dongChiNhanh} nhanLuu="Mở lại" />}
               {quanLy && <NutHop kieu="chu" nguy nhan="Xoá" tieuDe={`Xoá: ${c.ten}`} xacNhan="Xoá hẳn chi nhánh này? Không hoàn lại được. Chi nhánh đã có hoá đơn, thẻ, kho hay lịch hẹn thì hệ thống sẽ từ chối; khi đó hãy Sửa và tắt Đang hoạt động." an={{ id: c.id }} nhanLuu="Xoá" action={xoaChiNhanhCaiDat} />}
             </div>
           </article>

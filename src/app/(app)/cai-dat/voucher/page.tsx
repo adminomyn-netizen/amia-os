@@ -14,7 +14,8 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NgayChon } from "@/components/ui/NgayChon";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NUT_CHINH, NUT_PHU, O_NHAP } from "@/components/ui/dinh-dang";
-import { luuVoucher } from "./actions";
+import { NutNhanh } from "@/components/lich-hen/NutNhanh";
+import { giaHanVoucher, khoaVoucher, luuVoucher } from "./actions";
 
 /** "Quản lý voucher/thẻ giảm giá" theo SalonHero (Cài đặt › Thẻ giảm giá): ô Tìm kiếm, Lọc theo Kết thúc, nhóm Tất Cả / Sẵn sàng / Hết mã / Hết hạn / Bị khoá, nút Tạo voucher,
  *  cột Tên voucher · Bắt đầu · Kết thúc · Giá trị voucher · Số lượng mã · Mô tả · Trạng thái · Mã voucher · Giới hạn áp dụng. Xem: danhmuc.xem; tạo, sửa, khoá: danhmuc.sua. */
@@ -103,6 +104,14 @@ export default async function TrangVoucher({ searchParams }: { searchParams: Pro
           { nhan: "Trạng thái", hienThi: (r) => { const t = tinhTrang(r); return <NhanTrangThai kieu={KIEU_TT[t]}>{TT.find((x) => x.ma === t)?.ten}</NhanTrangThai>; } },
           { nhan: "Mã voucher", hienThi: (r) => { const m = ma.get(r.id) ?? []; return m.length <= 1 ? <span className="font-medium text-muc">{m[0]}</span> : <details><summary className="cursor-pointer text-muc">{m.length} mã</summary><p className="mt-1 max-h-40 overflow-y-auto break-all text-[12px] leading-5">{m.join(", ")}</p></details>; } },
           { nhan: "Giới hạn áp dụng", hienThi: (r) => `${nhanGioiHan(r.gioi_han)}${Number(r.don_toi_thieu) > 0 ? ` · đơn từ ${Number(r.don_toi_thieu).toLocaleString("vi-VN")} ₫` : ""}` },
+          { nhan: "", hienThi: (r) => (
+            <div className="flex flex-wrap justify-end gap-2">
+              <Link href={`/cai-dat/voucher/${r.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Lịch sử sử dụng</Link>
+              <a href={`/api/xuat/voucher-ma?id=${r.id}`} className="text-[13px] font-medium text-nhan-dam hover:underline">Xuất mã</a>
+              {sua && <NutHop kieu="chu" nhan="Gia hạn" tieuDe={`Gia hạn voucher: ${r.ten}`} moTa="Chỉ đổi ngày kết thúc; giá trị và điều kiện giữ nguyên." truong={[{ ten: "den_ngay", nhan: "Dùng được đến hết ngày", loai: "ngay", batBuoc: true }]} action={giaHanVoucher} an={{ id: r.id }} giaTri={{ den_ngay: r.den_ngay }} nhanLuu="Gia hạn" />}
+              {sua && <NutNhanh nhan={r.bi_khoa ? "Mở khoá" : "Khoá"} action={khoaVoucher} du={{ id: r.id, khoa: r.bi_khoa ? "0" : "1" }} />}
+            </div>
+          ) },
           { nhan: "", hienThi: (r) => (sua ? <NutHop kieu="chu" nhan="Sửa" tieuDe="Thông tin voucher" nhanLuu="Lưu thông tin" truong={truong} action={luuVoucher}
             giaTri={{ id: r.id, ten: r.ten, tu_ngay: r.tu_ngay, den_ngay: r.den_ngay, loai_giam: r.loai_giam, gia_tri: Number(r.gia_tri), giam_toi_da: r.giam_toi_da == null ? "" : Number(r.giam_toi_da), so_luong: r.so_luong, loai_ma: r.loai_ma,
               ma: r.loai_ma === "mot_ma" ? (ma.get(r.id) ?? [])[0] ?? "" : "", gioi_han: r.gioi_han, don_toi_thieu: Number(r.don_toi_thieu), so_lan_toi_da_khach: r.so_lan_toi_da_khach ?? "", hang_khach: r.hang_khach ?? [], khach_moi_cu: r.khach_moi_cu ?? "", dich_vu_ids: r.dich_vu_ids ?? [], nhom_khach_ids: r.nhom_khach_ids ?? [], loai_lich_hen: r.loai_lich_hen ?? [], gio_tu: r.gio_tu ? r.gio_tu.slice(0, 5) : "", gio_den: r.gio_den ? r.gio_den.slice(0, 5) : "",

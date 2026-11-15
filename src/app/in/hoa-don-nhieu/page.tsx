@@ -24,7 +24,7 @@ export default async function InNhieuHoaDon({ searchParams }: { searchParams: Pr
       <style>{`@media print{@page{size:${KHO_CUON(giay) ? `${giay.replace("mm", "")}mm auto` : giay};margin:${KHO_CUON(giay) ? "2mm" : "12mm"}}.ban-in+.ban-in{break-before:page}}`}</style>
       <div className="khong-in mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-3 px-6 pt-8">
         <p className="text-[12.5px] text-muc-3">{coIn.length} hoá đơn · khổ giấy {giay}{boQua > 0 ? ` · bỏ qua ${boQua} đơn chưa hoàn thành (Thiết lập in chỉ cho in đơn hoàn thành)` : ""}{ids.length > ds.length ? ` · ${ids.length - ds.length} đơn không xem được` : ""}</p>
-        {coIn.length > 0 && <NutIn />}
+        {coIn.length > 0 && <NutIn kho={giay} />}
       </div>
       {coIn.length === 0 ? <p className="mx-auto max-w-[560px] px-6 py-10 text-center text-[14px] text-muc-2">Chưa có hoá đơn nào để in. Quay lại danh sách hoá đơn và chọn đơn cần in.</p>
         : coIn.flatMap((x) => Array.from({ length: 1 + x.cfg.banSao }, (_, i) => <div key={`${x.id}-${i}`} className="ban-in"><BanInHoaDon cfg={x.cfg} d={x.d as DuLieuIn} /></div>))}

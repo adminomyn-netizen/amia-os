@@ -20,7 +20,7 @@ export default async function InHoaDonGtgt({ params, searchParams }: { params: P
       <style>{"@media print{@page{size:A4;margin:12mm}}"}</style>
       <TuIn bat={tuIn} />
       <div className="khong-in mx-auto mb-4 flex max-w-[820px] items-center justify-between gap-3 px-6 pt-8 text-[13px] text-muc-3">
-        <span>Bấm In rồi chọn &quot;Lưu thành PDF&quot; để tải tệp PDF.</span><NutIn />
+        <span>Bấm In rồi chọn &quot;Lưu thành PDF&quot; để tải tệp PDF.</span><NutIn kho="A4" />
       </div>
       <div className="px-4 pb-10">
         {x ? <MauHoaDonGtgt mauSo={x.mau_so} kyHieu={x.ky_hieu} so={x.so} ngayLap={x.ngay_lap} ban={x.nguoi_ban} nd={x.noi_dung} trangThai="da_xuat" />

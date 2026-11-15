@@ -23,7 +23,7 @@ export default async function InHoaDon({ params, searchParams }: { params: Promi
       <style>{`@media print{@page{size:${KHO_CUON(giay) ? `${giay.replace("mm", "")}mm auto` : giay};margin:${KHO_CUON(giay) ? "2mm" : "12mm"}}.ban-in+.ban-in{break-before:page}}`}</style>
       <div className="khong-in mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-3 px-6 pt-8">
         <p className="text-[12.5px] text-muc-3">Khổ giấy {giay}{cfg.banSao > 0 ? ` · in ${cfg.banSao + 1} bản` : ""} (đổi ở Cài đặt › Thiết lập in)</p>
-        {d && <NutIn />}
+        {d && <NutIn kho={giay} />}
       </div>
       {!d ? <p className="mx-auto max-w-[560px] px-6 py-10 text-center text-[14px] text-muc-2">Thiết lập in đang chỉ cho in hoá đơn đã hoàn thành. Hoá đơn này chưa hoàn thành nên chưa in được.</p>
         : Array.from({ length: 1 + cfg.banSao }, (_, i) => <div key={i} className="ban-in"><BanInHoaDon cfg={cfg} d={d} /></div>)}

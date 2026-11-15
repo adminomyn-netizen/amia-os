@@ -41,3 +41,4 @@ Nguồn đối chiếu: đọc thẳng SalonHero (chỉ gọi hàm đọc `getSe
 ## Nhật ký việc xong
 - 07:50 Sửa tờ in bị thu nhỏ/lệch lề khi in (hoá đơn, tạm tính, phiếu làm).
 - 08:0x Nút **Gia hạn thẻ**: hàng loạt ở Khách hàng › Khách dùng thẻ (tích chọn như SalonHero); từng thẻ ở hồ sơ thẻ, tab Thẻ dịch vụ của khách, danh sách Thẻ. Chỉ đổi hạn, ghi Lịch sử thẻ, không đụng buổi/tiền (chị Lâm hỏi 07:4x).
+- 08:1x Nút **In** có bước **Kết nối máy in** lần đầu trên mỗi máy quầy: hướng dẫn chọn máy in quầy, khổ giấy, lề mặc định, tỉ lệ 100%; ghi tên máy in, lần sau bấm In ra hộp in ngay; nút "Máy in: … · Đổi". Muốn bấm là ra giấy không hiện hộp in: Chrome máy quầy chạy --kiosk-printing (cần cài 1 lần tại máy) (chị Lâm 07:4x).

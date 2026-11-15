@@ -31,7 +31,7 @@ export default async function InPhieuThu({ params }: { params: Promise<{ id: str
   return (
     <main data-theme="light" className="mx-auto bg-white text-muc">
       <style>{"@media print{@page{size:A5;margin:10mm}}"}</style>
-      <div className="khong-in mx-auto mb-4 flex max-w-[640px] items-center justify-end px-6 pt-8"><NutIn /></div>
+      <div className="khong-in mx-auto mb-4 flex max-w-[640px] items-center justify-end px-6 pt-8"><NutIn kho="A5" /></div>
       <section className="mx-auto max-w-[640px] px-6 pb-10 text-[14px]">
         <header className="text-center">
           <p className="font-semibold">{cn?.ten ?? "AMIA"}</p>

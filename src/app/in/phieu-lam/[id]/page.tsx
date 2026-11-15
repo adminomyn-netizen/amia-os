@@ -70,7 +70,7 @@ export default async function InPhieuLam({ params }: { params: Promise<{ id: str
       <style>{`@media print{@page{size:${cuon ? `${giay.replace("mm", "")}mm auto` : giay};margin:${cuon ? "2mm" : "12mm"}}}`}</style>
       <div className="khong-in mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-3 px-6 pt-8">
         <p className="text-[12.5px] text-muc-3">Phiếu làm dịch vụ · khổ giấy {giay} (đổi ở Cài đặt › Thiết lập in)</p>
-        <NutIn />
+        <NutIn kho={giay} />
       </div>
       <div className={`to-in mx-auto bg-white ${cuon ? "px-2 py-3 text-[11px]" : "px-6 py-8 text-[13px]"}`} style={{ width: "100%", maxWidth: BE_NGANG[giay] }}>
         <header className="text-center">

@@ -27,7 +27,7 @@ export function InTamTinh({ cfg, cuaHang }: { cfg: CauHinhIn; cuaHang: DuLieuIn[
       <style>{`@media print{@page{size:${KHO_CUON(giay) ? `${giay.replace("mm", "")}mm auto` : giay};margin:${KHO_CUON(giay) ? "2mm" : "12mm"}}}`}</style>
       <div className="khong-in mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-3 px-6 pt-8">
         <p className="text-[12.5px] text-muc-3">Bản tạm tính, chưa phải hoá đơn đã chốt · khổ giấy {giay}</p>
-        {d && <NutIn />}
+        {d && <NutIn kho={giay} />}
       </div>
       {d ? <BanInHoaDon cfg={cfg} d={{ ...d, cuaHang: cuaHang ?? d.cuaHang }} /> : <p className="mx-auto max-w-[560px] px-6 py-10 text-center text-[14px] text-muc-2">Không có đơn tạm tính nào. Mở Thu ngân và bấm In hoá đơn.</p>}
     </main>

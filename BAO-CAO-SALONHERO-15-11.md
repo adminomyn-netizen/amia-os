@@ -197,3 +197,5 @@ Excel dự phòng: 81 tệp trong `amia-os/du-phong-salonhero-15-11/excel/` (99M
 | Sổ quỹ (dòng thu chi tay, gộp mã) | 3.228 | 3.227 | 1 | thiếu 1 dòng (mã SH 616168, tiền mặt Vinh) → đang lấy chi tiết để chép |
 | Ảnh đại diện khách | 3.486 | 3.485 tải về máy | 1 | ảnh nằm trên S3 của SalonHero, sắp mất quyền → đã tải về `du-phong-salonhero-15-11/anh-khach/` (264MB); 1 ảnh lỗi |
 | Ảnh liệu trình (album khách) | ? | 259.990 (tới 11/08/2026) | đang soát | đã có ở máy + Lark; đang kiểm ảnh SH chụp sau 11/08 |
+| Thẻ: số buổi còn / số dư tiền từng thẻ | 12.788 thẻ | 12.788 | 0 | **xong**: 10.358 thẻ buổi + 2.430 thẻ tiền khớp từng thẻ (thay cho lịch sử trừ buổi, API SH 35s/thẻ) |
+| Đặt lịch online (cài đặt) | 26 | 26 | 3 | 23 khớp. Khác 3: đặt trước SH 30 phút / AMIA 120; số ngày cho đặt SH 8 / AMIA 60; SH đang MỞ web đặt lịch, AMIA đang KHOÁ. Không tự đổi vì là trang công khai → **chờ chị chốt** |

@@ -540,3 +540,19 @@ body {
 /* Sidebar: vẫn cuộn được bằng chuột/cảm ứng nhưng không hiện thanh kéo (chị Lâm 7/11). */
 .khong-thanh-cuon { scrollbar-width: none; -ms-overflow-style: none; }
 .khong-thanh-cuon::-webkit-scrollbar { display: none; }
+/* Vạch chạy khi chuyển trang (ThanhTai, 15/11/2026): chạy nhanh tới ~80% rồi chậm dần; trang mới tới thì kéo đầy và mờ đi. */
+.thanh-tai {
+  position: fixed; top: 0; left: 0; z-index: 70; height: 2.5px; width: 100%; transform-origin: left; pointer-events: none;
+  background: linear-gradient(90deg, var(--nhan), var(--dat)); box-shadow: 0 0 8px rgb(15 118 110 / 0.35);
+  animation: thanh-tai-chay 8s cubic-bezier(0.1, 0.7, 0.2, 1) forwards;
+}
+.thanh-tai-xong { animation: thanh-tai-xong 240ms ease-out forwards; }
+@keyframes thanh-tai-chay { 0% { transform: scaleX(0); } 6% { transform: scaleX(0.35); } 100% { transform: scaleX(0.92); } }
+@keyframes thanh-tai-xong { 0% { transform: scaleX(0.92); opacity: 1; } 60% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(1); opacity: 0; } }
+/* Mục tab dưới vừa chạm: sáng lên ngay, không chờ trang mới. */
+.thanh-tab a .tab-cho { position: absolute; inset: 0; border-radius: inherit; background: var(--nhan-nhat); opacity: 0.85; z-index: -1; }
+@media (prefers-reduced-motion: reduce) { .thanh-tai { animation: none; transform: scaleX(0.6); } }
+/* Khung chờ KHÔNG nhấp nháy (15/11/2026, nhân viên phản ánh "nháy nháy" trên điện thoại): thay nhịp pulse lặp vô hạn của Tailwind
+ * bằng một lần hiện mờ dần, trễ 120ms — trang về nhanh thì gần như không thấy khung chờ, chậm thì khung đứng yên, dịu mắt. */
+.animate-pulse { animation: khung-cho-hien 280ms ease-out 120ms both; }
+@keyframes khung-cho-hien { from { opacity: 0; } to { opacity: 1; } }

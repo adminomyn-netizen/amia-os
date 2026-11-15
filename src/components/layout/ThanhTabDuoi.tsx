@@ -1,6 +1,7 @@
 "use client";
 
 import { LinkNhe } from "@/components/ui/LinkNhe";
+import { useLinkStatus } from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Grid2x2, X } from "lucide-react";
@@ -38,6 +39,7 @@ export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
           const Icon = m.icon;
           return (
             <LinkNhe key={m.duong_dan} href={m.duong_dan} aria-current={dang(m.duong_dan) ? "page" : undefined}>
+              <ChoTab />
               <Icon strokeWidth={1.7} className="h-[22px] w-[22px]" />
               <span>{m.ten.length > 11 ? m.ten.split(" ")[0] : m.ten}</span>
             </LinkNhe>
@@ -92,4 +94,10 @@ export function ThanhTabDuoi({ muc }: { muc: MucDto[] }) {
       )}
     </>
   );
+}
+
+/** Lớp sáng trong mục tab vừa chạm, trong lúc trang mới đang mở (useLinkStatus). */
+function ChoTab() {
+  const { pending } = useLinkStatus();
+  return pending ? <span aria-hidden className="tab-cho" /> : null;
 }

@@ -11,6 +11,7 @@ import { DauTrangMay } from "@/components/layout/DauTrangMay";
 import { DauTrang } from "@/components/layout/DauTrang";
 import { ThanhTabDuoi } from "@/components/layout/ThanhTabDuoi";
 import { CuonVeDau } from "@/components/layout/CuonVeDau";
+import { ThanhTai } from "@/components/layout/ThanhTai";
 import { ChatNoi } from "@/components/chat/ChatNoi";
 import { CanhBaoQuaGio } from "@/components/layout/CanhBaoQuaGio";
 import { phamViQuaGio } from "@/lib/qua-gio";
@@ -27,7 +28,7 @@ async function ThanhBenCoDem({ muc, cn }: { muc: MucNgang[]; cn: string | undefi
   return <ThanhBen muc={muc.map((m) => (m.duong_dan === "/lich-hen" ? { ...m, dem: demLich } : m))} />;
 }
 
-/** Khung dùng chung: thanh menu ngang (máy tính) / đầu trang + thanh tab dưới (điện thoại) đứng yên khi đổi trang, chỉ phần nội dung bên dưới đổi (kèm loading.tsx). */
+/** Khung dùng chung: thanh menu ngang (máy tính) / đầu trang + thanh tab dưới (điện thoại) đứng yên khi đổi trang, chỉ phần nội dung bên dưới đổi; trang cũ đứng yên tới khi trang mới sẵn sàng, có vạch chạy ThanhTai (bỏ loading.tsx nhấp nháy 15/11/2026). */
 export default async function KhungUngDung({ children }: { children: React.ReactNode }) {
   const nd = await layNguoiDungDangNhap(true);
   const dsMuc = nd.phaiDoiMatKhau ? [] : locMenu(nd);
@@ -46,6 +47,7 @@ export default async function KhungUngDung({ children }: { children: React.React
   const coSo = nd.dsCoSo.length > 1 ? nd.dsCoSo.filter((c) => c.chinh || c.chiNhanhId === nd.chiNhanhId || dsChiNhanh.some((x) => x.id === c.chiNhanhId && x.hoat_dong)).map((c) => ({ id: c.chiNhanhId, ten: dsChiNhanh.find((x) => x.id === c.chiNhanhId)?.ten ?? "Chi nhánh", vai: NHAN_VAI_TRO[c.vaiTro], dang: c.chiNhanhId === nd.chiNhanhId })) : undefined;
   return (
     <div className="khung-di-dong flex min-h-screen w-full flex-col">
+      <Suspense fallback={null}><ThanhTai /></Suspense>
       <DauTrangMay hoTen={nd.hoTen} vaiTro={NHAN_VAI_TRO[nd.vaiTro]} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} coSo={coSo} />
       <div className="flex min-h-0 min-w-0 flex-1">
         <Suspense fallback={<ThanhBen muc={mucNgang} />}><ThanhBenCoDem muc={mucNgang} cn={cnDem} /></Suspense>

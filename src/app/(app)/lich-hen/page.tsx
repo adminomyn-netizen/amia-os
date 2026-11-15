@@ -118,6 +118,15 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     if (sp.cho && (l.phong ?? "").trim().toLowerCase() !== sp.cho.toLowerCase()) return false;
     return true;
   });
+  // Báo cáo trạng thái lịch trong khoảng ngày (chị Diệu Thuý 15/11/2026, như dải đếm Đặt trước / Check-in / Huỷ của SalonHero): theo mọi bộ lọc trừ ô trạng thái; bấm một ô để lọc theo trạng thái đó.
+  const demTt = new Map<string, number>();
+  for (const l of lichTho ?? []) {
+    if (loai && (l.loai_lich ?? "chua_ghi") !== loai) continue;
+    if (nvLoc.length && !nvLoc.includes(l.nhan_vien_id ?? NV_CHUA_PHAN)) continue;
+    if (sp.cho && (l.phong ?? "").trim().toLowerCase() !== sp.cho.toLowerCase()) continue;
+    demTt.set(l.trang_thai, (demTt.get(l.trang_thai) ?? 0) + 1);
+  }
+  const tongDemTt = [...demTt.values()].reduce((x, y) => x + y, 0);
   const lichNgayRong = lichKhongTim.filter((l) => ngayCuaIso(l.bat_dau) === ngay);
 
   // Chi tiết chỉ cần cho cột phải (lịch của ngày đang chọn).
@@ -369,6 +378,13 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
         <span className="flex items-center gap-2"><span>Nhân viên</span><span className="w-[190px]"><LocNhieuNhanVien giaTri={nvLoc.join(",")} luaChon={nvLocLC} /></span></span>
         <span className="flex items-center gap-2"><span>Chỗ</span><span className="w-[140px]"><LocCho giaTri={sp.cho ?? ""} luaChon={[...new Set([...choCn.map((c) => c.ten), ...lich.map((l) => (l.phong ?? "").trim()).filter(Boolean)])].map((t) => ({ gia_tri: t, nhan: t }))} /></span></span>
         <span className="tabular-nums" aria-live="polite">{lich.filter(homLich).length} lịch đang hiệu lực{nvLoc.length || sp.cho || q || tt || nguon ? " theo bộ lọc" : ""} trong khoảng ngày</span>
+        <nav aria-label="Số lịch theo trạng thái" className="flex w-full flex-wrap items-center gap-1.5 tabular-nums">
+          <Link href={url({ tt: "" })} scroll={false} className={`rounded-tag px-2.5 py-1 text-[12.5px] ${!tt ? "bg-nhan-nhat font-semibold text-nhan-dam" : "bg-giay-tram text-muc-2 hover:text-muc"}`}>Tất cả: {tongDemTt}</Link>
+          {Object.entries(TT).map(([ma, v]) => (
+            <Link key={ma} href={url({ tt: tt === ma ? "" : ma })} scroll={false} aria-current={tt === ma ? "true" : undefined}
+              className={`rounded-tag px-2.5 py-1 text-[12.5px] ${tt === ma ? "ring-2 ring-nhan-dam font-semibold" : ""} ${MAU_TRANG_THAI[ma]?.chip ?? "bg-giay-tram text-muc-2"}`}>{v.nhan}: {demTt.get(ma) ?? 0}</Link>
+          ))}
+        </nav>
         <span className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:ml-auto">
           <div className="w-[190px]"><LocLoaiLich giaTri={loai} /></div>
           <div className="mr-1 w-[190px]"><LocNguon giaTri={nguon} /></div>

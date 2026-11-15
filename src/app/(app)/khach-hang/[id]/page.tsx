@@ -128,9 +128,19 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const { data: lichDv } = (lichSap ?? []).length ? await db.from("lich_hen_dich_vu").select("lich_id, dich_vu_id").in("lich_id", (lichSap ?? []).map((l) => l.id)) : { data: [] as { lich_id: string; dich_vu_id: string }[] };
   const tenDvLich = new Map((dv ?? []).map((d) => [d.id, d.ten]));
   const tongDon = (hdKh ?? []).length;
-  // Tổng chi từ trước tới nay: cộng mọi đơn hoàn thành, cùng công thức với "Chi 12 tháng" (tiền hàng − giảm giá đơn) cho hai số khớp nhau.
-  const chiDon = (h: { tong_hang: number | null; giam_gia_don: number | null }) => Math.max(Number(h.tong_hang ?? 0) - Number(h.giam_gia_don ?? 0), 0);
+  // Tổng chi như "Tổng số đơn hàng" của SalonHero (chị Diệu Thuý 15/11/2026: khách Đoàn Thị Thu bên này 2,45 tỷ, SalonHero 1,44 tỷ):
+  // giá trị đơn TRỪ phần trả bằng thẻ tiền / tiền cọc — tiền đó đã tính một lần ở đơn nạp thẻ / đặt cọc, cộng lại là đếm hai lần.
+  // "Chi 12 tháng" ở hồ sơ cùng công thức để hai số khớp nhau (cột chi_12_thang của danh sách khách giữ nguyên vì hạng khách dựa vào nó).
+  const idHdTatCa = (hdKh ?? []).map((h) => h.id);
+  const traThe = new Map<string, number>();
+  for (let i = 0; i < idHdTatCa.length; i += 200) {
+    const { data } = await db.from("thanh_toan").select("hoa_don_id, so_tien").eq("phuong_thuc", "the_tien").in("hoa_don_id", idHdTatCa.slice(i, i + 200));
+    for (const r of data ?? []) traThe.set(r.hoa_don_id, (traThe.get(r.hoa_don_id) ?? 0) + Number(r.so_tien ?? 0));
+  }
+  const chiDon = (h: { id: string; tong_hang: number | null; giam_gia_don: number | null }) => Math.max(Number(h.tong_hang ?? 0) - Number(h.giam_gia_don ?? 0) - (traThe.get(h.id) ?? 0), 0);
   const tongChi = (hdKh ?? []).reduce((a, h) => a + chiDon(h), 0);
+  const moc12 = new Date(Date.now() + 7 * 3600e3 - 365 * 86_400_000).toISOString().slice(0, 10);
+  const chi12 = (hdKh ?? []).filter((h) => String(h.ngay_hd) >= moc12).reduce((a, h) => a + chiDon(h), 0);
   const ngayDen = [...new Set((hdKh ?? []).map((h) => h.ngay_hd))].sort();
   // Tần suất đến trung bình = số ngày giữa lần đến đầu và lần đến cuối chia cho số khoảng giữa các ngày có hoá đơn; cần ít nhất 2 ngày khác nhau.
   const tanSuat = ngayDen.length >= 2 ? Math.round((Date.parse(ngayDen[ngayDen.length - 1]) - Date.parse(ngayDen[0])) / 86_400_000 / (ngayDen.length - 1)) : null;
@@ -513,7 +523,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
 
   const NUT_LIEN_KET = "flex h-9 items-center rounded-nho border border-vien-dam px-3.5 text-[13px] font-medium text-muc-2 hover:bg-giay-tram";
   const chiSo: [string, string][] = [
-    ["Tổng chi", tienVN(tongChi)], ["Chi 12 tháng gần nhất", tienVN(k.chi_12_thang)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
+    ["Tổng chi", tienVN(tongChi)], ["Chi 12 tháng gần nhất", tienVN(chi12)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
   ];
   // Như đầu hồ sơ SalonHero: ghé thăm lần cuối + 3 số đếm đặt / đến / huỷ (chỉ khách có số từ SalonHero; "đặt từ app" SalonHero không xuất nên không có).
   const soDem: [string, string][] = [

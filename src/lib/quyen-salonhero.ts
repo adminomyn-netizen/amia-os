@@ -24,7 +24,7 @@ export const QUYEN_TU_SH: Partial<Record<Quyen, string[]>> = {
   "ban.sua": ["pos.update"],  // Sửa hoá đơn đã chốt = về nháp (SalonHero nút "Sửa": quản lý, kế toán, nhà đầu tư, chủ — câu 4, 03/11/2026)
   "ban.giamgia": ["pos.discount.update"],
   "ban.sua_khoa": ["pos.editLockedOrder.update"],
-  "ban.toan_co_so": ["pos.readByLoc.read"],
+  // "ban.toan_co_so" không ánh xạ thẳng: pos.readByLoc / pos.readByUser của SalonHero là quyền GIỚI HẠN (bật = chỉ xem theo cơ sở / của mình), xem quyenTuSalonHero.
   "ban.tip": ["pos.tip.update"],
   "no.thu": ["pos.update", "reportCustomer.customerDebt.update", "reportCustomer.customerDebt.create"],
   "no.xoa": ["reportCustomer.customerDebt.delete"],  // Xoá nợ / điều chỉnh nợ: SalonHero chỉ Chủ có (câu 3, 03/11/2026)
@@ -49,14 +49,18 @@ export const QUYEN_TU_SH: Partial<Record<Quyen, string[]>> = {
 /** Quyền AMIA của một vai SalonHero, suy từ ma trận. */
 export function quyenTuSalonHero(vai: ShVai): Quyen[] {
   const m = SH_MA_TRAN[vai];
-  return (Object.entries(QUYEN_TU_SH) as [Quyen, string[]][]).filter(([, ks]) => ks.some((k) => m[k] === true)).map(([q]) => q);
+  const ds = (Object.entries(QUYEN_TU_SH) as [Quyen, string[]][]).filter(([, ks]) => ks.some((k) => m[k] === true)).map(([q]) => q);
+  // Xem hoá đơn toàn cơ sở = có pos.read và KHÔNG bị giới hạn "chỉ hoá đơn của mình" (pos.readByUser). Trước 15/11/2026 ánh xạ ngược
+  // (cần readByLoc bật) nên Quản lý, Kế toán, Thu ngân chỉ thấy hoá đơn chính mình lập (chị Diệu Thuý: "không xem được tổng hoá đơn").
+  if (m["pos.read"] === true && m["pos.readByUser.read"] !== true) ds.push("ban.toan_co_so");
+  return ds;
 }
 
 /** Hợp nhất: quyền AMIA-only (không có ánh xạ) giữ nguyên bản mặc định cũ; quyền có ánh xạ lấy THEO SalonHero (thêm cả bớt). */
 export function ganSalonHero(vt: VaiTro, macDinhCu: Quyen[]): Quyen[] {
   const vai = VAI_SH_CUA_AMIA[vt];
   if (!vai) return macDinhCu;
-  const coAnhXa = new Set(Object.keys(QUYEN_TU_SH) as Quyen[]);
+  const coAnhXa = new Set([...(Object.keys(QUYEN_TU_SH) as Quyen[]), "ban.toan_co_so" as Quyen]);
   const giu = macDinhCu.filter((q) => !coAnhXa.has(q));
   return [...new Set([...giu, ...quyenTuSalonHero(vai)])];
 }

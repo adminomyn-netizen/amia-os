@@ -175,7 +175,7 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
           <div className="the-noi flex items-start gap-3 border-l-[3px] border-l-nhan-dam p-3.5">
             <span aria-hidden className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-nho ${(KIEU_NHOM[noi.nhom] ?? KIEU_NHOM.khac).nen} ${(KIEU_NHOM[noi.nhom] ?? KIEU_NHOM.khac).chu}`}><Bell strokeWidth={1.8} className="h-[18px] w-[18px]" /></span>
             <span className="min-w-0 flex-1 text-[13.5px] leading-snug">
-              <span className="block font-semibold text-muc">{noi.ma === "lichonl" ? "Có lịch khách đặt online mới" : "Có việc mới đang chờ"}</span>
+              <span className="block font-semibold text-muc">{noi.ma === "lichonl" ? "Có lịch khách đặt online mới" : noi.ma === "lich" ? "Có lịch hẹn mới chờ xác nhận" : "Có việc mới đang chờ"}</span>
               <span className="mt-0.5 block text-muc-2">{noi.nhan}</span>
               <Link href={noi.href} onClick={() => { setNoi(null); thaoTac("doc", noi.ma); }} className="mt-1.5 inline-block font-medium text-nhan-dam hover:underline">Xem và xác nhận</Link>
             </span>

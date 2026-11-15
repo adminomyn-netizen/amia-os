@@ -29,7 +29,8 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     ? loc(db.from("lich_hen").select("bat_dau, khach_id").in("nguon", ["ONLINE", "WEB"]).eq("trang_thai", "chua_xac_nhan").gte("bat_dau", new Date().toISOString()).order("tao_luc", { ascending: false }).limit(300))
     : null;
   const [[lich, phieu, dem, no, phieuBuoi, buoiCho], nangCao, khieuNai, nhacCong, lead] = await Promise.all([Promise.all([
-    coQuyen(nd, "lich.xem") ? loc(db.from("lich_hen").select("id", { count: "exact", head: true }).gte("bat_dau", tu).lt("bat_dau", den).eq("trang_thai", "chua_xac_nhan")) : null,
+    // Lịch chưa xác nhận từ hôm nay trở đi (trước 15/11/2026 chỉ đếm hôm nay → lịch nhân viên/online đặt cho ngày mai không ai thấy để xác nhận).
+    coQuyen(nd, "lich.xem") ? loc(db.from("lich_hen").select("bat_dau, khach_id, nguon", { count: "exact" }).gte("bat_dau", tu).eq("trang_thai", "chua_xac_nhan").order("tao_luc", { ascending: false }).limit(300)) : null,
     coQuyen(nd, "phieu.xem") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"]).is("buoi_id", null)) : null,
     pDem,
     coQuyen(nd, "baocao.tien") ? loc(db.from("hoa_don").select("con_no").eq("trang_thai", "hoan_thanh").gt("con_no", 0)) : null,
@@ -39,7 +40,15 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     nd.nhanVienId && coQuyen(nd, "the.xem") ? db.from("buoi_cho_lam").select("id", { count: "exact", head: true }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "cho_lam") : null,
   ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay), rieng((a) => themCanhBaoLead(nd, a))]);
   const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
-  if ((lich?.count ?? 0) > 0) ra.push({ ma: "lich", nhan: `${lich!.count} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
+  // Lịch online đã có mục riêng "lichonl" → mục này chỉ đếm lịch đặt tại quầy / nhân viên tạo.
+  const dsLich = ((lich?.data ?? []) as { bat_dau: string; khach_id: string | null; nguon: string | null }[]).filter((l) => !["ONLINE", "WEB"].includes(l.nguon ?? ""));
+  if (dsLich.length) {
+    const homNayN = dsLich.filter((l) => l.bat_dau < den).length, moi = dsLich[0];
+    const { data: kh } = moi.khach_id ? await db.from("khach_hang").select("ho_ten").eq("id", moi.khach_id).maybeSingle() : { data: null };
+    const luc = new Date(moi.bat_dau).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
+    const xa = new Date(Math.max(...dsLich.map((l) => Date.parse(l.bat_dau))) + 7 * 3600e3).toISOString().slice(0, 10);
+    ra.push({ ma: "lich", nhan: `${dsLich.length} lịch chưa xác nhận từ hôm nay (hôm nay ${homNayN} · mới nhất: ${kh?.ho_ten ?? "khách"} · ${luc})`, href: `/lich-hen?tt=chua_xac_nhan&tu=${homNay}&den=${xa < homNay ? homNay : xa > congNgay(homNay, 30) ? congNgay(homNay, 30) : xa}` });
+  }
   const onl = ((await pOnl)?.data ?? []) as { bat_dau: string; khach_id: string | null }[];
   if (onl.length) {
     const moi = onl[0];

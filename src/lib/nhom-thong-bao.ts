@@ -11,7 +11,7 @@ export const NHOM_THONG_BAO: { ma: NhomThongBao; nhan: string }[] = [
 ];
 
 export function nhomCuaThongBao(ma: string): NhomThongBao {
-  if (ma === "lich") return "lich";
+  if (ma === "lich" || ma === "lichonl") return "lich";
   if (ma === "no" || ma === "hdv") return "hoa_don";
   if (ma === "the" || ma === "buoicho") return "the";
   return "khac";

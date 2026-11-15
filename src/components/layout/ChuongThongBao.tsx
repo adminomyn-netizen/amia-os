@@ -9,6 +9,18 @@ import { NHOM_THONG_BAO, type NhomThongBao } from "@/lib/nhom-thong-bao";
 type Muc = { ma: string; nhan: string; href: string; trang: "chua_doc" | "da_doc"; nhom: NhomThongBao };
 type KetQua = { ds: Muc[]; tatTieng?: boolean };
 
+/** Tiếng "ting" ngắn khi có việc mới (Web Audio, không cần tệp âm thanh). Trình duyệt chặn khi người dùng chưa chạm trang lần nào thì thôi. */
+function keuTing() {
+  try {
+    const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AC) return;
+    const ac = new AC(), o = ac.createOscillator(), g = ac.createGain();
+    o.type = "sine"; o.frequency.setValueAtTime(880, ac.currentTime); o.frequency.setValueAtTime(1320, ac.currentTime + 0.12);
+    g.gain.setValueAtTime(0.0001, ac.currentTime); g.gain.exponentialRampToValueAtTime(0.25, ac.currentTime + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + 0.45);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + 0.5); o.onended = () => void ac.close();
+  } catch { /* trình duyệt chặn */ }
+}
+
 /** Biểu tượng + màu nền theo nhóm, để nhìn lướt là biết loại việc (kiểu thông báo Facebook). */
 const KIEU_NHOM: Record<NhomThongBao, { Icon: LucideIcon; nen: string; chu: string }> = {
   lich: { Icon: CalendarClock, nen: "bg-nhan-nhat", chu: "text-nhan-dam" },
@@ -64,6 +76,9 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
   const [tatTieng, setTatTieng] = useState(false);
   const tatTiengRef = useRef(false);
   const truocDo = useRef<number | null>(null);
+  // Hộp nổi báo việc mới ngay trong phần mềm (chị Diệu Thuý 15/11/2026: lịch online phải báo ngay trong app, không bắt bật thông báo đẩy).
+  const [noi, setNoi] = useState<Muc | null>(null);
+  const daThay = useRef<Set<string> | null>(null);
   const trucRef = useRef(false);
   const goc = useRef<HTMLDivElement>(null);
   const lamMoi = useCallback((ep = false) => {
@@ -80,6 +95,18 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
         if (!tatTiengRef.current && typeof navigator !== "undefined" && "vibrate" in navigator) try { navigator.vibrate(120); } catch { /* trình duyệt chặn */ }
       }
       truocDo.current = chua;
+      // Việc chưa đọc MỚI xuất hiện (khoá = mã + nhãn, nhãn đổi khi có lịch mới) → hiện hộp nổi + "ting". Lần tải đầu chỉ ghi nhớ.
+      // Đầu trang máy tính và điện thoại cùng gắn chuông: chỉ bản đang hiển thị mới hiện hộp và kêu.
+      const khoa = new Set(moi.filter((m) => m.trang === "chua_doc").map((m) => `${m.ma}|${m.nhan}`));
+      if (daThay.current) {
+        const moiXuatHien = moi.filter((m) => m.trang === "chua_doc" && !daThay.current!.has(`${m.ma}|${m.nhan}`));
+        const hien = goc.current && goc.current.getClientRects().length > 0;
+        if (moiXuatHien.length && hien) {
+          setNoi(moiXuatHien.find((m) => m.ma === "lichonl") ?? moiXuatHien.find((m) => m.nhom === "lich") ?? moiXuatHien[0]);
+          if (!tatTiengRef.current) keuTing();
+        }
+      }
+      daThay.current = khoa;
     });
   }, []);
   useEffect(() => {
@@ -107,6 +134,11 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
     document.addEventListener("visibilitychange", hoiLai); window.addEventListener("online", hoiLai);
     return () => { clearTimeout(dau); clearTimeout(tre); clearInterval(t); document.removeEventListener("visibilitychange", hoiLai); window.removeEventListener("online", hoiLai); void sb.removeChannel(kenh); };
   }, [lamMoi]);
+  useEffect(() => {
+    if (!noi) return;
+    const t = setTimeout(() => setNoi(null), 15000);
+    return () => clearTimeout(t);
+  }, [noi]);
   useEffect(() => {
     if (!mo) return;
     const ngoai = (e: MouseEvent) => { if (goc.current && !goc.current.contains(e.target as Node)) setMo(false); };
@@ -138,6 +170,19 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
         <Bell strokeWidth={1.7} className="h-[21px] w-[21px]" />
         {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: `0 0 0 2px var(${toi ? "--menu" : "--giay-sang"})` }}>{n}</span>}
       </button>
+      {noi && !mo && (
+        <div role="alert" className="vao fixed right-4 top-[68px] z-[60] w-[340px] max-sm:inset-x-3 max-sm:w-auto">
+          <div className="the-noi flex items-start gap-3 border-l-[3px] border-l-nhan-dam p-3.5">
+            <span aria-hidden className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-nho ${(KIEU_NHOM[noi.nhom] ?? KIEU_NHOM.khac).nen} ${(KIEU_NHOM[noi.nhom] ?? KIEU_NHOM.khac).chu}`}><Bell strokeWidth={1.8} className="h-[18px] w-[18px]" /></span>
+            <span className="min-w-0 flex-1 text-[13.5px] leading-snug">
+              <span className="block font-semibold text-muc">{noi.ma === "lichonl" ? "Có lịch khách đặt online mới" : "Có việc mới đang chờ"}</span>
+              <span className="mt-0.5 block text-muc-2">{noi.nhan}</span>
+              <Link href={noi.href} onClick={() => { setNoi(null); thaoTac("doc", noi.ma); }} className="mt-1.5 inline-block font-medium text-nhan-dam hover:underline">Xem và xác nhận</Link>
+            </span>
+            <button type="button" onClick={() => setNoi(null)} aria-label="Đóng thông báo" className="text-muc-3 hover:text-muc"><X strokeWidth={2} className="h-4 w-4" /></button>
+          </div>
+        </div>
+      )}
       {mo && (
         // Lớp ngoài lo vị trí (máy tính: thả dưới chuông; điện thoại: cố định sát hai mép màn hình để không bị cắt bên trái), lớp trong là thẻ nổi.
         <div className="absolute right-0 top-full z-50 mt-2.5 w-[380px] max-sm:fixed max-sm:inset-x-3 max-sm:top-[60px] max-sm:mt-0 max-sm:w-auto">

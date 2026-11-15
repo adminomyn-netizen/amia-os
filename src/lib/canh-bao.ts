@@ -5,7 +5,7 @@ import { coQuyen, type CoQuyen } from "@/lib/quyen";
 import { layNhacCong } from "@/lib/nhac-cong";
 
 /** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
-export type CanhBao = { ma: "lich" | "phieu" | "phieu-buoi" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin" | "knai" | "bchung" | "lead" | "leadnhac" | "buoicho"; nhan: string; href: string };
+export type CanhBao = { ma: "lich" | "lichonl" | "phieu" | "phieu-buoi" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin" | "knai" | "bchung" | "lead" | "leadnhac" | "buoicho"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
 /** Cảnh báo nhân sự (hợp đồng lao động...) đã chuyển sang MSC Group OS: bỏ mọi mục trỏ vào /nhan-su. */
@@ -23,6 +23,11 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
   type Dem = { the_sap_het?: number; kho_duoi_muc?: number; kho_ton_am?: number };
   const pDem: Promise<Dem | null> = coQuyen(nd, "the.xem") || coQuyen(nd, "kho.xem")
     ? Promise.resolve(db.rpc("dem_canh_bao_nhanh", cn ? { p_cn: cn } : {})).then((r) => (r.data ?? {}) as Dem) : Promise.resolve(null);
+  // Lịch khách tự đặt online (web đặt lịch AMIA = ONLINE, SalonHero = WEB) còn "Chưa xác nhận", mọi ngày sắp tới (chị Diệu Thuý 15/11/2026:
+  // nhân sự phải thấy NGAY trong phần mềm để xác nhận, không cần bật thông báo đẩy). Nhãn kèm lịch mới nhất → có lịch mới là nhãn đổi = hiện lại "chưa đọc".
+  const pOnl = coQuyen(nd, "lich.xem")
+    ? loc(db.from("lich_hen").select("bat_dau, khach_id").in("nguon", ["ONLINE", "WEB"]).eq("trang_thai", "chua_xac_nhan").gte("bat_dau", new Date().toISOString()).order("tao_luc", { ascending: false }).limit(300))
+    : null;
   const [[lich, phieu, dem, no, phieuBuoi, buoiCho], nangCao, khieuNai, nhacCong, lead] = await Promise.all([Promise.all([
     coQuyen(nd, "lich.xem") ? loc(db.from("lich_hen").select("id", { count: "exact", head: true }).gte("bat_dau", tu).lt("bat_dau", den).eq("trang_thai", "chua_xac_nhan")) : null,
     coQuyen(nd, "phieu.xem") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"]).is("buoi_id", null)) : null,
@@ -35,6 +40,14 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
   ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay), rieng((a) => themCanhBaoLead(nd, a))]);
   const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
   if ((lich?.count ?? 0) > 0) ra.push({ ma: "lich", nhan: `${lich!.count} lịch hôm nay chưa xác nhận`, href: "/lich-hen" });
+  const onl = ((await pOnl)?.data ?? []) as { bat_dau: string; khach_id: string | null }[];
+  if (onl.length) {
+    const moi = onl[0];
+    const { data: kh } = moi.khach_id ? await db.from("khach_hang").select("ho_ten").eq("id", moi.khach_id).maybeSingle() : { data: null };
+    const luc = new Date(moi.bat_dau).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit", day: "2-digit", month: "2-digit" });
+    const denNgay = new Date(Math.max(...onl.map((l) => Date.parse(l.bat_dau))) + 7 * 3600e3).toISOString().slice(0, 10);
+    ra.push({ ma: "lichonl", nhan: `${onl.length} lịch khách đặt online chờ xác nhận (mới nhất: ${kh?.ho_ten ?? "khách"} · ${luc})`, href: `/lich-hen?tt=chua_xac_nhan&tu=${homNay}&den=${denNgay < homNay ? homNay : denNgay}` });
+  }
   if ((phieu?.count ?? 0) > 0) ra.push({ ma: "phieu", nhan: `${phieu!.count} phiếu cấp vật tư đang chờ kho cấp hoặc Chuyên viên trị liệu nhận`, href: "/phieu-cap" });
   if ((buoiCho?.count ?? 0) > 0) ra.push({ ma: "buoicho", nhan: `${buoiCho!.count} khách thu ngân chuyển cho bạn đang chờ làm`, href: "/the/cho-lam?tab=toi" });
   if ((phieuBuoi?.count ?? 0) > 0) ra.push({ ma: "phieu-buoi", nhan: `${phieuBuoi!.count} phiếu vật tư theo buổi chờ Chuyên viên trị liệu kiểm và xác nhận`, href: "/phieu-cap?tab=chot" });

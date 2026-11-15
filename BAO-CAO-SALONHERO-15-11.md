@@ -154,21 +154,24 @@ Ghi chú: thẻ M24820 có ở AMIA nhưng không còn trên SalonHero (đã bi�
 - 08:13 đang chạy: chép thô toàn bộ SalonHero ra `du-phong-salonhero-15-11/` (kho, voucher, hoa hồng, nhân viên, cài đặt, mẫu in…), xong sẽ so số với AMIA.
 - 08:2x XONG ghi chú khách (ghi chú riêng CS): SalonHero 13.686 khách / 141.731 ghi chú — AMIA thiếu 0, lệch 0, khách lấy lỗi 0 → **khớp 100%**.
 
-### ĐỢT 1 SỐ ĐÃ CHÉP (09:03) — file Excel: `amia-os/du-phong-salonhero-15-11/DOI-CHIEU-DOT-1.xlsx`
+### ĐỢT 1 SỐ ĐÃ CHÉP (09:09) — file Excel: `amia-os/du-phong-salonhero-15-11/DOI-CHIEU-DOT-1.xlsx`
 Dự phòng thô SalonHero (897MB JSON, chỉ đọc): `amia-os/du-phong-salonhero-15-11/` · bản Excel từng mục: `amia-os/du-phong-salonhero-15-11/excel/` (đang gộp JSON → xlsx, mỗi mảng 1 tệp).
 
 | Mục | SalonHero | AMIA OS | Lệch | Ghi chú |
 |---|---|---|---|---|
-| Khách hàng | 13.589 | 13.686 | 0 | mọi mã khách SH có trong AMIA (AMIA hơn 97 khách ngoài danh sách) |
+| Khách hàng | 13.589 | 13.776 | 0 | **xong**: mọi mã khách SH có trong AMIA (thêm 187 hồ sơ khách đã xoá trên SH nhưng còn đơn/lịch/nhắc, để ẩn) |
 | Ghi chú riêng CS | 141.731 | 141.731 | 0 | **xong** |
 | Thẻ thành viên | 12.788 | 12.788 | 0 | **xong** (AMIA giữ thêm thẻ đã xoá/hết) |
 | Loại thẻ | 348 | 348 | 0 | **xong** |
 | Hoá đơn (thanh toán + huỷ) | 82.697 | 82.697 | 0 | **xong**, khớp từng năm; 2.162 phiếu NHÁP không chép |
 | Dịch vụ / Người giới thiệu / Voucher / Chi nhánh | 247 / 78 / 0 / 2 | 247 / 78 / 0 / 2 | 0 | **xong** |
-| Lịch hẹn | 83.410 | 83.303 | 107 | 09:01 chép bù 1.067 lịch; 107 lịch còn lại của khách đã bị xoá trên SH |
-| Nhắc chăm sóc | 60.292 | 60.266 | 26 | 09:02 chép bù 30; 26 của khách đã xoá trên SH |
-| Nhóm khách / khách thuộc nhóm | 27 / 4.604 | 26 / 4.555 | 1 / 49 | đang chép bù |
-| Nhân viên | 25 | 23 | 2 | thiếu 2 CTV → đang chép bù |
-| Sản phẩm | 427 | 423 | 4 | thiếu 4 SP → đang chép bù |
-| Công nợ, kho nhập/xuất/tồn, sổ quỹ, điểm, hoa hồng, cài đặt in, đặt lịch online | xem Excel | | đang soát | cập nhật đợt 2 lúc 09:40 |
-Sao lưu trước khi ghi: `sao-luu/db-20261115-0900-bang-truoc-bu-lich-15-11`, `sao-luu/db-20261115-0901-bang-truoc-bu-nhac-15-11`.
+| Lịch hẹn | 83.410 | 83.410 | 0 | **xong 09:06**: chép bù 1.174 lịch 2020–2025 (107 lịch của 90 khách đã xoá trên SH → dựng lại hồ sơ khách) |
+| Nhắc chăm sóc | 60.292 | 60.292 | 0 | **xong 09:06**: chép bù 56 |
+| Nhóm khách / khách thuộc nhóm | 27 / 4.604 | 26 / 4.555 | 0 | **xong**: SH có LUXURY và Luxury trùng tên, AMIA gộp 1 nhóm (49 khách gắn cả hai) |
+| Nhân viên | 25 | 25 | 0 | **xong 09:04**: nối Bích Ngọc (NV0113); thêm BS partime Nguyễn Trọng Nhân (Đà Lạt, trạng thái nghỉ) |
+| Sản phẩm | 427 | 427 | 0 | **xong 09:04**: thêm 4 SP tạo trên SH 11/11 (đơn vị tạm 'Chai', kho xem lại) |
+| Công nợ khách (tiền) | 1.401.142.500 | 1.407.142.500 | 6.000.000 | 142/143 khách khớp từng đồng. Lệch 1: Hà Thị Mỹ Anh (AVI26006336), HĐ SH 26060591 ngày 20/06/2026 — SH đã trả đủ 6.000.000, AMIA còn ghi nợ 6.000.000. **Chờ chị duyệt, chưa sửa (tiền)** |
+| Kho nhập / xuất thủ công | 646 / 257 phiếu | 2.182 / 474 dòng | 0 | đã chép 29/10; SH không có phiếu nhập/xuất thủ công mới sau 29/10; 24 dòng xuất của SP đã xoá trên SH không chép |
+| Tồn kho, sổ quỹ, điểm, hoa hồng, cài đặt in, đặt lịch online, ảnh khách | xem Excel | | đang soát | cập nhật đợt 2 lúc 09:40 |
+Sao lưu trước khi ghi: `sao-luu/db-20261115-0900-bang-truoc-bu-lich-15-11`, `…0901…-truoc-bu-nhac-15-11`, `…0903…-truoc-bu-nhom-sp-nv-15-11`, `…0905…-truoc-kh-xoa-15-11`.
+Excel dự phòng: 81 tệp trong `amia-os/du-phong-salonhero-15-11/excel/` (99MB, mỗi mảng 1 tệp: khách, thẻ, hoá đơn từng năm, lịch hẹn từng năm, nhắc, kho, nhân viên, cài đặt in…).

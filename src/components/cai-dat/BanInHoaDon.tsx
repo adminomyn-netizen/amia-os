@@ -79,7 +79,7 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
       ] as [string, string][]).filter(([, v]) => v)
     : [];
   return (
-    <div className={`to-in mx-auto bg-white text-muc ${nho} ${cuon ? "px-2 py-3" : "px-6 py-8"}`} style={{ width: "100%", maxWidth: BE_NGANG[cfg.khoGiay] }}>
+    <div className={`to-in mx-auto bg-white text-muc ${nho} ${cuon ? "px-2 py-3" : "px-6 py-8 print:px-0 print:py-0"}`} style={{ width: "100%", maxWidth: BE_NGANG[cfg.khoGiay] }}>
       <header className="text-center">
         {cfg.logo && (
           // eslint-disable-next-line @next/next/no-img-element
@@ -157,8 +157,8 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
           {cfg.ghiChu && d.ghiChu && <p className={lop("mt-3 text-muc-2")}>{c.ghiChu}: {d.ghiChu}</p>}
           {cfg.chuKyKhach && (
             <div className={`mt-5 grid grid-cols-2 gap-4 text-center ${phu}`}>
-              <div><p className="font-medium">{c.khachHang}</p><div className="h-14 border-b border-dashed border-vien-dam" /></div>
-              <div><p className="font-medium">{c.daiDien}</p><div className="h-14 border-b border-dashed border-vien-dam" /></div>
+              <div><p className="font-medium">{c.khachHang}</p><div className="h-14 print:h-10 border-b border-dashed border-vien-dam" /></div>
+              <div><p className="font-medium">{c.daiDien}</p><div className="h-14 print:h-10 border-b border-dashed border-vien-dam" /></div>
             </div>
           )}
           {cfg.cauKhongHoanLai?.trim() && <p className={`mt-4 whitespace-pre-line text-center ${phu}`}>{cfg.cauKhongHoanLai}</p>}
@@ -176,14 +176,14 @@ export function BanInHoaDon({ cfg, d }: { cfg: CauHinhIn; d: DuLieuIn }) {
         <div className="mt-4 text-center">
           {d.qrAnh ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={d.qrAnh} alt="Mã QR thanh toán" className="mx-auto h-32 w-32" />
+            <img src={d.qrAnh} alt="Mã QR thanh toán" className="mx-auto h-32 w-32 print:h-24 print:w-24" />
           ) : (
             <div className="mx-auto flex h-24 w-24 items-center justify-center border border-dashed border-vien-dam text-[11px] text-muc-3">{d.xemMau ? c.maQr : c.chuaQr}</div>
           )}
           {cfg.qrChuTk && <p className={lop("mt-1 text-muc-2")}>{cfg.qrNganHang} · {cfg.qrChuTk}</p>}
         </div>
       )}
-      {cfg.noiDungCuoi.trim() && <p className={`mt-6 whitespace-pre-line text-center text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>{cfg.noiDungCuoi}</p>}
+      {cfg.noiDungCuoi.trim() && <p className={`mt-6 print:mt-3 whitespace-pre-line text-center text-muc-3 ${cuon ? "text-[10px]" : "text-[12px]"}`}>{cfg.noiDungCuoi}</p>}
     </div>
   );
 }

@@ -16,7 +16,8 @@ import { NgayChon } from "@/components/ui/NgayChon";
 import { NutHop } from "@/components/ui/BieuMau";
 import { TRUONG_CAP_THE } from "../../the/page";
 import { NhanTinhTrangThe } from "@/components/the/NhanTinhTrangThe";
-import { capTheTay, suaThe, thuHoiThe } from "../../the/actions";
+import { capTheTay, giaHanNhieuThe, suaThe, thuHoiThe } from "../../the/actions";
+import { GiaHanHangLoat, OChonThe } from "@/components/the/GiaHanHangLoat";
 
 const MOI_TRANG = 50;
 const KHONG_GIOI_HAN = 999999;
@@ -114,8 +115,10 @@ export default async function KhachDungThe({ searchParams }: { searchParams: Pro
 
       {loiDs && <p role="alert" className="rounded-nho bg-loi-nen px-3 py-2.5 text-[14px] text-loi">Chưa tải được danh sách (hệ thống đang chậm). Tải lại trang để thử lại.</p>}
       <p className="text-[13px] text-muc"><b className="tabular-nums">{soVN(tong)}</b> thẻ{ttHienTai && f.tt ? ` · ${ttHienTai}` : " đang dùng"}{cn ? ` · ${tenCn.get(cn) ?? ""}` : ""}{f.nhom ? ` · nhóm ${tenNhom.get(f.nhom) ?? ""}` : ""}</p>
+      {choCap && ds.length > 0 && <GiaHanHangLoat action={giaHanNhieuThe} />}
       <Bang noi duLieu={ds} khoa={(r) => r.id ?? ""} trong="Không có thẻ nào với điều kiện này."
         cot={[
+          ...(choCap ? [{ nhan: "", hienThi: (r: (typeof ds)[number]) => (r.trang_thai !== "thu_hoi" && r.id ? <OChonThe id={r.id} ma={r.ma ?? ""} /> : null) }] : []),
           { chinh: true, nhan: "Khách hàng", hienThi: (r) => { const k = khach.get(r.khach_id ?? ""); return k ? <div><Link href={`/khach-hang/${k.id}`} className="font-medium text-muc hover:underline">{k.ho_ten}</Link><div className="text-[12px] tabular-nums text-muc-3">{k.dien_thoai} · {k.ma}</div></div> : ""; } },
           { nhan: "Tên thẻ", hienThi: (r) => <div className="text-[13px]"><Link href={`/the/${r.id}`} className="font-medium text-nhan-dam hover:underline">{r.ma}</Link> <span className="text-muc-3">· {r.loai === "tien" ? "Thẻ tiền" : "Thẻ lần"}</span><div className="text-muc-3">{tenGoi.get(r.goi_id ?? "") ?? ""}</div></div> },
           { nhan: "Ngày cấp", hienThi: (r) => <span className="tabular-nums">{ngayVN(r.ngay_cap)}</span> },

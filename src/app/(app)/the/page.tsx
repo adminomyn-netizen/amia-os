@@ -10,7 +10,7 @@ import { layBoSungThe } from "@/lib/the-bo-sung";
 import { NutSuaThe } from "@/components/the/NutSuaThe";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
-import { capTheTay, duKienHanThe, thucHienBuoi } from "./actions";
+import { capTheTay, duKienHanThe, giaHanNhieuThe, thucHienBuoi } from "./actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 
 /** Các ô của hộp Cấp thẻ tay (SalonHero "Cấp thẻ mới"): số lần / số tiền trong thẻ + đã dùng ban đầu, ngày cấp, hạn (trống = tự tính theo loại thẻ), số lượng cấp, lý do.
@@ -93,6 +93,7 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
               buoiCon: Number(r.so_buoi_con ?? 0), buoiTong: r.so_buoi_tong == null ? null : Number(r.so_buoi_tong), soDu: Number(r.so_du_tien ?? 0), tongTien: r.tong_tien == null ? null : Number(r.tong_tien),
               ngayCap: r.ngay_cap, han: r.han_dung, khach: k ? { id: k.id, ten: k.ho_ten, ma: k.ma } : null, lanGan: bs.lanGan(r.id ?? ""), lichToi: bs.lichToi(r.khach_id), phuTrach: bs.phuTrach(r.khach_id) }}
               nut={<>{tab === "lan" && coQuyen(nd, "the.thuchien") && (r.tinh_trang === "hoat_dong" || r.tinh_trang === "sap_het") ? <NutBuoi theId={r.id ?? ""} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvCuaGoi(r.goi_id)} goiId={r.goi_id} tenThe={tenGoi.get(r.goi_id ?? "") ?? r.ma ?? ""} buoiCon={Number(r.so_buoi_con ?? 0)} buoiTong={r.so_buoi_tong == null ? null : Number(r.so_buoi_tong)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
+              {suaDuoc && r.trang_thai !== "thu_hoi" && <NutHop kieu="chu" nhan="Gia hạn" tieuDe={`Gia hạn thẻ ${r.ma ?? ""}`} moTa="Đặt ngày hết hạn mới cho thẻ. Không đổi số buổi / số dư / tiền. Ghi vào Lịch sử thẻ." an={{ ids: r.id ?? "" }} giaTri={{ han_moi: r.han_dung ?? "" }} truong={[{ ten: "han_moi", nhan: "Ngày hết hạn mới", loai: "ngay", batBuoc: true }, { ten: "ly_do", nhan: "Lý do (không bắt buộc)", loai: "chu", rong: true }]} nhanLuu="Gia hạn thẻ" action={giaHanNhieuThe} />}
               {suaDuoc && r.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: r.id ?? "", ma: r.ma ?? "", loai: r.loai ?? "lan", han_dung: r.han_dung, gia_tri_buoi: r.gia_tri_buoi, ghi_chu: r.ghi_chu }} maKhach={k?.ma ?? ""} nhan="Sửa" />}</>} />
           ); })}
         </LuoiThe>

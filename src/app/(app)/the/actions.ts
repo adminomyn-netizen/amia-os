@@ -250,3 +250,29 @@ export async function capTheTay(fd: FormData): Promise<KQ> {
   lamMoi(); revalidatePath("/khach-hang/dung-the");
   return { ok: true };
 }
+
+/** Gia hạn hàng loạt (SalonHero #/membercards: tích chọn nhiều thẻ → "Gia hạn thẻ" → nhập ngày hết hạn mới, updateMultipleMembercards).
+ *  Chỉ đổi hạn thẻ (qua sua_the, mỗi thẻ ghi 1 dòng Lịch sử thẻ); không đụng số buổi / số dư / tiền. Bỏ qua thẻ đã thu hồi hoặc ngoài chi nhánh. */
+export async function giaHanNhieuThe(fd: FormData): Promise<KQ & { soThe?: number }> {
+  const nd = await kiemQuyen("the.dieuchinh");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const ids = [...new Set(fd.getAll("ids").map(String).filter(Boolean))].slice(0, 200);
+  if (!ids.length) return { loi: "Bạn chưa tích chọn thẻ nào." };
+  const han = chuoi(fd, "han_moi");
+  if (!NGAY.test(han)) return { loi: "Chọn ngày hết hạn mới." };
+  const db = sb();
+  let q = db.from("the_khach").select("id, chi_nhanh_id, han_dung, trang_thai").in("id", ids);
+  if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  const { data: ds, error: e0 } = await q;
+  if (e0) return { loi: thongBaoLoi(e0) };
+  const lyDo = (chuoi(fd, "ly_do") || "Gia hạn hàng loạt").slice(0, 300);
+  let soThe = 0;
+  for (const t of ds ?? []) {
+    if (t.trang_thai === "thu_hoi" || t.han_dung === han) continue;
+    const { error } = await db.rpc("sua_the", { p_the: t.id, p_nguoi: nd.nhanVienId, p_doi_han: true, p_han: han, p_doi_chu: false, p_doi_gia: false, p_doi_ghi_chu: false, p_ly_do: lyDo });
+    if (error) return { loi: `Đã gia hạn ${soThe} thẻ, lỗi ở thẻ tiếp theo: ${thongBaoLoi(error)}` };
+    soThe++; revalidatePath(`/the/${t.id}`);
+  }
+  revalidatePath("/the"); revalidatePath("/khach-hang/dung-the");
+  return { ok: true, soThe };
+}

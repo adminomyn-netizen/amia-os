@@ -16,7 +16,7 @@ import { KhoiThe, LuoiThe } from "@/components/the/KhoiThe";
 import { NutBuoi, NutNhieuThe } from "@/components/the/NutBuoi";
 import { layBoSungThe } from "@/lib/the-bo-sung";
 import { NutSuaThe } from "@/components/the/NutSuaThe";
-import { thucHienBuoi } from "../../the/actions";
+import { giaHanNhieuThe, thucHienBuoi } from "../../the/actions";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { TaiAnh } from "@/components/khach/TaiAnh";
 import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
@@ -234,6 +234,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
                 buoiCon: Number(x.so_buoi_con ?? 0), buoiTong: x.so_buoi_tong == null ? null : Number(x.so_buoi_tong), soDu: Number(x.so_du_tien ?? 0), tongTien: x.tong_tien == null ? null : Number(x.tong_tien),
                 ngayCap: x.ngay_cap, han: x.han_dung, lanGan: bsThe.lanGan(x.id ?? ""), lichToi: bsThe.lichToi(x.khach_id), phuTrach: bsThe.phuTrach(x.khach_id) }}
                 nut={<>{dungBuoi && x.loai === "lan" && (x.tinh_trang === "hoat_dong" || x.tinh_trang === "sap_het") ? <NutBuoi theId={x.id ?? ""} nhanVien={nvBuoi} bacSi={bsBuoi} dichVu={dvCuaGoi(x.goi_id)} goiId={x.goi_id} tenThe={tenThe(x)} buoiCon={Number(x.so_buoi_con ?? 0)} buoiTong={x.so_buoi_tong == null ? null : Number(x.so_buoi_tong)} action={thucHienBuoi} truTrucTiep={duocTruBuoiTrucTiep(nd)} /> : null}
+                {suaThe && x.trang_thai !== "thu_hoi" && <NutHop kieu="chu" nhan="Gia hạn" tieuDe={`Gia hạn thẻ ${x.ma ?? ""}`} moTa="Đặt ngày hết hạn mới cho thẻ. Không đổi số buổi / số dư / tiền. Ghi vào Lịch sử thẻ." an={{ ids: x.id ?? "" }} giaTri={{ han_moi: x.han_dung ?? "" }} truong={[{ ten: "han_moi", nhan: "Ngày hết hạn mới", loai: "ngay", batBuoc: true }, { ten: "ly_do", nhan: "Lý do (không bắt buộc)", loai: "chu", rong: true }]} nhanLuu="Gia hạn thẻ" action={giaHanNhieuThe} />}
                 {suaThe && x.trang_thai !== "thu_hoi" && <NutSuaThe t={{ id: x.id ?? "", ma: x.ma ?? "", loai: x.loai ?? "lan", han_dung: x.han_dung, gia_tri_buoi: x.gia_tri_buoi, ghi_chu: x.ghi_chu }} maKhach={k.ma ?? ""} nhan="Sửa" />}</>} />
             ))}
           </LuoiThe>

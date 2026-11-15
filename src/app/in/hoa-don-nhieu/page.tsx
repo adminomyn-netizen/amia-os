@@ -21,7 +21,7 @@ export default async function InNhieuHoaDon({ searchParams }: { searchParams: Pr
   const giay = coIn[0]?.cfg.khoGiay ?? "A5";
   return (
     <main data-theme="light" className="mx-auto bg-white text-muc">
-      <style>{`@media print{@page{size:${KHO_CUON(giay) ? `${giay.replace("mm", "")}mm auto` : giay};margin:${KHO_CUON(giay) ? "2mm" : "12mm"}}.ban-in+.ban-in{break-before:page}}`}</style>
+      <style>{`@media print{@page{size:${KHO_CUON(giay) ? `${giay.replace("mm", "")}mm auto` : giay};margin:${KHO_CUON(giay) ? "2mm" : "8mm 8mm 8mm 14mm"}}.ban-in+.ban-in{break-before:page}}`}</style>
       <div className="khong-in mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-3 px-6 pt-8">
         <p className="text-[12.5px] text-muc-3">{coIn.length} hoá đơn · khổ giấy {giay}{boQua > 0 ? ` · bỏ qua ${boQua} đơn chưa hoàn thành (Thiết lập in chỉ cho in đơn hoàn thành)` : ""}{ids.length > ds.length ? ` · ${ids.length - ds.length} đơn không xem được` : ""}</p>
         {coIn.length > 0 && <NutIn kho={giay} />}

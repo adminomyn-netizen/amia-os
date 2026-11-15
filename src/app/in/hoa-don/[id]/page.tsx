@@ -20,8 +20,8 @@ export default async function InHoaDon({ params, searchParams }: { params: Promi
   const giay = cfg.khoGiay;
   return (
     <main data-theme="light" className="mx-auto bg-white text-muc">
-      <style>{`@media print{@page{size:${KHO_CUON(giay) ? `${giay.replace("mm", "")}mm auto` : giay};margin:${KHO_CUON(giay) ? "2mm" : "8mm"}}.ban-in+.ban-in{break-before:page}}`}</style>
-      {/* Khổ A4/A5: tờ dài hơn 1 trang thì tự thu nhỏ vừa đúng 1 trang khi in (chị Flora 15/11/2026: "Mẫu A5 co 1 tờ"). */}
+      <style>{`@media print{@page{size:${KHO_CUON(giay) ? `${giay.replace("mm", "")}mm auto` : giay};margin:${KHO_CUON(giay) ? "2mm" : "8mm 8mm 8mm 14mm"}}.ban-in+.ban-in{break-before:page}}`}</style>
+      {/* Lề trái 14mm: máy in quầy cắt mất chữ mép trái khi lề 8mm (chị Thuý 15/11/2026). Khổ A4/A5: tờ dài hơn 1 trang thì tự thu nhỏ vừa đúng 1 trang khi in (chị Flora 15/11/2026: "Mẫu A5 co 1 tờ"). */}
       {!KHO_CUON(giay) && <script dangerouslySetInnerHTML={{ __html: `(function(){var mm=${giay === "A4" ? 281 : 194};function co(){var px=mm*96/25.4*0.97;document.querySelectorAll(".ban-in").forEach(function(e){e.style.zoom="";var h=e.getBoundingClientRect().height;if(h>px)e.style.zoom=String(Math.floor(px/h*1000)/1000);});}function tra(){document.querySelectorAll(".ban-in").forEach(function(e){e.style.zoom="";});}window.addEventListener("beforeprint",co);window.addEventListener("afterprint",tra);var m=window.matchMedia&&window.matchMedia("print");if(m&&m.addEventListener)m.addEventListener("change",function(x){x.matches?co():tra();});})();` }} />}
       <div className="khong-in mx-auto mb-4 flex max-w-[760px] items-center justify-between gap-3 px-6 pt-8">
         <p className="text-[12.5px] text-muc-3">Khổ giấy {giay}{cfg.banSao > 0 ? ` · in ${cfg.banSao + 1} bản` : ""} (đổi ở Cài đặt › Thiết lập in)</p>

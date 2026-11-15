@@ -47,6 +47,7 @@ export default async function ChiTietDonMua({ params }: { params: Promise<{ id: 
           {duyet && don.trang_thai === "cho_duyet" && <NutNhanh chinh nhan="Duyệt đơn" action={duyetDonMua} du={{ don_id: id }} />}
           {duyet && don.trang_thai === "cho_duyet" && <NutHop kieu="phu" nhan="Từ chối" tieuDe="Từ chối đơn mua" truong={lyDo("Lý do từ chối")} action={tuChoiDonMua} an={{ don_id: id }} nhanLuu="Từ chối" />}
           {duocNhan && <NhanHangForm donId={id} action={nhanHangDonMua} dong={(dong ?? []).filter((d) => Number(d.da_nhan) < Number(d.so_luong)).map((d) => ({ id: d.id, ten: tenSp.get(d.san_pham_id)?.ten ?? "", don_vi: tenSp.get(d.san_pham_id)?.don_vi ?? "", con: Number(d.so_luong) - Number(d.da_nhan) }))} />}
+          {["dang_nhan", "da_nhan"].includes(don.trang_thai) && <a href={`/in/phieu-nhap-ncc/${id}`} target="_blank" rel="noopener" className="inline-flex h-10 items-center rounded-nho border border-vien-dam px-4 text-[14px] font-medium text-muc-2 hover:bg-giay-tram">In phiếu nhập (công nợ NCC)</a>}
           {tao && ["nhap", "cho_duyet", "da_duyet"].includes(don.trang_thai) && <NutHop kieu="chu" nguy nhan="Huỷ đơn" tieuDe="Huỷ đơn mua" truong={lyDo("Lý do huỷ")} action={huyDonMua} an={{ don_id: id }} nhanLuu="Huỷ đơn" />}
         </TieuDeNoi>
       </div>

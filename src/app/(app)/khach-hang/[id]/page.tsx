@@ -23,6 +23,7 @@ import { AnhCuLuuTru } from "@/components/khach/AnhCuLuuTru";
 import { LuoiAnh } from "@/components/khach/LuoiAnh";
 import { NhanNhom } from "@/components/khach/DanhSachKhach";
 import { LichSuGiaoDich, type ThamSoLichSu } from "@/components/khach/LichSuGiaoDich";
+import { LichHenKhach } from "@/components/khach/LichHenKhach";
 import { thamSoBaoHanh, thangTron, tinhBaoHanh, LOAI_KN, TT_BC, TT_KN } from "@/lib/khieu-nai";
 import { truongBaoBatThuong, truongKhieuNai } from "@/lib/khieu-nai-form";
 import { baoBienChung, ghiBaoHanh, ghiKhieuNai } from "../../khieu-nai/actions";
@@ -49,7 +50,7 @@ const NHAN_TT_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "the", ten: "Thẻ dịch vụ" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "lich-hen", ten: "Lịch hẹn" }, { ma: "the", ten: "Thẻ dịch vụ" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 /** Mỗi trang lịch sử điểm thưởng. */
 const DIEM_MOI_TRANG = 50;
@@ -249,7 +250,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     ];
     noiDung = (
       <>
-        <h3 className="mb-3 text-[14px] font-medium text-muc">Ghi chú điều trị</h3>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="text-[14px] font-medium text-muc">Ghi chú điều trị</h3>{(gc ?? []).length > 0 && <Link href={`/in/ghi-chu-khach/${id}`} target="_blank" className="flex h-9 items-center rounded-nho border border-vien-dam px-3.5 text-[13px] font-medium text-muc-2 hover:bg-giay-tram">In ghi chú</Link>}</div>
         {duocThemGhiChu(nd) && <div className="mb-5"><NutHop nhan="+ Thêm ghi chú" tieuDe="Thêm ghi chú điều trị" moTa="Ghi chú điều trị, chăm sóc của khách. Ghi sai thì bấm Sửa ở ghi chú đó." rong truong={tr} an={{ khach_id: id }} action={luuGhiChu} /></div>}
         {(gc ?? []).length === 0 && <p className="chu-tieu-de py-10 text-center text-[22px] text-muc-3">Chưa có ghi chú điều trị.</p>}
         <ol className="space-y-5">
@@ -284,6 +285,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     );
   } else if (tab === "lich-su") {
     noiDung = <LichSuGiaoDich khachId={id} t={sp} />;
+  } else if (tab === "lich-hen") {
+    noiDung = <LichHenKhach khachId={id} tatCa={(sp as { lh?: string }).lh === "tat-ca"} />;
   } else if (tab === "tu-van") {
     const [{ data: pv }, { data: dvTv }] = await Promise.all([
       db.from("phieu_tu_van").select("*").eq("khach_id", id).order("ngay_tu_van", { ascending: false }).order("tao_luc", { ascending: false }).limit(50),
@@ -544,6 +547,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
             {coQuyen(nd, "ban.tao") && <Link href={`/ban-hang?khach=${id}`} className="nut-vang flex h-9 items-center rounded-nho px-3.5 text-[13px]">Tạo đơn</Link>}
             <Link href={`/in-ma-khach/${id}`} target="_blank" className={NUT_LIEN_KET}>In mã</Link>
             <Link href={`/in-ma-khach/${id}?kieu=phieu`} target="_blank" className={NUT_LIEN_KET}>In phiếu</Link>
+            {coQuyen(nd, "khach.sdt") && /^0\d{8,10}$/.test((k.zalo || k.dien_thoai) ?? "") && <a href={`https://zalo.me/${(k.zalo || k.dien_thoai) ?? ""}`} target="_blank" rel="noopener noreferrer" className={NUT_LIEN_KET}>Nhắn Zalo</a>}
             {sua && <NutHop kieu="phu" nhan={k.danh_dau_mat ? "Bỏ đánh dấu mất" : "Đánh dấu đã mất"} tieuDe="Đánh dấu khách" xacNhan={k.danh_dau_mat ? "Đưa khách trở lại luồng chăm sóc?" : "Khách không còn quay lại? Trạng thái sẽ là 'Đã mất' cho tới khi bỏ đánh dấu."} an={{ id, mat: k.danh_dau_mat ? "0" : "1" }} nhanLuu="Xác nhận" action={danhDauMat} />}
             {coQuyen(nd, "khach.nhap") && <NutHop kieu="phu" nhan="Điểm" tieuDe={`Chỉnh điểm thưởng: ${k.ho_ten}`} moTa={`Số dư hiện tại ${soVN(kx?.diem_so_du ?? 0)} điểm. Sổ điểm chỉ thêm dòng: nhập số dương để cộng, số âm để trừ.`} truong={[{ ten: "so_diem", nhan: "Số điểm (+ cộng, − trừ)", loai: "chu", batBuoc: true, goiY: "vd 50 hoặc -50" }, { ten: "ly_do", nhan: "Lý do", loai: "nhieu_dong", batBuoc: true }]} an={{ khach_id: id }} nhanLuu="Ghi điểm" action={suaDiemKhach} />}
             {coQuyen(nd, "khach.nhap") && <NutHop kieu="phu" nguy nhan="Xoá" tieuDe={`Xoá khách ${k.ho_ten}`} xacNhan="Chỉ xoá được khách nhập nhầm (chưa có hoá đơn, lịch, thẻ, ảnh, ghi chú điều trị). Xoá rồi không khôi phục được. Tiếp tục?" an={{ id }} nhanLuu="Xoá khách" action={xoaKhach} />}

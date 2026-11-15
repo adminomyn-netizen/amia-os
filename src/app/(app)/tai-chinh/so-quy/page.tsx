@@ -108,6 +108,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
         <div className="mt-5 flex flex-wrap items-center gap-3">
           <LocSoQuy goc={goc} loai={sp.loai ?? ""} pl={sp.pl ?? ""} da={sp.da === "1"} q={sp.q ?? ""} phanLoai={(loaiTC ?? []).map((l) => l.ten)} quyKia={tab === "ngan-hang" ? "quỹ tiền mặt" : "quỹ ngân hàng"} />
           <a href={`/api/xuat/so-quy?quy=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>
+          <a href={`/in/so-quy?quy=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} target="_blank" rel="noopener" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In sổ quỹ</a>
         </div>
         <div className="mt-3">
           <Bang noi duLieu={ds} khoa={(r) => r.id ?? ""} trong="Chưa có giao dịch nào trong bộ lọc này."

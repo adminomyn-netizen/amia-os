@@ -57,6 +57,7 @@ export async function DanhSachPhieuKho({ nd, huong, sp, nut }: { nd: NguoiDung; 
             ...(huong === "xuat" || rows.some((r) => r.ncc) ? [{ nhan: "Nhà cung cấp", hienThi: (r: (typeof rows)[number]) => r.ncc ?? "" }] : []),
             { nhan: "Phân loại", hienThi: (r) => r.phan_loai }, { nhan: "Tình trạng", hienThi: (r) => <NhanTrangThai kieu={KIEU_TT[r.tinh_trang] ?? "tram"}>{r.tinh_trang}</NhanTrangThai> },
             { nhan: "Chi nhánh", hienThi: (r) => r.chi_nhanh ?? "" }, { nhan: "Tổng tiền", phai: true, hienThi: (r) => tienVN(r.tong_tien) },
+            { nhan: "", hienThi: (r) => (r.tinh_trang === "Hoàn thành" ? <a href={`/in/phieu-kho?ma=${encodeURIComponent(r.ma)}&cn=${r.chi_nhanh_id}`} target="_blank" rel="noopener" className="text-[13px] font-medium text-nhan-dam hover:underline">In phiếu</a> : null) },
           ]} />
       </div>
       <ThanhTrang trang={trang} tong={tong.dong} moi={MOI_TRANG} gan={(t) => `${goc}?${thamSo({ trang: t ? String(t) : undefined })}`} don="phiếu" />

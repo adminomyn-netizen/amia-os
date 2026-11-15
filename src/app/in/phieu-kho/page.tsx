@@ -4,7 +4,7 @@ import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN, soVN } from "@/lib/dinh-dang";
 import { BangIn, khoGiayIn, ToInChung } from "@/components/in/ToInChung";
 
-const MA = /^(?:PN|PX|XL|XK|NB|NK)\d{1,12}$/;
+const MA = /^(?:PN|PX|XL|XK|NB|NK)\d{1,20}$/;
 const NHAN_LOAI: Record<string, string> = { nhap: "Nhập", tra_ncc: "Trả NCC", hao_hut: "Xuất huỷ", xuat_khan: "Xuất khẩn cấp", xuat_noi_bo: "Sang kho nội bộ", cap_ca: "Xuất tiêu hao", tra_ca: "Trả về", dieu_chinh: "Điều chỉnh" };
 
 /** In phiếu nhập kho / phiếu xuất kho (SalonHero nút In phiếu ở từng phiếu): các dòng sổ kho cùng mã phiếu như Kho › Phiếu nhập / Phiếu xuất gom (mã PN…/PX… từ SalonHero, XL/XK/NB lập ở AMIA, NK<số dòng> cho lần nhập tay).

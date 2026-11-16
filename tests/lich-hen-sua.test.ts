@@ -4,15 +4,10 @@ import { dongThayDoi } from "@/lib/lich-hen-lich-su";
 import { MAU_TRANG_THAI } from "@/lib/lich-hen";
 
 describe("quyền sửa lịch hẹn (chị Lâm 10/11)", () => {
-  it("người tạo sửa được lịch của mình, người khác thì không", () => {
+  it("ai có quyền sửa lịch đều sửa được mọi lịch (16/11)", () => {
     expect(quyenSuaLich({ vaiTro: "le_tan", nhanVienId: "a" }, { tao_boi: "a" }).duoc).toBe(true);
-    const k = quyenSuaLich({ vaiTro: "le_tan", nhanVienId: "b" }, { tao_boi: "a" });
-    expect(k.duoc).toBe(false);
-    expect(k.lyDo).toContain("người tạo lịch hoặc quản lý");
-  });
-  it("quản lý / chủ / kỹ thuật sửa mọi lịch, kể cả lịch không có người tạo (đồng bộ)", () => {
-    for (const v of ["quan_ly", "chu", "ky_thuat"]) expect(quyenSuaLich({ vaiTro: v, nhanVienId: "x" }, { tao_boi: null }).duoc).toBe(true);
-    expect(quyenSuaLich({ vaiTro: "thu_ngan", nhanVienId: "x" }, { tao_boi: null }).duoc).toBe(false);
+    expect(quyenSuaLich({ vaiTro: "ktv", nhanVienId: "b" }, { tao_boi: "a" }).duoc).toBe(true);
+    for (const v of ["quan_ly", "chu", "thu_ngan", "tu_van"]) expect(quyenSuaLich({ vaiTro: v, nhanVienId: "x" }, { tao_boi: null }).duoc).toBe(true);
   });
 });
 

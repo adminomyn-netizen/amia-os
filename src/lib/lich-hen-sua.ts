@@ -5,11 +5,10 @@ export const VAI_QUAN_LY_LICH = ["chu", "ky_thuat", "quan_ly"] as const;
 export const laQuanLyLich = (vaiTro: string) => (VAI_QUAN_LY_LICH as readonly string[]).includes(vaiTro);
 export const LY_DO_KHONG_SUA = "Chỉ người tạo lịch hoặc quản lý được sửa";
 
-/** Người tạo lịch sửa được lịch của mình; quản lý sửa được mọi lịch. Lịch không có người tạo (đồng bộ SalonHero, đặt online) chỉ quản lý sửa. */
-export function quyenSuaLich(nd: { vaiTro: string; nhanVienId: string }, lich: { tao_boi: string | null }): { duoc: boolean; lyDo?: string } {
-  if (laQuanLyLich(nd.vaiTro)) return { duoc: true };
-  if (lich.tao_boi && lich.tao_boi === nd.nhanVienId) return { duoc: true };
-  return { duoc: false, lyDo: LY_DO_KHONG_SUA };
+/** Ai có quyền "lich.sua" đều sửa được MỌI lịch, kể cả lịch người khác tạo / đồng bộ SalonHero / đặt online (chị Lâm 16/11/2026: "sửa cả ngày cả giờ, các thông tin trong lịch hẹn sửa hết").
+ *  Nơi gọi đã chặn quyền "lich.sua"; trường khoá theo trạng thái / hoá đơn vẫn giữ (khoaSuaLich), mọi lần sửa vẫn ghi lịch sử. */
+export function quyenSuaLich(_nd: { vaiTro: string; nhanVienId: string }, _lich: { tao_boi: string | null }): { duoc: boolean; lyDo?: string } {
+  return { duoc: true };
 }
 
 /** Trạng thái còn sửa được hết (chưa phục vụ). */

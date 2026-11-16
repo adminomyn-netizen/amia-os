@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { X } from "lucide-react";
+import { createPortal } from "react-dom";
 
 /** Thông tin có sẵn trên thẻ lưới: hiện ngay khi bấm, trong lúc máy chủ dựng phần chi tiết đầy đủ. */
 type Tom = { ten: string; gio: string; trangThai: string; mau: string };
@@ -67,7 +68,7 @@ export function KhungChiTietLich({ lichId, chiTiet, children }: { lichId: string
   return (
     <Ctx.Provider value={mo}>
       <div ref={goc} className="contents">{children}</div>
-      {chon && (
+      {chon && typeof document !== "undefined" && createPortal(
         <>
           {hep && <button type="button" aria-label="Đóng chi tiết lịch hẹn" tabIndex={-1} className="fixed inset-0 z-[69] bg-muc/35" onClick={dong} />}
           <div ref={khungRef} role="dialog" aria-label="Chi tiết lịch hẹn"
@@ -89,7 +90,9 @@ export function KhungChiTietLich({ lichId, chiTiet, children }: { lichId: string
               </div>
             )}
           </div>
-        </>
+        </>,
+        // Gắn thẳng vào body (16/11): trong khung app, thanh tab dưới (z-40) đè lên đáy khung trên điện thoại, che nút Xác nhận / Huỷ.
+        document.body,
       )}
     </Ctx.Provider>
   );

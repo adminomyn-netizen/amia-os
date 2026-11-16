@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { ChevronLeft, ChevronRight, Download, Minus, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import type { AnhKhach } from "@/lib/anh-khach";
 import { ngayGioVN, ngayVN } from "@/lib/dinh-dang";
@@ -160,7 +161,8 @@ export function XemAnhPhongTo({ ds, chiSo, dong, doiToi, xoaDuoc, xoa }: {
   const hoiXoa = hoiXoaId === anh.id;
   const loiAnh = loiXoa?.id === anh.id ? loiXoa.loi : "";
   const truoc = chiSo > 0 ? () => doiToi(chiSo - 1) : undefined, sau = chiSo < ds.length - 1 ? () => doiToi(chiSo + 1) : undefined;
-  return (
+  // Gắn vào body (16/11): trong <main> trên iPhone, thanh tab dưới đè lên khung phóng to.
+  return createPortal(
     <div className="fixed inset-0 z-[60] bg-black/92 text-white" role="dialog" aria-modal="true" aria-label={`Xem ảnh ${chiSo + 1} trên ${ds.length}`}>
       <KhungAnh key={anh.id} anh={anh} truoc={truoc} sau={sau} />
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent px-4 pb-6 pt-[calc(12px+env(safe-area-inset-top))]">
@@ -196,6 +198,7 @@ export function XemAnhPhongTo({ ds, chiSo, dong, doiToi, xoaDuoc, xoa }: {
       )}
       {truoc && <button type="button" onClick={truoc} aria-label="Ảnh trước" className="absolute left-2 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20 sm:flex"><ChevronLeft strokeWidth={1.8} className="h-6 w-6" aria-hidden /></button>}
       {sau && <button type="button" onClick={sau} aria-label="Ảnh sau" className="absolute right-2 top-1/2 z-10 hidden h-12 w-12 -translate-y-1/2 items-center justify-center rounded-nho bg-black/50 hover:bg-white/20 sm:flex"><ChevronRight strokeWidth={1.8} className="h-6 w-6" aria-hidden /></button>}
-    </div>
+    </div>,
+    document.body,
   );
 }

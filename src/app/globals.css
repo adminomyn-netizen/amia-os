@@ -358,7 +358,7 @@ body {
 @media (max-width: 1023px) {
   /* min-h-screen (100vh) lớn hơn vùng nhìn thấy khi thanh địa chỉ trình duyệt hiện → đẩy thanh dưới tụt khỏi màn hình; ép min-height về 0, dùng dvh. */
   .khung-di-dong { height: 100vh; height: 100dvh; min-height: 0; overflow: hidden; }
-  .noi-dung-cuon { overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch; }
+  .noi-dung-cuon { overflow-y: auto; overscroll-behavior-y: contain; } /* bỏ -webkit-overflow-scrolling: touch (16/11): Safari iPhone coi nó là lớp chồng riêng, khung bật lên bên trong bị thanh tab dưới đè */
 }
 @media print { .khung-di-dong { height: auto; overflow: visible; } .noi-dung-cuon { overflow: visible; } }
 .bang-duoi { padding-bottom: env(safe-area-inset-bottom); }

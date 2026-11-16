@@ -64,7 +64,7 @@ export default async function KhungKhachHang({ children }: { children: React.Rea
       </TieuDeNoi>
       <LoiTatKhach muc={loiTat.map(({ href, nhan, mau }) => ({ href, nhan, mau }))} />
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {chiSo.map((c) => c.tab ? <HopSinhNhat key={c.nhan} nhan={c.nhan} so={c.so} tab={c.tab} hang={hangLC} /> : (
+        {chiSo.map((c) => c.tab ? <HopSinhNhat key={c.nhan} nhan={c.nhan} so={c.so} tab={c.tab} hang={hangLC} choXuat={coQuyen(nd, "khach.xuat")} /> : (
           <div key={c.nhan} className="the-noi the-noi-thap px-4 pb-3 pt-3.5">
             <dt className="text-[12.5px] text-muc-3">{c.nhan}</dt>
             <dd className="mt-0.5 text-[22px] font-semibold leading-tight tabular-nums text-muc">{c.so.toLocaleString("vi-VN")}</dd>

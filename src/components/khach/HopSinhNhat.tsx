@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { Download } from "lucide-react";
 import { Hop } from "@/components/ui/Hop";
 import { Chon, type LuaChon } from "@/components/ui/Chon";
 import { O_NHAP, NUT_PHU } from "@/components/ui/dinh-dang";
@@ -14,7 +15,7 @@ const MOI_LAN = 50;
 
 /** Ô chỉ số "Sinh nhật …" ở đầu màn Khách hàng, bấm mở hộp Sinh nhật như SalonHero: 3 tab (hôm nay / 7 ngày tới / trong tháng), lọc hạng, tìm tên/SĐT/mã.
  * Dùng chung API danh sách khách (/api/khach/tim) nên quyền xem SĐT và phạm vi chi nhánh giữ nguyên như cột trái. */
-export function HopSinhNhat({ nhan, so, tab: tabDau, hang }: { nhan: string; so: number; tab: MaTab; hang: LuaChon[] }) {
+export function HopSinhNhat({ nhan, so, tab: tabDau, hang, choXuat = false }: { nhan: string; so: number; tab: MaTab; hang: LuaChon[]; choXuat?: boolean }) {
   const [mo, setMo] = useState(false);
   const [tab, setTab] = useState<MaTab>(tabDau);
   const [h, setH] = useState("");
@@ -24,6 +25,7 @@ export function HopSinhNhat({ nhan, so, tab: tabDau, hang }: { nhan: string; so:
   const [dang, setDang] = useState(false);
   const [loi, setLoi] = useState("");
   const lan = useRef(0);
+  const lienKetXuat = new URLSearchParams({ sinh_nhat: tab, ...(h ? { hang: h } : {}), ...(q.trim() ? { q: q.trim() } : {}) }).toString();
 
   const tai = async (tu: number) => {
     const n = ++lan.current;
@@ -69,7 +71,11 @@ export function HopSinhNhat({ nhan, so, tab: tabDau, hang }: { nhan: string; so:
           <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm tên, số điện thoại, mã khách" aria-label="Tìm khách sinh nhật" className={O_NHAP} />
           <Chon ariaLabel="Hạng khách" giaTri={h} onDoi={setH} luaChon={[{ gia_tri: "", nhan: "Mọi hạng" }, ...hang]} />
         </div>
-        <p className="mb-2 text-[13px] text-muc-3" aria-live="polite">{dang && ds.length === 0 ? "Đang tải…" : `${tong.toLocaleString("vi-VN")} khách`}</p>
+        <div className="mb-2 flex items-center justify-between gap-3">
+          <p className="text-[13px] text-muc-3" aria-live="polite">{dang && ds.length === 0 ? "Đang tải…" : `${tong.toLocaleString("vi-VN")} khách`}</p>
+          {/* Xuất đúng danh sách đang xem (tab + hạng + từ khoá) qua API xuất khách sẵn có: chặn quyền khach.xuat, giữ phạm vi chi nhánh, ghi nhật ký. Chị Nguyên xin 16/11. */}
+          {choXuat && tong > 0 && <a href={`/api/xuat/khach-hang?${lienKetXuat}`} download className="flex items-center gap-1 text-[13px] font-medium text-nhan-dam hover:underline"><Download aria-hidden strokeWidth={1.7} className="h-3.5 w-3.5" />Xuất Excel</a>}
+        </div>
         {loi && <div role="alert" className="mb-2 rounded-nho bg-loi-nen px-3 py-2 text-[14px] text-loi">{loi}</div>}
         <ul className="divide-y divide-vien rounded-nho border border-vien">
           {ds.map((k) => (

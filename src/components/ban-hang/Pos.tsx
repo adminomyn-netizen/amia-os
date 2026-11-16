@@ -78,7 +78,7 @@ export function Pos(props: PropsPos) {
   const [ds, setDs] = useState<Tab[]>(() => [{ k: 1, ten: "", soDong: props.dongBanDau.length, kieu: props.lichId ? "dich_vu" : props.dongBanDau.length ? kieuTuDong(props.dongBanDau) : "ban" }]);
   const [dangXem, setDangXem] = useState(1);
   const dem = useRef(1);
-  const [xong, setXong] = useState<{ id: string; ma: string; datLichKhach?: string | null; guiCv?: string } | null>(null);
+  const [xong, setXong] = useState<{ id: string; ma: string; datLichKhach?: string | null; guiCv?: string; theMoi?: { khachId: string; ids: string[] } } | null>(null);
   // "Chờ thanh toán" (như SalonHero): đơn đang xử lý của cả chi nhánh — đơn nháp của mọi thu ngân + hoá đơn mở lại để sửa.
   const [moCho, setMoCho] = useState(false);
   const [dsChoTai, setDsCho] = useState<Awaited<ReturnType<typeof dsDonCho>> | null>(null);
@@ -340,6 +340,7 @@ export function Pos(props: PropsPos) {
             {xong.datLichKhach && <Link href={`/lich-hen?khach=${xong.datLichKhach}`} target="_blank" className="font-medium underline">Đặt lịch hẹn tiếp theo</Link>}</span>
         </p>
       )}
+      {xong?.theMoi && props.buoi && <GuiTheMoi key={xong.id} theMoi={xong.theMoi} {...props} />}
       {ds.map((t, i) => (
         <div key={t.k} role="tabpanel" id={`don-${t.k}`} aria-labelledby={`don-tab-${t.k}`} hidden={t.k !== dangXem}>
           <DonPos {...props} k={t.k} kieu={t.kieu} nhapDau={t.nhap} khoiPhuc={t.khoiPhuc} cnNho={cnNho} onLuuTam={onLuuTam} onChonCn={onChonCn} onNhap={lamMoiNhap} dauTien={i === 0 && t.k === 1 && !t.nhap} dangXem={t.k === dangXem} onDonChoKhach={guiManHinhKhach} onDoi={capNhat} onHuy={(p) => huyDon(t.k, p)}
@@ -432,10 +433,44 @@ function TheCuaKhach({ the: dsThe, theBan, nut, dvDon, giaHan }: { the: TheKh[] 
   );
 }
 
+/** Ngay sau khi chốt đơn bán thẻ liệu trình: nút "Gửi chuyên viên làm buổi đầu" cho từng thẻ vừa cấp, khỏi chọn lại khách
+ *  (chị Diệu Thuý 16/11/2026: hoá đơn bán thẻ không tự sang trị liệu). Vào hàng Chờ làm như nút ở "Thẻ khách đang có"; chuyên viên Kết thúc mới trừ buổi. */
+function GuiTheMoi({ theMoi, layTheKh, buoi, muc, nhanVien, truBuoiTrucTiep }: PropsPos & { theMoi: { khachId: string; ids: string[] } }) {
+  const [ds, setDs] = useState<TheKh[] | null>(null);
+  const [daGui, setDaGui] = useState<string[]>([]);
+  useEffect(() => {
+    let con = true;
+    layTheKh(theMoi.khachId).then((r) => con && setDs((r?.the ?? []).filter((t) => theMoi.ids.includes(t.id) && t.loai === "lan" && t.buoiCon > 0)));
+    return () => { con = false; };
+  }, [layTheKh, theMoi]);
+  const dvMuc = useMemo(() => muc.filter((m) => m.loai === "dich_vu").map((m) => ({ gia_tri: m.id, nhan: m.ten })), [muc]);
+  const nvLC = useMemo(() => luaChonNhanVien(nhanVien.map((n) => ({ id: n.id, ho_ten: n.ten, vai_tro: n.vaiTro }))), [nhanVien]);
+  const bacSiLC = useMemo(() => [{ gia_tri: "", nhan: "Không có" }, ...nhanVien.filter((n) => n.vaiTro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ten }))], [nhanVien]);
+  if (!buoi || !ds?.length) return null;
+  return (
+    <div className="mb-4 rounded-nho border border-nhan/40 bg-giay-sang px-3 py-2.5 text-[14px]">
+      <p className="mb-2 text-muc-2">Khách làm buổi đầu hôm nay? Gửi thẻ vừa bán cho chuyên viên trị liệu (chuyên viên bấm Kết thúc mới trừ buổi):</p>
+      <ul className="space-y-2">
+        {ds.map((t) => {
+          const dvThe = dvMuc.filter((d) => t.dichVu.includes(d.gia_tri));
+          return (
+            <li key={t.id} className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-muc">{t.ten} <span className="text-muc-3">· {t.ma} · còn {t.buoiCon} buổi</span></span>
+              {daGui.includes(t.id) ? <span className="font-medium text-nhan-dam">Đã gửi chuyên viên</span>
+                : <NutBuoi theId={t.id} macDinh={t.lanTruoc} nhanVien={nvLC} bacSi={bacSiLC} dichVu={dvThe.length || t.goiId ? dvThe : dvMuc} goiId={t.goiId} tenThe={t.ten} buoiCon={t.buoiCon} buoiTong={t.buoiTong} nhan="Gửi chuyên viên làm buổi đầu" truTrucTiep={truBuoiTrucTiep}
+                  action={async (fd) => { const r = await buoi(fd); if (r.ok) setDaGui((x) => [...x, t.id]); return r; }} />}
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, khachBanDau, dongBanDau, chiNhanhId, chiNhanh, khoaChiNhanh, lichId: lichGoc, soKhachLich, choGiam = true, choTip = true, thuNgan = "", nguonLich = "", viTriLich = "", taiKhoanNhan = [], taoMoi = false, tim, layThe, layDiem, layTheKh, chot, voucher, dsVoucher: dsVc, luuNhap, xoaNhap, k, kieu, nhapDau, khoiPhuc: kp, cnNho, onLuuTam, onChonCn, onNhap, dauTien, dangXem, onDonChoKhach, onDoi, onXong, onHuy }: PropsPos & {
   k: number; kieu: KieuDon; nhapDau?: DonNhapRut;
   /** Đơn mở lại từ bộ nhớ tạm của trình duyệt (chưa lưu nháp). */ khoiPhuc?: DonLuuTam; /** Chi nhánh người dùng chọn lần trước (nhớ 30 ngày). */ cnNho?: string | null;
-  onLuuTam?: (k: number, t: TabLuu | null) => void; onChonCn?: (id: string) => void; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null; guiCv?: string }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
+  onLuuTam?: (k: number, t: TabLuu | null) => void; onChonCn?: (id: string) => void; onNhap: () => void; dauTien: boolean; dangXem: boolean; onDonChoKhach: (d: DonChoKhach) => void; onDoi: (k: number, ten: string, soDong: number) => void; onXong: (kq: { id: string; ma: string; datLichKhach?: string | null; guiCv?: string; theMoi?: { khachId: string; ids: string[] } }) => void; onHuy: (p: { nhapId: string | null; suaMa?: string }) => void;
 }) {
   const lichId = dauTien ? lichGoc : kp?.lichId ?? null;
   const dauUrl = dauTien ? chuKyUrl({ lichId: lichGoc, khachBanDau, dongBanDau, suaHd }) : "";
@@ -667,7 +702,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
       else if ("id" in kq) {
         if (cuaSoIn) cuaSoIn.location.href = `/in/hoa-don/${kq.id}${inSau.nn === "en" ? "?nn=en" : ""}`;
         if (nhapId) { await xoaNhap(nhapId); onNhap(); }
-        onXong({ id: kq.id, ma: kq.ma, datLichKhach: datLichTiep && khach ? khach.id : null, guiCv: kq.guiCv });
+        onXong({ id: kq.id, ma: kq.ma, datLichKhach: datLichTiep && khach ? khach.id : null, guiCv: kq.guiCv, theMoi: kq.theMoi });
       }
     });
   };

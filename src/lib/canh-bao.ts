@@ -37,7 +37,7 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     // Phiếu vật tư theo buổi (0310) chưa được chuyên viên trị liệu xác nhận: chốt cuối ngày sẽ bỏ qua.
     coQuyen(nd, "phieu.nhan") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).eq("trang_thai", "cho_cap").not("buoi_id", "is", null).is("xac_nhan_luc", null)) : null,
     // Khách thu ngân vừa chuyển cho chính người này (0321), chưa bắt đầu làm.
-    nd.nhanVienId && coQuyen(nd, "the.xem") ? db.from("buoi_cho_lam").select("id", { count: "exact", head: true }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "cho_lam") : null,
+    nd.nhanVienId && coQuyen(nd, "the.xem") ? db.from("buoi_cho_lam").select("khach_id, chuyen_luc", { count: "exact" }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "cho_lam").order("chuyen_luc", { ascending: false }).limit(1) : null,
   ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay), rieng((a) => themCanhBaoLead(nd, a))]);
   const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
   // Lịch online đã có mục riêng "lichonl" → mục này chỉ đếm lịch đặt tại quầy / nhân viên tạo.
@@ -58,7 +58,13 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     ra.push({ ma: "lichonl", nhan: `${onl.length} lịch khách đặt online chờ xác nhận (mới nhất: ${kh?.ho_ten ?? "khách"} · ${luc})`, href: `/lich-hen?tt=chua_xac_nhan&tu=${homNay}&den=${denNgay < homNay ? homNay : denNgay}` });
   }
   if ((phieu?.count ?? 0) > 0) ra.push({ ma: "phieu", nhan: `${phieu!.count} phiếu cấp vật tư đang chờ kho cấp hoặc Chuyên viên trị liệu nhận`, href: "/phieu-cap" });
-  if ((buoiCho?.count ?? 0) > 0) ra.push({ ma: "buoicho", nhan: `${buoiCho!.count} khách thu ngân chuyển cho bạn đang chờ làm`, href: "/the/cho-lam?tab=toi" });
+  if ((buoiCho?.count ?? 0) > 0) {
+    // Kèm khách mới nhất + giờ chuyển: có khách mới là nhãn đổi → chuông hiện lại "chưa đọc", hộp nổi + "ting" (trước 16/11/2026 chỉ có số, số không đổi thì không báo).
+    const moi = (buoiCho!.data ?? [])[0] as { khach_id: string; chuyen_luc: string } | undefined;
+    const { data: kh } = moi ? await db.from("khach_hang").select("ho_ten").eq("id", moi.khach_id).maybeSingle() : { data: null };
+    const luc = moi ? new Date(moi.chuyen_luc).toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit" }) : "";
+    ra.push({ ma: "buoicho", nhan: `${buoiCho!.count} khách thu ngân chuyển cho bạn đang chờ làm${moi ? ` (mới nhất: ${kh?.ho_ten ?? "khách"} · ${luc})` : ""}`, href: "/the/cho-lam?tab=toi" });
+  }
   if ((phieuBuoi?.count ?? 0) > 0) ra.push({ ma: "phieu-buoi", nhan: `${phieuBuoi!.count} phiếu vật tư theo buổi chờ Chuyên viên trị liệu kiểm và xác nhận`, href: "/phieu-cap?tab=chot" });
   if ((the?.count ?? 0) > 0) ra.push({ ma: "the", nhan: `${the!.count} thẻ liệu trình sắp hết buổi (nhắc khách mua tiếp)`, href: "/the" });
   const dsNo = (no?.data ?? []) as { con_no: number }[];

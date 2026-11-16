@@ -117,7 +117,7 @@ export async function dsVoucher(chiNhanhId: string, khachId: string | null, lich
   return dsVoucherThuNgan(sb(), { chiNhanhId: nd.chiNhanhId ?? chiNhanhId, khachId, lichId });
 }
 
-type KQ = { ok: true; id: string; ma: string; /** Kết quả gửi dòng dịch vụ cho chuyên viên trị liệu xác nhận (đơn đã chốt, chỉ để báo). */ guiCv?: string } | { ok?: false; loi: string };
+type KQ = { ok: true; id: string; ma: string; /** Kết quả gửi dòng dịch vụ cho chuyên viên trị liệu xác nhận (đơn đã chốt, chỉ để báo). */ guiCv?: string; /** Thẻ liệu trình vừa cấp từ đơn này (để thu ngân gửi chuyên viên làm buổi đầu ngay trên quầy). */ theMoi?: { khachId: string; ids: string[] } } | { ok?: false; loi: string };
 
 /** Tạo hoá đơn + dòng + người hưởng + thanh toán rồi chốt. Giá lấy từ DB (không tin giá gửi lên). Lỗi trước khi có thanh toán thì xoá nháp; sau đó thì huỷ có hoàn tiền. */
 export async function chotDonBanHang(json: string): Promise<KQ> {
@@ -344,7 +344,14 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   const guiCv = lui.lui || (suaCu && suaCu.ngay_hd !== homNayHCM()) ? "" : await guiDongDichVuChoCv(nd, { hoaDonId: h.id, ma, khachId: don.khachId, chiNhanhId: don.chiNhanhId, lichId: don.lichId, sua: !!suaCu },
     don.dong.map((d, i) => ({ loai: d.loai, ref: d.ref, sl: d.sl, ten: gia.get(`${d.loai}:${d.ref}`)?.ten ?? "Dịch vụ", dongId: idDong[i], phucVu: (d.nv?.phuc_vu ?? []).map((x) => x.id) })))
     .catch(() => "Chưa gửi được dịch vụ cho chuyên viên trị liệu (lỗi kết nối). Hoá đơn đã chốt bình thường.");
-  return { ok: true, id: h.id, ma, ...(guiCv ? { guiCv } : {}) };
+  // Bán thẻ liệu trình: chot_hoa_don cấp thẻ nhưng KHÔNG tự đưa vào hàng Chờ làm (khách có thể chưa làm hôm nay). Trả id thẻ mới để màn Thu ngân hiện
+  // nút "Gửi chuyên viên làm buổi đầu" ngay sau khi chốt, khỏi chọn lại khách (chị Diệu Thuý 16/11/2026: "hoá đơn thu ngân chưa chuyển lên được trị liệu").
+  let theMoi: { khachId: string; ids: string[] } | undefined;
+  if (!lui.lui && don.khachId && don.dong.some((d) => d.loai === "goi_the")) {
+    const { data: tm } = await db.from("the_khach").select("id").in("hoa_don_dong_id", idDong);
+    if (tm?.length) theMoi = { khachId: don.khachId, ids: tm.map((t) => t.id) };
+  }
+  return { ok: true, id: h.id, ma, ...(guiCv ? { guiCv } : {}), ...(theMoi ? { theMoi } : {}) };
 }
 
 /** Hoá đơn dịch vụ → chuyên viên trị liệu xác nhận (quản lý cơ sở 15/11/2026: "tạo hoá đơn dịch vụ không đẩy về chuyên viên trị liệu xác nhận").

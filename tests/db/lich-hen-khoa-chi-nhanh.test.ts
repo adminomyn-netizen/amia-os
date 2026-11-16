@@ -43,10 +43,10 @@ describe("Lịch hẹn: khoá chi nhánh ở máy chủ", () => {
     expect((await luuLichHen(fd({ id: "l-dl", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe(KHONG);
     expect((await luuLichHen(fd({ id: "l-vinh", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");
   });
-  it("sửa lịch: chỉ người tạo hoặc quản lý (chị Lâm 10/11), kiểm ở máy chủ", async () => {
+  it("sửa lịch: ai có quyền sửa lịch đều sửa được lịch người khác tạo (chị Lâm 16/11), kiểm ở máy chủ", async () => {
     const { luuLichHen } = await import("../../src/app/(app)/lich-hen/actions");
-    expect((await luuLichHen(fd({ id: "l-vinh-khac", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chỉ người tạo lịch hoặc quản lý được sửa.");
-    expect((await luuLichHen(fd({ id: "l-sh", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chỉ người tạo lịch hoặc quản lý được sửa.");
+    expect((await luuLichHen(fd({ id: "l-vinh-khac", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");
+    expect((await luuLichHen(fd({ id: "l-sh", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");
     nguoiDung = { chiNhanhId: VINH, nhanVienId: "ql", vaiTro: "quan_ly" };
     expect((await luuLichHen(fd({ id: "l-vinh-khac", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");
     expect((await luuLichHen(fd({ id: "l-sh", khach_id: "k-vinh", ngay: "", gio: "" }))).loi).toBe("Chọn ngày và giờ hẹn.");

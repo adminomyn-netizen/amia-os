@@ -15,6 +15,7 @@ import { ThanhTai } from "@/components/layout/ThanhTai";
 import { ChatNoi } from "@/components/chat/ChatNoi";
 import { CanhBaoQuaGio } from "@/components/layout/CanhBaoQuaGio";
 import { phamViQuaGio } from "@/lib/qua-gio";
+import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 
 /** Thanh bên + chấm đỏ số lịch hẹn hôm nay (như SalonHero). Lỗi truy vấn thì thôi (không chấm), không làm hỏng khung trang. */
 async function ThanhBenCoDem({ muc, cn }: { muc: MucNgang[]; cn: string | undefined }) {
@@ -53,7 +54,7 @@ export default async function KhungUngDung({ children }: { children: React.React
         <Suspense fallback={<ThanhBen muc={mucNgang} />}><ThanhBenCoDem muc={mucNgang} cn={cnDem} /></Suspense>
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
           <DauTrang hoTen={nd.hoTen} vaiTro={nd.vaiTro} chucDanh={nd.chucDanh} email={nd.email} chiNhanh={chiNhanh} anh={nd.anhDaiDien} caiDat={caiDat} coSo={coSo} />
-          <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-10 lg:pb-16 lg:pt-6">{children}</main>
+          <main id="noi-dung-chinh" className="noi-dung-cuon min-h-0 flex-1 px-4 pb-8 pt-6 lg:px-10 lg:pb-16 lg:pt-6">{!nd.phaiDoiMatKhau && (nd.vaiTro === "ktv" || nd.vaiTro === "bac_si") && <BatThongBao bieuNgu />}{children}</main>
           <CuonVeDau />
           {muc.length > 0 && <ThanhTabDuoi muc={muc} />}
           {!nd.phaiDoiMatKhau && phamViQuaGio(nd) !== "khong" && <CanhBaoQuaGio />}

@@ -103,7 +103,7 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
         const moiXuatHien = moi.filter((m) => m.trang === "chua_doc" && !daThay.current!.has(`${m.ma}|${m.nhan}`));
         const hien = goc.current && goc.current.getClientRects().length > 0;
         if (moiXuatHien.length && hien) {
-          setNoi(moiXuatHien.find((m) => m.ma === "buoicho") ?? moiXuatHien.find((m) => m.ma === "lichonl") ?? moiXuatHien.find((m) => m.nhom === "lich") ?? moiXuatHien[0]);
+          setNoi(moiXuatHien.find((m) => m.ma === "buoicho") ?? moiXuatHien.find((m) => m.ma === "buoidl") ?? moiXuatHien.find((m) => m.ma === "lichonl") ?? moiXuatHien.find((m) => m.nhom === "lich") ?? moiXuatHien[0]);
           if (!tatTiengRef.current) keuTing();
         }
       }

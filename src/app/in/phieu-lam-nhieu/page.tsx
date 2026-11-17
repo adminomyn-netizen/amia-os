@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { yeuCauQuyen } from "@/lib/auth";
+import { yeuCauMotTrong } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN } from "@/lib/dinh-dang";
@@ -13,7 +13,7 @@ import { nhanBuoiThu, soBuoiPhieu, KHONG_GIOI_HAN } from "@/lib/phieu-lam-dich-v
  *  "1 hoá đơn có thể nhiều dịch vụ, khách làm nhiều dịch vụ cùng 1 lúc, hiện tại một khách 1 dịch vụ 1 lần in").
  *  `?ids=` = các lượt Khách chờ làm (buoi_cho_lam), cách nhau dấu phẩy. Chỉ đọc. Khổ giấy theo Cài đặt › Thiết lập in (hoá đơn). */
 export default async function InPhieuLamNhieu({ searchParams }: { searchParams: Promise<{ ids?: string }> }) {
-  const nd = await yeuCauQuyen("the.xem");
+  const nd = await yeuCauMotTrong(["the.xem", "the.thuchien", "ban.tao"]) // chuyên viên trị liệu in phiếu làm của khách mình (17/11/2026);
   const ids = [...new Set(((await searchParams).ids ?? "").split(",").map((x) => x.trim()).filter((x) => /^[0-9a-f-]{36}$/i.test(x)))].slice(0, 30);
   if (!ids.length) notFound();
   const db = sb();

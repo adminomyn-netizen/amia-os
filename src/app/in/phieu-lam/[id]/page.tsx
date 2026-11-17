@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { yeuCauQuyen } from "@/lib/auth";
+import { yeuCauMotTrong } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayGioVN, ngayVN } from "@/lib/dinh-dang";
@@ -12,7 +12,7 @@ import { nhanBuoiThu, soBuoiPhieu } from "@/lib/phieu-lam-dich-vu";
 /** Phiếu làm dịch vụ (chị Diệu Thuý 10/11/2026 mục 11): thu ngân in khi chuyển khách cho chuyên viên trị liệu, hoặc in lại buổi đã làm.
  *  `id` = lượt Khách chờ làm (buoi_cho_lam) hoặc buổi đã làm (buoi_thuc_hien). Chỉ đọc. Khổ giấy theo Cài đặt › Thiết lập in (hoá đơn). */
 export default async function InPhieuLam({ params }: { params: Promise<{ id: string }> }) {
-  const nd = await yeuCauQuyen("the.xem");
+  const nd = await yeuCauMotTrong(["the.xem", "the.thuchien", "ban.tao"]) // chuyên viên trị liệu in phiếu làm của khách mình (17/11/2026);
   const { id } = await params;
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const db = sb();

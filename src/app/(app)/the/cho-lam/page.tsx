@@ -1,4 +1,4 @@
-import { yeuCauQuyen } from "@/lib/auth";
+import { yeuCauMotTrong } from "@/lib/auth";
 import { coQuyen, duocKetThucBuoi } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { homNayHCM, ngayVN } from "@/lib/dinh-dang";
@@ -11,12 +11,15 @@ import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
 /** Khách chờ làm: thu ngân / lễ tân chuyển khách cho chuyên viên trị liệu bằng nút Gửi chuyên viên làm.
  *  Tab "Của tôi" = khách chuyển cho chính người đang xem; tab "Cả chi nhánh" = bảng theo dõi trong ngày cho thu ngân / quản lý. */
 export default async function TrangKhachChoLam({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
-  const nd = await yeuCauQuyen("the.xem");
+  // Chuyên viên trị liệu / bác sĩ không có "the.xem" nhưng có "the.thuchien": vẫn phải mở được khách chuyển cho mình
+  // (chị Lâm 17/11/2026: bấm thông báo trên chuông bị đẩy về Trang chủ "Vai trò của bạn không mở được trang vừa chọn").
+  const nd = await yeuCauMotTrong(["the.xem", "the.thuchien", "ban.tao"]);
+  const xemChung = coQuyen(nd, "the.xem") || coQuyen(nd, "ban.tao");
   const sp = await searchParams;
   const homNay = homNayHCM();
   const thaoTacChung = coQuyen(nd, "ban.tao") || coQuyen(nd, "the.dieuchinh");
   const macDinh = ["ktv", "bac_si"].includes(nd.vaiTro) ? "toi" : "chi_nhanh";
-  const tab = sp.tab === "toi" || sp.tab === "chi_nhanh" ? sp.tab : macDinh;
+  const tab = !xemChung ? "toi" : sp.tab === "toi" || sp.tab === "chi_nhanh" ? sp.tab : macDinh;
   const db = sb();
   const [ds, { data: nv }] = await Promise.all([
     docBuoiCho({ chiNhanhId: nd.chiNhanhId, ngay: homNay, ...(tab === "toi" ? { nvId: nd.nhanVienId } : {}) }),
@@ -32,9 +35,9 @@ export default async function TrangKhachChoLam({ searchParams }: { searchParams:
 
   return (
     <>
-      <TieuDeNoi tieuDe="Khách chờ làm" quayLai={{ href: "/the", nhan: "Thẻ liệu trình" }}
+      <TieuDeNoi tieuDe="Khách chờ làm" quayLai={xemChung ? { href: "/the", nhan: "Thẻ liệu trình" } : undefined}
         phu={`Thu ngân bấm "Gửi chuyên viên làm" (Thu ngân, thẻ, hồ sơ khách, lịch hẹn) thì khách hiện ở đây. Chuyên viên bấm Bắt đầu làm (xác nhận dịch vụ), làm bước nào tích bước đó, trả khách thì bấm Kết thúc: lúc đó mới trừ 1 buổi, ghi doanh thu và ra phiếu vật tư. Hôm nay ${ngayVN(homNay)}.`} />
-      <Tab goc="/the/cho-lam" dang={tab} muc={[{ ma: "toi", ten: "Của tôi" }, { ma: "chi_nhanh", ten: "Cả chi nhánh hôm nay" }]} />
+      {xemChung && <Tab goc="/the/cho-lam" dang={tab} muc={[{ ma: "toi", ten: "Của tôi" }, { ma: "chi_nhanh", ten: "Cả chi nhánh hôm nay" }]} />}
       <p className="mb-4 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-muc-3" aria-live="polite">
         <span>Chờ làm <b className="font-semibold text-canh-bao">{dem("cho_lam")}</b></span>
         <span>Đang làm <b className="font-semibold text-nhan-dam">{dem("dang_lam")}</b></span>

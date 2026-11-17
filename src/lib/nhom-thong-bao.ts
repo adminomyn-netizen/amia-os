@@ -13,7 +13,7 @@ export const NHOM_THONG_BAO: { ma: NhomThongBao; nhan: string }[] = [
 export function nhomCuaThongBao(ma: string): NhomThongBao {
   if (ma === "lich" || ma === "lichonl") return "lich";
   // Lượt thu ngân chuyển (= "hoá đơn dịch vụ" chờ chuyên viên xác nhận) nằm ở tab Hoá đơn (chị Lâm 17/11/2026).
-  if (ma === "no" || ma === "hdv" || ma === "buoicho" || ma === "buoidl") return "hoa_don";
+  if (ma === "no" || ma === "hdv" || ma === "buoicho" || ma === "buoidl" || ma === "buoithieu") return "hoa_don";
   if (ma === "the") return "the";
   return "khac";
 }

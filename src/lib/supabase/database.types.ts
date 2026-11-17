@@ -1943,6 +1943,9 @@ export type Database = {
       }
       buoi_cho_lam: {
         Row: {
+          buoc_tong: number | null
+          buoc_xong: number | null
+          vat_tu_luc: string | null
           bac_si_id: string | null
           bat_dau_boi: string | null
           bat_dau_luc: string | null
@@ -1975,6 +1978,9 @@ export type Database = {
           xu_ly_boi: string | null
         }
         Insert: {
+          buoc_tong?: number | null
+          buoc_xong?: number | null
+          vat_tu_luc?: string | null
           bac_si_id?: string | null
           bat_dau_boi?: string | null
           bat_dau_luc?: string | null
@@ -2007,6 +2013,9 @@ export type Database = {
           xu_ly_boi?: string | null
         }
         Update: {
+          buoc_tong?: number | null
+          buoc_xong?: number | null
+          vat_tu_luc?: string | null
           bac_si_id?: string | null
           bat_dau_boi?: string | null
           bat_dau_luc?: string | null

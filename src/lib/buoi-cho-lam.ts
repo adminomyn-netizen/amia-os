@@ -16,7 +16,7 @@ export type BuoiCho = {
   hoaDonId: string | null; hoaDonMa: string; goiTen: string; conBuoi: number | null; tongBuoi: number | null;
   dichVuId: string; dichVuTen: string; nvIds: string[]; nvTen: string[]; bacSiId: string | null; tuVanIds: string[]; tuVanTen: string[]; tuVanTinhTrang: string | null; tuVanDeXuat: string | null;
   ghiChu: string | null; vung: string; shot: string; line: string; keTiepNgay: string | null; keTiepNoiDung: string | null;
-  chuyenLuc: string; chuyenBoiTen: string; batDauLuc: string | null; xongLuc: string | null; lyDo: string | null; lichHenId: string | null; chuyenBoi: string | null;
+  chuyenLuc: string; chuyenBoiTen: string; batDauLuc: string | null; xongLuc: string | null; /** Bước quy trình đã tích / tổng lúc Kết thúc (0339); null = không có quy trình. */ buocXong: number | null; buocTong: number | null; lyDo: string | null; lichHenId: string | null; chuyenBoi: string | null;
 };
 
 /** Lượt chờ làm trong ngày của chi nhánh (hoặc chỉ của một chuyên viên). `chiMo` = chỉ lượt còn chờ / đang làm. */
@@ -57,7 +57,7 @@ export async function docBuoiCho(o: { chiNhanhId: string | null; ngay: string; n
       tuVanIds: r.tu_van_ids, tuVanTen: r.tu_van_ids.map((x) => mN.get(x) ?? "?"), tuVanTinhTrang: r.tu_van_tinh_trang, tuVanDeXuat: r.tu_van_de_xuat,
       ghiChu: r.ghi_chu, vung: ts.vung == null ? "" : String(ts.vung), shot: ts.shot == null ? "" : String(ts.shot), line: ts.line == null ? "" : String(ts.line),
       keTiepNgay: r.ke_tiep_ngay, keTiepNoiDung: r.ke_tiep_noi_dung, chuyenLuc: r.chuyen_luc, chuyenBoiTen: (r.chuyen_boi && mN.get(r.chuyen_boi)) || "", chuyenBoi: r.chuyen_boi,
-      batDauLuc: r.bat_dau_luc, xongLuc: r.xong_luc, lyDo: r.ly_do, lichHenId: r.lich_hen_id,
+      batDauLuc: r.bat_dau_luc, xongLuc: r.xong_luc, buocXong: r.buoc_xong ?? null, buocTong: r.buoc_tong ?? null, lyDo: r.ly_do, lichHenId: r.lich_hen_id,
     };
   });
 }

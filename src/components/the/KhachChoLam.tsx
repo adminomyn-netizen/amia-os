@@ -18,19 +18,14 @@ const NHAN: Record<string, { chu: string; kieu: "tot" | "cho" | "loi" | "tram" }
 const gio = (iso: string | null) => (iso ? new Date(iso).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Ho_Chi_Minh" }) : "");
 const phut = (tu: string, den?: string | null) => Math.max(0, Math.round(((den ? new Date(den).getTime() : Date.now()) - new Date(tu).getTime()) / 60000));
 
-/** Nút "Bắt đầu làm" to, dễ bấm trên điện thoại. */
-function NutBatDau({ id, onDoi }: { id: string; onDoi?: () => Promise<void> | void }) {
-  const router = useRouter();
-  const [dang, bat] = useTransition();
-  const [loi, setLoi] = useState("");
+/** Nút "Bắt đầu làm": mở hộp nhận vật tư — quy trình chị Lâm chốt 17/11/2026: vật tư cấp TRƯỚC khi làm, chưa tích "Đã nhận đủ vật tư" thì không bắt đầu được. */
+function NutBatDau({ id, qt, onDoi }: { id: string; qt?: QuyTrinhKhach; onDoi?: () => Promise<void> | void }) {
+  const vatTu = [...new Set((qt?.buoc ?? []).flatMap((b) => b.goiY).map((x) => x.trim()).filter(Boolean))];
   return (
-    <span className="flex flex-col">
-      <button type="button" disabled={dang} className="nut-vang h-11 w-full rounded-nho px-4 text-[15px] font-medium disabled:opacity-60 sm:w-auto"
-        onClick={() => { setLoi(""); bat(async () => { const fd = new FormData(); fd.set("id", id); const kq = await batDauLam(fd); if (kq.loi) setLoi(kq.loi); else { router.refresh(); await onDoi?.(); } }); }}>
-        {dang ? "Đang lưu" : "Bắt đầu làm"}
-      </button>
-      {loi && <span role="alert" className="mt-1 text-[12.5px] text-loi">{loi}</span>}
-    </span>
+    <NutHop nhan="Bắt đầu làm" tieuDe="Nhận vật tư trước khi làm" nhanLuu="Bắt đầu làm" an={{ id }}
+      moTa={vatTu.length ? `Vật tư cho khách này theo quy trình: ${vatTu.join("; ")}. Nhận đủ ở kho rồi tích xác nhận mới bắt đầu làm được.` : "Dịch vụ này chưa có danh sách vật tư theo quy trình. Nhận đủ vật tư cần dùng ở kho rồi tích xác nhận mới bắt đầu làm được."}
+      truong={[{ ten: "da_nhan_vat_tu", nhan: "Em đã nhận đủ vật tư cho buổi này", loai: "gat" }]}
+      action={async (fd) => { const k = await batDauLam(fd); if (k.ok) await onDoi?.(); return k; }} />
   );
 }
 
@@ -41,7 +36,10 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hien
   const mo = r.trangThai === "cho_lam" || r.trangThai === "dang_lam";
   const nhanGoc = NHAN[r.trangThai] ?? { chu: r.trangThai, kieu: "tram" as const };
   // Thu ngân nhìn trạng thái sống: "Đang làm · bước 2/5" (chị Lâm 11/11/2026).
-  const nhan = r.trangThai === "dang_lam" && qt?.buoc.length ? { ...nhanGoc, chu: `${nhanGoc.chu} · bước ${qt.buoc.filter((b) => b.daTich).length}/${qt.buoc.length}` } : nhanGoc;
+  const thieuBuoc = r.trangThai === "xong" && r.buocTong != null && r.buocXong != null && r.buocXong < r.buocTong;
+  const nhan = r.trangThai === "dang_lam" && qt?.buoc.length ? { ...nhanGoc, chu: `${nhanGoc.chu} · bước ${qt.buoc.filter((b) => b.daTich).length}/${qt.buoc.length}` }
+    : thieuBuoc ? { chu: `Xong · THIẾU BƯỚC ${r.buocXong}/${r.buocTong}`, kieu: "loi" as const }
+    : r.trangThai === "xong" && r.buocTong ? { ...nhanGoc, chu: `${nhanGoc.chu} · đủ ${r.buocTong}/${r.buocTong} bước` } : nhanGoc;
   return (
     <li className={`rounded-hop border bg-giay-sang px-4 py-3.5 ${r.trangThai === "dang_lam" ? "border-nhan" : "border-vien"} ${mo ? "" : "opacity-80"}`}>
       <div className="flex items-start justify-between gap-3">
@@ -76,7 +74,7 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hien
       {mo && qt && hienQt && <BuocQuyTrinh khachId={r.khachId} qt={qt} thaoTac={thaoTac} onDoi={onDoi} />}
       {mo && thaoTac && (
         <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-          {r.trangThai === "cho_lam" && <NutBatDau id={r.id} onDoi={onDoi} />}
+          {r.trangThai === "cho_lam" && <NutBatDau id={r.id} qt={qt} onDoi={onDoi} />}
           {ketThuc ? <NutHop kieu={r.trangThai === "dang_lam" ? "chinh" : "phu"} nhan="Kết thúc (trả khách)" tieuDe={`Kết thúc · ${r.khachTen}`} rong nhanLuu={r.theId ? `Kết thúc, trừ ${r.soLuong} buổi` : "Kết thúc, xác nhận đã làm"}
             moTa={`${r.theId ? `${r.dichVuTen} · thẻ ${r.theMa}. Bấm khi đã làm xong và trả khách: trừ ${r.soLuong} buổi của thẻ${r.soLuong > 1 ? ` (${r.soLuong} người cùng làm)` : ""}, ghi doanh thu của buổi và ra phiếu vật tư theo định mức (tính là đã xác nhận, không phải bấm lại; dùng khác định mức thì mở phiếu sửa).` : `${r.dichVuTen}${r.hoaDonMa ? ` · hoá đơn ${r.hoaDonMa}` : ""}. Bấm khi đã làm xong và trả khách để xác nhận đã làm dịch vụ của hoá đơn. Không trừ thẻ, không đổi tiền.`}${qt && qt.buoc.some((b) => !b.daTich) ? ` Còn ${qt.buoc.filter((b) => !b.daTich).length} bước quy trình chưa tích.` : ""}`}
             an={{ id: r.id }} truong={truongBuoi({ nhanVien, bacSi })}

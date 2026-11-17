@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { kiemQuyen, KHONG_DU_QUYEN, type NguoiDung } from "@/lib/auth";
 import { coQuyen, duocKetThucBuoi } from "@/lib/quyen";
 import { sb, thongBaoLoi, tuyChon } from "@/lib/db";
-import { chuoi } from "@/lib/form";
+import { bat, chuoi } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
 import { docBuoiCho, docQuyTrinh, type BuoiCho, type QuyTrinhKhach } from "@/lib/buoi-cho-lam";
 import { docHenKeTiep, docNguoiBuoi, docThamSo, ghiHenKeTiep, taoPhieuBuoi, theTrongPhamVi, type PhieuBuoi } from "@/lib/buoi-thuc-hien";
@@ -290,8 +290,10 @@ export async function batDauLam(fd: FormData): Promise<KQ> {
   if (!l) return { loi: "Không tìm thấy lượt chờ làm." };
   if (!duocThaoTac(nd, l)) return { loi: KHONG_DU_QUYEN };
   if (l.trang_thai !== "cho_lam") return { loi: "Lượt này không còn ở trạng thái Chờ làm." };
+  // Quy trình chị Lâm chốt 17/11/2026: vật tư cấp TRƯỚC khi làm — chưa tích "Đã nhận đủ vật tư" thì không bắt đầu được (0339).
+  if (!bat(fd, "da_nhan_vat_tu")) return { loi: "Tích \"Đã nhận đủ vật tư\" trước khi bắt đầu làm (vật tư phải cấp trước khi làm)." };
   const db = sb(), bayGio = new Date().toISOString();
-  const { data: doi, error } = await db.from("buoi_cho_lam").update({ trang_thai: "dang_lam", bat_dau_luc: bayGio, bat_dau_boi: nd.nhanVienId, cap_nhat_luc: bayGio })
+  const { data: doi, error } = await db.from("buoi_cho_lam").update({ trang_thai: "dang_lam", bat_dau_luc: bayGio, bat_dau_boi: nd.nhanVienId, vat_tu_luc: bayGio, cap_nhat_luc: bayGio })
     .eq("id", l.id).eq("trang_thai", "cho_lam").select("id");
   if (error) return { loi: thongBaoLoi(error) };
   if (!doi?.length) return { loi: "Lượt này vừa được người khác xử lý." };
@@ -325,7 +327,10 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
   if ("loi" in hen) return { loi: hen.loi };
   const db = sb();
   // Tiến độ bước đọc TRƯỚC khi đóng lượt (sau đó lượt không còn mở) — chỉ khi cần báo thu ngân.
-  const td = l.chuyen_boi && l.chuyen_boi !== nd.nhanVienId ? await tienDoKhach(l.chi_nhanh_id, l.khach_id) : null;
+  // Tiến độ bước luôn đọc (trước đây chỉ khi báo thu ngân): ghi lại để quản lý kiểm ai Kết thúc mà chưa tích đủ bước/vật tư (0339).
+  const td = await tienDoKhach(l.chi_nhanh_id, l.khach_id);
+  const thieu = td && td.tong > 0 && td.xong < td.tong ? `Bạn mới tích ${td.xong}/${td.tong} bước quy trình (kèm vật tư) của khách hôm nay — quản lý sẽ thấy lượt này "Thiếu bước". Lần sau tích từng bước ngay khi làm, trước khi bấm Kết thúc.` : null;
+  const ghiBuoc = async () => { if (td && td.tong > 0) await db.from("buoi_cho_lam").update({ buoc_xong: td.xong, buoc_tong: td.tong }).eq("id", l.id); };
   if (!l.the_id) {
     // Lượt từ hoá đơn dịch vụ (0333): chuyên viên xác nhận đã làm; không trừ thẻ, không sổ cái, không buổi.
     const { error: eHd } = await db.rpc("xong_buoi_cho", {
@@ -334,8 +339,10 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
     });
     lamMoi(); revalidatePath("/lich-hen");
     if (eHd) return { loi: thongBaoLoi(eHd) };
+    await ghiBuoc();
     await baoThuNgan(nd, l, "xong", td);
-    return { ok: true, ...(hen.co ? { canhBao: "Đã xác nhận làm xong. Lượt theo hoá đơn không gắn thẻ nên CHƯA lưu hẹn buổi kế tiếp: đặt lịch hẹn cho khách ở Lịch hẹn." } : {}) };
+    const cbHd = [hen.co ? "Lượt theo hoá đơn không gắn thẻ nên CHƯA lưu hẹn buổi kế tiếp: đặt lịch hẹn cho khách ở Lịch hẹn." : "", thieu ?? ""].filter(Boolean);
+    return { ok: true, ...(cbHd.length ? { canhBao: `Đã xác nhận làm xong. ${cbHd.join(" ")}` } : {}) };
   }
   // Thẻ đã bị trừ buổi qua đồng bộ SalonHero SAU lúc thu ngân chuyển lượt này (thu ngân trừ song song trên SalonHero, 14–16/11/2026):
   // buổi đó đã trừ rồi, bấm Kết thúc nữa là trừ đôi. Chặn, cho trả lại thu ngân.
@@ -349,6 +356,7 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
   });
   lamMoi(l.the_id); revalidatePath("/lich-hen");
   if (error) return { loi: thongBaoLoi(error) };
+  await ghiBuoc();
   await baoThuNgan(nd, l, "xong", td);
   // Buổi đã trừ. Từ đây lỗi nào cũng chỉ cảnh báo (bấm lại cũng không trừ thêm vì lượt đã "xong").
   const canhBao: string[] = [];
@@ -360,6 +368,7 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
   let phieu: PhieuBuoi | undefined;
   if (buoi) { const r = await taoPhieuBuoi(nd, buoi, true); phieu = r.phieu; if (r.canhBao) canhBao.push(r.canhBao); }
   // Lượt nhiều buổi (0333): mỗi buổi thêm một phiếu vật tư theo định mức (mỗi người làm dùng vật tư riêng).
+  if (thieu) canhBao.push(thieu);
   if (buoi && (l.so_luong ?? 1) > 1) {
     const { data: lx } = await db.from("buoi_cho_lam").select("buoi_ids").eq("id", l.id).maybeSingle();
     for (const b of (lx?.buoi_ids ?? []).filter((x) => x !== buoi)) { const r = await taoPhieuBuoi(nd, b, true); if (r.canhBao) canhBao.push(r.canhBao); }

@@ -1,5 +1,6 @@
 "use client";
 
+import { BatThongBao } from "@/components/trang-chu/BatThongBao";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Bell, BellOff, CalendarClock, Check, ClipboardList, CreditCard, Receipt, Volume2, X, type LucideIcon } from "lucide-react";
@@ -236,6 +237,8 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
               })}
             </ul>
           )}
+          {/* Bật thông báo đẩy ngay dưới danh sách chuông (chị Lâm 17/11/2026: nút nằm trong menu avatar không ai biết mà bật). */}
+          <BatThongBao />
           <div className="flex items-center gap-2 border-t border-vien px-5 py-2.5 text-[12px] text-muc-3">
             <span aria-hidden className={`inline-block h-2 w-2 ${truc ? "bg-nhan" : "bg-muc-3"}`} style={{ borderRadius: 9999 }} />
             {truc ? "Cập nhật trực tiếp" : "Đang nối lại, tạm cập nhật mỗi 30 giây"}

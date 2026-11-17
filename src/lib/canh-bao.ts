@@ -37,7 +37,8 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     // Phiếu vật tư theo buổi (0310) chưa được chuyên viên trị liệu xác nhận: chốt cuối ngày sẽ bỏ qua.
     coQuyen(nd, "phieu.nhan") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).eq("trang_thai", "cho_cap").not("buoi_id", "is", null).is("xac_nhan_luc", null)) : null,
     // Khách thu ngân vừa chuyển cho chính người này (0321), chưa bắt đầu làm.
-    nd.nhanVienId && coQuyen(nd, "the.xem") ? db.from("buoi_cho_lam").select("khach_id, chuyen_luc", { count: "exact" }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "cho_lam").order("chuyen_luc", { ascending: false }).limit(1) : null,
+    // Khách thu ngân chuyển cho CHÍNH mình: không cần quyền xem thẻ (chị Diệu Thuý 17/11/2026: tài khoản chuyên viên trị liệu không có "the.xem" nên chuông không hiện mục này).
+    nd.nhanVienId ? db.from("buoi_cho_lam").select("khach_id, chuyen_luc", { count: "exact" }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "cho_lam").order("chuyen_luc", { ascending: false }).limit(1) : null,
   ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay), rieng((a) => themCanhBaoLead(nd, a))]);
   const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
   // Lịch online đã có mục riêng "lichonl" → mục này chỉ đếm lịch đặt tại quầy / nhân viên tạo.

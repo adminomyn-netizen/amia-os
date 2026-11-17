@@ -337,6 +337,12 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
     await baoThuNgan(nd, l, "xong", td);
     return { ok: true, ...(hen.co ? { canhBao: "Đã xác nhận làm xong. Lượt theo hoá đơn không gắn thẻ nên CHƯA lưu hẹn buổi kế tiếp: đặt lịch hẹn cho khách ở Lịch hẹn." } : {}) };
   }
+  // Thẻ đã bị trừ buổi qua đồng bộ SalonHero SAU lúc thu ngân chuyển lượt này (thu ngân trừ song song trên SalonHero, 14–16/11/2026):
+  // buổi đó đã trừ rồi, bấm Kết thúc nữa là trừ đôi. Chặn, cho trả lại thu ngân.
+  if (l.chuyen_luc) {
+    const { data: shTru } = await db.from("the_so_cai").select("tao_luc").eq("the_id", l.the_id).eq("loai", "dieu_chinh").lt("so_buoi", 0).like("nhap_dot", "SH-DB-%").gt("tao_luc", l.chuyen_luc).limit(1);
+    if (shTru?.length) return { loi: "Buổi này đã trừ trên SalonHero (đồng bộ sang app) sau lúc thu ngân chuyển, nên không trừ thêm lần nữa. Bấm \"Trả lại thu ngân\" để đóng lượt." };
+  }
   const { data: buoiId, error } = await db.rpc("xong_buoi_cho", {
     p_id: l.id, p_nv: nguoi.nv, p_bac_si: tuyChon(chuoi(fd, "bac_si_id")), p_tham_so: docThamSo(fd), p_ghi_chu: tuyChon(chuoi(fd, "ghi_chu").slice(0, 1000)),
     p_tu_van: nguoi.tuVan, p_tinh_trang: tuyChon(nguoi.tinhTrang), p_de_xuat: tuyChon(nguoi.deXuat), p_nguoi: nd.nhanVienId,

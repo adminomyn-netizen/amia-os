@@ -40,7 +40,7 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     // Khách thu ngân chuyển cho CHÍNH mình: không cần quyền xem thẻ (chị Diệu Thuý 17/11/2026: tài khoản chuyên viên trị liệu không có "the.xem" nên chuông không hiện mục này).
     nd.nhanVienId ? db.from("buoi_cho_lam").select("khach_id, chuyen_luc", { count: "exact" }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "cho_lam").order("chuyen_luc", { ascending: false }).limit(1) : null,
     // Đã bấm Bắt đầu làm quá 2 tiếng mà chưa bấm "Đã làm xong" → thẻ khách CHƯA trừ buổi (17/11/2026: 48 lượt 15–16/11 kẹt ở đây).
-    nd.nhanVienId ? db.from("buoi_cho_lam").select("id", { count: "exact", head: true }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "dang_lam").lt("bat_dau_luc", new Date(Date.now() - 2 * 3600e3).toISOString()) : null,
+    nd.nhanVienId ? db.from("buoi_cho_lam").select("id", { count: "exact", head: true }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "dang_lam").lt("bat_dau_luc", new Date(Date.now() - 2 * 3600e3).toISOString()).gte("chuyen_luc", "2026-11-16T17:00:00Z") : null, // lượt trước 17/11 thu ngân đã trừ trên SalonHero → không nhắc bấm xong (trừ đôi)
   ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay), rieng((a) => themCanhBaoLead(nd, a))]);
   const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
   // Lịch online đã có mục riêng "lichonl" → mục này chỉ đếm lịch đặt tại quầy / nhân viên tạo.

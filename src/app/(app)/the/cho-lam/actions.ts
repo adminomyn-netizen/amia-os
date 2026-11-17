@@ -352,11 +352,11 @@ export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
     if (r.loi) canhBao.push(`CHƯA lưu được hẹn buổi kế tiếp (${r.loi}). Vào hồ sơ thẻ bấm "Hẹn buổi kế tiếp" để ghi.`);
   }
   let phieu: PhieuBuoi | undefined;
-  if (buoi) { const r = await taoPhieuBuoi(nd, buoi); phieu = r.phieu; if (r.canhBao) canhBao.push(r.canhBao); }
+  if (buoi) { const r = await taoPhieuBuoi(nd, buoi, true); phieu = r.phieu; if (r.canhBao) canhBao.push(r.canhBao); }
   // Lượt nhiều buổi (0333): mỗi buổi thêm một phiếu vật tư theo định mức (mỗi người làm dùng vật tư riêng).
   if (buoi && (l.so_luong ?? 1) > 1) {
     const { data: lx } = await db.from("buoi_cho_lam").select("buoi_ids").eq("id", l.id).maybeSingle();
-    for (const b of (lx?.buoi_ids ?? []).filter((x) => x !== buoi)) { const r = await taoPhieuBuoi(nd, b); if (r.canhBao) canhBao.push(r.canhBao); }
+    for (const b of (lx?.buoi_ids ?? []).filter((x) => x !== buoi)) { const r = await taoPhieuBuoi(nd, b, true); if (r.canhBao) canhBao.push(r.canhBao); }
   }
   return { ok: true, ...(phieu ? { ...phieu, xemPhieu: coQuyen(nd, "phieu.xem") } : {}), ...(canhBao.length ? { canhBao: `Đã trừ buổi, nhưng ${canhBao.join(" ")}` } : {}) };
 }

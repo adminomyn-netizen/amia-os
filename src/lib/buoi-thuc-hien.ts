@@ -69,10 +69,17 @@ export function docNguoiBuoi(fd: FormData): NguoiBuoi | { loi: string } {
 
 export type PhieuBuoi = { phieuId: string; phieuMa: string; phieuBacSi: boolean };
 /** Phiếu vật tư của buổi (đủ dòng định mức của dịch vụ); chuyên viên trị liệu kiểm, xác nhận, cuối ngày chốt mới xuất kho. */
-export async function taoPhieuBuoi(nd: NguoiDung, buoi: string): Promise<{ phieu?: PhieuBuoi; canhBao?: string }> {
+/** `xacNhan`: chuyên viên trị liệu tự bấm "Đã làm xong" = đã kiểm vật tư theo định mức → xác nhận phiếu luôn, khỏi bấm "Xác nhận đã kiểm" lần hai
+ *  (chuyên viên phản ánh qua chị Lâm 17/11/2026). Dùng khác định mức thì mở phiếu sửa dòng → phiếu tự về "chưa xác nhận" để xác nhận lại.
+ *  Phiếu bác sĩ chỉ định dùng lại cho buổi thì KHÔNG tự xác nhận. */
+export async function taoPhieuBuoi(nd: NguoiDung, buoi: string, xacNhan = false): Promise<{ phieu?: PhieuBuoi; canhBao?: string }> {
   const { data: pid, error } = await sb().rpc("tao_phieu_theo_buoi", { p_buoi: buoi, p_nguoi: nd.nhanVienId });
   if (error || typeof pid !== "string") return { canhBao: `CHƯA tạo được phiếu vật tư cho buổi này (${thongBaoLoi(error) || "không rõ lỗi"}). Đừng làm lại buổi; báo kho / quản lý ra phiếu.` };
-  const { data: pc } = await sb().from("phieu_cap").select("ma, buoi_id").eq("id", pid).maybeSingle();
+  const { data: pc } = await sb().from("phieu_cap").select("ma, buoi_id, xac_nhan_luc").eq("id", pid).maybeSingle();
+  if (xacNhan && pc && pc.buoi_id === buoi && !pc.xac_nhan_luc) {
+    const { error: eXn } = await sb().rpc("xac_nhan_phieu_buoi", { p_id: pid, p_nguoi: nd.nhanVienId });
+    if (eXn) console.error("taoPhieuBuoi xác nhận:", eXn.message); // không chặn: phiếu vẫn còn, chuyên viên xác nhận tay được
+  }
   revalidatePath("/phieu-cap");
   return { phieu: { phieuId: pid, phieuMa: pc?.ma ?? "", phieuBacSi: !!pc && pc.buoi_id !== buoi } };
 }

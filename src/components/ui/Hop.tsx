@@ -83,7 +83,7 @@ export function Hop({
   // Gắn thẳng vào <body>: trên iPhone vùng cuộn <main> (-webkit-overflow-scrolling) tạo lớp xếp chồng riêng → thanh tab dưới (z-40)
   // đè lên hộp, che mất nút Lưu (Thương 14/11/2026: "đặt lịch hẹn k lưu được"; chị Thuý 13/11 ghi chú khách).
   return createPortal(
-    <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto overscroll-contain px-2 py-3 sm:px-4 sm:py-14"
+    <div className="fixed inset-0 z-[80] flex items-start justify-center overflow-y-auto overscroll-contain px-2 py-3 sm:px-4 sm:py-14"
       style={vung ? { top: vung.top, height: vung.height, bottom: "auto" } : undefined}
     >
       <button aria-label="Đóng" tabIndex={-1} data-dong className="fixed inset-0 bg-muc/35" onClick={dong} />

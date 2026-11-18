@@ -163,7 +163,7 @@ export function XemAnhPhongTo({ ds, chiSo, dong, doiToi, xoaDuoc, xoa }: {
   const truoc = chiSo > 0 ? () => doiToi(chiSo - 1) : undefined, sau = chiSo < ds.length - 1 ? () => doiToi(chiSo + 1) : undefined;
   // Gắn vào body (16/11): trong <main> trên iPhone, thanh tab dưới đè lên khung phóng to.
   return createPortal(
-    <div className="fixed inset-0 z-[60] bg-black/92 text-white" role="dialog" aria-modal="true" aria-label={`Xem ảnh ${chiSo + 1} trên ${ds.length}`}>
+    <div className="fixed inset-0 z-[95] bg-black/92 text-white" role="dialog" aria-modal="true" aria-label={`Xem ảnh ${chiSo + 1} trên ${ds.length}`}>
       <KhungAnh key={anh.id} anh={anh} truoc={truoc} sau={sau} />
       <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-start justify-between gap-3 bg-gradient-to-b from-black/60 to-transparent px-4 pb-6 pt-[calc(12px+env(safe-area-inset-top))]">
         <div className="min-w-0 text-[13px] leading-tight">

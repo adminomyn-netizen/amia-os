@@ -159,7 +159,7 @@ export function Chon({
           role="listbox"
           aria-label={ariaLabel}
           style={{ position: "fixed", visibility: "hidden" }}
-          className={`z-[70] overflow-y-auto rounded-the border border-vien bg-giay-sang p-1.5 ${BONG}`}
+          className={`z-[90] overflow-y-auto rounded-the border border-vien bg-giay-sang p-1.5 ${BONG}`}
         >
           {coTim && (
             <li role="presentation" className="sticky top-0 z-10 -mx-1.5 -mt-1.5 mb-1 bg-giay-sang px-2 pb-1.5 pt-2">

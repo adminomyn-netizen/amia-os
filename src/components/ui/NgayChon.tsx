@@ -160,7 +160,7 @@ export function NgayChon({
           role="dialog"
           aria-label="Chọn ngày"
           style={{ position: "fixed", visibility: "hidden" }}
-          className={`z-[70] overflow-y-auto rounded-[12px] border border-vien bg-giay-sang p-3.5 ${BONG}`}
+          className={`z-[90] overflow-y-auto rounded-[12px] border border-vien bg-giay-sang p-3.5 ${BONG}`}
         >
           <div className="flex items-center gap-1.5">
             <button

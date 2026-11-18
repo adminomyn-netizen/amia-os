@@ -62,7 +62,7 @@ export function LocNhieuNhanVien({ giaTri, luaChon, coChuaPhan = true }: { giaTr
       </button>
       {mo && createPortal(
         <div ref={hopRef} role="dialog" aria-label="Chọn nhân viên" style={{ position: "fixed", visibility: "hidden" }}
-          className="z-[70] flex flex-col overflow-hidden rounded-the border border-vien bg-giay-sang shadow-[0_14px_32px_rgba(5,40,36,0.18)]">
+          className="z-[90] flex flex-col overflow-hidden rounded-the border border-vien bg-giay-sang shadow-[0_14px_32px_rgba(5,40,36,0.18)]">
           <div className="border-b border-vien p-2">
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Gõ để tìm…" aria-label="Tìm nhân viên" className="h-8 w-full rounded-nho border border-vien-dam bg-giay px-2.5 text-[13px] text-muc outline-none focus-visible:border-nhan" />
           </div>

@@ -172,7 +172,7 @@ export function ChuongThongBao({ toi = false }: { toi?: boolean }) {
         {n > 0 && <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center bg-loi px-1 text-[11px] font-semibold leading-none text-white" style={{ borderRadius: 9, boxShadow: `0 0 0 2px var(${toi ? "--menu" : "--giay-sang"})` }}>{n}</span>}
       </button>
       {noi && !mo && (
-        <div role="alert" className="vao fixed right-4 top-[68px] z-[60] w-[340px] max-sm:inset-x-3 max-sm:w-auto">
+        <div role="alert" className="vao fixed right-4 top-[68px] z-[95] w-[340px] max-sm:inset-x-3 max-sm:w-auto">
           <div className="the-noi flex items-start gap-3 border-l-[3px] border-l-nhan-dam p-3.5">
             <span aria-hidden className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-nho ${(KIEU_NHOM[noi.nhom] ?? KIEU_NHOM.khac).nen} ${(KIEU_NHOM[noi.nhom] ?? KIEU_NHOM.khac).chu}`}><Bell strokeWidth={1.8} className="h-[18px] w-[18px]" /></span>
             <span className="min-w-0 flex-1 text-[13.5px] leading-snug">

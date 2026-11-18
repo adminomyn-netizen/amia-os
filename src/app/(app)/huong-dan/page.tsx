@@ -5,7 +5,7 @@ import { NHAN_VAI_TRO, type Quyen } from "@/lib/quyen";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { MucTrang } from "@/components/ui/MucTrang";
 
-type Bai = { href: string; ten: string; quyen: Quyen[] | null; moTa: string; buoc: string[] };
+type Bai = { href: string; ten: string; quyen: Quyen[] | null; moTa: string; buoc: string[]; chiTiet?: string };
 
 /** Hướng dẫn ngắn theo từng mục lớn; người dùng chỉ thấy những mục mình có quyền dùng. */
 const BAI: Bai[] = [
@@ -20,7 +20,7 @@ const BAI: Bai[] = [
   { href: "/kho-mua-sam", ten: "Kho & Mua sắm", quyen: ["kho.xem", "phieu.xem"], moTa: "Tồn kho, nhập hàng, phiếu cấp vật tư, kiểm kê.", buoc: ["Nhập kho: mỗi lô phải có hạn dùng nếu sản phẩm bắt buộc.", "Phiếu cấp vật tư: phiếu bác sĩ chỉ định cấp trước ca; phiếu theo buổi chuyên viên trị liệu kiểm, bấm Xác nhận đã kiểm.", "Cuối ngày bấm Chốt cuối ngày → Chốt và xuất kho. Hàng hết hạn hoặc không đủ tồn sẽ bị chặn.", "Kiểm kê định kỳ, chênh lệch cần người khác duyệt."] },
   { href: "/tai-chinh", ten: "Tài chính - Kế toán", quyen: ["quy.xem", "baocao.tien", "no.thu"], moTa: "Sổ quỹ, công nợ, hoá đơn đầu vào, quyết toán.", buoc: ["Ghi thu chi vào đúng quỹ và đúng loại thu chi.", "Đối chiếu hoá đơn đầu vào: người đối chiếu phải khác người ghi.", "Kỳ khoá sổ xong không sửa được số cũ."] },
   { href: "/van-ban", ten: "Văn bản & Hợp đồng", quyen: ["vb.xem"], moTa: "Hợp đồng, quyết định, quy định.", buoc: ["Soạn văn bản rồi gửi duyệt.", "Người duyệt phải khác người soạn.", "Văn bản đã duyệt tra cứu được trong danh sách."] },
-  { href: "/marketing", ten: "Marketing", quyen: ["mkt.xem", "lead.xu_ly"], moTa: "Khách tiềm năng, nguồn giới thiệu, chiến dịch.", buoc: ["Khách tiềm năng mới hiện ở Hộp Lead, nhận xử lý để không ai bị bỏ sót.", "Ghi rõ nguồn để biết kênh nào hiệu quả."] },
+  { href: "/marketing", ten: "Marketing", quyen: ["mkt.xem", "lead.xu_ly"], chiTiet: "/huong-dan/marketing", moTa: "Hộp thư fanpage, Hộp Lead tự đổ từ Pancake, báo cáo marketing, chiến dịch, nội dung.", buoc: ["Khách tiềm năng mới hiện ở Hộp Lead, nhận xử lý để không ai bị bỏ sót.", "Ghi rõ nguồn để biết kênh nào hiệu quả."] },
   { href: "/bao-cao", ten: "Báo cáo", quyen: ["baocao.xem"], moTa: "Doanh thu, nhân viên, nợ, vật tư.", buoc: ["Chọn khoảng ngày và chi nhánh.", "Tab Doanh thu: rê chuột hoặc bấm một cột → thấy thực thu, doanh thu, số đơn, tiền mặt, chuyển khoản, nợ mới và nút xem hoá đơn của ngày/kỳ đó.", "Bấm Xuất Excel để tải số liệu."] },
   { href: "/cai-dat", ten: "Cài đặt", quyen: ["danhmuc.xem", "nhanvien.quanly", "hethong.phanquyen", "baocao.tien"], moTa: "Thiết lập cửa hàng, danh mục, hoa hồng, phân quyền.", buoc: ["Bấm avatar góc phải, chọn Cài đặt hệ thống để thấy mọi thiết lập theo nhóm.", "Phân quyền: Tài khoản & phân quyền, mỗi người chỉnh quyền riêng; bảng Vai trò & quyền cho biết mặc định.", "Danh mục sản phẩm: mỗi sản phẩm cần mã đúng quy ước và không trùng tên."] },
 ];
@@ -41,6 +41,7 @@ export default async function HuongDan() {
             <MucTrang noi tieuDe={b.ten} phai={<Link href={b.href} className="font-medium text-nhan-dam hover:underline">Mở</Link>}>
               <p className="mb-3 text-[14px] text-muc-2">{b.moTa}</p>
               <ol className="list-decimal space-y-1.5 pl-5 text-[14px] text-muc marker:text-muc-3">{b.buoc.map((x) => <li key={x}>{x}</li>)}</ol>
+              {b.chiTiet && <Link href={b.chiTiet} className="nut-vang mt-4 inline-flex h-10 items-center rounded-nho px-4 text-[14px]">Xem hướng dẫn chi tiết có video</Link>}
             </MucTrang>
           </div>
         ))}

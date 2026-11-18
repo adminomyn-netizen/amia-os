@@ -25,6 +25,7 @@ const NHOM: { nhan: string; ma: CanhBao["ma"][] }[] = [
   { nhan: "vụ khiếu nại, biến chứng", ma: ["bchung", "knai"] },
   { nhan: "mục kho cần xem", ma: ["kho", "han", "tonam"] },
   { nhan: "thẻ sắp hết buổi", ma: ["the"] },
+  { nhan: "khách đến hạn liệu trình", ma: ["goiy"] },
   { nhan: "khoản công nợ", ma: ["no"] },
   { nhan: "việc lead (chưa nhận, nhắc)", ma: ["lead", "leadnhac"] },
   { nhan: "việc chấm công, lương", ma: ["ccvao", "ccra", "ccquen", "luong", "cckhoa", "ccnghi", "klhan", "hdld"] },

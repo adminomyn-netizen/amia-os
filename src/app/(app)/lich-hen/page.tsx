@@ -32,6 +32,7 @@ import { KhungChiTietLich, TheLich } from "@/components/lich-hen/KhungChiTietLic
 import { LocLoaiLich } from "@/components/lich-hen/LocSuaLich";
 import { khoaSuaLich, laLoaiLich, laQuanLyLich, nhanLoaiLich, quyenSuaLich } from "@/lib/lich-hen-sua";
 import { NHAN_HANH_DONG_SUA, dongThayDoi } from "@/lib/lich-hen-lich-su";
+import { demGoiYLichDenHan } from "@/lib/goi-y-lich";
 
 const TT: Record<string, { nhan: string; kieu: "tot" | "cho" | "loi" | "tram" }> = {
   chua_xac_nhan: { nhan: "Chưa xác nhận", kieu: "tram" }, da_xac_nhan: { nhan: "Đã xác nhận", kieu: "cho" }, cho_phuc_vu: { nhan: "Chờ phục vụ", kieu: "cho" },
@@ -96,7 +97,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
   // Mọi truy vấn không phụ thuộc nhau chạy cùng một lượt (trước đây xếp hàng 4 lượt → chuyển trang chậm).
   const sua = coQuyen(nd, "lich.sua");
   const taoKhachDuoc = sua && coQuyen(nd, "khach.sua");
-  const [{ data: lichTho }, { data: nv }, { data: dv }, { count: demHomNay }, { data: choLam }, { data: yeuCau }, { data: lk }, { data: khachMoi }, { data: nhomKh }] = await Promise.all([
+  const [{ data: lichTho }, { data: nv }, { data: dv }, { count: demHomNay }, { data: choLam }, { data: yeuCau }, { data: lk }, { data: khachMoi }, { data: nhomKh }, soGoiY] = await Promise.all([
     qLich,
     db.from("nhan_vien").select("id, ho_ten, vai_tro, chuc_danh, ma_nv, chi_nhanh_id").eq("hoat_dong", true).order("ma_nv"),
     db.from("dich_vu").select("id, ma, ten, thoi_luong_phut, noi_hien_thi, chi_nhanh_ids").eq("hoat_dong", true).order("ma"),
@@ -107,6 +108,8 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
     sp.khach ? db.from("khach_hang").select("id, ma, ho_ten, dien_thoai, nguoi_phu_trach_id").eq("id", sp.khach).maybeSingle() : Promise.resolve({ data: null }),
     // Nhóm khách hàng cho ô "Nhóm khách hàng" khi tạo khách trong hộp đặt lịch (như SalonHero).
     taoKhachDuoc ? db.from("nhom_khach").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] as { id: string; ten: string }[] }),
+    // Số khách đến hạn liệu trình hôm nay/quá hạn (gợi ý lịch hẹn theo dịch vụ, 0342) cho nút "Gợi ý lịch sắp đến".
+    demGoiYLichDenHan(nd.chiNhanhId ?? null),
   ]);
   const idsK = [...new Set((lichTho ?? []).map((l) => l.khach_id))];
   const qThuong = q.toLowerCase();
@@ -368,6 +371,7 @@ export default async function TrangLichHen({ searchParams }: { searchParams: Pro
             {KIEU_XEM.map((k) => <Link key={k.ma} href={url({ kieu: k.ma })} aria-current={k.ma === kieu ? "true" : undefined} className={nutKieu(k.ma === kieu)}>{k.nhan}</Link>)}
           </div>
           <Link href={`/lich-hen/so-do-cho?cn=${cnId}`} className={nutPhu}>Sơ đồ chỗ</Link>
+          <Link href={`/lich-hen/goi-y?cn=${cnId}`} className={nutPhu}>Gợi ý lịch sắp đến{soGoiY > 0 ? <span className="ml-1.5 rounded-full bg-nhan-dam px-1.5 text-[11.5px] font-semibold text-white tabular-nums">{soGoiY}</span> : null}</Link>
           <Link href={`/lich-hen/lich-su?cn=${cnId}`} className={nutPhu}>Lịch sử</Link>
           {quanLy && <Link href={`/lich-hen/lich-su-sua?cn=${cnId}`} className={nutPhu}>Lịch sử sửa</Link>}
           <ChonKhoang tu={tu} den={den} />

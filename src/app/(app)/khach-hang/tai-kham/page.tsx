@@ -47,7 +47,7 @@ export default async function NhacTaiKham({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-4">
-      <TieuDeNoi gon tieuDe="Nhắc tái khám" icon={CalendarClock} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Khách có thẻ liệu trình còn buổi, đã tới ngày hẹn buổi kế tiếp mà chưa đặt lịch. Hẹn tái khám = lần làm gần nhất + khoảng cách giữa 2 buổi của gói (mặc định {ng.macDinhNgay} ngày).</>} />
+      <TieuDeNoi gon tieuDe="Nhắc tái khám" icon={CalendarClock} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Khách có thẻ liệu trình còn buổi, đã tới ngày hẹn buổi kế tiếp mà chưa đặt lịch. Hẹn tái khám = lần làm gần nhất + khoảng cách giữa 2 buổi của gói (mặc định {ng.macDinhNgay} ngày). Nhắc theo từng dịch vụ (Exion, MFU, peel…, cả khách không có thẻ) xem ở <Link href="/lich-hen/goi-y" className="font-medium text-nhan-dam hover:underline">Gợi ý lịch hẹn</Link>.</>} />
 
       <form method="get" className="the-noi the-noi-thap flex flex-wrap items-end gap-3 px-4 pb-3.5 pt-4 text-[13px]">
         {!khoa && (

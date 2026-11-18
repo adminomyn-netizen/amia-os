@@ -3,9 +3,10 @@ import { sb } from "@/lib/db";
 import { congNgay, homNayHCM, tienVN } from "@/lib/dinh-dang";
 import { coQuyen, type CoQuyen } from "@/lib/quyen";
 import { layNhacCong } from "@/lib/nhac-cong";
+import { demGoiYLichDenHan } from "@/lib/goi-y-lich";
 
 /** `ma` = loại việc (khoá trạng thái đã đọc/đã xoá của từng nhân viên). */
-export type CanhBao = { ma: "lich" | "lichonl" | "phieu" | "phieu-buoi" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin" | "knai" | "bchung" | "lead" | "leadnhac" | "buoicho" | "buoidl" | "buoithieu"; nhan: string; href: string };
+export type CanhBao = { ma: "lich" | "lichonl" | "phieu" | "phieu-buoi" | "the" | "no" | "kho" | "han" | "chuyen" | "xuatkhan" | "hdv" | "vb" | "hdld" | "ccvao" | "ccra" | "ccquen" | "luong" | "ccnguoi" | "cckhoa" | "ccnghi" | "klduyet" | "klhan" | "tomtat_tuan" | "tomtat_thang" | "tomtat_nam" | "tonam" | "tdyc" | "tduv" | "tdtin" | "knai" | "bchung" | "lead" | "leadnhac" | "buoicho" | "buoidl" | "buoithieu" | "goiy"; nhan: string; href: string };
 
 /** Việc đang chờ người này xử lý (theo quyền và chi nhánh của họ): dùng cho chuông thông báo và Trang chủ. */
 /** Cảnh báo nhân sự (hợp đồng lao động...) đã chuyển sang MSC Group OS: bỏ mọi mục trỏ vào /nhan-su. */
@@ -28,7 +29,7 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
   const pOnl = coQuyen(nd, "lich.xem")
     ? loc(db.from("lich_hen").select("bat_dau, khach_id").in("nguon", ["ONLINE", "WEB"]).eq("trang_thai", "chua_xac_nhan").gte("bat_dau", new Date().toISOString()).order("tao_luc", { ascending: false }).limit(300))
     : null;
-  const [[lich, phieu, dem, no, phieuBuoi, buoiCho, buoiDl, buoiThieu], nangCao, khieuNai, nhacCong, lead] = await Promise.all([Promise.all([
+  const [[lich, phieu, dem, no, phieuBuoi, buoiCho, buoiDl, buoiThieu], nangCao, khieuNai, nhacCong, lead, goiY] = await Promise.all([Promise.all([
     // Lịch chưa xác nhận từ hôm nay trở đi (trước 15/11/2026 chỉ đếm hôm nay → lịch nhân viên/online đặt cho ngày mai không ai thấy để xác nhận).
     coQuyen(nd, "lich.xem") ? loc(db.from("lich_hen").select("bat_dau, khach_id, nguon", { count: "exact" }).gte("bat_dau", tu).eq("trang_thai", "chua_xac_nhan").order("tao_luc", { ascending: false }).limit(300)) : null,
     coQuyen(nd, "phieu.xem") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).in("trang_thai", ["cho_cap", "da_cap"]).is("buoi_id", null)) : null,
@@ -43,7 +44,9 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     nd.nhanVienId ? db.from("buoi_cho_lam").select("id", { count: "exact", head: true }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "dang_lam").lt("bat_dau_luc", new Date(Date.now() - 2 * 3600e3).toISOString()).gte("chuyen_luc", "2026-11-16T17:00:00Z") : null, // lượt trước 17/11 thu ngân đã trừ trên SalonHero → không nhắc bấm xong (trừ đôi)
     // Quản lý (chị Diệu Thuý 17/11/2026: "lỡ làm mà không tích thì sao"): lượt hôm nay chuyên viên bấm Kết thúc khi chưa tích đủ bước quy trình/vật tư (0339).
     nd.vaiTro === "quan_ly" || nd.vaiTro === "chu" ? loc(db.from("buoi_cho_lam").select("buoc_xong, buoc_tong").eq("trang_thai", "xong").gte("xong_luc", tu).lt("xong_luc", den).not("buoc_tong", "is", null)) : null,
-  ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay), rieng((a) => themCanhBaoLead(nd, a))]);
+  ]), rieng((a) => themCanhBaoNangCao(nd, a, homNay, pDem.then((d) => d?.kho_ton_am ?? 0))), rieng((a) => themCanhBaoKhieuNai(nd, a)), layNhacCong(nd, homNay), rieng((a) => themCanhBaoLead(nd, a)),
+    // Gợi ý lịch hẹn theo dịch vụ (chị Diệu Thuý 18/11/2026: "hiện thông báo sắp tới lịch"): khách đến hạn hôm nay / quá hạn chưa xử lý, cho người đặt được lịch.
+    coQuyen(nd, "lich.sua") ? demGoiYLichDenHan(cn) : Promise.resolve(0)]);
   const the = coQuyen(nd, "the.xem") ? { count: dem?.the_sap_het ?? 0 } : null, kho = coQuyen(nd, "kho.xem") ? { count: dem?.kho_duoi_muc ?? 0 } : null;
   // Lịch online đã có mục riêng "lichonl" → mục này chỉ đếm lịch đặt tại quầy / nhân viên tạo.
   const dsLich = ((lich?.data ?? []) as { bat_dau: string; khach_id: string | null; nguon: string | null }[]).filter((l) => !["ONLINE", "WEB"].includes(l.nguon ?? ""));
@@ -78,6 +81,7 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
   const dsNo = (no?.data ?? []) as { con_no: number }[];
   if (dsNo.length > 0) ra.push({ ma: "no", nhan: `${dsNo.length} hoá đơn còn nợ, tổng ${tienVN(dsNo.reduce((s, r) => s + Number(r.con_no), 0))}`, href: "/bao-cao?tab=no" });
   if ((kho?.count ?? 0) > 0) ra.push({ ma: "kho", nhan: `${kho!.count} mặt hàng dưới mức tồn tối thiểu`, href: "/kho?thieu=1" });
+  if (goiY > 0) ra.push({ ma: "goiy", nhan: `${goiY} khách đến hạn liệu trình (buổi kế tiếp / tái khám) hôm nay hoặc đã quá hạn mà chưa có lịch`, href: "/lich-hen/goi-y?truoc=0" });
   ra.push(...nangCao, ...khieuNai, ...lead);
   ra.unshift(...nhacCong);
   return ra;

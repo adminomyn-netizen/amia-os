@@ -3814,6 +3814,8 @@ export type Database = {
           doi_tuong: string
           cho_sua_gia: boolean
           in_gio_phuc_vu: boolean
+          khoang_cach_ngay: number | null
+          tai_kham_sau_ngay: number | null
           vat_loai: string | null
           noi_hien_thi: string
           chi_nhanh_ids: string[] | null
@@ -3840,6 +3842,8 @@ export type Database = {
           doi_tuong?: string
           cho_sua_gia?: boolean
           in_gio_phuc_vu?: boolean
+          khoang_cach_ngay?: number | null
+          tai_kham_sau_ngay?: number | null
           vat_loai?: string | null
           noi_hien_thi?: string
           chi_nhanh_ids?: string[] | null
@@ -3866,6 +3870,8 @@ export type Database = {
           doi_tuong?: string
           cho_sua_gia?: boolean
           in_gio_phuc_vu?: boolean
+          khoang_cach_ngay?: number | null
+          tai_kham_sau_ngay?: number | null
           vat_loai?: string | null
           noi_hien_thi?: string
           chi_nhanh_ids?: string[] | null
@@ -8316,6 +8322,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      lich_goi_y_xu_ly: {
+        Row: {
+          cap_nhat_luc: string
+          dich_vu_id: string
+          ghi_chu: string | null
+          khach_id: string
+          lan_cuoi: string
+          loai: string
+          nguoi_id: string | null
+          nhac_id: string | null
+          tao_luc: string
+          trang_thai: string | null
+        }
+        Insert: {
+          cap_nhat_luc?: string
+          dich_vu_id: string
+          ghi_chu?: string | null
+          khach_id: string
+          lan_cuoi: string
+          loai: string
+          nguoi_id?: string | null
+          nhac_id?: string | null
+          tao_luc?: string
+          trang_thai?: string | null
+        }
+        Update: {
+          cap_nhat_luc?: string
+          dich_vu_id?: string
+          ghi_chu?: string | null
+          khach_id?: string
+          lan_cuoi?: string
+          loai?: string
+          nguoi_id?: string | null
+          nhac_id?: string | null
+          tao_luc?: string
+          trang_thai?: string | null
+        }
+        Relationships: []
       }
       lich_hen: {
         Row: {
@@ -14209,6 +14254,39 @@ export type Database = {
           ngay_goc: string
           so_lan_goi: number
           tong: number
+        }[]
+      }
+      ds_goi_y_lich: {
+        Args: {
+          p_bao_truoc?: number
+          p_cn?: string
+          p_dich_vu?: string
+          p_gioi_han?: number
+          p_khach?: string
+          p_loai?: string
+          p_nhom?: string
+          p_tre_toi_da?: number
+          p_tt?: string
+        }
+        Returns: {
+          chi_nhanh_id: string
+          den_han: string
+          dich_vu_id: string
+          dien_thoai: string
+          ghi_chu: string
+          ho_ten: string
+          ke_tiep_ngay: string
+          khach_id: string
+          lan_cuoi: string
+          lich_sap_toi: string
+          loai: string
+          ma: string
+          nhac_id: string
+          so_ngay: number
+          so_ngay_con: number
+          ten_dich_vu: string
+          tong: number
+          trang_thai: string
         }[]
       }
       ds_tai_kham: {

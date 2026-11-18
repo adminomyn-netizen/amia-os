@@ -116,7 +116,8 @@ language sql stable as $$
          l.kt, l.lich_sap_toi, l.trang_thai, l.ghi_chu, l.nhac_id, l.cn2
     from loc l cross join cfg
    where (p_cn is null or l.cn2 = p_cn)
-   order by l.den, l.ho_ten, l.khach_id, l.loai
+   -- Gọi trước: đến hạn hôm nay / sắp đến (gần nhất trước), rồi tới quá hạn (mới quá trước, quá lâu xuống cuối).
+   order by (l.den < cfg.hn), abs(l.den - cfg.hn), l.ho_ten, l.khach_id, l.loai
    limit least(greatest(coalesce(p_gioi_han, 500), 1), 2000);
 $$;
 

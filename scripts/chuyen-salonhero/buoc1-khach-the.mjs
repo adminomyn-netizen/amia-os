@@ -142,10 +142,11 @@ try {
   // ── 4. Thẻ: cập nhật số dư cho thẻ đã có (dòng điều chỉnh), thêm thẻ mới ──
   const khachMoiMap = await mapMa(db, "khach_hang");
   const goi = await mapMa(db, "goi_the");
-  const theCo = new Map((await q(`select t.sh_id, t.id, t.loai, t.trang_thai, coalesce(s.b,0)::int buoi, coalesce(s.t,0)::bigint tien from public.the_khach t left join lateral (select sum(so_buoi) b, sum(so_tien) t from public.the_so_cai where the_id = t.id) s on true where t.sh_id is not null`)).map((r) => [Number(r.sh_id), r]));
+  const theCo = new Map((await q(`select t.sh_id, t.id, t.loai, t.trang_thai, t.so_buoi_tong tong, coalesce(s.b,0)::int buoi, coalesce(s.t,0)::bigint tien from public.the_khach t left join lateral (select sum(so_buoi) b, sum(so_tien) t from public.the_so_cai where the_id = t.id) s on true where t.sh_id is not null`)).map((r) => [Number(r.sh_id), r]));
   const maThe = new Set((await q(`select ma from public.the_khach`)).map((r) => r.ma));
   const dieuChinh = [], theMoi = [], bo = { khong_co_khach: 0, khong_co_goi: 0, so_du_bo: 0, trang_thai_doi: 0 };
   const dichTrangThai = [];
+  const tangTong = []; // SalonHero tăng số buổi của thẻ (tặng/mua thêm): tổng trên app phải tăng theo, không thì hiện "còn 3/2 buổi" (M24840, 18/11/2026). Chỉ tăng, không giảm, không đụng giá trị buổi.
   for (const c of dsThe) {
     if (c.is_deleted) continue;
     const lan = c.card_type === "USING";
@@ -156,6 +157,7 @@ try {
     const co = theCo.get(Number(c.id));
     if (co) {
       if (dichBuoi !== co.buoi || dichTien !== Number(co.tien)) dieuChinh.push({ the_id: co.id, so_buoi: dichBuoi - co.buoi, so_tien: dichTien - Number(co.tien) });
+      if (lan && limit < 999999 && co.tong != null && limit > co.tong) tangTong.push({ id: co.id, so_buoi_tong: limit });
       if (co.trang_thai !== tt && co.trang_thai !== "thu_hoi") { dichTrangThai.push({ id: co.id, trang_thai: tt }); bo.trang_thai_doi++; }
       continue;
     }
@@ -168,6 +170,7 @@ try {
   }
   if (dieuChinh.length) await theoLo(dieuChinh, 1000, (lo) => q(`insert into public.the_so_cai (the_id, loai, so_buoi, so_tien, nguoi_id, ghi_chu, nhap_dot)
       select x.the_id, 'dieu_chinh', x.so_buoi, x.so_tien, $2::uuid, 'Đồng bộ số dư với SalonHero (đợt ' || $3 || ')', $3 from jsonb_to_recordset($1::jsonb) as x(the_id uuid, so_buoi int, so_tien bigint)`, [JSON.stringify(lo), he, dot]));
+  if (tangTong.length) await q(`update public.the_khach t set so_buoi_tong = x.so_buoi_tong from jsonb_to_recordset($1::jsonb) as x(id uuid, so_buoi_tong int) where t.id = x.id and t.so_buoi_tong < x.so_buoi_tong`, [JSON.stringify(tangTong)]);
   if (dichTrangThai.length) await theoLo(dichTrangThai, 1000, (lo) => q(`update public.the_khach t set trang_thai = x.trang_thai from jsonb_to_recordset($1::jsonb) as x(id uuid, trang_thai text) where t.id = x.id`, [JSON.stringify(lo)]));
   let nTheMoi = 0;
   await theoLo(theMoi, 1000, async (lo) => {
@@ -205,7 +208,7 @@ try {
   them("Khách có SĐT phụ", [...chiTiet.values()].filter((r) => sdt(r.chi_tiet?.new_mobile)).length, (await q(`select count(*)::int n from public.khach_hang where sdt_phu is not null`))[0].n);
   them("Ghi chú riêng SalonHero đã nhập", ghiChu.length, (await q(`select count(*)::int n from public.khach_ghi_chu where sh_id is not null`))[0].n);
   inBang(kq);
-  const tom = { dot, that, cap_nhat: nCapNhat, them_moi: nMoi, ghi_chu_rieng_moi: nGhiChu, the_dieu_chinh: dieuChinh.length, the_moi: nTheMoi, the_doi_trang_thai: bo.trang_thai_doi, ...bao, bo, dieu_tra: dieuTra };
+  const tom = { dot, that, cap_nhat: nCapNhat, them_moi: nMoi, ghi_chu_rieng_moi: nGhiChu, the_dieu_chinh: dieuChinh.length, the_tang_tong_buoi: tangTong.length, the_moi: nTheMoi, the_doi_trang_thai: bo.trang_thai_doi, ...bao, bo, dieu_tra: dieuTra };
   console.log(JSON.stringify(tom));
   writeFileSync(`${thuMuc}/_buoc1-${that ? "that" : "thu"}.json`, JSON.stringify({ tom, doi_chieu: kq }, null, 1));
   const lech = kq.filter((x) => x.khop === "LỆCH" && !/Khách có|Ghi chú|Thẻ có số dư/.test(x.muc)).length + (lechThe ? 1 : 0);

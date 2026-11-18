@@ -4,7 +4,11 @@
 
 /** Một dòng gửi chuyên viên: thẻ + dịch vụ, người làm riêng (rỗng = dùng người làm chung của đơn).
  *  `soLuong` = số buổi trừ của dòng (nhiều người cùng làm một dịch vụ trên một thẻ, quản lý cơ sở 15/11/2026); không ghi = 1. */
-export type DongGuiCv = { theId: string; dvId: string; nvIds?: string[]; soLuong?: number };
+export type DongGuiCv = { theId: string; dvId: string; nvIds?: string[]; soLuong?: number;
+  /** Khách làm cùng dịch vụ thêm lần trong ngày khi lần trước CÒN đang chờ / đang làm (chi nhánh Vinh 18/11/2026): không tạo lượt mới
+   *  (chỉ mục một-lượt-mở giữ nguyên) mà cộng `soLuong` lần vào lượt đó. `slCu` = số buổi của lượt lúc thu ngân chọn: lượt đã đổi thì máy chủ chặn
+   *  (bấm gửi hai lần không cộng hai lần). */
+  luotId?: string; slCu?: number };
 
 export const TOI_DA_DONG_GUI = 20;
 /** Số buổi tối đa một dòng (một lượt) — khớp ràng buộc buoi_cho_lam.so_luong (0333) với biên an toàn. */
@@ -30,7 +34,7 @@ export function cheDoDvThe(dichVu: { gia_tri: string; nhan: string }[], goiId?: 
   return { kieu: "chon" };
 }
 
-/** Đọc ô `dong` (JSON) của biểu mẫu: bỏ dòng hỏng, gộp dòng trùng (cùng thẻ + dịch vụ, giữ dòng đầu), số buổi của dòng ở `soLuong`. */
+/** Đọc ô `dong` (JSON) của biểu mẫu: bỏ dòng hỏng, gộp dòng trùng (cùng thẻ + dịch vụ [+ lượt đang chờ], giữ dòng đầu), số lần (buổi) của dòng ở `soLuong`. */
 export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string } {
   let x: unknown;
   try { x = JSON.parse(tho || "[]"); } catch { return { loi: "Danh sách dịch vụ không đọc được, tải lại trang rồi chọn lại." }; }
@@ -40,7 +44,15 @@ export function docDongGui(tho: string): { dong: DongGuiCv[] } | { loi: string }
     const theId = String(d?.theId ?? ""), dvId = String(d?.dvId ?? "");
     if (!UUID.test(theId) || !(UUID.test(dvId) || goiCuaDv(dvId))) continue;
     const sl = soLuongDong(d?.soLuong ?? 1);
-    if (dong.some((o) => o.theId === theId && o.dvId === dvId)) continue; // gửi trùng (bấm hai lần) không cộng dồn: số buổi nằm ở soLuong
+    const luotId = UUID.test(String(d?.luotId ?? "")) ? String(d.luotId) : "";
+    if (dong.some((o) => o.theId === theId && o.dvId === dvId && (o.luotId ?? "") === luotId)) continue; // gửi trùng không cộng dồn: số lần (buổi) nằm ở soLuong
+    if (luotId) {
+      // Thêm lần vào lượt đang chờ: người làm theo lượt đó, bắt buộc có slCu hợp lệ.
+      const slCu = Math.floor(Number(d?.slCu));
+      if (!Number.isFinite(slCu) || slCu < 1) continue;
+      dong.push({ theId, dvId, luotId, slCu, ...(sl > 1 ? { soLuong: sl } : {}) });
+      continue;
+    }
     const nvIds = Array.isArray(d?.nvIds) ? [...new Set((d.nvIds as unknown[]).map(String).filter((v) => UUID.test(v)))].slice(0, 7) : [];
     dong.push({ theId, dvId, ...(nvIds.length ? { nvIds } : {}), ...(sl > 1 ? { soLuong: sl } : {}) });
   }

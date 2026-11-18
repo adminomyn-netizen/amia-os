@@ -11,7 +11,7 @@ import { docHenKeTiep, docNguoiBuoi, docThamSo, ghiHenKeTiep, taoPhieuBuoi, theT
 import { guiChoNhanVien } from "@/lib/push";
 import { tenGonNv } from "@/lib/ten-nv";
 import { nhacBuocTiep, tienDoBuoc, tinKetQuaLuot, type TienDoBuoc } from "@/lib/quy-trinh-buoc";
-import { docDongGui, goiCuaDv, kiemBuoiThe, nguoiLamDong, soLuongDong, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
+import { docDongGui, goiCuaDv, kiemBuoiThe, nguoiLamDong, soLuongDong, TOI_DA_SO_LUONG_DONG, type DongGuiCv } from "@/lib/don-nhieu-dich-vu";
 import { dvThucCuaThe } from "@/lib/dich-vu-theo-the";
 
 // Luồng thu ngân → chuyên viên trị liệu (0321). Chuyển / Bắt đầu / Trả lại / Huỷ CHỈ đổi bảng buoi_cho_lam (không sổ cái, không doanh thu, không phiếu).
@@ -168,15 +168,19 @@ async function doiDongTheoGoi(nd: NguoiDung, dong: DongGuiCv[]): Promise<{ dong:
 /** Một đơn làm dịch vụ gửi NHIỀU dịch vụ cho chuyên viên trị liệu MỘT lần (chị Thuý / chị Lâm 11/11/2026).
  *  Ô `dong` = JSON [{ theId, dvId, nvIds? }] (thẻ gồm nhiều dịch vụ thì mỗi dịch vụ một dòng); người làm / bác sĩ / tư vấn chung ở các ô thường,
  *  dòng có nvIds thì dùng người làm riêng. Kiểm HẾT các dòng trước (kể cả số buổi còn của từng thẻ trừ lượt đang mở), rồi ghi tất cả trong MỘT lệnh:
- *  có dòng lỗi thì không dòng nào được gửi. Chưa trừ buổi — chuyên viên Kết thúc từng dòng mới trừ. */
+ *  có dòng lỗi thì không dòng nào được gửi. Chưa trừ buổi — chuyên viên Kết thúc từng dòng mới trừ.
+ *  Khách làm CÙNG dịch vụ nhiều lần trong ngày (chi nhánh Vinh 18/11/2026): mỗi lần = 1 buổi, nằm ở so_luong của lượt (Kết thúc trừ so_luong buổi, 0333);
+ *  lần trước còn mở thì dòng mang luotId + slCu và được CỘNG vào lượt đó (chỉ mục một-lượt-mở (the_id, dich_vu_id) giữ nguyên). */
 export async function chuyenNhieuDichVu(fd: FormData): Promise<KQChuyen & { soDong?: number }> {
   const nd = await nguoiThaoTac();
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const doc = docDongGui(chuoi(fd, "dong"));
   if ("loi" in doc) return { loi: doc.loi };
+  // Dòng có luotId = khách làm thêm lần cùng dịch vụ khi lần trước còn đang chờ / đang làm: cộng số buổi vào lượt đó (chi nhánh Vinh 18/11/2026).
+  const them = doc.dong.filter((d) => d.luotId), moiDong = doc.dong.filter((d) => !d.luotId);
   const chung = [...new Set([...fd.getAll("nv_ids").map(String).filter(Boolean)])];
-  if (doc.dong.some((d) => !nguoiLamDong(d, chung).length)) return { loi: "Chọn người làm (chuyên viên trị liệu) chung, hoặc người làm riêng cho từng dịch vụ." };
-  const doi = await doiDongTheoGoi(nd, doc.dong);
+  if (moiDong.some((d) => !nguoiLamDong(d, chung).length)) return { loi: "Chọn người làm (chuyên viên trị liệu) chung, hoặc người làm riêng cho từng dịch vụ." };
+  const doi = await doiDongTheoGoi(nd, moiDong);
   if ("loi" in doi) return { loi: `Chưa gửi dịch vụ nào:\n${doi.loi}` };
   const chuanBi = await Promise.all(doi.dong.map((d) => {
     const f = new FormData();
@@ -186,27 +190,58 @@ export async function chuyenNhieuDichVu(fd: FormData): Promise<KQChuyen & { soDo
     return chuanBiLuot(nd, f);
   }));
   const loi = chuanBi.flatMap((p) => ("loi" in p ? [p.loi] : []));
+  // Lượt đang mở được cộng thêm lần: phải còn mở, đúng thẻ + dịch vụ, số buổi chưa bị ai đổi từ lúc chọn.
+  const db = sb();
+  const luotThem = await Promise.all(them.map((d) => docLuot(nd, d.luotId!)));
+  const theThem = [...new Set(them.map((d) => d.theId))];
+  const { data: theTT } = theThem.length ? await db.from("v_the_khach").select("id, so_buoi_con, trang_thai").in("id", theThem) : { data: [] as { id: string; so_buoi_con: number | null; trang_thai: string | null }[] };
+  const ttThe = new Map((theTT ?? []).map((t) => [t.id as string, t]));
+  them.forEach((d, i) => {
+    const l = luotThem[i];
+    if (!l || l.the_id !== d.theId || l.dich_vu_id !== d.dvId || !["cho_lam", "dang_lam"].includes(l.trang_thai) || Math.max(1, l.so_luong ?? 1) !== d.slCu)
+      return void loi.push("Lượt đang chờ của dịch vụ này vừa thay đổi (đã Kết thúc / trả lại / sửa). Tải lại rồi chọn lại.");
+    if (!duocThaoTac(nd, l)) return void loi.push(KHONG_DU_QUYEN);
+    if (ttThe.get(d.theId)?.trang_thai !== "hoat_dong") return void loi.push("Thẻ đang bị khoá hoặc đã thu hồi.");
+    if (d.slCu! + soLuongDong(d.soLuong ?? 1) > TOI_DA_SO_LUONG_DONG) loi.push(`Một lượt tối đa ${TOI_DA_SO_LUONG_DONG} buổi.`);
+  });
   if (loi.length) return { loi: `Chưa gửi dịch vụ nào:\n${[...new Set(loi)].join("\n")}` };
   const ok = chuanBi.filter((p): p is Exclude<typeof p, { loi: string }> => !("loi" in p));
-  if (new Set(ok.map((p) => p.dong.khach_id)).size > 1) return { loi: "Các thẻ phải cùng một khách." };
-  const mo = await luotMoCuaThe([...new Set(ok.map((p) => p.dong.the_id))]);
+  const khachIds = new Set([...ok.map((p) => p.dong.khach_id), ...luotThem.map((l) => l!.khach_id)]);
+  if (khachIds.size > 1) return { loi: "Các thẻ phải cùng một khách." };
+  // Kiểm số buổi trên MÁY CHỦ: buổi đang giữ bởi lượt mở (gồm cả lượt được cộng thêm) + buổi mới ≤ số buổi còn của thẻ.
+  const mo = await luotMoCuaThe([...new Set([...ok.map((p) => p.dong.the_id), ...theThem])]);
   const tenThe = (theId: string) => chuoi(fd, `ten__${theId}`) || "Thẻ";
-  const loiBuoi = kiemBuoiThe(ok.map((p) => ({ theId: p.dong.the_id, soLuong: p.dong.so_luong })), new Map(ok.map((p) => [p.dong.the_id, { ten: tenThe(p.dong.the_id), buoiCon: p.buoiCon, dangMo: mo.get(p.dong.the_id) ?? 0 }])));
+  const theKiem = new Map<string, { ten: string; buoiCon: number; dangMo: number }>();
+  for (const p of ok) theKiem.set(p.dong.the_id, { ten: tenThe(p.dong.the_id), buoiCon: p.buoiCon, dangMo: mo.get(p.dong.the_id) ?? 0 });
+  for (const id of theThem) if (!theKiem.has(id)) theKiem.set(id, { ten: tenThe(id), buoiCon: Number(ttThe.get(id)?.so_buoi_con ?? 0), dangMo: mo.get(id) ?? 0 });
+  const loiBuoi = kiemBuoiThe([...ok.map((p) => ({ theId: p.dong.the_id, soLuong: p.dong.so_luong })), ...them.map((d) => ({ theId: d.theId, soLuong: d.soLuong }))], theKiem);
   if (loiBuoi.length) return { loi: `Chưa gửi dịch vụ nào:\n${loiBuoi.join("\n")}` };
-  const db = sb();
   // Một lệnh insert nhiều dòng = một giao dịch: trùng / lỗi ở bất kỳ dòng nào thì không dòng nào được ghi.
-  const { error } = await db.from("buoi_cho_lam").insert(ok.map((p) => p.dong));
-  if (error) return { loi: error.code === "23505" ? `Chưa gửi dịch vụ nào: có dịch vụ đã đang chờ chuyên viên trị liệu (bỏ tick dịch vụ ghi "đang chờ").` : thongBaoLoi(error) };
-  for (const id of new Set(ok.map((p) => p.dong.the_id))) lamMoi(id);
+  if (ok.length) {
+    const { error } = await db.from("buoi_cho_lam").insert(ok.map((p) => p.dong));
+    if (error) return { loi: error.code === "23505" ? `Chưa gửi dịch vụ nào: có dịch vụ vừa được gửi cho chuyên viên trị liệu. Tải lại rồi chọn lại (dịch vụ "đang chờ" thì tick để thêm lần vào lượt đó).` : thongBaoLoi(error) };
+  }
+  // Cộng lần vào lượt đang mở: chỉ ghi khi số buổi vẫn đúng như lúc chọn (bấm gửi hai lần không cộng hai lần). Chưa trừ buổi, không sổ cái.
+  const chuaThem: string[] = [];
+  const daThem: { l: Luot; sl: number }[] = [];
+  for (const [i, d] of them.entries()) {
+    const l = luotThem[i]!, sl = d.slCu! + soLuongDong(d.soLuong ?? 1);
+    const { data: r, error } = await db.from("buoi_cho_lam").update({ so_luong: sl, cap_nhat_luc: new Date().toISOString() })
+      .eq("id", l.id).eq("so_luong", d.slCu!).in("trang_thai", ["cho_lam", "dang_lam"]).select("id");
+    if (error || !r?.length) chuaThem.push((await tenKhachDv(l)).dichVu); else daThem.push({ l, sl });
+  }
+  if (!ok.length && !daThem.length) return { loi: "Lượt đang chờ vừa thay đổi, chưa thêm lần nào. Tải lại rồi chọn lại." };
+  for (const id of new Set([...ok.map((p) => p.dong.the_id), ...daThem.map((x) => x.l.the_id)])) lamMoi(id);
   const tenNv = new Map(ok.flatMap((p) => [...p.tenNv]));
-  const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", ok[0].dong.khach_id).maybeSingle();
+  const { data: kh } = await db.from("khach_hang").select("ho_ten").eq("id", [...khachIds][0]).maybeSingle();
   // Mỗi chuyên viên một báo đẩy gom các dịch vụ của mình.
   const theoNv = new Map<string, string[]>();
   for (const p of ok) for (const id of p.dong.nv_ids) theoNv.set(id, [...(theoNv.get(id) ?? []), p.dong.so_luong > 1 ? `${p.dvTen} × ${p.dong.so_luong}` : p.dvTen]);
+  for (const x of daThem) { const dv = (await tenKhachDv(x.l)).dichVu; for (const id of x.l.nv_ids) theoNv.set(id, [...(theoNv.get(id) ?? []), `${dv} thêm lần, nay × ${x.sl}`]); }
   const phong = ok.find((p) => p.phong)?.phong ?? "";
   await Promise.all([...theoNv].map(([id, dv]) => guiChoNhanVien([id], { tieuDe: "Khách chờ làm", noiDung: `${kh?.ho_ten ?? "Khách"} · ${dv.join(", ")}${phong ? ` · ${phong}` : ""}${nd.hoTen ? ` (${tenGonNv(nd.hoTen)} chuyển)` : ""}. Bấm Bắt đầu làm.`, url: "/the/cho-lam", tag: "buoi-cho-lam" }).catch(() => null)));
   const chuyenCho = [...new Set(ok.flatMap((p) => p.dong.nv_ids))].map((x) => tenNv.get(x) ?? "").filter(Boolean).join(", ");
-  return { ok: true, chuyenCho, soDong: ok.length };
+  return { ok: true, chuyenCho, soDong: ok.length + daThem.length, ...(chuaThem.length ? { canhBao: `Chưa thêm lần được cho: ${chuaThem.join(", ")} (lượt vừa thay đổi). Tải lại rồi chọn lại.` } : {}) };
 }
 
 /** Một lần chuyển NHIỀU thẻ của cùng khách cho chuyên viên trị liệu (chị Diệu Thuý 10/11 mục 8: một hoá đơn làm dịch vụ chọn được nhiều thẻ).

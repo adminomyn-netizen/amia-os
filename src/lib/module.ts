@@ -66,6 +66,7 @@ export const MODULE: Module[] = [
       { nhan: "Bán hàng", the: [
         { ten: "Bán hàng tại quầy", moTa: "Lên đơn, dùng buổi thẻ, gia hạn, thu tiền, in hoá đơn.", duongDan: "/ban-hang", trangThai: "san_sang", quyen: ["ban.tao"] },
         { ten: "Danh sách hoá đơn", moTa: "Hoá đơn bán hàng, thu nợ, huỷ.", duongDan: "/hoa-don", trangThai: "san_sang", quyen: ["ban.xem"] },
+        { ten: "Hoá đơn trong ngày", moTa: "Hoá đơn dịch vụ và hoá đơn bán hàng theo ngày, kiểm khách đã lên đủ chưa.", duongDan: "/bao-cao?tab=hoa-don-ngay", trangThai: "san_sang", quyen: ["baocao.tien"] },
       ] },
     ],
   },
@@ -100,6 +101,7 @@ export const MODULE: Module[] = [
       ] },
       { nhan: "Hoá đơn", the: [
         { ten: "Danh sách hoá đơn", moTa: "Hoá đơn bán hàng, thu nợ, huỷ.", duongDan: "/hoa-don", trangThai: "san_sang", quyen: ["ban.xem"] },
+        { ten: "Hoá đơn trong ngày", moTa: "Hoá đơn dịch vụ và hoá đơn bán hàng theo ngày, kiểm khách đã lên đủ chưa.", duongDan: "/bao-cao?tab=hoa-don-ngay", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "Hoá đơn đầu vào", moTa: "Hoá đơn mua vào: theo dõi hoá đơn chưa về, đối chiếu với đơn mua.", duongDan: "/tai-chinh/hoa-don-dau-vao", trangThai: "san_sang", quyen: ["mua.xem"] },
         { ten: "Hoá đơn điện tử", moTa: "Chọn đơn cần xuất, ghi số hoá đơn điện tử bằng tay, xuất Excel.", duongDan: "/tai-chinh/hoa-don-dien-tu", trangThai: "san_sang", quyen: ["ban.xem"] },
       ] },

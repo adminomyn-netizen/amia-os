@@ -70,3 +70,21 @@ describe("cheDoDvThe (hộp Gửi chuyên viên làm một thẻ)", () => {
     expect(cheDoDvThe([], null)).toEqual({ kieu: "chon" });
   });
 });
+
+// Chi nhánh Vinh 18/11/2026: khách làm cùng dịch vụ 2 lần trong ngày, lần trước còn đang chờ → dòng mang luotId + slCu (cộng vào lượt đó).
+describe("docDongGui — thêm lần vào lượt đang chờ", () => {
+  const L = "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee";
+  it("giữ luotId + slCu, bỏ người làm riêng (theo lượt đang chờ); dòng mới cùng dịch vụ vẫn tách riêng", () => {
+    const r = docDongGui(JSON.stringify([{ theId: T1, dvId: A, luotId: L, slCu: 2, soLuong: 2, nvIds: [NV] }, { theId: T1, dvId: A }, { theId: T1, dvId: A, luotId: L, slCu: 2 }]));
+    expect(r).toEqual({ dong: [{ theId: T1, dvId: A, luotId: L, slCu: 2, soLuong: 2 }, { theId: T1, dvId: A }] });
+  });
+  it("luotId hỏng thì coi như dòng mới; slCu thiếu / sai thì bỏ dòng", () => {
+    expect(docDongGui(JSON.stringify([{ theId: T1, dvId: A, luotId: "x" }]))).toEqual({ dong: [{ theId: T1, dvId: A }] });
+    expect(docDongGui(JSON.stringify([{ theId: T1, dvId: A, luotId: L }]))).toHaveProperty("loi");
+  });
+  it("kiemBuoiThe: buổi đang chờ + số lần thêm vượt số buổi còn thì chặn", () => {
+    const the = new Map([[T1, { ten: "Amia Basic 30 buổi", buoiCon: 3, dangMo: 2 }]]);
+    expect(kiemBuoiThe([{ theId: T1 }], the)).toEqual([]);
+    expect(kiemBuoiThe([{ theId: T1, soLuong: 2 }], the)[0]).toContain("chỉ còn 1 buổi");
+  });
+});

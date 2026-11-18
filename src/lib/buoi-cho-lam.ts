@@ -12,7 +12,7 @@ export const TRANG_THAI_CHO: Record<string, { nhan: string; kieu: "cho" | "dang"
 export type BuoiCho = {
   id: string; trangThai: string; khachId: string; khachTen: string; khachMa: string;
   /** null = lượt từ hoá đơn dịch vụ (khách trả tiền, không trừ thẻ — 0333). */ theId: string | null; theMa: string;
-  /** Số buổi trừ khi Kết thúc (nhiều người cùng làm trên một thẻ); lượt hoá đơn = số lượng của dòng. */ soLuong: number;
+  /** Số buổi trừ khi Kết thúc (khách làm cùng dịch vụ nhiều lần trong ngày, hoặc nhiều người cùng làm trên một thẻ); lượt hoá đơn = số lượng của dòng. */ soLuong: number;
   hoaDonId: string | null; hoaDonMa: string; goiTen: string; conBuoi: number | null; tongBuoi: number | null;
   dichVuId: string; dichVuTen: string; nvIds: string[]; nvTen: string[]; bacSiId: string | null; tuVanIds: string[]; tuVanTen: string[]; tuVanTinhTrang: string | null; tuVanDeXuat: string | null;
   ghiChu: string | null; vung: string; shot: string; line: string; keTiepNgay: string | null; keTiepNoiDung: string | null;

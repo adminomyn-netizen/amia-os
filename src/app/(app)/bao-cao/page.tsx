@@ -20,6 +20,7 @@ import { BaoCaoHoaHongGioiThieu, BaoCaoHoaHongThucThu } from "@/components/bao-c
 import { LUA_CHON_THE, LUA_CHON_VAI } from "@/lib/bao-cao-hoa-hong";
 import { BaoCaoDatLich, BaoCaoDungDichVu, BaoCaoThuNgan } from "@/components/bao-cao/BaoCaoMoi";
 import { BaoCaoDanhGia } from "@/components/bao-cao/BaoCaoDanhGia";
+import { BaoCaoHoaDonNgay } from "@/components/bao-cao/BaoCaoHoaDonNgay";
 import { BaoCaoTiLeChot } from "@/components/bao-cao/BaoCaoTiLeChot";
 import { BaoCaoVoucher } from "@/components/bao-cao/BaoCaoVoucher";
 import { BaoCaoThoiGianDv } from "@/components/bao-cao/BaoCaoThoiGianDv";
@@ -35,7 +36,7 @@ import { XemKhachMuc } from "@/components/bao-cao/XemKhachMuc";
 import { layDanhSachNo } from "@/lib/bao-cao-no";
 import { gomTheoKy, HANG_KHACH, KIEU_GOM, khoaKy, kieuGom, layDoanhThuChiSo, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, layTongKhoanChi, laySanPhamDichVu, LOAI_MUC, LOC_LOAI, type LoaiMuc, soDongTrang, soTrang } from "@/lib/bao-cao-gap";
 
-const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "voucher", ten: "Hiệu quả voucher" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "thoi-gian-dv", ten: "Thời gian dịch vụ" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }, { ma: "nhap-xuat-kho", ten: "Nhập xuất kho hàng" }, { ma: "nhap-kho", ten: "Báo cáo nhập kho" }, { ma: "xuat-kho", ten: "Xuất kho bởi nhân viên" }, { ma: "ban-san-pham", ten: "Sản phẩm đã bán" }, { ma: "ton-lo", ten: "Báo cáo tồn theo lô hàng" }, { ma: "chi-phi-dv", ten: "Báo cáo chi phí dịch vụ" }];
+const TAB = [{ ma: "doanh-thu", ten: "Doanh thu theo ngày" }, { ma: "hoa-don-ngay", ten: "Hoá đơn trong ngày" }, { ma: "chi-nhanh", ten: "Theo chi nhánh" }, { ma: "khach-hang", ten: "Theo khách hàng" }, { ma: "thu-ngan", ten: "Theo thu ngân" }, { ma: "nhan-vien", ten: "Theo nhân viên" }, { ma: "dich-vu", ten: "Theo dịch vụ, sản phẩm" }, { ma: "dung-dich-vu", ten: "Dùng dịch vụ" }, { ma: "dung-the-ma", ten: "Thống kê sử dụng d.vụ" }, { ma: "voucher", ten: "Hiệu quả voucher" }, { ma: "lich-su-the", ten: "Lịch sử dùng thẻ" }, { ma: "dat-lich", ten: "Đặt lịch" }, { ma: "thoi-gian-dv", ten: "Thời gian dịch vụ" }, { ma: "no", ten: "Khách còn nợ" }, { ma: "the", ten: "Thẻ còn dư" }, { ma: "hh-thuc-thu", ten: "Hoa hồng thực thu" }, { ma: "hh-gioi-thieu", ten: "Hoa hồng giới thiệu" }, { ma: "danh-gia", ten: "Đánh giá nhân viên" }, { ma: "ti-le-chot", ten: "Tỉ lệ chốt tư vấn" }, { ma: "nhap-xuat-kho", ten: "Nhập xuất kho hàng" }, { ma: "nhap-kho", ten: "Báo cáo nhập kho" }, { ma: "xuat-kho", ten: "Xuất kho bởi nhân viên" }, { ma: "ban-san-pham", ten: "Sản phẩm đã bán" }, { ma: "ton-lo", ten: "Báo cáo tồn theo lô hàng" }, { ma: "chi-phi-dv", ten: "Báo cáo chi phí dịch vụ" }];
 /** Tab không có số tiền: chỉ cần quyền xem báo cáo. Các tab còn lại cần thêm quyền xem số tiền. */
 const TAB_KHONG_TIEN = new Set(["doanh-thu", "dat-lich", "thoi-gian-dv", "danh-gia", "ti-le-chot", "ton-lo"]);
 /** Tab có lựa chọn gom số liệu theo kỳ, và cách gom mặc định. */
@@ -55,9 +56,9 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const tabs = TAB.filter((t) => tien || TAB_KHONG_TIEN.has(t.ma));
   const tab = tabs.some((t) => t.ma === sp.tab) ? sp.tab! : "doanh-thu";
   const kn = khoangNgay(sp.tu, sp.den);
-  // Mặc định của SalonHero: Nhập xuất kho hàng = hôm nay; Chi phí dịch vụ = 7 ngày gần nhất; còn lại từ đầu tháng.
+  // Mặc định của SalonHero: Nhập xuất kho hàng = hôm nay; Hoá đơn trong ngày = hôm nay (thu ngân kiểm khách lên đủ chưa); Chi phí dịch vụ = 7 ngày gần nhất; còn lại từ đầu tháng.
   const macDinhNgay = !sp.tu && !sp.den;
-  const tu = macDinhNgay && tab === "nhap-xuat-kho" ? kn.homNay : macDinhNgay && tab === "chi-phi-dv" ? congNgay(kn.homNay, -6) : kn.tu;
+  const tu = macDinhNgay && (tab === "nhap-xuat-kho" || tab === "hoa-don-ngay") ? kn.homNay : macDinhNgay && tab === "chi-phi-dv" ? congNgay(kn.homNay, -6) : kn.tu;
   const den = kn.den;
   const db = sb();
   const { data: dsCn } = await dsChiNhanhRutGon();
@@ -70,11 +71,13 @@ export default async function TrangBaoCao({ searchParams }: { searchParams: Prom
   const them = `${sp.tu ? `&tu=${sp.tu}` : ""}${sp.den ? `&den=${sp.den}` : ""}${sp.cn ? `&cn=${sp.cn}` : ""}`;
   const loc = { tu, den, cn, nhom, doiTuNgay };
   const coChiNhanh = !cn && (dsCn ?? []).length > 1;
-  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "hh-gioi-thieu" && sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${tab === "dung-the-ma" && sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${tab === "no" && sp.nt === "tra" ? `&nt=tra${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "no" && sp.nt !== "tra" ? `${sp.tu ? `&ntu=${sp.tu}` : ""}${sp.den ? `&nden=${sp.den}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${["nhap-xuat-kho", "nhap-kho", "xuat-kho", "ban-san-pham", "ton-lo", "chi-phi-dv"].includes(tab) ? (["nhom_sp", "nguon", "ncc", "loai", "v", "dv", "nv", "tt", "han", "q"] as const).map((k) => (sp[k] ? `&${k}=${encodeURIComponent(sp[k]!)}` : "")).join("") : ""}${tab === "dich-vu" ? `${sp.loai ? `&loai=${sp.loai}` : ""}${sp.lm ? `&lm=${sp.lm}` : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
+  const xuat = `/api/xuat/bao-cao?tab=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}${coNhom ? `&nhom=${nhom}` : ""}${tab === "hh-thuc-thu" ? `${sp.vai ? `&vai=${sp.vai}` : ""}${sp.the === "1" ? "&the=1" : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "hh-gioi-thieu" && sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${tab === "dung-the-ma" && sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}${tab === "no" && sp.nt === "tra" ? `&nt=tra${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "no" && sp.nt !== "tra" ? `${sp.tu ? `&ntu=${sp.tu}` : ""}${sp.den ? `&nden=${sp.den}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${["nhap-xuat-kho", "nhap-kho", "xuat-kho", "ban-san-pham", "ton-lo", "chi-phi-dv"].includes(tab) ? (["nhom_sp", "nguon", "ncc", "loai", "v", "dv", "nv", "tt", "han", "q"] as const).map((k) => (sp[k] ? `&${k}=${encodeURIComponent(sp[k]!)}` : "")).join("") : ""}${tab === "hoa-don-ngay" && sp.loai === "ban" ? "&loai=ban" : ""}${tab === "dich-vu" ? `${sp.loai ? `&loai=${sp.loai}` : ""}${sp.lm ? `&lm=${sp.lm}` : ""}` : ""}${tab === "doanh-thu" && sp.gom ? `&gom=${sp.gom}` : ""}${tab === "khach-hang" ? `${sp.nk ? `&nk=${sp.nk}` : ""}${sp.hang ? `&hang=${encodeURIComponent(sp.hang)}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}${tab === "lich-su-the" ? `${sp.tt ? `&tt=${encodeURIComponent(sp.tt)}` : ""}${sp.lt ? `&lt=${sp.lt}` : ""}${sp.q ? `&q=${encodeURIComponent(sp.q)}` : ""}` : ""}`;
   let noiDung: React.ReactNode;
 
   const dsChiNhanh = nd.chiNhanhId ? undefined : (dsCn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten }));
-  if (tab === "thoi-gian-dv") {
+  if (tab === "hoa-don-ngay") {
+    noiDung = <><LocBaoCao goc="/bao-cao" tu={tu} den={den} chiNhanh={dsChiNhanh} cn={sp.cn} motNgay={tu === den} /><BaoCaoHoaDonNgay tu={tu} den={den} cn={cn} loai={sp.loai === "ban" ? "ban" : "dich_vu"} coChiNhanh={coChiNhanh} goc={`/bao-cao?tab=hoa-don-ngay&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} /></>;
+  } else if (tab === "thoi-gian-dv") {
     noiDung = <BaoCaoThoiGianDv tu={tu} den={den} cn={cn} chiNhanh={dsChiNhanh} nv={sp.nv || undefined} dv={sp.dv || undefined} q={sp.q || undefined} chiQua={sp.qg === "1"} trang={soTrang(sp.trang)} />;
   } else if (tab === "nhap-xuat-kho") {
     noiDung = <BaoCaoNhapXuatKho l={lKho} nhom={sp.nhom_sp || undefined} so={soDongKho(sp.so)} />;

@@ -19,13 +19,16 @@ const han = (d: string) => new Date(d).toLocaleDateString("vi-VN", { day: "2-dig
  *  Mỗi thẻ liệu trình còn buổi liệt kê TỪNG dịch vụ của thẻ để tick. Thẻ của gói chưa gắn dịch vụ (vd EXION, chị Lâm 11/11/2026)
  *  thì chính thẻ là một dòng tick "<tên gói> · 1 buổi" (máy chủ dùng dịch vụ mang tên gói); "Đổi / thêm dịch vụ" mở tìm trong cả danh mục.
  *  Người làm chung cho cả đơn, dòng nào khác người thì đổi riêng. Một nút gửi hết cho chuyên viên trị liệu (chưa trừ buổi; Kết thúc mới trừ).
- *  Chọn quá số buổi còn của thẻ (tính cả lượt đang chờ / đang làm) thì chặn và báo rõ. */
+ *  Chọn quá số buổi còn của thẻ (tính cả lượt đang chờ / đang làm) thì chặn và báo rõ.
+ *  Khách làm CÙNG dịch vụ nhiều lần trong ngày (chi nhánh Vinh 18/11/2026): tick lại dòng (hoặc bấm +) là thêm 1 lần = thêm 1 buổi trừ khi Kết thúc.
+ *  Dòng "đang chờ" (lần trước chưa Kết thúc) cũng tick được: máy chủ cộng số lần vào chính lượt đang chờ đó, người làm theo lượt đó. */
 export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId, coQuyen, onXong }: {
-  khach: boolean; the: TheDv[] | null; dvMuc: LuaChon[]; /** Lượt hôm nay đang chờ / đang làm của khách (đọc ở Hoá đơn dịch vụ); soLuong = số buổi lượt đó sẽ trừ. */ dangMo: { theId: string; dvId: string; soLuong?: number }[];
+  khach: boolean; the: TheDv[] | null; dvMuc: LuaChon[]; /** Lượt hôm nay đang chờ / đang làm của khách (đọc ở Hoá đơn dịch vụ); soLuong = số buổi lượt đó sẽ trừ. */ dangMo: { id?: string; theId: string; dvId: string; soLuong?: number }[];
   nhanVien: LuaChon[]; bacSi: LuaChon[]; lichId?: string; coQuyen: boolean; onXong: (kq: KetQuaBuoi) => void;
 }) {
-  // sl = số buổi trừ của dòng: nhiều người cùng làm một dịch vụ trên một thẻ (quản lý cơ sở 15/11/2026: 3 người làm "chăm sóc da AC" → trừ 3 buổi).
-  const [chon, setChon] = useState<Map<string, { theId: string; dvId: string; nv: string; sl: number }>>(new Map());
+  // sl = số lần (= số buổi trừ khi Kết thúc) của dòng: khách làm cùng dịch vụ nhiều lần trong ngày (Vinh 18/11/2026), hoặc nhiều người cùng làm
+  // một dịch vụ trên một thẻ (quản lý cơ sở 15/11/2026: 3 người làm "chăm sóc da AC" → trừ 3 buổi). luotId/slCu: thêm lần vào lượt đang chờ.
+  const [chon, setChon] = useState<Map<string, { theId: string; dvId: string; nv: string; sl: number; luotId?: string; slCu?: number }>>(new Map());
   const [nvChung, setNvChung] = useState<string[] | null>(null);
   const [bs, setBs] = useState<string | null>(null);
   const [tim, setTim] = useState("");
@@ -46,26 +49,32 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
   const moCua = (theId: string) => dangMo.filter((x) => x.theId === theId).reduce((s, x) => s + Math.max(1, x.soLuong ?? 1), 0);
   const dong = [...chon.values()];
   const loiBuoi = kiemBuoiThe(dong.map((d) => ({ theId: d.theId, soLuong: d.sl })), new Map(ds.map((t) => [t.id, { ten: `${t.ten}${t.ma ? ` (#${t.ma})` : ""}`, buoiCon: t.buoiCon, dangMo: moCua(t.id) }])));
-  const thieuNguoi = dong.some((d) => !d.nv) && nvC.length === 0;
+  const thieuNguoi = dong.some((d) => !d.luotId && !d.nv) && nvC.length === 0;
   const tongDong = ds.reduce((s, t) => s + (t.dichVu.length || 1), 0);
   const tim_ = tim.trim().toLowerCase();
 
-  const doi = (theId: string, dvId: string) => setChon((m) => {
-    const n = new Map(m), k = khoa(theId, dvId);
-    if (n.has(k)) n.delete(k); else n.set(k, { theId, dvId, nv: "", sl: 1 });
-    return n;
-  });
-  const datNv = (k: string, nv: string) => setChon((m) => { const n = new Map(m), d = n.get(k); if (d) n.set(k, { ...d, nv }); return n; });
-  const datSl = (k: string, sl: number) => setChon((m) => { const n = new Map(m), d = n.get(k); if (d) n.set(k, { ...d, sl: Math.min(TOI_DA_SO_LUONG_DONG, Math.max(1, sl)) }); return n; });
   /** Buổi còn chọn thêm được cho thẻ: còn − đang chờ − các dòng đã chọn của thẻ. */
   const conChon = (theId: string) => { const t = ds.find((x) => x.id === theId); return t ? t.buoiCon - moCua(theId) - dong.filter((d) => d.theId === theId).reduce((s, d) => s + d.sl, 0) : 0; };
+  /** Lượt đang chờ / đang làm của đúng thẻ + dịch vụ (chỉ mục một-lượt-mở: tối đa một). */
+  const luotMo = (theId: string, dvId: string) => dangMo.find((x) => x.theId === theId && x.dvId === dvId);
+  /** Tick dòng: chưa chọn thì chọn 1 lần; đã chọn thì tick lại = thêm 1 lần (khách làm cùng dịch vụ nhiều lần), còn buổi mới thêm. */
+  const doi = (theId: string, dvId: string) => {
+    const k = khoa(theId, dvId), d = chon.get(k);
+    if (d) { if (conChon(theId) > 0 && d.sl < TOI_DA_SO_LUONG_DONG) datSl(k, d.sl + 1); return; }
+    if (conChon(theId) <= 0) return setLoi("Thẻ đã hết buổi để chọn thêm (tính cả buổi đang chờ / đang làm).");
+    const mo = luotMo(theId, dvId);
+    setChon((m) => new Map(m).set(k, { theId, dvId, nv: "", sl: 1, ...(mo?.id ? { luotId: mo.id, slCu: Math.max(1, mo.soLuong ?? 1) } : {}) }));
+  };
+  const bo = (k: string) => setChon((m) => { const n = new Map(m); n.delete(k); return n; });
+  const datNv = (k: string, nv: string) => setChon((m) => { const n = new Map(m), d = n.get(k); if (d) n.set(k, { ...d, nv }); return n; });
+  const datSl = (k: string, sl: number) => setChon((m) => { const n = new Map(m), d = n.get(k); if (!d) return m; if (sl < 1) n.delete(k); else n.set(k, { ...d, sl: Math.min(TOI_DA_SO_LUONG_DONG, sl) }); return n; });
   const gui = () => {
     setLoi("");
     if (!dong.length) return setLoi("Tick ít nhất một dịch vụ khách làm hôm nay.");
     if (loiBuoi.length) return setLoi(loiBuoi.join("\n"));
     if (thieuNguoi) return setLoi("Chọn người làm (chuyên viên trị liệu) chung, hoặc đổi người làm riêng cho từng dịch vụ.");
     const fd = new FormData();
-    fd.set("dong", JSON.stringify(dong.map((d): DongGuiCv => ({ theId: d.theId, dvId: d.dvId, ...(d.nv ? { nvIds: [d.nv] } : {}), ...(d.sl > 1 ? { soLuong: d.sl } : {}) }))));
+    fd.set("dong", JSON.stringify(dong.map((d): DongGuiCv => ({ theId: d.theId, dvId: d.dvId, ...(d.luotId ? { luotId: d.luotId, slCu: d.slCu } : d.nv ? { nvIds: [d.nv] } : {}), ...(d.sl > 1 ? { soLuong: d.sl } : {}) }))));
     for (const id of nvC) fd.append("nv_ids", id);
     if (bsC) fd.set("bac_si_id", bsC);
     if (lichId) fd.set("lich_id", lichId);
@@ -80,28 +89,34 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
 
   const dongDv = (t: TheDv, dvId: string) => {
     const nhan = nhanDong(t, dvId);
-    const k = khoa(t.id, dvId), d = chon.get(k), dangCho = dangMo.some((x) => x.theId === t.id && x.dvId === dvId);
+    const k = khoa(t.id, dvId), d = chon.get(k), mo = luotMo(t.id, dvId), dangCho = !!mo;
+    // Đang chờ mà không biết id lượt (dữ liệu cũ) thì không cộng được: giữ khoá như trước.
+    const khoaDong = !coQuyen || (dangCho && !mo?.id);
     return (
       <li key={k}>
-        <button type="button" role="checkbox" aria-checked={!!d} disabled={dangCho || !coQuyen} onClick={() => doi(t.id, dvId)}
+        <button type="button" aria-pressed={!!d} aria-label={d ? `${nhan}: thêm 1 lần nữa (đang chọn ${d.sl} lần)` : `Chọn ${nhan}`} disabled={khoaDong || (!!d && (conChon(t.id) <= 0 || d.sl >= TOI_DA_SO_LUONG_DONG))} onClick={() => doi(t.id, dvId)}
           className={`flex min-h-11 w-full items-center gap-3 rounded-nho px-2 py-2 text-left text-[14px] hover:bg-giay-sang disabled:cursor-not-allowed disabled:opacity-60 ${d ? "bg-giay-sang" : ""}`}>
           <span aria-hidden className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-[4px] border text-[12px] leading-none ${d ? "border-nhan bg-nhan text-white" : "border-vien-dam bg-giay-sang"}`}>{d ? "✓" : ""}</span>
           <span className={`min-w-0 flex-1 ${d ? "font-medium text-muc" : "text-muc-2"}`}>{nhan}</span>
-          {dangCho && <span className="shrink-0 rounded-tag bg-canh-bao-nen px-1.5 py-0.5 text-[12px] text-canh-bao">đang chờ</span>}
+          {d && d.sl > 1 && <span className="shrink-0 rounded-tag bg-nhan-dam px-1.5 py-0.5 text-[12px] font-semibold tabular-nums text-giay">×{d.sl}</span>}
+          {dangCho && <span className="shrink-0 rounded-tag bg-canh-bao-nen px-1.5 py-0.5 text-[12px] text-canh-bao">đang chờ{Math.max(1, mo?.soLuong ?? 1) > 1 ? ` ${mo?.soLuong} lần` : ""}</span>}
         </button>
         {d && (
           <div className="mb-1 ml-10 mr-1 flex flex-wrap items-center gap-2">
-            <span className="flex items-center gap-1.5" role="group" aria-label={`Số buổi trừ ${nhan}`}>
-              <button type="button" aria-label="Bớt một buổi" disabled={d.sl <= 1} onClick={() => datSl(k, d.sl - 1)}
+            <span className="flex items-center gap-1.5" role="group" aria-label={`Số lần làm ${nhan}`}>
+              <button type="button" aria-label={d.sl <= 1 ? `Bỏ chọn ${nhan}` : "Bớt một lần"} onClick={() => datSl(k, d.sl - 1)}
                 className="flex h-9 w-9 items-center justify-center rounded-nho border border-vien-dam bg-giay-sang text-muc-2 hover:bg-giay-tram disabled:opacity-40"><Minus aria-hidden className="h-4 w-4" /></button>
-              <span className="min-w-[5.5rem] text-center text-[13.5px] font-medium tabular-nums text-muc" aria-live="polite">{d.sl} buổi{d.sl > 1 ? ` (${d.sl} người)` : ""}</span>
-              <button type="button" aria-label="Thêm một buổi" disabled={conChon(d.theId) <= 0 || d.sl >= TOI_DA_SO_LUONG_DONG} onClick={() => datSl(k, d.sl + 1)}
+              <span className="min-w-[7.5rem] text-center text-[13.5px] font-medium tabular-nums text-muc" aria-live="polite">{d.luotId ? `thêm ${d.sl} lần` : `${d.sl} lần`} (trừ {d.sl} buổi)</span>
+              <button type="button" aria-label="Thêm một lần" disabled={conChon(d.theId) <= 0 || d.sl >= TOI_DA_SO_LUONG_DONG} onClick={() => datSl(k, d.sl + 1)}
                 className="flex h-9 w-9 items-center justify-center rounded-nho border border-vien-dam bg-giay-sang text-muc-2 hover:bg-giay-tram disabled:opacity-40"><Plus aria-hidden className="h-4 w-4" /></button>
             </span>
-            <span className="min-w-[12rem] flex-1">
-              <Chon nho ariaLabel={`Người làm ${nhan}`} giaTri={d.nv} onDoi={(v) => datNv(k, v)}
-                luaChon={[{ gia_tri: "", nhan: "Người làm chung của đơn" }, ...nvLC]} />
-            </span>
+            {d.luotId
+              ? <span className="min-w-[12rem] flex-1 text-[12.5px] text-muc-3">Cộng vào lượt đang chờ (đang {d.slCu} lần): cùng chuyên viên trị liệu, Kết thúc trừ {(d.slCu ?? 1) + d.sl} buổi.</span>
+              : <span className="min-w-[12rem] flex-1">
+                  <Chon nho ariaLabel={`Người làm ${nhan}`} giaTri={d.nv} onDoi={(v) => datNv(k, v)}
+                    luaChon={[{ gia_tri: "", nhan: "Người làm chung của đơn" }, ...nvLC]} />
+                </span>}
+            <button type="button" className={`${NUT_CHU} text-[13px]`} onClick={() => bo(k)}>Bỏ</button>
           </div>
         )}
       </li>
@@ -114,7 +129,7 @@ export function ChonDvDaMua({ khach, the, dvMuc, dangMo, nhanVien, bacSi, lichId
       {!khach ? <p className="text-[14px] text-muc-2">Chọn khách ở ô trên trước để hiện các dịch vụ khách đã mua còn buổi.</p>
         : the === null ? <p className="text-[14px] text-muc-3">Đang tải</p>
         : ds.length === 0 ? <p className="text-[14px] text-muc-2">Khách chưa có thẻ liệu trình nào còn buổi. Khách làm dịch vụ lẻ thì bấm Thêm dịch vụ lẻ bên dưới.</p> : (<>
-          <p className="mb-2 text-[13px] text-muc-3">Tick được nhiều dịch vụ, nhiều thẻ cùng lúc. Nhiều người cùng làm một dịch vụ trên một thẻ thì bấm + để trừ nhiều buổi. Kết thúc mới trừ buổi.</p>
+          <p className="mb-2 text-[13px] text-muc-3">Tick được nhiều dịch vụ, nhiều thẻ cùng lúc. Khách làm cùng một dịch vụ nhiều lần (hoặc nhiều người cùng làm) thì tick lại hoặc bấm +: mỗi lần trừ 1 buổi. Kết thúc mới trừ buổi.</p>
           {tongDong > 8 && <input value={tim} onChange={(e) => setTim(e.target.value)} placeholder="Tìm dịch vụ trong thẻ của khách" aria-label="Tìm dịch vụ khách đã mua" className="mb-2 h-11 w-full rounded-nho border border-vien-dam bg-giay-sang px-3 text-[14px] outline-none" />}
           <ul className="space-y-2">
             {ds.map((t) => {

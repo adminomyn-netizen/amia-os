@@ -4,13 +4,14 @@ import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { docHet, ngayXuat as ngay, phanHoiExcel, type BangXuat as Bang, type Cot } from "@/lib/xuat-excel";
 import { khoangNgay } from "@/lib/bao-cao";
-import { congNgay, ngayGioVN } from "@/lib/dinh-dang";
+import { congNgay, gioVN, ngayGioVN } from "@/lib/dinh-dang";
 import { layTiLeChot, phanTram } from "@/lib/tu-van";
 import { layBaoCaoVoucher } from "@/lib/bao-cao-voucher";
 import { chuSao, layDanhGia, tongTheoNhanVien } from "@/lib/bao-cao-danh-gia";
 import { dongDoiChieu, layHoaHongGioiThieu, layHoaHongThucThu, NHAN_VAI_HH, NHOM_HH } from "@/lib/bao-cao-hoa-hong";
 import { gomTheoKy, kieuGom, layLichSuDungThe, layCacLanTraNo, layThongKeDungDichVu, layNhanVienSh, laySanPhamDichVu, LOC_LOAI, layTheoChiNhanh, layTheoKhachHang } from "@/lib/bao-cao-gap";
 import { layBanSanPham, layChiPhiDichVu, layNhapKho, layNhapXuatKho, layTonTheoLo, layXuatKho } from "@/lib/bao-cao-kho";
+import { khoangHoaDonNgay, layHoaDonTrongNgay, tongHoaDonNgay } from "@/lib/bao-cao-hoa-don-ngay";
 import { chonNhom, layDatLich, layDungDichVu, layThuNgan, tenKy, tenNguon, TRANG_THAI_LICH } from "@/lib/bao-cao-du-lieu";
 
 /** Xuất Excel cho MỌI tab báo cáo theo bộ lọc đang chọn (tab, từ/đến, chi nhánh, gom kỳ).
@@ -42,6 +43,19 @@ export async function GET(req: Request) {
       { nhan: "Quẹt thẻ", khoa: "quet_the", tien: true }, { nhan: "Momo", khoa: "momo", tien: true }, { nhan: "VNPay", khoa: "vnpay", tien: true }, { nhan: "Shopee Pay", khoa: "shopee", tien: true },
       { nhan: "GrabPay", khoa: "grab", tien: true }, { nhan: "Ví điện tử khác", khoa: "vi_khac", tien: true }, ...(coCod ? [{ nhan: "Ship COD", khoa: "ship_cod", tien: true }] : []),
       { nhan: "Trừ thẻ tiền", khoa: "tru_the_tien", tien: true }, { nhan: "Nợ mới", khoa: "no_moi", tien: true }, { nhan: "Buổi đã làm", khoa: "so_buoi", so: true }, { nhan: "Doanh thu buổi", khoa: "doanh_thu_buoi", tien: true }] });
+  } else if (tab === "hoa-don-ngay") {
+    // Hai trang tính: Hoá đơn dịch vụ / Hoá đơn bán hàng (cùng quy tắc chia nhóm với trang), dòng tổng chỉ cộng hoá đơn hoàn thành.
+    const k = khoangHoaDonNgay(tu, den);
+    const ds = await layHoaDonTrongNgay(db, k.tu, k.den, cn);
+    for (const [loai, ten] of [["dich_vu", "Hoá đơn dịch vụ"], ["ban", "Hoá đơn bán hàng"]] as const) {
+      const nhom = ds.filter((r) => r.loai === loai), t = tongHoaDonNgay(nhom);
+      bangs.push({ ten, dong: [...nhom.map((r) => ({ ngay: ngay(r.ngay), gio: gioVN(r.taoLuc), ma: r.ma, ma_sh: r.maSh ?? "", khach: r.khach, ma_khach: r.maKhach, hang: r.hang, phai_thu: r.phaiThu, da_thu: r.daThu, con_no: r.conNo, nguoi_lap: r.nguoiLap, trang_thai: r.trangThai === "hoan_thanh" ? "Hoàn thành" : "Đang xử lý" })),
+        ...(nhom.length ? [{ ngay: "Tổng", khach: `${t.soDon} hoá đơn hoàn thành`, phai_thu: t.phaiThu, da_thu: t.daThu, con_no: t.conNo, trang_thai: t.soDangXuLy ? `Chưa cộng ${t.soDangXuLy} đơn đang xử lý` : "" }] : [])], cot: [
+        { nhan: "Ngày", khoa: "ngay", rong: 12 }, { nhan: "Giờ", khoa: "gio", rong: 8 }, { nhan: "Mã HĐ", khoa: "ma", rong: 16 }, { nhan: "Mã SalonHero", khoa: "ma_sh", rong: 14 },
+        { nhan: "Khách hàng", khoa: "khach", rong: 28 }, { nhan: "Mã khách", khoa: "ma_khach", rong: 14 }, { nhan: ten === "Hoá đơn dịch vụ" ? "Dịch vụ" : "Sản phẩm, thẻ, dịch vụ", khoa: "hang", rong: 48 },
+        { nhan: "Tổng tiền", khoa: "phai_thu", tien: true }, { nhan: "Đã thu", khoa: "da_thu", tien: true }, { nhan: "Còn nợ", khoa: "con_no", tien: true },
+        { nhan: "Người lập", khoa: "nguoi_lap", rong: 24 }, { nhan: "Trạng thái", khoa: "trang_thai", rong: 16 }] });
+    }
   } else if (tab === "thu-ngan") {
     const { nhom } = chonNhom(u.searchParams.get("nhom") ?? undefined, tu, den, "tong");
     const ds = await layThuNgan(db, tu, den, cn, nhom);

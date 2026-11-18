@@ -4,9 +4,9 @@ import { ChonDiemDuong } from "./ChonDiemDuong";
 export type Chuoi = { ten: string; gia_tri: number[]; mau?: string };
 
 /** Biểu đồ đường + vùng tô theo ngày. Trục tung có 4 vạch; nhãn ngày cách đều. Có chú thích cho từng chuỗi. */
-export function DuongMien({ nhan, chuoi, dinhDang = (n: number) => n.toLocaleString("vi-VN"), dinhDangTruc, ten, lienKet }: { nhan: string[]; chuoi: Chuoi[]; dinhDang?: (n: number) => string; /** Nhãn trục tung (nên gọn, vd 900k); mặc định tự rút gọn từ triệu. */ dinhDangTruc?: (n: number) => string; ten: string; /** Đường dẫn chi tiết của từng điểm (vd hoá đơn của ngày); có thì bấm vào điểm hiện khung số + nút mở. */ lienKet?: (string | undefined)[] }) {
+export function DuongMien({ nhan, chuoi, dinhDang = (n: number) => n.toLocaleString("vi-VN"), dinhDangTruc, ten, lienKet, trong = "Chưa có doanh thu trong khoảng này." }: { nhan: string[]; chuoi: Chuoi[]; dinhDang?: (n: number) => string; /** Nhãn trục tung (nên gọn, vd 900k); mặc định tự rút gọn từ triệu. */ dinhDangTruc?: (n: number) => string; ten: string; /** Đường dẫn chi tiết của từng điểm (vd hoá đơn của ngày); có thì bấm vào điểm hiện khung số + nút mở. */ lienKet?: (string | undefined)[]; /** Câu hiện khi mọi giá trị bằng 0. */ trong?: string }) {
   const max = Math.max(1, ...chuoi.flatMap((c) => c.gia_tri));
-  if (!nhan.length || chuoi.every((c) => c.gia_tri.every((v) => v <= 0))) return <p className="py-6 text-center text-[14px] text-muc-3">Chưa có doanh thu trong khoảng này.</p>;
+  if (!nhan.length || chuoi.every((c) => c.gia_tri.every((v) => v <= 0))) return <p className="py-6 text-center text-[14px] text-muc-3">{trong}</p>;
   const W = 640, H = 230, L = 58, R = 12, T = 12, B = 28, rong = W - L - R, cao = H - T - B;
   const x = (i: number) => L + (nhan.length === 1 ? rong / 2 : (i / (nhan.length - 1)) * rong);
   const y = (v: number) => T + cao - (v / max) * cao;

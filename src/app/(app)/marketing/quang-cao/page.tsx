@@ -6,6 +6,7 @@ import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Bang } from "@/components/ui/Table";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { luuQuangCao } from "../actions";
+import { tenChienDich } from "@/lib/ten-chien-dich";
 
 export default async function TrangQuangCao() {
   const nd = await yeuCauQuyen("mkt.xem");
@@ -25,9 +26,9 @@ export default async function TrangQuangCao() {
     theoNgay.set(r.ngay, o);
   }
   const tong = [...theoNgay.values()].sort((a, b) => b.ngay.localeCompare(a.ngay));
-  const ten = new Map((cd ?? []).map((c) => [c.id, `${c.ma} · ${c.ten}`]));
+  const ten = new Map((cd ?? []).map((c) => [c.id, tenChienDich(c.ten)]));
   const truong: Truong[] = [
-    { ten: "chien_dich_id", nhan: "Chiến dịch", loai: "chon", batBuoc: true, rong: true, luaChon: (cd ?? []).map((c) => ({ gia_tri: c.id, nhan: `${c.ma} · ${c.ten}` })) },
+    { ten: "chien_dich_id", nhan: "Chiến dịch", loai: "chon", batBuoc: true, rong: true, luaChon: (cd ?? []).map((c) => ({ gia_tri: c.id, nhan: tenChienDich(c.ten) })) },
     { ten: "ngay", nhan: "Ngày", loai: "ngay", batBuoc: true }, { ten: "chi_phi", nhan: "Chi phí", loai: "tien", batBuoc: true },
     { ten: "hien_thi", nhan: "Lượt hiển thị", loai: "so" }, { ten: "tiep_can", nhan: "Tiếp cận", loai: "so" }, { ten: "click", nhan: "Lượt click", loai: "so" },
     { ten: "tin_nhan_moi", nhan: "Tin nhắn mới", loai: "so" }, { ten: "lead_so", nhan: "Lead (theo nền tảng)", loai: "so" },

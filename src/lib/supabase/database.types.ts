@@ -649,6 +649,8 @@ export type Database = {
       }
       hop_thu_hoi_thoai: {
         Row: {
+          nguon: string | null
+          sdt: string | null
           chi_nhanh_id: string | null
           chua_doc: number
           id: string
@@ -661,6 +663,8 @@ export type Database = {
           tin_cuoi_luc: string | null
         }
         Insert: {
+          nguon?: string | null
+          sdt?: string | null
           chi_nhanh_id?: string | null
           chua_doc?: number
           id?: string
@@ -673,6 +677,8 @@ export type Database = {
           tin_cuoi_luc?: string | null
         }
         Update: {
+          nguon?: string | null
+          sdt?: string | null
           chi_nhanh_id?: string | null
           chua_doc?: number
           id?: string
@@ -688,6 +694,7 @@ export type Database = {
       }
       hop_thu_tin: {
         Row: {
+          ma_ngoai: string | null
           hoi_thoai_id: string
           huong: string
           id: string
@@ -697,6 +704,7 @@ export type Database = {
           trang_thai: string
         }
         Insert: {
+          ma_ngoai?: string | null
           hoi_thoai_id: string
           huong: string
           id?: string
@@ -706,6 +714,7 @@ export type Database = {
           trang_thai?: string
         }
         Update: {
+          ma_ngoai?: string | null
           hoi_thoai_id?: string
           huong?: string
           id?: string

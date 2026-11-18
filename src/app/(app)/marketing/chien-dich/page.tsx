@@ -8,6 +8,7 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { doiTrangThaiChienDich, luuChienDich } from "../actions";
+import { tenChienDich } from "@/lib/ten-chien-dich";
 
 const BUOC: Record<string, { nhan: string; dich: string; duyet?: boolean }[]> = {
   nhap: [{ nhan: "Gửi duyệt", dich: "cho_duyet" }],
@@ -45,9 +46,9 @@ export default async function TrangChienDich() {
       </TieuDeNoi>
       <Bang noi duLieu={ds ?? []} khoa={(r) => r.id} trong="Chưa có chiến dịch."
         cot={[
-          { nhan: "Chiến dịch", chinh: true, hienThi: (r) => <div>{r.ma} · {r.ten}<div className="text-[12.5px] text-muc-3">{MUC_TIEU[r.muc_tieu]}{r.kenh && ` · ${r.kenh}`}</div></div> },
+          { nhan: "Chiến dịch", chinh: true, hienThi: (r) => <div className="font-medium">{tenChienDich(r.ten)}<div className="text-[12.5px] text-muc-3">{MUC_TIEU[r.muc_tieu]}{r.kenh && ` · ${r.kenh}`}</div></div> },
           { nhan: "Thời gian", hienThi: (r) => (r.bat_dau || r.ket_thuc ? `${ngayVN(r.bat_dau)} – ${ngayVN(r.ket_thuc)}` : "") },
-          { nhan: "Ngân sách", phai: true, hienThi: (r) => { const chi = daChi.get(r.id) ?? 0; return <div>{tienVN(r.ngan_sach)}<div className={`text-[12.5px] ${r.ngan_sach > 0 && chi > r.ngan_sach ? "text-canh-bao" : "text-muc-3"}`}>Đã chi {tienVN(chi)}</div></div>; } },
+          { nhan: "Ngân sách", phai: true, hienThi: (r) => { const chi = daChi.get(r.id) ?? 0; return r.ngan_sach > 0 ? <div>{tienVN(r.ngan_sach)}<div className={`text-[12.5px] ${chi > r.ngan_sach ? "text-canh-bao" : "text-muc-3"}`}>Đã chi {tienVN(chi)}</div></div> : <div>Đã chi {tienVN(chi)}<div className="text-[12.5px] text-muc-3">Chưa đặt ngân sách</div></div>; } },
           { nhan: "Phụ trách", hienThi: (r) => (r.owner_id ? tenNv.get(r.owner_id) : "") },
           { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_CHIEN_DICH[r.trang_thai].kieu}>{TT_CHIEN_DICH[r.trang_thai].ten}</NhanTrangThai> },
           { nhan: "", hienThi: (r) => (

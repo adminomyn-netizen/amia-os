@@ -7,6 +7,10 @@ import { tenKenh } from "@/lib/tin-nhan";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { OTraLoi } from "@/components/hop-thu/OTraLoi";
+import { TuLamMoi } from "@/components/hop-thu/TuLamMoi";
+
+const PANCAKE_PAGE = "125397971450402";
+const linkPancake = (ma: string) => `https://pancake.vn/${PANCAKE_PAGE}?c_id=${encodeURIComponent(ma)}`;
 import { danhDauDaDoc, traLoiKhach } from "./actions";
 
 const BUOC = ["Nối Zalo OA hoặc Messenger ở Cài đặt, Zalo OA và SMS.", "Khách nhắn vào trang, tin hiện ở danh sách bên trái.", "Bấm vào một hội thoại để xem và trả lời."];
@@ -47,7 +51,8 @@ export default async function TrangHopThu({ searchParams }: { searchParams: Prom
   }
   return (
     <div>
-      <TieuDeNoi tieuDe="Hộp thư" phu="Trả lời khách nhắn qua Zalo OA và Messenger ở một chỗ." />
+      <TieuDeNoi tieuDe="Hộp thư" phu="Tin khách nhắn fanpage (Messenger, lấy qua Pancake) và Zalo OA ở một chỗ. Trang tự cập nhật." />
+      <TuLamMoi />
       <div className="grid gap-5 lg:grid-cols-[320px_1fr]">
         <nav aria-label="Danh sách hội thoại" className={`${dang ? "hidden lg:block" : ""} max-h-[70vh] overflow-y-auto border-vien lg:border-r lg:pr-4`}>
           <ul className="divide-y divide-vien">
@@ -68,20 +73,20 @@ export default async function TrangHopThu({ searchParams }: { searchParams: Prom
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div className="min-w-0"><Link href="/marketing/hop-thu" className="text-[13px] text-muc-3 hover:text-muc lg:hidden">← Danh sách</Link>
                   <div className="truncate text-[16px] font-medium text-muc">{dang.ten_khach ?? "Khách chưa rõ tên"}</div>
-                  <div className="text-[12.5px] text-muc-3">{tenKenh(dang.kenh)}{daNoi.has(dang.kenh) ? "" : " · kênh chưa nối"}</div></div>
+                  <div className="text-[12.5px] text-muc-3">{tenKenh(dang.kenh)}{dang.nguon === "pancake" ? " · qua Pancake" : daNoi.has(dang.kenh) ? "" : " · kênh chưa nối"}{dang.sdt ? ` · ${dang.sdt}` : ""}</div></div>
               </div>
               <ul className="mb-3 max-h-[52vh] flex-1 space-y-2 overflow-y-auto">
                 {tin.map((t) => (
                   <li key={t.id} className={`flex ${t.huong === "di" ? "justify-end" : "justify-start"}`}>
                     <div className={`max-w-[85%] rounded-nho px-3 py-2 text-[14px] ${t.huong === "di" ? "bg-nhan-nhat text-nhan-dam" : "bg-giay-tram text-muc"}`}>
                       <div className="whitespace-pre-wrap break-words">{t.noi_dung}</div>
-                      <div className="mt-1 text-[11.5px] text-muc-3">{ngayGioVN(t.tao_luc)}{t.huong === "di" && t.trang_thai !== "da_gui" ? ` · ${TT_TIN[t.trang_thai as keyof typeof TT_TIN] || ""}${daNoi.has(dang.kenh) ? "" : ", chưa gửi tới khách vì kênh chưa nối"}` : ""}</div>
+                      <div className="mt-1 text-[11.5px] text-muc-3">{ngayGioVN(t.tao_luc)}{t.huong === "di" && t.trang_thai !== "da_gui" ? ` · ${TT_TIN[t.trang_thai as keyof typeof TT_TIN] || ""}${daNoi.has(dang.kenh) || dang.nguon === "pancake" ? "" : ", chưa gửi tới khách vì kênh chưa nối"}` : ""}</div>
                     </div>
                   </li>
                 ))}
                 {tin.length === 0 && <li className="py-8 text-center text-[14px] text-muc-3">Chưa có tin nào.</li>}
               </ul>
-              <OTraLoi hoiThoaiId={dang.id} chuaDoc={dang.chua_doc} duocTraLoi={traLoiDuoc} traLoi={traLoiKhach} daDoc={danhDauDaDoc} />
+              <OTraLoi hoiThoaiId={dang.id} chuaDoc={dang.chua_doc} duocTraLoi={traLoiDuoc} traLoi={traLoiKhach} daDoc={danhDauDaDoc} traLoiNgoai={dang.nguon === "pancake" ? linkPancake(dang.ma_ngoai) : undefined} />
             </div>
           )}
         </section>

@@ -7,7 +7,7 @@ import { NUT_CHINH, O_NHIEU_DONG } from "@/components/ui/dinh-dang";
 type KQ = { ok?: boolean; loi?: string; ghiChu?: string };
 
 /** Khung trả lời trong hộp thư. Mở hội thoại có tin chưa đọc thì tự đánh dấu đã đọc. */
-export function OTraLoi({ hoiThoaiId, chuaDoc, duocTraLoi, traLoi, daDoc }: { hoiThoaiId: string; chuaDoc: number; duocTraLoi: boolean; traLoi: (fd: FormData) => Promise<KQ>; daDoc: (fd: FormData) => Promise<KQ> }) {
+export function OTraLoi({ hoiThoaiId, chuaDoc, duocTraLoi, traLoi, daDoc, traLoiNgoai }: { hoiThoaiId: string; chuaDoc: number; duocTraLoi: boolean; traLoi: (fd: FormData) => Promise<KQ>; daDoc: (fd: FormData) => Promise<KQ>; traLoiNgoai?: string }) {
   const router = useRouter();
   const [dang, bat] = useTransition();
   const [loi, setLoi] = useState(""), [ghiChu, setGhiChu] = useState(""), [nd, setNd] = useState("");
@@ -19,6 +19,13 @@ export function OTraLoi({ hoiThoaiId, chuaDoc, duocTraLoi, traLoi, daDoc }: { ho
       void daDoc(fd).then(() => router.refresh());
     }
   }, [chuaDoc, hoiThoaiId, daDoc, router]);
+  // Hội thoại lấy qua Pancake: app chỉ đọc, trả lời khách trên Pancake (tin trả lời tự hiện lại ở đây sau vài giây).
+  if (traLoiNgoai) return (
+    <div className="border-t border-vien pt-3 text-[13px] text-muc-3">
+      <a href={traLoiNgoai} target="_blank" rel="noopener noreferrer" className={`${NUT_CHINH} inline-flex items-center`}>Trả lời trên Pancake ↗</a>
+      <p className="mt-2">Tin lấy từ fanpage qua Pancake, tự cập nhật khoảng 15–30 giây. Trả lời trên Pancake thì tin cũng hiện lại ở đây.</p>
+    </div>
+  );
   if (!duocTraLoi) return <p className="border-t border-vien pt-3 text-[13px] text-muc-3">Bạn chỉ được xem hộp thư.</p>;
   return (
     <div className="border-t border-vien pt-3">

@@ -9,6 +9,7 @@ import { Bang } from "@/components/ui/Table";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { luuLink } from "../actions";
+import { tenChienDich } from "@/lib/ten-chien-dich";
 
 export default async function TrangLink() {
   const nd = await yeuCauQuyen("mkt.xem");
@@ -28,7 +29,7 @@ export default async function TrangLink() {
     { ten: "ma", nhan: "Mã link (không đổi được sau khi tạo)", loai: "chu", batBuoc: true, chiKhiTao: true, goiY: "vd: khuyen-mai-11" },
     { ten: "dich_den", nhan: "Địa chỉ đích", loai: "chu", batBuoc: true, rong: true, goiY: "https://…" },
     { ten: "nguon_id", nhan: "Nguồn", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...(nguon ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }))] },
-    { ten: "chien_dich_id", nhan: "Chiến dịch", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...(cd ?? []).map((n) => ({ gia_tri: n.id, nhan: `${n.ma} · ${n.ten}` }))] },
+    { ten: "chien_dich_id", nhan: "Chiến dịch", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...(cd ?? []).map((n) => ({ gia_tri: n.id, nhan: tenChienDich(n.ten) }))] },
     { ten: "doi_tac_id", nhan: "Đối tác giới thiệu", loai: "chon", luaChon: [{ gia_tri: "", nhan: "—" }, ...(dt ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten }))] },
     { ten: "hoat_dong", nhan: "Trạng thái", loai: "chon", luaChon: [{ gia_tri: "1", nhan: "Đang bật" }, { gia_tri: "0", nhan: "Đã tắt" }] },
   ];

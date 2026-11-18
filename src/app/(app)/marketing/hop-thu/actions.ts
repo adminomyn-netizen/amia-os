@@ -21,6 +21,8 @@ export async function traLoiKhach(fd: FormData): Promise<KQ> {
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const id = chuoi(fd, "hoi_thoai_id");
   if (!(await hoiThoaiDuocPhep(nd, id))) return { loi: KHONG_DU_QUYEN };
+  const { data: ht } = await sb().from("hop_thu_hoi_thoai").select("nguon").eq("id", id).maybeSingle();
+  if (ht?.nguon === "pancake") return { loi: "Hội thoại này lấy từ fanpage qua Pancake: bấm \"Trả lời trên Pancake\" để trả lời khách." };
   const kq = await luuTinTraLoi({ hoiThoaiId: id, noiDung: chuoi(fd, "noi_dung"), nguoiId: nd.nhanVienId ?? null });
   if (!kq.ok) return { loi: kq.loi };
   lamMoi();

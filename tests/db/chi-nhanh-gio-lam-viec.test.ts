@@ -13,7 +13,7 @@ const datGio = (cn: string, v: unknown) => db.query(`update chi_nhanh set gio_la
 
 beforeAll(async () => {
   db = await taoDbVoiMigration();
-  CN = (await q<{ id: string }>(`select id from chi_nhanh order by ma limit 1`))[0].id;
+  CN = (await q<{ id: string }>(`select id from chi_nhanh where ma='VINH'`))[0].id;
   CN2 = (await q<{ id: string }>(`insert into chi_nhanh (ma, ten) values ('CN2','Chi nhánh hai') returning id`))[0].id;
   await db.query(`insert into cho_lam (chi_nhanh_id, ten) values ($1,'G1'), ($2,'G1')`, [CN, CN2]);
   await db.query(`update cau_hinh set gia_tri='1' where khoa='dat_online.mo'`);

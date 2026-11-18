@@ -22,7 +22,7 @@ const datLoi = async (o: Dat) => { try { await dat(o); } catch (e) { return (e a
 
 beforeAll(async () => {
   db = await taoDbVoiMigration();
-  CN = (await q<{ id: string }>(`select id from chi_nhanh order by ma limit 1`))[0].id;
+  CN = (await q<{ id: string }>(`select id from chi_nhanh where ma='VINH'`))[0].id;
   CN2 = (await q<{ id: string }>(`insert into chi_nhanh (ma, ten) values ('CN2','Chi nhánh hai') returning id`))[0].id;
   NV = (await q<{ id: string }>(`insert into nhan_vien (ho_ten, vai_tro, chi_nhanh_id) values ('Quản lý','quan_ly',$1) returning id`, [CN]))[0].id;
   KTV = (await q<{ id: string }>(`insert into nhan_vien (ho_ten, vai_tro, chi_nhanh_id, la_phuc_vu, hien_dat_lich) values ('KTV A','ktv',$1,true,true) returning id`, [CN]))[0].id;

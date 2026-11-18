@@ -14,7 +14,7 @@ const so = async () => (await q<{ b: string; t: string }>(`select coalesce(sum(s
 beforeAll(async () => {
   db = await taoDbVoiMigration();
   CN = (await q<{ id: string }>(`select id from chi_nhanh where ma='VINH'`))[0].id;
-  CN2 = (await q<{ id: string }>(`select id from chi_nhanh where ma<>'VINH' limit 1`))[0].id;
+  CN2 = (await q<{ id: string }>(`insert into chi_nhanh (ma, ten) values ('CN2','Chi nhánh hai') returning id`))[0].id;
   await q(`insert into nhan_vien (id, ho_ten, vai_tro, chi_nhanh_id) values ('${u(1)}','Thu Ngân','thu_ngan',$1)`, [CN]);
   KH = await taoKhach("1", CN); KH2 = await taoKhach("2", CN); KH3 = await taoKhach("3", CN2);
   const goi = (await q<{ id: string }>(`insert into goi_the (ma, ten, loai, gia, so_buoi) values ('G1','Triệt lông','lan',1000,5) returning id`))[0].id;

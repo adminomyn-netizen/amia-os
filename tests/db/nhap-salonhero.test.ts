@@ -54,6 +54,8 @@ const DATA = {
 
 beforeAll(async () => {
   db = await taoDbVoiMigration();
+  // Migration 0335 đã đóng Đà Lạt (chặn gắn dòng mới); test này cố ý dựng dữ liệu lịch sử ở Đà Lạt nên mở lại trong DB thử.
+  await db.query(`update chi_nhanh set hoat_dong = true where ma = 'DALAT'`);
   await q(`insert into auth.users (id) values ('${u(900)}')`);
   await q(`insert into nhan_vien (id, user_id, ho_ten, vai_tro) values ('${CHU}', '${u(900)}', 'Quản lý', 'quan_ly')`);
 });

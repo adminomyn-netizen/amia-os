@@ -20,6 +20,8 @@ async function hd(o: { ma: string; sh?: string; cn: string; khach: string | null
 
 beforeAll(async () => {
   db = await taoDbVoiMigration();
+  // Migration 0335 đã đóng Đà Lạt (chặn gắn dòng mới); test này cố ý dựng dữ liệu lịch sử ở Đà Lạt nên mở lại trong DB thử.
+  await db.query(`update chi_nhanh set hoat_dong = true where ma = 'DALAT'`);
   VINH = (await q<{ id: string }>(`select id from chi_nhanh where ma='VINH'`))[0].id;
   DALAT = (await q<{ id: string }>(`select id from chi_nhanh where ma='DALAT'`))[0].id;
   await q(`insert into nhan_vien (id, ho_ten, vai_tro, chi_nhanh_id, trang_thai_lam) values ($1,'Thu ngân','thu_ngan',$2,'dang_lam'),($3,'KTV Vinh','ktv',$2,'dang_lam'),($4,'KTV nghỉ','ktv',$2,'nghi_viec'),($5,'KTV Đà Lạt','ktv',$6,'dang_lam')`, [u(1), VINH, u(2), u(3), u(4), DALAT]);

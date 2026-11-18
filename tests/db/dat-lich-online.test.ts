@@ -19,7 +19,7 @@ const bat = (v: string) => db.query(`update cau_hinh set gia_tri=$1 where khoa='
 
 beforeAll(async () => {
   db = await taoDbVoiMigration();
-  CN = (await q<{ id: string }>(`select id from chi_nhanh order by ma limit 1`))[0].id;
+  CN = (await q<{ id: string }>(`select id from chi_nhanh where ma='VINH'`))[0].id;
   CN2 = (await q<{ id: string }>(`insert into chi_nhanh (ma, ten) values ('CN2','Chi nhánh hai') returning id`))[0].id;
   NV = (await q<{ id: string }>(`insert into nhan_vien (ho_ten, vai_tro, chi_nhanh_id) values ('Lễ tân','le_tan',$1) returning id`, [CN]))[0].id;
   const nhom = (await q<{ id: string }>(`insert into dich_vu_nhom (ten) values ('Nhóm') returning id`))[0].id;

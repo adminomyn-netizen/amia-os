@@ -39,7 +39,7 @@ const NV = { leTan: u(1), quanLy: u(2), bacSi: u(3), ktv: u(4) };
 
 beforeAll(async () => {
   db = await taoDbVoiMigration();
-  CN = (await q<{ id: string }>(`select id from chi_nhanh order by ma limit 1`))[0].id;
+  CN = (await q<{ id: string }>(`select id from chi_nhanh where ma='VINH'`))[0].id;
   for (const [vt, id] of [["le_tan", NV.leTan], ["quan_ly", NV.quanLy], ["bac_si", NV.bacSi], ["ktv", NV.ktv]] as const) await db.query(`insert into nhan_vien (id, ho_ten, vai_tro, chi_nhanh_id) values ($1,$2,$3,$4)`, [id, vt, vt, CN]);
   KH = (await q<{ id: string }>(`insert into khach_hang (ma, ho_ten, dien_thoai, chi_nhanh_id, nguon, nguoi_phu_trach_id) values ('KH1','Chị A','0900000001',$1,'mkt',$2) returning id`, [CN, NV.leTan]))[0].id;
 }, 60000);

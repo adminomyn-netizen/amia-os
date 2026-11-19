@@ -12,8 +12,8 @@ export function LocBaoCao({ goc, tu, den, chiNhanh, cn, nhom, cacNhom, motNgay }
   return (
     <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
       {motNgay && den !== undefined && <NgayChon ariaLabel="Ngày" giaTri={den} onDoi={(v) => dat("tu", v, "den")} />}
-      {!motNgay && tu !== undefined && <NgayChon ariaLabel="Từ ngày" giaTri={tu} onDoi={(v) => dat("tu", v)} />}
-      {!motNgay && den !== undefined && <NgayChon ariaLabel="Đến ngày" giaTri={den} onDoi={(v) => dat("den", v)} />}
+      {!motNgay && tu !== undefined && <NgayChon ariaLabel="Từ ngày" giaTri={tu} onDoi={(v) => (v && den && v > den ? dat("tu", v, "den") : dat("tu", v))} />}
+      {!motNgay && den !== undefined && <NgayChon ariaLabel="Đến ngày" giaTri={den} onDoi={(v) => (v && tu && v < tu ? dat("tu", v, "den") : dat("den", v))} />}
       {chiNhanh && chiNhanh.length > 1 && <Chon ariaLabel="Chi nhánh" giaTri={cn ?? ""} onDoi={(v) => dat("cn", v)} luaChon={[{ gia_tri: "", nhan: "Mọi chi nhánh" }, ...chiNhanh]} />}
       {cacNhom && <Chon ariaLabel="Gom số liệu" giaTri={nhom ?? cacNhom[0].gia_tri} onDoi={(v) => dat("nhom", v)} luaChon={cacNhom} />}
     </div>

@@ -109,6 +109,7 @@ export const MODULE: Module[] = [
       { nhan: "Quyết toán & kế toán", the: [
         { ten: "Bảng tính hoa hồng tháng", moTa: "Chính sách từ 11/2026: tính thử từng người, số Kế toán chốt, ca không tính phí, chốt vào bảng lương.", duongDan: "/hoa-hong/thang", trangThai: "san_sang", quyen: ["luong.xem"] },
         { ten: "Quyết toán hoa hồng", moTa: "Hoa hồng theo tháng, so số hiện tại với số đã chốt trong bảng lương.", duongDan: "/tai-chinh/quyet-toan-hoa-hong", trangThai: "san_sang", quyen: ["luong.xem"] },
+        { ten: "Dữ liệu SalonHero (cũ)", moTa: "Hoá đơn và sổ quỹ cũ từ SalonHero theo ngày, đặt cạnh số AMIA OS để Kế toán / Quản lý đối chiếu.", duongDan: "/tai-chinh/du-lieu-salonhero", trangThai: "san_sang", quyen: ["hd.ke_toan"] },
         { ten: "Đối soát bán hàng", moTa: "Sản phẩm bán so với xuất kho, giá vốn và doanh thu sau huỷ.", duongDan: "/tai-chinh/doi-soat", trangThai: "san_sang", quyen: ["baocao.tien"] },
         { ten: "Khoá kỳ kế toán", moTa: "Khoá/mở kỳ theo tháng, chặn ghi thêm sổ quỹ và công nợ của tháng đã chốt.", duongDan: "/tai-chinh/khoa-ky", trangThai: "san_sang", quyen: ["ky.khoa", "ky.mo_lai"] },
       ] },

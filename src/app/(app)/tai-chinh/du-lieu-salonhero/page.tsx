@@ -7,7 +7,7 @@ import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NgayChon } from "@/components/ui/NgayChon";
 
 const NGAY = /^\d{4}-\d{2}-\d{2}$/;
-type Dong = { ngay: string; cn: string; shHd: number; shTien: number; shThu: number; shNo: number; appHd: number; appTien: number; quyThu: number; quyChi: number; quyDong: number };
+type Dong = { ngay: string; cn: string; shHd: number; shTien: number; shThu: number; shNo: number; appHd: number; appTien: number; quyThu: number; quyChi: number; quyDong: number; thuNgay: number };
 
 /** Đọc hết các trang (PostgREST giới hạn 1000 dòng/lần). */
 async function docHet<T>(lay: (a: number, b: number) => PromiseLike<{ data: T[] | null }>): Promise<T[]> {
@@ -26,21 +26,24 @@ export default async function TrangDuLieuSalonHero({ searchParams }: { searchPar
 
   const { data: dsCn } = await db.from("chi_nhanh").select("id, ten");
   const tenCn = new Map((dsCn ?? []).map((c) => [c.id, c.ten]));
-  const [hd, quy, cuoi] = await Promise.all([
+  const [hd, quy, cuoi, tt] = await Promise.all([
     docHet<{ ngay_hd: string; chi_nhanh_id: string | null; la_lich_su: boolean; tong_phai_thu: number; da_thu: number; con_no: number }>((a, b) =>
       db.from("hoa_don").select("ngay_hd, chi_nhanh_id, la_lich_su, tong_phai_thu, da_thu, con_no").eq("trang_thai", "hoan_thanh").eq("la_so_du_dau", false).gte("ngay_hd", tu).lte("ngay_hd", den).order("id").range(a, b)),
     docHet<{ ngay: string | null; chi_nhanh_id: string | null; loai: string | null; so_tien: number | null; nguon: string | null; sh_id: number | null; da_dao: boolean | null }>((a, b) =>
       db.from("v_so_quy").select("ngay, chi_nhanh_id, loai, so_tien, nguon, sh_id, da_dao").not("sh_id", "is", null).gte("ngay", tu).lte("ngay", den).order("id").range(a, b)),
     db.from("hoa_don").select("ngay_hd").eq("la_lich_su", true).not("sh_id", "is", null).eq("trang_thai", "hoan_thanh").order("ngay_hd", { ascending: false }).limit(1).maybeSingle(),
+    docHet<{ ngay: string; loai: string; phuong_thuc: string; so_tien: number; hoa_don: { chi_nhanh_id: string | null } | null }>((a, b) =>
+      db.from("thanh_toan").select("ngay, loai, phuong_thuc, so_tien, hoa_don(chi_nhanh_id)").neq("phuong_thuc", "the_tien").gte("ngay", tu).lte("ngay", den).order("id").range(a, b) as never),
   ]);
 
   const m = new Map<string, Dong>();
-  const dong = (n: string, c: string | null) => { const k = `${n}|${c ?? ""}`; let d = m.get(k); if (!d) { d = { ngay: n, cn: tenCn.get(c ?? "") ?? "—", shHd: 0, shTien: 0, shThu: 0, shNo: 0, appHd: 0, appTien: 0, quyThu: 0, quyChi: 0, quyDong: 0 }; m.set(k, d); } return d; };
+  const dong = (n: string, c: string | null) => { const k = `${n}|${c ?? ""}`; let d = m.get(k); if (!d) { d = { ngay: n, cn: tenCn.get(c ?? "") ?? "—", shHd: 0, shTien: 0, shThu: 0, shNo: 0, appHd: 0, appTien: 0, quyThu: 0, quyChi: 0, quyDong: 0, thuNgay: 0 }; m.set(k, d); } return d; };
   for (const r of hd) {
     const d = dong(r.ngay_hd.slice(0, 10), r.chi_nhanh_id);
     if (r.la_lich_su) { d.shHd++; d.shTien += Number(r.tong_phai_thu); d.shThu += Number(r.da_thu); d.shNo += Number(r.con_no); }
     else { d.appHd++; d.appTien += Number(r.tong_phai_thu); }
   }
+  for (const r of tt) { const d = dong(r.ngay.slice(0, 10), r.hoa_don?.chi_nhanh_id ?? null); d.thuNgay += (r.loai === "thu" ? 1 : -1) * Number(r.so_tien); }
   for (const r of quy) {
     if (r.da_dao) continue;
     const d = dong(String(r.ngay ?? "").slice(0, 10), r.chi_nhanh_id); d.quyDong++;
@@ -63,6 +66,7 @@ export default async function TrangDuLieuSalonHero({ searchParams }: { searchPar
       <HangChiSo muc={[
         { nhan: "Hoá đơn SalonHero", so: soVN(t("shHd")), ghiChu: `Doanh thu ${tienVN(t("shTien"))}` },
         { nhan: "Đã thu / còn nợ (SalonHero)", so: tienVN(t("shThu")), ghiChu: `Còn nợ ${tienVN(t("shNo"))}` },
+        { nhan: "Tiền thu theo ngày thu (như Báo cáo)", so: tienVN(t("thuNgay")), ghiChu: "Gồm cả thu nợ hoá đơn ngày trước; không gồm trừ thẻ tiền" },
         { nhan: "Hoá đơn AMIA OS", so: soVN(t("appHd")), ghiChu: `Doanh thu ${tienVN(t("appTien"))}` },
         { nhan: "Phiếu quỹ SalonHero", so: soVN(t("quyDong")), ghiChu: `Thu ${tienVN(t("quyThu"))} · chi ${tienVN(t("quyChi"))}` },
       ]} />
@@ -78,6 +82,7 @@ export default async function TrangDuLieuSalonHero({ searchParams }: { searchPar
           { nhan: "Còn nợ SH", phai: true, hienThi: (r) => (r.shNo ? tienVN(r.shNo) : "") },
           { nhan: "HĐ AMIA OS", phai: true, hienThi: (r) => (r.appHd ? soVN(r.appHd) : "") },
           { nhan: "Doanh thu AMIA OS", phai: true, hienThi: (r) => (r.appHd ? tienVN(r.appTien) : "") },
+          { nhan: "Tiền thu trong ngày (báo cáo)", phai: true, hienThi: (r) => (r.thuNgay ? tienVN(r.thuNgay) : "") },
           { nhan: "Quỹ SH thu", phai: true, hienThi: (r) => (r.quyThu ? tienVN(r.quyThu) : "") },
           { nhan: "Quỹ SH chi", phai: true, hienThi: (r) => (r.quyChi ? tienVN(r.quyChi) : "") },
         ]} />

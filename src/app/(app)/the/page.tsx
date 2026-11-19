@@ -12,6 +12,7 @@ import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { NutBuoi } from "@/components/the/NutBuoi";
 import { capTheTay, duKienHanThe, giaHanNhieuThe, thucHienBuoi } from "./actions";
 import { luaChonNhanVien } from "@/lib/lua-chon-nhan-vien";
+import { docLocThe, goiTheoDichVu, TT_THE, tinhTrangCuaLoc } from "@/lib/the-loc";
 
 /** Các ô của hộp Cấp thẻ tay (SalonHero "Cấp thẻ mới"): số lần / số tiền trong thẻ + đã dùng ban đầu, ngày cấp, hạn (trống = tự tính theo loại thẻ), số lượng cấp, lý do.
  *  Dùng chung ở /the và Khách dùng thẻ. Ô "Tại chi nhánh" cần danh sách chi nhánh nên thêm bằng truongCapThe(chiNhanh). */
@@ -29,23 +30,26 @@ export function truongCapThe(chiNhanh: { id: string; ten: string }[]): Truong[] 
 }
 const TAB = [{ ma: "lan", ten: "Thẻ liệu trình" }, { ma: "tien", ten: "Thẻ tiền" }];
 
-export default async function TrangThe({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; het?: string; so?: string }> }) {
+export default async function TrangThe({ searchParams }: { searchParams: Promise<{ tab?: string; q?: string; het?: string; so?: string; tt?: string; dv?: string; cn?: string }> }) {
   const nd = await yeuCauQuyen("the.xem");
   const sp = await searchParams;
-  const tab = sp.tab === "tien" ? "tien" : "lan";
+  const loc = docLocThe(sp);
+  const tab = loc.tab;
   const db = sb();
   // Hiện TỪNG PHẦN: 50 thẻ mới nhất trước, bấm "Xem thêm" lấy thêm 50 (tối đa 1.000) — trang nhẹ, mở ngay.
   const so = Math.min(1000, Math.max(50, Math.floor(Number(sp.so) / 50) * 50 || 50));
+  const goiIds = await goiTheoDichVu(loc.dv);
   let q = db.from("v_the_khach").select("*").eq("loai", tab).order("ngay_cap", { ascending: false }).order("id").limit(so + 1);
-  if (nd.chiNhanhId) q = q.eq("chi_nhanh_id", nd.chiNhanhId);
+  if (nd.chiNhanhId || loc.cn) q = q.eq("chi_nhanh_id", nd.chiNhanhId ?? loc.cn);
+  if (goiIds) q = q.in("goi_id", goiIds);
   // Tìm ở máy chủ trên TOÀN BỘ thẻ (mã thẻ, mã/tên/SĐT khách), không lọc trên 200 thẻ mới nhất.
-  const tuKhoa = (sp.q ?? "").trim().replace(/[%,()*\\]/g, " ").trim();
+  const tuKhoa = loc.q;
   if (tuKhoa) {
     const { data: kt } = await db.from("khach_hang").select("id").or(`ho_ten_khong_dau.ilike.%${boDau(tuKhoa)}%,dien_thoai.ilike.%${tuKhoa.replace(/^0/, "")}%,ma.ilike.%${tuKhoa}%`).limit(300);
     const ids = (kt ?? []).map((k) => k.id);
     q = q.or(ids.length ? `ma.ilike.%${tuKhoa}%,khach_id.in.(${ids.join(",")})` : `ma.ilike.%${tuKhoa}%`);
   }
-  if (sp.het !== "1") q = q.in("tinh_trang", ["hoat_dong", "sap_het", "khoa"]);
+  q = q.in("tinh_trang", tinhTrangCuaLoc(loc.tt));
   const [{ data: the }, { data: goi }, { data: nv }, { data: dv }, { data: lk }, { data: cnCap }] = await Promise.all([
     q, db.from("goi_the").select("id, ten, loai, so_buoi, gia_tri_the").eq("hoat_dong", true).order("ten"),
     db.from("nhan_vien").select("id, ho_ten, vai_tro").eq("hoat_dong", true).order("ho_ten"), db.from("dich_vu").select("id, ten").eq("hoat_dong", true).order("ten"),
@@ -59,7 +63,10 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
   const conNua = (the ?? []).length > so, ds = (the ?? []).slice(0, so);
   const suaDuoc = coQuyen(nd, "the.dieuchinh");
   const bs = await layBoSungThe(ds.map((r) => ({ id: r.id ?? "", khach_id: r.khach_id, loai: r.loai })), nd.chiNhanhId);
-  const lienKetThem = `/the?${new URLSearchParams({ tab, ...(sp.q ? { q: sp.q } : {}), ...(sp.het === "1" ? { het: "1" } : {}), so: String(so + 50) })}`;
+  const thamLoc = { tab, tt: loc.tt, ...(loc.q ? { q: loc.q } : {}), ...(loc.dv ? { dv: loc.dv } : {}), ...(loc.cn ? { cn: loc.cn } : {}) };
+  const lienKetThem = `/the?${new URLSearchParams({ ...thamLoc, so: String(so + 50) })}`;
+  const lienKetXuat = `/api/xuat/the?${new URLSearchParams(thamLoc)}`;
+  const { data: dsCn } = nd.chiNhanhId ? { data: [] as { id: string; ten: string }[] } : await db.from("chi_nhanh").select("id, ten").order("thu_tu").order("ma");
   const nvLC = luaChonNhanVien(nv ?? []);
   const bacSiLC = [{ gia_tri: "", nhan: "Không có" }, ...(nv ?? []).filter((n) => n.vai_tro === "bac_si").map((n) => ({ gia_tri: n.id, nhan: n.ho_ten }))];
   // Danh sách dịch vụ cho nút "Gửi chuyên viên làm": dựng MỘT lần cho mỗi gói (gói không gắn dịch vụ thì dùng chung một danh sách đủ) và dùng lại
@@ -82,10 +89,16 @@ export default async function TrangThe({ searchParams }: { searchParams: Promise
         )}
       </TieuDeNoi>
       <Tab muc={TAB} dang={tab} goc="/the" />
-      <div className="mb-4 flex flex-wrap items-center gap-4 text-[14px]">
-        <form className="flex-1" action="/the"><input type="hidden" name="tab" value={tab} /><input name="q" defaultValue={sp.q ?? ""} placeholder="Tìm mã thẻ, tên, SĐT khách (Enter)" aria-label="Tìm thẻ" className="h-11 w-full max-w-md rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] outline-none focus:border-nhan" /></form>
-        <Link href={`/the?tab=${tab}${sp.het === "1" ? "" : "&het=1"}`} className="font-medium text-nhan-dam hover:underline">{sp.het === "1" ? "Chỉ thẻ còn dùng" : "Hiện cả thẻ đã hết/hết hạn/thu hồi"}</Link>
-      </div>
+      <form action="/the" className="mb-2 flex flex-wrap items-end gap-3 text-[14px]">
+        <input type="hidden" name="tab" value={tab} />
+        <label className="flex min-w-[220px] flex-1 flex-col gap-1 text-[12.5px] text-muc-3">Tìm khách / mã thẻ<input name="q" defaultValue={loc.q} placeholder="Mã thẻ, tên, SĐT khách" aria-label="Tìm thẻ" className="h-11 w-full rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] text-muc outline-none focus:border-nhan" /></label>
+        <label className="flex min-w-[200px] flex-1 flex-col gap-1 text-[12.5px] text-muc-3">Dịch vụ / tên thẻ<input name="dv" defaultValue={loc.dv} placeholder="Vd: chăm sóc da, MFU" aria-label="Lọc theo dịch vụ hoặc tên thẻ" className="h-11 w-full rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] text-muc outline-none focus:border-nhan" /></label>
+        <label className="flex flex-col gap-1 text-[12.5px] text-muc-3">Tình trạng<select name="tt" defaultValue={loc.tt} aria-label="Tình trạng thẻ" className="h-11 rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] text-muc">{TT_THE.map((t) => <option key={t.ma} value={t.ma}>{t.nhan}</option>)}</select></label>
+        {!nd.chiNhanhId && (dsCn ?? []).length > 1 && <label className="flex flex-col gap-1 text-[12.5px] text-muc-3">Chi nhánh<select name="cn" defaultValue={loc.cn} aria-label="Chi nhánh" className="h-11 rounded-nho border border-vien-dam bg-giay-sang px-3 text-[15px] text-muc"><option value="">Tất cả</option>{(dsCn ?? []).map((c) => <option key={c.id} value={c.id}>{c.ten}</option>)}</select></label>}
+        <button type="submit" className="nut-vang h-11 rounded-nho px-5 text-[14px] font-medium">Lọc</button>
+        <a href={lienKetXuat} className="inline-flex h-11 items-center rounded-nho border border-vien-dam px-4 text-[14px] font-medium text-muc-2 hover:bg-giay-tram">Xuất Excel</a>
+      </form>
+      <p className="mb-4 text-[12.5px] text-muc-3">Xuất Excel lấy đúng bộ lọc đang chọn, đủ mọi thẻ khớp (không giới hạn 50 thẻ): tên thẻ, dịch vụ, khách, SĐT, đã dùng/tổng buổi, lần dùng gần nhất, hạn dùng.</p>
       {ds.length === 0 ? <p className="py-10 text-center text-[14px] text-muc-3">Chưa có thẻ nào.</p> : (
         <LuoiThe>
           {ds.map((r) => { const k = tenK.get(r.khach_id ?? ""); return (

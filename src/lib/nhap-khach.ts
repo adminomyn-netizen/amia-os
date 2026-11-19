@@ -3,14 +3,14 @@ import ExcelJS from "exceljs";
 import { chuanSdt, coSdtHopLe } from "@/lib/dinh-dang";
 import { ngaySinhKhongNam } from "@/lib/ngay-sinh";
 
-export type KhachNhap = { ho_ten: string; dien_thoai: string; zalo: string | null; email: string | null; ngay_sinh: string | null; gioi_tinh: string | null; dia_chi: string | null; ghi_chu: string | null; dong: number };
+export type KhachNhap = { ho_ten: string; dien_thoai: string; zalo: string | null; email: string | null; ngay_sinh: string | null; gioi_tinh: string | null; dia_chi: string | null; ghi_chu: string | null; chi_nhanh: string | null; dong: number };
 export type LoiNhap = { dong: number; viec: string };
 
-const bo = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+export const bo = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/gi, "d").toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
 const TIEU_DE: Record<keyof Omit<KhachNhap, "dong">, string[]> = {
   ho_ten: ["ho ten", "ten khach hang", "ten khach", "khach hang", "ho va ten", "ten"],
   dien_thoai: ["so dien thoai", "dien thoai", "sdt", "phone", "so dt", "mobile"],
-  zalo: ["zalo"], email: ["email", "mail"], ngay_sinh: ["ngay sinh", "sinh nhat", "birthday"], gioi_tinh: ["gioi tinh", "gioi"], dia_chi: ["dia chi", "address"], ghi_chu: ["ghi chu", "note"],
+  zalo: ["zalo"], email: ["email", "mail"], ngay_sinh: ["ngay sinh", "sinh nhat", "birthday"], gioi_tinh: ["gioi tinh", "gioi"], dia_chi: ["dia chi", "address"], ghi_chu: ["ghi chu", "note"], chi_nhanh: ["chi nhanh", "co so", "chi nhanh ap dung"],
 };
 
 function ngay(v: unknown): string | null {
@@ -48,7 +48,7 @@ export async function docKhachTuExcel(buf: ArrayBuffer): Promise<{ khach: KhachN
     if (!coSdtHopLe(sdt)) return void loi.push({ dong: so, viec: `Số điện thoại "${chu(lay(r, "dien_thoai")) ?? ""}" chưa hợp lệ` });
     if (thay.has(sdt)) return void loi.push({ dong: so, viec: `Số ${sdt} bị lặp trong file (giữ dòng đầu)` });
     thay.add(sdt);
-    khach.push({ ho_ten: ten, dien_thoai: sdt, zalo: chu(lay(r, "zalo")), email: chu(lay(r, "email")), ngay_sinh: ngay(lay(r, "ngay_sinh")), gioi_tinh: gt(lay(r, "gioi_tinh")), dia_chi: chu(lay(r, "dia_chi")), ghi_chu: chu(lay(r, "ghi_chu")), dong: so });
+    khach.push({ ho_ten: ten, dien_thoai: sdt, zalo: chu(lay(r, "zalo")), email: chu(lay(r, "email")), ngay_sinh: ngay(lay(r, "ngay_sinh")), gioi_tinh: gt(lay(r, "gioi_tinh")), dia_chi: chu(lay(r, "dia_chi")), ghi_chu: chu(lay(r, "ghi_chu")), chi_nhanh: chu(lay(r, "chi_nhanh")), dong: so });
   });
   return { khach, loi, cotThieu: [], tongDong: tong };
 }

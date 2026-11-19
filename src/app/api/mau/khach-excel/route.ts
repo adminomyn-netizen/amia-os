@@ -9,7 +9,7 @@ export async function GET() {
   const ws = wb.addWorksheet("Khách hàng");
   ws.columns = [
     { header: "Họ tên", key: "ho_ten", width: 28 }, { header: "Số điện thoại", key: "dien_thoai", width: 16 }, { header: "Zalo", key: "zalo", width: 16 }, { header: "Email", key: "email", width: 26 },
-    { header: "Ngày sinh", key: "ngay_sinh", width: 14 }, { header: "Giới tính", key: "gioi_tinh", width: 11 }, { header: "Địa chỉ", key: "dia_chi", width: 34 }, { header: "Ghi chú", key: "ghi_chu", width: 30 },
+    { header: "Ngày sinh", key: "ngay_sinh", width: 14 }, { header: "Giới tính", key: "gioi_tinh", width: 11 }, { header: "Địa chỉ", key: "dia_chi", width: 34 }, { header: "Ghi chú", key: "ghi_chu", width: 30 }, { header: "Chi nhánh", key: "chi_nhanh", width: 16 },
   ];
   ws.getRow(1).font = { bold: true };
   ws.views = [{ state: "frozen", ySplit: 1 }];
@@ -28,7 +28,8 @@ export async function GET() {
     { cot: "Giới tính", bb: "Không", cach: "Nữ hoặc Nam" },
     { cot: "Địa chỉ", bb: "Không", cach: "Địa chỉ liên hệ" },
     { cot: "Ghi chú", bb: "Không", cach: "Ghi chú chung về khách" },
-    { cot: "", bb: "", cach: "Dòng đầu của trang “Khách hàng” là tiêu đề, không xoá. Mỗi dòng sau là một khách. Nguồn khách, người phụ trách, chi nhánh và nhóm khách chọn ngay trong hộp nhập, áp cho cả file. Tối đa 8 MB." },
+    { cot: "Chi nhánh", bb: "Không", cach: "Tên chi nhánh của khách (ví dụ: Vinh). Để trống = dùng chi nhánh chọn trong hộp nhập. Chi nhánh Đà Lạt đã đóng nên khách mới ghi Đà Lạt sẽ báo lỗi, không nhập." },
+    { cot: "", bb: "", cach: "Dòng đầu của trang “Khách hàng” là tiêu đề, không xoá. Mỗi dòng sau là một khách. Nguồn khách, người phụ trách, và nhóm khách chọn ngay trong hộp nhập, áp cho cả file; chi nhánh lấy theo cột Chi nhánh (trống thì theo hộp nhập). Tối đa 8 MB." },
   ]);
   hd.getColumn("cach").alignment = { wrapText: true, vertical: "top" };
   const buf = await wb.xlsx.writeBuffer();

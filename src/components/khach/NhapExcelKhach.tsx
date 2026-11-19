@@ -26,7 +26,7 @@ export function NhapExcelKhach({ nguon, nhanVien, chiNhanh, nhom = [], action, m
   return (
     <>
       <button type="button" className={NUT_PHU} onClick={() => { setMo(true); setKq(null); }}>Nhập từ tệp excel</button>
-      <Hop mo={mo} dong={() => setMo(false)} tieuDe="Nhập khách từ Excel" moTa="Dòng đầu là tiêu đề. Bắt buộc có cột Họ tên và Số điện thoại; tuỳ chọn: Zalo, Email, Ngày sinh, Giới tính, Địa chỉ, Ghi chú. Khách trùng số điện thoại: bỏ qua, hoặc bật Ghi đè để cập nhật hồ sơ cũ bằng các ô có dữ liệu trong file." rong="rong">
+      <Hop mo={mo} dong={() => setMo(false)} tieuDe="Nhập khách từ Excel" moTa="Dòng đầu là tiêu đề. Bắt buộc có cột Họ tên và Số điện thoại; tuỳ chọn: Zalo, Email, Ngày sinh, Giới tính, Địa chỉ, Ghi chú, Chi nhánh (Vinh; để trống = chi nhánh chọn bên dưới). Khách trùng số điện thoại: bỏ qua, hoặc bật Ghi đè để cập nhật hồ sơ cũ bằng các ô có dữ liệu trong file." rong="rong">
         <div className="space-y-4">
           <div>
             <div className="flex flex-wrap items-baseline justify-between gap-2">

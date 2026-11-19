@@ -11,7 +11,7 @@ import { coQuyen, duocThemGhiChu } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { bat, chuoi, chuoiHoacNull, mang } from "@/lib/form";
 import { chuanSdt, coSdtHopLe, homNayHCM, soTuChu } from "@/lib/dinh-dang";
-import { docKhachTuExcel } from "@/lib/nhap-khach";
+import { bo as boDau, docKhachTuExcel } from "@/lib/nhap-khach";
 import { cotDoi } from "@/lib/lich-su-sua-khach";
 import { ngaySinhHopLe } from "@/lib/ngay-sinh";
 import { ANH_TOI_DA, DANH_DAU_HOSTING, ghiAnhDaiDien, loaiAnh, xoaAnhDaiDien } from "@/lib/anh-dai-dien-khach";
@@ -321,7 +321,7 @@ export async function taiAnh(fd: FormData): Promise<KQ> {
 
 export type KetQuaNhap = { ok?: boolean; loi?: string; hopLe?: number; tongDong?: number; daCo?: number; daNhap?: number; ghiDe?: boolean; daGhiDe?: number; trungNhieu?: number; nhom?: string; dongLoi?: { dong: number; viec: string }[] };
 
-/** Nhập khách từ Excel. che_do=xem chỉ kiểm tra (không ghi). Khách có SĐT đã tồn tại: mặc định bỏ qua; bật ghi_de=1 (như SalonHero "Ghi đè nếu trùng") thì cập nhật hồ sơ đó bằng các ô CÓ dữ liệu trong file (ô trống giữ nguyên, không đổi mã/nguồn/phụ trách/chi nhánh). SĐT trùng nhiều hồ sơ thì không ghi đè, chỉ báo. Nguồn/người phụ trách/chi nhánh áp chung cho khách mới. */
+/** Nhập khách từ Excel. che_do=xem chỉ kiểm tra (không ghi). Khách có SĐT đã tồn tại: mặc định bỏ qua; bật ghi_de=1 (như SalonHero "Ghi đè nếu trùng") thì cập nhật hồ sơ đó bằng các ô CÓ dữ liệu trong file (ô trống giữ nguyên, không đổi mã/nguồn/phụ trách/chi nhánh). SĐT trùng nhiều hồ sơ thì không ghi đè, chỉ báo. Nguồn/người phụ trách áp chung cho khách mới; chi nhánh lấy theo cột "Chi nhánh" của từng dòng (trống = chi nhánh chọn trên hộp). */
 export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
   const nd = await kiemQuyen("khach.nhap");
   if (!nd) return { loi: KHONG_DU_QUYEN };
@@ -348,7 +348,20 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
   const idTheoSdt = new Map<string, string[]>();
   for (let i = 0; i < sdts.length; i += 300) { const { data } = await db.from("khach_hang").select("id, dien_thoai").in("dien_thoai", sdts.slice(i, i + 300)); (data ?? []).forEach((x) => idTheoSdt.set(x.dien_thoai, [...(idTheoSdt.get(x.dien_thoai) ?? []), x.id])); }
   const daCo = new Set(idTheoSdt.keys());
-  const moi = doc.khach.filter((k) => !daCo.has(k.dien_thoai));
+  // Cột "Chi nhánh" (tuỳ chọn) trong file: để trống = chi nhánh chọn trên hộp nhập; ghi tên/mã chi nhánh = khách mới vào chi nhánh đó. Chi nhánh đã đóng (Đà Lạt) hoặc không nhận ra thì dòng báo lỗi, không nhập.
+  const { data: dsCn } = await db.from("chi_nhanh").select("id, ma, ten, hoat_dong");
+  const timCn = (t: string) => { const b = boDau(t); return (dsCn ?? []).find((c) => boDau(c.ten) === b || boDau(c.ma) === b || boDau(c.ten).replace(/^amia /, "") === b); };
+  const cnMacDinh = (dsCn ?? []).find((c) => c.id === cn);
+  const cnTheoDong = new Map<number, string>(), loiCn: { dong: number; viec: string }[] = [];
+  const moi = doc.khach.filter((k) => {
+    if (daCo.has(k.dien_thoai)) return false;
+    const c = k.chi_nhanh ? timCn(k.chi_nhanh) : cnMacDinh;
+    if (!c) { loiCn.push({ dong: k.dong, viec: `Chi nhánh "${k.chi_nhanh}" không có trong hệ thống` }); return false; }
+    if (!c.hoat_dong) { loiCn.push({ dong: k.dong, viec: `Chi nhánh ${c.ten} đã đóng, không nhập khách mới (khách đã có số điện thoại trong hệ thống thì vẫn bỏ qua như thường)` }); return false; }
+    if (nd.chiNhanhId && c.id !== nd.chiNhanhId) { loiCn.push({ dong: k.dong, viec: `Tài khoản chỉ nhập được cho chi nhánh của mình, không nhập cho ${c.ten}` }); return false; }
+    cnTheoDong.set(k.dong, c.id);
+    return true;
+  });
   // Ghi đè: chỉ khi SĐT khớp đúng 1 hồ sơ; dòng cuối cùng trong file thắng nếu file lặp SĐT.
   const COT_GHI_DE = ["ho_ten", "zalo", "email", "ngay_sinh", "gioi_tinh", "dia_chi", "ghi_chu"] as const;
   const canGhi = new Map<string, Partial<Record<(typeof COT_GHI_DE)[number], string>>>();
@@ -361,7 +374,7 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
     for (const c of COT_GHI_DE) { const v = k[c]; if (v) doi[c] = v; }
     canGhi.set(ids[0], doi);
   }
-  const kq: KetQuaNhap = { ok: true, tongDong: doc.tongDong, hopLe: doc.khach.length, daCo: daCo.size, ghiDe, trungNhieu: ghiDe ? trungNhieu : undefined, dongLoi: doc.loi.slice(0, 30) };
+  const kq: KetQuaNhap = { ok: true, tongDong: doc.tongDong, hopLe: doc.khach.length - loiCn.length, daCo: daCo.size, ghiDe, trungNhieu: ghiDe ? trungNhieu : undefined, dongLoi: [...doc.loi, ...loiCn].sort((a, b) => a.dong - b.dong).slice(0, 30) };
   if (chuoi(fd, "che_do") !== "nhap") return kq;
   let daGhiDe = 0;
   if (ghiDe) {
@@ -384,7 +397,7 @@ export async function nhapKhachExcel(fd: FormData): Promise<KetQuaNhap> {
     const base = Number((await db.rpc("so_tiep_theo", { p_khoa: "khach" })).data ?? 0);
     // Cấp đủ dải mã cho lô: so_tiep_theo tăng 1/lần gọi nên gọi thêm lo.length-1 lần để giữ mã duy nhất.
     for (let j = 1; j < lo.length; j++) await db.rpc("so_tiep_theo", { p_khoa: "khach" });
-    const rows = lo.map((k, j) => ({ ma: "KH" + String(base + j).padStart(6, "0"), ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo, email: k.email, ngay_sinh: k.ngay_sinh, gioi_tinh: k.gioi_tinh, dia_chi: k.dia_chi, ghi_chu: k.ghi_chu, chi_nhanh_id: cn, nguon, nguoi_phu_trach_id: phuTrach, tao_boi: nd.nhanVienId }));
+    const rows = lo.map((k, j) => ({ ma: "KH" + String(base + j).padStart(6, "0"), ho_ten: k.ho_ten, dien_thoai: k.dien_thoai, zalo: k.zalo, email: k.email, ngay_sinh: k.ngay_sinh, gioi_tinh: k.gioi_tinh, dia_chi: k.dia_chi, ghi_chu: k.ghi_chu, chi_nhanh_id: cnTheoDong.get(k.dong) ?? cn, nguon, nguoi_phu_trach_id: phuTrach, tao_boi: nd.nhanVienId }));
     const { data: moiIds, error } = await db.from("khach_hang").insert(rows).select("id");
     if (error) return { ...kq, ok: false, loi: `Dừng ở lô thứ ${i / 200 + 1} (đã nhập ${nhap} khách): ${thongBaoLoi(error)}`, daNhap: nhap, daGhiDe };
     nhap += rows.length;

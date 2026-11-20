@@ -42,6 +42,13 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
   // Tài khoản nhận tiền (0323): bảng nhỏ (vài chục dòng), đọc hết để hiện cả tài khoản đã ẩn của khoản thu cũ; ô chọn Thu nợ chỉ lấy tài khoản đang dùng.
   const { data: dsTk } = await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, chu_tai_khoan, so_tai_khoan, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh, hoat_dong").order("tao_luc");
   const tkTheoId = new Map((dsTk ?? []).map((x) => [x.id, x]));
+  // Thẻ tiền / thẻ cọc còn dùng được của khách: cho Thu nợ trừ thẳng vào thẻ (chi nhánh Vinh 20/11/2026). Đơn lịch sử SalonHero thì không.
+  const { data: theTienKhach } = h.trang_thai === "hoan_thanh" && Number(h.con_no) > 0 && h.khach_id && !h.la_lich_su
+    ? await db.from("v_the_khach").select("id, ma, so_du_tien, goi_id").eq("khach_id", h.khach_id).eq("loai", "tien").in("tinh_trang", ["hoat_dong", "sap_het"]).gt("so_du_tien", 0)
+    : { data: [] };
+  const { data: goiTheTien } = (theTienKhach ?? []).length ? await db.from("goi_the").select("id, ten").in("id", [...new Set((theTienKhach ?? []).map((t) => t.goi_id as string))]) : { data: [] };
+  const tenGoiTien = new Map((goiTheTien ?? []).map((g) => [g.id as string, g.ten as string]));
+  const luaChonTheTien = (theTienKhach ?? []).map((t) => ({ gia_tri: t.id as string, nhan: `${tenGoiTien.get(t.goi_id as string) ?? "Thẻ tiền"} · ${t.ma} · còn ${tienVN(Number(t.so_du_tien))}` }));
   const tkCuaTt = new Map((tt ?? []).map((x) => [x.id, x.tai_khoan_id]));
   /** "Vietcombank · Chủ TK · số TK" của một khoản thu; khoản cũ chưa rõ tài khoản thì tên ngân hàng như trước. */
   const taiKhoanNhan = (tkId: string | null | undefined, nganHang: string | null | undefined) => {
@@ -132,7 +139,7 @@ export default async function ChiTietHoaDon({ params, searchParams }: { params: 
         )}
         {coNo && coQuyen(nd, "no.thu") && (
           <NutHop nhan="Thu nợ" tieuDe="Thu nợ" moTa={`Còn nợ ${tienVN(h.con_no)}. Mỗi lần thu được ghi vào sổ thu tiền, không sửa lại được.`} an={{ hoa_don_id: id }} giaTri={{ phuong_thuc: "tien_mat", so_tien: Number(h.con_no), ngay: homNayHCM() }}
-            truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: PHUONG_THUC_TIEN, batBuoc: true }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } },
+            truong={[{ ten: "phuong_thuc", nhan: "Phương thức", loai: "chon", luaChon: luaChonTheTien.length ? [...PHUONG_THUC_TIEN, { gia_tri: "the_tien", nhan: "Thẻ tiền / tiền cọc" }] : PHUONG_THUC_TIEN, batBuoc: true }, { ten: "the_id", nhan: "Chọn thẻ", loai: "chon", luaChon: luaChonTheTien, batBuoc: true, rong: true, hienKhi: { ten: "phuong_thuc", la: ["the_tien"] } }, { ten: "loai_vi", nhan: "Loại ví", loai: "chon", luaChon: LOAI_VI, batBuoc: true, hienKhi: { ten: "phuong_thuc", la: ["vi_dien_tu"] } },
               { ten: "tai_khoan_id", nhan: "Tài khoản nhận", loai: "chon", luaChon: luaChonTaiKhoanForm((dsTk ?? []).filter((x) => x.hoat_dong), h.chi_nhanh_id), batBuoc: true, rong: true, hienKhi: { ten: "phuong_thuc", la: ["chuyen_khoan", "quet_the"] } }, { ten: "so_tien", nhan: "Số tiền thu", loai: "tien", batBuoc: true }, { ten: "ngay", nhan: "Ngày thu", loai: "ngay" }, { ten: "ghi_chu", nhan: "Ghi chú", loai: "chu", rong: true }]} action={thuNo} />
         )}
         {coNo && h.la_lich_su && coQuyen(nd, "no.xoa") && <button type="button" disabled title={KHOA_SH} className="h-10 cursor-not-allowed rounded-nho border border-vien px-4 text-[14px] font-medium text-muc-3">Điều chỉnh nợ (khoá)</button>}

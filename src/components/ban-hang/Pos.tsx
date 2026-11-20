@@ -970,6 +970,26 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
               <div className="border-t border-vien pt-3">
                 <div className="mb-2 flex items-baseline justify-between gap-2"><span className="text-[14px] font-semibold text-muc">Thanh toán</span>
                   <span className="text-[12px] text-muc-3">Bấm tên hình thức để điền phần còn lại</span></div>
+                {/* Thẻ tiền / thẻ cọc còn số dư của khách hiện ngay trong hộp Thanh toán (SalonHero tự hiện để chọn trừ; chi nhánh Vinh 20/11/2026: AMIA OS không thấy chỗ trừ). */}
+                {khach && theTien.length > 0 && (
+                  <div className="mb-2 rounded-nho border border-nhan bg-nhan-nhat px-3 py-2" aria-label="Thẻ tiền và thẻ cọc của khách">
+                    <p className="mb-1 text-[13px] font-semibold text-nhan-dam">Khách có thẻ tiền / tiền cọc: bấm để trừ</p>
+                    <ul className="divide-y divide-vien">
+                      {theTien.map((x) => {
+                        const daCo = thu.some((y) => y.phuong_thuc === "the_tien" && y.the_id === x.id);
+                        return (
+                          <li key={x.id} className="flex items-center justify-between gap-2 py-1.5 text-[13px]">
+                            <span className="min-w-0 text-muc">{theKhach?.the.find((z) => z.id === x.id)?.ten ?? "Thẻ tiền"} <span className="text-muc-3">· {x.ma} · còn {tienVN(x.soDu)}</span></span>
+                            {daCo ? <span className="shrink-0 text-[12px] font-medium text-nhan-dam">Đã trừ thẻ</span>
+                              : <button type="button" className={`shrink-0 ${NUT_CHU}`} disabled={conNo <= 0} title={conNo <= 0 ? "Thêm dịch vụ vào đơn trước, rồi mới trừ thẻ" : undefined}
+                                  onClick={() => setThu((a) => [...a, { phuong_thuc: "the_tien", the_id: x.id, so_tien: Math.min(x.soDu, Math.max(conNo, 0)) }])}>Trừ thẻ</button>}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    {conNo <= 0 && !thu.some((y) => y.phuong_thuc === "the_tien") && <p className="mt-1 text-[12px] text-canh-bao">Thêm dịch vụ vào đơn trước, rồi mới trừ được thẻ.</p>}
+                  </div>
+                )}
                 {/* Như hộp "Thanh toán đơn hàng" của SalonHero: Tiền mặt, Quẹt thẻ, Chuyển khoản nhập sẵn cùng lúc (= "Nhiều hình thức"); khoản khác thêm ở nút bên dưới. */}
                 <ul className="divide-y divide-vien rounded-nho border border-vien">
                   {HINH_THUC_NHANH.map((pt) => {

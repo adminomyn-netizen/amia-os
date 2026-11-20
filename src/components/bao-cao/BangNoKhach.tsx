@@ -17,13 +17,15 @@ export type DongNoKhach = { id: string; ma: string; maSh: string | null; khachId
 /** Danh sách khách hàng còn nợ. Mặc định gom theo khách (dòng khách có tổng, bên dưới là từng hoá đơn kèm số lần thanh toán và ngày trả nợ cuối); `gom=false` thì mỗi hoá đơn một dòng.
  *  Có quyền thu nợ thì mỗi hoá đơn có ô chọn và nút "Trả nợ" (như SalonHero): thu nốt toàn bộ số còn nợ của các hoá đơn đã chọn,
  *  ghi vào sổ thu tiền qua đúng hàm thu nợ của màn hoá đơn. */
-export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh = false, taiKhoan = [] }: { dong: DongNoKhach[]; choPhepThu: boolean; homNay: string; gom?: boolean; coChiNhanh?: boolean;
-  /** Lựa chọn "Tài khoản nhận" cho chuyển khoản / quẹt thẻ (id tài khoản, "Khác"). */ taiKhoan?: { gia_tri: string; nhan: string }[] }) {
+export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh = false, taiKhoan = [], theTien = [] }: { dong: DongNoKhach[]; choPhepThu: boolean; homNay: string; gom?: boolean; coChiNhanh?: boolean;
+  /** Lựa chọn "Tài khoản nhận" cho chuyển khoản / quẹt thẻ (id tài khoản, "Khác"). */ taiKhoan?: { gia_tri: string; nhan: string }[];
+  /** Thẻ tiền / tiền cọc còn dùng được của khách (chỉ truyền trên hồ sơ một khách): hiện khối "Trừ vào thẻ" trong hộp Trả nợ. */ theTien?: { gia_tri: string; nhan: string; soDu: number }[] }) {
   const router = useRouter();
   const [chon, setChon] = useState<Set<string>>(new Set());
   const [mo, setMo] = useState(false);
   const [pt, setPt] = useState("tien_mat");
   const [vi, setVi] = useState("");
+  const [the, setThe] = useState("");
   const [tk, setTk] = useState(taiKhoan[0]?.gia_tri ?? "");
   const [ngay, setNgay] = useState(homNay);
   const [loi, setLoi] = useState("");
@@ -53,7 +55,7 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
     setLoi("");
     const fd = new FormData();
     for (const d of dsChon) fd.append("hoa_don_id", d.id);
-    fd.set("phuong_thuc", pt); fd.set("ngay", ngay); if (pt === "vi_dien_tu") fd.set("loai_vi", vi); if (pt === "chuyen_khoan" || pt === "quet_the") fd.set("tai_khoan_id", tk);
+    fd.set("phuong_thuc", pt); fd.set("ngay", ngay); if (pt === "vi_dien_tu") fd.set("loai_vi", vi); if (pt === "chuyen_khoan" || pt === "quet_the") fd.set("tai_khoan_id", tk); if (pt === "the_tien") fd.set("the_id", the);
     bat(async () => {
       const kq = await thuNoNhieuDon(fd);
       if (kq.loi) { setLoi(kq.loi); return; }
@@ -68,7 +70,7 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
       {choPhepThu && (
         <div className="mb-3 flex flex-wrap items-center gap-x-4 gap-y-2">
           <label className="flex min-h-10 items-center gap-2 text-[14px] text-muc-2"><input type="checkbox" checked={hetTrang} onChange={() => setChon(hetTrang ? new Set() : new Set(dong.slice(0, TOI_DA_DON_THU_NO).map((d) => d.id)))} className="h-4 w-4 accent-[var(--nhan)]" />{dong.length > TOI_DA_DON_THU_NO ? `Chọn ${TOI_DA_DON_THU_NO} hoá đơn đầu (tối đa mỗi lần)` : "Chọn tất cả"}</label>
-          <button type="button" className={NUT_CHINH} disabled={dsChon.length === 0} onClick={() => { setLoi(""); setThanhCong(""); setPt("tien_mat"); setNgay(homNay); setMo(true); }}>Trả nợ</button>
+          <button type="button" className={NUT_CHINH} disabled={dsChon.length === 0} onClick={() => { setLoi(""); setThanhCong(""); setPt("tien_mat"); setThe(""); setNgay(homNay); setMo(true); }}>Trả nợ</button>
           {dsChon.length > 0 && <span className="text-[13px] text-muc-3">Đã chọn {dsChon.length} hoá đơn · còn nợ {tienVN(tongChon)}</span>}
           {thanhCong && <span role="status" className="text-[13px] text-nhan-dam">{thanhCong}</span>}
         </div>
@@ -128,8 +130,27 @@ export function BangNoKhach({ dong, choPhepThu, homNay, gom = true, coChiNhanh =
       </div>
       <Hop mo={mo} dong={() => setMo(false)} tieuDe="Cảnh báo" moTa={`Bạn đã chọn ${dsChon.length} hoá đơn còn nợ. Bạn có chắc chắn muốn thanh toán toàn bộ số nợ còn lại của các hoá đơn đã được chọn không?`}>
         <p className="mb-4 text-[14px] text-muc-2">Tổng sẽ thu: <span className="font-medium text-muc tabular-nums">{tienVN(tongChon)}</span>. Mỗi hoá đơn được ghi một khoản thu vào sổ thu tiền, không sửa lại được.</p>
+        {theTien.length > 0 && (
+          <div className="mb-4 rounded-nho border border-vien p-3">
+            <p className="text-[13.5px] font-medium text-muc">Khách có thẻ tiền / tiền cọc: bấm để trừ nợ vào thẻ</p>
+            <ul className="mt-2 space-y-2">
+              {theTien.map((t) => {
+                const dangChon = pt === "the_tien" && the === t.gia_tri, du = t.soDu >= tongChon;
+                return (
+                  <li key={t.gia_tri} className="flex flex-wrap items-center justify-between gap-2 text-[13.5px]">
+                    <span className="min-w-0 text-muc-2 [overflow-wrap:anywhere]">{t.nhan} · còn <b className="tabular-nums text-muc">{tienVN(t.soDu)}</b>{!du && <span className="block text-[12.5px] text-canh-bao">Không đủ trả {tienVN(tongChon)}: chọn ít hoá đơn hơn</span>}</span>
+                    {dangChon
+                      ? <button type="button" className={NUT_PHU} onClick={() => { setPt("tien_mat"); setThe(""); }}>Bỏ trừ thẻ</button>
+                      : <button type="button" className={NUT_CHINH} disabled={!du} onClick={() => { setLoi(""); setPt("the_tien"); setThe(t.gia_tri); }}>Trừ thẻ này</button>}
+                  </li>
+                );
+              })}
+            </ul>
+            {pt === "the_tien" && <p role="status" className="mt-2 text-[13px] text-nhan-dam">Sẽ trừ {tienVN(tongChon)} vào thẻ đã chọn. Bấm "Có" ở dưới để xác nhận.</p>}
+          </div>
+        )}
         <div className="grid gap-x-4 gap-y-4 sm:grid-cols-2">
-          <div><label htmlFor="no-pt" className={NHAN_O}>Phương thức</label><Chon id="no-pt" luaChon={PHUONG_THUC_TIEN} giaTri={pt} onDoi={setPt} /></div>
+          <div><label htmlFor="no-pt" className={NHAN_O}>Phương thức</label><Chon id="no-pt" luaChon={PHUONG_THUC_TIEN} giaTri={pt === "the_tien" ? "" : pt} trong={pt === "the_tien" ? "Trừ vào thẻ (đã chọn ở trên)" : undefined} onDoi={(v) => { setPt(v); setThe(""); }} /></div>
           {pt === "vi_dien_tu" && <div><label htmlFor="no-vi" className={NHAN_O}>Loại ví</label><Chon id="no-vi" trong="Chọn ví" luaChon={LOAI_VI} giaTri={vi} onDoi={setVi} /></div>}
           {(pt === "chuyen_khoan" || pt === "quet_the") && <div className="sm:col-span-2"><label htmlFor="no-tk" className={NHAN_O}>Tài khoản nhận</label><Chon id="no-tk" trong="Chọn tài khoản" luaChon={taiKhoan} giaTri={tk} onDoi={setTk} /></div>}
           <div><label htmlFor="no-ngay" className={NHAN_O}>Ngày thu</label><NgayChon id="no-ngay" giaTri={ngay} onDoi={setNgay} /></div>

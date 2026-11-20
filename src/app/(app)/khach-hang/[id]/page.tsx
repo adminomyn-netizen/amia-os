@@ -82,7 +82,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     dsChiNhanhRutGon(),
     db.from("dich_vu").select("id, ma, ten").eq("hoat_dong", true).order("ma"),
     db.from("khach_quan_tam").select("dich_vu_id").eq("khach_id", id),
-    db.from("hoa_don").select("id, ma, sh_ma, ngay_hd, tong_phai_thu, da_thu, con_no, chi_nhanh_id").eq("khach_id", id).eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd"),
+    db.from("hoa_don").select("id, ma, sh_ma, ngay_hd, tong_phai_thu, da_thu, con_no, chi_nhanh_id, la_lich_su").eq("khach_id", id).eq("trang_thai", "hoan_thanh").gt("con_no", 0).order("ngay_hd"),
     db.from("v_the_khach").select("*").eq("khach_id", id).order("ngay_cap", { ascending: false }),
     k.nguoi_gioi_thieu_id ? db.from("khach_hang").select("ma, ho_ten").eq("id", k.nguoi_gioi_thieu_id).maybeSingle() : Promise.resolve({ data: null }),
     xemAnh ? demAnhKhach(id) : Promise.resolve(0),
@@ -528,6 +528,11 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const thuNoDuoc = coQuyen(nd, "no.thu") && tongNo > 0;
   const { data: dsTkNo } = thuNoDuoc ? await db.from("tai_khoan_ngan_hang").select("id, ngan_hang, chu_tai_khoan, so_tai_khoan, chi_nhanh_id, dung_chuyen_khoan, dung_quet_the, mac_dinh").eq("hoat_dong", true).order("tao_luc") : { data: [] };
   const tenCnNo = new Map(((cn ?? []) as { id: string; ten: string }[]).map((c) => [c.id, c.ten]));
+  // Thẻ tiền / tiền cọc còn dùng được: cho Trả nợ trừ thẳng vào thẻ (CN Vinh 20/11/2026). Đơn lịch sử SalonHero không trừ thẻ được nên bỏ qua.
+  const { data: theTienNo } = thuNoDuoc && (no ?? []).some((h) => !h.la_lich_su) ? await db.from("v_the_khach").select("id, ma, so_du_tien, goi_id").eq("khach_id", id).eq("loai", "tien").in("tinh_trang", ["hoat_dong", "sap_het"]).gt("so_du_tien", 0) : { data: [] };
+  const { data: goiTienNo } = (theTienNo ?? []).length ? await db.from("goi_the").select("id, ten").in("id", [...new Set((theTienNo ?? []).map((t) => t.goi_id as string))]) : { data: [] };
+  const tenGoiTienNo = new Map((goiTienNo ?? []).map((g) => [g.id as string, g.ten as string]));
+  const luaChonTheNo = (theTienNo ?? []).map((t) => ({ gia_tri: t.id as string, nhan: `${tenGoiTienNo.get(t.goi_id as string) ?? "Thẻ tiền"} · ${t.ma}`, soDu: Number(t.so_du_tien) }));
   const dongNo = (no ?? []).map((h) => ({ id: h.id, ma: h.ma, maSh: h.sh_ma, khachId: id, khach: k.ho_ten ?? "", dienThoai: "", chiNhanh: tenCnNo.get(h.chi_nhanh_id) ?? "", ngay: h.ngay_hd,
     tong: Number(h.tong_phai_thu), daThu: Number(h.da_thu), conNo: Number(h.con_no), soLan: 1, ngayCuoi: h.ngay_hd }));
   const chiSo: [string, string][] = [
@@ -607,7 +612,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
         <section id="con-no" aria-label="Hoá đơn còn nợ" className="the-noi the-noi-thap mt-4 scroll-mt-20 px-4 pb-3 pt-4">
           <h2 className="text-[14px] font-semibold text-muc">Hoá đơn còn nợ · <span className="tabular-nums text-canh-bao">{tienVN(tongNo)}</span></h2>
           <p className="mb-2 mt-1 text-[12.5px] text-muc-3">{thuNoDuoc ? "Tích hoá đơn rồi bấm Trả nợ: chọn ngày thu và hình thức (tiền mặt, chuyển khoản...), thu hết số còn nợ của hoá đơn đã chọn. Thu một phần: bấm mã hoá đơn, dùng nút Thu nợ trong hoá đơn." : "Bạn chưa có quyền thu nợ."}</p>
-          <BangNoKhach choPhepThu={thuNoDuoc} homNay={homNayHCM()} gom={false} dong={dongNo} taiKhoan={luaChonTaiKhoanForm(dsTkNo ?? [], nd.chiNhanhId ?? k.chi_nhanh_id ?? null)} />
+          <BangNoKhach choPhepThu={thuNoDuoc} homNay={homNayHCM()} gom={false} dong={dongNo} taiKhoan={luaChonTaiKhoanForm(dsTkNo ?? [], nd.chiNhanhId ?? k.chi_nhanh_id ?? null)} theTien={luaChonTheNo} />
         </section>
       )}
       <section aria-label="Lịch hẹn sắp tới" className="the-noi the-noi-thap mt-4 px-4 pb-3 pt-4">

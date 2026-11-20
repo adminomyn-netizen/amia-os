@@ -57,19 +57,30 @@ export async function thuNoNhieuDon(fd: FormData): Promise<KQ & { soDon?: number
   const nd = await kiemQuyen("no.thu");
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const pt = chuoi(fd, "phuong_thuc"), ngay = chuoi(fd, "ngay") || homNayHCM();
-  if (!PT_THU_NO.includes(pt)) return { loi: "Chọn phương thức thu." };
+  if (!PT_THU_NO.includes(pt) && pt !== "the_tien") return { loi: "Chọn phương thức thu." };
+  const theId = pt === "the_tien" ? chuoi(fd, "the_id") : "";
+  if (pt === "the_tien" && !/^[0-9a-f-]{36}$/i.test(theId)) return { loi: "Chọn thẻ tiền / tiền cọc để trừ." };
   const loaiVi = loaiViKhoanThu(pt, chuoi(fd, "loai_vi"));
   if (loaiVi === undefined) return { loi: "Thu bằng ví điện tử phải chọn loại ví." };
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || ngay > homNayHCM()) return { loi: "Ngày thu không hợp lệ (không được ở tương lai)." };
   const ids = fd.getAll("hoa_don_id").map(String);
   const db = sb();
-  const { data: hds, error: loiDoc } = await db.from("hoa_don").select("id, ma, trang_thai, con_no, chi_nhanh_id").in("id", ids.slice(0, 200));
+  const { data: hds, error: loiDoc } = await db.from("hoa_don").select("id, ma, trang_thai, con_no, chi_nhanh_id, khach_id, la_lich_su").in("id", ids.slice(0, 200));
   if (loiDoc) return { loi: thongBaoLoi(loiDoc) };
   const phieu = lapPhieuThuNo(ids, hds ?? [], nd.chiNhanhId);
   if (phieu.loi !== undefined) return { loi: phieu.loi };
   const tk = await taiKhoanThuNo(fd, pt, [...new Set((hds ?? []).filter((x) => phieu.dong.some((d) => d.hoa_don_id === x.id)).map((x) => x.chi_nhanh_id))]);
   if ("loi" in tk) return { loi: tk.loi };
-  const { error } = await db.from("thanh_toan").insert(phieu.dong.map((d) => ({ hoa_don_id: d.hoa_don_id, loai: "thu", phuong_thuc: pt, loai_vi: loaiVi, so_tien: d.so_tien, ngan_hang: tk.nganHang, tai_khoan_id: tk.tkId, nguoi_id: nd.nhanVienId, ghi_chu: chuoi(fd, "ghi_chu") || "Thu nợ", ngay })));
+  if (pt === "the_tien") {
+    // Trừ thẻ: các hoá đơn phải cùng một khách với thẻ, không phải đơn lịch sử SalonHero, và số dư thẻ phải đủ cho cả phiếu (không trừ dở dang).
+    const chon = (hds ?? []).filter((x) => phieu.dong.some((d) => d.hoa_don_id === x.id));
+    if (chon.some((x) => x.la_lich_su)) return { loi: "Có đơn chuyển từ SalonHero, không trừ thẻ ở đây được. Bỏ đơn đó ra rồi thu lại." };
+    const { data: the } = await db.from("v_the_khach").select("id, khach_id, loai, tinh_trang, so_du_tien").eq("id", theId).maybeSingle();
+    if (!the || the.loai !== "tien" || !["hoat_dong", "sap_het"].includes(the.tinh_trang ?? "")) return { loi: "Thẻ này không dùng để trừ được (hết hạn, đã hết tiền hoặc không phải thẻ tiền / cọc)." };
+    if (chon.some((x) => x.khach_id !== the.khach_id)) return { loi: "Thẻ không phải của khách có hoá đơn này." };
+    if (Number(the.so_du_tien) < phieu.tong) return { loi: `Thẻ còn ${Number(the.so_du_tien).toLocaleString("vi-VN")}đ, không đủ trả ${phieu.tong.toLocaleString("vi-VN")}đ. Chọn ít hoá đơn hơn, hoặc vào từng hoá đơn bấm Thu nợ để trừ một phần.` };
+  }
+  const { error } = await db.from("thanh_toan").insert(phieu.dong.map((d) => ({ hoa_don_id: d.hoa_don_id, loai: "thu", phuong_thuc: pt, the_id: theId || null, loai_vi: loaiVi, so_tien: d.so_tien, ngan_hang: tk.nganHang, tai_khoan_id: tk.tkId, nguoi_id: nd.nhanVienId, ghi_chu: chuoi(fd, "ghi_chu") || (pt === "the_tien" ? "Thu nợ bằng thẻ tiền" : "Thu nợ"), ngay })));
   if (error) return { loi: thongBaoLoi(error) };
   await db.from("nhat_ky_truy_cap").insert({ nguoi_id: nd.nhanVienId, hanh_dong: "thu_no_nhieu_don", doi_tuong: "hoa_don", chi_tiet: { so_don: phieu.dong.length, tong: phieu.tong, phuong_thuc: pt, ngay, ma: phieu.dong.map((d) => d.ma) } });
   revalidatePath("/bao-cao");

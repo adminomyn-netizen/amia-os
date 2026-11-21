@@ -33,7 +33,7 @@ export type MucBan = { loai: "dich_vu" | "goi_the" | "san_pham"; id: string; ten
   /** "Nơi hiển thị" = chỉ đặt lịch / ẩn: không hiện ở ô chọn mục của Thu ngân (dòng cũ vẫn dùng được). */ anThuNgan?: boolean;
   /** "Địa điểm cung cấp" của dịch vụ: null/không có = mọi chi nhánh. */ chiNhanhIds?: string[] | null;
   /** "Sửa giá khi thanh toán": thu ngân được sửa đơn giá dòng (chỉ dịch vụ, sản phẩm). */ choSuaGia?: boolean;
-  /** Gói thẻ: các dịch vụ của gói (goi_the_dich_vu) để lọc hai chiều thẻ ↔ dịch vụ ở thu ngân. */ dichVu?: string[]; /** Thẻ liệu trình: số buổi MỖI thẻ (mỗi đơn vị số lượng cấp 1 thẻ). Thu ngân thấy "SL × buổi = tổng buổi" để khỏi nhập số buổi vào ô số lượng (HD000034, 21/11/2026). */ soBuoi?: number };
+  /** Gói thẻ: các dịch vụ của gói (goi_the_dich_vu) để lọc hai chiều thẻ ↔ dịch vụ ở thu ngân. */ dichVu?: string[]; /** Thẻ liệu trình: số buổi MỖI thẻ (mỗi đơn vị số lượng cấp 1 thẻ). Thu ngân thấy "SL × buổi = tổng buổi" để khỏi nhập số buổi vào ô số lượng (HD000034, 21/11/2026). */ banTheoBuoi?: boolean; soBuoi?: number };
 /** Cột noi_hien_thi (migration 0194): 'tat_ca' | 'thu_ngan' | 'dat_lich' | 'an'. Giá trị lạ coi như 'tat_ca' (giữ hành vi cũ). */
 export const hienThuNgan = (noi: string | null | undefined) => noi !== "dat_lich" && noi !== "an";
 export const hienDatLich = (noi: string | null | undefined) => noi !== "thu_ngan" && noi !== "an";

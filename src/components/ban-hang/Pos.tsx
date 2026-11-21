@@ -905,6 +905,7 @@ function DonPos({ suaHd, nguonGt = [], buoi, truBuoiTrucTiep, muc, nhanVien, kha
                       <span className="min-w-[32px] text-center text-[16px] font-medium tabular-nums lg:min-w-[28px] lg:text-[14px] lg:font-normal">{d.sl}</span>
                       <button type="button" aria-label="Tăng số lượng" onClick={() => capNhat(i, { sl: d.sl + 1 })} className="flex h-11 w-11 items-center justify-center text-muc-2 lg:block lg:h-auto lg:w-auto lg:p-2"><Plus strokeWidth={1.8} className="h-4 w-4 lg:h-3.5 lg:w-3.5" /></button>
                     </span>
+                    {d.loai === "goi_the" && !!m.banTheoBuoi && <span className="text-[13px] text-muc-2">Số lượng = số buổi → <b>1 thẻ {d.sl} buổi</b></span>}
                     {d.loai === "goi_the" && !!m.soBuoi && m.soBuoi > 1 && <span className="text-[13px] text-muc-2">× {m.soBuoi} buổi/thẻ = <b>{d.sl * m.soBuoi} buổi</b> ({d.sl} thẻ)</span>}
                     {m.choSuaGia && LOAI_SUA_GIA.includes(d.loai) && <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Đơn giá <OTien className="w-[120px]" giaTri={giaDong(d, m)} onDoi={(n) => { const g = Math.min(n, GIA_SUA_TOI_DA); capNhat(i, { gia: g === m.gia ? undefined : g, giam: Math.min(d.giam, g * d.sl) }); }} ariaLabel="Sửa đơn giá dòng" /></span>}
                     {choGiam && <span className="flex items-center gap-1.5 text-[13px] text-muc-3">Giảm <OTien className="w-[120px]" giaTri={d.giam} onDoi={(n) => capNhat(i, { giam: Math.min(n, giaDong(d, m) * d.sl), pct: undefined })} ariaLabel="Giảm giá dòng" /></span>}

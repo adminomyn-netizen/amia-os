@@ -4545,6 +4545,7 @@ export type Database = {
           ma: string
           sh_id: number | null
           so_buoi: number | null
+          ban_theo_buoi: boolean
           tao_luc: string
           ten: string
         }
@@ -4575,6 +4576,7 @@ export type Database = {
           ma: string
           sh_id?: number | null
           so_buoi?: number | null
+          ban_theo_buoi?: boolean
           tao_luc?: string
           ten: string
         }
@@ -4605,6 +4607,7 @@ export type Database = {
           ma?: string
           sh_id?: number | null
           so_buoi?: number | null
+          ban_theo_buoi?: boolean
           tao_luc?: string
           ten?: string
         }

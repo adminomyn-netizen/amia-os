@@ -348,7 +348,15 @@ export async function batDauLam(fd: FormData): Promise<KQ> {
 }
 
 /** Chuyên viên bấm Đã làm xong (CHỈ chuyên viên trị liệu, Chủ/Kỹ thuật gỡ kẹt — duocKetThucBuoi): lúc này mới trừ 1 buổi + ghi doanh thu buổi (thuc_hien_buoi) + người làm/tư vấn, rồi ra phiếu vật tư theo định mức. */
+/** Bọc lại: lỗi bất ngờ trả về thông báo trong hộp, không ném lên trình duyệt (ném thì cả trang nhảy ra màn hình lỗi, chị Thuý 21/11/2026). */
 export async function xongBuoiCho(fd: FormData): Promise<KQXong> {
+  try { return await xongBuoiChoLoi(fd); }
+  catch (e) {
+    console.error("xongBuoiCho:", e);
+    return { loi: "Máy chủ báo lỗi khi Kết thúc. Tải lại trang xem lượt đã sang \"Đã xử lý hôm nay\" chưa; chưa thì bấm Kết thúc lại một lần. Vẫn lỗi thì chụp màn hình gửi anh Nam." };
+  }
+}
+async function xongBuoiChoLoi(fd: FormData): Promise<KQXong> {
   const nd = await nguoiThaoTac();
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const l = await docLuot(nd, chuoi(fd, "id"));

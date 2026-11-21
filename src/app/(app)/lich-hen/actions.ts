@@ -79,8 +79,7 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
   const cacNgay = laKieuLap(kieuLap) ? ngayLap(ngay, kieuLap, khoang, tong) : [ngay];
   const buoi = cacNgay.map((n) => { const bd = new Date(`${n}T${gio}:00${MUI}`); return { bd, kt: new Date(bd.getTime() + phut * 60000) }; });
   const nv = chuoiHoacNull(fd, "nhan_vien_id");
-  // Chị Lâm 17/11/2026: lịch phải có chuyên viên (Người thực hiện) để hiện đúng hàng ở lịch theo nhân viên và gửi thông báo cho chuyên viên. Lịch đã khoá giờ (xong/huỷ) sửa ghi chú thì không bắt.
-  if (!nv && !(cu && khoa.gio)) return { loi: "Chọn chuyên viên trị liệu ở ô Người thực hiện." };
+  // Chị Thuý 21/11/2026: không bắt buộc chọn chuyên viên (chưa biết ai làm vẫn lưu được; khi thu ngân gửi lượt thì tự gắn chuyên viên vào lịch, 0338).
   // Một lịch nhiều khách (như SalonHero): Khách 2, 3… đi cùng khách chính, cùng giờ bắt đầu; mỗi khách có dịch vụ, người thực hiện, chỗ riêng.
   const diCungDoc = khoa.diCung ? [] : docKhachDiCung(chuoi(fd, "khach_di_cung"));
   if (typeof diCungDoc === "string") return { loi: diCungDoc };

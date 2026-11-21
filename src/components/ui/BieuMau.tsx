@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { unstable_rethrow, useRouter } from "next/navigation";
 import { Hop } from "./Hop";
 import { Chon, type LuaChon } from "./Chon";
 import { NgayChon } from "./NgayChon";
@@ -159,7 +159,10 @@ export function NutHop({
     }
     setDangNut(nut);
     bat(async () => {
-      const kq = await hanhDong(fd);
+      // Hành động máy chủ ném lỗi (mạng yếu, lỗi bất ngờ) mà không bắt thì React đẩy cả trang ra màn hình lỗi ("tự nhảy ra", chị Thuý 21/11/2026: bấm Kết thúc bị nhảy ra). Bắt lại để hộp vẫn mở và báo lỗi ngay trong hộp.
+      let kq: KetQuaHD | void;
+      try { kq = await hanhDong(fd); }
+      catch (e) { unstable_rethrow(e); setLoi("Chưa lưu được vì máy chủ báo lỗi hoặc mạng yếu. Tải lại trang rồi bấm lại một lần; vẫn lỗi thì chụp màn hình gửi anh Nam."); return; }
       if (kq && kq.loi) setLoi(kq.loi);
       else {
         if (kq && typeof kq.canhBao === "string") window.alert(kq.canhBao);

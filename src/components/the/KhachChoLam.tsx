@@ -80,7 +80,7 @@ function TheKhach({ r, nhanVien, bacSi, thaoTac, ketThuc, coLienKetThe, qt, hien
             an={{ id: r.id }} truong={truongBuoi({ nhanVien, bacSi })}
             giaTri={{ nv_ids: r.nvIds, bac_si_id: r.bacSiId ?? "", tu_van_ids: r.tuVanIds, tu_van_tinh_trang: r.tuVanTinhTrang ?? "", tu_van_de_xuat: r.tuVanDeXuat ?? "", vung: r.vung, shot: r.shot, line: r.line,
               ghi_chu: r.ghiChu ?? "", ke_tiep_ngay: r.keTiepNgay ?? "", ke_tiep_noi_dung: r.keTiepNoiDung ?? "" }}
-            action={async (fd) => { const k = await xongBuoiCho(fd); if (k.ok) { setKq(k); await onDoi?.(); } return k; }} />
+            action={async (fd) => { const k = await xongBuoiCho(fd); if (k.ok) { setKq(k); try { await onDoi?.(); } catch { /* buổi đã trừ xong; chỉ tải lại danh sách lỗi thì router.refresh lo */ } } return k; }} />
             : <span className="text-[13px] text-muc-3">Chuyên viên trị liệu bấm Kết thúc khi trả khách.</span>}
           {dvCuaThe && (() => { const dv = r.theId ? dvCuaThe(r.theId) : []; const ds = dv.some((d) => d.gia_tri === r.dichVuId) ? dv : [{ gia_tri: r.dichVuId, nhan: r.dichVuTen }, ...dv]; return (
             <NutHop kieu="chu" nhan="Sửa dịch vụ / chuyên viên" tieuDe={`Sửa · ${r.dichVuTen}`} rong nhanLuu="Lưu"

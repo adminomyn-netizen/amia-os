@@ -125,8 +125,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
   const gui = () => {
     setLoi("");
     if (!sua && !loaiLich) { setLoi("Chọn loại lịch: tư vấn khách mới, khách liệu trình, dịch vụ lẻ, tái khám hay bảo hành."); return; }
-    // Chị Lâm 17/11/2026: đặt lịch phải chọn chuyên viên, không để "Chưa phân" (lịch theo nhân viên toàn nằm ở "Chưa chọn nhân viên", chuyên viên không nhận thông báo).
-    if (!nv && !khoa?.gio) { setLoi("Chọn chuyên viên trị liệu ở ô Người thực hiện."); return; }
+    // Chị Thuý 21/11/2026: chuyên viên không bắt buộc, chưa chọn vẫn lưu được.
     const fd = new FormData();
     if (sua) fd.set("id", sua.id);
     fd.set("khach_id", khach?.id ?? ""); fd.set("ngay", ngay); fd.set("gio", gio); fd.set("thoi_luong", phut); fd.set("nhan_vien_id", nv); fd.set("chi_nhanh_id", cn);
@@ -211,7 +210,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
               : <>{sua?.dichVuTen && dvs.length === 0 && <p className="mb-1.5 text-[12px] text-muc-3">Lịch chuyển từ SalonHero ghi: {sua.dichVuTen}</p>}<ChonNhieuDichVu ds={dsDv} tatCa={dichVu} chon={dvs} onDoi={doiDvs} /></>}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
-            <div><label className={NHAN_O}>Người thực hiện <span className="text-loi">*</span></label><Chon trong="Chọn chuyên viên" ariaLabel="Người thực hiện" giaTri={nv} onDoi={setNv} luaChon={[{ gia_tri: "", nhan: "Chọn chuyên viên" }, ...nhanVien]} /></div>
+            <div><label className={NHAN_O}>Người thực hiện</label><Chon trong="Chọn chuyên viên" ariaLabel="Người thực hiện" giaTri={nv} onDoi={setNv} luaChon={[{ gia_tri: "", nhan: "Chọn chuyên viên" }, ...nhanVien]} /></div>
             <div><label className={NHAN_O}>Chi nhánh</label>{khoa?.khach ? <p className="rounded-nho border border-vien bg-giay-tram px-3 py-2 text-[14px] text-muc">{chiNhanh.find((c) => c.gia_tri === cn)?.nhan ?? "—"}</p> : <Chon ariaLabel="Chi nhánh" giaTri={cn} onDoi={setCn} luaChon={chiNhanh} />}</div>
             {choCuaCn.length > 0
               ? <div><label className={NHAN_O}>Phòng / giường</label><Chon trong="Chưa xếp chỗ" ariaLabel="Phòng / giường" giaTri={phong} onDoi={setPhong} luaChon={[{ gia_tri: "", nhan: "Chưa xếp chỗ" }, ...(phong && !choCuaCn.includes(phong) ? [phong] : []).concat(choCuaCn).map((t) => ({ gia_tri: t, nhan: t }))]} /></div>

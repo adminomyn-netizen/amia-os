@@ -39,7 +39,7 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     coQuyen(nd, "phieu.nhan") ? loc(db.from("phieu_cap").select("id", { count: "exact", head: true }).eq("trang_thai", "cho_cap").not("buoi_id", "is", null).is("xac_nhan_luc", null)) : null,
     // Khách thu ngân vừa chuyển cho chính người này (0321), chưa bắt đầu làm.
     // Khách thu ngân chuyển cho CHÍNH mình: không cần quyền xem thẻ (chị Diệu Thuý 17/11/2026: tài khoản chuyên viên trị liệu không có "the.xem" nên chuông không hiện mục này).
-    nd.nhanVienId ? db.from("buoi_cho_lam").select("khach_id, chuyen_luc", { count: "exact" }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "cho_lam").order("chuyen_luc", { ascending: false }).limit(1) : null,
+    nd.nhanVienId ? db.from("buoi_cho_lam").select("khach_id, chuyen_luc", { count: "exact" }).contains("nv_ids", [nd.nhanVienId]).or(`trang_thai.eq.cho_lam,and(trang_thai.eq.dang_lam,bat_dau_luc.gte.${new Date(Date.now() - 2 * 3600e3).toISOString()},chuyen_luc.gte.2026-11-16T17:00:00Z)`).order("chuyen_luc", { ascending: false }).limit(1) : null, // gồm cả lượt thu ngân đã bấm Bắt đầu hộ (đang làm dưới 2 giờ; quá 2 giờ thì chuông buoidl nhắc bấm xong) — Bích 21/11/2026 không thấy đơn vì lượt vào luôn trạng thái đang làm
     // Đã bấm Bắt đầu làm quá 2 tiếng mà chưa bấm "Đã làm xong" → thẻ khách CHƯA trừ buổi (17/11/2026: 48 lượt 15–16/11 kẹt ở đây).
     nd.nhanVienId ? db.from("buoi_cho_lam").select("id", { count: "exact", head: true }).contains("nv_ids", [nd.nhanVienId]).eq("trang_thai", "dang_lam").lt("bat_dau_luc", new Date(Date.now() - 2 * 3600e3).toISOString()).gte("chuyen_luc", "2026-11-16T17:00:00Z") : null, // lượt trước 17/11 thu ngân đã trừ trên SalonHero → không nhắc bấm xong (trừ đôi)
     // Quản lý (chị Diệu Thuý 17/11/2026: "lỡ làm mà không tích thì sao"): lượt hôm nay chuyên viên bấm Kết thúc khi chưa tích đủ bước quy trình/vật tư (0339).
@@ -71,7 +71,7 @@ async function layCanhBaoGoc(nd: CoQuyen & { chiNhanhId: string | null; nhanVien
     const moi = (buoiCho!.data ?? [])[0] as { khach_id: string; chuyen_luc: string } | undefined;
     const { data: kh } = moi ? await db.from("khach_hang").select("ho_ten").eq("id", moi.khach_id).maybeSingle() : { data: null };
     const luc = moi ? new Date(moi.chuyen_luc).toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour: "2-digit", minute: "2-digit" }) : "";
-    ra.push({ ma: "buoicho", nhan: `${buoiCho!.count} khách thu ngân chuyển cho bạn đang chờ làm${moi ? ` (mới nhất: ${kh?.ho_ten ?? "khách"} · ${luc})` : ""}`, href: "/the/cho-lam?tab=toi" });
+    ra.push({ ma: "buoicho", nhan: `${buoiCho!.count} khách thu ngân chuyển cho bạn (chờ làm hoặc đang làm)${moi ? ` (mới nhất: ${kh?.ho_ten ?? "khách"} · ${luc})` : ""}`, href: "/the/cho-lam?tab=toi" });
   }
   if ((buoiDl?.count ?? 0) > 0) ra.push({ ma: "buoidl", nhan: `${buoiDl!.count} khách bạn đã bắt đầu làm nhưng chưa bấm "Đã làm xong" (thẻ chưa trừ buổi)`, href: "/the/cho-lam?tab=toi" });
   const soThieu = ((buoiThieu?.data ?? []) as { buoc_xong: number | null; buoc_tong: number | null }[]).filter((r) => (r.buoc_xong ?? 0) < (r.buoc_tong ?? 0)).length;

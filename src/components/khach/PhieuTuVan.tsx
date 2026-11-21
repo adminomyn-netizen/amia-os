@@ -20,7 +20,7 @@ export function DanhSachPhieuTuVan({ phieu, nhuCau, tenNv, tenDv, khach, truong,
     <ol className="space-y-4">
       {phieu.map((p) => {
         const kq = KET_QUA_TV[p.ket_qua] ?? KET_QUA_TV.cho_chot;
-        const buoc = ([["1. Đặt vấn đề", p.dat_van_de], ["2. Phân tích", p.phan_tich], ["3. Chứng minh", p.chung_minh]] as const).filter(([, v]) => v);
+        const buoc = ([["1. Thông tin", p.dat_van_de], ["2. Phân tích", p.phan_tich], ["3. Giải pháp", p.chung_minh]] as const).filter(([, v]) => v);
         const nc = nhuCau.get(p.id) ?? [];
         const k = khach?.get(p.khach_id);
         return (

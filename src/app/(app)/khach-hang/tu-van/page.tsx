@@ -35,7 +35,7 @@ export default async function SoTuVan({ searchParams }: { searchParams: Promise<
     className={`shrink-0 rounded-nho px-3 py-1.5 text-[13px] ${kq === k ? "bg-nhan text-white" : "border border-vien-dam text-muc-2 hover:bg-giay-tram"}`}>{t}</Link>;
   return (
     <div className="space-y-4">
-      <TieuDeNoi gon tieuDe="Tư vấn khách hàng" icon={MessagesSquare} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Mỗi lần tư vấn là một phiếu: đặt vấn đề → phân tích → chứng minh → kết quả. Phiếu chỉ sửa, không xoá; mọi sửa đều có nhật ký.</>}>
+      <TieuDeNoi gon tieuDe="Tư vấn khách hàng" icon={MessagesSquare} quayLai={{ href: "/khach-hang", nhan: "Danh sách khách" }} quayLaiDienThoai phu={<>Mỗi lần tư vấn là một phiếu: thông tin → phân tích → giải pháp → kết quả. Phiếu chỉ sửa, không xoá; mọi sửa đều có nhật ký.</>}>
         {sua && <NutHop nhan="Ghi phiếu tư vấn" tieuDe="Ghi phiếu tư vấn" rong action={luuPhieuTuVan} truong={truongPhieuTuVan(nvLc, dvLc, true)}
           giaTri={{ tu_van_vien_id: nd.nhanVienId, ngay_tu_van: homNayHCM(), ket_qua: "cho_chot" }} />}
       </TieuDeNoi>

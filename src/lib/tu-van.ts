@@ -1,4 +1,4 @@
-// Phiếu tư vấn theo phễu (migration 0105): đặt vấn đề → phân tích → chứng minh → kết quả. Tự thiết kế theo mục "tư vấn" của VTTech (chưa đối chiếu giao diện gốc).
+// Phiếu tư vấn theo phễu (migration 0105): thông tin → phân tích → giải pháp → kết quả. Tự thiết kế theo mục "tư vấn" của VTTech (chưa đối chiếu giao diện gốc).
 import type { Truong } from "@/components/ui/BieuMau";
 import type { sb } from "@/lib/db";
 
@@ -17,9 +17,9 @@ export const truongPhieuTuVan = (nhanVien: LC[], dichVu: LC[], coDienThoai: bool
   { ten: "ngay_tu_van", nhan: "Ngày tư vấn", loai: "ngay", batBuoc: true },
   { ten: "dich_vu_id", nhan: "Dịch vụ quan tâm", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Chưa rõ / không có" }, ...dichVu] },
   { ten: "goi_quan_tam", nhan: "Gói / liệu trình quan tâm", loai: "chu", goiY: "Ví dụ: liệu trình 6 buổi" },
-  { ten: "dat_van_de", nhan: "1. Đặt vấn đề", loai: "nhieu_dong", rong: true, goiY: "Khách đang lo gì, muốn gì (ghi ngắn)." },
+  { ten: "dat_van_de", nhan: "1. Thông tin", loai: "nhieu_dong", rong: true, goiY: "Thông tin khách: đang lo gì, muốn gì, tình trạng da (ghi ngắn)." },
   { ten: "phan_tich", nhan: "2. Phân tích", loai: "nhieu_dong", rong: true, goiY: "Nguyên nhân, tình trạng, hướng giải quyết." },
-  { ten: "chung_minh", nhan: "3. Chứng minh", loai: "nhieu_dong", rong: true, goiY: "Ca tương tự, hình ảnh trước/sau, cam kết đã đưa khách xem." },
+  { ten: "chung_minh", nhan: "3. Giải pháp", loai: "nhieu_dong", rong: true, goiY: "Giải pháp đề xuất cho khách: dịch vụ, liệu trình, ca tương tự, hình ảnh trước/sau." },
   { ten: "ket_qua", nhan: "4. Kết quả", loai: "chon", batBuoc: true, luaChon: LUA_CHON_KQ },
   { ten: "bao_gia", nhan: "Báo giá dự kiến", loai: "tien" },
   { ten: "ngay_hen_lai", nhan: "Ngày hẹn quay lại", loai: "ngay" },

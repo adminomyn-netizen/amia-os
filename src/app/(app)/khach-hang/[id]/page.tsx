@@ -314,7 +314,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     noiDung = (
       <>
         <h3 className="mb-3 text-[14px] font-medium text-muc">Phiếu tư vấn</h3>
-        {sua0 && <div className="mb-5"><NutHop nhan="Ghi phiếu tư vấn" tieuDe={`Phiếu tư vấn: ${k.ho_ten}`} moTa="Đặt vấn đề → phân tích → chứng minh → kết quả. Phiếu sửa được (có nhật ký), không xoá." rong truong={trTv} an={{ khach_id: id }}
+        {sua0 && <div className="mb-5"><NutHop nhan="Ghi phiếu tư vấn" tieuDe={`Phiếu tư vấn: ${k.ho_ten}`} moTa="Thông tin → phân tích → giải pháp → kết quả. Phiếu sửa được (có nhật ký), không xoá." rong truong={trTv} an={{ khach_id: id }}
           giaTri={{ tu_van_vien_id: nd.nhanVienId, ngay_tu_van: homNayHCM(), ket_qua: "cho_chot" }} action={luuPhieuTuVan} /></div>}
         <DanhSachPhieuTuVan phieu={pv ?? []} nhuCau={gomNhuCau(ncTv ?? [])} tenNv={tenNv} tenDv={new Map((dvTv ?? []).map((d) => [d.id, d.ten]))} truong={trTv} duocSua={sua0} luu={luuPhieuTuVan} />
       </>

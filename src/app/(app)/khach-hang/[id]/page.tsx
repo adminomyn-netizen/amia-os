@@ -535,9 +535,9 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const luaChonTheNo = (theTienNo ?? []).map((t) => ({ gia_tri: t.id as string, nhan: `${tenGoiTienNo.get(t.goi_id as string) ?? "Thẻ tiền"} · ${t.ma}`, soDu: Number(t.so_du_tien) }));
   const dongNo = (no ?? []).map((h) => ({ id: h.id, ma: h.ma, maSh: h.sh_ma, khachId: id, khach: k.ho_ten ?? "", dienThoai: "", chiNhanh: tenCnNo.get(h.chi_nhanh_id) ?? "", ngay: h.ngay_hd,
     tong: Number(h.tong_phai_thu), daThu: Number(h.da_thu), conNo: Number(h.con_no), soLan: 1, ngayCuoi: h.ngay_hd }));
-  // Doanh thu cơ hội = tổng "Báo giá dự kiến" của các phiếu tư vấn còn "Chờ chốt" (chị Lâm 21/11/2026). Chốt hoặc không chốt thì hết là cơ hội.
-  const { data: tvCho } = await db.from("phieu_tu_van").select("bao_gia").eq("khach_id", id).eq("ket_qua", "cho_chot");
-  const doanhThuCoHoi = (tvCho ?? []).reduce((t, r) => t + Number(r.bao_gia ?? 0), 0);
+  // Doanh thu cơ hội = "Báo giá dự kiến" của phiếu tư vấn "Chờ chốt" MỚI NHẤT của khách, không cộng dồn (chị Thuý/Hero 21/11/2026: 2 phiếu cùng 1 lần tư vấn bị cộng đôi). Chốt hoặc không chốt thì hết là cơ hội.
+  const { data: tvCho } = await db.from("phieu_tu_van").select("bao_gia").eq("khach_id", id).eq("ket_qua", "cho_chot").order("ngay_tu_van", { ascending: false }).order("tao_luc", { ascending: false }).limit(1);
+  const doanhThuCoHoi = Number(tvCho?.[0]?.bao_gia ?? 0);
   const chiSo: [string, string][] = [
     ["Tổng chi", tienVN(tongChi)], ["Chi 12 tháng gần nhất", tienVN(chi12)], ["Doanh thu cơ hội", tienVN(doanhThuCoHoi)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
   ];

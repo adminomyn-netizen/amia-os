@@ -55,7 +55,7 @@ export async function dungToInHoaDon(db: Db, hds: Tables<"hoa_don">[], nnEp?: Ng
   // Thẻ cấp từ dòng của đơn: đọc theo lô 300 dòng (in nhiều đơn một lần).
   const theTheoDong: NonNullable<typeof theTheoId> = [];
   for (let i = 0; i < idsDong.length; i += 300) {
-    const { data } = await db.from("v_the_khach").select(THE_COT).in("hoa_don_dong_id", idsDong.slice(i, i + 300));
+    const { data } = await db.from("v_the_khach").select(THE_COT).in("hoa_don_dong_id", idsDong.slice(i, i + 300)).neq("tinh_trang", "thu_hoi"); // thẻ thu hồi (cấp dư) không in lên hoá đơn
     theTheoDong.push(...(data ?? []));
   }
   const tatCaThe = [...(theTheoId ?? []), ...(theTheoSh ?? []), ...(theCuaKhach ?? []), ...theTheoDong];

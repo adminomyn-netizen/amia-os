@@ -50,7 +50,7 @@ export default async function TrangBanHang({ searchParams }: { searchParams: Pro
   const anTN = (noi: string) => !hienThuNgan(noi);
   const muc: MucBan[] = [
     ...(dv ?? []).map((d) => ({ loai: "dich_vu" as const, id: d.id, ten: d.ten, gia: d.gia, nhom: tenNhom.get(d.nhom_id) ?? "Khác", tao: d.tao_luc, ma: d.ma, anThuNgan: anTN(d.noi_hien_thi), chiNhanhIds: d.chi_nhanh_ids, choSuaGia: d.cho_sua_gia })),
-    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma, anThuNgan: anTN(g.noi_hien_thi), choSuaGia: g.cho_sua_gia, dichVu: dvCuaGoi.get(g.id) ?? [] })),
+    ...(goi ?? []).map((g) => ({ loai: "goi_the" as const, id: g.id, ten: g.ten, gia: g.gia, nhom: g.loai === "lan" ? "Liệu trình" : "Thẻ tiền", tao: g.tao_luc, ma: g.ma, anThuNgan: anTN(g.noi_hien_thi), choSuaGia: g.cho_sua_gia, dichVu: dvCuaGoi.get(g.id) ?? [], soBuoi: g.loai === "lan" ? g.so_buoi ?? undefined : undefined })),
     ...(sp ?? []).map((s) => ({ loai: "san_pham" as const, id: s.id, ten: s.ten, gia: s.gia_ban, nhom: s.nhom ?? "Sản phẩm", tao: s.tao_luc, ma: s.ma, maVach: s.ma_vach ?? undefined, anThuNgan: anTN(s.noi_hien_thi), choSuaGia: s.cho_sua_gia })),
   ];
   type K = { id: string; ma: string; ho_ten: string; dien_thoai: string; nguoi_phu_trach_id: string; chi_nhanh_id: string; doi_tac_id: string | null };

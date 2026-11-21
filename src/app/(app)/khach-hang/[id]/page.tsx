@@ -535,8 +535,11 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
   const luaChonTheNo = (theTienNo ?? []).map((t) => ({ gia_tri: t.id as string, nhan: `${tenGoiTienNo.get(t.goi_id as string) ?? "Thẻ tiền"} · ${t.ma}`, soDu: Number(t.so_du_tien) }));
   const dongNo = (no ?? []).map((h) => ({ id: h.id, ma: h.ma, maSh: h.sh_ma, khachId: id, khach: k.ho_ten ?? "", dienThoai: "", chiNhanh: tenCnNo.get(h.chi_nhanh_id) ?? "", ngay: h.ngay_hd,
     tong: Number(h.tong_phai_thu), daThu: Number(h.da_thu), conNo: Number(h.con_no), soLan: 1, ngayCuoi: h.ngay_hd }));
+  // Doanh thu cơ hội = tổng "Báo giá dự kiến" của các phiếu tư vấn còn "Chờ chốt" (chị Lâm 21/11/2026). Chốt hoặc không chốt thì hết là cơ hội.
+  const { data: tvCho } = await db.from("phieu_tu_van").select("bao_gia").eq("khach_id", id).eq("ket_qua", "cho_chot");
+  const doanhThuCoHoi = (tvCho ?? []).reduce((t, r) => t + Number(r.bao_gia ?? 0), 0);
   const chiSo: [string, string][] = [
-    ["Tổng chi", tienVN(tongChi)], ["Chi 12 tháng gần nhất", tienVN(chi12)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
+    ["Tổng chi", tienVN(tongChi)], ["Chi 12 tháng gần nhất", tienVN(chi12)], ["Doanh thu cơ hội", tienVN(doanhThuCoHoi)], ["Thẻ đang dùng", soVN(k.so_the_dang_dung)], ["Còn nợ", tienVN(tongNo)], ["Điểm thưởng", soVN(kx?.diem_so_du ?? 0)], ["Tạo hồ sơ", ngayVN(k.tao_luc)],
   ];
   // Như đầu hồ sơ SalonHero: ghé thăm lần cuối + 3 số đếm đặt / đến / huỷ (chỉ khách có số từ SalonHero; "đặt từ app" SalonHero không xuất nên không có).
   const soDem: [string, string][] = [
@@ -600,7 +603,7 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
           </div>
         )}
         <dl className="mt-4 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-5 lg:grid-cols-3 xl:grid-cols-5">
-          {chiSo.map(([a, b]) => (<div key={a}><dt className="text-[12px] text-muc-3">{a}</dt><dd className="mt-0.5 text-[16px] font-medium tabular-nums text-muc">{a === "Còn nợ" && tongNo > 0 ? <a href="#con-no" className="text-canh-bao underline-offset-2 hover:underline">{b}{thuNoDuoc ? " · Thu nợ" : ""}</a> : b}</dd></div>))}
+          {chiSo.map(([a, b]) => (<div key={a}><dt className="text-[12px] text-muc-3">{a}</dt><dd className={`mt-0.5 text-[16px] font-medium tabular-nums ${a === "Doanh thu cơ hội" ? "font-semibold text-loi" : "text-muc"}`}>{a === "Còn nợ" && tongNo > 0 ? <a href="#con-no" className="text-canh-bao underline-offset-2 hover:underline">{b}{thuNoDuoc ? " · Thu nợ" : ""}</a> : b}</dd></div>))}
         </dl>
         {soDem.length > 0 && (
           <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-3 border-t border-vien pt-3 sm:grid-cols-4">

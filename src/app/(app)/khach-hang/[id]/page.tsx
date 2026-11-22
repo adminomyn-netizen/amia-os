@@ -25,6 +25,7 @@ import { NhanNhom } from "@/components/khach/DanhSachKhach";
 import { AnhDaiDien } from "@/components/khach/AnhDaiDien";
 import { srcAnhKhach } from "@/lib/anh-dai-dien-src";
 import { LichSuGiaoDich, type ThamSoLichSu } from "@/components/khach/LichSuGiaoDich";
+import { LichSuLamDichVu } from "@/components/khach/LichSuLamDichVu";
 import { LichHenKhach } from "@/components/khach/LichHenKhach";
 import { BangNoKhach } from "@/components/bao-cao/BangNoKhach";
 import { luaChonTaiKhoanForm } from "@/lib/ban-hang";
@@ -54,7 +55,7 @@ const NHAN_TT_LICH: Record<string, string> = { chua_xac_nhan: "Chưa xác nhận
 
 /** Sự kiện vừa xảy ra trong vòng `ms` mili giây qua? */
 const moiXayRa = (iso: string, ms: number) => Date.now() - new Date(iso).getTime() < ms;
-const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "lich-hen", ten: "Lịch hẹn" }, { ma: "the", ten: "Thẻ dịch vụ" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
+const TAB = [{ ma: "thong-tin", ten: "Thông tin" }, { ma: "ghi-chu", ten: "Ghi chú" }, { ma: "nguoi-than", ten: "Người thân" }, { ma: "lich-su", ten: "Lịch sử giao dịch" }, { ma: "lich-hen", ten: "Lịch hẹn" }, { ma: "lich-su-lam", ten: "Lịch sử làm dịch vụ" }, { ma: "the", ten: "Thẻ dịch vụ" }, { ma: "diem-thuong", ten: "Điểm thưởng" }, { ma: "nhac-nho", ten: "Nhắc nhở" }, { ma: "anh", ten: "Ảnh khách hàng" }, { ma: "tu-van", ten: "Tư vấn" }, { ma: "sau-dieu-tri", ten: "Hài lòng sau điều trị" }, { ma: "khieu-nai", ten: "Khiếu nại & bảo hành" }];
 
 /** Mỗi trang lịch sử điểm thưởng. */
 const DIEM_MOI_TRANG = 50;
@@ -302,6 +303,8 @@ export default async function HoSoKhach({ params, searchParams }: { params: Prom
     noiDung = <LichSuGiaoDich khachId={id} t={sp} />;
   } else if (tab === "lich-hen") {
     noiDung = <LichHenKhach khachId={id} tatCa={(sp as { lh?: string }).lh === "tat-ca"} />;
+  } else if (tab === "lich-su-lam") {
+    noiDung = <LichSuLamDichVu khachId={id} tatCa={(sp as { ls?: string }).ls === "tat-ca"} />;
   } else if (tab === "tu-van") {
     const [{ data: pv }, { data: dvTv }] = await Promise.all([
       db.from("phieu_tu_van").select("*").eq("khach_id", id).order("ngay_tu_van", { ascending: false }).order("tao_luc", { ascending: false }).limit(50),

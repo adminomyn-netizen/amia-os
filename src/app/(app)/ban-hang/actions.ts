@@ -244,6 +244,12 @@ export async function chotDonBanHang(json: string): Promise<KQ> {
   // Tháng đã khoá sổ kế toán thì không lùi vào được.
   const lui = kiemNgayLui(don.ngayHd);
   if (!lui.ok) return { loi: lui.loi };
+  // Dòng DỊCH VỤ phải có người Phục vụ (chị Lâm 23/11/2026, vụ HD000056): không có thì chốt xong dịch vụ không về Hoá đơn dịch vụ của chuyên viên (guiDongDichVuChoCv bỏ qua dòng này).
+  // Chỉ áp đơn mới của khách có hồ sơ; đơn lùi ngày / sửa lại đơn cũ / khách lẻ giữ như trước.
+  if (!lui.lui && !suaCu && don.khachId) {
+    const thieuNguoi = don.dong.filter((d) => d.loai === "dich_vu" && !(d.nv?.phuc_vu ?? []).some((x) => x.id)).map((d) => gia.get(`dich_vu:${d.ref}`)?.ten ?? "Dịch vụ");
+    if (thieuNguoi.length) return { loi: `Dịch vụ chưa chọn người Phục vụ: ${[...new Set(thieuNguoi)].join(", ")}. Chọn người làm ở dòng đó (vai Phục vụ) rồi chốt lại, để dịch vụ về Hoá đơn dịch vụ của chuyên viên.` };
+  }
   if (lui.lui) {
     const { data: ky } = await db.from("ky_ke_toan").select("trang_thai").eq("thang", lui.lui.ngay.slice(0, 7)).maybeSingle();
     if (ky?.trang_thai === "da_khoa") return { loi: `Tháng ${lui.lui.ngay.slice(5, 7)}/${lui.lui.ngay.slice(0, 4)} đã khoá sổ, không lùi ngày hoá đơn vào tháng này được.` };

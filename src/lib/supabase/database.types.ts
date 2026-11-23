@@ -13108,6 +13108,7 @@ export type Database = {
           ngay: string | null
           nguoi_id: string | null
           nguoi_nhan: string | null
+          ngan_hang: string | null
           nguoi_ten: string | null
           nguon: string | null
           noi_dung: string | null

@@ -37,7 +37,7 @@ export default async function InSoQuy({ searchParams }: { searchParams: Promise<
         ))}
       </dl>
       <BangIn cot={[{ nhan: "Ngày" }, { nhan: "Mã" }, { nhan: "Nội dung" }, { nhan: "Thu/Chi", phai: true }, { nhan: "Số dư", phai: true }]}
-        dong={tatCa.map((r) => [ngayVN(r.ngay), r.ma ?? "", `${NHAN[r.loai ?? ""] ?? ""} · ${r.loai_thu_chi ? `${r.loai_thu_chi} · ` : ""}${r.noi_dung ?? ""}${r.khach_ten ? ` · ${r.khach_ten}` : ""}`, `${Number(r.bien_dong) < 0 ? "−" : "+"}${soVN(r.so_tien)}`, soVN(r.du)])} />
+        dong={tatCa.map((r) => [ngayVN(r.ngay), r.ma ?? "", `${NHAN[r.loai ?? ""] ?? ""} · ${r.loai_thu_chi ? `${r.loai_thu_chi} · ` : ""}${r.ngan_hang ? `${r.ngan_hang} · ` : ""}${r.noi_dung ?? ""}${r.khach_ten ? ` · ${r.khach_ten}` : ""}`, `${Number(r.bien_dong) < 0 ? "−" : "+"}${soVN(r.so_tien)}`, soVN(r.du)])} />
       {tatCa.length === 0 && <p className="py-4 text-center text-muc-3">Không có giao dịch trong khoảng ngày này.</p>}
       {(dong ?? []).length >= 5000 && <p className="mt-2 text-muc-3">Chỉ in 5.000 dòng đầu, thu hẹp khoảng ngày để in đủ.</p>}
     </ToInChung>

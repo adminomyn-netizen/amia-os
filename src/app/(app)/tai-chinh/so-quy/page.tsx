@@ -18,7 +18,7 @@ import { chuyenQuy, daoPhieu, ghiNapRut, ghiThuChi, luuLoaiThuChi } from "./acti
 const TAB = [{ ma: "tien-mat", ten: "Sổ quỹ tiền mặt" }, { ma: "ngan-hang", ten: "Sổ quỹ ngân hàng" }, { ma: "loai", ten: "Phân loại thu/chi" }];
 const NHAN_LOAI: Record<string, { ten: string; kieu: "tot" | "loi" | "cho" | "tram" }> = { thu: { ten: "Thu vào", kieu: "tot" }, chi: { ten: "Chi ra", kieu: "loi" }, nap: { ten: "Nạp tiền", kieu: "cho" }, rut: { ten: "Rút tiền", kieu: "cho" } };
 
-type SP = { tab?: string; tu?: string; den?: string; cn?: string; loai?: string; pl?: string; da?: string; q?: string };
+type SP = { tab?: string; tu?: string; den?: string; cn?: string; loai?: string; pl?: string; nh?: string; da?: string; q?: string };
 
 export default async function TrangSoQuy({ searchParams }: { searchParams: Promise<SP> }) {
   const nd = await yeuCauQuyen("quy.xem");
@@ -90,6 +90,8 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
     const tuKhoa = boDau((sp.q ?? "").trim());
     if (tuKhoa) ds = ds.filter((r) => boDau(`${r.ma ?? ""} ${r.noi_dung ?? ""} ${r.doi_tuong ?? ""} ${r.loai_thu_chi ?? ""} ${r.khach_ten ?? ""} ${r.nguoi_nhan ?? ""} ${r.nguoi_ten ?? ""}`).includes(tuKhoa));
     if (sp.pl) ds = ds.filter((r) => r.loai_thu_chi === sp.pl);
+    const dsNganHang = tab === "ngan-hang" ? [...new Set(tatCa.map((r) => r.ngan_hang).filter((x): x is string => !!x))].sort() : [];
+    if (sp.nh) ds = ds.filter((r) => (sp.nh === "-" ? !r.ngan_hang : r.ngan_hang === sp.nh));
     ds = ds.reverse();
     const nguoiIds = [...new Set(ds.map((r) => r.nguoi_id).filter((x): x is string => !!x))];
     const { data: nvTen } = nguoiIds.length ? await db.from("nhan_vien").select("id, ho_ten").in("id", nguoiIds.slice(0, 300)) : { data: [] as { id: string; ho_ten: string }[] };
@@ -106,7 +108,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
         <ChiSoQuy dau={dau} thu={Number(t?.thu ?? 0)} chi={Number(t?.chi ?? 0)} nap={Number(t?.nap ?? 0)} rut={Number(t?.rut ?? 0)} hienTai={Number(t?.hien_tai ?? 0)} />
         {tab === "ngan-hang" && <TachQuyNganHang chiNhanhIds={[...new Set(quyHienTai.map((q) => q.chi_nhanh_id))]} tu={tu} den={den} />}
         <div className="mt-5 flex flex-wrap items-center gap-3">
-          <LocSoQuy goc={goc} loai={sp.loai ?? ""} pl={sp.pl ?? ""} da={sp.da === "1"} q={sp.q ?? ""} phanLoai={(loaiTC ?? []).map((l) => l.ten)} quyKia={tab === "ngan-hang" ? "quỹ tiền mặt" : "quỹ ngân hàng"} />
+          <LocSoQuy goc={goc} loai={sp.loai ?? ""} pl={sp.pl ?? ""} nh={sp.nh ?? ""} nganHang={tab === "ngan-hang" ? dsNganHang : null} da={sp.da === "1"} q={sp.q ?? ""} phanLoai={(loaiTC ?? []).map((l) => l.ten)} quyKia={tab === "ngan-hang" ? "quỹ tiền mặt" : "quỹ ngân hàng"} />
           <a href={`/api/xuat/so-quy?quy=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">Xuất Excel</a>
           <a href={`/in/so-quy?quy=${tab}&tu=${tu}&den=${den}${sp.cn ? `&cn=${sp.cn}` : ""}`} target="_blank" rel="noopener" className="h-10 rounded-nho border border-vien-dam px-4 text-[14px] font-medium leading-10 text-muc-2 hover:bg-giay-tram">In sổ quỹ</a>
         </div>
@@ -120,6 +122,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
               { nhan: "Người thu / chi", hienThi: (r) => r.nguoi_ten ?? tenNguoi.get(r.nguoi_id ?? "") ?? "" },
               { nhan: "Loại", hienThi: (r) => { const n = NHAN_LOAI[r.loai ?? ""]; if (!n) return null; const quyKia = tab === "ngan-hang" ? "quỹ tiền mặt" : "quỹ ngân hàng"; return <NhanTrangThai kieu={n.kieu}>{r.nguon === "chuyen_quy" ? (r.loai === "rut" ? `Chuyển sang ${quyKia}` : `Nhận từ ${quyKia}`) : n.ten}</NhanTrangThai>; } },
               { nhan: "Phân loại", hienThi: (r) => r.loai_thu_chi ?? "" },
+              ...(tab === "ngan-hang" ? [{ nhan: "Ngân hàng", hienThi: (r: { ngan_hang: string | null }) => r.ngan_hang ?? "" }] : []),
               { nhan: "Nội dung", chinh: true, hienThi: (r) => <span className="text-muc">{r.noi_dung}{r.doi_tuong && r.sh_id == null ? <span className="text-muc-3"> · {r.doi_tuong}</span> : null}{r.da_dao ? <span className="text-muc-3"> · đã đảo</span> : null}</span> },
               { nhan: "Người nhận tiền", hienThi: (r) => r.nguoi_nhan ?? "" },
               { nhan: "Số tiền", phai: true, hienThi: (r) => <span className={Number(r.bien_dong) < 0 ? "text-loi" : "text-nhan-dam"}>{Number(r.bien_dong) < 0 ? "−" : "+"}{soVN(r.so_tien)}</span> },

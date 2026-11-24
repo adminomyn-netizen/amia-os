@@ -204,7 +204,7 @@ export function FormLichHen({ nhan, kieu = "chinh", dichVu, nhanVien, chiNhanh, 
           )}
           </>}
           <div>
-            <label className={NHAN_O}>Dịch vụ <span className="text-loi">*</span></label>
+            <label className={NHAN_O}>Dịch vụ <span className="text-[12px] font-normal text-muc-3">(không bắt buộc, có thể ghi ở Ghi chú)</span></label>
             {khoa?.dichVu
               ? <p className="rounded-nho border border-vien bg-giay-tram px-3 py-2 text-[14px] text-muc">{dvs.map((d) => dichVu.find((x) => x.id === d)?.ten).filter(Boolean).join(", ") || sua?.dichVuTen || "Chưa ghi dịch vụ"} <span className="text-[12px] text-muc-3">(khoá)</span></p>
               : <>{sua?.dichVuTen && dvs.length === 0 && <p className="mb-1.5 text-[12px] text-muc-3">Lịch chuyển từ SalonHero ghi: {sua.dichVuTen}</p>}<ChonNhieuDichVu ds={dsDv} tatCa={dichVu} chon={dvs} onDoi={doiDvs} /></>}

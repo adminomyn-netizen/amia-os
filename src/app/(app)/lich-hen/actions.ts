@@ -6,7 +6,6 @@ import { guiChoNhanVien } from "@/lib/push";
 import { kiemQuyen, KHONG_DU_QUYEN } from "@/lib/auth";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
-import { ngayVN } from "@/lib/dinh-dang";
 import { gioBaThu } from "@/lib/gio-lam-viec";
 import { laKieuLap, ngayLap, thuCuaNgay, TOI_DA_BUOI_LAP, TRANG_THAI_DAT } from "@/lib/lich-hen";
 import { docKhachDiCung, dongKhachDiCung } from "@/lib/lich-hen-nhom";
@@ -65,8 +64,7 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
     if (!k || k.chi_nhanh_id !== nd.chiNhanhId) return { loi: KHONG_DU_QUYEN };
   }
   if (!/^\d{4}-\d{2}-\d{2}$/.test(ngay) || !/^\d{2}:\d{2}$/.test(gio)) return { loi: "Chọn ngày và giờ hẹn." };
-  // Lịch chuyển từ SalonHero có thể chỉ có tên dịch vụ dạng chữ (không có dòng dịch vụ): sửa lịch đó được để trống dịch vụ.
-  if (dv.length === 0 && !(id && dvCu.length === 0)) return { loi: "Chọn ít nhất một dịch vụ." };
+  // Lễ tân 24/11/2026: không bắt buộc chọn dịch vụ khi đặt lịch (đã có ô Ghi chú); lịch không dịch vụ vẫn lưu bình thường.
   if (phut < 5 || (phut > 600 && !khoa.gio)) return { loi: "Thời lượng phải từ 5 đến 600 phút." };
   if (!id && !loaiLich) return { loi: "Chọn loại lịch (tư vấn khách mới, khách liệu trình…)." };
   // Lịch lặp (chỉ khi đặt mới, giống SalonHero): kiểu DAILY/WEEKLY/MONTHLY, mỗi N ngày/tuần/tháng, tổng số buổi.
@@ -89,28 +87,7 @@ export async function luuLichHen(fd: FormData): Promise<KQ> {
     const { data: co } = await db.from("dich_vu").select("id").in("id", dvNhom);
     if ((co ?? []).length !== dvNhom.length) return { loi: "Có dịch vụ của khách đi cùng không còn trong danh mục." };
   }
-  // Trùng giờ: người thực hiện của khách chính và của từng khách đi cùng (xét cả lịch chính lẫn khách đi cùng của lịch khác). Một truy vấn cho cả chuỗi lặp.
-  const canKiem = new Map<string, number>(); // nhân viên → thời lượng phút phải rảnh
-  // Lịch đã khoá giờ (đã phục vụ / xong / huỷ) mà giữ nguyên người thực hiện thì không kiểm lại trùng giờ (dữ liệu cũ có thể chồng giờ, không chặn việc sửa ghi chú).
-  if (nv && !(cu && khoa.gio && nv === cu.nhan_vien_id)) canKiem.set(nv, phut);
-  for (const k of diCung) if (k.nhanVienId) canKiem.set(k.nhanVienId, Math.max(canKiem.get(k.nhanVienId) ?? 0, k.thoiLuong ?? phut));
-  if (canKiem.size) {
-    const ids = [...canKiem.keys()], tuIso = buoi[0].bd.toISOString(), denIso = new Date(buoi[buoi.length - 1].bd.getTime() + 600 * 60000).toISOString();
-    let q1 = db.from("lich_hen").select("id, bat_dau, ket_thuc, nhan_vien_id").in("nhan_vien_id", ids).not("trang_thai", "in", "(huy,khong_den)").lt("bat_dau", denIso).gt("ket_thuc", tuIso);
-    if (id) q1 = q1.neq("id", id);
-    let q2 = db.from("lich_hen_khach").select("nhan_vien_id, thoi_luong_phut, lich_hen!inner(id, bat_dau, ket_thuc, trang_thai)").in("nhan_vien_id", ids)
-      .not("lich_hen.trang_thai", "in", "(huy,khong_den)").lt("lich_hen.bat_dau", denIso).gt("lich_hen.ket_thuc", tuIso);
-    if (id) q2 = q2.neq("lich_id", id);
-    const [{ data: t1 }, { data: t2 }] = await Promise.all([q1.limit(2000), q2.limit(2000)]);
-    const ban = [
-      ...(t1 ?? []).map((t) => ({ nv: t.nhan_vien_id, bd: Date.parse(t.bat_dau), kt: Date.parse(t.ket_thuc) })),
-      ...(t2 ?? []).map((t) => { const l = t.lich_hen as unknown as { bat_dau: string; ket_thuc: string }; const bd = Date.parse(l.bat_dau); return { nv: t.nhan_vien_id, bd, kt: t.thoi_luong_phut ? bd + t.thoi_luong_phut * 60000 : Date.parse(l.ket_thuc) }; }),
-    ];
-    for (const [nvK, ph] of canKiem) {
-      const vuong = buoi.findIndex((b) => ban.some((t) => t.nv === nvK && t.bd < b.bd.getTime() + ph * 60000 && t.kt > b.bd.getTime()));
-      if (vuong >= 0) return { loi: `${nvK === nv ? "Nhân viên này" : "Người thực hiện của khách đi cùng"} đã có lịch trùng giờ${buoi.length > 1 ? ` vào ngày ${ngayVN(cacNgay[vuong])}` : ""}. Chọn giờ khác hoặc người khác.` };
-    }
-  }
+  // Lễ tân 24/11/2026: trùng giờ chuyên viên KHÔNG chặn đặt lịch (đặt thêm được); không chọn chuyên viên vẫn lưu. Ô Gợi ý giờ vẫn tránh giờ bận.
   // Trạng thái lúc tạo (SalonHero: Chưa xác nhận / Đã xác nhận / Chờ phục vụ trong hộp đặt lịch); chỉ khi đặt mới, sai giá trị thì về "Chưa xác nhận".
   const ttDau = id ? "" : TRANG_THAI_DAT.includes(chuoi(fd, "trang_thai") as (typeof TRANG_THAI_DAT)[number]) ? chuoi(fd, "trang_thai") : "chua_xac_nhan";
   const mocDau = ttDau === "cho_phuc_vu" ? { xac_nhan_luc: new Date().toISOString(), checkin_luc: new Date().toISOString() } : ttDau === "da_xac_nhan" ? { xac_nhan_luc: new Date().toISOString() } : {};

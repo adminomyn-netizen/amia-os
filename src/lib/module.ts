@@ -92,6 +92,7 @@ export const MODULE: Module[] = [
     nhom: [
       { nhan: "Thu / chi", the: [
         { ten: "Sổ quỹ", moTa: "Tiền mặt và ngân hàng: thu/chi, chuyển quỹ, số dư, xuất Excel.", duongDan: "/tai-chinh/so-quy", trangThai: "san_sang", quyen: ["quy.xem"] },
+        { ten: "Báo cáo quỹ ngày", moTa: "Mỗi ngày từng quỹ: tồn đầu, thu, chi theo bảy nhóm khoản, tồn cuối. Thay sheet Báo cáo quỹ ngày trên Lark.", duongDan: "/tai-chinh/bao-cao-quy", trangThai: "san_sang", quyen: ["quy.xem"] },
         { ten: "Khoản thu", moTa: "Ghi nhận khoản thu ngoài hoá đơn.", duongDan: "/tai-chinh/so-quy?moi=thu", trangThai: "san_sang", quyen: ["quy.ghi"] },
         { ten: "Khoản chi", moTa: "Ghi nhận khoản chi, chi phí.", duongDan: "/tai-chinh/so-quy?moi=chi", trangThai: "san_sang", quyen: ["quy.ghi"] },
       ] },

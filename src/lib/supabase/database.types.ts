@@ -3832,6 +3832,12 @@ export type Database = {
         Update: { hoat_dong?: boolean; nhom?: string; so_hieu?: string; ten?: string }
         Relationships: []
       }
+      quy_so_du_nhat_ky: {
+        Row: { id: string; ly_do: string; luc: string; nguoi_id: string; quy_id: string; sau: number; truoc: number }
+        Insert: { id?: string; ly_do: string; luc?: string; nguoi_id: string; quy_id: string; sau: number; truoc: number }
+        Update: { id?: string; ly_do?: string; luc?: string; nguoi_id?: string; quy_id?: string; sau?: number; truoc?: number }
+        Relationships: []
+      }
       de_xuat: {
         Row: {
           khoan_chi: string | null
@@ -8954,6 +8960,7 @@ export type Database = {
       }
       loai_thu_chi: {
         Row: {
+          nhom: string | null
           he_thong: boolean
           hoat_dong: boolean
           huong: string
@@ -8962,6 +8969,7 @@ export type Database = {
           thu_tu: number
         }
         Insert: {
+          nhom?: string | null
           he_thong?: boolean
           hoat_dong?: boolean
           huong: string
@@ -8970,6 +8978,7 @@ export type Database = {
           thu_tu?: number
         }
         Update: {
+          nhom?: string | null
           he_thong?: boolean
           hoat_dong?: boolean
           huong?: string
@@ -14378,6 +14387,10 @@ export type Database = {
       dong_ho_so_de_xuat: {
         Args: { p_de_xuat: string; p_nguoi: string }
         Returns: undefined
+      }
+      bao_cao_quy_ngay: {
+        Args: { p_chi_nhanh: string; p_den: string; p_tu: string }
+        Returns: { huong: string; ngay: string; nhom: string | null; quy_id: string; tien: number }[]
       }
       chi_theo_de_xuat: {
         Args: {

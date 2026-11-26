@@ -95,9 +95,10 @@ export async function luuLoaiThuChi(fd: FormData): Promise<KQ> {
   if (id) {
     const { data: cu } = await db.from("loai_thu_chi").select("he_thong").eq("id", id).maybeSingle();
     if (!cu || cu.he_thong) return { loi: "Phân loại của hệ thống không sửa được." };
-    const { error } = await db.from("loai_thu_chi").update({ ten, hoat_dong: bat(fd, "hoat_dong") }).eq("id", id);
+    const { error } = await db.from("loai_thu_chi").update({ ten, hoat_dong: bat(fd, "hoat_dong"), nhom: chuoi(fd, "nhom") || null }).eq("id", id);
     return error ? { loi: error.code === "23505" ? "Đã có phân loại trùng tên." : thongBaoLoi(error) } : xong();
   }
-  const { error } = await db.from("loai_thu_chi").insert({ ten, huong: chuoi(fd, "huong") === "thu" ? "thu" : "chi", thu_tu: 50 });
+  const huong = chuoi(fd, "huong") === "thu" ? "thu" : "chi";
+  const { error } = await db.from("loai_thu_chi").insert({ ten, huong, thu_tu: 50, nhom: chuoi(fd, "nhom") || (huong === "thu" ? "Thu nội bộ" : "Chi nội bộ") });
   return error ? { loi: error.code === "23505" ? "Đã có phân loại trùng tên." : thongBaoLoi(error) } : xong();
 }

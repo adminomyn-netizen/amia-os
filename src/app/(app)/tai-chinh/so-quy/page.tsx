@@ -59,7 +59,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
 
   let noiDung: React.ReactNode;
   if (tab === "loai") {
-    const truong: Truong[] = [{ ten: "huong", nhan: "Loại", loai: "chon", luaChon: [{ gia_tri: "thu", nhan: "Thu vào" }, { gia_tri: "chi", nhan: "Chi ra" }], chiKhiTao: true, batBuoc: true }, { ten: "ten", nhan: "Tên phân loại", loai: "chu", batBuoc: true, rong: true }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" }];
+    const truong: Truong[] = [{ ten: "huong", nhan: "Loại", loai: "chon", luaChon: [{ gia_tri: "thu", nhan: "Thu vào" }, { gia_tri: "chi", nhan: "Chi ra" }], chiKhiTao: true, batBuoc: true }, { ten: "ten", nhan: "Tên phân loại", loai: "chu", batBuoc: true, rong: true }, { ten: "nhom", nhan: "Nhóm trên Báo cáo quỹ ngày", loai: "chon", rong: true, luaChon: ["Thu từ khách", "Thu nội bộ", "Thu từ đối tác - NCC", "Thu tài chính", "Chi cho khách", "Chi đối tác - NCC", "Chi nội bộ"].map((n) => ({ gia_tri: n, nhan: n })) }, { ten: "hoat_dong", nhan: "Đang dùng", loai: "gat" }];
     noiDung = (
       <>
         {ghi && <div className="mb-4"><NutHop nhan="Thêm phân loại" tieuDe="Thêm phân loại thu/chi" truong={truong} action={luuLoaiThuChi} giaTri={{ huong: "chi", hoat_dong: true }} /></div>}
@@ -68,7 +68,7 @@ export default async function TrangSoQuy({ searchParams }: { searchParams: Promi
             { nhan: "Phân loại", chinh: true, hienThi: (r) => <span className="text-muc">{r.ten}</span> },
             { nhan: "Loại", hienThi: (r) => <NhanTrangThai kieu={r.huong === "thu" ? "tot" : "loi"}>{r.huong === "thu" ? "Thu vào" : "Chi ra"}</NhanTrangThai> },
             { nhan: "Ghi chú", hienThi: (r) => (r.he_thong ? "Hệ thống tự ghi, không sửa" : r.hoat_dong ? "" : "Ngừng dùng") },
-            { nhan: "", hienThi: (r) => (ghi && !r.he_thong ? <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa phân loại" truong={truong.filter((t) => t.ten !== "huong")} action={luuLoaiThuChi} giaTri={{ id: r.id, ten: r.ten, hoat_dong: r.hoat_dong }} /> : null) },
+            { nhan: "", hienThi: (r) => (ghi && !r.he_thong ? <NutHop kieu="chu" nhan="Sửa" tieuDe="Sửa phân loại" truong={truong.filter((t) => t.ten !== "huong")} action={luuLoaiThuChi} giaTri={{ id: r.id, ten: r.ten, nhom: r.nhom ?? "", hoat_dong: r.hoat_dong }} /> : null) },
           ]} />
       </>
     );

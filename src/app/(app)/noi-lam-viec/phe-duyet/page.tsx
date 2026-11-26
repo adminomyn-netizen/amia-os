@@ -7,6 +7,7 @@ import { LOAI_DX, TT_DX } from "@/lib/de-xuat";
 import { LOAI_PHIEU, LOAI_NGHI, TT_PHIEU } from "@/lib/nhan-su";
 import { TT_DON } from "@/app/(app)/kho-mua-sam/mua-hang/page";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
+import type { Database } from "@/lib/supabase/database.types";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
@@ -14,17 +15,18 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { buocHienTai, kiemTraDuyet, moTaNguoiDuyet, soTienBangChu, type BuocDuyet } from "@/lib/quy-trinh-duyet";
 import { coNguoiGiuChucDanhFn, taiBuocDeXuat } from "@/lib/quy-trinh-duyet-server";
-import { duyetDeXuat, tuChoiDeXuat, chiTheoDeXuat, lapDonMuaTuDeXuat } from "../actions";
+import { duyetDeXuat, tuChoiDeXuat, traVeBoSungDeXuat, chiTheoDeXuat, lapDonMuaTuDeXuat, luuButToanDeXuat, dongHoSoDeXuat } from "../actions";
 import { duyetDonMua, tuChoiDonMua } from "@/app/(app)/kho-mua-sam/actions";
 import { duyetPhieuHr, tuChoiPhieuHr } from "@/app/(app)/nhan-su/actions";
 
+type But = { no?: string; co?: string; so_tien?: number; doi_tuong?: string | null };
 type Dong = {
   khoa: string; nguon: "dx" | "dm" | "hr"; soNgay?: number; id: string; ma: string; loai: string; tieuDe: string; nguoiGui: string | null; chiNhanh: string; tien: number | null;
-  tt: string; ttTen: string; kieu: "tot" | "cho" | "loi" | "tram"; luc: string; han: string | null; ly: string | null; loaiDx?: string; quy?: string | null; buoc?: BuocDuyet[]; chiaGhi?: boolean;
+  tt: string; ttTen: string; kieu: "tot" | "cho" | "loi" | "tram"; luc: string; han: string | null; ly: string | null; loaiDx?: string; quy?: string | null; buoc?: BuocDuyet[]; goc?: Database["public"]["Tables"]["de_xuat"]["Row"];
 };
 
 const TAB = [
-  { ma: "tat-ca", ten: "Tất cả" }, { ma: "hr", ten: "Nghỉ phép · OT · HR" }, { ma: "cho-duyet", ten: "Chờ tôi duyệt" }, { ma: "cho-thuc-hien", ten: "Chờ thực hiện" },
+  { ma: "tat-ca", ten: "Tất cả" }, { ma: "hr", ten: "Nghỉ phép · OT · HR" }, { ma: "cho-duyet", ten: "Chờ tôi duyệt" }, { ma: "cho-thuc-hien", ten: "Chờ thực hiện" }, { ma: "cho-dong", ten: "Chờ đóng hồ sơ" },
   { ma: "toi-gui", ten: "Tôi đã gửi" }, { ma: "da-xu-ly", ten: "Đã xử lý" }, { ma: "tu-choi", ten: "Bị từ chối" },
 ];
 
@@ -70,6 +72,7 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
     lapDon ? db.from("nha_cung_cap").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
     chi ? db.from("loai_thu_chi").select("id, ten").eq("huong", "chi").eq("he_thong", false).eq("hoat_dong", true).order("thu_tu") : Promise.resolve({ data: [] }),
   ]);
+  const { data: tkKt } = chi ? await db.from("tai_khoan_ke_toan").select("so_hieu, ten").eq("hoat_dong", true).order("so_hieu") : { data: [] as { so_hieu: string; ten: string }[] };
   const buocTheoDx = await taiBuocDeXuat((dx ?? []).map((r) => r.id));
   const coGiu = await coNguoiGiuChucDanhFn();
   const chucDanhToi = (nv ?? []).find((n) => n.id === nd.nhanVienId)?.chuc_danh_tai_chinh ?? null;
@@ -86,7 +89,7 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
     nguoiGui: r.nhan_vien_id, chiNhanh: tenCn.get(cnCua.get(r.nhan_vien_id) ?? "") ?? "", tien: null, tt: r.trang_thai, ttTen: TT_PHIEU[r.trang_thai].ten, kieu: TT_PHIEU[r.trang_thai].kieu, luc: r.tao_luc, han: null, ly: r.ly_do_duyet && r.trang_thai === "tu_choi" ? r.ly_do_duyet : null,
   }));
   const tatCa: Dong[] = [
-    ...(dx ?? []).map((r): Dong => ({ khoa: `dx${r.id}`, nguon: "dx", id: r.id, ma: r.ma, loai: `Đề xuất ${LOAI_DX[r.loai as keyof typeof LOAI_DX].toLowerCase()}`, tieuDe: r.tieu_de, nguoiGui: r.nguoi_gui_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: r.so_tien, tt: r.trang_thai, ttTen: TT_DX[r.trang_thai].ten, kieu: TT_DX[r.trang_thai].kieu, luc: r.tao_luc, han: buocHienTai(buocTheoDx.get(r.id) ?? [])?.han_xu_ly ?? r.han_duyet, ly: r.ly_do, loaiDx: r.loai, buoc: buocTheoDx.get(r.id) })),
+    ...(dx ?? []).map((r): Dong => ({ khoa: `dx${r.id}`, nguon: "dx", id: r.id, ma: r.ma, loai: `Đề xuất ${LOAI_DX[r.loai as keyof typeof LOAI_DX].toLowerCase()}`, tieuDe: r.tieu_de, nguoiGui: r.nguoi_gui_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: r.so_tien, tt: r.trang_thai, ttTen: TT_DX[r.trang_thai].ten, kieu: TT_DX[r.trang_thai].kieu, luc: r.tao_luc, han: buocHienTai(buocTheoDx.get(r.id) ?? [])?.han_xu_ly ?? r.han_duyet, ly: r.ly_do, loaiDx: r.loai, buoc: buocTheoDx.get(r.id), goc: r })),
     ...(dm ?? []).map((r): Dong => ({ khoa: `dm${r.id}`, nguon: "dm", id: r.id, ma: r.ma, loai: "Đơn mua hàng", tieuDe: r.ghi_chu || "Đơn mua hàng", nguoiGui: r.nguoi_tao_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: tongDm.get(r.id) ?? 0, tt: r.trang_thai, ttTen: TT_DON[r.trang_thai].ten, kieu: TT_DON[r.trang_thai].kieu, luc: r.tao_luc, han: null, ly: r.ly_do })),
     ...hrDong,
   ].sort((a, b) => b.luc.localeCompare(a.luc));
@@ -98,9 +101,10 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
   };
   const choToiDuyet = (r: Dong) => r.tt === "cho_duyet" && (r.nguon === "dx" && r.buoc?.length ? toiDuyetDuocBuoc(r) : (r.nguon === "dx" ? duyetDx : r.nguon === "hr" ? duyetHr : duyetDm) && (r.nguoiGui !== nd.nhanVienId || nd.vaiTro === "ky_thuat")) && (r.nguon !== "hr" || (r.soNgay ?? 0) < 4 || r.loai !== "Phiếu nghỉ" || coQuyen(nd, "nghi.duyet_bgd"));
   const choThucHien = (r: Dong) => r.nguon === "dx" && r.tt === "da_duyet" && (r.loaiDx === "mua_sam" ? lapDon : chi);
-  const daXuLy = (r: Dong) => ["da_duyet", "da_thuc_hien", "tu_choi", "huy", "dang_nhan", "da_nhan"].includes(r.tt) && !choThucHien(r);
+  const choDong = (r: Dong) => r.nguon === "dx" && r.tt === "da_thuc_hien" && !r.goc?.dong_ho_so_luc && ["thanh_toan", "tam_ung", "hoan_ung"].includes(r.loaiDx ?? "");
+  const daXuLy = (r: Dong) => ["da_duyet", "da_thuc_hien", "tu_choi", "huy", "dang_nhan", "da_nhan"].includes(r.tt) && !choThucHien(r) && !choDong(r);
   const loc: Record<string, (r: Dong) => boolean> = {
-    "tat-ca": () => true, hr: (r) => r.nguon === "hr", "cho-duyet": choToiDuyet, "cho-thuc-hien": choThucHien, "toi-gui": (r) => r.nguoiGui === nd.nhanVienId, "da-xu-ly": daXuLy, "tu-choi": (r) => r.tt === "tu_choi",
+    "tat-ca": () => true, hr: (r) => r.nguon === "hr", "cho-duyet": choToiDuyet, "cho-thuc-hien": choThucHien, "cho-dong": choDong, "toi-gui": (r) => r.nguoiGui === nd.nhanVienId, "da-xu-ly": daXuLy, "tu-choi": (r) => r.tt === "tu_choi",
   };
   const dem = (ma: string) => tatCa.filter(loc[ma]).length;
   const hienThi = tatCa.filter(loc[tab]);
@@ -119,7 +123,7 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
           { nhan: "Nội dung", hienThi: (r) => <div><span className="text-muc">{r.tieuDe}</span>{r.ly && <div className="mt-0.5 text-[13px] text-loi">{r.ly}</div>}</div> },
           { nhan: "Người gửi", hienThi: (r) => <div>{ten.get(r.nguoiGui ?? "") ?? ""}<div className="text-[12.5px] text-muc-3">{r.chiNhanh} · {ngayVN(ngayCuaIso(r.luc))}</div></div> },
           { nhan: "Số tiền", phai: true, hienThi: (r) => (r.tien ? <div>{tienVN(r.tien)}<div className="max-w-[220px] text-[12px] leading-snug text-muc-3">{soTienBangChu(r.tien)}</div></div> : "") },
-          { nhan: "Hạn duyệt", hienThi: (r) => (r.han && r.tt === "cho_duyet" ? <span className={r.han < hom ? "text-loi" : ""}>{ngayVN(r.han)}{r.han < hom ? " · quá hạn" : ""}</span> : "") },
+          { nhan: "Hạn", hienThi: (r) => (r.han && r.tt === "cho_duyet" ? <span className={r.han < hom ? "text-loi" : ""}>{ngayVN(r.han)}{r.han < hom ? " · quá hạn" : ""}</span> : r.tt === "da_duyet" && r.goc?.ngay_du_kien_chi ? <span className={r.goc.ngay_du_kien_chi < hom ? "text-loi" : ""}>Chi dự kiến {ngayVN(r.goc.ngay_du_kien_chi)}</span> : r.goc?.dong_ho_so_luc ? <span className="text-muc-3">Đã đóng hồ sơ</span> : "") },
           { nhan: "Trạng thái", hienThi: (r) => {
             const hien = buocHienTai(r.buoc ?? []);
             return <div><NhanTrangThai kieu={r.kieu}>{r.tt === "cho_duyet" && hien ? `Chờ: ${hien.ten}` : r.ttTen}</NhanTrangThai>{r.buoc?.length ? <ChuoiBuoc buoc={r.buoc} ten={ten} /> : null}</div>;
@@ -128,6 +132,7 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
             const nut = [];
             if (choToiDuyet(r)) {
               nut.push(<NutHop key="d" kieu="chu" nhan="Duyệt" tieuDe="Duyệt" xacNhan={`Duyệt ${r.ma}${r.tien ? ` · ${tienVN(r.tien)}` : ""}?`} action={r.nguon === "dx" ? duyetDeXuat : r.nguon === "hr" ? duyetPhieuHr : duyetDonMua} an={r.nguon === "dm" ? { don_id: r.id } : { id: r.id }} nhanLuu="Duyệt" />);
+              if (r.nguon === "dx" && r.buoc?.length) nut.push(<NutHop key="b" kieu="chu" nhan="Trả về bổ sung" tieuDe="Trả về — cần bổ sung chứng từ" moTa="Phiếu quay về người lập kèm lý do. Người lập bổ sung rồi gửi lại, chuỗi duyệt chạy lại từ bước đầu." truong={lyDo("Cần bổ sung gì")} action={traVeBoSungDeXuat} an={{ id: r.id }} nhanLuu="Trả về" />);
               nut.push(<NutHop key="t" kieu="chu" nguy nhan="Từ chối" tieuDe="Từ chối" truong={lyDo("Lý do từ chối")} action={r.nguon === "dx" ? tuChoiDeXuat : r.nguon === "hr" ? tuChoiPhieuHr : tuChoiDonMua} an={r.nguon === "dm" ? { don_id: r.id } : { id: r.id }} nhanLuu="Từ chối" />);
             }
             if (choThucHien(r) && r.loaiDx !== "mua_sam") {
@@ -140,6 +145,16 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
             if (choThucHien(r) && r.loaiDx === "mua_sam") {
               nut.push(<NutHop key="l" kieu="chu" nhan="Lập đơn mua" tieuDe={`Lập đơn mua · ${r.ma}`} moTa="Tạo đơn mua nháp từ đề xuất này; thêm hàng và gửi duyệt ở màn Mua hàng." action={lapDonMuaTuDeXuat} an={{ id: r.id }} nhanLuu="Lập đơn"
                 truong={[{ ten: "ncc_id", nhan: "Nhà cung cấp", loai: "chon", batBuoc: true, luaChon: (ncc ?? []).map((n) => ({ gia_tri: n.id, nhan: n.ten })) }]} />);
+            }
+            if (r.nguon === "dx" && chi && r.goc && !r.goc.dong_ho_so_luc && ["da_duyet", "da_thuc_hien"].includes(r.tt) && ["thanh_toan", "tam_ung", "hoan_ung"].includes(r.loaiDx ?? "")) {
+              const bt = (r.goc.but_toan ?? {}) as { ghi_nhan?: But; thanh_toan?: But };
+              const tkLua = (tkKt ?? []).map((t) => ({ gia_tri: t.so_hieu, nhan: `${t.so_hieu} · ${t.ten}` }));
+              const t = (ten: string, nhan: string): Truong => ({ ten, nhan, loai: "chon", batBuoc: true, luaChon: tkLua });
+              nut.push(<NutHop key="bt" kieu="chu" nhan={r.goc.but_toan ? "Sửa bút toán" : "Bút toán"} tieuDe={`Bút toán Nợ/Có · ${r.ma}`} moTa="Kế toán điền như phiếu 'có bút toán' bên Lark: ghi nhận chi phí/tạm ứng, rồi ghi nhận thanh toán. Cần có đủ hai bút toán mới đóng được hồ sơ." action={luuButToanDeXuat} an={{ id: r.id }} nhanLuu="Lưu bút toán"
+                giaTri={{ ghi_nhan_no: bt.ghi_nhan?.no ?? "", ghi_nhan_co: bt.ghi_nhan?.co ?? "", ghi_nhan_so_tien: bt.ghi_nhan?.so_tien ?? r.tien ?? "", ghi_nhan_doi_tuong: bt.ghi_nhan?.doi_tuong ?? ten.get(r.nguoiGui ?? "") ?? "", thanh_toan_no: bt.thanh_toan?.no ?? "", thanh_toan_co: bt.thanh_toan?.co ?? "", thanh_toan_so_tien: bt.thanh_toan?.so_tien ?? r.tien ?? "", thanh_toan_doi_tuong: bt.thanh_toan?.doi_tuong ?? ten.get(r.nguoiGui ?? "") ?? "" }}
+                truong={[t("ghi_nhan_no", "Ghi nhận chi phí · Nợ TK"), t("ghi_nhan_co", "Ghi nhận chi phí · Có TK"), { ten: "ghi_nhan_so_tien", nhan: "Số tiền (đ)", loai: "tien", batBuoc: true }, { ten: "ghi_nhan_doi_tuong", nhan: "Đối tượng", loai: "chu" },
+                  t("thanh_toan_no", "Ghi nhận thanh toán · Nợ TK"), t("thanh_toan_co", "Ghi nhận thanh toán · Có TK"), { ten: "thanh_toan_so_tien", nhan: "Số tiền (đ)", loai: "tien", batBuoc: true }, { ten: "thanh_toan_doi_tuong", nhan: "Đối tượng", loai: "chu" }]} />);
+              if (r.tt === "da_thuc_hien" && r.goc.but_toan) nut.push(<NutHop key="dh" kieu="chu" nhan="Đóng hồ sơ" tieuDe="Đóng hồ sơ" xacNhan={`Đóng hồ sơ ${r.ma}? Sau khi đóng không sửa được bút toán.`} action={dongHoSoDeXuat} an={{ id: r.id }} nhanLuu="Đóng hồ sơ" />);
             }
             if (r.nguon === "dm") nut.push(<Link key="m" href={`/kho-mua-sam/mua-hang/${r.id}`} className="text-[14px] text-nhan-dam hover:underline">Mở đơn</Link>);
             return nut.length ? <div className="flex flex-wrap items-center justify-end gap-1.5">{nut}</div> : null;

@@ -44,3 +44,14 @@ describe("buocHienTai", () => {
   it("lấy bước chưa duyệt nhỏ nhất", () => expect(buocHienTai([buoc({ thu_tu: 1, trang_thai: "da_duyet" }), buoc({ thu_tu: 3 }), buoc({ thu_tu: 2 })])?.thu_tu).toBe(2));
   it("hết bước thì null", () => expect(buocHienTai([buoc({ trang_thai: "da_duyet" })])).toBeNull());
 });
+
+import { phanTichHangMuc } from "@/lib/de-xuat";
+describe("phanTichHangMuc (hạng mục tạm ứng)", () => {
+  it("cộng tổng các dòng", () => expect(phanTichHangMuc("Vé máy bay | 2.500.000\nKhách sạn | 1500000")).toEqual({ ds: [{ ten: "Vé máy bay", so_tien: 2500000 }, { ten: "Khách sạn", so_tien: 1500000 }], tong: 4000000 }));
+  it("dòng thiếu tiền hoặc tiền không phải số thì báo lỗi", () => {
+    expect(phanTichHangMuc("Vé máy bay")).toHaveProperty("loi");
+    expect(phanTichHangMuc("Vé | abc")).toHaveProperty("loi");
+    expect(phanTichHangMuc("Vé | 0")).toHaveProperty("loi");
+  });
+  it("trống thì tổng 0", () => expect(phanTichHangMuc("")).toEqual({ ds: [], tong: 0 }));
+});

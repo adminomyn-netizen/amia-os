@@ -6,7 +6,7 @@ import { coQuyen } from "@/lib/quyen";
 import { sb, thongBaoLoi } from "@/lib/db";
 import { chuoi, chuoiHoacNull, bat, so } from "@/lib/form";
 import { homNayHCM } from "@/lib/dinh-dang";
-import { hanMucHieuLuc } from "@/lib/de-xuat";
+import { hanMucHieuLuc, phanTichHangMuc, HINH_THUC_CHI, PHAN_LOAI_VAT } from "@/lib/de-xuat";
 import { buocHienTai, kiemTraDuyet } from "@/lib/quy-trinh-duyet";
 import { coNguoiGiuChucDanhFn, taiBuocDeXuat } from "@/lib/quy-trinh-duyet-server";
 import { vuotNganSach } from "@/lib/ngan-sach";
@@ -165,7 +165,17 @@ export async function guiDeXuat(fd: FormData): Promise<KQ> {
   if (!["mua_sam", "thanh_toan", "tam_ung", "hoan_ung", "hoan_khach"].includes(loai)) return { loi: "Loại đề xuất không hợp lệ." };
   const tieuDe = chuoi(fd, "tieu_de");
   if (!tieuDe) return { loi: "Nhập nội dung đề xuất." };
-  const tien = chuoi(fd, "so_tien") === "" ? null : so(fd, "so_tien");
+  let tien = chuoi(fd, "so_tien") === "" ? null : so(fd, "so_tien");
+  // Tạm ứng chi phí: nhập các hạng mục dự trù thì tổng tiền là tổng hạng mục (như "Tổng tiền dự trù" của phiếu Lark).
+  let hangMuc: { ten: string; so_tien: number }[] | null = null;
+  if (loai === "tam_ung" && chuoi(fd, "hang_muc")) {
+    const hm = phanTichHangMuc(chuoi(fd, "hang_muc"));
+    if ("loi" in hm) return { loi: hm.loi };
+    hangMuc = hm.ds; tien = hm.tong;
+  }
+  const hinhThuc = chuoi(fd, "hinh_thuc_chi"), vat = chuoi(fd, "phan_loai_vat");
+  if (hinhThuc && !HINH_THUC_CHI[hinhThuc]) return { loi: "Hình thức thanh toán không hợp lệ." };
+  if (vat && !PHAN_LOAI_VAT[vat]) return { loi: "Phân loại hoá đơn VAT không hợp lệ." };
   if (tien !== null && (!Number.isInteger(tien) || tien <= 0 || tien > TOI_DA)) return { loi: "Số tiền phải là số đồng lớn hơn 0 và không quá 100 tỷ." };
   if (loai !== "mua_sam" && tien === null) return { loi: "Nhập số tiền." };
   const cn = nd.chiNhanhId ?? chuoi(fd, "chi_nhanh_id");
@@ -200,6 +210,7 @@ export async function guiDeXuat(fd: FormData): Promise<KQ> {
     doi_tuong: loai === "tam_ung" || loai === "hoan_ung" ? null : chuoiHoacNull(fd, "doi_tuong"), chi_nhanh_id: cn, nguoi_gui_id: nd.nhanVienId, han_duyet: chuoiHoacNull(fd, "han_duyet"),
     ngay_can_chi: chuoiHoacNull(fd, "ngay_can_chi"), de_xuat_goc_id: goc, loai_tam_ung: loaiTamUng,
     bo_phan: chuoiHoacNull(fd, "bo_phan"), so_tai_khoan: chuoiHoacNull(fd, "so_tai_khoan"), chu_tai_khoan: chuoiHoacNull(fd, "chu_tai_khoan"), ngan_hang: chuoiHoacNull(fd, "ngan_hang"), link_dinh_kem: chuoiHoacNull(fd, "link_dinh_kem"),
+    khoan_chi: chuoiHoacNull(fd, "khoan_chi"), hinh_thuc_chi: hinhThuc || null, phan_loai_vat: vat || null, hang_muc: hangMuc,
   }).select("id").single();
   if (error || !moi) return { loi: error?.code === "23505" ? "Khoản tạm ứng này đã có hoàn ứng." : thongBaoLoi(error) };
   // Chép chuỗi bước duyệt theo quy trình đang áp dụng. Lỗi thì rút lại đề xuất, tránh đề xuất không ai duyệt được.
@@ -285,8 +296,76 @@ export async function huyDeXuat(fd: FormData): Promise<KQ> {
   if (!nd) return { loi: KHONG_DU_QUYEN };
   const d = await layDeXuat(chuoi(fd, "id"), nd.chiNhanhId);
   if (!d || d.nguoi_gui_id !== nd.nhanVienId) return { loi: KHONG_DU_QUYEN };
-  if (d.trang_thai !== "cho_duyet") return { loi: "Chỉ huỷ được đề xuất đang chờ duyệt." };
-  const { error } = await sb().from("de_xuat").update({ trang_thai: "huy" }).eq("id", d.id).eq("trang_thai", "cho_duyet");
+  if (d.trang_thai !== "cho_duyet" && d.trang_thai !== "can_bo_sung") return { loi: "Chỉ huỷ được đề xuất đang chờ duyệt hoặc đang cần bổ sung." };
+  const { error } = await sb().from("de_xuat").update({ trang_thai: "huy" }).eq("id", d.id).eq("trang_thai", d.trang_thai);
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+/** Trả về "Cần bổ sung chứng từ": người đang giữ bước hiện tại trả phiếu về người lập kèm lý do; người lập sửa rồi gửi lại, chuỗi duyệt chạy lại từ đầu. */
+export async function traVeBoSungDeXuat(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("dexuat.duyet");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const d = await layDeXuat(chuoi(fd, "id"), nd.chiNhanhId);
+  if (!d || d.trang_thai !== "cho_duyet") return { loi: "Đề xuất không ở trạng thái chờ duyệt." };
+  const ly = chuoi(fd, "ly_do");
+  if (!ly) return { loi: "Nhập lý do cần bổ sung." };
+  const buocs = (await taiBuocDeXuat([d.id])).get(d.id) ?? [];
+  const hien = buocHienTai(buocs);
+  if (!hien) return { loi: "Đề xuất này không có quy trình nhiều bước nên không trả về được. Hãy từ chối kèm lý do." };
+  const { data: nv } = await sb().from("nhan_vien").select("chuc_danh_tai_chinh").eq("id", nd.nhanVienId).maybeSingle();
+  const kq = kiemTraDuyet({ nguoi: { nhanVienId: nd.nhanVienId, vaiTro: nd.vaiTro, chucDanhTaiChinh: nv?.chuc_danh_tai_chinh ?? null }, nguoiGuiId: d.nguoi_gui_id, buoc: hien, daDuyetBoi: new Set(), coNguoiGiuChucDanh: await coNguoiGiuChucDanhFn() });
+  if (kq.loi) return { loi: kq.loi };
+  const { error } = await sb().rpc("tra_ve_bo_sung_buoc", { p_buoc: hien.id, p_nguoi: nd.nhanVienId, p_thay: kq.thay, p_ly_do: ly });
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+/** Người lập gửi lại sau khi bổ sung chứng từ (lần gửi + 1). */
+export async function guiLaiDeXuat(fd: FormData): Promise<KQ> {
+  const nd = await kiemNoiBo();
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const { error } = await sb().rpc("gui_lai_de_xuat", { p_de_xuat: chuoi(fd, "id"), p_nguoi: nd.nhanVienId, p_noi_dung: chuoi(fd, "noi_dung"), p_link: chuoi(fd, "link_dinh_kem"), p_ghi_chu: chuoi(fd, "ghi_chu") });
+  if (error) return { loi: thongBaoLoi(error) };
+  lamMoi();
+  return { ok: true };
+}
+
+/** Bút toán Nợ/Có của phiếu (Kế toán tổng hợp điền như bản "có bút toán" bên Lark): ghi nhận chi phí + ghi nhận thanh toán. */
+export async function luuButToanDeXuat(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("quy.ghi");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const d = await layDeXuat(chuoi(fd, "id"), nd.chiNhanhId);
+  if (!d) return { loi: "Không tìm thấy đề xuất." };
+  if (d.dong_ho_so_luc) return { loi: "Hồ sơ đã đóng, không sửa bút toán." };
+  if (!["da_duyet", "da_thuc_hien"].includes(d.trang_thai)) return { loi: "Chỉ điền bút toán cho đề xuất đã duyệt." };
+  const { data: tk } = await sb().from("tai_khoan_ke_toan").select("so_hieu").eq("hoat_dong", true);
+  const hop = new Set((tk ?? []).map((x) => x.so_hieu));
+  const doi = (ma: string) => {
+    const no = chuoi(fd, `${ma}_no`), co = chuoi(fd, `${ma}_co`), tien = Math.round(so(fd, `${ma}_so_tien`));
+    if (!hop.has(no) || !hop.has(co)) return null;
+    if (no === co) return null;
+    if (!Number.isInteger(tien) || tien <= 0 || tien > TOI_DA) return null;
+    return { no, co, so_tien: tien, doi_tuong: chuoiHoacNull(fd, `${ma}_doi_tuong`) };
+  };
+  const ghiNhan = doi("ghi_nhan"), thanhToan = doi("thanh_toan");
+  if (!ghiNhan || !thanhToan) return { loi: "Điền đủ hai bút toán: Nợ, Có (chọn trong danh mục tài khoản, khác nhau) và số tiền lớn hơn 0." };
+  const { error } = await sb().from("de_xuat").update({ but_toan: { ghi_nhan: ghiNhan, thanh_toan: thanhToan } }).eq("id", d.id).is("dong_ho_so_luc", null);
+  if (error) return { loi: thongBaoLoi(error) };
+  await sb().from("de_xuat_lich_su").insert({ de_xuat_id: d.id, nguoi_id: nd.nhanVienId, hanh_dong: "but_toan" });
+  lamMoi();
+  return { ok: true };
+}
+
+/** Đóng hồ sơ sau khi đã chi và đã có bút toán. */
+export async function dongHoSoDeXuat(fd: FormData): Promise<KQ> {
+  const nd = await kiemQuyen("quy.ghi");
+  if (!nd) return { loi: KHONG_DU_QUYEN };
+  const d = await layDeXuat(chuoi(fd, "id"), nd.chiNhanhId);
+  if (!d) return { loi: "Không tìm thấy đề xuất." };
+  const { error } = await sb().rpc("dong_ho_so_de_xuat", { p_de_xuat: d.id, p_nguoi: nd.nhanVienId });
   if (error) return { loi: thongBaoLoi(error) };
   lamMoi();
   return { ok: true };

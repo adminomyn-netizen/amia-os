@@ -3820,8 +3820,29 @@ export type Database = {
         }
         Relationships: []
       }
+      de_xuat_lich_su: {
+        Row: { buoc_ten: string | null; de_xuat_id: string; ghi_chu: string | null; hanh_dong: string; id: string; luc: string; nguoi_id: string | null }
+        Insert: { buoc_ten?: string | null; de_xuat_id: string; ghi_chu?: string | null; hanh_dong: string; id?: string; luc?: string; nguoi_id?: string | null }
+        Update: { buoc_ten?: string | null; de_xuat_id?: string; ghi_chu?: string | null; hanh_dong?: string; id?: string; luc?: string; nguoi_id?: string | null }
+        Relationships: []
+      }
+      tai_khoan_ke_toan: {
+        Row: { hoat_dong: boolean; nhom: string; so_hieu: string; ten: string }
+        Insert: { hoat_dong?: boolean; nhom: string; so_hieu: string; ten: string }
+        Update: { hoat_dong?: boolean; nhom?: string; so_hieu?: string; ten?: string }
+        Relationships: []
+      }
       de_xuat: {
         Row: {
+          khoan_chi: string | null
+          hinh_thuc_chi: string | null
+          phan_loai_vat: string | null
+          hang_muc: Json | null
+          but_toan: Json | null
+          ngay_du_kien_chi: string | null
+          dong_ho_so_luc: string | null
+          nguoi_dong_ho_so_id: string | null
+          lan_gui: number
           bo_phan: string | null
           chu_tai_khoan: string | null
           link_dinh_kem: string | null
@@ -3851,6 +3872,15 @@ export type Database = {
           trang_thai: string
         }
         Insert: {
+          khoan_chi?: string | null
+          hinh_thuc_chi?: string | null
+          phan_loai_vat?: string | null
+          hang_muc?: Json | null
+          but_toan?: Json | null
+          ngay_du_kien_chi?: string | null
+          dong_ho_so_luc?: string | null
+          nguoi_dong_ho_so_id?: string | null
+          lan_gui?: number
           bo_phan?: string | null
           chu_tai_khoan?: string | null
           link_dinh_kem?: string | null
@@ -3880,6 +3910,15 @@ export type Database = {
           trang_thai?: string
         }
         Update: {
+          khoan_chi?: string | null
+          hinh_thuc_chi?: string | null
+          phan_loai_vat?: string | null
+          hang_muc?: Json | null
+          but_toan?: Json | null
+          ngay_du_kien_chi?: string | null
+          dong_ho_so_luc?: string | null
+          nguoi_dong_ho_so_id?: string | null
+          lan_gui?: number
           bo_phan?: string | null
           chu_tai_khoan?: string | null
           link_dinh_kem?: string | null
@@ -14326,6 +14365,18 @@ export type Database = {
       }
       tu_choi_buoc_de_xuat: {
         Args: { p_buoc: string; p_ly_do: string; p_nguoi: string; p_thay: boolean }
+        Returns: undefined
+      }
+      tra_ve_bo_sung_buoc: {
+        Args: { p_buoc: string; p_ly_do: string; p_nguoi: string; p_thay: boolean }
+        Returns: undefined
+      }
+      gui_lai_de_xuat: {
+        Args: { p_de_xuat: string; p_ghi_chu: string; p_link: string; p_noi_dung: string; p_nguoi: string }
+        Returns: undefined
+      }
+      dong_ho_so_de_xuat: {
+        Args: { p_de_xuat: string; p_nguoi: string }
         Returns: undefined
       }
       chi_theo_de_xuat: {

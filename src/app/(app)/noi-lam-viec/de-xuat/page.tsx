@@ -3,7 +3,7 @@ import { yeuCauNoiBo } from "@/lib/auth";
 import { coQuyen } from "@/lib/quyen";
 import { sb } from "@/lib/db";
 import { ngayVN, tienVN, ngayCuaIso } from "@/lib/dinh-dang";
-import { LOAI_DX, TT_DX } from "@/lib/de-xuat";
+import { LOAI_DX, TT_DX, KHOAN_CHI, HINH_THUC_CHI, PHAN_LOAI_VAT } from "@/lib/de-xuat";
 import { TieuDeNoi } from "@/components/ui/TieuDeNoi";
 import { Tab } from "@/components/ui/Tab";
 import { Bang } from "@/components/ui/Table";
@@ -11,7 +11,7 @@ import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
 import { buocHienTai, soTienBangChu } from "@/lib/quy-trinh-duyet";
 import { taiBuocDeXuat } from "@/lib/quy-trinh-duyet-server";
-import { guiDeXuat, huyDeXuat } from "../actions";
+import { guiDeXuat, huyDeXuat, guiLaiDeXuat } from "../actions";
 
 const TAB = [{ ma: "mua-sam", ten: "Mua sắm" }, { ma: "thanh-toan", ten: "Thanh toán" }, { ma: "tam-ung", ten: "Tạm ứng" }, { ma: "hoan-ung", ten: "Hoàn ứng" }, { ma: "hoan-khach", ten: "Hoàn trả khách" }];
 const LOAI = { "mua-sam": "mua_sam", "thanh-toan": "thanh_toan", "tam-ung": "tam_ung", "hoan-ung": "hoan_ung", "hoan-khach": "hoan_khach" } as const;
@@ -50,6 +50,12 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
     { ten: "so_tien", nhan: loai === "mua_sam" ? "Dự toán (không bắt buộc)" : loai === "hoan_ung" ? "Tổng chi thực tế" : "Số tiền", loai: "tien", batBuoc: loai !== "mua_sam" },
     ...(loai === "tam_ung" || loai === "hoan_ung" ? [] : [{ ten: "doi_tuong", nhan: loai === "mua_sam" ? "Nhà cung cấp dự kiến" : "Trả cho", loai: "chu" as const }]),
     ...(nd.chiNhanhId ? [] : [{ ten: "chi_nhanh_id", nhan: "Chi nhánh", loai: "chon" as const, luaChon: (cn ?? []).map((c) => ({ gia_tri: c.id, nhan: c.ten })), batBuoc: true }]),
+    ...(loai === "thanh_toan" || loai === "tam_ung" ? [
+      { ten: "khoan_chi", nhan: "Khoản chi", loai: "chon" as const, batBuoc: true, luaChon: KHOAN_CHI.map((k) => ({ gia_tri: k, nhan: k })) },
+      { ten: "hinh_thuc_chi", nhan: "Hình thức thanh toán", loai: "chon" as const, batBuoc: true, luaChon: Object.entries(HINH_THUC_CHI).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
+    ] : []),
+    ...(loai === "thanh_toan" ? [{ ten: "phan_loai_vat", nhan: "Phân loại chi phí (hoá đơn VAT)", loai: "chon" as const, luaChon: Object.entries(PHAN_LOAI_VAT).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) }] : []),
+    ...(loai === "tam_ung" ? [{ ten: "hang_muc", nhan: "Hạng mục chi phí dự trù (mỗi dòng: Tên hạng mục | số tiền). Có hạng mục thì tổng tiền tự tính", loai: "nhieu_dong" as const, rong: true }] : []),
     ...(loai === "thanh_toan" || loai === "tam_ung" || loai === "hoan_khach" ? [
       { ten: "bo_phan", nhan: "Bộ phận", loai: "chu" as const },
       { ten: "ngan_hang", nhan: "Ngân hàng nhận tiền", loai: "chu" as const },
@@ -74,11 +80,12 @@ export default async function TrangDeXuat({ searchParams }: { searchParams: Prom
       )}
       <Bang noi duLieu={dx ?? []} khoa={(r) => r.id} trong="Chưa có đề xuất nào."
         cot={[
-          { nhan: "Mã", chinh: true, hienThi: (r) => r.ma }, { nhan: "Nội dung", hienThi: (r) => <div><span className="text-muc">{r.tieu_de}</span>{r.noi_dung && <div className="mt-0.5 text-[13px] text-muc-3">{r.noi_dung}</div>}{r.ly_do && <div className="mt-0.5 text-[13px] text-loi">Lý do từ chối: {r.ly_do}</div>}</div> },
+          { nhan: "Mã", chinh: true, hienThi: (r) => r.ma }, { nhan: "Nội dung", hienThi: (r) => <div><span className="text-muc">{r.tieu_de}</span>{r.noi_dung && <div className="mt-0.5 text-[13px] text-muc-3">{r.noi_dung}</div>}{Array.isArray(r.hang_muc) && r.hang_muc.length > 0 && <ul className="mt-1 text-[12.5px] text-muc-3">{(r.hang_muc as { ten: string; so_tien: number }[]).map((h, i) => <li key={i}>• {h.ten}: {tienVN(h.so_tien)}</li>)}</ul>}{r.lan_gui > 1 && <div className="text-[12.5px] text-muc-3">Gửi lần {r.lan_gui}</div>}{r.ly_do && <div className="mt-0.5 text-[13px] text-loi">Lý do từ chối: {r.ly_do}</div>}</div> },
           { nhan: "Người gửi", hienThi: (r) => ten.get(r.nguoi_gui_id) ?? "" }, { nhan: "Ngày gửi", hienThi: (r) => ngayVN(ngayCuaIso(r.tao_luc)) },
           { nhan: "Số tiền", phai: true, hienThi: (r) => (r.so_tien ? <div>{tienVN(r.so_tien)}<div className="ml-auto max-w-[220px] text-[12px] leading-snug text-muc-3">{soTienBangChu(r.so_tien)}</div></div> : "") },
           { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={TT_DX[r.trang_thai].kieu}>{r.trang_thai === "cho_duyet" && buocHienTai(buocTheoDx.get(r.id) ?? []) ? `Chờ: ${buocHienTai(buocTheoDx.get(r.id) ?? [])?.ten}` : TT_DX[r.trang_thai].ten}</NhanTrangThai> },
-          { nhan: "", hienThi: (r) => (r.nguoi_gui_id === nd.nhanVienId && r.trang_thai === "cho_duyet" ? <NutHop kieu="chu" nguy nhan="Huỷ" tieuDe="Huỷ đề xuất" xacNhan={`Huỷ đề xuất ${r.ma}?`} action={huyDeXuat} an={{ id: r.id }} nhanLuu="Huỷ đề xuất" /> : null) },
+          { nhan: "", hienThi: (r) => (r.nguoi_gui_id === nd.nhanVienId && r.trang_thai === "can_bo_sung" ? <span className="flex justify-end gap-3"><NutHop kieu="chu" nhan="Bổ sung và gửi lại" tieuDe={`Gửi lại ${r.ma} (lần ${r.lan_gui + 1})`} moTa={`Người duyệt yêu cầu: ${r.ly_do ?? ""}`} action={guiLaiDeXuat} an={{ id: r.id }} nhanLuu="Gửi lại" giaTri={{ noi_dung: r.noi_dung ?? "", link_dinh_kem: r.link_dinh_kem ?? "" }}
+            truong={[{ ten: "noi_dung", nhan: "Chi tiết (sửa nếu cần)", loai: "nhieu_dong", rong: true }, { ten: "link_dinh_kem", nhan: "Link hồ sơ / chứng từ đã bổ sung", loai: "chu", rong: true }, { ten: "ghi_chu", nhan: "Ghi chú cho người duyệt", loai: "nhieu_dong", rong: true }]} /><NutHop kieu="chu" nguy nhan="Huỷ" tieuDe="Huỷ đề xuất" xacNhan={`Huỷ đề xuất ${r.ma}?`} action={huyDeXuat} an={{ id: r.id }} nhanLuu="Huỷ đề xuất" /></span> : r.nguoi_gui_id === nd.nhanVienId && r.trang_thai === "cho_duyet" ? <NutHop kieu="chu" nguy nhan="Huỷ" tieuDe="Huỷ đề xuất" xacNhan={`Huỷ đề xuất ${r.ma}?`} action={huyDeXuat} an={{ id: r.id }} nhanLuu="Huỷ đề xuất" /> : null) },
         ]} />
     </div>
   );

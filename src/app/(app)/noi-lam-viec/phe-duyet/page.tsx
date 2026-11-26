@@ -12,19 +12,41 @@ import { Bang } from "@/components/ui/Table";
 import { HangChiSo } from "@/components/ui/HangChiSo";
 import { NhanTrangThai } from "@/components/ui/NhanTrangThai";
 import { NutHop, type Truong } from "@/components/ui/BieuMau";
+import { buocHienTai, kiemTraDuyet, moTaNguoiDuyet, soTienBangChu, type BuocDuyet } from "@/lib/quy-trinh-duyet";
+import { coNguoiGiuChucDanhFn, taiBuocDeXuat } from "@/lib/quy-trinh-duyet-server";
 import { duyetDeXuat, tuChoiDeXuat, chiTheoDeXuat, lapDonMuaTuDeXuat } from "../actions";
 import { duyetDonMua, tuChoiDonMua } from "@/app/(app)/kho-mua-sam/actions";
 import { duyetPhieuHr, tuChoiPhieuHr } from "@/app/(app)/nhan-su/actions";
 
 type Dong = {
   khoa: string; nguon: "dx" | "dm" | "hr"; soNgay?: number; id: string; ma: string; loai: string; tieuDe: string; nguoiGui: string | null; chiNhanh: string; tien: number | null;
-  tt: string; ttTen: string; kieu: "tot" | "cho" | "loi" | "tram"; luc: string; han: string | null; ly: string | null; loaiDx?: string; quy?: string | null;
+  tt: string; ttTen: string; kieu: "tot" | "cho" | "loi" | "tram"; luc: string; han: string | null; ly: string | null; loaiDx?: string; quy?: string | null; buoc?: BuocDuyet[]; chiaGhi?: boolean;
 };
 
 const TAB = [
   { ma: "tat-ca", ten: "Tất cả" }, { ma: "hr", ten: "Nghỉ phép · OT · HR" }, { ma: "cho-duyet", ten: "Chờ tôi duyệt" }, { ma: "cho-thuc-hien", ten: "Chờ thực hiện" },
   { ma: "toi-gui", ten: "Tôi đã gửi" }, { ma: "da-xu-ly", ten: "Đã xử lý" }, { ma: "tu-choi", ten: "Bị từ chối" },
 ];
+
+/** Tiến trình các bước duyệt: ✓ đã duyệt (ai), ● đang chờ, ○ chưa tới lượt, ✕ từ chối. */
+function ChuoiBuoc({ buoc, ten }: { buoc: BuocDuyet[]; ten: Map<string, string> }) {
+  const hom = homNayHCM();
+  return (
+    <ol className="mt-1.5 space-y-0.5 text-[12.5px] leading-snug text-muc-3">
+      {buoc.map((b) => {
+        const hien = b.trang_thai === "cho" && buocHienTai(buoc)?.id === b.id;
+        const dau = b.trang_thai === "da_duyet" ? "✓" : b.trang_thai === "tu_choi" ? "✕" : hien ? "●" : "○";
+        return (
+          <li key={b.id} className={b.trang_thai === "tu_choi" ? "text-loi" : hien ? "font-medium text-muc" : ""}>
+            {dau} {b.ten}
+            {b.nguoi_id ? ` · ${ten.get(b.nguoi_id) ?? ""}${b.duyet_thay ? " (duyệt thay)" : ""}` : hien ? ` · ${moTaNguoiDuyet(b)}` : ""}
+            {hien && b.han_xu_ly && b.han_xu_ly < hom ? <span className="text-loi"> · quá hạn</span> : null}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
 
 export default async function TrangPheDuyet({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   const nd = await yeuCauNoiBo();
@@ -43,11 +65,14 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
   const [{ data: dx }, { data: dm }, { data: hr }, { data: nv }, { data: cn }, { data: quy }, { data: ncc }, { data: ltc }] = await Promise.all([
     qx, coDm ? qm : Promise.resolve({ data: [] as never[] }),
     (xemHr ? db.from("phieu_hr").select("*").order("tao_luc", { ascending: false }).limit(300) : db.from("phieu_hr").select("*").or(`nhan_vien_id.eq.${nd.nhanVienId},nguoi_gui_id.eq.${nd.nhanVienId}`).order("tao_luc", { ascending: false }).limit(100)),
-    db.from("nhan_vien").select("id, ho_ten, chi_nhanh_id"), db.from("chi_nhanh").select("id, ten"),
+    db.from("nhan_vien").select("id, ho_ten, chi_nhanh_id, chuc_danh_tai_chinh"), db.from("chi_nhanh").select("id, ten"),
     chi ? db.from("quy").select("id, ten, chi_nhanh_id").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
     lapDon ? db.from("nha_cung_cap").select("id, ten").eq("hoat_dong", true).order("ten") : Promise.resolve({ data: [] }),
     chi ? db.from("loai_thu_chi").select("id, ten").eq("huong", "chi").eq("he_thong", false).eq("hoat_dong", true).order("thu_tu") : Promise.resolve({ data: [] }),
   ]);
+  const buocTheoDx = await taiBuocDeXuat((dx ?? []).map((r) => r.id));
+  const coGiu = await coNguoiGiuChucDanhFn();
+  const chucDanhToi = (nv ?? []).find((n) => n.id === nd.nhanVienId)?.chuc_danh_tai_chinh ?? null;
   const ids = (dm ?? []).map((d) => d.id);
   const { data: dong } = ids.length ? await db.from("don_mua_dong").select("don_mua_id, so_luong, don_gia").in("don_mua_id", ids) : { data: [] };
   const tongDm = new Map<string, number>();
@@ -61,12 +86,17 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
     nguoiGui: r.nhan_vien_id, chiNhanh: tenCn.get(cnCua.get(r.nhan_vien_id) ?? "") ?? "", tien: null, tt: r.trang_thai, ttTen: TT_PHIEU[r.trang_thai].ten, kieu: TT_PHIEU[r.trang_thai].kieu, luc: r.tao_luc, han: null, ly: r.ly_do_duyet && r.trang_thai === "tu_choi" ? r.ly_do_duyet : null,
   }));
   const tatCa: Dong[] = [
-    ...(dx ?? []).map((r): Dong => ({ khoa: `dx${r.id}`, nguon: "dx", id: r.id, ma: r.ma, loai: `Đề xuất ${LOAI_DX[r.loai as keyof typeof LOAI_DX].toLowerCase()}`, tieuDe: r.tieu_de, nguoiGui: r.nguoi_gui_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: r.so_tien, tt: r.trang_thai, ttTen: TT_DX[r.trang_thai].ten, kieu: TT_DX[r.trang_thai].kieu, luc: r.tao_luc, han: r.han_duyet, ly: r.ly_do, loaiDx: r.loai })),
+    ...(dx ?? []).map((r): Dong => ({ khoa: `dx${r.id}`, nguon: "dx", id: r.id, ma: r.ma, loai: `Đề xuất ${LOAI_DX[r.loai as keyof typeof LOAI_DX].toLowerCase()}`, tieuDe: r.tieu_de, nguoiGui: r.nguoi_gui_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: r.so_tien, tt: r.trang_thai, ttTen: TT_DX[r.trang_thai].ten, kieu: TT_DX[r.trang_thai].kieu, luc: r.tao_luc, han: buocHienTai(buocTheoDx.get(r.id) ?? [])?.han_xu_ly ?? r.han_duyet, ly: r.ly_do, loaiDx: r.loai, buoc: buocTheoDx.get(r.id) })),
     ...(dm ?? []).map((r): Dong => ({ khoa: `dm${r.id}`, nguon: "dm", id: r.id, ma: r.ma, loai: "Đơn mua hàng", tieuDe: r.ghi_chu || "Đơn mua hàng", nguoiGui: r.nguoi_tao_id, chiNhanh: tenCn.get(r.chi_nhanh_id) ?? "", tien: tongDm.get(r.id) ?? 0, tt: r.trang_thai, ttTen: TT_DON[r.trang_thai].ten, kieu: TT_DON[r.trang_thai].kieu, luc: r.tao_luc, han: null, ly: r.ly_do })),
     ...hrDong,
   ].sort((a, b) => b.luc.localeCompare(a.luc));
 
-  const choToiDuyet = (r: Dong) => r.tt === "cho_duyet" && (r.nguon === "dx" ? duyetDx : r.nguon === "hr" ? duyetHr : duyetDm) && (r.nguoiGui !== nd.nhanVienId || nd.vaiTro === "ky_thuat") && (r.nguon !== "hr" || (r.soNgay ?? 0) < 4 || r.loai !== "Phiếu nghỉ" || coQuyen(nd, "nghi.duyet_bgd"));
+  const toiDuyetDuocBuoc = (r: Dong) => {
+    const hien = buocHienTai(r.buoc ?? []);
+    if (!hien) return false;
+    return kiemTraDuyet({ nguoi: { nhanVienId: nd.nhanVienId, vaiTro: nd.vaiTro, chucDanhTaiChinh: chucDanhToi }, nguoiGuiId: r.nguoiGui ?? "", buoc: hien, daDuyetBoi: new Set((r.buoc ?? []).filter((b) => b.trang_thai === "da_duyet" && b.nguoi_id).map((b) => b.nguoi_id as string)), coNguoiGiuChucDanh: coGiu }).loi === null;
+  };
+  const choToiDuyet = (r: Dong) => r.tt === "cho_duyet" && (r.nguon === "dx" && r.buoc?.length ? toiDuyetDuocBuoc(r) : (r.nguon === "dx" ? duyetDx : r.nguon === "hr" ? duyetHr : duyetDm) && (r.nguoiGui !== nd.nhanVienId || nd.vaiTro === "ky_thuat")) && (r.nguon !== "hr" || (r.soNgay ?? 0) < 4 || r.loai !== "Phiếu nghỉ" || coQuyen(nd, "nghi.duyet_bgd"));
   const choThucHien = (r: Dong) => r.nguon === "dx" && r.tt === "da_duyet" && (r.loaiDx === "mua_sam" ? lapDon : chi);
   const daXuLy = (r: Dong) => ["da_duyet", "da_thuc_hien", "tu_choi", "huy", "dang_nhan", "da_nhan"].includes(r.tt) && !choThucHien(r);
   const loc: Record<string, (r: Dong) => boolean> = {
@@ -88,9 +118,12 @@ export default async function TrangPheDuyet({ searchParams }: { searchParams: Pr
           { nhan: "Loại", chinh: true, hienThi: (r) => <div><div className="text-muc">{r.loai}</div><div className="text-[12.5px] text-muc-3">{r.ma}</div></div> },
           { nhan: "Nội dung", hienThi: (r) => <div><span className="text-muc">{r.tieuDe}</span>{r.ly && <div className="mt-0.5 text-[13px] text-loi">{r.ly}</div>}</div> },
           { nhan: "Người gửi", hienThi: (r) => <div>{ten.get(r.nguoiGui ?? "") ?? ""}<div className="text-[12.5px] text-muc-3">{r.chiNhanh} · {ngayVN(ngayCuaIso(r.luc))}</div></div> },
-          { nhan: "Số tiền", phai: true, hienThi: (r) => (r.tien ? tienVN(r.tien) : "") },
+          { nhan: "Số tiền", phai: true, hienThi: (r) => (r.tien ? <div>{tienVN(r.tien)}<div className="max-w-[220px] text-[12px] leading-snug text-muc-3">{soTienBangChu(r.tien)}</div></div> : "") },
           { nhan: "Hạn duyệt", hienThi: (r) => (r.han && r.tt === "cho_duyet" ? <span className={r.han < hom ? "text-loi" : ""}>{ngayVN(r.han)}{r.han < hom ? " · quá hạn" : ""}</span> : "") },
-          { nhan: "Trạng thái", hienThi: (r) => <NhanTrangThai kieu={r.kieu}>{r.ttTen}</NhanTrangThai> },
+          { nhan: "Trạng thái", hienThi: (r) => {
+            const hien = buocHienTai(r.buoc ?? []);
+            return <div><NhanTrangThai kieu={r.kieu}>{r.tt === "cho_duyet" && hien ? `Chờ: ${hien.ten}` : r.ttTen}</NhanTrangThai>{r.buoc?.length ? <ChuoiBuoc buoc={r.buoc} ten={ten} /> : null}</div>;
+          } },
           { nhan: "", hienThi: (r) => {
             const nut = [];
             if (choToiDuyet(r)) {

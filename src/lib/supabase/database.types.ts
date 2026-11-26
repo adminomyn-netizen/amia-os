@@ -3664,8 +3664,169 @@ export type Database = {
           },
         ]
       }
+      de_xuat_buoc_duyet: {
+        Row: {
+          de_xuat_id: string
+          du_phong_vai_tro: string[]
+          ghi_chu: string | null
+          han_xu_ly: string | null
+          id: string
+          kiem_han_muc: boolean
+          luc: string | null
+          nguoi_duyet_gia_tri: string | null
+          nguoi_duyet_loai: string
+          nguoi_id: string | null
+          sla_ngay: number
+          ten: string
+          thu_tu: number
+          trang_thai: string
+          duyet_thay: boolean
+        }
+        Insert: {
+          de_xuat_id: string
+          du_phong_vai_tro?: string[]
+          ghi_chu?: string | null
+          han_xu_ly?: string | null
+          id?: string
+          kiem_han_muc?: boolean
+          luc?: string | null
+          nguoi_duyet_gia_tri?: string | null
+          nguoi_duyet_loai: string
+          nguoi_id?: string | null
+          sla_ngay?: number
+          ten: string
+          thu_tu: number
+          trang_thai?: string
+          duyet_thay?: boolean
+        }
+        Update: {
+          de_xuat_id?: string
+          du_phong_vai_tro?: string[]
+          ghi_chu?: string | null
+          han_xu_ly?: string | null
+          id?: string
+          kiem_han_muc?: boolean
+          luc?: string | null
+          nguoi_duyet_gia_tri?: string | null
+          nguoi_duyet_loai?: string
+          nguoi_id?: string | null
+          sla_ngay?: number
+          ten?: string
+          thu_tu?: number
+          trang_thai?: string
+          duyet_thay?: boolean
+        }
+        Relationships: []
+      }
+      quy_trinh_duyet: {
+        Row: {
+          cap_nhat_boi: string | null
+          cap_nhat_luc: string
+          hoat_dong: boolean
+          ma: string
+          ma_lark: string | null
+          mo_ta: string | null
+          ten: string
+        }
+        Insert: {
+          cap_nhat_boi?: string | null
+          cap_nhat_luc?: string
+          hoat_dong?: boolean
+          ma: string
+          ma_lark?: string | null
+          mo_ta?: string | null
+          ten: string
+        }
+        Update: {
+          cap_nhat_boi?: string | null
+          cap_nhat_luc?: string
+          hoat_dong?: boolean
+          ma?: string
+          ma_lark?: string | null
+          mo_ta?: string | null
+          ten?: string
+        }
+        Relationships: []
+      }
+      quy_trinh_duyet_buoc: {
+        Row: {
+          du_phong_vai_tro: string[]
+          id: string
+          kiem_han_muc: boolean
+          nguoi_duyet_gia_tri: string | null
+          nguoi_duyet_loai: string
+          nguong_quy_tac: string | null
+          quy_trinh_ma: string
+          sla_ngay: number
+          ten: string
+          thu_tu: number
+        }
+        Insert: {
+          du_phong_vai_tro?: string[]
+          id?: string
+          kiem_han_muc?: boolean
+          nguoi_duyet_gia_tri?: string | null
+          nguoi_duyet_loai: string
+          nguong_quy_tac?: string | null
+          quy_trinh_ma: string
+          sla_ngay?: number
+          ten: string
+          thu_tu: number
+        }
+        Update: {
+          du_phong_vai_tro?: string[]
+          id?: string
+          kiem_han_muc?: boolean
+          nguoi_duyet_gia_tri?: string | null
+          nguoi_duyet_loai?: string
+          nguong_quy_tac?: string | null
+          quy_trinh_ma?: string
+          sla_ngay?: number
+          ten?: string
+          thu_tu?: number
+        }
+        Relationships: []
+      }
+      quy_trinh_duyet_nhat_ky: {
+        Row: {
+          hanh_dong: string
+          id: string
+          luc: string
+          ly_do: string | null
+          nguoi_id: string
+          quy_trinh_ma: string | null
+          sau: Json | null
+          truoc: Json | null
+        }
+        Insert: {
+          hanh_dong: string
+          id?: string
+          luc?: string
+          ly_do?: string | null
+          nguoi_id: string
+          quy_trinh_ma?: string | null
+          sau?: Json | null
+          truoc?: Json | null
+        }
+        Update: {
+          hanh_dong?: string
+          id?: string
+          luc?: string
+          ly_do?: string | null
+          nguoi_id?: string
+          quy_trinh_ma?: string | null
+          sau?: Json | null
+          truoc?: Json | null
+        }
+        Relationships: []
+      }
       de_xuat: {
         Row: {
+          bo_phan: string | null
+          chu_tai_khoan: string | null
+          link_dinh_kem: string | null
+          ngan_hang: string | null
+          so_tai_khoan: string | null
           chi_nhanh_id: string
           de_xuat_goc_id: string | null
           doi_tuong: string | null
@@ -3690,6 +3851,11 @@ export type Database = {
           trang_thai: string
         }
         Insert: {
+          bo_phan?: string | null
+          chu_tai_khoan?: string | null
+          link_dinh_kem?: string | null
+          ngan_hang?: string | null
+          so_tai_khoan?: string | null
           chi_nhanh_id: string
           de_xuat_goc_id?: string | null
           doi_tuong?: string | null
@@ -3714,6 +3880,11 @@ export type Database = {
           trang_thai?: string
         }
         Update: {
+          bo_phan?: string | null
+          chu_tai_khoan?: string | null
+          link_dinh_kem?: string | null
+          ngan_hang?: string | null
+          so_tai_khoan?: string | null
           chi_nhanh_id?: string
           de_xuat_goc_id?: string | null
           doi_tuong?: string | null
@@ -14143,6 +14314,18 @@ export type Database = {
           p_nguoi: string
           p_quy: string
         }
+        Returns: undefined
+      }
+      tao_buoc_duyet: {
+        Args: { p_de_xuat: string }
+        Returns: number
+      }
+      duyet_buoc_de_xuat: {
+        Args: { p_buoc: string; p_ghi_chu: string; p_nguoi: string; p_thay: boolean }
+        Returns: undefined
+      }
+      tu_choi_buoc_de_xuat: {
+        Args: { p_buoc: string; p_ly_do: string; p_nguoi: string; p_thay: boolean }
         Returns: undefined
       }
       chi_theo_de_xuat: {

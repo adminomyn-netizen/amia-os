@@ -207,7 +207,7 @@ export const MODULE: Module[] = [
         { ten: "Vai trò & quyền", moTa: "Bảng mỗi vai trò mặc định làm được những gì.", duongDan: "/cai-dat/vai-tro", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Chính sách hoa hồng từ 11/2026", moTa: "Tỉ lệ PL05, PL06, danh mục gói thẻ, nhóm hưởng từng người, đơn giá phí trị liệu, giá khuyến mại.", duongDan: "/hoa-hong/chinh-sach/cai-dat", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
         { ten: "Cấu hình hoa hồng (đến 10/2026)", moTa: "Tỉ lệ hoa hồng theo loại và vai, kiểu SalonHero — dùng cho các tháng trước 11/2026.", duongDan: "/hoa-hong", trangThai: "san_sang", quyen: ["baocao.tien"] },
-        { ten: "Chính sách phê duyệt", moTa: "Thao tác nào cần duyệt, ai duyệt, ngưỡng tiền.", duongDan: "/cai-dat/chinh-sach-duyet", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },
+        { ten: "Quy trình phê duyệt", moTa: "Chuỗi người duyệt từng loại đề xuất, ngưỡng tiền, chức danh tài chính. Mọi người xem được, chỉ anh Nam sửa.", duongDan: "/cai-dat/quy-trinh-duyet", trangThai: "san_sang", quyen: ["noibo.dung"] },
       ] },
       { nhan: "Khách hàng & đặt lịch", the: [
         { ten: "Điểm khách hàng", moTa: "Quy đổi tiền thành điểm, điểm thành tiền, mức điểm từng hạng khách.", duongDan: "/cai-dat/diem-thuong", trangThai: "san_sang", quyen: ["hethong.phanquyen"] },

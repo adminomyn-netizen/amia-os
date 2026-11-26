@@ -11,10 +11,12 @@ import { datDangKyTuDo, datLaiMatKhau, suaNhanVien, taoNhanVien, xoaNhanVien } f
 import { ngayVN } from "@/lib/dinh-dang";
 import { CHUC_DANH_TC } from "@/lib/de-xuat";
 import { KHUNG_LAM, TT_LAM } from "@/lib/nhan-su";
+import { laNguoiSuaQuyTrinh } from "@/lib/quy-trinh-duyet-server";
 import { giaTriVaiTheoChiNhanh, truongVaiTheoChiNhanh } from "./truong-chi-nhanh";
 
 export default async function TrangNhanVien({ searchParams }: { searchParams: Promise<{ nghi?: string }> }) {
-  await yeuCauQuyen("hethong.phanquyen");
+  const ndTrang = await yeuCauQuyen("hethong.phanquyen");
+  const nguoiSuaQT = await laNguoiSuaQuyTrinh(ndTrang.nhanVienId);
   const hienNghi = (await searchParams).nghi === "1";
   const db = sb();
   const [{ data: moDk }, { data: ds }, { data: cn }] = await Promise.all([db.from("cau_hinh").select("gia_tri").eq("khoa", "dang_ky.mo").maybeSingle(), db.from("nhan_vien").select("id, user_id, ho_ten, email, dien_thoai, vai_tro, chuc_danh, chi_nhanh_id, hoat_dong, quyen_rieng, han_muc_duyet, chuc_danh_tai_chinh, ma_nv, ngay_vao_lam, ngay_vao_chinh_thuc, trang_thai_lam, khung_lam_viec, vai_tro_chuyen_mon, them:nhan_vien_chi_nhanh!nhan_vien_chi_nhanh_nhan_vien_id_fkey(chi_nhanh_id, vai_tro)").order("ho_ten"), db.from("chi_nhanh").select("id, ten").eq("hoat_dong", true).order("thu_tu").order("ma")]);
@@ -37,7 +39,7 @@ export default async function TrangNhanVien({ searchParams }: { searchParams: Pr
     { ten: "email", nhan: "Email đăng nhập (bỏ trống nếu không cần tài khoản)", loai: "email", rong: true },
     { ten: "mat_khau", nhan: "Mật khẩu ban đầu (bỏ trống = 12345678; người dùng buộc đổi khi vào lần đầu)", loai: "mat_khau", rong: true },
   ];
-  const truongSua: Truong[] = [...chung,
+  const truongSuaDayDu: Truong[] = [...chung,
     { ten: "trang_thai_lam", nhan: "Trạng thái làm việc (Nghỉ việc / Khoá = không đăng nhập được)", loai: "chon", rong: true, luaChon: Object.entries(TT_LAM).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
     { ten: "ngay_vao_lam", nhan: "Ngày vào làm", loai: "ngay" }, { ten: "ngay_vao_chinh_thuc", nhan: "Ngày vào chính thức (tính phép năm)", loai: "ngay" },
     { ten: "khung_lam_viec", nhan: "Khung làm việc / chấm công", loai: "chon", rong: true, luaChon: Object.entries(KHUNG_LAM).map(([gia_tri, nhan]) => ({ gia_tri, nhan })) },
@@ -45,6 +47,8 @@ export default async function TrangNhanVien({ searchParams }: { searchParams: Pr
     { ten: "chuc_danh_tai_chinh", nhan: "Chức danh tài chính (nếu có)", loai: "chon", luaChon: [{ gia_tri: "", nhan: "Không có" }, ...Object.entries(CHUC_DANH_TC).map(([gia_tri, nhan]) => ({ gia_tri, nhan }))] },
     { ten: "han_muc_duyet", nhan: "Hạn mức duyệt chi (đ). Bỏ trống = theo vai trò (Kỹ thuật, Quản lý không giới hạn; vai trò khác không duyệt tiền)", loai: "so", rong: true },
     { ten: "hoat_dong", nhan: "Đang làm việc / được đăng nhập", loai: "gat" }];
+  // Chức danh tài chính và hạn mức duyệt chỉ anh Nam được đổi: người khác không thấy hai ô này.
+  const truongSua = truongSuaDayDu.filter((t) => nguoiSuaQT || (t.ten !== "chuc_danh_tai_chinh" && t.ten !== "han_muc_duyet"));
 
   return (
     <>

@@ -1,4 +1,4 @@
-export const LOAI_DX = { mua_sam: "Mua sắm", thanh_toan: "Thanh toán", tam_ung: "Tạm ứng lương", hoan_ung: "Hoàn ứng", hoan_khach: "Hoàn trả khách" } as const;
+export const LOAI_DX = { mua_sam: "Mua sắm", thanh_toan: "Thanh toán", tam_ung: "Tạm ứng", hoan_ung: "Hoàn ứng", hoan_khach: "Hoàn trả khách" } as const;
 export const CHUC_DANH_TC: Record<string, string> = {
   ke_toan_truong: "Kế toán trưởng", ke_toan_thu: "Kế toán thu", ke_toan_chi: "Kế toán chi", ke_toan_vat_tu: "Kế toán vật tư", thu_quy: "Thủ quỹ",
   giam_doc_cong_ty: "Giám đốc công ty", giam_doc_chi_nhanh: "Giám đốc chi nhánh",

@@ -8,6 +8,7 @@ import { bat, chuoi, chuoiHoacNull, mang, so } from "@/lib/form";
 import { laVaiTro, NHOM_QUYEN } from "@/lib/quyen";
 import { MK_MAC_DINH } from "@/lib/mat-khau";
 import { vaiGanTheoChiNhanh } from "@/lib/vai-chi-nhanh";
+import { laNguoiSuaQuyTrinh } from "@/lib/quy-trinh-duyet-server";
 import { TIEN_TO_VAI_CN } from "./truong-chi-nhanh";
 
 type KQ = { ok?: true; loi?: string };
@@ -75,6 +76,7 @@ export async function suaNhanVien(fd: FormData): Promise<KQ> {
   const vaiTro = chuoi(fd, "vai_tro");
   if (!laVaiTro(vaiTro)) return { loi: "Chọn vai trò." };
   const db = sb();
+  const nguoiSuaQT = await laNguoiSuaQuyTrinh(nd.nhanVienId);
   const { data: cu } = await db.from("nhan_vien").select("user_id, vai_tro").eq("id", id).maybeSingle();
   if (!cu) return { loi: "Không tìm thấy nhân viên." };
   const ttLam = ["dang_lam", "tam_nghi", "nghi_viec", "khoa"].includes(chuoi(fd, "trang_thai_lam")) ? chuoi(fd, "trang_thai_lam") : "dang_lam";
@@ -87,7 +89,8 @@ export async function suaNhanVien(fd: FormData): Promise<KQ> {
     ho_ten: chuoi(fd, "ho_ten"), vai_tro: vaiTro, chuc_danh: chuoiHoacNull(fd, "chuc_danh"), dien_thoai: chuoiHoacNull(fd, "dien_thoai"),
     chi_nhanh_id: chuoiHoacNull(fd, "chi_nhanh_id"), hoat_dong: hoatDong,
     trang_thai_lam: ttLuu, khung_lam_viec: khung, ngay_vao_lam: chuoiHoacNull(fd, "ngay_vao_lam"), ngay_vao_chinh_thuc: chuoiHoacNull(fd, "ngay_vao_chinh_thuc"), vai_tro_chuyen_mon: mang(fd, "vai_tro_chuyen_mon"),
-    chuc_danh_tai_chinh: chuoiHoacNull(fd, "chuc_danh_tai_chinh"), han_muc_duyet: chuoiHoacNull(fd, "han_muc_duyet") === null ? null : Math.max(0, Math.round(so(fd, "han_muc_duyet"))),
+    // Chức danh tài chính và hạn mức duyệt chỉ anh Nam được đổi (chị Lâm chốt 26/11/2026); người khác lưu hồ sơ thì hai trường này giữ nguyên.
+    ...(nguoiSuaQT ? { chuc_danh_tai_chinh: chuoiHoacNull(fd, "chuc_danh_tai_chinh"), han_muc_duyet: chuoiHoacNull(fd, "han_muc_duyet") === null ? null : Math.max(0, Math.round(so(fd, "han_muc_duyet"))) } : {}),
   }).eq("id", id);
   if (error) return { loi: thongBaoLoi(error) };
   const loiCn = await luuVaiTheoChiNhanh(id, chuoiHoacNull(fd, "chi_nhanh_id"), vaiTro, fd, nd.nhanVienId);

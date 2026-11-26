@@ -37,14 +37,13 @@ export function duocDuyetBuoc(nguoi: NguoiXet, b: Pick<BuocDuyet, "nguoi_duyet_l
 }
 
 /**
- * Kiểm cả bộ quy tắc: không tự duyệt đề xuất mình gửi, một người không duyệt hai bước của cùng một đề xuất (bất kiêm nhiệm), đúng vị trí của bước.
+ * Kiểm cả bộ quy tắc: không tự duyệt đề xuất mình gửi, đúng vị trí của bước. Một người được duyệt nhiều bước của cùng đề xuất (y hệt Lark: kế toán trưởng đứng hai bước ở nhiều phiếu thật).
  * Kỹ thuật được duyệt thay mọi bước (ghi "duyệt thay"), như luật cũ. Trả lỗi tiếng Việt hoặc null; thay = true khi Kỹ thuật duyệt thay.
  */
-export function kiemTraDuyet(p: { nguoi: NguoiXet; nguoiGuiId: string; buoc: BuocDuyet; daDuyetBoi: Set<string>; coNguoiGiuChucDanh: (cd: string) => boolean }): { loi: string | null; thay: boolean } {
+export function kiemTraDuyet(p: { nguoi: NguoiXet; nguoiGuiId: string; buoc: BuocDuyet; daDuyetBoi?: Set<string>; coNguoiGiuChucDanh: (cd: string) => boolean }): { loi: string | null; thay: boolean } {
   const dung = duocDuyetBuoc(p.nguoi, p.buoc, p.coNguoiGiuChucDanh);
   if (p.nguoi.vaiTro === "ky_thuat") return { loi: null, thay: !dung };
   if (p.nguoiGuiId === p.nguoi.nhanVienId) return { loi: "Người gửi không tự duyệt đề xuất của mình.", thay: false };
-  if (p.daDuyetBoi.has(p.nguoi.nhanVienId)) return { loi: "Bạn đã duyệt một bước của đề xuất này. Bước tiếp theo cần người khác duyệt.", thay: false };
   if (!dung) return { loi: `Bước «${p.buoc.ten}» do ${moTaNguoiDuyet(p.buoc)} duyệt.`, thay: false };
   return { loi: null, thay: false };
 }

@@ -34,7 +34,7 @@ describe("kiemTraDuyet", () => {
   const coNguoiGiuChucDanh = () => false;
   const goc = { nguoiGuiId: "gui", daDuyetBoi: new Set<string>(), coNguoiGiuChucDanh };
   it("người gửi không tự duyệt", () => expect(kiemTraDuyet({ ...goc, nguoi: nguoi("ke_toan", null, "gui"), buoc: buoc({}) }).loi).toMatch(/không tự duyệt/));
-  it("một người không duyệt hai bước", () => expect(kiemTraDuyet({ ...goc, daDuyetBoi: new Set(["u1"]), nguoi: nguoi("ke_toan"), buoc: buoc({}) }).loi).toMatch(/người khác/));
+  it("một người được duyệt nhiều bước của cùng đề xuất (như Lark)", () => expect(kiemTraDuyet({ ...goc, daDuyetBoi: new Set(["u1"]), nguoi: nguoi("ke_toan"), buoc: buoc({}) }).loi).toBeNull());
   it("sai vị trí thì báo rõ ai duyệt", () => expect(kiemTraDuyet({ ...goc, nguoi: nguoi("le_tan"), buoc: buoc({}) }).loi).toMatch(/Kế toán trưởng duyệt/));
   it("đúng vị trí thì qua", () => expect(kiemTraDuyet({ ...goc, nguoi: nguoi("ke_toan"), buoc: buoc({}) })).toEqual({ loi: null, thay: false }));
   it("Kỹ thuật duyệt thay mọi bước và được ghi là duyệt thay", () => expect(kiemTraDuyet({ ...goc, nguoi: nguoi("ky_thuat"), buoc: buoc({}) })).toEqual({ loi: null, thay: true }));

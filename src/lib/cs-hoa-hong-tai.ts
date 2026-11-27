@@ -175,7 +175,7 @@ async function tinh(nam: number, thang: number, den: string): Promise<BangThang>
     khongThuocDien: khongThuocDien.sort((a, b) => b.ds - a.ds),
     phi: {
       bs, tlv, caChuaNguoiLam, caNguoiKhac: phi.nguoiKhac.length,
-      ca: phi.dong.map((d) => ({ dongId: d.ca.dongId, ngay: d.ca.ngay, maHd: d.ca.maHd, khach: d.ca.khach ?? "Khách lẻ", ten: d.ca.ten, soDv: d.soDv, nv: d.nv, tenNv: tenNv(d.nv), doiTuong: d.doiTuong, laPhuBs: d.laPhuBs, dongGia: d.laPhuBs ? "Phụ bác sĩ" : d.dong?.ten ?? "", donGia: d.donGia, tien: d.tien })),
+      ca: phi.dong.map((d) => ({ dongId: d.ca.dongId, ngay: d.ca.ngay, maHd: d.ca.maHd, khach: d.ca.khach ?? "Khách lẻ", ten: d.ca.ten, soDv: d.soDv, nv: d.nv, tenNv: tenNv(d.nv), doiTuong: d.doiTuong, laPhuBs: d.laPhuBs, dongGia: d.laPhuBs ? "Phụ bác sĩ" : d.dong?.ten ?? "", donGia: d.donGia, tien: d.tien })).sort((a, b) => (a.ngay < b.ngay ? 1 : a.ngay > b.ngay ? -1 : a.maHd < b.maHd ? 1 : a.maHd > b.maHd ? -1 : 0)),
       chuaDonGia: [...chuaDonGia.values()].sort((a, b) => b.soCa - a.soCa),
       loaiTru: phi.loaiTru.map((c) => ({ dongId: c.dongId, ngay: c.ngay, maHd: c.maHd, ten: c.ten, lyDo: c.loaiTru ?? "" })),
     },

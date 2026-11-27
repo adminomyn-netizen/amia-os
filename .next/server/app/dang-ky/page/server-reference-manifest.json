@@ -1,0 +1,15 @@
+{
+  "node": {
+    "603c7dcaee1bd3c8e4213bd430c100109ece677125": {
+      "workers": {
+        "app/dang-ky/page": {
+          "moduleId": 851987,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyTaiKhoan",
+      "filename": "src/app/dang-ky/actions.ts"
+    }
+  },
+  "edge": {}
+}

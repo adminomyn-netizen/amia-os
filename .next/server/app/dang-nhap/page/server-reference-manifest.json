@@ -1,0 +1,15 @@
+{
+  "node": {
+    "60a5a8c1a5ab0cfd557e4e9493be98a0c3334372cc": {
+      "workers": {
+        "app/dang-nhap/page": {
+          "moduleId": 929288,
+          "async": false
+        }
+      },
+      "exportedName": "dangNhap",
+      "filename": "src/app/dang-nhap/actions.ts"
+    }
+  },
+  "edge": {}
+}

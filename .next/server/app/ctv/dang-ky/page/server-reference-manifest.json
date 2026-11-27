@@ -1,0 +1,85 @@
+{
+  "node": {
+    "607e3283bbfb5024d82c9a9d08ff89a167e09e1c18": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "guiMaDangKy",
+      "filename": "src/app/ctv/actions.ts"
+    },
+    "60b12c5a4723de27d7fbd9861cf457e7eb3cb283c9": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "xacNhanDangKy",
+      "filename": "src/app/ctv/actions.ts"
+    },
+    "6043b28f7548977c63c528daf9388fa23d9df9b9ea": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "guiMaDangNhap",
+      "filename": "src/app/ctv/actions.ts"
+    },
+    "60a0e8a5400a41dc13d72f24375d3c49fdf790ddb4": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "xacNhanDangNhap",
+      "filename": "src/app/ctv/actions.ts"
+    },
+    "6036a4404c74cc9cbcca36a0b328ce4f0498d70599": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "luuHoSoCtv",
+      "filename": "src/app/ctv/actions.ts"
+    },
+    "60cf06feb0d0592da684fe88debdc4cfdc358c4c1c": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "guiKhieuNaiCtv",
+      "filename": "src/app/ctv/actions.ts"
+    },
+    "40f5521b2f8e229593fecf668f4320b2d1bbf99765": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "guiMaRutCtv",
+      "filename": "src/app/ctv/actions.ts"
+    },
+    "603cf3db2b67c1fe58196379573bfee2c2f9924f1f": {
+      "workers": {
+        "app/ctv/dang-ky/page": {
+          "moduleId": 562199,
+          "async": false
+        }
+      },
+      "exportedName": "taoYeuCauRutCtv",
+      "filename": "src/app/ctv/actions.ts"
+    }
+  },
+  "edge": {}
+}

@@ -1,0 +1,185 @@
+{
+  "node": {
+    "60f9c4451409598852ce03feb1439bae2f447dc1ff": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "0097dd53a815581915c7d208fd14e738d5a64f4fc0": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "guiThuThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "403360626de6bf0243759ed1fa723370fb8293faa2": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "huyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "002a5a8a84cb9bc6e34e78a2d4ebd98b4cf6232ec5": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "dangXuat",
+      "filename": "src/app/dang-nhap/actions.ts"
+    },
+    "40c2bb09bee4840f98b39b1cd35bc564f7a058df0c": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "doiChiNhanhLamViec",
+      "filename": "src/app/(app)/chi-nhanh-lam-viec/actions.ts"
+    },
+    "40250b9ed8f1d5edc838619901ee83638ea2ed04fb": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "timChung",
+      "filename": "src/app/(app)/tim-kiem/actions.ts"
+    },
+    "40404f25f4800fcac94f425a843bbd16105373abfe": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "duyetSuaChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "406395353d1984f04891f7c54e44bf7f9bedb4af2f": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "guiTinChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "00205d2aaf7fbb42c9674d7125150f27b02230e090": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "layChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "403bbc62b6f0352e0f40c23e410e3685ca63be64fc": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "camKetBienChung",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "4045a603c8f531849603aaa0037283abb6602fd200": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "dongKhieuNai",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "4058022929f1e6f0b6e7cba851d50ec933a96e192d": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "deXuatPhuongAn",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "4063f8bf2ad57f67f1b00165521af6ecbab275e098": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "ghiKhieuNai",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "408757049cf765d4ad98e9cb22a92a19643e8e9fdf": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "baoBienChung",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "409807000de11aa28c17c157aacb993ea7c8f737e7": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "ghiBaoHanh",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "40d8e472dfae378dfa46b894cec32c23df0f9325b8": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "dongBienChung",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "40f48535b4819b266d45d205c5cb69fbc5f655110a": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "duyetKhieuNai",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    },
+    "40fb6a5080a21e300ac5341ed2163738fe87bc4515": {
+      "workers": {
+        "app/(app)/khieu-nai/page": {
+          "moduleId": 292936,
+          "async": false
+        }
+      },
+      "exportedName": "khamBienChung",
+      "filename": "src/app/(app)/khieu-nai/actions.ts"
+    }
+  },
+  "edge": {}
+}

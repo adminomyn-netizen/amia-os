@@ -1,0 +1,12 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/mkt/so-lieu-ngay/route.js")
+R.c("server/chunks/[root-of-the-server]__0i-_zqsviw2mf._.js")
+R.c("server/chunks/src_app_api_cron_meta-ads_route_ts_0-i_izsr8b2dq._.js")
+R.c("server/chunks/node_modules_next_1lo724y0ayaf6._.js")
+R.c("server/chunks/_0ztl1tyayu9wc._.js")
+R.c("server/chunks/[root-of-the-server]__15bjnu5yieigz._.js")
+R.c("server/chunks/src_lib_supabase_admin_ts_0cfteh4lkaqb-._.js")
+R.c("server/chunks/node_modules_next_dist_0ku_biribeqcf._.js")
+R.c("server/chunks/node_modules_next_dist_0asya_d53xspt._.js")
+R.c("server/chunks/_next-internal_server_app_api_mkt_so-lieu-ngay_route_actions_0wbloela0peao.js")
+R.m(492586)
+module.exports=R.m(492586).exports

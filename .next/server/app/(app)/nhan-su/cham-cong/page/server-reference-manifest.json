@@ -1,0 +1,335 @@
+{
+  "node": {
+    "60f9c4451409598852ce03feb1439bae2f447dc1ff": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "0097dd53a815581915c7d208fd14e738d5a64f4fc0": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "guiThuThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "403360626de6bf0243759ed1fa723370fb8293faa2": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "huyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "002a5a8a84cb9bc6e34e78a2d4ebd98b4cf6232ec5": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "dangXuat",
+      "filename": "src/app/dang-nhap/actions.ts"
+    },
+    "40c2bb09bee4840f98b39b1cd35bc564f7a058df0c": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "doiChiNhanhLamViec",
+      "filename": "src/app/(app)/chi-nhanh-lam-viec/actions.ts"
+    },
+    "40250b9ed8f1d5edc838619901ee83638ea2ed04fb": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "timChung",
+      "filename": "src/app/(app)/tim-kiem/actions.ts"
+    },
+    "40404f25f4800fcac94f425a843bbd16105373abfe": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "duyetSuaChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "406395353d1984f04891f7c54e44bf7f9bedb4af2f": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "guiTinChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "00205d2aaf7fbb42c9674d7125150f27b02230e090": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "layChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "0078aee2f7ca8c943a0c2ea2e221379cdaf0195811": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "chamCongVao",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "00ce86bb7f43d87b05fdc7c1b99cc8e4ee72614b49": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "chamCongRa",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "401aeb9ba85846624079a1c8fdcb7537b32e777df1": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "thongTinNghi",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "401c7704cf51344ab2f65cb7552f55be916d9bb9dd": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "phanCa",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40228b368be3f20a0b5b1a7f12554acc6af3b944c0": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "guiDuyetKyLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "4024bcef39d8dd41631ab8657cd36ccea696210c50": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "luuDieuKienLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "403517fa553fdc4de73e8a37cf28590da54e8353d3": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "khoaThangCong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "403fb2b9b68f307473be8f9ac263b3e5643a7efc0f": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "luuCa",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "4044c96a1bb5f4a8a939c91e662c32423b05461bf1": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "dieuChinhPhep",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "4050fc2024b7691db2f200c34081ffebf708e1fc2b": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "guiPhieuHr",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "4051a3935a65b73c8b9d50467b6a9eecb237882942": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "huyPhieuHr",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40718c15622d13f5578f95eb6ed92865cd24f5dfa9": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "tinhLaiKyLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40729928d1855e682652edc893ec133c9f4c0bd75b": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "luuNgayLe",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "4072df1756baf2b14103ac88192d2c01a137046908": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "nhapCongThuCong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "4074a68fa8f9a483dfe124cfe64e6a91052084260e": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "chiKyLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "4088d9f3a02f8f9cd84e95571f5c80007df02deaa9": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "duyetKyLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40ae13f29ae8e2d0ec8faa7d292136c453ef9d91c6": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "xoaKyLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40c8b38638350a19abca58e0666c437efc6ab58fe6": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "taoKyLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40ca6c623187113bcfebafa2fa4f7ed9ee2fe23d99": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "themKhoanLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40cd262fba5fae9972c1dd4f14f571537e2a6b69a0": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "tuChoiPhieuHr",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40cf934e86c7b25ea451bbc568773e4265c18d767f": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "duyetPhieuHr",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40f11f6e2459c06f57b20c34a37fc9b1fd9fe775ec": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "traLaiKyLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40fa6711b5b9252984400601de533fabd2a3d6f313": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "xoaNgayLe",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    },
+    "40fb22f8ba4ca3e8d0a0e305b30906a191018abb4a": {
+      "workers": {
+        "app/(app)/nhan-su/cham-cong/page": {
+          "moduleId": 547239,
+          "async": false
+        }
+      },
+      "exportedName": "xoaKhoanLuong",
+      "filename": "src/app/(app)/nhan-su/actions.ts"
+    }
+  },
+  "edge": {}
+}

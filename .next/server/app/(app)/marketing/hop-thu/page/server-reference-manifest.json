@@ -1,0 +1,115 @@
+{
+  "node": {
+    "60f9c4451409598852ce03feb1439bae2f447dc1ff": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "0097dd53a815581915c7d208fd14e738d5a64f4fc0": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "guiThuThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "403360626de6bf0243759ed1fa723370fb8293faa2": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "huyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "002a5a8a84cb9bc6e34e78a2d4ebd98b4cf6232ec5": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "dangXuat",
+      "filename": "src/app/dang-nhap/actions.ts"
+    },
+    "40c2bb09bee4840f98b39b1cd35bc564f7a058df0c": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "doiChiNhanhLamViec",
+      "filename": "src/app/(app)/chi-nhanh-lam-viec/actions.ts"
+    },
+    "40250b9ed8f1d5edc838619901ee83638ea2ed04fb": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "timChung",
+      "filename": "src/app/(app)/tim-kiem/actions.ts"
+    },
+    "40404f25f4800fcac94f425a843bbd16105373abfe": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "duyetSuaChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "406395353d1984f04891f7c54e44bf7f9bedb4af2f": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "guiTinChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "00205d2aaf7fbb42c9674d7125150f27b02230e090": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "layChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "4007ba4fa9fe07867ab00f9b65fa79af0f0c397147": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "traLoiKhach",
+      "filename": "src/app/(app)/marketing/hop-thu/actions.ts"
+    },
+    "40f5d481183a450f6db29c3590cf144a6c7c27557d": {
+      "workers": {
+        "app/(app)/marketing/hop-thu/page": {
+          "moduleId": 671083,
+          "async": false
+        }
+      },
+      "exportedName": "danhDauDaDoc",
+      "filename": "src/app/(app)/marketing/hop-thu/actions.ts"
+    }
+  },
+  "edge": {}
+}

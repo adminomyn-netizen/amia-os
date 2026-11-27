@@ -1,0 +1,11 @@
+var R=require("../../../../chunks/[turbopack]_runtime.js")("server/app/api/cron/anh-dai-dien-khach/route.js")
+R.c("server/chunks/[root-of-the-server]__0mc2fpgkpzeqw._.js")
+R.c("server/chunks/node_modules_next_dist_0asya_d53xspt._.js")
+R.c("server/chunks/_1tbk93c7-i8hn._.js")
+R.c("server/chunks/[root-of-the-server]__15bjnu5yieigz._.js")
+R.c("server/chunks/src_lib_supabase_admin_ts_0cfteh4lkaqb-._.js")
+R.c("server/chunks/node_modules_next_dist_0ku_biribeqcf._.js")
+R.c("server/chunks/node_modules_next_1lo724y0ayaf6._.js")
+R.c("server/chunks/1oeh_server_app_api_cron_anh-dai-dien-khach_route_actions_160keb38os-et.js")
+R.m(24422)
+module.exports=R.m(24422).exports

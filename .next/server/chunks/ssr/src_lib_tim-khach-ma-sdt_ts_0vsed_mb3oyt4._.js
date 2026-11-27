@@ -1,0 +1,3 @@
+module.exports=[935924,a=>{"use strict";var b=a.i(761469),c=a.i(937332);async function d(a){let d=a.trim().toUpperCase().replace(/[^A-Z0-9._-]/g,""),e=(0,c.U)(a),f=[d?`ma.eq.${d}`:"",e.length>=9?`dien_thoai.eq.${e}`:""].filter(Boolean);if(!f.length)return{loi:"Nhập mã khách hoặc số điện thoại."};let{data:g}=await (0,b.U)().from("khach_hang").select("id, chi_nhanh_id, ho_ten, ma").or(f.join(",")).limit(3),h=g??[],i=h.filter(a=>a.ma?.toUpperCase()===d);return 1===i.length?{k:i[0]}:h.length>1?{loi:"Có nhiều khách trùng số điện thoại này. Nhập mã khách."}:h.length?{k:h[0]}:{loi:"Không tìm thấy khách theo mã hoặc số điện thoại đó."}}a.s(["f",0,d])}];
+
+//# sourceMappingURL=src_lib_tim-khach-ma-sdt_ts_0vsed_mb3oyt4._.js.map

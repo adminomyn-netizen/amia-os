@@ -1,0 +1,39 @@
+{
+  "headers": {
+    "x-nextjs-stale-time": "300",
+    "x-nextjs-prerender": "1",
+    "x-next-cache-tags": "_N_T_/layout,_N_T_/ctv/layout,_N_T_/ctv/dieu-khoan/layout,_N_T_/ctv/dieu-khoan/page,_N_T_/ctv/dieu-khoan"
+  },
+  "segmentPaths": [
+    "/_tree",
+    "/_full",
+    "/ctv/dieu-khoan/__PAGE__"
+  ],
+  "prefetchHints": {
+    "hints": 64,
+    "slots": {
+      "children": {
+        "hints": 96,
+        "slots": {
+          "children": {
+            "hints": 96,
+            "slots": {
+              "children": {
+                "hints": 160,
+                "slots": null
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "routeCache": {
+    "key": "/route-cache/APP_PAGE/014d19f4b12ebee7c6a93080d33f52f5fab28ffe3856e1c3ccbe64a36c390838/$/ctv/dieu-khoan",
+    "owner": {
+      "kind": "APP_PAGE",
+      "sourceRoute": "/ctv/dieu-khoan/page"
+    },
+    "isFallback": false
+  }
+}

@@ -1,0 +1,255 @@
+{
+  "node": {
+    "60f9c4451409598852ce03feb1439bae2f447dc1ff": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "0097dd53a815581915c7d208fd14e738d5a64f4fc0": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "guiThuThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "403360626de6bf0243759ed1fa723370fb8293faa2": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "huyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "002a5a8a84cb9bc6e34e78a2d4ebd98b4cf6232ec5": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "dangXuat",
+      "filename": "src/app/dang-nhap/actions.ts"
+    },
+    "40c2bb09bee4840f98b39b1cd35bc564f7a058df0c": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "doiChiNhanhLamViec",
+      "filename": "src/app/(app)/chi-nhanh-lam-viec/actions.ts"
+    },
+    "40250b9ed8f1d5edc838619901ee83638ea2ed04fb": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "timChung",
+      "filename": "src/app/(app)/tim-kiem/actions.ts"
+    },
+    "40404f25f4800fcac94f425a843bbd16105373abfe": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "duyetSuaChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "406395353d1984f04891f7c54e44bf7f9bedb4af2f": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "guiTinChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "00205d2aaf7fbb42c9674d7125150f27b02230e090": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "layChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "40362f7fc55b354a7814ccd099418ccb41f9dcdd3a": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "luuPhongBan",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "403969e6bb8047ca2dd21edec48a7a5f194ddd4baf": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "goTaiLieu",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "404340583a0bfff38ec0f7a1dcdf78026724c4d80c": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "luuLoTrinh",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "404ba727934b8fa786498497b232c29a6d5483a6be": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "doiTrangThaiTaiLieu",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "4058b91fc8014cb0be97abe33fe6c3815693c2035e": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "huyNghiViec",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "4059a8133b19e9a51dfa2548ca84be4481a17ed349": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "hoanTatNghiViec",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "4059e936d6ba0b90cb69f0bc5b5bc987a29e55b094": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "luuChucDanh",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "406152a86c56b42343ab968a5375da722b34e1e60a": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "xinLinkTaiLen",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "4085caef6b0bb9a7cf2639efa74bc5ff6843929fa0": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "themThanNhan",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "409d808370b2e0f6180853c1c0856731779c03e88c": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "luuHoSoNhom",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "409deb2ee3dc49f4554d86acc18bf03593c6757b6f": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "xacNhanTaiLen",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "40d2e9012ae10fa6fb2ec5af37410d7647c303ee85": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "guiNghiViec",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "40d4eed3235af8f32b790d186a1519d98ee17dab5e": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "duyetNghiViec",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "40e7db0343e8acd7a899a3f358435c96cdf1014ff5": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "capNhatBanGiao",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "40ed0e08a864fcd9b5c2cfe4b18382bb6626f48807": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "xoaThanNhan",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    },
+    "40fc61aa6f400a37fd4320b8bee35993ccb55a5172": {
+      "workers": {
+        "app/(app)/nhan-su/nghi-viec/page": {
+          "moduleId": 232188,
+          "async": false
+        }
+      },
+      "exportedName": "luuThongTinCongViec",
+      "filename": "src/app/(app)/nhan-su/ho-so/actions.ts"
+    }
+  },
+  "edge": {}
+}

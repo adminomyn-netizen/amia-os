@@ -1,0 +1,3 @@
+module.exports=[714673,a=>{"use strict";async function b(a,b){let[{data:c},{data:d}]=await Promise.all([a.from("cau_hinh").select("khoa, gia_tri").in("khoa",["diem.doi_bat","diem.doi_tien","diem.doi_thu_ngan"]),b?a.from("hang_diem_cau_hinh").select("tien_doi_moi_diem").eq("hang",b).maybeSingle():Promise.resolve({data:null})]),e=new Map((c??[]).map(a=>[a.khoa,a.gia_tri])),f=Math.round(Number(d?.tien_doi_moi_diem)),g=Number.isInteger(f)&&f>0?f:Math.round(Number(e.get("diem.doi_tien")));return{bat:"1"===e.get("diem.doi_bat")&&"0"!==e.get("diem.doi_thu_ngan"),tienMoiDiem:Number.isInteger(g)&&g>0?g:1e4}}a.s(["f",0,b])}];
+
+//# sourceMappingURL=src_lib_diem-thuong_ts_1ajuv8ru3abo7._.js.map

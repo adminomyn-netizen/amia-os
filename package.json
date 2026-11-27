@@ -1,0 +1,49 @@
+{
+  "name": "amia-os",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "kiem-tra-thiet-ke": "node scripts/kiem-tra-thiet-ke.mjs",
+    "test": "vitest run",
+    "kiem-tra": "eslint && tsc --noEmit && vitest run && node scripts/kiem-tra-thiet-ke.mjs && node scripts/doi-chieu.mjs",
+    "doi-chieu": "node scripts/doi-chieu.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.1156.0",
+    "@aws-sdk/s3-request-presigner": "^3.1156.0",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.118.0",
+    "@types/qrcode": "^1.5.6",
+    "date-fns": "^4.4.0",
+    "exceljs": "^4.4.0",
+    "lucide-react": "^1.61.0",
+    "next": "^16.4.3",
+    "nodemailer": "^10.2.1",
+    "qrcode": "^1.5.4",
+    "react": "^19.3.1",
+    "react-big-calendar": "1.19.4",
+    "react-dom": "^19.3.1",
+    "server-only": "^0.0.1",
+    "web-push": "^3.6.7"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.5.11",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^26.6.5",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.3.0",
+    "@types/react-big-calendar": "1.16.3",
+    "@types/react-dom": "^19.3.0",
+    "@types/web-push": "^3.6.4",
+    "eslint": "^9.39.5",
+    "eslint-config-next": "^16.4.3",
+    "pg": "^8.23.1",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.5"
+  }
+}

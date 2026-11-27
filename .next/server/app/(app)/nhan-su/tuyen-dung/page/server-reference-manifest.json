@@ -1,0 +1,175 @@
+{
+  "node": {
+    "60f9c4451409598852ce03feb1439bae2f447dc1ff": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "0097dd53a815581915c7d208fd14e738d5a64f4fc0": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "guiThuThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "403360626de6bf0243759ed1fa723370fb8293faa2": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "huyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "002a5a8a84cb9bc6e34e78a2d4ebd98b4cf6232ec5": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "dangXuat",
+      "filename": "src/app/dang-nhap/actions.ts"
+    },
+    "40c2bb09bee4840f98b39b1cd35bc564f7a058df0c": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "doiChiNhanhLamViec",
+      "filename": "src/app/(app)/chi-nhanh-lam-viec/actions.ts"
+    },
+    "40250b9ed8f1d5edc838619901ee83638ea2ed04fb": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "timChung",
+      "filename": "src/app/(app)/tim-kiem/actions.ts"
+    },
+    "40404f25f4800fcac94f425a843bbd16105373abfe": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "duyetSuaChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "406395353d1984f04891f7c54e44bf7f9bedb4af2f": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "guiTinChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "00205d2aaf7fbb42c9674d7125150f27b02230e090": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "layChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "40495fc591d8cef03b9ed2567bf59be43a58617c0a": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "luuUngVien",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    },
+    "40554f9a43f065fc90f85b2011f6176ca694a85f45": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "luuDangKenh",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    },
+    "405eb67544b5494d242a9fec71b88f14b56f89f088": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "luuTinTuyen",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    },
+    "406e777c74faa91ff2f8949c6c726447c74f56f00d": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "goDangKenh",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    },
+    "40992add4d2788cb46adcc256eb80e86c9c31c7655": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "xoaTinTuyen",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    },
+    "40c15ffaad6112f9c605db3c3c0d7a68536d9ea926": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "guiYeuCauTuyen",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    },
+    "40db928ec4092ccc7fb6fe8b0c936508b4c8ec3c3c": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "chuyenYeuCau",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    },
+    "40fea7d4060e87dda60caa529299e9f86cce1e9c42": {
+      "workers": {
+        "app/(app)/nhan-su/tuyen-dung/page": {
+          "moduleId": 285082,
+          "async": false
+        }
+      },
+      "exportedName": "xoaUngVien",
+      "filename": "src/app/(app)/nhan-su/tuyen-dung/actions.ts"
+    }
+  },
+  "edge": {}
+}

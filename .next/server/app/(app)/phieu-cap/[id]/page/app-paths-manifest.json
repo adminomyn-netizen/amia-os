@@ -1,0 +1,3 @@
+{
+  "/(app)/phieu-cap/[id]/page": "app/(app)/phieu-cap/[id]/page.js"
+}

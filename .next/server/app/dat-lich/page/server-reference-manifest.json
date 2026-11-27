@@ -1,0 +1,35 @@
+{
+  "node": {
+    "6055b6c991a5e3521caaff7e2cb48949f707375f90": {
+      "workers": {
+        "app/dat-lich/page": {
+          "moduleId": 844214,
+          "async": false
+        }
+      },
+      "exportedName": "datLichOnline",
+      "filename": "src/app/dat-lich/actions.ts"
+    },
+    "7c7ab9d3ca3424d30328eb56b02aff7d89f43d7283": {
+      "workers": {
+        "app/dat-lich/page": {
+          "moduleId": 844214,
+          "async": false
+        }
+      },
+      "exportedName": "layKhungGio",
+      "filename": "src/app/dat-lich/actions.ts"
+    },
+    "409a456b10e5af68832d206db0bb508703c4d1e6fd": {
+      "workers": {
+        "app/dat-lich/page": {
+          "moduleId": 844214,
+          "async": false
+        }
+      },
+      "exportedName": "traGioiThieu",
+      "filename": "src/app/dat-lich/actions.ts"
+    }
+  },
+  "edge": {}
+}

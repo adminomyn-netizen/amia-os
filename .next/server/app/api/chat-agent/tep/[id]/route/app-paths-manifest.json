@@ -1,0 +1,3 @@
+{
+  "/api/chat-agent/tep/[id]/route": "app/api/chat-agent/tep/[id]/route.js"
+}

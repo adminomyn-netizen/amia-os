@@ -1,0 +1,22 @@
+{
+  "devFiles": [],
+  "ampDevFiles": [],
+  "polyfillFiles": [
+    "static/chunks/0cz1d0mv5g_q7.js"
+  ],
+  "lowPriorityFiles": [],
+  "rootMainFiles": [
+    "static/chunks/1f424c_zcdqsc.js",
+    "static/chunks/21d2ksq_nydfo.js",
+    "static/chunks/0ykhi6pk49so-.js",
+    "static/chunks/12ij-psblwaei.js",
+    "static/chunks/turbopack-3-ry682tkyiqk.js"
+  ],
+  "pages": {},
+  "ampFirstPages": [],
+  "rootMainFilesTree": {},
+  "pagesChunkGroupBootstrapParams": {
+    "/(app)/van-ban/danh-sach/page": {"otherChunks":["static/chunks/1f424c_zcdqsc.js","static/chunks/21d2ksq_nydfo.js","static/chunks/0ykhi6pk49so-.js","static/chunks/12ij-psblwaei.js"],"runtimeModuleIds":[494553]}
+  },
+  "chunkLoadingGlobal": "TURBOPACK"
+}

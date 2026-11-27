@@ -1,0 +1,265 @@
+{
+  "node": {
+    "60f9c4451409598852ce03feb1439bae2f447dc1ff": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "0097dd53a815581915c7d208fd14e738d5a64f4fc0": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "guiThuThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "403360626de6bf0243759ed1fa723370fb8293faa2": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "huyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "002a5a8a84cb9bc6e34e78a2d4ebd98b4cf6232ec5": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "dangXuat",
+      "filename": "src/app/dang-nhap/actions.ts"
+    },
+    "40c2bb09bee4840f98b39b1cd35bc564f7a058df0c": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "doiChiNhanhLamViec",
+      "filename": "src/app/(app)/chi-nhanh-lam-viec/actions.ts"
+    },
+    "40250b9ed8f1d5edc838619901ee83638ea2ed04fb": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "timChung",
+      "filename": "src/app/(app)/tim-kiem/actions.ts"
+    },
+    "40404f25f4800fcac94f425a843bbd16105373abfe": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "duyetSuaChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "406395353d1984f04891f7c54e44bf7f9bedb4af2f": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "guiTinChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "00205d2aaf7fbb42c9674d7125150f27b02230e090": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "layChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "4003a98ef4c867f2a2a119b2bb0cb1b51a51cbf66b": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "tuChoiDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "402c4f114aa9cca2374ea6ccd34cf8a8fee72fbdd7": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "baoKetViec",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "402cfdbd18576dc1ba8817d490ec1e509232f302b0": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "guiLaiDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "404f68d880b48937292ef261ea20b9cadcc5232c83": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "huyDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "405153ff3d3d35fc1fd93f07e420338138b23844a1": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "nopBaoCaoNgay",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "40663aa0841e3af10a3449711b7996683b9d48a8f7": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "duyetDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "406977eb973dc1fc743963ad2a7353db6c8324fec0": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "xoaWiki",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "406e49e799bb2d25ff1f98c683554423eb674dd4fb": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "dongHoSoDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "4077ebbd6adb46a6f641075d8edbac32138beb98c6": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "doiTrangThaiViec",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "4081b197fcf5468f1d297d61a924d5b7e111c344f2": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "lapDonMuaTuDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "408403cb69922a84e5b704f94e9e2d02d94fcd8837": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "luuButToanDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "40a4782e7d4d403ea1aa1b516bf4006759e52f4106": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "chiTheoDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "40ae662a0a060334221297452d9517f93c30f4ce54": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "traVeBoSungDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "40b3d51368716f192a3226b8d6f231d0d446d00e9c": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "chamViec",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "40c1563fc5f7a7fe85b0864626f98f3b70b4ed1c59": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "giaoViec",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "40f5e30e3ed3f9ff0e08f72de855808ce8c89a8479": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "guiDeXuat",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    },
+    "40ff18d059b0d26623c9f5b21c15d0febaaa89f586": {
+      "workers": {
+        "app/(app)/noi-lam-viec/bao-cao-ngay/page": {
+          "moduleId": 937362,
+          "async": false
+        }
+      },
+      "exportedName": "luuWiki",
+      "filename": "src/app/(app)/noi-lam-viec/actions.ts"
+    }
+  },
+  "edge": {}
+}

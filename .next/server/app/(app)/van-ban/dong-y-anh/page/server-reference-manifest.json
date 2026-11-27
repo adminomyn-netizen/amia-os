@@ -1,0 +1,195 @@
+{
+  "node": {
+    "60f9c4451409598852ce03feb1439bae2f447dc1ff": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "dangKyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "0097dd53a815581915c7d208fd14e738d5a64f4fc0": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "guiThuThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "403360626de6bf0243759ed1fa723370fb8293faa2": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "huyThongBao",
+      "filename": "src/app/(app)/tai-khoan/thong-bao-actions.ts"
+    },
+    "002a5a8a84cb9bc6e34e78a2d4ebd98b4cf6232ec5": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "dangXuat",
+      "filename": "src/app/dang-nhap/actions.ts"
+    },
+    "40c2bb09bee4840f98b39b1cd35bc564f7a058df0c": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "doiChiNhanhLamViec",
+      "filename": "src/app/(app)/chi-nhanh-lam-viec/actions.ts"
+    },
+    "40250b9ed8f1d5edc838619901ee83638ea2ed04fb": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "timChung",
+      "filename": "src/app/(app)/tim-kiem/actions.ts"
+    },
+    "40404f25f4800fcac94f425a843bbd16105373abfe": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "duyetSuaChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "406395353d1984f04891f7c54e44bf7f9bedb4af2f": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "guiTinChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "00205d2aaf7fbb42c9674d7125150f27b02230e090": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "layChat",
+      "filename": "src/app/(app)/chat/actions.ts"
+    },
+    "4024fd51c29c13ab25f1fdeba589e24b014d6636d6": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "luuVanBan",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "40369082d2f6b85ee32757a1c6a50302bbd18a66b7": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "traVeVb",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "404c8f487cde950c3a04f41c98e01c7a23c6406242": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "guiDuyetVb",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "405d37d389689ffd4621191768588e43717bc5b732": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "taoPhienBanMoi",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "405de5635abc3d25c99e8abe0ac63b717b6030a6b7": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "luuBanDienTu",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "406290037c609ca8f46ddacc731344e85cb16e5ff0": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "rutConsent",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "4076a906d9b5ac1fa2e07ededd197aecacaeb82063": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "kyVb",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "40bea6a813a45ee541dec1e8d09737265bcccbc051": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "luuConsent",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "40cd8edecd419e3101ddc81ea59702cef492f5992f": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "huyVb",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    },
+    "40ec21f54c513cc08dfab4cd3d090ca8b4ac99f953": {
+      "workers": {
+        "app/(app)/van-ban/dong-y-anh/page": {
+          "moduleId": 523571,
+          "async": false
+        }
+      },
+      "exportedName": "duyetVb",
+      "filename": "src/app/(app)/van-ban/actions.ts"
+    }
+  },
+  "edge": {}
+}

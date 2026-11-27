@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "functions": {
+    "/_middleware": {
+      "runtime": "nodejs",
+      "matchers": [
+        {
+          "regexp": "^(?:\\/(_next\\/data\\/[^/]{1,}))?(?:\\/((?!_next\\/static|_next\\/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4)$).*))(\\.json|\\.rsc|\\.segments\\/.+\\.segment\\.rsc)?[\\/#\\?]?$",
+          "originalSource": "/((?!_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|.*\\.(?:svg|png|jpg|jpeg|gif|webp|mp4)$).*)"
+        }
+      ]
+    },
+    "/api/chat-agent/cong-cu": {
+      "maxDuration": 60
+    },
+    "/api/cron/anh-dai-dien-khach": {
+      "maxDuration": 60
+    },
+    "/api/cron/ctv-thu": {
+      "maxDuration": 60
+    },
+    "/api/cron/meta-ads": {
+      "maxDuration": 120
+    },
+    "/api/cron/nhac-cham-cong": {
+      "maxDuration": 60
+    },
+    "/api/cron/tom-tat": {
+      "maxDuration": 60
+    },
+    "/api/mkt/so-lieu-ngay": {
+      "maxDuration": 60
+    },
+    "/api/xuat/khach-hang": {
+      "maxDuration": 60
+    },
+    "/api/xuat/the": {
+      "maxDuration": 60
+    }
+  }
+}

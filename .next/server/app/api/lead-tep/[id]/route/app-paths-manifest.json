@@ -1,0 +1,3 @@
+{
+  "/api/lead-tep/[id]/route": "app/api/lead-tep/[id]/route.js"
+}

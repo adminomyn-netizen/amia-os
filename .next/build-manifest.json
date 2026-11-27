@@ -1,0 +1,1950 @@
+{
+  "pages": {
+    "/_app": []
+  },
+  "devFiles": [],
+  "polyfillFiles": [
+    "static/chunks/0cz1d0mv5g_q7.js"
+  ],
+  "lowPriorityFiles": [
+    "static/ZEzZfH21xcEMw5TW2FJG3/_buildManifest.js",
+    "static/ZEzZfH21xcEMw5TW2FJG3/_ssgManifest.js",
+    "static/ZEzZfH21xcEMw5TW2FJG3/_clientMiddlewareManifest.js"
+  ],
+  "rootMainFiles": [
+    "static/chunks/1f424c_zcdqsc.js",
+    "static/chunks/21d2ksq_nydfo.js",
+    "static/chunks/0ykhi6pk49so-.js",
+    "static/chunks/12ij-psblwaei.js",
+    "static/chunks/turbopack-3-ry682tkyiqk.js"
+  ],
+  "rootMainFilesTree": {},
+  "pagesChunkGroupBootstrapParams": {
+    "/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/_not-found/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/_global-error/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/ban-hang/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/bao-cao/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/bang-tin/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/blog/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/chi-nhanh/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/chinh-sach-duyet/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/diem-thuong/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/gio-lam-viec/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/ngan-hang/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/nhan-vien-phuc-vu/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/quy-tac-kho/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/quy-trinh-duyet/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/tai-khoan-dang-nhap/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/thiet-lap-in/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/thiet-lap-khac/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/thong-tin-chung/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/vai-tro/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/voucher/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/voucher/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/web-dat-lich/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/cai-dat/zalo-sms/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/da-chuyen-msc/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/danh-muc/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/danh-muc/in-ma-vach/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/dinh-muc/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-don/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-don/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-hong/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-hong/chi-tiet/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-hong/chinh-sach/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-hong/chinh-sach/cai-dat/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-hong/thang/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/hoa-hong/thang/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/huong-dan/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/huong-dan/marketing/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/in-ma-khach/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/cham-soc/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/dung-the/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/gan-day/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/nhac-nho/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/nhom/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/tai-kham/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/the-sap-het/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/thong-ke/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khach-hang/tu-van/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khieu-nai/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khieu-nai/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/khieu-nai/bien-chung/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/chuan-hoa/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/chuyen-kho/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/hang-ban/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/kiem-ke/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/kiem-ke/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/noi-bo/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/phieu-nhap/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/phieu-xuat/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho/xu-ly/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho-mua-sam/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho-mua-sam/cong-no/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho-mua-sam/mua-hang/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho-mua-sam/mua-hang/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/kho-mua-sam/nha-cung-cap/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/lich-hen/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/lich-hen/goi-y/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/lich-hen/goi-y/cai-dat/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/lich-hen/lich-su/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/lich-hen/lich-su-sua/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/lich-hen/so-do-cho/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/bao-cao/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/chien-dich/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/doi-tac/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/doi-tac/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/hoi-thoai/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/hop-thu/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/lead/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/lead/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/lead/cau-hinh/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/link/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/noi-dung/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/marketing/quang-cao/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/bao-cao/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/bhxh-phu-cap/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/ca-kip/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/cham-cong/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/chi-phi/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/danh-muc/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/dao-tao/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/ho-so/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/ho-so/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/ho-so-cua-toi/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/hop-dong/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/khen-thuong-ky-luat/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/kpi/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/lich/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/luong/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/luong/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/luong/dieu-kien/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/luong/phieu/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/ngay-nghi/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/nghi-viec/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/offboarding/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/onboarding/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/tai-san/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/thang-tien/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/thu-viec/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/tuyen-dung/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/tuyen-dung/email/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-su/tuyen-dung/viec/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/nhan-vien/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/noi-lam-viec/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/noi-lam-viec/bao-cao-ngay/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/noi-lam-viec/chot-ngay/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/noi-lam-viec/de-xuat/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/noi-lam-viec/phe-duyet/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/noi-lam-viec/viec/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/noi-lam-viec/wiki/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/phieu-cap/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/phieu-cap/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/quy-trinh/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/quy-trinh/[ma]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/bao-cao-quy/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/cong-no-khach/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/doi-soat/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/du-lieu-salonhero/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/hoa-don-dau-vao/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/hoa-don-dien-tu/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/hoa-don-dien-tu/lap/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/khoa-ky/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/ngan-sach/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/quyet-toan-hoa-hong/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-chinh/so-quy/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tai-khoan/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/the/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/the/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/the/cho-lam/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/thu-nhap-cua-toi/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/tong-quan/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/trang-chu/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/van-ban/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/van-ban/danh-sach/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/(app)/van-ban/dong-y-anh/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/blog/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/blog/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/ctv/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/ctv/dang-ky/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/ctv/dieu-khoan/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/dang-ky/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/dang-nhap/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/dat-lai-mat-khau/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/dat-lich/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/dat-lich/[ref]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/chuyen-kho/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/ghi-chu-khach/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/hoa-don/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/hoa-don-gtgt/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/hoa-don-nhieu/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/phieu-kho/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/phieu-lam/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/phieu-lam-nhieu/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/phieu-nhap-ncc/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/phieu-thu/[id]/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/so-quy/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/in/tam-tinh/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/man-hinh-khach/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    },
+    "/quen-mat-khau/page": {
+      "otherChunks": [
+        "static/chunks/1f424c_zcdqsc.js",
+        "static/chunks/21d2ksq_nydfo.js",
+        "static/chunks/0ykhi6pk49so-.js",
+        "static/chunks/12ij-psblwaei.js"
+      ],
+      "runtimeModuleIds": [
+        494553
+      ]
+    }
+  },
+  "chunkLoadingGlobal": "TURBOPACK"
+}

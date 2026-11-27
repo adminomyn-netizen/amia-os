@@ -1,0 +1,15 @@
+{
+  "node": {
+    "604bbea5dfe528a40e5b85cafb470c84b52cd46074": {
+      "workers": {
+        "app/quen-mat-khau/page": {
+          "moduleId": 639789,
+          "async": false
+        }
+      },
+      "exportedName": "datLaiMatKhau",
+      "filename": "src/app/quen-mat-khau/actions.ts"
+    }
+  },
+  "edge": {}
+}
